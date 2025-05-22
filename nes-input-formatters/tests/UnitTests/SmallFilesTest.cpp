@@ -33,7 +33,6 @@
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
-
 namespace NES
 {
 class SmallFilesTest : public Testing::BaseUnitTest
@@ -71,6 +70,7 @@ public:
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");
     }
+
     void SetUp() override { BaseUnitTest::SetUp(); }
 
     void TearDown() override { BaseUnitTest::TearDown(); }
@@ -83,6 +83,7 @@ public:
         size_t sizeOfRawBuffers;
         size_t sizeOfFormattedBuffers;
     };
+
     void runTest(const TestConfig& testConfig)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);

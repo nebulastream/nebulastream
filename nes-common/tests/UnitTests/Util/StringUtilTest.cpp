@@ -62,6 +62,7 @@ TEST(FormatFloatTests, HandlesInfinity)
     EXPECT_EQ(formatFloat(floatInfinity), "inf");
     EXPECT_EQ(formatFloat(doubleInfinity), "inf");
 }
+
 TEST(FormatFloatTests, HandlesNaN)
 {
     constexpr float floatQuietNan = std::numeric_limits<float>::quiet_NaN();
@@ -73,6 +74,7 @@ TEST(FormatFloatTests, HandlesNaN)
     EXPECT_EQ(formatFloat(doubleQuietNan), "nan");
     EXPECT_EQ(formatFloat(doubleSignalingNan), "nan");
 }
+
 TEST(FormatFloatTests, HandlesMax)
 {
     constexpr float floatMax = std::numeric_limits<float>::max();
@@ -316,6 +318,7 @@ TEST(FromCharsTest, ScientificNotationInput)
     ASSERT_TRUE(result.has_value());
     EXPECT_FLOAT_EQ(result.value(), 12300.0F);
 }
+
 TEST(StringCaseConversionTest, ToUpperCaseBasic)
 {
     EXPECT_EQ(toUpperCase("hello"), "HELLO");
@@ -372,7 +375,6 @@ TEST(StringCaseInplaceTest, ToUpperCaseInplaceEmpty)
     toUpperCaseInplace(str);
     EXPECT_EQ(str, "");
 }
-
 
 TEST(StringCaseInplaceTest, ToLowerCaseInplaceBasic)
 {

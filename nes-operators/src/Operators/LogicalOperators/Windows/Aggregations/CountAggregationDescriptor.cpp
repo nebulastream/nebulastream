@@ -24,7 +24,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -33,6 +32,7 @@ CountAggregationDescriptor::CountAggregationDescriptor(const std::shared_ptr<Nod
 {
     this->aggregationType = Type::Count;
 }
+
 CountAggregationDescriptor::CountAggregationDescriptor(
     const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
@@ -81,14 +81,17 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
+
 std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
+
 std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
+
 std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);

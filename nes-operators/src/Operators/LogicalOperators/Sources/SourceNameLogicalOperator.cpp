@@ -104,10 +104,12 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
+
 std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
+
 void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
 {
     this->schema = std::move(schema);

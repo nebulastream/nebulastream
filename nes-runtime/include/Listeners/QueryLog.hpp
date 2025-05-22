@@ -61,6 +61,7 @@ struct QueryStatusChange
     std::chrono::system_clock::time_point timestamp;
     std::optional<Exception> exception;
 };
+
 inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 
 /// The query log keeps track of query status changes. We want to keep it as lightweight as possible to reduce overhead inflicted to

@@ -34,7 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/LogicalQueryDumpHelper.hpp>
 #include <fmt/format.h>
-#include "ErrorHandling.hpp"
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -320,6 +320,7 @@ std::stringstream LogicalQueryDumpHelper::drawTree(const size_t maxWidth) const
     };
     return asciiOutput;
 }
+
 namespace
 {
 /// The name means this is the first/middle/last connector [to the child|from the parent] on the line.
@@ -351,7 +352,6 @@ std::map<char, std::string> getAsciiToUnicode()
         {PARENT_CHILD_LAST_BRANCH, "┤"}};
 }
 }
-
 
 void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const size_t position, std::string& output)
 {

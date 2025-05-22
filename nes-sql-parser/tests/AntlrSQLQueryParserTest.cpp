@@ -279,7 +279,6 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithQualifi
     }
 }
 
-
 TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
 {
     {
@@ -365,7 +364,6 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterA
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
     }
 }
-
 
 TEST_F(AntlrSQLQueryParserTest, threeJoinTest)
 {
@@ -637,7 +635,6 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithMultipleJoinkeyFunctionsWit
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-
 TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
 {
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
@@ -677,7 +674,6 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithFilterAndMapAfterJoinWithQu
     throw NotImplemented("We should do the same as in joinTestWithFilterAndMapAfterJoin but use qualifiernames");
     ASSERT_TRUE(false);
 }
-
 
 TEST_F(AntlrSQLQueryParserTest, globalWindowTest)
 {

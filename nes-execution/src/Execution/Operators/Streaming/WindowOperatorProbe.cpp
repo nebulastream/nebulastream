@@ -63,7 +63,6 @@ void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* p
     opHandler->setWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
 }
 
-
 WindowOperatorProbe::WindowOperatorProbe(const uint64_t operatorHandlerIndex, WindowMetaData windowMetaData)
     : operatorHandlerIndex(operatorHandlerIndex), windowMetaData(std::move(windowMetaData))
 {

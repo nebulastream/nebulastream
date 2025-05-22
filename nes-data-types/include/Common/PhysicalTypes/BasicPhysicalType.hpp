@@ -18,6 +18,7 @@
 #include <string>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES
 {
 

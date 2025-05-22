@@ -29,6 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+
 namespace NES
 {
 NodeFunctionCase::NodeFunctionCase(std::shared_ptr<DataType> stamp) : NodeFunction(std::move(stamp), "Case")

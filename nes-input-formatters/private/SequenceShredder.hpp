@@ -213,6 +213,7 @@ private:
         BitmapType tupleDelimiterBitmapSnapshot;
         BitmapType seenAndUsedBitmapSnapshot;
     };
+
     struct BitmapVectorSnapshot
     {
         size_t tail;
@@ -220,6 +221,7 @@ private:
         BitmapVectorType tupleDelimiterVectorSnapshot;
         BitmapVectorType seenAndUsedVectorSnapshot;
     };
+
     /// The unique_ptr avoids allocating space for all bitmaps (BitmapVectorSnapshot) in the common case, which is 'BitmapSnapshot'
     using Snapshot = std::variant<BitmapSnapshot, std::unique_ptr<BitmapVectorSnapshot>>;
 

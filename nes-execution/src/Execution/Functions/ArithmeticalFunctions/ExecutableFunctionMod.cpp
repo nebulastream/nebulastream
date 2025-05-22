@@ -38,7 +38,6 @@ ExecutableFunctionMod::ExecutableFunctionMod(
 {
 }
 
-
 ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {

@@ -25,11 +25,11 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include "QueryCompiler/Configurations/Enums/CompilationStrategy.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -62,6 +62,7 @@ struct StreamJoinOperators
         : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator)
     {
     }
+
     std::shared_ptr<LogicalOperator> operatorNode;
     std::shared_ptr<Operator> leftInputOperator;
     std::shared_ptr<Operator> rightInputOperator;
@@ -86,6 +87,7 @@ struct StreamJoinConfigs
         , joinStrategy(joinStrategy)
     {
     }
+
     std::vector<std::string> joinFieldNamesLeft;
     std::vector<std::string> joinFieldNamesRight;
     const uint64_t windowSize;

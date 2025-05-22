@@ -30,6 +30,7 @@ std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>)
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
+
 std::string Undefined::toString()
 {
     return "Undefined";

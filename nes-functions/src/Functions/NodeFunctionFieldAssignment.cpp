@@ -124,6 +124,7 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
         }
     }
 }
+
 std::shared_ptr<NodeFunction> NodeFunctionFieldAssignment::deepCopy()
 {
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(getField()->deepCopy()), getAssignment()->deepCopy());

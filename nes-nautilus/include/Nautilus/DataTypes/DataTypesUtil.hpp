@@ -41,7 +41,6 @@ nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
     return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
 }
 
-
 inline std::unordered_map<BasicPhysicalType::NativeType, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>>
     storeValueFunctionMap = {
         {BasicPhysicalType::NativeType::BOOLEAN,

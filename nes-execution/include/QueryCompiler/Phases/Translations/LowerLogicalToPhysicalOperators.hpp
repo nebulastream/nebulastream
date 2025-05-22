@@ -17,6 +17,7 @@
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+
 namespace NES::QueryCompilation
 {
 /**

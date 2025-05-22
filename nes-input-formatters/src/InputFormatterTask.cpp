@@ -16,11 +16,10 @@
 #include <ostream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SequenceShredder.hpp>
-#include "InputFormatters/InputFormatter.hpp"
-
 
 namespace NES::InputFormatters
 {
@@ -31,7 +30,9 @@ InputFormatterTask::InputFormatterTask(const OriginId originId, std::unique_ptr<
     , inputFormatter(std::move(inputFormatter))
 {
 }
+
 InputFormatterTask::~InputFormatterTask() = default;
+
 void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     inputFormatter->flushFinalTuple(originId, pipelineExecutionContext, *sequenceShredder);
@@ -43,6 +44,7 @@ void InputFormatterTask::execute(
     inputFormatter->parseTupleBufferRaw(
         inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples(), *sequenceShredder);
 }
+
 std::ostream& InputFormatterTask::toString(std::ostream& os) const
 {
     os << "InputFormatterTask: {\n";

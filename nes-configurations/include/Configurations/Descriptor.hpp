@@ -119,10 +119,12 @@ public:
         struct ConfigParameterModel : ConfigParameterConcept
         {
             ConfigParameterModel(const T& configParameter) : configParameter(configParameter) { }
+
             std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
             {
                 return configParameter.validate(config);
             }
+
             std::optional<ConfigType> getDefaultValue() const override { return configParameter.defaultValue; }
 
         private:

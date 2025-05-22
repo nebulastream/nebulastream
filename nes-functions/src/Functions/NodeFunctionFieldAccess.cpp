@@ -24,6 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+
 namespace NES
 {
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName)

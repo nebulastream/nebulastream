@@ -24,7 +24,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -33,6 +32,7 @@ SumAggregationDescriptor::SumAggregationDescriptor(const std::shared_ptr<NodeFun
 {
     this->aggregationType = Type::Sum;
 }
+
 SumAggregationDescriptor::SumAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
@@ -81,6 +81,7 @@ void SumAggregationDescriptor::inferStamp(const Schema& schema)
     }
     asField->setStamp(getFinalAggregateStamp());
 }
+
 std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::copy()
 {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
@@ -90,10 +91,12 @@ std::shared_ptr<DataType> SumAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> SumAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> SumAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();

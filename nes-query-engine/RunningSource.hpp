@@ -26,7 +26,6 @@ namespace NES::Runtime
 struct RunningQueryPlan;
 struct RunningQueryPlanNode;
 
-
 /// The Running Source is a wrapper around the SourceHandle. The Lifecycle of the RunningSource controls start/stop of the source handle.
 /// The purpose of the running source is to create the emit function which and redirects external events towards the task queue, where one of
 /// the WorkerThreads can handle them. We cannot allow that the SourceThread causes the RunningSource to be destroyed, which would cause a

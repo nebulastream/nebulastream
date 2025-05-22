@@ -78,6 +78,7 @@ void logProxy(const char* message, const LogLevel logLevel);
 
 VarVal createNautilusMinValue(const std::shared_ptr<PhysicalType>& physicalType);
 VarVal createNautilusMaxValue(const std::shared_ptr<PhysicalType>& physicalType);
+
 template <typename T>
 static VarVal createNautilusConstValue(T value, const std::shared_ptr<PhysicalType>& physicalType)
 {

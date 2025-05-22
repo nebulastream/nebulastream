@@ -16,6 +16,7 @@
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+
 namespace NES::QueryCompilation
 {
 

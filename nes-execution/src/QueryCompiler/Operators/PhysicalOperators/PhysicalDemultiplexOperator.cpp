@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
@@ -26,6 +27,7 @@ std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(OperatorId
 {
     return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
 }
+
 std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(const std::shared_ptr<Schema>& inputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema));
@@ -47,7 +49,6 @@ std::ostream& PhysicalDemultiplexOperator::toQueryPlanString(std::ostream& os) c
     os << "PhysicalDemultiplexOperator:";
     return PhysicalUnaryOperator::toQueryPlanString(os);
 }
-
 
 std::shared_ptr<Operator> PhysicalDemultiplexOperator::copy()
 {

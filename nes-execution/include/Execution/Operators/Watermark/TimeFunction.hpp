@@ -19,7 +19,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>
 
-
 namespace NES::Runtime::Execution
 {
 struct ExecutionContext;

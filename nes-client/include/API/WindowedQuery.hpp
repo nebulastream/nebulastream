@@ -21,6 +21,7 @@
 #include <API/Windowing.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Types/WindowType.hpp>
+
 namespace NES::WindowOperatorBuilder
 {
 /**

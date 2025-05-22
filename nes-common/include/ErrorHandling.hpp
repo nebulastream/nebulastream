@@ -47,7 +47,6 @@ private:
     uint64_t errorCode;
 };
 
-
 /// This macro is used to define exceptions in <ExceptionDefinitions.hpp>
 /// @param name The name of the exception
 /// @param code The code of the exception

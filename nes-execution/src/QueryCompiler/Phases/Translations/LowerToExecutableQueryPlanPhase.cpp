@@ -39,7 +39,6 @@
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES::QueryCompilation
 {
 

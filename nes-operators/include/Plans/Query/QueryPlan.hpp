@@ -26,7 +26,6 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 
-
 namespace NES
 {
 

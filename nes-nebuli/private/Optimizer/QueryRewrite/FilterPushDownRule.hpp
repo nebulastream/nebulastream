@@ -25,7 +25,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-
 namespace NES::Optimizer
 {
 

@@ -26,7 +26,6 @@
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES::QueryCompilation
 {
 

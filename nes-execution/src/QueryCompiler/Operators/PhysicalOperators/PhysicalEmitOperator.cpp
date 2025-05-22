@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
@@ -30,6 +31,7 @@ std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(const std::shared
 {
     return create(getNextOperatorId(), std::move(inputSchema));
 }
+
 std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
 {
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);

@@ -94,6 +94,7 @@ struct Terminated
         Failed,
         Stopped
     };
+
     TerminationReason reason;
 };
 
@@ -112,6 +113,7 @@ public:
         WorkEmitter& emitter);
     QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
     void stopQuery(QueryId queryId);
+
     void clear()
     {
         const std::scoped_lock lock(mutex);
@@ -149,16 +151,23 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
     }
 
     [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
+
     Memory::TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
+
     bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
+
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
+
     PipelineId getPipelineId() const override { return pipelineId; }
+
     std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "Operator Handlers were not set");
         return *operatorHandlers;
     }
+
     void setOperatorHandlers(std::vector<std::shared_ptr<Execution::OperatorHandler>>& handlers) override
     {
         operatorHandlers = std::addressof(handlers);
@@ -174,7 +183,6 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 {
 public:
     void addThread();
-
 
     /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
     std::function<void(Exception)> injectQueryFailureUnsafe(RunningQueryPlanNode* node, std::function<void(Exception)> failure)
@@ -335,6 +343,7 @@ public:
     /// This allows the thread to access into the internalTaskQueue, which is prohibited for non-worker threads.
     /// The terminator thread does not count towards numberOfThreads
     constexpr static WorkerThreadId terminatorThreadId = INITIAL<WorkerThreadId>;
+
     [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_.load(); }
 
 private:
@@ -752,6 +761,7 @@ void QueryCatalog::start(
     WorkEmitter& emitter)
 {
     const std::scoped_lock lock(mutex);
+
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
@@ -775,6 +785,7 @@ void QueryCatalog::start(
                 listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
             }
         }
+
         void onFailure(Exception exception) override
         {
             ENGINE_LOG_DEBUG("Query {} onFailure", queryId);
@@ -810,6 +821,7 @@ void QueryCatalog::start(
                 listener->logQueryFailure(queryId, std::move(exception), timestamp);
             }
         }
+
         /// OnDestruction is called when the entire query graph is terminated.
         void onDestruction() override
         {

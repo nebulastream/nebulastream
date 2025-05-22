@@ -52,26 +52,32 @@ public:
 private:
     uint64_t sequenceNumber;
     uint64_t originId;
+
     friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber < rhs.sequenceNumber;
     }
+
     friend bool operator<=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber <= rhs.sequenceNumber;
     }
+
     friend bool operator>(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber > rhs.sequenceNumber;
     }
+
     friend bool operator>=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber >= rhs.sequenceNumber;
     }
+
     friend bool operator==(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber == rhs.sequenceNumber;
     }
+
     friend bool operator!=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs)
     {
         return lhs.sequenceNumber != rhs.sequenceNumber;

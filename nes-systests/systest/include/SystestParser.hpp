@@ -53,6 +53,7 @@ public:
         /// Takes the keyword by reference and modifies it according to the rule
         std::function<void(std::string&)> ruleFunction;
     };
+
     /// Register a substitution rule to be applied to the file before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
@@ -65,9 +66,12 @@ public:
     {
         std::shared_ptr<DataType> type;
         std::string name;
+
         bool operator==(const Field& other) const { return *type == *other.type && name == other.name; }
+
         bool operator!=(const Field& other) const = default;
     };
+
     using Schema = std::vector<Field>;
 
     struct CSVSource

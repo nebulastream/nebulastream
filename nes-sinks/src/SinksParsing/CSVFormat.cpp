@@ -68,7 +68,6 @@ std::string CSVFormat::getFormattedSchema() const
     return schema->toString("", ", ", "\n");
 }
 
-
 std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
 {
     return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);

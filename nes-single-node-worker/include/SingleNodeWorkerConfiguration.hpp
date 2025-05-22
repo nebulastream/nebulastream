@@ -35,6 +35,7 @@ connections.  Valid values include dns:///localhost:1234,
 
 protected:
     std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri}; }
+
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 

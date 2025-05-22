@@ -43,6 +43,7 @@ void BinaryOperator::setRightInputSchema(std::shared_ptr<Schema> inputSchema)
         this->rightInputSchema = std::move(inputSchema);
     }
 }
+
 void BinaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
 {
     if (outputSchema)
@@ -50,6 +51,7 @@ void BinaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
         this->outputSchema = std::move(outputSchema);
     }
 }
+
 std::shared_ptr<Schema> BinaryOperator::getLeftInputSchema() const
 {
     return leftInputSchema;

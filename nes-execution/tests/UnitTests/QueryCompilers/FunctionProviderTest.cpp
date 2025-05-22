@@ -44,6 +44,7 @@ public:
         Logger::setupLogging("FunctionProviderTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup FunctionProviderTest test class.");
     }
+
     void SetUp() override
     {
         BaseUnitTest::SetUp();

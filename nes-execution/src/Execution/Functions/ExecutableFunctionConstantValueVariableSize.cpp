@@ -22,6 +22,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Functions
 {
 

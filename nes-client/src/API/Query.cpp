@@ -33,7 +33,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 
@@ -296,6 +295,7 @@ Query& Query::limit(const uint64_t limit)
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
+
 Query& Query::map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction)
 {
     NES_DEBUG("Query: add map operator to query");

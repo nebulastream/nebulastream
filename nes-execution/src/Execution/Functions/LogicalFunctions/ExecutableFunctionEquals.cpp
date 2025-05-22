@@ -28,7 +28,6 @@
 #include <ExecutableFunctionRegistry.hpp>
 #include <function.hpp>
 
-
 namespace NES::Runtime::Execution::Functions
 {
 

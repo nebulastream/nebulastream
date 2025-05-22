@@ -58,7 +58,6 @@ std::ostream& NodeFunctionAnd::toDebugString(std::ostream& os) const
     return os << *children.at(0) << " && " << *children.at(1);
 }
 
-
 void NodeFunctionAnd::inferStamp(const Schema& schema)
 {
     /// delegate stamp inference of children
@@ -67,6 +66,7 @@ void NodeFunctionAnd::inferStamp(const Schema& schema)
     INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: {}", getLeft()->getStamp()->toString());
     INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: {}", getRight()->getStamp()->toString());
 }
+
 std::shared_ptr<NodeFunction> NodeFunctionAnd::deepCopy()
 {
     return NodeFunctionAnd::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());

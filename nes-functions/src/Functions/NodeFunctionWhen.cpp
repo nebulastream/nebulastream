@@ -27,7 +27,6 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
-
 namespace NES
 {
 NodeFunctionWhen::NodeFunctionWhen(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "When") { };

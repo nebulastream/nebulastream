@@ -18,6 +18,7 @@
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/WindowType.hpp>
+
 namespace NES::Windowing
 {
 /**

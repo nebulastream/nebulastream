@@ -95,7 +95,6 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
     return schema;
 }
 
-
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
     auto found = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
@@ -290,7 +289,6 @@ bool SystestParser::moveToNextToken()
     return currentLine < lines.size();
 }
 
-
 std::optional<TokenType> SystestParser::nextToken()
 {
     if (!moveToNextToken())
@@ -379,7 +377,6 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
 
     return source;
 }
-
 
 SystestParser::CSVSource SystestParser::expectCSVSource() const
 {

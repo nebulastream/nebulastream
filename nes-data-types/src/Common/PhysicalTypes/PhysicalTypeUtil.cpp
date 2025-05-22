@@ -31,46 +31,57 @@ bool isChar(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::CHAR);
 }
+
 bool isBool(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::BOOLEAN);
 }
+
 bool isUInt8(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::UINT_8);
 }
+
 bool isUInt16(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::UINT_16);
 }
+
 bool isUInt32(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::UINT_32);
 }
+
 bool isUInt64(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::UINT_64);
 }
+
 bool isInt8(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::INT_8);
 }
+
 bool isInt16(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::INT_16);
 }
+
 bool isInt32(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::INT_32);
 }
+
 bool isInt64(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::INT_64);
 }
+
 bool isFloat(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::FLOAT);
 }
+
 bool isDouble(const PhysicalType& physicalType)
 {
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::DOUBLE);

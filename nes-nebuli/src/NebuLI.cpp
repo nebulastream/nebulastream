@@ -77,6 +77,7 @@ struct convert<SchemaField>
         return true;
     }
 };
+
 template <>
 struct convert<NES::CLI::Sink>
 {
@@ -88,6 +89,7 @@ struct convert<NES::CLI::Sink>
         return true;
     }
 };
+
 template <>
 struct convert<NES::CLI::LogicalSource>
 {
@@ -98,6 +100,7 @@ struct convert<NES::CLI::LogicalSource>
         return true;
     }
 };
+
 template <>
 struct convert<NES::CLI::PhysicalSource>
 {
@@ -109,6 +112,7 @@ struct convert<NES::CLI::PhysicalSource>
         return true;
     }
 };
+
 template <>
 struct convert<NES::CLI::QueryConfig>
 {

@@ -26,7 +26,6 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -35,6 +34,7 @@ AvgAggregationDescriptor::AvgAggregationDescriptor(const std::shared_ptr<NodeFun
 {
     this->aggregationType = Type::Avg;
 }
+
 AvgAggregationDescriptor::AvgAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
@@ -111,10 +111,12 @@ std::shared_ptr<DataType> AvgAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> AvgAggregationDescriptor::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
+
 std::shared_ptr<DataType> AvgAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);

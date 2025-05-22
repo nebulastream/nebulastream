@@ -20,6 +20,7 @@ namespace detail
 {
 class MemorySegment;
 }
+
 /**
  * @brief Interface for buffer recycling mechanism
  */

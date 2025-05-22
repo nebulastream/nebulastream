@@ -38,6 +38,7 @@ namespace NES::Runtime
 /// https://github.com/nebulastream/nebulastream-public/pull/464/files
 struct CallbackRef;
 struct CallbackOwner;
+
 struct Callback
 {
     static std::pair<CallbackOwner, CallbackRef> create(std::string context);
@@ -51,6 +52,7 @@ private:
 struct CallbackRef
 {
     CallbackRef() = default;
+
     explicit CallbackRef(std::shared_ptr<Callback> ref) : ref(std::move(ref)) { }
 
 private:
@@ -62,7 +64,9 @@ private:
 struct CallbackOwner
 {
     CallbackOwner() = default;
+
     explicit CallbackOwner(std::string context, std::weak_ptr<Callback> owner) : context(std::move(context)), owner(std::move(owner)) { }
+
     CallbackOwner(const CallbackOwner& other) = delete;
     CallbackOwner& operator=(const CallbackOwner& other) = delete;
 
@@ -71,7 +75,9 @@ struct CallbackOwner
     /// Destructor and move assignment will erase all pending callbacks
     ~CallbackOwner();
     CallbackOwner& operator=(CallbackOwner&& other) noexcept;
+
     explicit operator bool() const { return !owner.expired(); }
+
     void addCallback(absl::AnyInvocable<void()> callbackFunction) const;
 
     /// Only call this function if you can guarantee that:
@@ -120,6 +126,7 @@ struct RunningQueryPlanNode
 
 
     ~RunningQueryPlanNode();
+
     RunningQueryPlanNode(
         PipelineId id,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,

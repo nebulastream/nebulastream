@@ -30,6 +30,7 @@
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES
 {
 
@@ -40,6 +41,7 @@ std::shared_ptr<Schema> Schema::create()
 {
     return std::make_shared<Schema>();
 }
+
 std::shared_ptr<Schema> Schema::create(MemoryLayoutType layoutType)
 {
     return std::make_shared<Schema>(layoutType);

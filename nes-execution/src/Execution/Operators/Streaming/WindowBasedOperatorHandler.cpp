@@ -60,7 +60,6 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
     return *sliceAndWindowStore;
 }
 
-
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {
     const auto newGlobalWaterMarkProbe
@@ -92,7 +91,6 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
     const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
-
 
 void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
 {

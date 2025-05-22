@@ -68,6 +68,7 @@ public:
                     { threadFunction(i, upperBound, sequenceNumberGen, boolDistribution); });
             }
         }
+
         /// Check if at least one thread is still active
         void waitForCompletion() const { completionLatch.wait(); }
 

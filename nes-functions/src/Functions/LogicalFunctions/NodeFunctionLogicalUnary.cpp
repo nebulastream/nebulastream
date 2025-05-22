@@ -14,15 +14,14 @@
 
 #include <memory>
 #include <utility>
+#include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
+#include <Functions/NodeFunctionUnary.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include "Functions/LogicalFunctions/NodeFunctionLogical.hpp"
-#include "Functions/NodeFunctionUnary.hpp"
-
 
 namespace NES
 {

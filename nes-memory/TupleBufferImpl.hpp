@@ -40,7 +40,6 @@ class BufferRecycler;
 
 static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 
-
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
@@ -106,6 +105,7 @@ public:
     [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
@@ -152,12 +152,15 @@ private:
             return os;
         }
     };
+
     std::mutex owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif
 };
+
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
 static_assert(alignof(BufferControlBlock) % 64 == 0);
+
 /**
  * @brief The MemorySegment is a wrapper around a pointer to allocated memory of size bytes and a control block
  * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.

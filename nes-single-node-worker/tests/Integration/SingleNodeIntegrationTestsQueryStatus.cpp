@@ -40,6 +40,7 @@ public:
         Logger::setupLogging("SingleNodeIntegrationTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
+
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
 

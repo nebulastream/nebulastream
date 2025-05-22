@@ -33,6 +33,7 @@ class VariableSizedDataTest : public Testing::BaseUnitTest
 {
 public:
     static constexpr auto sizeOfLengthInBytes = 4;
+
     static void SetUpTestCase()
     {
         Logger::setupLogging("VariableSizedDataTest.log", LogLevel::LOG_DEBUG);

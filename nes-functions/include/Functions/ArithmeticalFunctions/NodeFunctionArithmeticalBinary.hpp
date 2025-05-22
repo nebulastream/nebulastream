@@ -20,6 +20,7 @@
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 /**

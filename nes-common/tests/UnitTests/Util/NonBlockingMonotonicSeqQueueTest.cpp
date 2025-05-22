@@ -27,6 +27,7 @@
 #include <BaseUnitTest.hpp>
 
 using namespace std;
+
 namespace NES
 {
 

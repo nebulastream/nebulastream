@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES::QueryCompilation
 {
 

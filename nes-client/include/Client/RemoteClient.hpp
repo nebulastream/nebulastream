@@ -37,6 +37,7 @@ public:
         std::string errorMessage;
 
         bool operator!() const { return withError; }
+
         operator bool() const { return !withError; }
     };
 

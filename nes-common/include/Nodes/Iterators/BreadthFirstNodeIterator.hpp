@@ -17,6 +17,7 @@
 #include <memory>
 #include <queue>
 #include <Nodes/Node.hpp>
+
 namespace NES
 {
 /**

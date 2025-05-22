@@ -29,7 +29,6 @@ class DataType
 public:
     virtual ~DataType() = default;
 
-
     template <class NewDataType>
     static std::shared_ptr<NewDataType> as(const std::shared_ptr<DataType> ptr)
     {

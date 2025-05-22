@@ -22,6 +22,7 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

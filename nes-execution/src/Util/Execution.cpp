@@ -24,7 +24,6 @@
 #include <Util/Execution.hpp>
 #include <nautilus/std/string.h>
 
-
 namespace NES::QueryCompilation::Util
 {
 std::tuple<uint64_t, uint64_t, std::unique_ptr<Runtime::Execution::Operators::TimeFunction>>

@@ -20,6 +20,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
+
 namespace NES::Memory::MemoryLayouts
 {
 
@@ -36,6 +37,7 @@ public:
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
+
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();

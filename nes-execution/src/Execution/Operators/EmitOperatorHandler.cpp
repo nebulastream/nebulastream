@@ -36,9 +36,11 @@ void EmitOperatorHandler::removeSequenceState(const SequenceNumberForOriginId se
     seqNumberOriginIdToOutputChunkNumber.wlock()->erase(seqNumberOriginId);
     seqNumberOriginIdToChunkStateInput.wlock()->erase(seqNumberOriginId);
 }
+
 void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
 }
+
 void EmitOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExecutionContext&)
 {
 }

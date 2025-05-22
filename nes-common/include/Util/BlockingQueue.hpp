@@ -22,6 +22,7 @@
 #include <queue>
 #include <thread>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES
 {
 

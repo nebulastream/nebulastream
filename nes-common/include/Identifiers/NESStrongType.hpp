@@ -37,6 +37,7 @@ class NESStrongType
 {
 public:
     explicit constexpr NESStrongType(T v) : v(v) { }
+
     using Underlying = T;
     using TypeTag = Tag;
     constexpr static T INITIAL = initial;

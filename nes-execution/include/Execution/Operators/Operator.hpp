@@ -22,6 +22,7 @@ namespace NES::Runtime::Execution
 {
 struct ExecutionContext;
 }
+
 namespace NES::Runtime::Execution::Operators
 {
 using namespace Nautilus;

@@ -78,6 +78,7 @@ std::ostream& UnaryOperator::toDebugString(std::ostream& os) const
                outputSchema->toString(),
                fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
+
 std::ostream& UnaryOperator::toQueryPlanString(std::ostream& os) const
 {
     return os << fmt::format("OriginIds({})", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));

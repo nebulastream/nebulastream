@@ -33,7 +33,6 @@ ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> chi
 {
 }
 
-
 ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
     ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {

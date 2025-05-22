@@ -18,6 +18,7 @@
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
+
 namespace NES
 {
 

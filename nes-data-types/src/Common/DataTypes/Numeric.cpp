@@ -22,7 +22,6 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES
 {
 

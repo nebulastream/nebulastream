@@ -14,6 +14,7 @@
 #pragma once
 #include <memory>
 #include <Execution/Operators/Operator.hpp>
+
 namespace NES::Runtime::Execution
 {
 

@@ -20,7 +20,6 @@
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-
 namespace NES::Windowing
 {
 

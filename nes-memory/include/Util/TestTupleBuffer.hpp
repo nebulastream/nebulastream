@@ -44,7 +44,6 @@ concept ContainsString = requires { requires(std::is_same_v<std::string, Types> 
 template <class Type>
 concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 
-
 /// The DynamicField allows to read and write a field at a
 /// specific address and a specific data type.
 /// For all field accesses we check that the template type is the same as the selected physical field type.

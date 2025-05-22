@@ -17,6 +17,7 @@
 #include <memory>
 #include <stack>
 #include <Nodes/Node.hpp>
+
 namespace NES
 {
 

@@ -50,6 +50,7 @@ bool NodeFunctionConcat::equal(const std::shared_ptr<Node>& rhs) const
     }
     return false;
 }
+
 void NodeFunctionConcat::inferStamp(const Schema& schema)
 {
     this->getLeft()->inferStamp(schema);

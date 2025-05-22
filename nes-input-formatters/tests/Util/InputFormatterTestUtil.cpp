@@ -151,6 +151,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
+
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{

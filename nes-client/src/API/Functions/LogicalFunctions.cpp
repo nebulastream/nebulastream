@@ -81,6 +81,7 @@ std::shared_ptr<NodeFunction> operator!(const std::shared_ptr<NodeFunction>& exp
 {
     return NodeFunctionNegate::create(std::move(exp));
 }
+
 std::shared_ptr<NodeFunction> operator!(const FunctionItem& exp)
 {
     return !exp.getNodeFunction();

@@ -126,6 +126,7 @@ void OperatorPipeline::removePredecessor(const std::shared_ptr<OperatorPipeline>
         }
     }
 }
+
 void OperatorPipeline::removeSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline)
 {
     for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
@@ -137,6 +138,7 @@ void OperatorPipeline::removeSuccessor(const std::shared_ptr<OperatorPipeline>& 
         }
     }
 }
+
 void OperatorPipeline::clearSuccessors()
 {
     for (const auto& succ : successorPipelines)
@@ -184,6 +186,7 @@ static std::vector<PipelineId> getIds(const std::vector<T>& pipelines)
         pipelines.begin(), pipelines.end(), std::back_inserter(ids), [](const auto& pipeline) { return pipeline.get()->getPipelineId(); });
     return ids;
 }
+
 std::string OperatorPipeline::toString() const
 {
     auto successorsStr = std::accumulate(

@@ -23,7 +23,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 
-
 namespace NES
 {
 

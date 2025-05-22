@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -29,6 +28,7 @@ std::shared_ptr<WatermarkStrategyDescriptor> IngestionTimeWatermarkStrategyDescr
 {
     return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(Windowing::IngestionTimeWatermarkStrategyDescriptor());
 }
+
 bool IngestionTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other)
 {
     return NES::Util::instanceOf<IngestionTimeWatermarkStrategyDescriptor>(other);

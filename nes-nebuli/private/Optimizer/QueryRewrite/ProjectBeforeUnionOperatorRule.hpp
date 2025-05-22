@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-
 namespace NES::Optimizer
 {
 /**

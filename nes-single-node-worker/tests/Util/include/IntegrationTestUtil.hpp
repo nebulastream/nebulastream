@@ -25,7 +25,6 @@
 #include <GrpcService.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 
-
 namespace NES::IntegrationTestUtil
 {
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";

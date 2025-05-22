@@ -18,6 +18,7 @@
 #include <type_traits>
 #include <API/Functions/Functions.hpp>
 #include <Functions/NodeFunction.hpp>
+
 namespace NES
 {
 

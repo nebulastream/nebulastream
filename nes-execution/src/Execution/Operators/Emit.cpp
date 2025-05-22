@@ -87,6 +87,7 @@ class EmitState : public OperatorState
 {
 public:
     explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
+
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;

@@ -26,6 +26,7 @@ namespace NES::Runtime
 {
 /// Forward declaration of QueryEngineTest, which includes Task, which includes SinkMedium, which includes NodeEngine
 class QueryTracker;
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -56,6 +57,7 @@ public:
     void stopQuery(QueryId queryId, QueryTerminationType terminationType);
 
     [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
+
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 
 private:

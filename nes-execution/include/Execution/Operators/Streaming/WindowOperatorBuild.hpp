@@ -20,7 +20,6 @@
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 
-
 namespace NES::Runtime::Execution::Operators
 {
 

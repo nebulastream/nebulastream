@@ -70,6 +70,7 @@ size_t QueryCompilationRequest::getBufferSize() const
 {
     return bufferSize;
 }
+
 void QueryCompilationRequest::setBufferSize(size_t bufferSize)
 {
     this->bufferSize = bufferSize;

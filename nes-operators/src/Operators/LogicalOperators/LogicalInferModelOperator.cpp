@@ -29,7 +29,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
-
 namespace NES::InferModel
 {
 
@@ -70,6 +69,7 @@ std::shared_ptr<Operator> LogicalInferModelOperator::copy()
     }
     return copy;
 }
+
 bool LogicalInferModelOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))

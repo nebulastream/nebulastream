@@ -40,6 +40,7 @@ std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
+
 void WindowOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);

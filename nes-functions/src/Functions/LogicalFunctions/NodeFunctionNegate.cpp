@@ -67,6 +67,7 @@ void NodeFunctionNegate::inferStamp(const Schema& schema)
             fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()->toString()));
     }
 }
+
 std::shared_ptr<NodeFunction> NodeFunctionNegate::deepCopy()
 {
     return NodeFunctionNegate::create(Util::as<NodeFunction>(children[0])->deepCopy());

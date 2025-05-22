@@ -34,6 +34,7 @@
 #include <options.hpp>
 #include <static.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
+
 namespace NES::Nautilus::TestUtils
 {
 
@@ -42,6 +43,7 @@ namespace NES::Nautilus::TestUtils
 struct RecordWithFields
 {
     RecordWithFields(const Record& record, std::vector<Record::RecordFieldIdentifier>& fields) : record(record), fields(fields) { }
+
     bool operator<(const RecordWithFields& other) const
     {
         for (const auto& fieldIdentifier : nautilus::static_iterable(fields))
@@ -100,7 +102,6 @@ struct MinMaxValue
     uint64_t max;
 };
 
-
 /// Base function wrapper class
 class FunctionWrapperBase
 {
@@ -118,6 +119,7 @@ public:
         : FunctionWrapperBase(), func(std::move(function))
     {
     }
+
     ~FunctionWrapper() override = default;
     nautilus::engine::CallableFunction<R, FunctionArguments...> func;
 };

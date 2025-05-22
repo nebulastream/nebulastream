@@ -20,6 +20,7 @@ namespace NES::Runtime::Execution
 {
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
+
 /**
  * @brief Interface to handle specific operator state.
  */

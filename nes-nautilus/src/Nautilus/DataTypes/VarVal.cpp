@@ -26,7 +26,6 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-
 namespace NES::Nautilus
 {
 

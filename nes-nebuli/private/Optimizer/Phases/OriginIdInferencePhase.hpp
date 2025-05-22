@@ -23,6 +23,7 @@ namespace NES
 class QueryPlan;
 class DecomposedQueryPlan;
 class OriginIdAssignmentOperator;
+
 namespace Optimizer
 {
 

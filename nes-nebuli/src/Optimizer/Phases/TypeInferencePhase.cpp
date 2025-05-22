@@ -55,7 +55,6 @@ std::shared_ptr<QueryPlan> TypeInferencePhase::performTypeInferenceQuery(std::sh
     return queryPlan;
 }
 
-
 void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators) const
 {
     PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");

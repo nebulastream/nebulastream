@@ -22,7 +22,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-
 namespace NES::Nautilus::Interface
 {
 /// Forward declaration of the ChainedHashMapRef, to avoid cyclic dependencies between ChainedHashMap and ChainedHashMapRef
@@ -39,7 +38,6 @@ public:
     HashFunction::HashValue::raw_type hash;
     explicit ChainedHashMapEntry(const HashFunction::HashValue::raw_type hash) : hash(hash) { };
 };
-
 
 /// Implementation of a single thread chained HashMap.
 /// To operate on the hash-map, {@refitem ChainedHashMapRef.hpp} provides a Nautilus wrapper.

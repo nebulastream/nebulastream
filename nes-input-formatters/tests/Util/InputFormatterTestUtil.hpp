@@ -30,10 +30,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <TestTaskQueue.hpp>
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestTupleBuffer.hpp"
-
 
 namespace NES::InputFormatterTestUtil
 {
@@ -85,7 +84,6 @@ struct TestConfig
     std::vector<ThreadInputBuffers> rawBytesPerThread;
     using TupleSchema = TupleSchemaTemplate;
 };
-
 
 template <typename T>
 class ThreadSafeVector

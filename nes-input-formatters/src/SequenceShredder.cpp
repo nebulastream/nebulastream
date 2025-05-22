@@ -324,6 +324,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         return checkSpanningTupleWithoutTupleDelimiter(spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot);
     }
 }
+
 /// Instantiate processSequenceNumber for both 'true' and 'false' so that the linker knows which templates to generate.
 template SequenceShredder::SpanningTupleBuffers SequenceShredder::processSequenceNumber<true>(StagedBuffer, SequenceNumberType);
 template SequenceShredder::SpanningTupleBuffers SequenceShredder::processSequenceNumber<false>(StagedBuffer, SequenceNumberType);
@@ -464,6 +465,7 @@ std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFin
         = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & bitmapSnapshot.tupleDelimiterVectorSnapshot[bitmapIndex];
     return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, isTupleDelimiter);
 }
+
 std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFindHigherWrappingSpanningTuple(
     const size_t sequenceNumberBitmapOffset, const size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot)
 {

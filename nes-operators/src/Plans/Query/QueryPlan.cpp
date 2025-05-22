@@ -31,7 +31,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/LogicalQueryDumpHelper.hpp>
 
-
 namespace NES
 {
 

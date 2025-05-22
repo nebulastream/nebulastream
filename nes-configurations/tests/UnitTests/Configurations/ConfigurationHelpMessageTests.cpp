@@ -54,6 +54,7 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
 
     public:
         InnerConfiguration(std::string name, std::string description) : BaseConfiguration(std::move(name), std::move(description)) { }
+
         InnerConfiguration() = default;
         ScalarOption<size_t> b{"B", "54", "This is Inner Option B"};
     };

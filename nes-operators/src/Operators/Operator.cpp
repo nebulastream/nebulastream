@@ -27,7 +27,6 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 /**
@@ -261,6 +260,7 @@ bool Operator::containAsGrandParent(const std::shared_ptr<Node>& operatorNode)
         [operatorIdToCheck](const std::shared_ptr<Node>& ancestor)
         { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
+
 void Operator::addAllProperties(const OperatorProperties& properties)
 {
     for (auto& [key, value] : properties)

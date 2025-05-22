@@ -19,6 +19,7 @@
 #include <thread>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+
 namespace NES::Testing
 {
 

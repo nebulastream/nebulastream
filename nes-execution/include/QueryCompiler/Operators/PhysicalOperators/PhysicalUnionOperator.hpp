@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 /**

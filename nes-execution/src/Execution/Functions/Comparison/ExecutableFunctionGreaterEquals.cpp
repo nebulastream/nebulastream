@@ -23,7 +23,6 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
-
 namespace NES::Runtime::Execution::Functions
 {
 

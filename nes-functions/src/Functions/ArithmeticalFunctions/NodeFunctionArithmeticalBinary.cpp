@@ -33,6 +33,7 @@ NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(std::shared_ptr<D
     : NodeFunctionBinary(std::move(stamp), std::move(name))
 {
 }
+
 NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other) : NodeFunctionBinary(other)
 {
 }

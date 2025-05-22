@@ -23,6 +23,7 @@ namespace NES::Sources
 {
 
 using SourceValidationRegistryReturnType = NES::Configurations::DescriptorConfig::Config;
+
 struct SourceValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;

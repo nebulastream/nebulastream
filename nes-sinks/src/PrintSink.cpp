@@ -47,6 +47,7 @@ PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
 }
+
 void PrintSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
 }

@@ -41,6 +41,7 @@ LogicalJoinOperator::LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescri
     : LogicalJoinOperator(std::move(joinDefinition), id, INVALID_ORIGIN_ID)
 {
 }
+
 LogicalJoinOperator::LogicalJoinOperator(
     std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalBinaryOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(std::move(joinDefinition))
@@ -66,7 +67,6 @@ std::ostream& LogicalJoinOperator::toQueryPlanString(std::ostream& os) const
 {
     return os << fmt::format("Join({:q})", *joinDefinition->getJoinFunction());
 }
-
 
 std::shared_ptr<Join::LogicalJoinDescriptor> LogicalJoinOperator::getJoinDefinition() const
 {

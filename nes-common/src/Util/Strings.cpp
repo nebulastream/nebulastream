@@ -76,6 +76,7 @@ std::string formatFloat(std::floating_point auto value)
 
     return formatted.substr(0, lastNonZero + 1);
 }
+
 /// explicit instantiations
 template std::string formatFloat(float);
 template std::string formatFloat(double);
@@ -140,7 +141,6 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
     return std::string(origin);
 }
 
-
 namespace
 {
 USED_IN_DEBUG constexpr bool isAsciiString(std::string_view input)
@@ -166,6 +166,7 @@ void toLowerCaseInplace(std::string& modified)
         character = static_cast<char>(::tolower(character));
     }
 }
+
 std::string escapeSpecialCharacters(const std::string_view input)
 {
     const std::unordered_map<char, std::string> specialCharacters = {
@@ -194,7 +195,6 @@ std::string escapeSpecialCharacters(const std::string_view input)
     return escapedString;
 }
 
-
 std::string toUpperCase(std::string_view input)
 {
     PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
@@ -206,7 +206,6 @@ std::string toLowerCase(std::string_view input)
     PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::tolower) | std::ranges::to<std::string>();
 }
-
 
 std::string_view trimWhiteSpaces(const std::string_view input)
 {

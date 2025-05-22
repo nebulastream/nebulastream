@@ -68,6 +68,7 @@ private:
     {
         registryImpl.emplace(std::move(key), std::move(creatorFunction));
     }
+
     friend Registrar;
 
     std::unordered_map<typename Registrar::KeyType, typename Registrar::CreatorFn> registryImpl;
@@ -104,6 +105,7 @@ public:
         static ConcreteRegistry instance;
         return instance;
     }
+
     friend ConcreteRegistry;
 };
 }

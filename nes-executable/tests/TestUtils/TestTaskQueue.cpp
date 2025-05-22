@@ -49,6 +49,7 @@ bool TestPipelineExecutionContext::emitBuffer(const NES::Memory::TupleBuffer& re
     }
     return true;
 }
+
 NES::Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
@@ -65,6 +66,7 @@ void TestablePipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer,
         taskFunction(tupleBuffer, pec);
     }
 }
+
 std::ostream& TestablePipelineStage::toString(std::ostream& os) const
 {
     if (taskSteps.empty())
@@ -131,7 +133,6 @@ void SingleThreadedTestTaskQueue::runTasks()
     eps->stop(*pipelineExecutionContext);
 }
 
-
 MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestablePipelineTask>& testTasks,
@@ -165,6 +166,7 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
         threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
     }
 }
+
 void MultiThreadedTestTaskQueue::startProcessing()
 {
     timer.start();

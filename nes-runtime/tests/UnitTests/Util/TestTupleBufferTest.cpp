@@ -43,6 +43,7 @@ public:
         NES::Logger::setupLogging("TestTupleBufferTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TestTupleBufferTest test class.");
     }
+
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();

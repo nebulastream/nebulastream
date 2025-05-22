@@ -317,7 +317,6 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
     return *this;
 }
 
-
 uint64_t findChainIndexProxy(const HashMap* hashMap, const uint64_t tupleIndexVal)
 {
     const auto* const chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
@@ -351,7 +350,6 @@ uint64_t findChainIndexProxy(const HashMap* hashMap, const uint64_t tupleIndexVa
     INVARIANT(false, "Could not find the tuple with index {} in ChainedHashMap.", tupleIndexVal);
     std::terminate(); /// Ensure termination even if INVARIANT is disabled.
 }
-
 
 ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<HashMap*>& hashMapRef,

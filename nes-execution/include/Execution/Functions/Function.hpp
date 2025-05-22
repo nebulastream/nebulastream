@@ -19,6 +19,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 using namespace Nautilus;
+
 class Function
 {
 public:

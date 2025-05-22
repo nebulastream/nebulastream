@@ -37,6 +37,7 @@ struct FieldResult
     std::shared_ptr<DataType> type;
     std::string valueAsString;
 };
+
 using MapFieldNameToValue = std::unordered_map<std::string, FieldResult>;
 
 static constexpr auto EPSILON = 1e-5;

@@ -41,6 +41,7 @@ public:
 
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
+
     template <class X>
     void add(X value)
     {
@@ -87,6 +88,7 @@ void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
         throw InvalidConfigParameter("YAML node should be a sequence but it was a " + node.as<std::string>());
     }
 }
+
 template <DerivedBaseOption T>
 void SequenceOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {

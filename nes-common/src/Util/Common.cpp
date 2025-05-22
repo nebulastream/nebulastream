@@ -39,10 +39,12 @@ VerbosityLevel getVerbosityLevel(std::ostream& os)
     NES_ERROR("Could not cast `{}` to VerbosityLevel. Will return {}", value, magic_enum::enum_name(VerbosityLevel::Debug));
     return VerbosityLevel::Debug;
 }
+
 void setVerbosityLevel(std::ostream& os, const VerbosityLevel& level)
 {
     os.iword(getIwordIndex()) = magic_enum::enum_integer(level);
 }
+
 int getIwordIndex()
 {
     static const int iwordIndex = std::ios_base::xalloc();

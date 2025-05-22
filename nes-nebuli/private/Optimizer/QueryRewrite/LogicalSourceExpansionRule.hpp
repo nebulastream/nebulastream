@@ -22,7 +22,6 @@
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 
-
 namespace NES::Optimizer
 {
 

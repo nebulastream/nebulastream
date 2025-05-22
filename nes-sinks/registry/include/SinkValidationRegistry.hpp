@@ -23,6 +23,7 @@ namespace NES::Sinks
 {
 
 using SinkValidationRegistryReturnType = NES::Configurations::DescriptorConfig::Config;
+
 struct SinkValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;

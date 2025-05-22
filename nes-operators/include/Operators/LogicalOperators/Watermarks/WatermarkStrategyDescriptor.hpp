@@ -17,7 +17,6 @@
 #include <memory>
 #include <API/Schema.hpp>
 
-
 namespace NES::Windowing
 {
 

@@ -30,6 +30,7 @@ std::string collectAndPrintStacktrace()
     NES_ERROR("{}", stack);
     return stack;
 }
+
 /**
  * @brief This method only collects the call stacks
  * Use this instead, if the Stacktrace is given over to another function

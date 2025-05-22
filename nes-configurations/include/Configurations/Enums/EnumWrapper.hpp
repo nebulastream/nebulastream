@@ -52,6 +52,7 @@ private:
 };
 
 }
+
 namespace fmt
 {
 template <>

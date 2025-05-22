@@ -25,6 +25,7 @@
 
 template <typename Var1, typename Var2>
 struct FlattenVariant;
+
 template <typename... Ts1, typename... Ts2>
 struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
 {

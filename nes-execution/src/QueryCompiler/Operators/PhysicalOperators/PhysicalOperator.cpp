@@ -14,6 +14,7 @@
 #include <ostream>
 #include <sstream>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

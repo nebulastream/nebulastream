@@ -49,6 +49,7 @@ namespace stdv = std::ranges::views;
 namespace NES::Testing
 {
 using namespace NES::Runtime;
+
 class QueryPlanTest : public BaseUnitTest
 {
 public:
@@ -107,7 +108,6 @@ private:
     Execution::ExecutablePipelineStage* stage;
 };
 
-
 class DataSourceMatcher
 {
 public:
@@ -131,7 +131,6 @@ public:
 private:
     OriginId source;
 };
-
 
 template <typename R, typename T>
 concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value_t<R>, T>;
@@ -292,6 +291,7 @@ struct SetupPipelineArgs
 };
 
 using Setups = EmittedTask<SetupPipelineArgs, Execution::ExecutablePipelineStage*>;
+
 template <>
 template <typename... TArgs>
 std::unique_ptr<Setups> Setups::setup(RangeOf<Execution::ExecutablePipelineStage*> auto stages, TArgs&&... args)
@@ -351,6 +351,7 @@ std::unique_ptr<SourceStops> SourceStops::setup(RangeOf<OriginId> auto originIds
 
     return setups;
 }
+
 template <>
 ::testing::AssertionResult SourceStops::executeEmittedTask(SourceStopArgs&& stops)
 {
@@ -710,7 +711,6 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
     }
 }
 
-
 TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
 {
     TestingHarness test;
@@ -744,7 +744,6 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
     EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
     EXPECT_TRUE(srcCtrl->wasClosed());
 }
-
 
 TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
 {

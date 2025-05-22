@@ -29,6 +29,7 @@ namespace NES::Nautilus::Interface
 /// Calculates the capacity of the hash map for the expected number of keys
 /// This method assures that the capacity is a power of 2 that is greater or equal to the number of keys
 constexpr auto assumedLoadFactor = 0.75;
+
 uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
 {
     PRECONDITION(numberOfKeys > 0, "Number of keys {} has to be greater than 0", numberOfKeys);

@@ -25,6 +25,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+
 namespace NES
 {
 
@@ -32,6 +33,7 @@ NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(std::shared_ptr<Dat
     : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
+
 NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other) : NodeFunctionUnary(other)
 {
 }

@@ -51,7 +51,6 @@ bool isFloat(const PhysicalType& physicalType);
 
 bool isDouble(const PhysicalType& physicalType);
 
-
 /// Function to check that a compile-time type is the same as a particular physical type.
 /// Depending on the compile-time type parameter, this method selects the suitable type check on the physical type at runtime.
 /// @tparam Type parameter

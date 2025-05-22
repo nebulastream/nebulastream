@@ -176,7 +176,6 @@ TEST_F(VarValTest, SimpleMove)
         testVarValLogicalOperation.operator()<bool>(true, true); \
     }
 
-
 TEST_F(VarValTest, binaryOperatorOverloads)
 {
     /// Testing operations defined on integer
@@ -345,7 +344,6 @@ void writeToFileProxy(const char* content)
     ofs << content;
     ofs << std::endl;
 };
-
 
 TEST_F(VarValTest, ostreamTest)
 {

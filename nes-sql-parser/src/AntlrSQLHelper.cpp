@@ -24,14 +24,17 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
+
 const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getWhereClauses() const
 {
     return this->whereClauses;
 }
+
 const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHavingClauses() const
 {
     return this->havingClauses;
 }
+
 const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getProjectionFields() const
 {
     return this->projectionFields;
@@ -42,14 +45,17 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
+
 void AntlrSQLHelper::addWhereClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
 {
     this->whereClauses.emplace_back(expressionNode);
 }
+
 void AntlrSQLHelper::addHavingClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
 {
     this->havingClauses.emplace_back(expressionNode);
 }
+
 void AntlrSQLHelper::addProjectionField(const std::shared_ptr<NES::NodeFunctionFieldAccess>& expressionNode)
 {
     this->projectionFields.push_back(expressionNode);
@@ -65,10 +71,12 @@ void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssi
     auto pos = this->mapBuilder.begin();
     this->mapBuilder.insert(pos, std::move(expressionNode));
 }
+
 std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> AntlrSQLHelper::getMapExpressions() const
 {
     return this->mapBuilder;
 }
+
 void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions)
 {
     this->mapBuilder = expressions;

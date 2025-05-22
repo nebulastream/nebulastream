@@ -98,6 +98,7 @@ void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
+
 void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
@@ -113,6 +114,7 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
         }
     }
 }
+
 void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);

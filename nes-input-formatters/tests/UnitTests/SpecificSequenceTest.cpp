@@ -24,7 +24,6 @@
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
-
 namespace NES
 {
 
@@ -36,6 +35,7 @@ public:
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");
     }
+
     void SetUp() override { BaseUnitTest::SetUp(); }
 
     void TearDown() override { BaseUnitTest::TearDown(); }

@@ -34,11 +34,11 @@
 
 using namespace std::literals;
 
-
 class GRPCClient
 {
 public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
+
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
     size_t registerQuery(const NES::DecomposedQueryPlan& plan) const

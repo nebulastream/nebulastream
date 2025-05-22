@@ -23,6 +23,7 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+
 namespace NES
 {
 
@@ -43,7 +44,6 @@ public:
         NES_INFO("NumericTypeConversionTest test class SetUpTestCase.");
     }
 };
-
 
 TEST_P(NumericTypeConversionTest, SimpleTest)
 {

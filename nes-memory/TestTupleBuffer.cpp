@@ -153,6 +153,7 @@ bool DynamicTuple::operator!=(const DynamicTuple& other) const
 {
     return !(*this == other);
 }
+
 bool DynamicTuple::operator==(const DynamicTuple& other) const
 {
     if (!(*this->memoryLayout->getSchema() == *other.memoryLayout->getSchema()))
@@ -261,6 +262,7 @@ Memory::TupleBuffer TestTupleBuffer::getBuffer()
 {
     return buffer;
 }
+
 std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer)
 {
     auto buf = buffer;
@@ -273,6 +275,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const
 {
     return TupleIterator(*this);
 }
+
 TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
 {
     return TupleIterator(*this, getNumberOfTuples());

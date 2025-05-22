@@ -73,6 +73,7 @@ public:
     }
 
     [[nodiscard]] Timestamp::Underlying getWindowSize() const { return windowSize; }
+
     [[nodiscard]] Timestamp::Underlying getWindowSlide() const { return windowSlide; }
 
 private:

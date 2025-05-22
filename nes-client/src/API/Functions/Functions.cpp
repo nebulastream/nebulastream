@@ -137,10 +137,12 @@ std::shared_ptr<NodeFunction> WHEN(const FunctionItem& conditionExp, const std::
 {
     return WHEN(conditionExp.getNodeFunction(), std::move(valueExp));
 }
+
 std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const FunctionItem& valueExp)
 {
     return WHEN(std::move(conditionExp), valueExp.getNodeFunction());
 }
+
 std::shared_ptr<NodeFunction> WHEN(const FunctionItem& conditionExp, const FunctionItem& valueExp)
 {
     return WHEN(conditionExp.getNodeFunction(), valueExp.getNodeFunction());
@@ -151,11 +153,11 @@ CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const std:
 {
     return NodeFunctionCase::create(std::move(whenFunctions), std::move(valueExp));
 }
+
 std::shared_ptr<NodeFunction> CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const FunctionItem& valueExp)
 {
     return CASE(std::move(whenFunctions), valueExp.getNodeFunction());
 }
-
 
 std::shared_ptr<NodeFunction> FunctionItem::getNodeFunction() const
 {

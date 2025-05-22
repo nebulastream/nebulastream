@@ -27,7 +27,6 @@ namespace NES::InputFormatters
 /// Forward referencing SequenceShredder to keep it as a private implementation detail of nes-input-formatters
 class SequenceShredder;
 
-
 /// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
 class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
 {
@@ -41,6 +40,7 @@ public:
     InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
     void start(Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
+
     void stop(Runtime::Execution::PipelineExecutionContext&) override;
     void
     execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
@@ -58,4 +58,5 @@ private:
 
 
 }
+
 FMT_OSTREAM(NES::InputFormatters::InputFormatterTask);

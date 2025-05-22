@@ -23,6 +23,7 @@ namespace NES::Runtime::Execution::Functions
 {
 
 using ExecutableFunctionRegistryReturnType = std::unique_ptr<Function>;
+
 struct ExecutableFunctionRegistryArguments
 {
     std::vector<ExecutableFunctionRegistryReturnType> childFunctions;
@@ -36,7 +37,6 @@ class ExecutableFunctionRegistry : public BaseRegistry<
 {
 };
 }
-
 
 #define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
 #include <ExecutableFunctionGeneratedRegistrar.inc>

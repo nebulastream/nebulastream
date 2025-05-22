@@ -123,10 +123,12 @@ void LogicalSelectionOperator::inferStringSignature()
     const auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
 float LogicalSelectionOperator::getSelectivity() const
 {
     return selectivity;
 }
+
 void LogicalSelectionOperator::setSelectivity(float newSelectivity)
 {
     selectivity = newSelectivity;

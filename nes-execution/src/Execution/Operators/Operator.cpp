@@ -17,6 +17,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

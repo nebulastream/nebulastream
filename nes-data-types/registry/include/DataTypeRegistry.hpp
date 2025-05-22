@@ -22,6 +22,7 @@ namespace NES
 {
 
 using DataTypeRegistryReturnType = std::unique_ptr<DataType>;
+
 struct DataTypeRegistryArguments
 {
 };
@@ -31,7 +32,6 @@ class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, Data
 };
 
 }
-
 
 #define INCLUDED_FROM_DATA_TYPE_REGISTRY
 #include <DataTypeGeneratedRegistrar.inc>

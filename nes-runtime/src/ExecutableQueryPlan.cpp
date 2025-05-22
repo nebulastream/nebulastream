@@ -59,7 +59,6 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
     return os;
 }
 
-
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     Execution::CompiledQueryPlan& compiledQueryPlan,
     const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,

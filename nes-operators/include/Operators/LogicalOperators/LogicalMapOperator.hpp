@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+
 namespace NES
 {
 

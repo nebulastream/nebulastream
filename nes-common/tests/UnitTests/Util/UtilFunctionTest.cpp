@@ -28,6 +28,7 @@ public:
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("UtilFunctionTest test class SetUpTestCase.");
     }
+
     static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
 };
 

@@ -138,6 +138,7 @@ OriginId LogicalJoinDescriptor::getOriginId() const
 {
     return originId;
 }
+
 void LogicalJoinDescriptor::setOriginId(const OriginId originId)
 {
     this->originId = originId;

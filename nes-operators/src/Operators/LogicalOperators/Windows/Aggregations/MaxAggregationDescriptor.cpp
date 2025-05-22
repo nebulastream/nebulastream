@@ -24,7 +24,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 

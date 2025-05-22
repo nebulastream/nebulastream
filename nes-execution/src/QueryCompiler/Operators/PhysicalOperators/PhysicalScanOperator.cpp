@@ -32,6 +32,7 @@ std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(const std::shared
 {
     return create(getNextOperatorId(), std::move(outputSchema));
 }
+
 std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
 {
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);

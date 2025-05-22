@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 

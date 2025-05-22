@@ -19,6 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction)

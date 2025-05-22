@@ -18,7 +18,6 @@
     #include <memory_resource>
     #include <Util/Logger/Logger.hpp>
 
-
 namespace NES::Runtime
 {
 /**

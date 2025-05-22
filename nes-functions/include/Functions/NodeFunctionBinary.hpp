@@ -17,6 +17,7 @@
 #include <string>
 #include <Functions/NodeFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 /**

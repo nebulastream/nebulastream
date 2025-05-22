@@ -29,16 +29,20 @@
 namespace NES
 {
 class Query;
+
 namespace JoinOperatorBuilder
 {
 class JoinWhere;
 }
+
 namespace WindowOperatorBuilder
 {
 class WindowedQuery;
 class KeyedWindowedQuery;
 }
+
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
+
 namespace JoinOperatorBuilder
 {
 class Join
@@ -188,6 +192,7 @@ private:
     uint64_t maxOccurrences;
     bool bounded;
 };
+
 ///TODO this method is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
      * @brief: this function creates a virtual key for the left side of the binary operator

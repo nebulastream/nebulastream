@@ -34,6 +34,7 @@ struct SequenceNumberForOriginId
     OriginId originId = INVALID_ORIGIN_ID;
 
     auto operator<=>(const SequenceNumberForOriginId&) const = default;
+
     friend std::ostream& operator<<(std::ostream& os, const SequenceNumberForOriginId& obj)
     {
         return os << "{ seqNumber = " << obj.sequenceNumber << ", originId = " << obj.originId << "}";

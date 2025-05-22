@@ -24,7 +24,6 @@
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -33,6 +32,7 @@ MedianAggregationDescriptor::MedianAggregationDescriptor(const std::shared_ptr<N
 {
     this->aggregationType = Type::Median;
 }
+
 MedianAggregationDescriptor::MedianAggregationDescriptor(
     const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
@@ -81,6 +81,7 @@ void MedianAggregationDescriptor::inferStamp(const Schema& schema)
     }
     asField->setStamp(getFinalAggregateStamp());
 }
+
 std::shared_ptr<WindowAggregationDescriptor> MedianAggregationDescriptor::copy()
 {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
@@ -90,10 +91,12 @@ std::shared_ptr<DataType> MedianAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> MedianAggregationDescriptor::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
+
 std::shared_ptr<DataType> MedianAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);

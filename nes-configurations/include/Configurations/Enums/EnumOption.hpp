@@ -26,6 +26,7 @@ namespace NES::Configurations
 
 template <class T>
 concept IsEnum = std::is_enum<T>::value;
+
 /// This class defines an option, which has only the member of an enum as possible values.
 template <IsEnum T>
 class EnumOption : public TypedBaseOption<T>
@@ -77,6 +78,7 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
     };
+
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override
     {
         auto value = inputParams[identifier];

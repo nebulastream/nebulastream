@@ -62,22 +62,30 @@ class val<NES::Runtime::Timestamp>
 {
 public:
     using Underlying = uint64_t;
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::Runtime::Timestamp>(const Underlying timestamp) : value(timestamp) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::Runtime::Timestamp>(const val<Underlying>& timestamp) : value(timestamp) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::Runtime::Timestamp>(const NES::Runtime::Timestamp timestamp) : value(timestamp.getRawValue()) { }
+
     explicit val<NES::Runtime::Timestamp>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+
     val<NES::Runtime::Timestamp>(const val<NES::Runtime::Timestamp>& other) = default;
     val<NES::Runtime::Timestamp>& operator=(const val<NES::Runtime::Timestamp>& other) = default;
 
     [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
-    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
-    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
-    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
-    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
+    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
+
+    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
+
+    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
+
+    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
     /// IMPORTANT: This should be used with utmost care. Only, if there is no other way to work with the strong types.
     /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function

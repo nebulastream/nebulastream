@@ -37,7 +37,6 @@
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
-
 namespace NES::Runtime::Execution
 {
 
@@ -49,6 +48,7 @@ class TestPipelineExecutionContext final : public PipelineExecutionContext
 public:
     TestPipelineExecutionContext()
         : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)), pipelineId(PipelineId(PipelineId::INVALID)) { };
+
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
         std::shared_ptr<Memory::AbstractBufferProvider> bufferManager,
@@ -67,6 +67,7 @@ public:
             this->resultBuffers->size(),
             this->workerThreadId.getRawValue());
     }
+
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
         std::shared_ptr<Memory::AbstractBufferProvider> bufferManager,
@@ -92,10 +93,15 @@ public:
     void setRepeatTaskCallback(std::function<void()> repeatTaskCallback) { this->repeatTaskCallback = std::move(repeatTaskCallback); }
 
     [[nodiscard]] WorkerThreadId getId() const override { return workerThreadId; };
+
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 0; }; /// dummy implementation for  pure virtual function
+
     [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
+
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
+
     std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; }
+
     void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>& operatorHandlers) override
     {
         this->operatorHandlers = operatorHandlers;
@@ -121,6 +127,7 @@ class TestablePipelineStage : public ExecutablePipelineStage
 public:
     using ExecuteFunction = std::function<void(const Memory::TupleBuffer&, PipelineExecutionContext&)>;
     TestablePipelineStage() = default;
+
     TestablePipelineStage(const std::string& stepName, ExecuteFunction testTask) { addStep(stepName, std::move(testTask)); }
 
     void addStep(const std::string& stepName, ExecuteFunction testTask) { taskSteps.emplace_back(stepName, std::move(testTask)); }
@@ -132,7 +139,9 @@ private:
     std::vector<std::pair<std::string, ExecuteFunction>> taskSteps;
 
     std::ostream& toString(std::ostream& os) const override;
+
     void start(PipelineExecutionContext&) override { /* noop */ }
+
     void stop(PipelineExecutionContext&) override { /* noop */ }
 };
 
@@ -140,10 +149,12 @@ private:
 struct TestablePipelineTask
 {
     TestablePipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) { };
+
     TestablePipelineTask(const WorkerThreadId workerThreadId, Memory::TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
     }
+
     TestablePipelineTask(const WorkerThreadId workerThreadId, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), eps(std::move(eps))
     {

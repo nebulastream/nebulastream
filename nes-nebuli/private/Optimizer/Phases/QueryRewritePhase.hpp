@@ -20,6 +20,7 @@ namespace NES
 {
 
 class QueryPlan;
+
 namespace Configurations
 {
 class CoordinatorConfiguration;

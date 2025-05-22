@@ -25,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
 
-
 namespace NES
 {
 /**
@@ -68,6 +67,7 @@ public:
         std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
         return sourceOperators;
     }
+
     [[nodiscard]] std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
     [[nodiscard]] std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;

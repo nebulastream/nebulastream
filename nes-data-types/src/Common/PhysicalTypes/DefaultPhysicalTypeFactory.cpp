@@ -25,6 +25,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
+
 namespace NES
 {
 

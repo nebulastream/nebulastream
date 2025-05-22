@@ -103,7 +103,6 @@ private:
     size_t numInputTuplesToProduce;
 };
 
-
 TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
 {
     using ResultSchema = struct

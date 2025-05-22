@@ -275,6 +275,7 @@ protected:
 
     /// The usual string representation of the current node. Used by `operator<<`. Includes as much information about the node as possible.
     [[nodiscard]] virtual std::ostream& toDebugString(std::ostream& os) const = 0;
+
     /// Returns a shorter string representation for the current node. Accessed by setting the state of the current stream to
     /// `VerbosityLevel::QueryPlan` (`ss << VerbosityLevel::QueryPlan << node`).
     [[nodiscard]] virtual std::ostream& toQueryPlanString(std::ostream& os) const
@@ -352,6 +353,7 @@ private:
     bool visited{false};
     bool recStack{false};
 };
+
 inline std::ostream& operator<<(std::ostream& os, const Node& node)
 {
     switch (getVerbosityLevel(os))
@@ -366,6 +368,7 @@ inline std::ostream& operator<<(std::ostream& os, const Node& node)
     }
 }
 }
+
 namespace fmt
 {
 /// Implements formatting via fmt::format("{}") for all classes inheriting from Node. Internally, the `operator<<`
@@ -382,6 +385,7 @@ struct formatter<T> : ostream_formatter
     /// This character changes the default `VerbosityLevel` from `Debug` to `QueryPlan`.
     char queryPlanOptionCharacter = 'q';
     bool isQueryPlan{false};
+
     constexpr auto parse(fmt::format_parse_context& ctx)
     {
         /// Relies on std::ranges::find to find the first occurrence from the left.
@@ -396,6 +400,7 @@ struct formatter<T> : ostream_formatter
         }
         return pos;
     }
+
     auto format(const T& node, format_context& ctx) const
     {
         if (isQueryPlan)

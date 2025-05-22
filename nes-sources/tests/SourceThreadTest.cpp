@@ -54,16 +54,20 @@ constexpr size_t DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER = 23;
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 100;
 
 }
+
 using namespace std::literals;
+
 class SourceThreadTest : public Testing::BaseUnitTest
 {
 public:
     size_t pageSize = getpagesize();
+
     static void SetUpTestSuite()
     {
         Logger::setupLogging("SourceThreadTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceThreadTest test class.");
     }
+
     void SetUp() override { Testing::BaseUnitTest::SetUp(); }
 };
 
@@ -134,6 +138,7 @@ void verify_no_events(RecordingEmitFunction& recorder, std::source_location loca
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_no_events");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(0)) << "Expected no source events to be emitted";
 }
+
 template <typename T>
 void verify_last_event(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
 {
@@ -142,6 +147,7 @@ void verify_last_event(RecordingEmitFunction& recorder, std::source_location loc
     auto& lastEvent = recorder.recordedEmits.lock()->back();
     EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << typeid(T).name() << "` event";
 }
+
 void verify_number_of_emits(
     RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {

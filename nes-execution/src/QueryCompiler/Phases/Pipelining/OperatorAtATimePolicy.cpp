@@ -22,6 +22,7 @@ bool OperatorAtATimePolicy::isFusible(std::shared_ptr<PhysicalOperators::Physica
 {
     return false;
 }
+
 std::shared_ptr<OperatorFusionPolicy> OperatorAtATimePolicy::create()
 {
     return std::make_shared<OperatorAtATimePolicy>();

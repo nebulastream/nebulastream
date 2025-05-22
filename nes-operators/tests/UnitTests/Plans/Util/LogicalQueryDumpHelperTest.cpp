@@ -53,12 +53,18 @@ protected:
 struct TestNode : Operator
 {
     explicit TestNode(std::string_view nodeAsStringMember) : Operator(getNextOperatorId()), nodeAsString(nodeAsStringMember) { }
+
     std::string_view nodeAsString;
+
     std::ostream& toDebugString(std::ostream& os) const override { return os << nodeAsString; }
+
     /// Just implementing these so that TestNode is not virtual, we don't need any of them.
     std::shared_ptr<Operator> copy() override { return nullptr; }
+
     std::shared_ptr<Schema> getOutputSchema() const override { return nullptr; }
+
     void setOutputSchema(std::shared_ptr<Schema> outputSchema) override { (void)outputSchema; }
+
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 };
 
@@ -167,6 +173,7 @@ TEST_F(LogicalQueryDumpHelperTest, printQuerySourceTwoSinksExtraLong)
     EXPECT_EQ(helper.processedDag[1].nodes.size(), 1);
     EXPECT_EQ(helper.processedDag[1].nodes[0]->nodeAsString, leaf1);
 }
+
 /// TODO #685 Add a test that forces us to add vertical branches (dummy nodes) for nodes that have to be moved to another layer while being drawn.
 /// TODO #685 Add a test that forces branches to cross.
 }

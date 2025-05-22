@@ -13,6 +13,7 @@
 */
 
 #pragma once
+
 namespace NES::Runtime::Execution::Operators
 {
 

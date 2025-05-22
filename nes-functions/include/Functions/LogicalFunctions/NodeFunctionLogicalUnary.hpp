@@ -18,6 +18,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
 #include <Nodes/Node.hpp>
+
 namespace NES
 {
 /**

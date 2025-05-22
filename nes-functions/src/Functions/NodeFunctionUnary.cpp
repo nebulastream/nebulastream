@@ -34,6 +34,7 @@ void NodeFunctionUnary::setChild(const std::shared_ptr<NodeFunction>& child)
 {
     addChildWithEqual(child);
 }
+
 std::shared_ptr<NodeFunction> NodeFunctionUnary::child() const
 {
     return Util::as<NodeFunction>(children[0]);

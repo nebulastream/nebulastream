@@ -37,7 +37,6 @@ ExecutableFunctionDiv::ExecutableFunctionDiv(
 {
 }
 
-
 ExecutableFunctionRegistryReturnType
 ExecutableFunctionGeneratedRegistrar::RegisterDivExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {

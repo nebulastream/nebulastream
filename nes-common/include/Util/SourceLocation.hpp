@@ -18,6 +18,7 @@
     #include <source_location>
 #elif __has_include(<experimental/source_location>)
     #include <experimental/source_location>
+
 namespace std
 {
 using source_location = std::experimental::source_location;
@@ -25,6 +26,7 @@ using source_location = std::experimental::source_location;
 #else
     #include <cstdint>
     #include <stdint.h>
+
 namespace std
 {
 struct source_location
@@ -44,10 +46,14 @@ struct source_location
     }
 
     constexpr source_location() noexcept : _M_file("unknown"), _M_func(_M_file), _M_line(0), _M_col(0) { }
+
     /// 14.1.3, source_location field access
     constexpr uint_least32_t line() const noexcept { return _M_line; }
+
     constexpr uint_least32_t column() const noexcept { return _M_col; }
+
     constexpr const char* file_name() const noexcept { return _M_file; }
+
     constexpr const char* function_name() const noexcept { return _M_func; }
 
 private:

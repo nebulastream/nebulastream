@@ -23,17 +23,18 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
-
 namespace NES::Windowing
 {
 
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
 {
 }
+
 TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
+
 std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
 {
     return createEventTime(field, TimeUnit(1));
@@ -60,6 +61,7 @@ TimeCharacteristic::Type TimeCharacteristic::getType() const
 {
     return type;
 }
+
 bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 {
     const auto isFieldsEqual = (this->field == nullptr and other.field == nullptr) or (this->field->isEqual(other.field));

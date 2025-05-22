@@ -16,6 +16,7 @@
 #include <memory>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+
 namespace NES::QueryCompilation
 {
 /**

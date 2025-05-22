@@ -168,7 +168,6 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
     }
 }
 
-
 void AntlrSQLQueryPlanCreator::enterNamedExpressionSeq(AntlrSQLParser::NamedExpressionSeqContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -254,6 +253,7 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
     poppush(helper);
     AntlrSQLBaseListener::enterComparisonOperator(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     auto helper = helpers.top();
@@ -341,7 +341,6 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
     poppush(helper);
     AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
-
 
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
@@ -436,6 +435,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
     helpers.push(helper);
     AntlrSQLBaseListener::enterPrimaryQuery(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -495,6 +495,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
     AntlrSQLBaseListener::exitPrimaryQuery(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -502,6 +503,7 @@ void AntlrSQLQueryPlanCreator::enterWindowClause(AntlrSQLParser::WindowClauseCon
     poppush(helper);
     AntlrSQLBaseListener::enterWindowClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();

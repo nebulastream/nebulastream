@@ -34,16 +34,19 @@ SourceHandle::SourceHandle(
     this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));
 }
+
 SourceHandle::~SourceHandle() = default;
 
 bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
     return this->sourceThread->start(std::move(emitFunction));
 }
+
 void SourceHandle::stop() const
 {
     this->sourceThread->stop();
 }
+
 SourceReturnType::TryStopResult SourceHandle::tryStop(const std::chrono::milliseconds timeout) const
 {
     return this->sourceThread->tryStop(timeout);

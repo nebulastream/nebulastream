@@ -345,7 +345,6 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
     return errorMessages.str();
 }
 
-
 bool operator!=(const FieldResult& left, const FieldResult& right)
 {
     /// Check if the type is equal
@@ -374,6 +373,7 @@ bool operator!=(const FieldResult& left, const FieldResult& right)
 
     throw UnknownPhysicalType("Unknown type {}", left.type->toString());
 }
+
 bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
 {
     /// Check if the size is the same

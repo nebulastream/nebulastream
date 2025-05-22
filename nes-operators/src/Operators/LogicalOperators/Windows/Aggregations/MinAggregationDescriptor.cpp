@@ -24,7 +24,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -33,6 +32,7 @@ MinAggregationDescriptor::MinAggregationDescriptor(const std::shared_ptr<NodeFun
 {
     this->aggregationType = Type::Min;
 }
+
 MinAggregationDescriptor::MinAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
@@ -59,10 +59,12 @@ std::shared_ptr<DataType> MinAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> MinAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> MinAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
@@ -94,6 +96,7 @@ void MinAggregationDescriptor::inferStamp(const Schema& schema)
     }
     asField->setStamp(getFinalAggregateStamp());
 }
+
 std::shared_ptr<WindowAggregationDescriptor> MinAggregationDescriptor::copy()
 {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));

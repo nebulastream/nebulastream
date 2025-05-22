@@ -23,7 +23,6 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES::Runtime::Execution::Operators
 {
 

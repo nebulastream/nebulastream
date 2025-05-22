@@ -28,7 +28,6 @@ bool Boolean::operator==(const NES::DataType& other) const
     return dynamic_cast<const Boolean*>(&other) != nullptr;
 }
 
-
 std::shared_ptr<DataType> Boolean::join(const std::shared_ptr<DataType> otherDataType)
 {
     if (NES::Util::instanceOf<Boolean>(otherDataType))

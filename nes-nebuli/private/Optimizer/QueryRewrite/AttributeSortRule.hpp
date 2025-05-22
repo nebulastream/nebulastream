@@ -22,7 +22,6 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-
 namespace NES::Optimizer
 {
 

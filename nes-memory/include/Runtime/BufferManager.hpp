@@ -59,6 +59,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
 {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
+
     /// Hide the BufferManager constructor and only allow creation via BufferManager::create().
     /// Following: https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
     struct Private

@@ -28,7 +28,6 @@
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
-
 namespace NES::Testing
 {
 using namespace ::testing;

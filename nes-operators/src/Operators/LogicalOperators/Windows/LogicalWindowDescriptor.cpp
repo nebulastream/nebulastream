@@ -56,10 +56,12 @@ uint64_t LogicalWindowDescriptor::getNumberOfInputEdges() const
 {
     return numberOfInputEdges;
 }
+
 void LogicalWindowDescriptor::setNumberOfInputEdges(const uint64_t numberOfInputEdges)
 {
     this->numberOfInputEdges = numberOfInputEdges;
 }
+
 std::vector<std::shared_ptr<WindowAggregationDescriptor>> LogicalWindowDescriptor::getWindowAggregation() const
 {
     return windowAggregation;
@@ -108,10 +110,12 @@ std::string LogicalWindowDescriptor::toString() const
     ss << std::endl;
     return ss.str();
 }
+
 OriginId LogicalWindowDescriptor::getOriginId() const
 {
     return originId;
 }
+
 void LogicalWindowDescriptor::setOriginId(const OriginId originId)
 {
     this->originId = originId;
@@ -152,10 +156,12 @@ bool LogicalWindowDescriptor::equal(const std::shared_ptr<LogicalWindowDescripto
 
     return this->windowType->equal(otherWindowDefinition->getWindowType());
 }
+
 const std::vector<OriginId>& LogicalWindowDescriptor::getInputOriginIds() const
 {
     return inputOriginIds;
 }
+
 void LogicalWindowDescriptor::setInputOriginIds(const std::vector<OriginId>& inputOriginIds)
 {
     LogicalWindowDescriptor::inputOriginIds = inputOriginIds;

@@ -19,6 +19,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Node.hpp>
+
 namespace NES
 {
 

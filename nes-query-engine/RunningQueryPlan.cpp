@@ -200,6 +200,7 @@ RunningQueryPlanNode::~RunningQueryPlanNode()
 {
     assert(!requiresTermination && "Node was destroyed without termination. This should not happen");
 }
+
 void RunningQueryPlanNode::fail(Exception exception) const
 {
     unregisterWithError(std::move(exception));
@@ -389,7 +390,6 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
             std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired)),
         *callback};
 }
-
 
 std::unique_ptr<ExecutableQueryPlan> StoppingQueryPlan::dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan)
 {

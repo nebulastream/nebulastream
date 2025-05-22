@@ -101,13 +101,13 @@ private:
     size_t numInputTuplesToProduce;
 };
 
-
 TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
 {
     using ResultSchema = struct
     {
         uint64_t id;
     };
+
     const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum, numInputTuplesToProduceByTCPMockServer] = GetParam();
     const auto testSpecificResultFileName = fmt::format("{}.csv", IntegrationTestUtil::getUniqueTestIdentifier());
     const std::string queryInputFile = fmt::format("{}.bin", queryName);

@@ -33,6 +33,7 @@ enum class BufferManagerType : uint8_t
     LOCAL,
     FIXED
 };
+
 class AbstractBufferProvider
 {
 public:

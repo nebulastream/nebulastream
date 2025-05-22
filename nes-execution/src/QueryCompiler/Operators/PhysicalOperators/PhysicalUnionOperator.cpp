@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
@@ -53,10 +54,12 @@ std::ostream& PhysicalUnionOperator::toDebugString(std::ostream& os) const
 {
     return os << "\nPhysicalUnionOperator:\n";
 }
+
 std::ostream& PhysicalUnionOperator::toQueryPlanString(std::ostream& os) const
 {
     return os << "PhysicalUnionOperator";
 }
+
 std::shared_ptr<Operator> PhysicalUnionOperator::copy()
 {
     return create(id, leftInputSchema, rightInputSchema, outputSchema);

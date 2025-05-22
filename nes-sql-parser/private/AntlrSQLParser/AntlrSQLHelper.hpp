@@ -40,6 +40,7 @@ enum class AntlrSQLWindowType : uint8_t
     WINDOW_TUMBLING,
     WINDOW_THRESHOLD,
 };
+
 class AntlrSQLHelper
 {
     std::vector<std::shared_ptr<NodeFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
@@ -66,7 +67,9 @@ public:
     bool isSetOperation = false;
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
+
     bool isInFunctionCall() const { return not functionBuilder.empty(); }
+
     bool isInAggFunction() const { return not windowAggs.empty(); }
 
     /// Containers that hold state of specific objects that we create during parsing.

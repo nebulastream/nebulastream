@@ -26,7 +26,6 @@
 #include <Time/Timestamp.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
-
 namespace NES::QueryCompilation
 {
 enum class JoinBuildSideType : uint8_t
@@ -35,7 +34,6 @@ enum class JoinBuildSideType : uint8_t
     Left
 };
 }
-
 
 namespace NES::Runtime::Execution
 {
@@ -60,6 +58,7 @@ struct WindowInfo
     }
 
     bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+
     Timestamp windowStart;
     Timestamp windowEnd;
 };

@@ -40,7 +40,6 @@ NodeEngineBuilder::NodeEngineBuilder(
 {
 }
 
-
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     auto bufferManager = Memory::BufferManager::create(

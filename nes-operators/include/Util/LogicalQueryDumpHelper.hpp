@@ -34,6 +34,7 @@ namespace NES
 class QueryPlan;
 
 class Node;
+
 /// Dumps query plans to an output stream
 class LogicalQueryDumpHelper
 {
@@ -56,6 +57,7 @@ private:
     std::ostream& out;
 
     struct PrintNode;
+
     struct PrintNode
     {
         std::string nodeAsString;
@@ -68,29 +70,35 @@ private:
         bool verticalBranch;
         OperatorId id;
     };
+
     /// Holds information on each node of that layer in the dag and its cumulative width.
     struct Layer
     {
         std::vector<std::shared_ptr<PrintNode>> nodes;
         size_t layerWidth;
     };
+
     std::vector<Layer> processedDag;
+
     struct QueueItem
     {
         std::shared_ptr<Operator> node;
         /// Saves the (already processed) node that queued this node. And if we find more parents, the vector has room for them too.
         std::vector<std::weak_ptr<PrintNode>> parents;
     };
+
     std::deque<QueueItem> layerCalcQueue;
 
     /// Converts the `Node`s to `PrintNode`s in the `processedDag` structure which knows about they layer the node should appear on and how
     /// wide the node and the layer is (in terms of ASCII characters).
     size_t calculateLayers(const std::vector<std::shared_ptr<Operator>>& rootOperators);
+
     struct NodesPerLayerCounter
     {
         size_t current;
         size_t next;
     };
+
     /// Decides how to queue the children of the current node depending on whether we already queued it or already put in `processedDag`.
     ///
     /// There are four cases:

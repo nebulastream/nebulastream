@@ -34,6 +34,7 @@ struct WindowMetaData
         : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
     {
     }
+
     WindowMetaData() = default;
 
     std::string windowStartFieldName;

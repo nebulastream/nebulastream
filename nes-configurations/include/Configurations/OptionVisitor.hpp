@@ -17,6 +17,7 @@
 namespace NES::Configurations
 {
 class BaseConfiguration;
+
 class OptionVisitor
 {
 public:

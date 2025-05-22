@@ -77,7 +77,6 @@ VarVal TupleBufferMemoryProvider::loadValue(
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-
 VarVal TupleBufferMemoryProvider::storeValue(
     const std::shared_ptr<PhysicalType>& type,
     const RecordBuffer& recordBuffer,
@@ -108,7 +107,6 @@ VarVal TupleBufferMemoryProvider::storeValue(
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
-
 
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)

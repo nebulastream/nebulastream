@@ -25,6 +25,7 @@ namespace NES::InputFormatters
 {
 
 using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatter>;
+
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
 struct InputFormatterRegistryArguments
 {

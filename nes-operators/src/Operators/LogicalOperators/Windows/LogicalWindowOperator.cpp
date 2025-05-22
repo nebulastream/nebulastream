@@ -34,7 +34,6 @@
 #include <fmt/ranges.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 
-
 namespace NES
 {
 

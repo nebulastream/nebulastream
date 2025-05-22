@@ -19,7 +19,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-
 namespace NES::QueryCompilation
 {
 

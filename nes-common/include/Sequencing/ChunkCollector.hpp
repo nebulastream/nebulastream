@@ -98,6 +98,7 @@ private:
     struct Node
     {
         explicit Node(size_t start) : start(start) { }
+
         size_t start;
         std::atomic<size_t> missing = NodeSize;
         std::array<

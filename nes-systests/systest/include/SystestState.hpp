@@ -38,7 +38,6 @@
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
 
-
 namespace NES::Systest
 {
 using TestName = std::string;
@@ -72,6 +71,7 @@ struct Query
     }
 
     Query() = default;
+
     explicit Query(
         TestName name,
         std::string queryDefinition,
@@ -103,7 +103,6 @@ struct Query
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
     SystestParser::Schema expectedSinkSchema;
 };
-
 
 struct RunningQuery
 {
@@ -220,6 +219,7 @@ template <>
 struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
 {
     static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
     static auto format(const NES::Systest::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
     {
         return fmt::format_to(

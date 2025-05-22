@@ -65,18 +65,24 @@ class val<NES::NESStrongType<T, Tag, Invalid, Initial>>
 public:
     using Underlying = typename NES::NESStrongType<T, Tag, Invalid, Initial>::Underlying;
     using raw_type = NES::NESStrongType<T, Tag, Invalid, Initial>;
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const Underlying type) : value(type) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const val<Underlying> type) : value(type) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const NES::NESStrongType<T, Tag, Invalid, Initial> type) : value(type.getRawValue())
     {
     }
+
     explicit val<NES::NESStrongType<T, Tag, Invalid, Initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& other) : value(other.value)
     {
     }
+
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>& operator=(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& other)
     {
         value = other.value;
@@ -88,9 +94,13 @@ public:
     val<Underlying> convertToValue() const { return value; }
 
     [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
+
     [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
+
     [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
+
     [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
+
     [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
     val<Underlying> value;

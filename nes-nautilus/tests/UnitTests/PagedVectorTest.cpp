@@ -298,7 +298,6 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
         projections, testSchema, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 1, *nautilusEngine, *bufferManager);
 }
 
-
 INSTANTIATE_TEST_CASE_P(
     PagedVectorTest,
     PagedVectorTest,

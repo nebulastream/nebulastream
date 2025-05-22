@@ -48,6 +48,7 @@ const Runtime::Execution::ExecutablePipelineStage& ExecutableOperator::getStage(
 {
     return *executablePipelineStage;
 }
+
 std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> ExecutableOperator::takeStage()
 {
     return std::move(executablePipelineStage);

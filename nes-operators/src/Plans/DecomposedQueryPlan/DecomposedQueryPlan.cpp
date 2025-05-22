@@ -28,7 +28,6 @@
 #include <Util/LogicalQueryDumpHelper.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 

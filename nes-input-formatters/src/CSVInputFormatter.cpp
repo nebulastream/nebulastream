@@ -108,11 +108,11 @@ public:
     int8_t* getCurrentFieldPointer() { return (this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted); }
 
     [[nodiscard]] size_t getOffsetOfFirstTupleDelimiter() const { return currentTupleEndrawTB; }
+
     [[nodiscard]] size_t getOffsetOfLastTupleDelimiter() const
     {
         return tupleBufferRawSV.rfind(tupleDelimiter, tupleBufferRawSV.size() - 1);
     }
-
 
     void processCurrentTuple(
         std::string_view currentTuple,
@@ -177,6 +177,7 @@ public:
             progressOneTuple();
         }
     }
+
     [[nodiscard]] bool hasOneMoreTupleInRawTB() const { return currentTupleEndrawTB != std::numeric_limits<uint64_t>::max(); }
 
     [[nodiscard]] size_t sizeOfCurrentTuple() const { return this->currentTupleEndrawTB - this->currentTupleStartrawTB; }
@@ -237,10 +238,15 @@ public:
 
     /// Getter & Setter
     [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
+
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
+
     void setCurrentTupleStartrawTB(const size_t newCurrentTupleStartrawTB) { this->currentTupleStartrawTB = newCurrentTupleStartrawTB; }
+
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+
     uint64_t getNumTuplesInTBFormatted() { return numTuplesInTBFormatted; }
+
     const std::string& getTupleDelimiter() { return this->tupleDelimiter; }
 
     size_t currentTupleStartrawTB{0};
@@ -631,10 +637,12 @@ void CSVInputFormatter::flushFinalTuple(
             finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 }
+
 size_t CSVInputFormatter::getSizeOfTupleDelimiter()
 {
     return this->tupleDelimiter.size();
 }
+
 size_t CSVInputFormatter::getSizeOfFieldDelimiter()
 {
     return this->fieldDelimiter.size();

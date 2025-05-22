@@ -165,6 +165,7 @@ public:
     std::vector<std::string> getFieldNames() const;
 
     auto begin() const { return std::begin(fields); }
+
     auto end() const { return std::end(fields); }
 
 private:

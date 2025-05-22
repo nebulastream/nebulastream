@@ -29,6 +29,7 @@ SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
+
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
@@ -98,6 +99,7 @@ void SourceDescriptorLogicalOperator::inferInputOrigins()
     /// Data sources have no input origins.
     NES_INFO("Data sources have no input origins. Therefore, we do not infer any input origins!");
 }
+
 std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();

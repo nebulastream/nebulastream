@@ -278,6 +278,7 @@ deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrateg
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
 }
+
 std::shared_ptr<LogicalUnaryOperator> deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
 {
     return std::make_shared<LogicalLimitOperator>(limitDetails.limit(), getNextOperatorId());
@@ -938,6 +939,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::
         var);
     return protoVar;
 }
+
 void OperatorSerializationUtil::serializeSourceDescriptor(
     const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
@@ -996,6 +998,7 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             throw CannotSerialize("Unknown variant type.");
     }
 }
+
 std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(
     const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor)
 {
@@ -1086,7 +1089,6 @@ void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
     serializeWatermarkStrategyDescriptor(*watermarkStrategyDescriptor, watermarkStrategyDetails);
     serializedOperator.mutable_details()->PackFrom(watermarkStrategyDetails);
 }
-
 
 void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
     const Windowing::WatermarkStrategyDescriptor& watermarkStrategyDescriptor,
