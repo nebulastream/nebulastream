@@ -66,7 +66,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
         explicit Private() = default;
     };
 
-    static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
+    static constexpr auto DEFAULT_BUFFER_SIZE = 4 * 1024;
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
