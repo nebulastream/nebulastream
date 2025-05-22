@@ -30,69 +30,211 @@
 namespace NES::InputFormatters
 {
 
-class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
+enum class NumRequiredOffsetsPerField : uint8_t
 {
-    friend FieldIndexFunction;
-    static constexpr size_t NUMBER_OF_RESERVED_FIELDS = 1; /// layout: [numberOfTuples | fieldOffsets ...]
-    static constexpr size_t NUMBER_OF_RESERVED_BYTES = NUMBER_OF_RESERVED_FIELDS * sizeof(FieldOffsetsType);
-    static constexpr size_t OFFSET_OF_TOTAL_NUMBER_OF_TUPLES = 0;
+    ONE,
+    TWO,
+};
+
+struct FieldOffsetTypePair
+{
+    FieldOffsetsType startOfField{};
+    FieldOffsetsType endOfField{};
+};
+
+/// Determines the in-tuple-buffer representation of the offsets for type-safety reasons
+template <NumRequiredOffsetsPerField N>
+struct FieldOffsetTypeSelector;
+template <>
+struct FieldOffsetTypeSelector<NumRequiredOffsetsPerField::ONE>
+{
+    using type = FieldOffsetsType;
+};
+template <>
+struct FieldOffsetTypeSelector<NumRequiredOffsetsPerField::TWO>
+{
+    using type = FieldOffsetTypePair;
+};
+
+template <NumRequiredOffsetsPerField NumOffsetsPerField>
+class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerField>>
+{
+    friend FieldIndexFunction<FieldOffsets>;
 
     /// FieldIndexFunction (CRTP) interface functions
-    [[nodiscard]] FieldOffsetsType applyGetOffsetOfFirstTupleDelimiter() const;
-    [[nodiscard]] FieldOffsetsType applyGetOffsetOfLastTupleDelimiter() const;
-    [[nodiscard]] size_t applyGetTotalNumberOfTuples() const;
-    [[nodiscard]] std::string_view applyReadFieldAt(std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const;
+    [[nodiscard]] FieldOffsetsType applyGetOffsetOfFirstTupleDelimiter() const { return this->offsetOfFirstTuple; }
+    [[nodiscard]] FieldOffsetsType applyGetOffsetOfLastTupleDelimiter() const { return this->offsetOfLastTuple; }
+    [[nodiscard]] size_t applyGetTotalNumberOfTuples() const { return this->totalNumberOfTuples; }
+    [[nodiscard]] std::string_view applyReadFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx) const
+    {
+        PRECONDITION(tupleIdx < this->totalNumberOfTuples, "TupleIdx {} is out of range [0-{}].", tupleIdx, this->totalNumberOfTuples);
+        PRECONDITION(fieldIdx < this->numberOfFieldsInSchema, "FieldIdx {} is out of range [0-{}].", fieldIdx, numberOfFieldsInSchema);
 
+        const auto tupleIdxForDiv = (tupleIdx == 0) ? 0 : tupleIdx;
+        const auto bufferNumber = tupleIdxForDiv / maxNumberOfTuplesInFormattedBuffer;
+        PRECONDITION(
+            bufferNumber < this->offsetBuffers.size(), "Buffer {} is out of range [0-{}].", bufferNumber, this->offsetBuffers.size());
+
+        const auto numTuplesInPriorBuffers = bufferNumber * maxNumberOfTuplesInFormattedBuffer;
+        const auto tuplesAlreadyInCurrentBuffer = tupleIdx - numTuplesInPriorBuffers;
+        const auto fieldOffset = (tuplesAlreadyInCurrentBuffer * (numberOfOffsetsPerTuple)) + fieldIdx;
+
+        return createFieldSV(bufferView, bufferNumber, fieldOffset, fieldIdx);
+    }
+
+    template <typename OffsetType>
     class FieldOffsetsBuffer
     {
     public:
         explicit FieldOffsetsBuffer(Memory::TupleBuffer tupleBuffer)
             : tupleBuffer(std::move(tupleBuffer))
-            , fieldOffsetSpan(this->tupleBuffer.getBuffer<FieldOffsetsType>(), this->tupleBuffer.getBufferSize()) { };
+            , fieldOffsetSpan(this->tupleBuffer.template getBuffer<OffsetType>(), this->tupleBuffer.getBufferSize()) { };
         ~FieldOffsetsBuffer() = default;
 
-        [[nodiscard]] FieldOffsetsType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
+        [[nodiscard]] OffsetType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
 
     private:
         Memory::TupleBuffer tupleBuffer;
-        std::span<FieldOffsetsType> fieldOffsetSpan;
+        std::span<OffsetType> fieldOffsetSpan;
     };
+
+
+    [[nodiscard]] std::string_view
+    createFieldSV(const std::string_view bufferView, const size_t bufferNumber, const size_t fieldOffset, const size_t fieldIdx) const
+    requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
+    {
+        const auto targetBuffer = this->offsetBuffers[bufferNumber];
+        const auto startOfField = targetBuffer[fieldOffset];
+        const auto endOfField = targetBuffer[fieldOffset + 1];
+        /// Deduct the size of the field delimiter for all fields but the last, since a tuple does not end in a field delimiter
+        const auto isLastFiled = fieldIdx == (numberOfFieldsInSchema - 1);
+        const auto sizeOfField = endOfField - startOfField - (isLastFiled ? 0 : this->sizeOfFieldDelimiter);
+        return bufferView.substr(startOfField, sizeOfField);
+    }
+
+    [[nodiscard]] std::string_view
+    createFieldSV(const std::string_view bufferView, const size_t bufferNumber, const size_t fieldOffset, const size_t) const
+    requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
+    {
+        const auto targetBuffer = this->offsetBuffers[bufferNumber];
+        const auto& [startOfField, endOfField] = targetBuffer[fieldOffset];
+        const auto sizeOfField = endOfField - startOfField;
+        return bufferView.substr(startOfField, sizeOfField);
+    }
 
 public:
     explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
     ~FieldOffsets() = default;
 
     /// InputFormatter interface functions:
-    void startSetup(size_t numberOfFieldsInSchema, size_t sizeOfFieldDelimiter);
+    void startSetup(const size_t numberOfFieldsInSchema, const size_t sizeOfFieldDelimiter)
+    {
+        PRECONDITION(
+            sizeOfFieldDelimiter <= std::numeric_limits<FieldOffsetsType>::max(),
+            "Size of tuple delimiter must be smaller than: {}",
+            std::numeric_limits<FieldOffsetsType>::max());
+        this->currentIndex = 0;
+        this->sizeOfFieldDelimiter = static_cast<FieldOffsetsType>(sizeOfFieldDelimiter);
+        this->numberOfFieldsInSchema = numberOfFieldsInSchema;
+        if constexpr (NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
+        {
+            this->maxNumberOfTuplesInFormattedBuffer
+                = (this->bufferProvider.getBufferSize()) / ((numberOfFieldsInSchema + 1) * sizeof(FieldOffsetsType));
+            this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema + 1;
+        }
+        else
+        {
+            /// Each field requires two offsets.
+            this->maxNumberOfTuplesInFormattedBuffer
+                = (this->bufferProvider.getBufferSize()) / ((numberOfFieldsInSchema + 1) * (2 * sizeof(FieldOffsetsType)));
+            this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema;
+        }
+        PRECONDITION(
+            this->maxNumberOfTuplesInFormattedBuffer != 0,
+            "The buffer is of size {}, which is not large enough to represent a single tuple.",
+            this->bufferProvider.getBufferSize());
+        this->maxIndex = ((numberOfOffsetsPerTuple)*maxNumberOfTuplesInFormattedBuffer);
+        this->totalNumberOfTuples = 0;
+        this->offsetBuffers.emplace_back(this->bufferProvider.getBufferBlocking());
+    }
+
     /// Assures that there is space to write one more tuple and returns a pointer to write the field offsets (of one tuple) to.
     /// @Note expects that users of function write 'number of fields in schema + 1' offsets to pointer, manually incrementing the pointer by one for each offset.
-    void writeOffsetsOfNextTuple();
-    void writeOffsetAt(FieldOffsetsType offset, FieldOffsetsType idx);
+    void writeOffsetsOfNextTuple()
+    {
+        currentIndex += numberOfOffsetsPerTuple;
+        if (currentIndex >= maxIndex)
+        {
+            allocateNewChildBuffer();
+            currentIndex = 0;
+        }
+    }
+
+    void writeOffsetAt(const FieldOffsetsType offset, const FieldOffsetsType idx)
+    requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
+    {
+        this->offsetBuffers.back()[currentIndex + idx] = offset;
+    }
+    void writeOffsetAt(const FieldOffsetTypePair& offset, const FieldOffsetsType idx)
+    requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
+    {
+        /// It is safe to write, since we always check whether there is space for a new tuple in `writeOffsetsOfNextTuple`
+        this->offsetBuffers.back()[currentIndex + idx] = offset;
+    }
+
 
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
-    void markNoTupleDelimiters();
-    void markWithTupleDelimiters(FieldOffsetsType offsetToFirstTuple, FieldOffsetsType offsetToLastTuple);
+    void markNoTupleDelimiters()
+    {
+        this->offsetOfFirstTuple = std::numeric_limits<FieldOffsetsType>::max();
+        this->offsetOfLastTuple = std::numeric_limits<FieldOffsetsType>::max();
+    }
+    void markWithTupleDelimiters(const FieldOffsetsType offsetToFirstTuple, const FieldOffsetsType offsetToLastTuple)
+    {
+        this->offsetOfFirstTuple = offsetToFirstTuple;
+        this->offsetOfLastTuple = offsetToLastTuple;
+
+        /// Make sure that the number of read fields matches the expected value.
+        if (currentIndex % (numberOfOffsetsPerTuple) != 0)
+        {
+            throw FormattingError(
+                "Number of indexes {} must be a multiple of number of fields in tuple {}", currentIndex, (numberOfOffsetsPerTuple));
+        }
+
+        /// First, set the number of tuples for the current field offsets buffer
+        const auto numberOfTuplesRepresentedInCurrentBuffer = currentIndex / (numberOfOffsetsPerTuple);
+        totalNumberOfTuples += numberOfTuplesRepresentedInCurrentBuffer;
+
+        this->currentIndex = 0;
+    }
 
 private:
     size_t currentIndex{};
     FieldOffsetsType sizeOfFieldDelimiter{};
     size_t numberOfFieldsInSchema{};
+    size_t numberOfOffsetsPerTuple{};
     size_t maxNumberOfTuplesInFormattedBuffer{};
     size_t maxIndex{};
     size_t totalNumberOfTuples{};
     FieldOffsetsType offsetOfFirstTuple{};
     FieldOffsetsType offsetOfLastTuple{};
-    std::vector<FieldOffsetsBuffer> offsetBuffers;
+    std::vector<FieldOffsetsBuffer<typename FieldOffsetTypeSelector<NumOffsetsPerField>::type>> offsetBuffers;
     /// The InputFormatterTask guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance, since the
     /// InputFormatterTask constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets the ABP as an argument
     Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     /// Sets the metadata for the current buffer, uses the buffer provider to get a new buffer.
-    void allocateNewChildBuffer();
+    void allocateNewChildBuffer()
+    {
+        INVARIANT(
+            currentIndex % numberOfOffsetsPerTuple == 0,
+            "Number of indexes {} must be a multiple of number of fields in tuple {}",
+            currentIndex,
+            (numberOfOffsetsPerTuple));
 
-    /// We always add 1 to the number of tuples, because we represent an overfull buffer as the max number of tuples + 1.
-    /// When iterating over the index buffers, we always deduct 1 from the number of tuples, yielding the correct number of tuples in both cases
-    /// (overfull, not overfull)
-    inline void setNumberOfRawTuples(FieldOffsetsType numberOfTuples);
+        totalNumberOfTuples += maxNumberOfTuplesInFormattedBuffer;
+        this->offsetBuffers.emplace_back(bufferProvider.getBufferBlocking());
+        this->currentIndex = 0;
+    }
 };
 }

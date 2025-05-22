@@ -26,6 +26,8 @@
 namespace NES::InputFormatters
 {
 
+constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
+
 struct CSVMetaData
 {
     explicit CSVMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
@@ -36,13 +38,15 @@ private:
     std::string tupleDelimiter;
 };
 
-class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, CSVMetaData, /* IsFormattingRequired */ true>
+class CSVInputFormatIndexer final
+    : public InputFormatIndexer<FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>, CSVMetaData, /* IsFormattingRequired */ true>
 {
 public:
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
     ~CSVInputFormatIndexer() override = default;
 
-    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
+    void indexRawBuffer(
+        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
