@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <WindowBuildPhysicalOperator.hpp>
 
 #include <memory>
 #include <optional>
@@ -25,8 +26,8 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
-#include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -88,6 +89,10 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
+
+    /// Creating the local state for the window operator build.
+    const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const

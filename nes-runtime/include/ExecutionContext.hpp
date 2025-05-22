@@ -178,7 +178,6 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
-    std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
@@ -188,6 +187,9 @@ struct ExecutionContext final
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
+
+private:
+    std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
 };
 
 }

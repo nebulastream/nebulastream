@@ -29,6 +29,7 @@
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -56,18 +57,21 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto sliceReference = invoke(
-        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
+        +[](OperatorHandler* ptrOpHandler, const Timestamp timestampVal)
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
             const auto createFunction = opHandler->getCreateNewSlicesFunction();
-            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
+            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction)[0].get());
         },
-        operatorHandlerRef,
+        operatorHandler,
         timestamp);
     const auto nljPagedVectorMemRef = invoke(
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
