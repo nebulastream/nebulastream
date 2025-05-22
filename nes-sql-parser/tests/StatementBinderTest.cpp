@@ -12,6 +12,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <StatementHandler.hpp>
 #include "Common/DataTypes/BasicTypes.hpp"
 #include "Common/DataTypes/DataType.hpp"
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -40,11 +41,14 @@ using namespace NES;
 class StatementBinderTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog;
-    std::shared_ptr<Binder::StatementBinder> binder;
+    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
+    std::shared_ptr<StatementBinder> binder;
+    std::shared_ptr<StatementHandler> statementHandler;
+    CLI::Nebuli nebuli;
+    CLI::Optimizer optimizer;
 
-    /* Will be called before a test is executed. */
-    static void SetUpTestCase()
+        /* Will be called before a test is executed. */
+        static void SetUpTestCase()
     {
         Logger::setupLogging("StatementBinderTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatementBinderTest test case.");
@@ -53,8 +57,10 @@ public:
     {
         BaseUnitTest::SetUp();
         sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
-        binder = std::make_shared<Binder::StatementBinder>(
+            nebuli =
+        binder = std::make_shared<StatementBinder>(
             sourceCatalog, std::bind(AntlrSQLQueryParser::bindLogicalQueryPlan, std::placeholders::_1));
+            statementHandler = std::make_shared<DefaultStatementHandler>(sourceCatalog, );
     }
 };
 
@@ -75,8 +81,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32, attribute2 VARSIZED)";
     const auto statement1 = binder->parseAndBind(createLogicalSourceStatement);
     ASSERT_TRUE(statement1.has_value());
-    ASSERT_TRUE(std::holds_alternative<Binder::CreateLogicalSourceStatement>(*statement1));
-    const auto [actualSource] = std::get<Binder::CreateLogicalSourceStatement>(*statement1);
+    ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
+    const auto createStatement = std::get<CreateLogicalSourceStatement>(*statement1);
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
     expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideBasicType(BasicType::UINT32));
@@ -93,8 +99,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
         = Sources::SourceValidationProvider::provide("File", std::move(unvalidatedConfig));
 
     ASSERT_TRUE(statement2.has_value());
-    ASSERT_TRUE(std::holds_alternative<Binder::CreatePhysicalSourceStatement>(*statement2));
-    const auto [physicalSource] = std::get<Binder::CreatePhysicalSourceStatement>(*statement2);
+    ASSERT_TRUE(std::holds_alternative<CreatePhysicalSourceStatement>(*statement2));
+    const auto [physicalSource] = std::get<CreatePhysicalSourceStatement>(*statement2);
     ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
     ASSERT_EQ(physicalSource.getWorkerId(), INITIAL<WorkerId>);
     ASSERT_EQ(physicalSource.getParserConfig(), expectedParserConfig);
@@ -106,8 +112,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE 0";
     const auto statement3 = binder->parseAndBind(dropPhysicalSourceStatement);
     ASSERT_TRUE(statement3.has_value());
-    ASSERT_TRUE(std::holds_alternative<Binder::DropPhysicalSourceStatement>(*statement3));
-    const auto [dropped] = std::get<Binder::DropPhysicalSourceStatement>(*statement3);
+    ASSERT_TRUE(std::holds_alternative<DropPhysicalSourceStatement>(*statement3));
+    const auto [dropped] = std::get<DropPhysicalSourceStatement>(*statement3);
     ASSERT_EQ(dropped.getPhysicalSourceId(), 0);
     auto remainingPhysicalSources = sourceCatalog->getPhysicalSources(actualSource);
     ASSERT_TRUE(remainingPhysicalSources.has_value());
@@ -116,8 +122,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string dropLogicalSourceStatement = "DROP LOGICAL SOURCE testSource";
     const auto statement4 = binder->parseAndBind(dropLogicalSourceStatement);
     ASSERT_TRUE(statement4.has_value());
-    ASSERT_TRUE(std::holds_alternative<Binder::DropLogicalSourceStatement>(*statement4));
-    const auto [dropped2] = std::get<Binder::DropLogicalSourceStatement>(*statement4);
+    ASSERT_TRUE(std::holds_alternative<DropLogicalSourceStatement>(*statement4));
+    const auto [dropped2] = std::get<DropLogicalSourceStatement>(*statement4);
     ASSERT_EQ(dropped2.getLogicalSourceName(), "testSource");
     auto remainingLogicalSources = sourceCatalog->getAllSources();
     ASSERT_EQ(remainingLogicalSources.size(), 0);

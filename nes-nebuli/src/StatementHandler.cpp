@@ -13,8 +13,8 @@
 */
 #include <any>
 #include <expected>
-#include "SQLQueryParser/StatementBinder.hpp"
 #include <ErrorHandling.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 
 
 #include <StatementHandler.hpp>
@@ -23,8 +23,13 @@
 namespace NES
 {
 
+SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<Catalogs::Source::SourceCatalog>& source_catalog)
+    : sourceCatalog(source_catalog)
+{
+}
+
 std::expected<CreateLogicalSourceStatementResult, Exception>
-DefaultStatementHandler::operator()(const Binder::CreateLogicalSourceStatement& statement) noexcept
+SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement) noexcept
 {
     if (const auto created = sourceCatalog->addLogicalSource(statement.name, statement.schema))
     {
@@ -34,7 +39,7 @@ DefaultStatementHandler::operator()(const Binder::CreateLogicalSourceStatement& 
 }
 
 std::expected<CreatePhysicalSourceStatementResult, Exception>
-DefaultStatementHandler::operator()(const Binder::CreatePhysicalSourceStatement& statement) noexcept
+SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement) noexcept
 {
     if (const auto created = sourceCatalog->addPhysicalSource(
             statement.attachedTo, statement.sourceType, statement.workerId, statement.sourceConfig, statement.parserConfig))
@@ -45,7 +50,7 @@ DefaultStatementHandler::operator()(const Binder::CreatePhysicalSourceStatement&
 }
 
 std::expected<DropLogicalSourceStatementResult, Exception>
-DefaultStatementHandler::operator()(const Binder::DropLogicalSourceStatement& statement) noexcept
+SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement) noexcept
 {
     if (sourceCatalog->removeLogicalSource(statement.source))
     {
@@ -55,7 +60,7 @@ DefaultStatementHandler::operator()(const Binder::DropLogicalSourceStatement& st
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception>
-DefaultStatementHandler::operator()(Binder::DropPhysicalSourceStatement statement) noexcept
+SourceStatementHandler::operator()(DropPhysicalSourceStatement statement) noexcept
 {
     if (sourceCatalog->removePhysicalSource(statement.descriptor))
     {
@@ -64,27 +69,24 @@ DefaultStatementHandler::operator()(Binder::DropPhysicalSourceStatement statemen
     return std::unexpected{UnregisteredSource("Unknown physical source: {}", statement.descriptor)};
 }
 
-std::expected<DropQueryStatementResult, Exception> DefaultStatementHandler::operator()(Binder::DropQueryStatement statement) noexcept
+QueryStatementHandler::QueryStatementHandler(const std::shared_ptr<CLI::Nebuli>& nebuli, const std::shared_ptr<CLI::Optimizer>& optimizer)
+    : nebuli(nebuli), optimizer(optimizer)
 {
-    nebuli.stopQuery(statement.id);
+}
+
+std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(DropQueryStatement statement) noexcept
+{
+    nebuli->stopQuery(statement.id);
     return DropQueryStatementResult{statement.id};
 }
 
-std::expected<StartQueryStatementResult, Exception> DefaultStatementHandler::operator()(std::shared_ptr<QueryPlan> statement)
+std::expected<StartQueryStatementResult, Exception> QueryStatementHandler::operator()(std::shared_ptr<QueryPlan> statement)
 {
-    const auto optimizedPlan = optimizer.optimize(statement);
-    const auto id = nebuli.registerQuery(optimizedPlan);
-    nebuli.startQuery(id);
+    const auto optimizedPlan = optimizer->optimize(statement);
+    const auto id = nebuli->registerQuery(optimizedPlan);
+    nebuli->startQuery(id);
     return StartQueryStatementResult{id};
+
 }
-std::expected<StatementResult, Exception> DefaultStatementHandler::execute(Binder::Statement statement)
-{
-    try
-    {
-        return std::visit(*this, statement);
-    } catch (Exception& e)
-    {
-        return std::unexpected{e};
-    }
-}
+
 }

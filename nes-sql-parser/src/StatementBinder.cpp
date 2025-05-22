@@ -42,7 +42,7 @@
 #include <SerializableOperator.pb.h>
 #include <function.hpp>
 
-namespace NES::Binder
+namespace NES
 {
 
 StatementBinder::StatementBinder(

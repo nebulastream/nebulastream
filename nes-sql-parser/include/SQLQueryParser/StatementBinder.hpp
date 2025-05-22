@@ -29,7 +29,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Binder
+namespace NES
 {
 
 /// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
@@ -60,6 +60,8 @@ struct DropPhysicalSourceStatement
     Sources::SourceDescriptor descriptor;
 };
 
+using QueryStatement = std::shared_ptr<QueryPlan>;
+
 struct DropQueryStatement
 {
     QueryId id;
@@ -71,7 +73,7 @@ using Statement = std::variant<
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropQueryStatement,
-    std::shared_ptr<QueryPlan>>;
+    QueryStatement>;
 
 using BindingResult = std::expected<Statement, Exception>;
 

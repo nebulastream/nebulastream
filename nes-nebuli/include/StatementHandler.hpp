@@ -13,6 +13,9 @@
 */
 
 #pragma once
+#include "SQLQueryParser/StatementBinder.hpp"
+
+
 #include <NebuLI.hpp>
 
 
@@ -56,36 +59,29 @@ using StatementResult = std::variant<
         DropPhysicalSourceStatementResult,
         DropQueryStatementResult>;
 
-class StatementHandler
-{
-public:
-    virtual ~StatementHandler() = default;
-    virtual std::expected<StatementResult, Exception> execute(Binder::Statement statement) noexcept = 0;
-};
+template <typename Handler, typename... Statements>
+concept StatementHandlerFor = (requires(Handler handler_instance, Statements statement_instance) {
+    { handler_instance(statement_instance) };
+} && ...);
 
-
-class DefaultStatementHandler final : public StatementHandler
+class SourceStatementHandler final
 {
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
-    CLI::Nebuli nebuli;
-    CLI::Optimizer optimizer;
-
 public:
-    DefaultStatementHandler(
-            const std::shared_ptr<Catalogs::Source::SourceCatalog>& source_catalog,
-            const CLI::Nebuli& nebuli,
-            const CLI::Optimizer& optimizer)
-            : sourceCatalog(source_catalog), nebuli(nebuli), optimizer(optimizer)
-    {
-    }
+    explicit SourceStatementHandler(const std::shared_ptr<Catalogs::Source::SourceCatalog>& source_catalog);
+    std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement);
+    std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement);
+    std::expected<DropLogicalSourceStatementResult, Exception> operator()(const DropLogicalSourceStatement& statement);
+    std::expected<DropPhysicalSourceStatementResult, Exception> operator()(DropPhysicalSourceStatement statement);
+};
 
-    std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const Binder::CreateLogicalSourceStatement& statement);
-    std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const Binder::CreatePhysicalSourceStatement& statement);
-    std::expected<DropLogicalSourceStatementResult, Exception> operator()(const Binder::DropLogicalSourceStatement& statement);
-    std::expected<DropPhysicalSourceStatementResult, Exception> operator()(Binder::DropPhysicalSourceStatement statement);
-    std::expected<DropQueryStatementResult, Exception> operator()(Binder::DropQueryStatement statement);
-    std::expected<StartQueryStatementResult, Exception> operator()(std::shared_ptr<QueryPlan> statement);
-
-    std::expected<StatementResult, Exception> execute(Binder::Statement statement) noexcept override;
+class QueryStatementHandler final
+{
+    std::shared_ptr<CLI::Nebuli> nebuli;
+    std::shared_ptr<CLI::Optimizer> optimizer;
+public:
+    explicit QueryStatementHandler(const std::shared_ptr<CLI::Nebuli>& nebuli, const std::shared_ptr<CLI::Optimizer>& optimizer);
+    std::expected<StartQueryStatementResult, Exception> operator()(QueryStatement statement);
+    std::expected<DropQueryStatementResult, Exception> operator()(DropQueryStatement statement);
 };
 }
