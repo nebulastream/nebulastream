@@ -22,7 +22,7 @@ namespace NES
 
 InputFormatIndexerRegistryReturnType RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>(NativeInputFormatIndexer());
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>({}, QuotationType::NONE);
 }
 
 }
