@@ -27,6 +27,12 @@
 namespace NES::InputFormatters::RawValueParser
 {
 
+enum class QuotationType : uint8_t
+{
+    NONE,
+    DOUBLE_QUOTE
+};
+
 using ParseFunctionSignature = std::function<void(
     std::string_view inputString,
     size_t writeOffsetInBytes,
@@ -51,9 +57,23 @@ auto parseFieldString()
     };
 }
 
-/// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-ParseFunctionSignature getBasicStringParseFunction();
+template <typename T>
+auto parseQuotedFieldString()
+{
+    return [](const std::string_view quotedFieldValueString,
+              const size_t writeOffsetInBytes,
+              Memory::AbstractBufferProvider&,
+              Memory::TupleBuffer& tupleBufferFormatted)
+    {
+        INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
+        const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
+        const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
+        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *valuePtr = parsedValue;
+    };
+}
 
-/// Takes a vector containing parse function for fields. Adds a parse function that parses a basic NebulaStream type to the vector.
-ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType);
+/// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
+ParseFunctionSignature getParseFunction(const DataType::Type physicalType, QuotationType quotationType);
 }

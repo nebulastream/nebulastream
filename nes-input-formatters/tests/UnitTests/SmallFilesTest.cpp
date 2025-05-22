@@ -84,6 +84,7 @@ class SmallFilesTest : public Testing::BaseUnitTest
         {"Spacecraft_Telemetry", /// generated
          TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
+    SourceCatalog sourceCatalog;
 public:
     static void SetUpTestCase()
     {

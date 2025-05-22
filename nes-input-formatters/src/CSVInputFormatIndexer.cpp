@@ -125,7 +125,7 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
     auto inputFormatter
         = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
     return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>, CSVMetaData, true>(
-        std::move(inputFormatter));
+        std::move(inputFormatter), RawValueParser::QuotationType::NONE);
 }
 
 }
