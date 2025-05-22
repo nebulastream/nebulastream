@@ -168,7 +168,9 @@ class InputFormatterTask
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
 
-    explicit InputFormatterTask(FormatterType inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
+    explicit InputFormatterTask(
+        FormatterType inputFormatIndexer, const Schema& schema, const QuotationType quotationType, const ParserConfig& parserConfig)
+
         : inputFormatIndexer(std::move(inputFormatIndexer))
         , schemaInfo(schema)
         , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, schema})
@@ -179,12 +181,7 @@ public:
         /// field number, load the correct function for parsing from the vector.
         , parseFunctions(
               schema.getFields()
-              | std::views::transform(
-                  [](const auto& field)
-                  {
-                      return (field.dataType.isType(DataType::Type::VARSIZED)) ? getBasicStringParseFunction()
-                                                                               : getBasicTypeParseFunction(field.dataType.type);
-                  })
+              | std::views::transform([quotationType](const auto& field) { return getParseFunction(field.dataType.type, quotationType); })
               | std::ranges::to<std::vector>())
     {
     }

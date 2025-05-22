@@ -45,6 +45,8 @@ public:
     using FieldIndexFunctionType = NoopFieldIndexFunction;
     using IndexerMetaData = NativeMetaData;
 
+    NativeInputFormatIndexer() = default;
+
     void indexRawBuffer(NoopFieldIndexFunction&, const RawTupleBuffer&, const NativeMetaData&) const
     {
         ///Noop
