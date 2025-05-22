@@ -24,6 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
@@ -70,6 +71,23 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     auto newOnField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     INVARIANT(dynamic_cast<const Numeric*>(newOnField.getDataType().get()), "aggregations on non numeric fields is not supported.");
 
+    /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
+    if (const auto* integerDataType = dynamic_cast<const Integer*>(onField.getDataType().get()); integerDataType)
+    {
+        if (integerDataType->getIsSigned())
+        {
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::INT64)).get<FieldAccessLogicalFunction>();
+        }
+        else
+        {
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::UINT64)).get<FieldAccessLogicalFunction>();
+        }
+    }
+    else
+    {
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::FLOAT64)).get<FieldAccessLogicalFunction>();
+    }
+
     ///Set fully qualified name for the as Field
     const auto onFieldName = newOnField.getFieldName();
     const auto asFieldName = asField.getFieldName();
@@ -88,7 +106,7 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     auto newAsField = asField.withDataType(getFinalAggregateStamp());
     asField = newAsField.get<FieldAccessLogicalFunction>();
     onField = newOnField;
-    inputStamp = onField.getDataType();
+    inputStamp = newOnField.getDataType();
 }
 
 NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
