@@ -30,8 +30,9 @@
 
 namespace NES::InputFormatters
 {
+constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
-class CSVInputFormatter final : public InputFormatter<FieldOffsets, /* IsNativeFormat */ false>
+class CSVInputFormatter final : public InputFormatter<FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>, /* IsNativeFormat */ false>
 {
 public:
     static constexpr std::string_view NAME = "CSV";
@@ -45,7 +46,7 @@ public:
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
     void
-    setupFieldAccessFunctionForBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const override;
+    setupFieldAccessFunctionForBuffer(FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
     static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);

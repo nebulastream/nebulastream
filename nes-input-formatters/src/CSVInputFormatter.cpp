@@ -38,8 +38,9 @@
 
 namespace
 {
+
 void setupFieldAccessFunctionForTuple(
-    NES::InputFormatters::FieldOffsets& fieldOffsets,
+    NES::InputFormatters::FieldOffsets<NES::InputFormatters::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
     const std::string_view tuple,
     const NES::InputFormatters::FieldOffsetsType startIdxOfTuple,
     const std::string_view fieldDelimiter,
@@ -78,7 +79,7 @@ CSVInputFormatter::CSVInputFormatter(const InputFormatterDescriptor& descriptor,
 }
 
 void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
-    FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const
+    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->fieldDelimiter.size());
 
@@ -143,7 +144,7 @@ InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVIn
         arguments.inputFormatterConfig.getHasSpanningTuples() == hasSpanningTuples,
         "The CSVInputFormatter does not support parsing buffers without spanning tuples.");
     auto inputFormatter = std::make_unique<CSVInputFormatter>(arguments.inputFormatterConfig, arguments.numberOfFieldsInSchema);
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets, hasSpanningTuples>(
+    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>, hasSpanningTuples>(
         std::move(inputFormatter), tupleDelimiter);
 }
 
