@@ -30,8 +30,9 @@
 
 namespace
 {
+
 void initializeIndexFunctionForTuple(
-    NES::FieldOffsets& fieldOffsets,
+    NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
     const std::string_view tuple,
     const NES::FieldIndex startIdxOfTuple,
     const NES::ParserConfig& config,
@@ -67,7 +68,8 @@ CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t n
 {
 }
 
-void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
+void CSVInputFormatIndexer::indexRawBuffer(
+    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
