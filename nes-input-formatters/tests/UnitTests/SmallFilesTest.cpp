@@ -21,8 +21,11 @@
 #include <ios>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <span>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -45,6 +48,7 @@
 #include <TestTaskQueue.hpp>
 #include "Common/DataTypes/VariableSizedDataType.hpp"
 #include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
+#include "Configuration/WorkerConfiguration.hpp"
 #include "Util/Common.hpp"
 
 /// NOLINTBEGIN(readability-magic-numbers)
@@ -54,39 +58,22 @@ class SmallFilesTest : public Testing::BaseUnitTest
 {
     struct TestFile
     {
-        std::filesystem::path fileName;
+        std::string fileName;
         std::vector<InputFormatterTestUtil::TestDataTypes> schemaFieldTypes;
     };
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns",
-         TestFile{.fileName = std::filesystem::path("TwoIntegerColumns_20_Lines.csv"), .schemaFieldTypes = {INT32, INT32}}},
+        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns_20_Lines", .schemaFieldTypes = {INT32, INT32}}},
         {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
-             .fileName = std::filesystem::path("Bimbo_1_1000_Lines.csv"),
+             .fileName = "Bimbo_1_1000_Lines",
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{
-             .fileName = std::filesystem::path("Food_1_1000_Lines.csv"),
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+         TestFile{.fileName = "Food_1_1000_Lines", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
          TestFile{
-             .fileName = std::filesystem::path("Spacecraft_Telemetry_1000_Lines.csv"),
-             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}},
-        {"TwoIntegerColumns_binary",
-         TestFile{.fileName = std::filesystem::path("TwoIntegerColumns_20_Lines_binary.bin"), .schemaFieldTypes = {INT32, INT32}}},
-        {"Bimbo_1_1000_binary",
-         TestFile{
-             .fileName = std::filesystem::path("Bimbo_1_1000_Lines_binary.bin"),
-             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Food_1_binary",
-         TestFile{
-             .fileName = std::filesystem::path("Food_1_1000_Lines_binary.bin"),
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
-        {"Spacecraft_Telemetry_binary", /// generated
-         TestFile{
-             .fileName = std::filesystem::path("Spacecraft_Telemetry_1000_Lines_binary.bin"),
+             .fileName = "Spacecraft_Telemetry_1000_Lines",
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
 public:
@@ -165,7 +152,6 @@ public:
             const auto sizeOfBufferInBytes = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
             file.write(buffer.getBuffer<const char>(), static_cast<std::streamsize>(sizeOfBufferInBytes));
         }
-
     }
 
     static std::vector<Memory::TupleBuffer> loadTupleBuffersFromFile(
@@ -176,7 +162,8 @@ public:
     {
         const auto fileSize = std::filesystem::file_size(filepath);
         const auto sizeOfSchemaInBytes = schema.getSchemaSizeInBytes();
-        if (std::ifstream file(filepath, std::ifstream::binary); file.is_open() && fileSize >= sizeof(BinaryBufferHeader)) // Todo: the check does not make sense
+        if (std::ifstream file(filepath, std::ifstream::binary);
+            file.is_open() && fileSize >= sizeof(BinaryBufferHeader)) // Todo: the check does not make sense
         {
             // second arg '_': sizeOfBuffersInBytes
             const auto [numberOfBuffers, _] = [](std::ifstream& file, const std::filesystem::path& filepath)
@@ -276,13 +263,17 @@ public:
     }
 
     void writeTupleBuffersToFile(
-        std::vector<Memory::TupleBuffer>& resultBufferVec, const Schema& schema, const std::filesystem::path& actualResultFilePath, const std::vector<size_t>& varSizedFieldOffsets) const
+        std::vector<Memory::TupleBuffer>& resultBufferVec,
+        const Schema& schema,
+        const std::filesystem::path& actualResultFilePath,
+        const std::vector<size_t>& varSizedFieldOffsets) const
     {
         TestUtil::sortTupleBuffers(resultBufferVec);
         const auto sizeOfSchemaInBytes = schema.getSchemaSizeInBytes();
 
         // Todo: replace pair with struct (note that first/left is 1-based)
-        const std::vector<std::pair<size_t, size_t>> pagedSizedChunkOffsets = [](const std::vector<Memory::TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
+        const std::vector<std::pair<size_t, size_t>> pagedSizedChunkOffsets
+            = [](const std::vector<Memory::TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
         {
             size_t numBytesInNextChunk = 0;
             size_t numTuplesInNextChunk = 0;
@@ -320,7 +311,7 @@ public:
             ++nextChunkSequenceNumber;
         }
         appendFile.close();
-     }
+    }
 
     std::vector<size_t> getVarSizedFieldOffsets(const Schema& schema) const
     {
@@ -339,17 +330,53 @@ public:
         return varSizedFieldOffsets;
     }
 
-    template<bool WriteResultsExpectedFile = false>
+
+    std::optional<std::filesystem::path>
+    findFileByName(const std::string& fileNameWithoutExtension, const std::filesystem::path& directory) const
+    {
+        // Check if directory exists
+        if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
+        {
+            return std::nullopt;
+        }
+
+        // Iterate through directory entries
+        for (const auto& entry : std::filesystem::directory_iterator(directory))
+        {
+            if (entry.is_regular_file())
+            {
+                // Get the filename without extension (stem)
+                if (std::string stem = entry.path().stem().string(); stem == fileNameWithoutExtension)
+                {
+                    return entry.path();
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    template <bool WriteResultsExpectedFile = false>
     void runTest(const TestConfig& testConfig) const
     {
-        constexpr size_t SIZE_OF_FORMATTED_BUFFERS = 4096;
+        const size_t sizeOfFormattedBuffers = Configurations::WorkerConfiguration().bufferSizeInBytes.getValue();
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
         PRECONDITION(
-            SIZE_OF_FORMATTED_BUFFERS >= schema->getSchemaSizeInBytes(),
+            sizeOfFormattedBuffers >= schema->getSchemaSizeInBytes(),
             "The formatted buffer must be large enough to hold at least one tuple.");
 
-        const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType / currentTestFile.fileName;
+        const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType;
+        const auto testFilePath = [this](TestFile currentTestFile, const std::filesystem::path& testDirPath, std::string_view formatterType)
+        {
+            if (const auto testFilePath = findFileByName(currentTestFile.fileName, testDirPath))
+            {
+                return testFilePath.value();
+            }
+            throw InvalidConfigParameter(
+                "Could not find file test file: {}.<file_ending_of_{}>", testDirPath / currentTestFile.fileName, formatterType);
+        }(currentTestFile, testDirPath, testConfig.formatterType);
+
         const auto fileSizeInBytes = file_size(testFilePath);
         const auto numberOfExpectedRawBuffers
             = (fileSizeInBytes / testConfig.sizeOfRawBuffers) + static_cast<uint64_t>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
@@ -375,7 +402,7 @@ public:
         const auto varSizedFieldOffsets = getVarSizedFieldOffsets(*schema);
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
-            auto testBufferManager = Memory::BufferManager::create(SIZE_OF_FORMATTED_BUFFERS, numberOfRequiredFormattedBuffers);
+            auto testBufferManager = Memory::BufferManager::create(sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
             auto inputFormatterTask
                 = InputFormatterTestUtil::createInputFormatterTask(schema, testConfig.formatterType, testConfig.hasSpanningTuples);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
@@ -406,8 +433,8 @@ public:
             std::vector resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
 
             /// Load expected buffers
-            const auto expectedResultDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA)
-                / std::format("Expected/{}.nes", currentTestFile.fileName.stem().string());
+            const auto expectedResultDirPath
+                = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", currentTestFile.fileName);
 
             if constexpr (WriteResultsExpectedFile)
             {
@@ -478,7 +505,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "TwoIntegerColumns_binary",
+            .testFileName = "TwoIntegerColumns",
             .formatterType = "Native",
             .hasSpanningTuples = false,
             /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
@@ -492,7 +519,7 @@ TEST_F(SmallFilesTest, testBimboDataBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_1000_binary",
+            .testFileName = "Bimbo_1_1000",
             .formatterType = "Native",
             .hasSpanningTuples = true,
             .numberOfIterations = 10,
@@ -505,7 +532,7 @@ TEST_F(SmallFilesTest, DISABLED_testFoodDataBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "Food_1_binary",
+            .testFileName = "Food_1",
             .formatterType = "Native",
             .hasSpanningTuples = true,
             .numberOfIterations = 1,
