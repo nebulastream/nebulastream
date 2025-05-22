@@ -61,18 +61,8 @@ void FileSource::close()
 }
 size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    auto before = std::chrono::high_resolution_clock::now().time_since_epoch();
-
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
-    const auto numBytesRead = this->inputFile.gcount();
-    this->totalNumBytesRead += numBytesRead;
-
-    auto after = std::chrono::high_resolution_clock::now().time_since_epoch();
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count();
-    std::cout << "FileSource needed " << elapsed << "μs to fillTupleBuffer of "
-              << tupleBuffer.getBufferSize() << "bytes." << std::endl;
-
-    return numBytesRead;
+    return this->inputFile.gcount();
 }
 
 NES::Configurations::DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
