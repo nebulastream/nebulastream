@@ -20,6 +20,8 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/DelayShuffle/DelayBuffer.hpp>
+#include <Execution/Operators/DelayShuffle/ShuffleTuples.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -64,6 +66,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleBufferOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalShuffleTuplesOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortTuplesInBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
@@ -107,6 +111,8 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
+    std::unordered_map<PipelineId, std::stringstream> pipelineIdToText;
+
     for (const auto& node : nodes)
     {
         /// The scan and emit phase already contain the schema changes of the physical project operator.
@@ -115,9 +121,34 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
+        /// Adding the node and the pipeline id to the pipelineIdToText
+        if (queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
+        {
+            continue;
+        }
+        if (not pipelineIdToText.contains(operatorPipeline->getPipelineId()))
+        {
+            pipelineIdToText[operatorPipeline->getPipelineId()] << "";
+        }
+        pipelineIdToText[operatorPipeline->getPipelineId()] << " Node: " << *NES::Util::as<PhysicalOperators::PhysicalOperator>(node)
+                                                            << "\n";
+
+
         parentOperator
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
+
+    if (not queryCompilerConfig.pipelinesTxtFilePath.getValue().empty())
+    {
+        std::ofstream file(queryCompilerConfig.pipelinesTxtFilePath.getValue(), std::ios::app);
+        for (const auto& [pipelineId, text] : pipelineIdToText)
+        {
+            file << "Pipeline: " << pipelineId << "\n";
+            file << text.str();
+        }
+    }
+
+
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (const auto& root : rootOperators)
     {
@@ -226,6 +257,34 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             parentOperator->setChild(executableAggregationBuild);
             return executableAggregationBuild;
         }
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode))
+    {
+        auto shuffleBufferOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleBufferOperator>(operatorNode);
+        operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::DelayBufferOperatorHandler>(
+            shuffleBufferOperator->getUnorderedness(), shuffleBufferOperator->getMinDelay(), shuffleBufferOperator->getMaxDelay()));
+        const auto shuffleBuffers = std::make_shared<Runtime::Execution::Operators::DelayBuffer>(operatorHandlers.size() - 1);
+        parentOperator->setChild(shuffleBuffers);
+        return shuffleBuffers;
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalShuffleTuplesOperator>(operatorNode))
+    {
+        /// pass buffer size here
+        auto shuffleTuplesOperator = NES::Util::as<PhysicalOperators::PhysicalShuffleTuplesOperator>(operatorNode);
+        INVARIANT(
+            shuffleTuplesOperator->getInputSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+            "Currently only row layout is supported");
+        auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(shuffleTuplesOperator->getInputSchema(), bufferSize);
+        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+            = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+
+
+        operatorHandlers.push_back(
+            std::make_unique<Runtime::Execution::Operators::ShuffleTuplesOperatorHandler>(shuffleTuplesOperator->getUnorderedness()));
+        const auto shuffleTuplesExec
+            = std::make_shared<Runtime::Execution::Operators::ShuffleTuples>(std::move(memoryProvider), operatorHandlers.size() - 1);
+        pipeline.setRootOperator(shuffleTuplesExec);
+        return shuffleTuplesExec;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalSortTuplesInBuffer>(operatorNode))
     {

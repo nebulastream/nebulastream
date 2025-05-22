@@ -10,18 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        Map.cpp
-        Selection.cpp
-        Operator.cpp
-        Emit.cpp
-        EmitOperatorHandler.cpp
-        Scan.cpp
-        ExecutionContext.cpp)
-
-add_subdirectory(Watermark)
-add_subdirectory(Streaming)
-add_subdirectory(SliceCache)
-add_subdirectory(SliceStore)
-add_subdirectory(DelayShuffle)
-add_subdirectory(SortTuples)
+add_executable(tcpserver TCPServer.cpp)
