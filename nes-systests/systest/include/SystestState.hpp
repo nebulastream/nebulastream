@@ -29,11 +29,9 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
@@ -76,7 +74,7 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        std::shared_ptr<DecomposedQueryPlan> queryPlan,
+        LogicalPlan queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
@@ -97,7 +95,7 @@ struct Query
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    LogicalPlan queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
@@ -109,7 +107,7 @@ struct RunningQuery
 {
     Query query;
     QueryId queryId = INVALID_QUERY_ID;
-    Runtime::QuerySummary querySummary;
+    QuerySummary querySummary;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;

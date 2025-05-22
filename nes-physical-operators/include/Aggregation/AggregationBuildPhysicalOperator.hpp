@@ -21,8 +21,8 @@
 #include <vector>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
