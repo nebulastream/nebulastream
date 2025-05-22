@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <numeric>
 #include <vector>
@@ -23,21 +24,22 @@ namespace NES
 /// Calculates and stores a rolling average over the last n items
 /// IMPORTANT: This class is NOT thread-safe
 template <typename T>
+requires(std::integral<T> || std::floating_point<T>)
 class RollingAverage
 {
     std::vector<T> buffer;
     uint64_t windowSize;
     uint64_t index{0};
-    uint64_t count{0};
+    uint64_t rollingCount{0};
 
 public:
     explicit RollingAverage(uint64_t windowSize) : buffer(windowSize, 0), windowSize(windowSize) { }
 
     double add(T val)
     {
-        if (count < windowSize)
+        if (rollingCount < windowSize)
         {
-            ++count;
+            ++rollingCount;
         }
 
         buffer[index] = val;
@@ -48,13 +50,13 @@ public:
 
     double getAverage()
     {
-        if (count == 0)
+        if (rollingCount == 0)
         {
             return T(0);
         }
 
         const double sum = std::accumulate(buffer.begin(), buffer.end(), 0.0);
-        return sum / count;
+        return sum / rollingCount;
     }
 };
 

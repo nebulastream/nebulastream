@@ -19,10 +19,22 @@
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
+
+/// Stores all necessary intermediates for window operator build to reduce calling proxy functions for each tuple.
+class WindowOperatorBuildLocalState : public OperatorState
+{
+public:
+    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler) : operatorHandler(operatorHandler) { }
+    nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
+
+private:
+    nautilus::val<OperatorHandler*> operatorHandler;
+};
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
 /// It is part of the first phase (build) that builds up the state of the window operator.
