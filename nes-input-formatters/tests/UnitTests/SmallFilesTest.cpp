@@ -396,7 +396,7 @@ public:
         ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(1000)), Sources::SourceReturnType::TryStopResult::SUCCESS);
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2
+        const auto numberOfRequiredFormattedBuffers = (rawBuffers.size() * 2) + 1; //Todo: figure out what to set for JSON
         const auto varSizedFieldOffsets = getVarSizedFieldOffsets(*schema);
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
@@ -449,6 +449,53 @@ public:
     }
 };
 
+TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testBimboDataJSON)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testFoodDataJSON)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "Food",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "Spacecraft_Telemetry",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 4096});
+}
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {

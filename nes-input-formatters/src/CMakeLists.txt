@@ -22,5 +22,7 @@ add_source_files(nes-input-formatters
 # Register plugins
 add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)
 add_plugin(CSV InputFormatterValidation nes-input-formatters CSVInputFormatter.cpp)
+add_plugin(JSON InputFormatter nes-input-formatters JSONInputFormatter.cpp)
+add_plugin(JSON InputFormatterValidation nes-input-formatters JSONInputFormatter.cpp)
 add_plugin(Native InputFormatter nes-input-formatters NativeInputFormatter.cpp)
 add_plugin(Native InputFormatterValidation nes-input-formatters NativeInputFormatter.cpp)
