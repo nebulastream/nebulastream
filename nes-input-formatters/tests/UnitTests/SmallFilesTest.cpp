@@ -64,17 +64,15 @@ class SmallFilesTest : public Testing::BaseUnitTest
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns_20_Lines", .schemaFieldTypes = {INT32, INT32}}},
-        {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
+        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns", .schemaFieldTypes = {INT32, INT32}}},
+        {"Bimbo", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
-             .fileName = "Bimbo_1_1000_Lines",
+             .fileName = "Bimbo",
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{.fileName = "Food_1_1000_Lines", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+        {"Food", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
+         TestFile{.fileName = "Food", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
-         TestFile{
-             .fileName = "Spacecraft_Telemetry_1000_Lines",
-             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
+         TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
 public:
     static void SetUpTestCase()
@@ -398,7 +396,7 @@ public:
         ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(1000)), Sources::SourceReturnType::TryStopResult::SUCCESS);
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2;
+        const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2
         const auto varSizedFieldOffsets = getVarSizedFieldOffsets(*schema);
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
@@ -451,7 +449,7 @@ public:
     }
 };
 
-//Todo: don't allow to change 'sizeOfFormattedBuffers', then fill test buffers
+
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(
@@ -468,7 +466,7 @@ TEST_F(SmallFilesTest, testBimboData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_1000",
+            .testFileName = "Bimbo",
             .formatterType = "CSV",
             .hasSpanningTuples = true,
             .numberOfIterations = 1,
@@ -480,7 +478,7 @@ TEST_F(SmallFilesTest, testFoodData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Food_1",
+            .testFileName = "Food",
             .formatterType = "CSV",
             .hasSpanningTuples = true,
             .numberOfIterations = 1,
@@ -519,7 +517,7 @@ TEST_F(SmallFilesTest, testBimboDataBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_1000",
+            .testFileName = "Bimbo",
             .formatterType = "Native",
             .hasSpanningTuples = true,
             .numberOfIterations = 10,
@@ -532,7 +530,7 @@ TEST_F(SmallFilesTest, DISABLED_testFoodDataBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "Food_1",
+            .testFileName = "Food",
             .formatterType = "Native",
             .hasSpanningTuples = true,
             .numberOfIterations = 1,
