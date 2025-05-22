@@ -25,6 +25,36 @@
 namespace NES::InputFormatters::RawValueParser
 {
 
+ParseFunctionSignature getQuotedStringParseFunction()
+{
+    return [](const std::string_view inputString,
+              const size_t writeOffsetInBytes,
+              Memory::AbstractBufferProvider& bufferProvider,
+              Memory::TupleBuffer& tupleBufferFormatted)
+    {
+        INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
+        const auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
+        const auto valueLength = inputStringWithoutQuotes.length();
+        auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+        if (not childBuffer.has_value())
+        {
+            throw CannotAllocateBuffer("Could not store string, because we cannot allocate a child buffer.");
+        }
+
+        auto& childBufferVal = childBuffer.value();
+        *childBufferVal.getBuffer<uint32_t>() = valueLength;
+        std::memcpy(
+            childBufferVal.getBuffer<char>() + sizeof(uint32_t), ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            inputStringWithoutQuotes.data(),
+            valueLength);
+        const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
+        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *childBufferIndexPointer = indexToChildBuffer;
+    };
+}
+
+
 ParseFunctionSignature getBasicStringParseFunction()
 {
     return [](const std::string_view inputString,
@@ -52,7 +82,21 @@ ParseFunctionSignature getBasicStringParseFunction()
     };
 }
 
-ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType)
+ParseFunctionSignature getStringParseFunction(const QuotationType quotationType)
+{
+    switch (quotationType)
+    {
+        case QuotationType::NONE: {
+            return getBasicStringParseFunction();
+        }
+        case QuotationType::DOUBLE_QUOTE: {
+            return getQuotedStringParseFunction();
+        }
+    }
+    std::unreachable();
+}
+
+ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType, const QuotationType quotationType)
 {
     switch (physicalType)
     {
@@ -87,7 +131,7 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
             return parseFieldString<double>();
         }
         case DataType::Type::CHAR: {
-            return parseFieldString<char>();
+            return (quotationType == QuotationType::NONE) ? parseFieldString<char>() : parseQuotedFieldString<char>();
         }
         case DataType::Type::BOOLEAN: {
             return parseFieldString<bool>();
@@ -98,5 +142,14 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
             throw NotImplemented("Cannot parse undefined type.");
     }
     return nullptr;
+}
+
+ParseFunctionSignature getParseFunction(const DataType::Type physicalType, const QuotationType quotationType)
+{
+    if (physicalType == DataType::Type::VARSIZED)
+    {
+        return getBasicTypeParseFunction(physicalType, quotationType);
+    }
+    return getStringParseFunction(quotationType);
 }
 }

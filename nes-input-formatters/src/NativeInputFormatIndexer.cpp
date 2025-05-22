@@ -27,7 +27,7 @@ InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputForm
 {
     auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
     return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false>(
-        std::move(inputFormatter));
+        std::move(inputFormatter), RawValueParser::QuotationType::NONE);
 }
 
 }
