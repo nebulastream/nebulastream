@@ -50,7 +50,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
 
     PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
     PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::NO_SEPARATION,
+        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::FileLayout::NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
     /*PRECONDITION(
@@ -95,7 +95,7 @@ void FileBackedPagedVector::readFromFile(
 
     PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
     PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::NO_SEPARATION,
+        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::FileLayout::NO_SEPARATION,
         "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
     /*PRECONDITION(
