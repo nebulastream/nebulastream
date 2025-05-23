@@ -24,7 +24,8 @@ import pathlib
 import copy
 import BenchmarkConfig
 
-# Configuration for compilation
+
+# Configuration for execution
 BUILD_DIR = "cmake-build-relnologging"
 SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-2"
 NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
@@ -37,6 +38,7 @@ MEASURE_INTERVAL = 10
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
+WORKING_DIR = ".cache/benchmarks"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -48,15 +50,22 @@ CONFIG_FILES = {
 }
 
 
+def create_working_dir():
+    folder_name = os.path.join(WORKING_DIR, "working_dir")
+    os.makedirs(folder_name, exist_ok=True)
+    #print(f"Created working dir {folder_name}...")
+    return folder_name
+
+
 def create_output_folder():
     timestamp = int(time.time())
-    folder_name = f"SpillingBenchmarks_{timestamp}"
-    os.mkdir(folder_name)
+    folder_name = os.path.join(WORKING_DIR, f"SpillingBenchmarks_{timestamp}")
+    os.makedirs(folder_name, exist_ok=True)
     print(f"Created folder {folder_name}...")
     return folder_name
 
 
-def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports):
+def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports):
     # Creating a dest path for the worker and query config yaml file
     dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
     dest_path_query = os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)
@@ -72,6 +81,22 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     # Query Compiler Configuration
     worker_config_yaml["worker"]["queryCompiler"]["nautilusBackend"] = current_benchmark_config.nautilus_backend
     worker_config_yaml["worker"]["queryCompiler"]["pageSize"] = current_benchmark_config.page_size
+    worker_config_yaml["worker"]["queryCompiler"][
+        "numWatermarkGapsAllowed"] = current_benchmark_config.num_watermark_gaps_allowed
+    worker_config_yaml["worker"]["queryCompiler"][
+        "maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
+    worker_config_yaml["worker"]["queryCompiler"][
+        "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
+    worker_config_yaml["worker"]["queryCompiler"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
+    worker_config_yaml["worker"]["queryCompiler"][
+        "minWriteStateSize"] = current_benchmark_config.min_write_state_size
+    worker_config_yaml["worker"]["queryCompiler"][
+        "fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
+    worker_config_yaml["worker"]["queryCompiler"]["fileLayout"] = current_benchmark_config.file_layout
+    worker_config_yaml["worker"]["queryCompiler"][
+        "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
+    worker_config_yaml["worker"]["queryCompiler"]["sliceStoreType"] = current_benchmark_config.slice_store_type
+    worker_config_yaml["worker"]["queryCompiler"]["fileBackedWorkingDir"] = working_dir
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
@@ -217,7 +242,7 @@ def run_benchmark(current_benchmark_config):
 
         # Creating a new output folder and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
-        copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports)
+        copy_and_modify_configs(output_folder, create_working_dir(), current_benchmark_config, tcp_server_ports)
 
         # Waiting before starting the single node worker
         time.sleep(WAIT_BETWEEN_COMMANDS)
@@ -240,6 +265,13 @@ def run_benchmark(current_benchmark_config):
         all_processes = source_processes + [single_node_process] + [stop_process]
         for proc in all_processes:
             terminate_process_if_exists(proc)
+
+        # Move logs and statistics to output folder
+        for file_name in os.listdir(os.getcwd()):
+            if file_name.startswith("EngineStats_") or file_name.startswith("BenchmarkStats_") or file_name.endswith(
+                    ".log"):
+                source_file = os.path.join(os.getcwd(), file_name)
+                shutil.move(source_file, output_folder)
 
         return output_folder
 

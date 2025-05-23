@@ -1,10 +1,20 @@
 worker:
-  numberOfBuffersInGlobalBufferManager: 1000
+  numberOfBuffersInGlobalBufferManager: 2000000
   numberOfBuffersPerWorker: 1000
   bufferSizeInBytes: 4096
   queryCompiler:
     nautilusBackend: COMPILER
-    pageSize: 10240
+    pageSize: 4096
+    numWatermarkGapsAllowed: 1
+    maxNumSequenceNumbers: 1
+    fileDescriptorBufferSize: 4096
+    minReadStateSize: 0
+    minWriteStateSize: 0
+    fileOperationTimeDelta: 0
+    fileLayout: NO_SEPARATION
+    watermarkPredictorType: KALMAN
+    sliceStoreType: DEFAULT
+    fileBackedWorkingDir: ""
 
   queryEngine:
     numberOfWorkerThreads: 1
