@@ -89,7 +89,7 @@ class BenchmarkConfig:
 
 def create_all_benchmark_configs():
     NUM_TUPLES_TO_GENERATE = [0]  # 0 means the source will run indefinitely
-    TIMESTAMP_INCREMENT = [1000]
+    TIMESTAMP_INCREMENT = [1]
     INGESTION_RATE = [0]  # 0 means the source will ingest tuples as fast as possible
 
     NO_PHYSICAL_SOURCES = [1]
@@ -105,7 +105,7 @@ def create_all_benchmark_configs():
     FILE_OPERATION_TIME_DELTA = [0]
     FILE_LAYOUT = ["NO_SEPARATION"]
     WATERMARK_PREDICTOR_TYPE = ["KALMAN"]
-    SLICE_STORE_TYPE = ["DEFAULT", "FILE_BACKED"]
+    SLICE_STORE_TYPE = ["FILE_BACKED"]
 
     # Adding queries with different window sizes.
     WINDOW_SIZE_SLIDE = [

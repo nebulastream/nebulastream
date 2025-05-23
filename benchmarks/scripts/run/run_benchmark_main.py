@@ -27,7 +27,8 @@ import BenchmarkConfig
 
 # Configuration for execution
 BUILD_DIR = "cmake-build-relnologging"
-SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-2"
+SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
+# SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
 NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
 SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/nes-single-node-worker")
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
@@ -53,7 +54,7 @@ CONFIG_FILES = {
 def create_working_dir():
     folder_name = os.path.join(WORKING_DIR, "working_dir")
     os.makedirs(folder_name, exist_ok=True)
-    #print(f"Created working dir {folder_name}...")
+    # print(f"Created working dir {folder_name}...")
     return folder_name
 
 
