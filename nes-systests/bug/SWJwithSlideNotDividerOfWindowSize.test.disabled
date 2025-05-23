@@ -1,26 +1,19 @@
 # name: SWJ.test
 # description: Extended multi-way join queries using IoTropolis-inspired data (as DEBS.test)
 # groups: [milestone, benchmark, small]
+# TODO #899 - Fix this test
 
 # Source definitions
 SourceCSV solarPanel INT32 solarPanel_Id INT32 solarPanel_groupId FLOAT64 solarPanel_power UINT64 TS TESTDATA/small/solarPanel.csv
 SourceCSV factory INT32 factory_Id INT32 factory_sectorId FLOAT64 factory_power UINT64 TS TESTDATA/small/factory.csv
 SourceCSV windTurbine INT32 windTurbine_Id INT32 windTurbine_groupId FLOAT64 windTurbine_power UINT64 TS TESTDATA/small/windTurbine.csv
 
-SINK testQ1 INT32 solarPanel_power INT32 windTurbine_power INT32 solarPanel_groupId UINT64 TS UINT64 TS
-
-# Q1 resource consuming 2-way SWJ (because slide is small)
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId AND TS < TS
-WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 2 MINUTES)
-INTO CHECKSUM;
-----
-3378998,12850685294
-
-# Q2 = Q1 + extra condition (night query, true all night solarPanel = 0 , tests watermark)
+# Q3 = Q2 but with slicing not divider of window size
 SELECT *
 FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
-WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 5 MINUTES)
-INTO CHECKSUM;
+WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 3 MINUTES)
+INTO testQ1;
 ----
-1002925,3789103442
+# 780920, 2956677053 nes output
+# 1671122, Checksum_todo flink output
+# same query with slide 1 and slide 5 -> 3378998 and 1002925 result tuples, slide 3 should be inbetween but is smaller than with slide 5

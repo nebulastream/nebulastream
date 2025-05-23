@@ -16,7 +16,7 @@ INTO CHECKSUM;
 ----
 
 
-# Q1 self-join with tumbling window
+# Q2 self-join with tumbling window, two streams but same schema
 SELECT *
 FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId
 WINDOW TUMBLING (TS, SIZE 10 MINUTE)
