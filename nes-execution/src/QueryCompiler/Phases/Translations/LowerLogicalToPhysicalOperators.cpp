@@ -33,7 +33,7 @@ namespace NES::QueryCompilation
 {
 
 std::shared_ptr<LowerLogicalToPhysicalOperators>
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(const std::shared_ptr<PhysicalOperatorProvider>& provider)
+LowerLogicalToPhysicalOperators::create(const std::shared_ptr<PhysicalOperatorProvider>& provider)
 {
     return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
@@ -48,8 +48,8 @@ std::shared_ptr<DecomposedQueryPlan> LowerLogicalToPhysicalOperators::apply(std:
     auto isAlreadyLowered = [](const auto& node)
     {
         return not(
-            Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
-            or Util::instanceOf<SinkLogicalOperator>(node));
+            NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or NES::Util::instanceOf<SourceDescriptorLogicalOperator>(node)
+            or NES::Util::instanceOf<SinkLogicalOperator>(node));
     };
     const std::vector<std::shared_ptr<Node>> nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
