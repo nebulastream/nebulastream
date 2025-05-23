@@ -22,3 +22,5 @@
     struct fmt::formatter<typename TypeName> : fmt::ostream_formatter \
     { \
     }
+
+

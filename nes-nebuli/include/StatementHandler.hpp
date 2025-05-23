@@ -13,7 +13,8 @@
 */
 
 #pragma once
-#include "SQLQueryParser/StatementBinder.hpp"
+#include <memory>
+#include <SQLQueryParser/StatementBinder.hpp>
 
 
 #include <NebuLI.hpp>
@@ -51,37 +52,54 @@ struct StartQueryStatementResult
     QueryId id;
 };
 
-
 using StatementResult = std::variant<
-        CreateLogicalSourceStatementResult,
-        CreatePhysicalSourceStatementResult,
-        DropLogicalSourceStatementResult,
-        DropPhysicalSourceStatementResult,
-        DropQueryStatementResult>;
+    CreateLogicalSourceStatementResult,
+    CreatePhysicalSourceStatementResult,
+    DropLogicalSourceStatementResult,
+    DropPhysicalSourceStatementResult,
+    DropQueryStatementResult>;
 
-template <typename Handler, typename... Statements>
-concept StatementHandlerFor = (requires(Handler handler_instance, Statements statement_instance) {
-    { handler_instance(statement_instance) };
-} && ...);
 
-class SourceStatementHandler final
+/// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
+template <typename HandlerImpl>
+class StatementHandler
 {
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 public:
-    explicit SourceStatementHandler(const std::shared_ptr<Catalogs::Source::SourceCatalog>& source_catalog);
-    std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement);
-    std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement);
-    std::expected<DropLogicalSourceStatementResult, Exception> operator()(const DropLogicalSourceStatement& statement);
-    std::expected<DropPhysicalSourceStatementResult, Exception> operator()(DropPhysicalSourceStatement statement);
+    template <typename Statement>
+    auto apply(const Statement& statement) noexcept -> decltype(std::declval<HandlerImpl>()(statement))
+    {
+        return static_cast<HandlerImpl*>(this)->operator()(statement);
+    }
 };
 
-class QueryStatementHandler final
+class SourceStatementHandler final: public StatementHandler<SourceStatementHandler>
+{
+    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
+
+public:
+    explicit SourceStatementHandler(const std::shared_ptr<Catalogs::Source::SourceCatalog>& source_catalog);
+    std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement) noexcept;
+    std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement) noexcept;
+    std::expected<DropLogicalSourceStatementResult, Exception> operator()(const DropLogicalSourceStatement& statement) noexcept;
+    std::expected<DropPhysicalSourceStatementResult, Exception> operator()(DropPhysicalSourceStatement statement) noexcept;
+
+};
+
+class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     std::shared_ptr<CLI::Nebuli> nebuli;
     std::shared_ptr<CLI::Optimizer> optimizer;
+
 public:
     explicit QueryStatementHandler(const std::shared_ptr<CLI::Nebuli>& nebuli, const std::shared_ptr<CLI::Optimizer>& optimizer);
     std::expected<StartQueryStatementResult, Exception> operator()(QueryStatement statement);
     std::expected<DropQueryStatementResult, Exception> operator()(DropQueryStatement statement);
 };
+
 }
+FMT_OSTREAM(NES::CreateLogicalSourceStatementResult);
+FMT_OSTREAM(NES::CreatePhysicalSourceStatementResult);
+FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
+FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
+FMT_OSTREAM(NES::DropQueryStatementResult);
+FMT_OSTREAM(NES::StartQueryStatementResult);

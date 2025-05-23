@@ -66,11 +66,18 @@ dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource;
 dropQuery: QUERY id=unsignedIntegerLiteral;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
-dropLogicalSourceSubject: LOGICAL SOURCE name=identifier;
+dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
 dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
 
-showStatement: SHOW dbObjectType (FORMAT format=('TEXT' | 'JSON'))?;
+showStatement: SHOW showSubject (FORMAT showFormat)? (WHERE showFilter)?;
+showFormat: TEXT | JSON;
+showSubject: QUERIES #showQueriesSubject
+    | LOGICAL SOURCES #showLogicalSourcesSubject
+    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject;
 
+showFilter: 'name' EQ name=strictIdentifier #showLogicalSourcesFilter
+    | 'id' EQ id=unsignedIntegerLiteral #showPhysicalSourcesFilter
+    | 'id' EQ id=unsignedIntegerLiteral #showQueriesFilter;
 
 query : queryTerm queryOrganization;
 
@@ -454,6 +461,8 @@ LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
+JSON: 'JSON';
+TEXT: 'TEXT';
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list

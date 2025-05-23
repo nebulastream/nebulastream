@@ -34,6 +34,7 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <folly/hash/Hash.h>
+#include "Util/Logger/Formatter.hpp"
 
 namespace NES
 {
@@ -123,3 +124,4 @@ template <>
 struct fmt::formatter<NES::Sources::SourceDescriptor> : ostream_formatter
 {
 };
+FMT_OSTREAM(NES::Sources::ParserConfig);

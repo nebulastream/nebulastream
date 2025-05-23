@@ -26,12 +26,13 @@
 #include <unordered_map>
 #include <variant>
 
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <fmt/format.h>
 #include <sys/stat.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include "Functions/NodeFunction.hpp"
-#include "Functions/NodeFunctionConstantValue.hpp"
-#include "Sources/SourceDescriptor.hpp"
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -45,326 +46,416 @@
 namespace NES
 {
 
-StatementBinder::StatementBinder(
-    const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog,
-    const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
-    : sourceCatalog(sourceCatalog), queryBinder(queryPlanBinder)
-{
-}
 
-static_assert(std::ranges::range<std::string>);
-
-std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier)
+class StatementBinder::Impl
 {
-    if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(strictIdentifier))
+    std::shared_ptr<const Catalogs::Source::SourceCatalog> sourceCatalog;
+    std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)> queryBinder;
+
+public:
+    StatementBinder::Impl(
+        const std::shared_ptr<const Catalogs::Source::SourceCatalog>& sourceCatalog,
+        const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryBinder)
+        : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
     {
-        std::string text = unquotedIdentifier->getText();
-        return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
-            | std::ranges::to<std::string>();
     }
-    if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(strictIdentifier))
-    {
-        const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
-        return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
-    }
-    throw InvalidIdentifier(strictIdentifier->getText());
-}
 
-std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral)
-{
-    PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters");
-    bool inEscapeSequence = false;
-    std::stringstream ss;
-    for (uint32_t i = 1; i < stringLiteral->getText().size() - 1; i++)
+    std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier) const
     {
-        const char character = stringLiteral->getText()[i];
-        if (inEscapeSequence)
+        if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(strictIdentifier))
         {
-            switch (character)
-            {
-                case 'n':
-                    ss << '\n';
-                    break;
-                case 'r':
-                    ss << '\r';
-                    break;
-                case 't':
-                    ss << '\t';
-                    break;
-                case '\\':
-                    ss << '\\';
-                default:
-                    throw InvalidLiteral("invalid escape sequence \'\\{}\' in literal \"{}\"", character, stringLiteral->getText());
-            }
+            std::string text = unquotedIdentifier->getText();
+            return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
+                | std::ranges::to<std::string>();
         }
-        else
+        if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(strictIdentifier))
         {
-            if (character == '\\')
+            const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
+            return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+        }
+        throw InvalidIdentifier(strictIdentifier->getText());
+    }
+
+    std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral) const
+    {
+        PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
+        bool inEscapeSequence = false;
+        std::stringstream ss;
+        for (uint32_t i = 1; i < stringLiteral->getText().size() - 1; i++)
+        {
+            const char character = stringLiteral->getText()[i];
+            if (inEscapeSequence)
             {
-                inEscapeSequence = true;
+                switch (character)
+                {
+                    case 'n':
+                        ss << '\n';
+                        break;
+                    case 'r':
+                        ss << '\r';
+                        break;
+                    case 't':
+                        ss << '\t';
+                        break;
+                    case '\\':
+                        ss << '\\';
+                    default:
+                        throw InvalidLiteral("invalid escape sequence \'\\{}\' in literal \"{}\"", character, stringLiteral->getText());
+                }
             }
             else
             {
-                ss << character;
+                if (character == '\\')
+                {
+                    inEscapeSequence = true;
+                }
+                else
+                {
+                    ss << character;
+                }
             }
         }
+        return ss.str();
     }
-    return ss.str();
-}
 
-int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral)
-{
-    return std::stoi(integerLiteral->getText());
-}
+    int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral) const { return std::stoi(integerLiteral->getText()); }
 
-int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral)
-{
-    return std::stoi(signedIntegerLiteral->getText());
-}
-
-uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral)
-{
-    return std::stoul(unsignedIntegerLiteral->getText());
-}
-
-double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral)
-{
-    return std::stod(doubleLiteral->getText());
-}
-bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral)
-{
-    return booleanLiteral->getText() == "true" || booleanLiteral->getText() == "TRUE";
-}
-
-std::variant<std::string, int64_t, double, bool> bindLiteral(AntlrSQLParser::ConstantContext* literalAST)
-{
-    if (auto* const stringAST = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(literalAST))
+    int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral) const
     {
-        return bindStringLiteral(stringAST);
+        return std::stoi(signedIntegerLiteral->getText());
     }
-    if (auto* const numericLiteral = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(literalAST))
+
+    uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral) const
     {
-        if (auto* const intLocation = dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(numericLiteral->number()))
+        return std::stoul(unsignedIntegerLiteral->getText());
+    }
+
+    double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral) const { return std::stod(doubleLiteral->getText()); }
+    bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral) const
+    {
+        return booleanLiteral->getText() == "true" || booleanLiteral->getText() == "TRUE";
+    }
+
+    std::variant<std::string, int64_t, double, bool> bindLiteral(AntlrSQLParser::ConstantContext* literalAST) const
+    {
+        if (auto* const stringAST = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(literalAST))
         {
-            return bindIntegerLiteral(intLocation);
+            return bindStringLiteral(stringAST);
         }
-        if (auto* const doubleLocation = dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(numericLiteral->number()))
+        if (auto* const numericLiteral = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(literalAST))
         {
-            return bindDoubleLiteral(doubleLocation);
-        }
-    }
-    if (auto* const booleanLocation = dynamic_cast<AntlrSQLParser::BooleanLiteralContext*>(literalAST))
-    {
-        return bindBooleanLiteral(booleanLocation);
-    }
-    throw InvalidLiteral(literalAST->getText());
-}
-
-std::string literalToString(const std::variant<std::string, int64_t, double, bool>& literal)
-{
-    if (const auto* const stringLiteral = std::get_if<std::string>(&literal))
-    {
-        return *stringLiteral;
-    }
-    if (const auto* const intLiteral = std::get_if<int64_t>(&literal))
-    {
-        return std::to_string(*intLiteral);
-    }
-    if (const auto* const doubleLiteral = std::get_if<double>(&literal))
-    {
-        return std::to_string(*doubleLiteral);
-    }
-    if (const auto* const booleanLiteral = std::get_if<bool>(&literal))
-    {
-        return *booleanLiteral ? "true" : "false";
-    }
-    throw InvalidLiteral("Invalid literal");
-}
-
-BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST)
-{
-    if (statementAST->query() != nullptr)
-    {
-        return queryBinder(statementAST->query());
-    }
-    try
-    {
-        if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
-        {
-            if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
-                logicalSourceDefAST != nullptr)
+            if (auto* const intLocation = dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(numericLiteral->number()))
             {
-                const auto sourceName = logicalSourceDefAST->sourceName->getText();
-                Schema schema{};
-
-                for (auto* const column : logicalSourceDefAST->schemaDefinition()->columnDefinition())
-                {
-                    if (auto dataType = DataTypeProvider::tryProvideDataType(column->typeDefinition()->getText()))
-                    {
-                        schema.addField(bindIdentifier(column->identifier()->strictIdentifier()), *dataType);
-                    }
-                    else
-                    {
-                        throw UnknownDataType(column->typeDefinition()->getText());
-                    }
-                }
-                return CreateLogicalSourceStatement{sourceName, schema};
+                return bindIntegerLiteral(intLocation);
             }
-            if (auto* const physicalSourceDefAST = createAST->createDefinition()->createPhysicalSourceDefinition();
-                physicalSourceDefAST != nullptr)
+            if (auto* const doubleLocation = dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(numericLiteral->number()))
             {
-                std::string type;
-                WorkerId workerId = INITIAL<WorkerId>;
-                std::unordered_map<std::string, std::string> sourceOptions{};
-                std::unordered_map<std::string, std::string> parserOptions{};
+                return bindDoubleLiteral(doubleLocation);
+            }
+        }
+        if (auto* const booleanLocation = dynamic_cast<AntlrSQLParser::BooleanLiteralContext*>(literalAST))
+        {
+            return bindBooleanLiteral(booleanLocation);
+        }
+        throw InvalidLiteral(literalAST->getText());
+    }
 
-                const auto logicalSourceOpt = sourceCatalog->getLogicalSource(physicalSourceDefAST->logicalSource->getText());
-                if (not logicalSourceOpt.has_value())
-                {
-                    throw UnregisteredSource("{}", physicalSourceDefAST->logicalSource->getText());
-                }
-                type = physicalSourceDefAST->type->getText();
+    std::string literalToString(const std::variant<std::string, int64_t, double, bool>& literal) const
+    {
+        if (const auto* const stringLiteral = std::get_if<std::string>(&literal))
+        {
+            return *stringLiteral;
+        }
+        if (const auto* const intLiteral = std::get_if<int64_t>(&literal))
+        {
+            return std::to_string(*intLiteral);
+        }
+        if (const auto* const doubleLiteral = std::get_if<double>(&literal))
+        {
+            return std::to_string(*doubleLiteral);
+        }
+        if (const auto* const booleanLiteral = std::get_if<bool>(&literal))
+        {
+            return *booleanLiteral ? "true" : "false";
+        }
+        throw InvalidLiteral("Invalid literal");
+    }
 
-                for (auto* options = physicalSourceDefAST->options; const auto& option : options->namedConfigExpression())
+    ShowStatementFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
+    {
+        if (formatAST->TEXT() != nullptr)
+        {
+            return ShowStatementFormat::TEXT;
+        }
+        if (formatAST->JSON() != nullptr)
+        {
+            return ShowStatementFormat::JSON;
+        }
+        throw InvalidQuerySyntax("Invalid format");
+    }
+
+    BindingResult bind(AntlrSQLParser::StatementContext* statementAST) const
+    {
+        if (statementAST->query() != nullptr)
+        {
+            return queryBinder(statementAST->query());
+        }
+        try
+        {
+            if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
+            {
+                if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
+                    logicalSourceDefAST != nullptr)
                 {
-                    /// TODO use identifer list logic from #764
-                    if (option->name->strictIdentifier().size() != 2)
+                    const auto sourceName = logicalSourceDefAST->sourceName->getText();
+                    Schema schema{};
+
+                    for (auto* const column : logicalSourceDefAST->schemaDefinition()->columnDefinition())
                     {
-                        throw InvalidConfigParameter("{}", option->name->getText());
-                    }
-                    const auto rootIdentifier = bindIdentifier(option->name->strictIdentifier().at(0));
-                    auto optionName = bindIdentifier(option->name->strictIdentifier().at(1));
-                    auto optionValue = bindLiteral(option->constant());
-                    if (rootIdentifier == "SOURCE")
-                    {
-                        if (optionName == "BUFFERS_IN_LOCAL_POOL")
+                        if (auto dataType = DataTypeProvider::tryProvideDataType(column->typeDefinition()->getText()))
                         {
-                            optionName = "buffersInLocalPool";
-                        }
-                        if (optionName == "FILE_PATH")
-                        {
-                            optionName = "filePath";
-                        }
-                        if (optionName == "LOCATION")
-                        {
-                            if (auto* stringValue = std::get_if<std::string>(&optionValue))
-                            {
-                                if (*stringValue != "LOCAL")
-                                {
-                                    throw InvalidConfigParameter(
-                                        R"(SOURCE.LOCATION must be either an integer or 'LOCAL' but was "{}")",
-                                        std::get<std::string>(optionValue));
-                                }
-                            }
-                            else if (auto* const intValue = std::get_if<int64_t>(&optionValue))
-                            {
-                                if (*intValue < 0)
-                                {
-                                    throw InvalidConfigParameter("SOURCE.LOCATION cannot be a negative integer, but was {}", *intValue);
-                                }
-                                workerId = WorkerId{static_cast<uint64_t>(*intValue)};
-                            }
+                            schema.addField(bindIdentifier(column->identifier()->strictIdentifier()), *dataType);
                         }
                         else
                         {
-                            if (not sourceOptions.try_emplace(optionName, literalToString(bindLiteral(option->constant()))).second)
+                            throw UnknownDataType(column->typeDefinition()->getText());
+                        }
+                    }
+                    return CreateLogicalSourceStatement{sourceName, schema};
+                }
+                if (auto* const physicalSourceDefAST = createAST->createDefinition()->createPhysicalSourceDefinition();
+                    physicalSourceDefAST != nullptr)
+                {
+                    std::string type;
+                    WorkerId workerId = INITIAL<WorkerId>;
+                    std::unordered_map<std::string, std::string> sourceOptions{};
+                    std::unordered_map<std::string, std::string> parserOptions{};
+
+                    const auto logicalSourceOpt = sourceCatalog->getLogicalSource(physicalSourceDefAST->logicalSource->getText());
+                    if (not logicalSourceOpt.has_value())
+                    {
+                        throw UnregisteredSource("{}", physicalSourceDefAST->logicalSource->getText());
+                    }
+                    type = physicalSourceDefAST->type->getText();
+
+                    for (auto* options = physicalSourceDefAST->options; const auto& option : options->namedConfigExpression())
+                    {
+                        /// TODO use identifer list logic from #764
+                        if (option->name->strictIdentifier().size() != 2)
+                        {
+                            throw InvalidConfigParameter("{}", option->name->getText());
+                        }
+                        const auto rootIdentifier = bindIdentifier(option->name->strictIdentifier().at(0));
+                        auto optionName = bindIdentifier(option->name->strictIdentifier().at(1));
+                        auto optionValue = bindLiteral(option->constant());
+                        if (rootIdentifier == "SOURCE")
+                        {
+                            if (optionName == "BUFFERS_IN_LOCAL_POOL")
                             {
-                                throw InvalidConfigParameter("Duplicate option for source: {}", option->name->getText());
+                                optionName = "buffersInLocalPool";
+                            }
+                            if (optionName == "FILE_PATH")
+                            {
+                                optionName = "filePath";
+                            }
+                            if (optionName == "LOCATION")
+                            {
+                                if (auto* stringValue = std::get_if<std::string>(&optionValue))
+                                {
+                                    if (*stringValue != "LOCAL")
+                                    {
+                                        throw InvalidConfigParameter(
+                                            R"(SOURCE.LOCATION must be either an integer or 'LOCAL' but was "{}")",
+                                            std::get<std::string>(optionValue));
+                                    }
+                                }
+                                else if (auto* const intValue = std::get_if<int64_t>(&optionValue))
+                                {
+                                    if (*intValue < 0)
+                                    {
+                                        throw InvalidConfigParameter("SOURCE.LOCATION cannot be a negative integer, but was {}", *intValue);
+                                    }
+                                    workerId = WorkerId{static_cast<uint64_t>(*intValue)};
+                                }
+                            }
+                            else
+                            {
+                                if (not sourceOptions.try_emplace(optionName, literalToString(bindLiteral(option->constant()))).second)
+                                {
+                                    throw InvalidConfigParameter("Duplicate option for source: {}", option->name->getText());
+                                }
+                            }
+                        }
+                        else if (rootIdentifier == "PARSER")
+                        {
+                            //replace snake case caps with camel case option names
+                            if (optionName == "TUPLE_DELIMITER")
+                            {
+                                optionName = "tupleDelimiter";
+                            }
+                            else if (optionName == "FIELD_DELIMITER")
+                            {
+                                optionName = "fieldDelimiter";
+                            }
+                            else if (optionName == "TYPE")
+                            {
+                                optionName = "type";
+                            }
+                            if (not std::holds_alternative<std::string>(optionValue))
+                            {
+                                throw InvalidConfigParameter(
+                                    "Parser option {} must be a string, but was {} ",
+                                    option->name->getText(),
+                                    option->constant()->getText());
+                            }
+                            if (const auto [iter, inserted] = parserOptions.try_emplace(optionName, std::get<std::string>(optionValue));
+                                not inserted)
+                            {
+                                throw InvalidConfigParameter("Duplicate option for parser: {}", option->name->getText());
                             }
                         }
                     }
-                    else if (rootIdentifier == "PARSER")
-                    {
-                        //replace snake case caps with camel case option names
-                        if (optionName == "TUPLE_DELIMITER")
-                        {
-                            optionName = "tupleDelimiter";
-                        }
-                        else if (optionName == "FIELD_DELIMITER")
-                        {
-                            optionName = "fieldDelimiter";
-                        }
-                        else if (optionName == "TYPE")
-                        {
-                            optionName = "type";
-                        }
-                        if (not std::holds_alternative<std::string>(optionValue))
-                        {
-                            throw InvalidConfigParameter(
-                                "Parser option {} must be a string, but was {} ", option->name->getText(), option->constant()->getText());
-                        }
-                        if (const auto [iter, inserted] = parserOptions.try_emplace(optionName, std::get<std::string>(optionValue));
-                            not inserted)
-                        {
-                            throw InvalidConfigParameter("Duplicate option for parser: {}", option->name->getText());
-                        }
-                    }
-                }
 
-                auto parserConfig = Sources::ParserConfig::create(parserOptions);
-                //Validate input formatter config and type. We don't attach it directly to the SourceDescriptor to avoid the dependencies
-                InputFormatters::InputFormatterProvider::provideInputFormatter(
-                    parserConfig.parserType, *logicalSourceOpt->getSchema(), parserConfig.tupleDelimiter, parserConfig.fieldDelimiter);
-                if (not sourceOptions.try_emplace("type", type).second)
-                {
-                    throw InvalidConfigParameter("Type option for source cannot be specified via SET");
-                }
-                return CreatePhysicalSourceStatement{logicalSourceOpt.value(), type, workerId, sourceOptions, parserConfig};
-            }
-        }
-        if (auto* dropAst = statementAST->dropStatement(); dropAst != nullptr)
-        {
-            if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
-            {
-                if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject();
-                    logicalSourceSubject != nullptr && sourceCatalog->containsLogicalSource(logicalSourceSubject->name->getText()))
-                {
-                    if (const auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceSubject->name->getText());
-                        logicalSource.has_value())
+                    auto parserConfig = Sources::ParserConfig::create(parserOptions);
+                    //Validate input formatter config and type. We don't attach it directly to the SourceDescriptor to avoid the dependencies
+                    InputFormatters::InputFormatterProvider::provideInputFormatter(
+                        parserConfig.parserType, *logicalSourceOpt->getSchema(), parserConfig.tupleDelimiter, parserConfig.fieldDelimiter);
+                    if (not sourceOptions.try_emplace("type", type).second)
                     {
-                        return DropLogicalSourceStatement{*logicalSource};
+                        throw InvalidConfigParameter("Type option for source cannot be specified via SET");
                     }
-                    throw UnregisteredSource(logicalSourceSubject->name->getText());
-                }
-                if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject(); physicalSourceSubject != nullptr)
-                {
-                    if (const auto physicalSource = sourceCatalog->getPhysicalSource(bindUnsignedIntegerLiteral(physicalSourceSubject->id));
-                        physicalSource.has_value())
-                    {
-                        return DropPhysicalSourceStatement{*physicalSource};
-                    }
-                    throw UnregisteredSource("There is no physical source with id {}", physicalSourceSubject->id->getText());
+                    return CreatePhysicalSourceStatement{logicalSourceOpt.value(), type, workerId, sourceOptions, parserConfig};
                 }
             }
-            else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
+            if (auto* showAST = statementAST->showStatement(); showAST != nullptr)
             {
-                const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
-                return DropQueryStatement{id};
+                if (auto* logicalSourceSubject = dynamic_cast<AntlrSQLParser::ShowLogicalSourcesSubjectContext*>(showAST->showSubject());
+                    logicalSourceSubject != nullptr)
+                {
+                    if (showAST->showFilter() != nullptr)
+                    {
+                        if (const auto* logicalSourceFilter = dynamic_cast<const AntlrSQLParser::ShowLogicalSourcesFilterContext*>(showAST->showFilter());
+                            logicalSourceFilter != nullptr)
+                        {
+                            return ShowLogicalSourceStatement{.name = bindIdentifier(logicalSourceFilter->name), .format};
+                        }
+                        throw InvalidQuerySyntax("Filter for SHOW LOGICAL SOURCES must be on name attribute");
+                    }
+                    return ShowLogicalSourceStatement{};
+                }
+                if (auto* physicalSourceSubject = dynamic_cast<AntlrSQLParser::ShowPhysicalSourcesSubjectContext*>(showAST->showSubject());
+                    physicalSourceSubject != nullptr)
+                {
+                    std::optional<LogicalSource> logicalSource{};
+                    if (physicalSourceSubject->logicalSourceName != nullptr)
+                    {
+                        const auto logicalSourceName = bindIdentifier(physicalSourceSubject->logicalSourceName);
+                        logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+                        if (not logicalSource.has_value())
+                        {
+                            throw UnregisteredSource("There is no logical source with name {}", logicalSourceName);
+                        }
+                    }
+                    if (showAST->showFilter() != nullptr)
+                    {
+                        if (const auto* physicalSourceFilter
+                            = dynamic_cast<const AntlrSQLParser::ShowPhysicalSourcesFilterContext*>(showAST->showFilter());
+                            physicalSourceFilter != nullptr)
+                        {
+                            return ShowPhysicalSourceStatement{
+                                .logicalSource = logicalSource, .id = bindUnsignedIntegerLiteral(physicalSourceFilter->id)};
+                        }
+                        throw InvalidQuerySyntax("Filter for SHOW PHYSICAL SOURCES must be on id attribute");
+                    }
+                    return ShowPhysicalSourceStatement{.logicalSource = logicalSource};
+                }
+                if (auto* querySubject = dynamic_cast<AntlrSQLParser::ShowQueriesSubjectContext*>(showAST->showSubject());
+                    querySubject != nullptr)
+                {
+                    if (showAST->showFilter() != nullptr)
+                    {
+                        if (const auto* queryFilter = dynamic_cast<const AntlrSQLParser::ShowQueriesFilterContext*>(showAST->showFilter());
+                            queryFilter != nullptr)
+                        {
+                            return ShowQueryStatus{QueryId{bindUnsignedIntegerLiteral(queryFilter->id)}};
+                        }
+                        throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
+                    }
+                    return ShowQueryStatus{};
+                }
             }
-        }
-        if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
-        {
-            return queryBinder(queryAst);
-        }
+            if (auto* dropAst = statementAST->dropStatement(); dropAst != nullptr)
+            {
+                if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
+                {
+                    if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject();
+                        logicalSourceSubject != nullptr && sourceCatalog->containsLogicalSource(logicalSourceSubject->name->getText()))
+                    {
+                        if (const auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceSubject->name->getText());
+                            logicalSource.has_value())
+                        {
+                            return DropLogicalSourceStatement{*logicalSource};
+                        }
+                        throw UnregisteredSource(logicalSourceSubject->name->getText());
+                    }
+                    if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject();
+                        physicalSourceSubject != nullptr)
+                    {
+                        if (const auto physicalSource
+                            = sourceCatalog->getPhysicalSource(bindUnsignedIntegerLiteral(physicalSourceSubject->id));
+                            physicalSource.has_value())
+                        {
+                            return DropPhysicalSourceStatement{*physicalSource};
+                        }
+                        throw UnregisteredSource("There is no physical source with id {}", physicalSourceSubject->id->getText());
+                    }
+                }
+                else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
+                {
+                    const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
+                    return DropQueryStatement{id};
+                }
+            }
+            if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
+            {
+                return queryBinder(queryAst);
+            }
 
-        throw InvalidStatement(statementAST->toString());
+            throw InvalidStatement(statementAST->toString());
+        }
+        catch (Exception& e)
+        {
+            return std::unexpected{e};
+        }
     }
-    catch (Exception& e)
-    {
-        return std::unexpected{e};
-    }
-}
-BindingResult StatementBinder::parseAndBind(const std::string_view statementString)
+};
+
+StatementBinder::StatementBinder(
+    const std::shared_ptr<const Catalogs::Source::SourceCatalog>& sourceCatalog,
+    const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
+    : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
-    antlr4::ANTLRInputStream input(statementString.data(), statementString.length());
-    AntlrSQLLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-    AntlrSQLParser parser(&tokens);
-    /// Enable that antlr throws exeptions on parsing errors
-    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-    AntlrSQLParser::StatementContext* tree = parser.statement();
-    return bind(tree);
 }
+
+BindingResult StatementBinder::parseAndBind(const std::string_view statementString) const noexcept
+{
+    try
+    {
+        antlr4::ANTLRInputStream input(statementString.data(), statementString.length());
+        AntlrSQLLexer lexer(&input);
+        antlr4::CommonTokenStream tokens(&lexer);
+        AntlrSQLParser parser(&tokens);
+        /// Enable that antlr throws exeptions on parsing errors
+        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+        AntlrSQLParser::StatementContext* tree = parser.statement();
+        return impl->bind(tree);
+    }
+    catch (antlr4::ParseCancellationException& e)
+    {
+        return std::unexpected{InvalidQuerySyntax("{}", e)};
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj)
 {
     return os << fmt::format(

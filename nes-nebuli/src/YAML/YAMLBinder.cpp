@@ -174,20 +174,19 @@ std::vector<Sources::SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(c
         auto sourceType = sourceConfig.at(std::string{Configurations::SOURCE_TYPE_CONFIG});
         NES_DEBUG("Source type is: {}", sourceType);
 
-        auto buffersInLocalPool = Sources::SourceDescriptor::INVALID_BUFFERS_IN_LOCAL_POOL;
 
         if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(std::string{Configurations::BUFFERS_IN_LOCAL_POOL});
-            configuredNumSourceLocalBuffers != sourceConfig.end())
+            configuredNumSourceLocalBuffers == sourceConfig.end())
         {
-            if (const auto customBuffersInLocalPool = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
-            {
-                buffersInLocalPool = customBuffersInLocalPool.value();
-            }
+            sourceConfig.emplace(std::string{Configurations::BUFFERS_IN_LOCAL_POOL}, std::to_string(Sources::SourceDescriptor::INVALID_BUFFERS_IN_LOCAL_POOL));
+            // if (const auto customBuffersInLocalPool = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
+            // {
+            //     buffersInLocalPool = customBuffersInLocalPool.value();
+            // }
         }
         const auto validParserConfig = Sources::ParserConfig::create(parserConfig);
-        auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfig));
         const auto sourceDescriptorOpt = sourceCatalog->addPhysicalSource(
-            logicalSource.value(), INITIAL<WorkerId>, sourceType, buffersInLocalPool, std::move(validSourceConfig), validParserConfig);
+            logicalSource.value(), sourceType, INITIAL<WorkerId>, sourceConfig, validParserConfig);
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnregisteredSource("{}", logicalSource.value().getLogicalSourceName());

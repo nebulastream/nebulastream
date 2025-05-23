@@ -17,6 +17,7 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -27,6 +28,8 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -50,6 +53,29 @@ struct CreatePhysicalSourceStatement
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
+enum class ShowStatementFormat : uint8_t
+{
+    JSON,
+    TEXT
+};
+
+/// ShowLogicalSourceStatement only contains a name not bound to a logical statement,
+/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
+struct ShowLogicalSourceStatement
+{
+    std::optional<std::string> name;
+    ShowStatementFormat format{ShowStatementFormat::TEXT};
+};
+
+/// ShowPhysicalSourceStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
+/// referencing a dms object
+struct ShowPhysicalSourceStatement
+{
+    std::optional<LogicalSource> logicalSource;
+    std::optional<uint32_t> id;
+    ShowStatementFormat format{ShowStatementFormat::TEXT};
+};
+
 struct DropLogicalSourceStatement
 {
     LogicalSource source;
@@ -62,33 +88,80 @@ struct DropPhysicalSourceStatement
 
 using QueryStatement = std::shared_ptr<QueryPlan>;
 
+struct ShowQueryStatus
+{
+    std::optional<QueryId> id;
+    ShowStatementFormat format{ShowStatementFormat::TEXT};
+};
+
 struct DropQueryStatement
 {
     QueryId id;
 };
 
+
 using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
+    ShowLogicalSourceStatement,
+    ShowPhysicalSourceStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
-    DropQueryStatement,
-    QueryStatement>;
+    QueryStatement,
+    ShowQueryStatus,
+    DropQueryStatement>;
 
 using BindingResult = std::expected<Statement, Exception>;
 
 
 class StatementBinder
 {
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
-    std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)> queryBinder;
-    BindingResult bind(AntlrSQLParser::StatementContext* statementAST);
+    /// PIMPL pattern to hide all the internally used binder member functions
+    class Impl;
+    std::unique_ptr<Impl> impl;
 
 public:
     explicit StatementBinder(
-        const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<const Catalogs::Source::SourceCatalog>& sourceCatalog,
         const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
 
-    BindingResult parseAndBind(std::string_view statementString);
+    BindingResult parseAndBind(std::string_view statementString) const noexcept;
 };
 }
+
+namespace fmt
+{
+template <>
+struct formatter<std::unordered_map<std::string, std::string>>
+{
+    constexpr auto parse(const format_parse_context& ctx) const noexcept -> decltype(ctx.begin()) { return ctx.begin(); }
+
+    constexpr auto format(const std::unordered_map<std::string, std::string>& mapToFormat, format_context& ctx) const noexcept
+        -> decltype(ctx.out())
+    {
+        auto out = ctx.out();
+        out = format_to(out, "{{");
+        bool first = true;
+        for (const auto& [fst, snd] : mapToFormat)
+        {
+            if (!first)
+            {
+                out = format_to(out, ", ");
+            }
+            /// Note: fmt::format_to correctly handles escaping for strings by default.
+            out = fmt::format_to(out, R"("{}": "{}")", fst, snd);
+            first = false;
+        }
+        out = format_to(out, "}}");
+        return out;
+    }
+};
+
+}
+
+FMT_OSTREAM(NES::CreateLogicalSourceStatement);
+FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
+FMT_OSTREAM(NES::DropLogicalSourceStatement);
+FMT_OSTREAM(NES::DropPhysicalSourceStatement);
+FMT_OSTREAM(NES::DropQueryStatement);
+FMT_OSTREAM(NES::QueryStatement);

@@ -74,7 +74,7 @@ QueryStatementHandler::QueryStatementHandler(const std::shared_ptr<CLI::Nebuli>&
 {
 }
 
-std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(DropQueryStatement statement) noexcept
+std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(DropQueryStatement statement)
 {
     nebuli->stopQuery(statement.id);
     return DropQueryStatementResult{statement.id};
@@ -86,7 +86,6 @@ std::expected<StartQueryStatementResult, Exception> QueryStatementHandler::opera
     const auto id = nebuli->registerQuery(optimizedPlan);
     nebuli->startQuery(id);
     return StartQueryStatementResult{id};
-
 }
 
 }
