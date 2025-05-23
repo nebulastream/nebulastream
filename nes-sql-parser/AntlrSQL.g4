@@ -40,8 +40,9 @@ DISABLE_WARNING(-Wunused-parameter)
   }
 }
 
-singleStatement: statement ';'* EOF;
+singleStatement: statement ';'? EOF;
 
+multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: query | createStatement | dropStatement | showStatement;
 
 createStatement: CREATE createDefinition;
@@ -69,15 +70,13 @@ dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
 dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
 
-showStatement: SHOW showSubject (FORMAT showFormat)? (WHERE showFilter)?;
+showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
 showFormat: TEXT | JSON;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject;
 
-showFilter: 'name' EQ name=strictIdentifier #showLogicalSourcesFilter
-    | 'id' EQ id=unsignedIntegerLiteral #showPhysicalSourcesFilter
-    | 'id' EQ id=unsignedIntegerLiteral #showQueriesFilter;
+showFilter: attr=strictIdentifier EQ value=constant;
 
 query : queryTerm queryOrganization;
 
@@ -528,9 +527,8 @@ WS
     ;
 
 
-dbObjectType : SOURCES | QUERIES;
 
-SOURCES: (LOGICAL | PHYSICAL) ('SOURCES' | 'sources');
+SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
 

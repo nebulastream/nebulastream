@@ -16,6 +16,7 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <ErrorHandling.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -176,4 +177,35 @@ TEST_F(StatementBinderTest, BindDropQuery)
     const auto statement2 = binder->parseAndBind(queryString2);
     ASSERT_FALSE(statement2.has_value());
     ASSERT_EQ(statement2.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+
+TEST_F(StatementBinderTest, ShowLogicalSources)
+{
+    const std::string allLogicalQueryString = "SHOW LOGICAL SOURCES FORMAT JSON";
+    const std::string filteredLogicalQueryString = "SHOW LOGICAL SOURCES WHERE NAME = 'testSource'";
+    const std::string invalidFormatQueryString = "SHOW LOGICAL SOURCES WHERE NAME = 'testSource' FORMAT INVALID_FORMAT";
+    const std::string formatInInvalidPositionString = "SHOW LOGICAL SOURCES FORMAT JSON WHERE NAME = 'testSource' ";
+
+    const auto allSourcesStatementExp = binder->parseAndBind(allLogicalQueryString);
+    ASSERT_TRUE(allSourcesStatementExp.has_value());
+    ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*allSourcesStatementExp));
+    const auto [name, format] = std::get<ShowLogicalSourcesStatement>(*allSourcesStatementExp);
+    ASSERT_FALSE(name.has_value());
+    ASSERT_TRUE(format == ShowStatementFormat::JSON);
+
+    const auto filteredSourcesStatementExp = binder->parseAndBind(filteredLogicalQueryString);
+    ASSERT_TRUE(filteredSourcesStatementExp.has_value());
+    ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*filteredSourcesStatementExp));
+    const auto [name2, format2] = std::get<ShowLogicalSourcesStatement>(*filteredSourcesStatementExp);
+    ASSERT_TRUE(name2.has_value());
+    ASSERT_EQ(*name2, "testSource");
+    ASSERT_TRUE(format2 == ShowStatementFormat::TEXT);
+
+
+    const auto invalidFormatStatementExp = binder->parseAndBind(invalidFormatQueryString);
+    ASSERT_FALSE(invalidFormatStatementExp.has_value());
+
+    const auto formatInInvalidPositionStatementExp = binder->parseAndBind(formatInInvalidPositionString);
+    ASSERT_FALSE(formatInInvalidPositionStatementExp.has_value());
 }

@@ -59,21 +59,21 @@ enum class ShowStatementFormat : uint8_t
     TEXT
 };
 
-/// ShowLogicalSourceStatement only contains a name not bound to a logical statement,
+/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
-struct ShowLogicalSourceStatement
+struct ShowLogicalSourcesStatement
 {
     std::optional<std::string> name;
-    ShowStatementFormat format{ShowStatementFormat::TEXT};
+    ShowStatementFormat format;
 };
 
-/// ShowPhysicalSourceStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
+/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
 /// referencing a dms object
-struct ShowPhysicalSourceStatement
+struct ShowPhysicalSourcesStatement
 {
     std::optional<LogicalSource> logicalSource;
     std::optional<uint32_t> id;
-    ShowStatementFormat format{ShowStatementFormat::TEXT};
+    ShowStatementFormat format;
 };
 
 struct DropLogicalSourceStatement
@@ -88,10 +88,10 @@ struct DropPhysicalSourceStatement
 
 using QueryStatement = std::shared_ptr<QueryPlan>;
 
-struct ShowQueryStatus
+struct ShowQueries
 {
     std::optional<QueryId> id;
-    ShowStatementFormat format{ShowStatementFormat::TEXT};
+    ShowStatementFormat format;
 };
 
 struct DropQueryStatement
@@ -103,12 +103,12 @@ struct DropQueryStatement
 using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
-    ShowLogicalSourceStatement,
-    ShowPhysicalSourceStatement,
+    ShowLogicalSourcesStatement,
+    ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     QueryStatement,
-    ShowQueryStatus,
+    ShowQueries,
     DropQueryStatement>;
 
 using BindingResult = std::expected<Statement, Exception>;
@@ -125,7 +125,11 @@ public:
         const std::shared_ptr<const Catalogs::Source::SourceCatalog>& sourceCatalog,
         const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
 
-    BindingResult parseAndBind(std::string_view statementString) const noexcept;
+    /// If the destructor was implicitly defaulted, it would call the destructor of the unique ptr, which would require the definition of Impl.
+    /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
+    ~StatementBinder();
+
+    [[nodiscard]] std::expected<std::vector<BindingResult>, Exception> parseAndBind(std::string_view statementString) const noexcept;
 };
 }
 
