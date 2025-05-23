@@ -37,11 +37,13 @@ namespace NES::Runtime::Execution
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
+    const SliceStoreInfo& sliceStoreInfo,
     MemoryControllerInfo memoryControllerInfo,
     const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide, inputOrigins.size())
     , watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
+    , sliceStoreInfo(sliceStoreInfo)
     , numberOfWorkerThreads(0)
     , memoryControllerInfo(std::move(memoryControllerInfo))
 {
@@ -50,15 +52,15 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
         watermarkPredictorUpdateCnt.emplace(origin, 0);
         switch (watermarkPredictorType)
         {
-            case KalmanBased: {
+            case WatermarkPredictorType::KALMAN: {
                 watermarkPredictors.emplace(origin, std::make_shared<KalmanWindowTriggerPredictor>());
                 break;
             }
-            case RegressionBased: {
+            case WatermarkPredictorType::REGRESSION: {
                 watermarkPredictors.emplace(origin, std::make_shared<RegressionBasedWatermarkPredictor>());
                 break;
             }
-            case RLSBased: {
+            case WatermarkPredictorType::RLS: {
                 watermarkPredictors.emplace(origin, std::make_shared<RLSBasedWatermarkPredictor>());
                 break;
             }
@@ -74,6 +76,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
+    , sliceStoreInfo(other.sliceStoreInfo)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
 {
@@ -95,6 +98,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
     , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
+    , sliceStoreInfo(std::move(other.sliceStoreInfo))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
@@ -122,6 +126,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
     alteredSlicesPerThread = other.alteredSlicesPerThread;
+    sliceStoreInfo = other.sliceStoreInfo;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
     return *this;
@@ -140,6 +145,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
     alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
+    sliceStoreInfo = std::move(other.sliceStoreInfo);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
@@ -280,9 +286,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 
     /// Initialise memory controller and measure execution times for reading and writing
     memoryController = std::make_shared<MemoryController>(
-        USE_BUFFER_SIZE,
-        numberOfWorkerThreads,
-        numberOfWorkerThreads,
+        sliceStoreInfo.fileDescriptorBufferSize,
         numberOfWorkerThreads,
         memoryControllerInfo.workingDir,
         memoryControllerInfo.queryId,
@@ -295,7 +299,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const SliceStoreMetaData metaData)
+    const UpdateSlicesMetaData metaData)
 {
     const auto& [watermark, seqNumber, originId] = metaData.bufferMetaData;
     watermarkProcessor->updateWatermark(watermark, seqNumber, originId);
@@ -319,7 +323,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             auto* const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
             switch (operation)
             {
-                case READ: {
+                case FileOperation::READ: {
                     // TODO investigate why numTuples and numPages can be zero
                     if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
@@ -330,7 +334,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     // TODO handle wrong predictions
                     break;
                 }
-                case WRITE: {
+                case FileOperation::WRITE: {
                     if (pagedVector->getNumberOfPages() > 0)
                     {
                         const auto slicesInMemoryLocked = slicesInMemory.wlock();
@@ -355,12 +359,12 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     co_return;
 }
 
-std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
+std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId)
 {
-    std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> slicesToUpdate;
+    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> slicesToUpdate;
     for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
@@ -372,29 +376,31 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 
-        if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ
+        if (stateSizeOnDisk > sliceStoreInfo.minReadStateSize
             && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
-                   watermarkPredictors, timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + USE_TIME_DELTA_MS)
+                   watermarkPredictors,
+                   timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.fileOperationTimeDelta)
                 >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
             if (const auto fileLayout = memoryController->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
             {
-                slicesToUpdate.emplace_back(slice, READ, fileLayout.value());
+                slicesToUpdate.emplace_back(slice, FileOperation::READ, fileLayout.value());
             }
             /// Slice is already being read back if no FileLayout was found
         }
         else if (
-            stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE
+            stateSizeInMemory > sliceStoreInfo.minWriteStateSize
             && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
                    watermarkPredictors,
                    timeNow + getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
-                       + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk) + USE_TIME_DELTA_MS)
+                       + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk)
+                       + sliceStoreInfo.fileOperationTimeDelta)
                 < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
-            memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
-            slicesToUpdate.emplace_back(slice, WRITE, USE_FILE_LAYOUT);
+            memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, sliceStoreInfo.fileLayout);
+            slicesToUpdate.emplace_back(slice, FileOperation::WRITE, sliceStoreInfo.fileLayout);
         }
         /// Slice should not be written out or read back in any other case
     }
@@ -435,8 +441,8 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
 {
-    const auto& ingestionTimesForWatermarks
-        = watermarkProcessor->getIngestionTimesForWatermarks(originId, USE_NUM_GAPS_ALLOWED, USE_MAX_NUM_SEQ_NUMBERS);
+    const auto& ingestionTimesForWatermarks = watermarkProcessor->getIngestionTimesForWatermarks(
+        originId, sliceStoreInfo.numWatermarkGapsAllowed, sliceStoreInfo.maxNumSequenceNumbers);
     watermarkPredictors[originId]->update(ingestionTimesForWatermarks);
 }
 

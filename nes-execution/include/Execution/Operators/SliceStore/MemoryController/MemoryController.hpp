@@ -25,14 +25,7 @@ namespace NES::Runtime::Execution
 class MemoryController
 {
 public:
-    MemoryController(
-        size_t bufferSize,
-        uint64_t numReadBuffers,
-        uint64_t numWriteBuffers,
-        uint64_t numWorkerThreads,
-        std::filesystem::path workingDir,
-        QueryId queryId,
-        OriginId originId);
+    MemoryController(size_t bufferSize, uint64_t numWorkerThreads, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
     ~MemoryController();
 
     std::shared_ptr<FileWriter> getFileWriter(

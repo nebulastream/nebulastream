@@ -347,9 +347,35 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     const DecomposedQueryPlan& decomposedQueryPlan,
     const StreamJoinConfigs& streamJoinConfig) const
 {
-    (void)decomposedQueryPlan;
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
+
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    if (queryCompilerConfig.sliceStoreType.getValue() == SliceStoreType::FILE_BACKED)
+    {
+        sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
+            streamJoinConfig.windowSize,
+            streamJoinConfig.windowSlide,
+            SliceStoreInfo(
+                queryCompilerConfig.numWatermarkGapsAllowed.getValue(),
+                queryCompilerConfig.maxNumSequenceNumbers.getValue(),
+                queryCompilerConfig.fileDescriptorBufferSize.getValue(),
+                queryCompilerConfig.minReadStateSize.getValue(),
+                queryCompilerConfig.minWriteStateSize.getValue(),
+                queryCompilerConfig.fileOperationTimeDelta.getValue(),
+                queryCompilerConfig.fileLayout.getValue()),
+            MemoryControllerInfo(
+                queryCompilerConfig.fileBackedWorkingDir.getValue(),
+                decomposedQueryPlan.getQueryId(),
+                joinOperator->getOutputOriginIds()[0]),
+            queryCompilerConfig.watermarkPredictorType,
+            joinOperator->getAllInputOriginIds());
+    }
+    else
+    {
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+            streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
+    }
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
         queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
@@ -361,19 +387,6 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         "Created left and right memory provider for StreamJoin with page size {}--{}",
         leftMemoryProvider->getMemoryLayout()->getBufferSize(),
         rightMemoryProvider->getMemoryLayout()->getBufferSize());
-
-    // TODO(nikla44): ask Nils how to use config for setting the slice store, also in the CMakeLists.txt for the systests
-    auto sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
-        streamJoinConfig.windowSize,
-        streamJoinConfig.windowSlide,
-        MemoryControllerInfo(
-            queryCompilerConfig.fileBackedWorkingDir.getValue(), decomposedQueryPlan.getQueryId(), joinOperator->getOutputOriginIds()[0]),
-        KalmanBased,
-        joinOperator->getAllInputOriginIds());
-    /*auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        streamJoinConfig.windowSize,
-        streamJoinConfig.windowSlide,
-        joinOperator->getAllInputOriginIds().size());*/
 
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),

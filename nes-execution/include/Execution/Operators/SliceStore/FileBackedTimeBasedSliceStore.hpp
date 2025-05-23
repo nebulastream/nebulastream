@@ -33,10 +33,21 @@
 namespace NES::Runtime::Execution
 {
 
-enum DiskOperation : uint8_t
+enum class FileOperation : uint8_t
 {
     READ,
     WRITE
+};
+
+struct SliceStoreInfo
+{
+    uint64_t numWatermarkGapsAllowed;
+    uint64_t maxNumSequenceNumbers;
+    uint64_t fileDescriptorBufferSize;
+    uint64_t minReadStateSize;
+    uint64_t minWriteStateSize;
+    uint64_t fileOperationTimeDelta;
+    FileLayout fileLayout;
 };
 
 struct MemoryControllerInfo
@@ -46,7 +57,7 @@ struct MemoryControllerInfo
     OriginId outputOriginId;
 };
 
-struct SliceStoreMetaData
+struct UpdateSlicesMetaData
 {
     WorkerThreadId threadId;
     BufferMetaData bufferMetaData;
@@ -57,20 +68,11 @@ class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 public:
     //static constexpr std::array<size_t, 10> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
     static constexpr std::array<size_t, 6> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
-    static constexpr auto USE_FILE_LAYOUT = NO_SEPARATION;
-    static constexpr auto USE_MIN_STATE_SIZE_WRITE
-        = 0UL; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
-    static constexpr auto USE_MIN_STATE_SIZE_READ
-        = 0UL; /// slices with state sice less than 0B for a given ThreadId are not read back from external storage
-    static constexpr auto USE_TIME_DELTA_MS = 0UL; /// time delta in ms added to estimated read and write timestamps
-    static constexpr auto USE_BUFFER_SIZE = 1024 * 4UL; /// 4 KB size of file write and read buffers
-    static constexpr auto USE_NUM_WRITE_BUFFERS = 128UL; /// num file write buffers
-    static constexpr auto USE_MAX_NUM_SEQ_NUMBERS = UINT64_MAX; /// max number of data points for predictions
-    static constexpr auto USE_NUM_GAPS_ALLOWED = 10UL; /// number of gaps allowed in data points of sequence numbers
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
+        const SliceStoreInfo& sliceStoreInfo,
         MemoryControllerInfo memoryControllerInfo,
         WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
@@ -102,10 +104,10 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        SliceStoreMetaData metaData);
+        UpdateSlicesMetaData metaData);
 
 private:
-    std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> getSlicesToUpdate(
+    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> getSlicesToUpdate(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId);
@@ -151,6 +153,7 @@ private:
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
     std::map<std::pair<WorkerThreadId, QueryCompilation::JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
+    SliceStoreInfo sliceStoreInfo;
     uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;
     std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;

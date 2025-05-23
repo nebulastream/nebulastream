@@ -21,6 +21,9 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
+#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
@@ -40,8 +43,6 @@ public:
     NES::Configurations::EnumOption<DumpMode> dumpMode
         = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
     NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
-    NES::Configurations::StringOption fileBackedWorkingDir
-        = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
     NES::Configurations::EnumOption<Nautilus::Configurations::NautilusBackend> nautilusBackend
         = {"nautilusBackend",
            Nautilus::Configurations::NautilusBackend::COMPILER,
@@ -63,11 +64,73 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::UIntOption numWatermarkGapsAllowed
+        = {"numWatermarkGapsAllowed",
+           "10",
+           "Maximum number of gaps in watermark processor sequence numbers for watermark prediction.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption maxNumSequenceNumbers
+        = {"maxNumSequenceNumbers",
+           std::to_string(UINT64_MAX),
+           "Maximum number of watermark processor sequence numbers for watermark prediction.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption fileDescriptorBufferSize
+        = {"fileDescriptorBufferSize",
+           "4096",
+           "Buffer size of file writers and readers for file backed data structures.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption minReadStateSize
+        = {"minReadStateSize",
+           "0",
+           "Minimum state size per slice and thread to be read back to memory.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption minWriteStateSize
+        = {"minWriteStateSize",
+           "0",
+           "Minimum state size per slice and thread to be written to file.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption fileOperationTimeDelta
+        = {"fileOperationTimeDelta",
+           "0",
+           "Time delta added to watermark predictions to account for execution time.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::EnumOption<Runtime::Execution::FileLayout> fileLayout
+        = {"fileLayout",
+           Runtime::Execution::FileLayout::NO_SEPARATION,
+           "File layout for file backed data structures "
+           "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
+    NES::Configurations::EnumOption<Runtime::Execution::WatermarkPredictorType> watermarkPredictorType
+        = {"watermarkPredictorType",
+           Runtime::Execution::WatermarkPredictorType::KALMAN,
+           "Type of watermark predictor "
+           "[KALMAN|REGRESSION|RLS]."};
+    NES::Configurations::EnumOption<Runtime::Execution::SliceStoreType> sliceStoreType
+        = {"sliceStoreType",
+           Runtime::Execution::SliceStoreType::DEFAULT,
+           "Type of slice store "
+           "[DEFAULT|FILE_BACKED]."};
+    NES::Configurations::StringOption fileBackedWorkingDir
+        = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &fileBackedWorkingDir};
+        return {
+            &nautilusBackend,
+            &pageSize,
+            &numberOfPartitions,
+            &joinStrategy,
+            &pipelinesTxtFilePath,
+            &numWatermarkGapsAllowed,
+            &maxNumSequenceNumbers,
+            &fileDescriptorBufferSize,
+            &minReadStateSize,
+            &minWriteStateSize,
+            &fileOperationTimeDelta,
+            &fileLayout,
+            &watermarkPredictorType,
+            &sliceStoreType,
+            &fileBackedWorkingDir};
     }
 };
 }

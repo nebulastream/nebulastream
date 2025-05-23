@@ -28,6 +28,11 @@
 namespace NES::Runtime::Execution
 {
 
+enum class SliceStoreType : uint8_t
+{
+    DEFAULT,
+    FILE_BACKED
+};
 
 /// This struct stores a slice and the window info
 struct SlicesAndWindowInfo

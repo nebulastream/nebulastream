@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution
 {
 
-enum FileLayout : uint8_t
+enum class FileLayout : uint8_t
 {
     NO_SEPARATION_KEEP_KEYS,
     NO_SEPARATION,

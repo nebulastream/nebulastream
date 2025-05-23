@@ -56,7 +56,7 @@ void updateSlicesProxy(
                 bufferProvider,
                 memoryLayout,
                 joinBuildSide,
-                SliceStoreMetaData(
+                UpdateSlicesMetaData(
                     workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
     }
 }

@@ -19,8 +19,6 @@ namespace NES::Runtime::Execution
 
 MemoryController::MemoryController(
     const size_t bufferSize,
-    const uint64_t numReadBuffers,
-    const uint64_t numWriteBuffers,
     const uint64_t numWorkerThreads,
     std::filesystem::path workingDir,
     const QueryId queryId,
@@ -29,8 +27,8 @@ MemoryController::MemoryController(
 {
     if (bufferSize > 0)
     {
-        const auto writePoolSize = std::min(numWriteBuffers * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
-        const auto readPoolSize = std::min(numReadBuffers * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto writePoolSize = std::min(numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto readPoolSize = std::min(numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
 
         writeMemoryPool.resize(bufferSize * writePoolSize);
         for (size_t i = 0; i < writePoolSize; ++i)

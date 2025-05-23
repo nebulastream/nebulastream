@@ -46,7 +46,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     Runtime::Execution::FileLayout fileLayout)
 {
     // TODO remove once fileLayout is chosen adaptively
-    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::NO_SEPARATION;
+    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::FileLayout::NO_SEPARATION;
 
     PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
     PRECONDITION(
@@ -60,8 +60,8 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     switch (fileLayout)
     {
         /// Write all tuples consecutivley to file
-        case Runtime::Execution::NO_SEPARATION_KEEP_KEYS:
-        case Runtime::Execution::NO_SEPARATION: {
+        case Runtime::Execution::FileLayout::NO_SEPARATION_KEEP_KEYS:
+        case Runtime::Execution::FileLayout::NO_SEPARATION: {
             for (const auto& [_, page] : pages)
             {
                 const auto numTuplesOnPage = page.getNumberOfTuples();
@@ -71,12 +71,12 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
             break;
         }
         /// Write only payload to file and append key field data to designated pagedVectorKeys
-        case Runtime::Execution::SEPARATE_PAYLOAD: {
+        case Runtime::Execution::FileLayout::SEPARATE_PAYLOAD: {
             co_await writePayloadOnlyToFile(memoryLayout, bufferProvider, fileWriter);
             break;
         }
         /// Write designated pagedVectorKeys to key file first and then remaining payload and key field data to separate files
-        case Runtime::Execution::SEPARATE_KEYS: {
+        case Runtime::Execution::FileLayout::SEPARATE_KEYS: {
             co_await writePayloadAndKeysToSeparateFiles(memoryLayout, fileWriter);
             break;
         }
@@ -91,7 +91,7 @@ void FileBackedPagedVector::readFromFile(
     Runtime::Execution::FileLayout fileLayout)
 {
     // TODO remove once fileLayout is chosen adaptively
-    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::NO_SEPARATION;
+    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::FileLayout::NO_SEPARATION;
 
     PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
     PRECONDITION(
@@ -105,10 +105,10 @@ void FileBackedPagedVector::readFromFile(
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
-        case Runtime::Execution::NO_SEPARATION_KEEP_KEYS: {
+        case Runtime::Execution::FileLayout::NO_SEPARATION_KEEP_KEYS: {
             keyPages.clear();
         }
-        case Runtime::Execution::NO_SEPARATION: {
+        case Runtime::Execution::FileLayout::NO_SEPARATION: {
             // TODO just append new page disregarding the number of tuples on the last page?
             const auto tupleSize = memoryLayout->getTupleSize();
             appendPageIfFull(bufferProvider, memoryLayout);
@@ -129,8 +129,8 @@ void FileBackedPagedVector::readFromFile(
             break;
         }
         /// Read payload and key field data from separate files first and then remaining designated pagedVectorKeys and payload from file
-        case Runtime::Execution::SEPARATE_PAYLOAD:
-        case Runtime::Execution::SEPARATE_KEYS: {
+        case Runtime::Execution::FileLayout::SEPARATE_PAYLOAD:
+        case Runtime::Execution::FileLayout::SEPARATE_KEYS: {
             readSeparatelyFromFiles(memoryLayout, bufferProvider, fileReader);
             break;
         }
@@ -144,17 +144,17 @@ void FileBackedPagedVector::truncate(const Runtime::Execution::FileLayout fileLa
     switch (fileLayout)
     {
         /// Append key field data to designated pagedVectorKeys
-        case Runtime::Execution::NO_SEPARATION_KEEP_KEYS: {
+        case Runtime::Execution::FileLayout::NO_SEPARATION_KEEP_KEYS: {
             // TODO
             break;
         }
         /// Do nothing as key field data has just been written to designated pagedVectorKeys
-        case Runtime::Execution::SEPARATE_PAYLOAD: {
+        case Runtime::Execution::FileLayout::SEPARATE_PAYLOAD: {
             break;
         }
         /// Remove all key field data as a different FileLayout might have been used previously
-        case Runtime::Execution::NO_SEPARATION:
-        case Runtime::Execution::SEPARATE_KEYS: {
+        case Runtime::Execution::FileLayout::NO_SEPARATION:
+        case Runtime::Execution::FileLayout::SEPARATE_KEYS: {
             keyPages.clear();
             break;
         }
