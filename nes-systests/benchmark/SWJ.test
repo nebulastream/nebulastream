@@ -1,0 +1,30 @@
+# name: SWJ.test
+# description: Extended multi-way join queries using IoTropolis-inspired data (as DEBS.test)
+# groups: [milestone, benchmark, small]
+
+# Source definitions
+
+SourceCSV solarPanel INT32 solarPanel_Id INT32 solarPanel_groupId FLOAT64 solarPanel_power UINT64 TS TESTDATA/small/solarPanel.csv
+SourceCSV factory INT32 factory_Id INT32 factory_sectorId FLOAT64 factory_power UINT64 TS TESTDATA/small/factory.csv
+#SourceCSV household INT32 household_Id INT32 household_sectorId FLOAT64 household_power UINT64 TS TESTDATA/household.csv
+#SourceCSV office INT32 office_Id INT32 office_sectorId FLOAT64 office_power UINT64 TS TESTDATA/office.csv
+#SourceCSV streetLight INT32 streetLight_Id INT32 streetLight_sectorId FLOAT64 streetLight_power UINT64 TS TESTDATA/streetLight.csv
+SourceCSV windTurbine INT32 windTurbine_Id INT32 windTurbine_groupId FLOAT64 windTurbine_power UINT64 TS TESTDATA/small/windTurbine.csv
+
+SINK testQ1 INT32 solarPanel_power INT32 windTurbine_power INT32 solarPanel_groupId UINT64 TS UINT64 TS
+
+# Q1 resource consuming 2-way SWJ (because slide is small)
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId AND TS < TS
+WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 2 MINUTES)
+INTO CHECKSUM;
+----
+3378998,12850685294
+
+# Q2 = Q1 + extra condition (night query, true all night solarPanel = 0 , tests watermark)
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 5 MINUTES)
+INTO CHECKSUM;
+----
+1002925,3789103442
