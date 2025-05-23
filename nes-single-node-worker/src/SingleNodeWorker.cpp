@@ -64,8 +64,11 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
             bytesPerSecondMessage,
             tuplesPerSecondMessage,
             memoryConsumptionMessage);
+
+        /// We need to flush the file now as the worker might be killed abruptly
+        file.flush();
     };
-    constexpr auto timeIntervalInMilliSeconds = 100; // TODO(nikla44): doesn't print for time intervals that are larger
+    constexpr auto timeIntervalInMilliSeconds = 100;
     auto throughputListener = std::make_shared<Runtime::ThroughputListener>(
         fmt::format("BenchmarkStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()),
         timeIntervalInMilliSeconds,
