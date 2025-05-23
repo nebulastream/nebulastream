@@ -1,8 +1,16 @@
 # Includes all CMake utility functions to generate plugin registrars, which register plugins at plugin registries.
 
+function(_generate_plugin_registrars plugin_registry_component)
+    foreach (plugin_registry ${ARGN})
+        cmake_language(EVAL CODE "
+                cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL _generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
+        ")
+    endforeach ()
+endfunction()
+
 # creates a library that exposes only the registries and not the registrars
 # assumes that registries are located in '${CMAKE_CURRENT_SOURCE_DIR}/registry/include' (see nes-sources for an example)
-function(create_plugin_registry_library plugin_registry_library plugin_registry_component)
+function(_create_plugin_registry_library plugin_registry_library plugin_registry_component)
     add_library(${plugin_registry_library} registry)
     target_link_libraries(${plugin_registry_library} PUBLIC ${plugin_registry_component})
     target_include_directories(${plugin_registry_library}
@@ -13,40 +21,8 @@ function(create_plugin_registry_library plugin_registry_library plugin_registry_
     )
 endfunction()
 
-# enables/disables an optional plugin; if enabled, the path to the plugin becomes part of the build
-function(activate_optional_plugin plugin_path plugin_option)
-    if (${plugin_option})
-        message(STATUS "Activating optional plugin: ${plugin_path} (and all of its dependencies).")
-        add_subdirectory(${plugin_path})
-    else ()
-        message(STATUS "Skipping optional plugin: ${plugin_path}.")
-    endif ()
-endfunction()
-
-# create a new library for the plugin and link the component that the plugin registry belongs to against it
-# adds the name of plugin to the list of plugin names for the plugin registry
-# adds the name of the library of the plugin to the list of libraries for the plugin registry
-function(add_plugin_as_library plugin_name plugin_registry plugin_registry_component plugin_library)
-    set(sources ${ARGN})
-    add_library(${plugin_library} STATIC ${sources})
-    target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_component})
-
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
-endfunction()
-
-# adds the source files of the plugin to the source files of the component that the plugin registry belongs to
-# adds the name of plugin to the list of plugin names for the plugin registry
-function(add_plugin plugin_name plugin_registry plugin_registry_component)
-    set(sources ${ARGN})
-    add_source_files(${plugin_registry_component}
-            ${sources}
-    )
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-endfunction()
-
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
-function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
+function(_generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
     set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
     set(registrar_header_generated_path ${current_binary_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
 
@@ -91,11 +67,54 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     file(REMOVE ${temp_registrar_header_template_file})
 endfunction()
 
-function(generate_plugin_registrars plugin_registry_component)
-    foreach (plugin_registry ${ARGN})
-        cmake_language(EVAL CODE "
-                cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
-        ")
+
+# enables/disables an optional plugin; if enabled, the path to the plugin becomes part of the build
+function(activate_optional_plugin plugin_path plugin_option)
+    if (${plugin_option})
+        message(STATUS "Activating optional plugin: ${plugin_path} (and all of its dependencies).")
+        add_subdirectory(${plugin_path})
+    else ()
+        message(STATUS "Skipping optional plugin: ${plugin_path}.")
+    endif ()
+endfunction()
+
+# create a new library for the plugin and link the component that the plugin registry belongs to against it
+# adds the name of plugin to the list of plugin names for the plugin registry
+# adds the name of the library of the plugin to the list of libraries for the plugin registry
+function(add_plugin_as_library plugin_name plugin_registry plugin_registry_component plugin_library)
+    set(sources ${ARGN})
+    add_library(${plugin_library} STATIC ${sources})
+    target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_component})
+
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
+endfunction()
+
+# takes a target and triples (PLUGIN_NAME REGISTRY_NAME SOURCE_FILE), adds SOURCE_FILE to the target, just like
+# the 'add_source_files' function and then adds the PLUGIN_NAME to the REGISTRY_NAME
+function(add_source_files_as_plugins target_name)
+    # process arguments in triplets (groups of 3)
+    set(args_count ${ARGC})
+    math(EXPR triplet_count "(${args_count} - 1) / 3")
+
+    foreach (i RANGE 1 ${triplet_count})
+        # determine the index (1-based) of the first field of the current triplet
+        math(EXPR triplet_index "1 + (3 * (${i} - 1))")
+        # access all three fields of the current triplet
+        math(EXPR idx_plugin_name "${triplet_index}")
+        math(EXPR idx_plugin_registry "${triplet_index} + 1")
+        math(EXPR idx_source_file "${triplet_index} + 2")
+
+        # get the values from the arguments list
+        list(GET ARGV ${idx_plugin_name} plugin_name)
+        list(GET ARGV ${idx_plugin_registry} plugin_registry)
+        list(GET ARGV ${idx_source_file} source_file)
+
+        # add the source file to the target
+        add_source(${target_name} "${source_file}")
+
+        # adds the name of plugin to the list of plugin names for the plugin registry
+        set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
     endforeach ()
 endfunction()
 
@@ -104,7 +123,7 @@ endfunction()
 function(create_registries_for_component)
     get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
     set(registries_library ${COMPONENT_NAME}-registry)
-    create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
+    _create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
     target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
-    generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
+    _generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
 endfunction()

@@ -13,9 +13,11 @@
 add_source_files(nes-execution
         ExecutableFunctionReadField.cpp
         ExecutableFunctionConstantValueVariableSize.cpp
-        )
+)
 
-add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)
+add_source_files_as_plugins(nes-execution
+        Concat ExecutableFunction ExecutableFunctionConcat.cpp
+)
 
 
 add_subdirectory(ArithmeticalFunctions)

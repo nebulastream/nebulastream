@@ -13,22 +13,24 @@
 add_source_files(nes-data-types
         Numeric.cpp
         DataTypeProvider.cpp
-        )
+)
 
-# Register plugins
-add_plugin(BOOLEAN DataType nes-data-types Boolean.cpp)
-add_plugin(CHAR DataType nes-data-types Char.cpp)
-add_plugin(FLOAT32 DataType nes-data-types Float.cpp)
-add_plugin(FLOAT64 DataType nes-data-types Float.cpp)
-add_plugin(INT8 DataType nes-data-types Integer.cpp)
-add_plugin(INT16 DataType nes-data-types Integer.cpp)
-add_plugin(INT32 DataType nes-data-types Integer.cpp)
-add_plugin(INT64 DataType nes-data-types Integer.cpp)
-add_plugin(UINT8 DataType nes-data-types Integer.cpp)
-add_plugin(UINT16 DataType nes-data-types Integer.cpp)
-add_plugin(UINT32 DataType nes-data-types Integer.cpp)
-add_plugin(UINT64 DataType nes-data-types Integer.cpp)
-add_plugin(UNDEFINED DataType nes-data-types Undefined.cpp)
-add_plugin(VARSIZED DataType nes-data-types VariableSizedDataType.cpp)
+add_source_files_as_plugins(nes-data-types
+        BOOLEAN DataType Boolean.cpp
+        CHAR DataType Char.cpp
+        FLOAT32 DataType Float.cpp
+        FLOAT64 DataType Float.cpp
+        INT8 DataType Integer.cpp
+        INT16 DataType Integer.cpp
+        INT32 DataType Integer.cpp
+        INT64 DataType Integer.cpp
+        UINT8 DataType Integer.cpp
+        UINT16 DataType Integer.cpp
+        UINT32 DataType Integer.cpp
+        UINT64 DataType Integer.cpp
+        UNDEFINED DataType Undefined.cpp
+        VARSIZED DataType VariableSizedDataType.cpp
+)
+
 
 
