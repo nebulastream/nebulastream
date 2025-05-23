@@ -47,12 +47,14 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        const std::string_view cacheHitsAndMissesFile);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
     void allocateSliceCacheEntries(
         const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
     const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const;
+    void writeCacheHitAndMissesToConsole() const override;
 
 
     /// shared_ptr as multiple slices need access to it
@@ -63,6 +65,7 @@ protected:
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
 
+    std::string cacheHitsAndMissesFile;
 };
 
 }

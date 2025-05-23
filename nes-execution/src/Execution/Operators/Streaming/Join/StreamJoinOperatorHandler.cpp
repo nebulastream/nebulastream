@@ -28,15 +28,41 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Execution.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    const std::string_view cacheHitsAndMissesFile)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , cacheHitsAndMissesFile(cacheHitsAndMissesFile)
 {
+}
+
+void StreamJoinOperatorHandler::writeCacheHitAndMissesToConsole() const
+{
+    if (sliceCacheEntriesBufferForWorkerThreads.empty())
+    {
+        std::cout << "Slice cache has not been created" << std::endl;
+        return;
+    }
+
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    std::ofstream file(cacheHitsAndMissesFile, std::ios::out | std::ios::app);
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        for (auto joinBuildSide : magic_enum::enum_values<QueryCompilation::JoinBuildSideType>())
+        {
+            const auto sliceCacheStart = getStartOfSliceCacheEntries(WorkerThreadId(i), joinBuildSide);
+            const auto* hitsAndMisses = reinterpret_cast<const HitsAndMisses*>(sliceCacheStart);
+            file << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i
+                 << " and join build side " << magic_enum::enum_name(joinBuildSide) << std::endl;
+        }
+    }
+    file.flush();
 }
 
 const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(

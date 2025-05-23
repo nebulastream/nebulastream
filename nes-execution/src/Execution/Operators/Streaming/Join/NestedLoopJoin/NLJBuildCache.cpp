@@ -186,4 +186,13 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
     const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
+
+void NLJBuildCache::terminate(ExecutionContext& executionCtx) const
+{
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    nautilus::invoke(+[](const NLJOperatorHandler* opHandler) { opHandler->writeCacheHitAndMissesToConsole(); }, globalOperatorHandler);
+
+    StreamJoinBuild::terminate(executionCtx);
+}
 }

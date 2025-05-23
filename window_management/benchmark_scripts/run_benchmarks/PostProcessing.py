@@ -167,13 +167,13 @@ class PostProcessing:
             interesting_pipelines = find_pipeline_number(file.read())
 
 
-        pattern_worker_file = r"^worker_\d+\.txt$"
+        # pattern_worker_file = r"^worker_\d+\.txt$"
         pattern_task_details = (r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
                                 r"Task (?P<task_id>\d+) for Pipeline (?P<pipeline>\d+).*?"
                                 r"(?P<action>Started|Completed)(?:\. Number of Tuples: (?P<num_tuples>\d+))?")
 
         # Gathering all statistic files across all folders
-        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if re.match(pattern_worker_file, f)]
+        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if ".stats" in f]
         combined_df = pd.DataFrame()
         no_statistics_files = len(statistic_files)
         cnt_rows = 0
@@ -232,7 +232,7 @@ class PostProcessing:
                 df = df[df['pipeline_id'].isin(interesting_pipelines)]
 
             # Write the created dataframe to the csv file
-            df.to_csv(stat_file + ".csv", index=False)
+            df.to_csv(stat_file.replace(".stats", ".csv"), index=False)
 
             # Adding this dataframe to the global one
             cnt_rows += len(df)

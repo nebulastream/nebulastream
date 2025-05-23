@@ -213,8 +213,6 @@ def submitting_query(query_file):
     cmd = f"cat {query_file} | {NEBULI_PATH} register -x -s localhost:8080"
     # print(f"Submitting the query via {cmd}...")
     # shell=True is needed to pipe the output of cat to the register command
-    # print(os.path.exists(query_file))
-    # print(os.path.exists(NEBULI_PATH))
     result = subprocess.run(cmd,
                             shell=True,
                             check=True,
@@ -230,7 +228,7 @@ def submitting_query(query_file):
 
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
-    print(f"Starting the single node worker with {cmd}")
+    # print(f"Starting the single node worker with {cmd}")
     process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started single node worker with pid {pid}")

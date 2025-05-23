@@ -40,9 +40,30 @@ namespace NES::Runtime::Execution::Operators
 AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    const std::string_view cacheHitsAndMissesFile)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , cacheHitsAndMissesFile(cacheHitsAndMissesFile)
 {
+}
+
+void AggregationOperatorHandler::writeCacheHitAndMissesToConsole() const
+{
+    if (sliceCacheEntriesBufferForWorkerThreads.empty())
+    {
+        std::cout << "Slice cache has not been created" << std::endl;
+        return;
+    }
+
+    /// Writing the number of hits and misses to std::cout for each worker thread
+    std::ofstream file(cacheHitsAndMissesFile, std::ios::out | std::ios::app);
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        const auto sliceCacheStart = getStartOfSliceCacheEntries(WorkerThreadId(i));
+        const auto* hitsAndMisses = reinterpret_cast<const HitsAndMisses*>(sliceCacheStart);
+        file << "Hits: " << hitsAndMisses->hits << " Misses: " << hitsAndMisses->misses << " for worker thread " << i << std::endl;
+    }
+    file.flush();
 }
 
 const int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const

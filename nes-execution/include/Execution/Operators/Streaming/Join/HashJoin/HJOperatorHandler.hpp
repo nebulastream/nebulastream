@@ -40,8 +40,8 @@ class HJOperatorHandler final : public StreamJoinOperatorHandler
 {
 public:
     HJOperatorHandler(
-        const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-        : StreamJoinOperatorHandler(inputOrigins, std::move(outputOriginId), std::move(sliceAndWindowStore))
+        const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore, const std::string_view cacheHitsAndMissesFile)
+        : StreamJoinOperatorHandler(inputOrigins, std::move(outputOriginId), std::move(sliceAndWindowStore), cacheHitsAndMissesFile)
     {
     }
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;

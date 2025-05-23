@@ -289,4 +289,14 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }
+
+void AggregationBuildCache::terminate(ExecutionContext& executionCtx) const
+{
+    /// Writing the number of hits and misses to std::cout for each worker thread and left and right side
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    nautilus::invoke(
+        +[](const AggregationOperatorHandler* opHandler) { opHandler->writeCacheHitAndMissesToConsole(); }, globalOperatorHandler);
+
+    WindowOperatorBuild::terminate(executionCtx);
+}
 }

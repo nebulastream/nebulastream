@@ -68,8 +68,8 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     constexpr auto timeIntervalInMilliSeconds = 1000;
     const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);
 
-    const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
-        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+    auto fileName = fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid());
+    const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(std::filesystem::path(configuration.workerConfiguration.queryEngineConfiguration.statisticsDir.getValue()) / fileName);
     queryEngineStatisticsListener = {printStatisticListener, throughputListener};
     systemEventListener = printStatisticListener;
     nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();

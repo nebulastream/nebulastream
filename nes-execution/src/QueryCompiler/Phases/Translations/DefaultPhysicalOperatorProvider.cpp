@@ -399,12 +399,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     {
         case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
             joinOperatorHandler = std::make_shared<NLJOperatorHandler>(
-                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore));
+                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore), queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
             break;
         }
         case Configurations::StreamJoinStrategy::HASH_JOIN: {
             joinOperatorHandler = std::make_shared<HJOperatorHandler>(
-                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore));
+                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore), queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
             break;
         }
             std::unreachable();
@@ -602,7 +602,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
             timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
     const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
-        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
+        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore), queryCompilerConfig.cacheHitsAndMissesFilePath.getValue());
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);

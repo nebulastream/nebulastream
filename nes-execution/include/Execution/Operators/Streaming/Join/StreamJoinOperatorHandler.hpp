@@ -35,12 +35,15 @@ public:
     StreamJoinOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        const std::string_view cacheHitsAndMissesFile);
 
     const int8_t*
     getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const;
     void allocateSliceCacheEntries(
         const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
+
+    void writeCacheHitAndMissesToConsole() const override;
 
 protected:
     void triggerSlices(
@@ -55,5 +58,7 @@ protected:
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx)
         = 0;
+
+    std::string cacheHitsAndMissesFile;
 };
 }
