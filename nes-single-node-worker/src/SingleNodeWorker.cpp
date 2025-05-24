@@ -90,7 +90,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
         /// We need to flush the file now as the worker might be killed abruptly
         file.flush();
     };
-    constexpr auto timeIntervalInMilliSeconds = 100;
+    const auto timeIntervalInMilliSeconds = configuration.workerConfiguration.throughputListenerTimeInterval.getValue();
     auto throughputListener = std::make_shared<ThroughputListener>(
         fmt::format("BenchmarkStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()),
         timeIntervalInMilliSeconds,
