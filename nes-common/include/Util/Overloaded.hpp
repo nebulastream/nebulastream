@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <type_traits>
+#include <folly/functional/Invoke.h>
 
 namespace NES
 {
@@ -28,4 +30,20 @@ struct Overloaded : Ts... ///NOLINT
 {
     using Ts::operator()...;
 };
+
+template <typename... Functions>
+struct TypedOverloaded : Functions... ///NOLINT
+{
+    std::tuple<Functions...> functions;
+    // using Functions::operator()...;
+    explicit TypedOverloaded(Functions... functions): functions(functions...){ }
+
+    template <typename Arg, typename T>
+    requires ((requires (Functions function, Arg arg) { function(arg);} && std::is_same_v<Functions, T>) || ...)
+    Variant operator()(Arg arg)
+    {
+        return Variant{T::operator()(arg)};
+    }
+};
+
 }

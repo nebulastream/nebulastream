@@ -35,6 +35,7 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/detail/meta/call_std/end.hpp>
+#include <std/ostream.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
@@ -42,6 +43,7 @@
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include "SQLQueryParser/AntlrSQLQueryParser.hpp"
 #include "SQLQueryParser/StatementBinder.hpp"
+#include "Util/Overloaded.hpp"
 
 #include "StatementHandler.hpp"
 
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
         auto nebuli = std::make_shared<NES::CLI::Nebuli>(client);
 
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
-        NES::QueryStatementHandler {nebuli, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{nebuli, optimizer};
 
         auto input = program.get("-i");
         std::string inputString;
@@ -121,7 +123,17 @@ int main(int argc, char** argv)
 
         for (auto& statement : validStatements)
         {
-            sourceStatementHandler.apply(statement);
+            std::visit(statement, NES::TypedOverloaded<NES::StatementResult>(
+                    [&](NES::CreateLogicalSourceStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::CreatePhysicalSourceStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::DropLogicalSourceStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::DropPhysicalSourceStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::ShowLogicalSourcesStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::ShowPhysicalSourcesStatement stmt) { return sourceStatementHandler(stmt).value(); },
+                    [&](NES::QueryStatement stmt) { return queryStatementHandler(stmt).value(); },
+                    [&](NES::DropQueryStatement stmt) { return queryStatementHandler(stmt).value(); },
+                    [&](NES::ShowQueriesStatement stmt) { return queryStatementHandler(stmt).value(); }));
+
         }
 
 

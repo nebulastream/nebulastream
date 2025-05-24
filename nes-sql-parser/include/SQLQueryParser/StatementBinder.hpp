@@ -88,7 +88,7 @@ struct DropPhysicalSourceStatement
 
 using QueryStatement = std::shared_ptr<QueryPlan>;
 
-struct ShowQueries
+struct ShowQueriesStatement
 {
     std::optional<QueryId> id;
     ShowStatementFormat format;
@@ -108,7 +108,7 @@ using Statement = std::variant<
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     QueryStatement,
-    ShowQueries,
+    ShowQueriesStatement,
     DropQueryStatement>;
 
 

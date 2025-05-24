@@ -13,8 +13,8 @@
 */
 #include <any>
 #include <expected>
-#include <ErrorHandling.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <ErrorHandling.hpp>
 
 
 #include <StatementHandler.hpp>
@@ -49,6 +49,55 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
     return std::unexpected{InvalidConfigParameter("Invalid configuration: {}", statement)};
 }
 
+std::expected<ShowLogicalSourcesStatementResult, Exception>
+SourceStatementHandler::operator()(const ShowLogicalSourcesStatement& statement) noexcept
+{
+    if (statement.name)
+    {
+        if (const auto foundSource = sourceCatalog->getLogicalSource(*statement.name))
+        {
+            return ShowLogicalSourcesStatementResult{std::vector{*foundSource}};
+        }
+        return ShowLogicalSourcesStatementResult{{}};
+    }
+    return ShowLogicalSourcesStatementResult{sourceCatalog->getAllLogicalSources() | std::ranges::to<std::vector>()};
+}
+
+std::expected<ShowPhysicalSourcesStatementResult, Exception>
+SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement) noexcept
+{
+    if (statement.id and not statement.logicalSource)
+    {
+        if (const auto foundSource = sourceCatalog->getPhysicalSource(*statement.id))
+        {
+            return ShowPhysicalSourcesStatementResult{std::vector{*foundSource}};
+        }
+        return ShowPhysicalSourcesStatementResult{{}};
+    }
+    if (not statement.id and statement.logicalSource)
+    {
+        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        {
+            return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
+        }
+        return ShowPhysicalSourcesStatementResult{{}};
+    }
+    if (statement.logicalSource and statement.id)
+    {
+        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        {
+            return ShowPhysicalSourcesStatementResult{
+                *foundSources
+                | std::views::filter([statement](const auto& source) { return source.getPhysicalSourceId() == *statement.id; })
+                | std::ranges::to<std::vector>()};
+        }
+        return ShowPhysicalSourcesStatementResult{{}};
+    }
+    return ShowPhysicalSourcesStatementResult{
+        sourceCatalog->getAllSources() | std::views::transform([](auto& pair) { return pair.second; }) | std::views::join
+        | std::ranges::to<std::vector>()};
+}
+
 std::expected<DropLogicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement) noexcept
 {
@@ -80,12 +129,12 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
     return DropQueryStatementResult{statement.id};
 }
 
-std::expected<StartQueryStatementResult, Exception> QueryStatementHandler::operator()(std::shared_ptr<QueryPlan> statement)
+std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(std::shared_ptr<QueryPlan> statement)
 {
     const auto optimizedPlan = optimizer->optimize(statement);
     const auto id = nebuli->registerQuery(optimizedPlan);
     nebuli->startQuery(id);
-    return StartQueryStatementResult{id};
+    return QueryStatementResult{id};
 }
 
 }

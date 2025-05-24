@@ -401,7 +401,7 @@ public:
         return ShowPhysicalSourcesStatement{.logicalSource = logicalSource, .id = std::nullopt, .format = format};
     }
 
-    ShowQueries
+    ShowQueriesStatement
     bindShowQueriesStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
     {
         const ShowStatementFormat format = showFormat != nullptr ? bindFormat(showFormat) : ShowStatementFormat::TEXT;
@@ -416,9 +416,9 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be an unsigned integer");
             }
-            return ShowQueries{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
+            return ShowQueriesStatement{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
         }
-        return ShowQueries{.id = std::nullopt, .format = format};
+        return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
 
     Statement bindShowStatement(AntlrSQLParser::ShowStatementContext* showAST) const
