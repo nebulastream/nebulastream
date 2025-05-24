@@ -27,22 +27,22 @@
 class ClientHandler
 {
 public:
-    ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep, const int ingestionRate)
+    ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep, const double ingestionRate)
         : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
     {
     }
 
     void handle()
     {
-        std::cout << "New connection from " << inet_ntoa(address.sin_addr) << std::endl;
+        std::cout << "New connection from " << inet_ntoa(address.sin_addr) << '\n';
         try
         {
-            /// define random distributions for degreeOfDisorder and ts delay
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution valueDistrib(0, 10000);
 
-            const auto interval = std::chrono::microseconds(ingestionRate != 0 ? 1000000 / ingestionRate : 0);
+            const auto interval
+                = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 / ingestionRate : 0)));
             //std::cout << "Interval: " << static_cast<uint64_t>(interval.count()) << std::endl;
             auto nextSendTime = std::chrono::high_resolution_clock::now();
 
@@ -60,7 +60,7 @@ public:
                 value = valueDistrib(gen);
 
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
-                    + std::to_string(timestamp) + "\n";
+                    + std::to_string(timestamp) + '\n';
                 //std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
 
@@ -68,18 +68,18 @@ public:
 
                 if (countLimit != 0 && counter >= countLimit)
                 {
-                    std::cout << "Client " << inet_ntoa(address.sin_addr) << " reached count limit of " << countLimit << std::endl;
+                    std::cout << "Client " << inet_ntoa(address.sin_addr) << " reached count limit of " << countLimit << '\n';
                     break;
                 }
             }
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Exception in client: " << e.what() << std::endl;
+            std::cerr << "Exception in client: " << e.what() << '\n';
         }
         catch (...)
         {
-            std::cout << "Client " << inet_ntoa(address.sin_addr) << " disconnected" << std::endl;
+            std::cout << "Client " << inet_ntoa(address.sin_addr) << " disconnected\n";
         }
         cleanup();
     }
@@ -89,7 +89,7 @@ public:
         running = false;
         close(clientSocket);
         /// log("TCP server shut down.");
-        std::cout << "Cleaned up connection from " << inet_ntoa(address.sin_addr) << std::endl;
+        std::cout << "Cleaned up connection from " << inet_ntoa(address.sin_addr) << '\n';
     }
 
     [[nodiscard]] bool isRunning() const { return running; }
@@ -99,7 +99,7 @@ private:
     sockaddr_in address;
     uint64_t countLimit;
     int timeStep;
-    int ingestionRate;
+    double ingestionRate;
     uint64_t counter = 0;
     int value = 0;
     int payload = 0;
@@ -110,7 +110,7 @@ private:
 class CounterServer
 {
 public:
-    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep, const int ingestionRate)
+    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep, const double ingestionRate)
         : host(host), port(port), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
     {
     }
@@ -119,7 +119,7 @@ public:
     {
         if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         {
-            std::cerr << "Failed to create server socket" << std::endl;
+            std::cerr << "Failed to create server socket\n";
             cleanup(-1);
         }
 
@@ -132,12 +132,16 @@ public:
         int success = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
         if (success != 0)
         {
-            std::cout << "\nShutting down server because it can not bind to server socket " << serverSocket << "..." << std::endl;
+            std::cout << "\nShutting down server because it can not bind to server socket " << serverSocket << "...\n";
             cleanup(-1);
         }
-        listen(serverSocket, 5);
-        std::cout << "Server listening on " << host << ":" << port << std::endl;
-        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit)) << std::endl;
+        if (listen(serverSocket, 5) == -1)
+        {
+            std::cout << "\nShutting down server because it can not listen on server socket " << serverSocket << "...\n";
+            cleanup(-1);
+        }
+        std::cout << "Server listening on " << host << ":" << port << '\n';
+        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit)) << '\n';
 
         try
         {
@@ -146,6 +150,10 @@ public:
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
                 const int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
+                if (clientSocket == -1)
+                {
+                    std::cout << "\nShutting down server because it failed to accept client on socket " << clientSocket << "...\n";
+                }
                 ClientHandler client(clientSocket, clientAddress, countLimit, timeStep, ingestionRate);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
@@ -167,12 +175,12 @@ public:
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Exception in server: " << e.what() << std::endl;
+            std::cerr << "Exception in server: " << e.what() << '\n';
             cleanup(-1);
         }
         catch (...)
         {
-            std::cout << "Shutting down server..." << std::endl;
+            std::cout << "Shutting down server...\n";
         }
         cleanup(0);
     }
@@ -187,7 +195,7 @@ public:
         }
         /// Close server socket
         close(serverSocket);
-        std::cout << "Server shutdown complete" << std::endl;
+        std::cout << "Server shutdown complete\n";
         exit(errorCode);
     }
 
@@ -198,7 +206,7 @@ private:
     int port = 5020;
     uint64_t countLimit = 0;
     int timeStep = 1;
-    int ingestionRate = 0;
+    double ingestionRate = 0;
     int serverSocket;
     sockaddr_in serverAddress;
     std::vector<ClientHandler> clients;
@@ -211,7 +219,7 @@ int main(const int argc, char* argv[])
     int port = 5020;
     uint64_t countLimit = 0;
     int timeStep = 1;
-    int ingestionRate = 0;
+    double ingestionRate = 0;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -233,7 +241,7 @@ int main(const int argc, char* argv[])
         }
         else if (std::strcmp(argv[i], "-i") == 0 || std::strcmp(argv[i], "--ingestion-rate") == 0)
         {
-            ingestionRate = std::stoi(argv[++i]);
+            ingestionRate = std::stod(argv[++i]);
         }
     }
 
@@ -244,11 +252,11 @@ int main(const int argc, char* argv[])
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception in main: " << e.what() << std::endl;
+        std::cerr << "Exception in main: " << e.what() << '\n';
     }
     catch (...)
     {
-        std::cerr << "Unknown exception caught in main" << std::endl;
+        std::cerr << "Unknown exception caught in main\n";
     }
     std::cout << "finished";
 
