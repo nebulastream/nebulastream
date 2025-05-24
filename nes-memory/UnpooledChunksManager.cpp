@@ -79,6 +79,11 @@ size_t UnpooledChunksManager::getNumberOfUnpooledBuffers() const
     return numOfUnpooledBuffers;
 }
 
+size_t UnpooledChunksManager::getTotalSizeOfUnpooledBufferChunks() const
+{
+    return unpooledBufferChunksSize;
+}
+
 std::pair<uint8_t*, uint8_t*>
 UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_t neededSize, const size_t alignment)
 {
@@ -124,6 +129,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     currentAllocatedChunk.totalSize = newAllocationSize;
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
+    unpooledBufferChunksSize += newAllocationSize;
     NES_INFO(
         "Added tuple buffer {} of {}B to: {}",
         fmt::ptr(localMemoryForNewTupleBuffer),
@@ -155,7 +161,8 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
         [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
          copyOfChunk = chunk,
-         copyOfAlignment = alignment](Memory::detail::MemorySegment* memorySegment, Memory::BufferRecycler*)
+         copyOfAlignment = alignment,
+         this](Memory::detail::MemorySegment* memorySegment, Memory::BufferRecycler*)
         {
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
             auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
@@ -172,6 +179,7 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
                 auto& extractedChunkControlBlock = extractedChunk.mapped();
                 lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
                 lockedLocalUnpooledBufferData.unlock();
+                unpooledBufferChunksSize -= curUnpooledChunk.totalSize;
                 copyOfMemoryResource->deallocate(
                     extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
             }
