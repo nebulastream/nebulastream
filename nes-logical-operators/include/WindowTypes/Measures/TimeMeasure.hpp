@@ -15,10 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-
 #include <memory>
-#include <DataTypes/Schema.hpp>
+#include <string>
 
 namespace NES::Windowing
 {

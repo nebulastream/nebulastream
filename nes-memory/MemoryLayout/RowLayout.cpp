@@ -38,7 +38,7 @@ RowLayout::RowLayout(const RowLayout& other)
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(Schema schema, uint64_t bufferSize)
+std::shared_ptr<RowLayout> RowLayout::create(const Schema& schema, uint64_t bufferSize)
 {
     return std::make_shared<RowLayout>(schema, bufferSize);
 }

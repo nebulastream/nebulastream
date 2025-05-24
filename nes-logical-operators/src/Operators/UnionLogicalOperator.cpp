@@ -87,13 +87,13 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
     copy.rightInputSchema = Schema{copy.rightInputSchema.memoryLayoutType};
     if (distinctSchemas.size() == 1)
     {
-        copy.leftInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
-        copy.rightInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
+        copy.leftInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
+        copy.rightInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
     }
     else
     {
-        copy.leftInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
-        copy.rightInputSchema.addFieldsFromOtherSchema(distinctSchemas[1]);
+        copy.leftInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
+        copy.rightInputSchema.appendFieldsFromOtherSchema(distinctSchemas[1]);
     }
 
     if (std::ranges::none_of(leftInputSchema.getFields(), [&](const auto& field) { return leftInputSchema.contains(field.name); }))
@@ -109,7 +109,7 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
 
     ///Copy the schema of left input
     copy.outputSchema = Schema{};
-    copy.outputSchema.addFieldsFromOtherSchema(leftInputSchema);
+    copy.outputSchema.appendFieldsFromOtherSchema(leftInputSchema);
     return copy;
 }
 
@@ -214,15 +214,15 @@ LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputS
 {
     auto copy = *this;
     INVARIANT(inputSchemas.size() == 2, "Expected 2 input schemas.");
-    copy.leftInputSchema.addFieldsFromOtherSchema(inputSchemas[0]);
-    copy.rightInputSchema.addFieldsFromOtherSchema(inputSchemas[1]);
+    copy.leftInputSchema.appendFieldsFromOtherSchema(inputSchemas[0]);
+    copy.rightInputSchema.appendFieldsFromOtherSchema(inputSchemas[1]);
     return copy;
 }
 
 LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
 {
     auto copy = *this;
-    copy.outputSchema.addFieldsFromOtherSchema(outputSchema);
+    copy.outputSchema.appendFieldsFromOtherSchema(outputSchema);
     return copy;
 }
 

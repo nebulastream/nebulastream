@@ -20,6 +20,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 

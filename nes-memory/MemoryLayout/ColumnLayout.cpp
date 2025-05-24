@@ -37,9 +37,9 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(Schema schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
 {
-    return std::make_shared<ColumnLayout>(std::move(schema), bufferSize);
+    return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const

@@ -23,12 +23,13 @@
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Catalogs::Source
 {
 
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schema schema)
+bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
@@ -274,7 +275,7 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
     return allLogicalSourceAsString;
 }
 
-bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Schema schema)
+bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, const Schema& schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist

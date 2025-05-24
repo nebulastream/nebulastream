@@ -120,8 +120,15 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto dataType = copy.logicalFunction.getDataType().join(copy.fieldAccess.getDataType());
-        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType).get<FieldAccessLogicalFunction>();
+        if (const auto dataType = copy.logicalFunction.getDataType().join(copy.fieldAccess.getDataType()))
+        {
+            copy.fieldAccess
+                = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType.value()).get<FieldAccessLogicalFunction>();
+        }
+        else
+        {
+            throw TypeInferenceException("Cannot join {} with {}", copy.logicalFunction.getDataType(), copy.fieldAccess.getDataType());
+        }
     }
     else
     {
@@ -138,7 +145,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
         }
     }
 
-    if (copy.fieldAccess.getDataType().isUndefined())
+    if (copy.fieldAccess.getDataType().isType(DataType::Type::UNDEFINED))
     {
         copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
     }

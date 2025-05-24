@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>

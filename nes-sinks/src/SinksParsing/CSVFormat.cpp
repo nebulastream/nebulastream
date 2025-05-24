@@ -28,11 +28,12 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sinks
 {
 
-CSVFormat::CSVFormat(Schema pSchema) : schema(std::move(pSchema))
+CSVFormat::CSVFormat(const Schema& pSchema) : schema(pSchema)
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;

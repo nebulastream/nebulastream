@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <vector>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>

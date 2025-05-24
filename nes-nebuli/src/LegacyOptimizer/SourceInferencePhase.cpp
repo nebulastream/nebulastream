@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <ranges>
 #include <utility>
+
 #include <DataTypes/Schema.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -38,14 +41,20 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
             throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
         auto originalSchema = sourceCatalog->getSchemaForLogicalSource(source.getLogicalSourceName());
-        schema.addFieldsFromOtherSchema(originalSchema);
+        schema.appendFieldsFromOtherSchema(originalSchema);
         schema.memoryLayoutType = originalSchema.memoryLayoutType;
         auto qualifierName = source.getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         std::ranges::for_each(
             schema.getFields()
                 | std::views::filter([&qualifierName](const auto& field) { return not field.name.starts_with(qualifierName); }),
-            [&qualifierName, &schema](auto& field) { schema.renameField(field.name, qualifierName + field.name); });
+            [&qualifierName, &schema](auto& field)
+            {
+                if (not schema.renameField(field.name, qualifierName + field.name))
+                {
+                    throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
+                }
+            });
         auto result = replaceOperator(queryPlan, source, source.withSchema(schema));
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);

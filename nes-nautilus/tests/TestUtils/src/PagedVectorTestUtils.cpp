@@ -39,7 +39,7 @@ namespace NES::Nautilus::TestUtils
 
 void runStoreTest(
     Interface::PagedVector& pagedVector,
-    Schema testSchema,
+    const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -47,7 +47,8 @@ void runStoreTest(
     Memory::AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
-    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
     const auto memoryProviderInputBuffer
@@ -93,7 +94,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
-    Schema testSchema,
+    const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -169,7 +170,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    Schema schema,
+    const Schema& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,

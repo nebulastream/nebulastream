@@ -29,13 +29,13 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 class LogicalSource
 {
 public:
-    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, Schema schema);
+    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, const Schema& schema);
 
     [[nodiscard]] std::string getLogicalSourceName();
     [[nodiscard]] Schema getSchema();
 
 private:
-    LogicalSource(std::string logicalSourceName, Schema schema);
+    LogicalSource(std::string logicalSourceName, const Schema& schema);
 
     std::string logicalSourceName;
     Schema schema;

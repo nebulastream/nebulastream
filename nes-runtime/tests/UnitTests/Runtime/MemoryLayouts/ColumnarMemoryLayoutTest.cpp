@@ -20,6 +20,7 @@
 #include <random>
 #include <tuple>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
@@ -168,7 +169,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
                               .addField("t2", DataType::Type::UINT16)
                               .addField("t3", DataType::Type::UINT32);
 
-    std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    const std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -216,10 +217,10 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 
     auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
+    const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
-    for (size_t i = 0; i < NUM_TUPLES; i++)
+    for (size_t i = 0; i < numTuples; i++)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
         allTuples.emplace_back(writeRecord);
@@ -234,7 +235,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), "");
 
     size_t i = 0;
-    for (; i < NUM_TUPLES; ++i)
+    for (; i < numTuples; ++i)
     {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
