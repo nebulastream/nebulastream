@@ -59,9 +59,9 @@ const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, c
 }
 
 VarVal TupleBufferMemoryProvider::loadValue(
-    const PhysicalType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+    const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
-    if (physicalType.type != PhysicalType::Type::VARSIZED)
+    if (physicalType.type != DataType::Type::VARSIZED)
     {
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
@@ -72,13 +72,13 @@ VarVal TupleBufferMemoryProvider::loadValue(
 
 
 VarVal TupleBufferMemoryProvider::storeValue(
-    const PhysicalType& physicalType,
+    const DataType& physicalType,
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
 {
-    if (physicalType.type != PhysicalType::Type::VARSIZED)
+    if (physicalType.type != DataType::Type::VARSIZED)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
@@ -90,7 +90,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
         throw UnsupportedOperation("Physical Type: {} is currently not supported", physicalType);
     }
 
-    if (physicalType.type == PhysicalType::Type::VARSIZED)
+    if (physicalType.type == DataType::Type::VARSIZED)
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(

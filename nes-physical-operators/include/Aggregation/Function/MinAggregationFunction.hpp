@@ -29,8 +29,8 @@ class MinAggregationFunction : public AggregationFunction
 {
 public:
     MinAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(

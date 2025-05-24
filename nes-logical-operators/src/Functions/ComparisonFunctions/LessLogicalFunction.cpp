@@ -39,7 +39,7 @@ LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other) : lef
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
+    , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }
 

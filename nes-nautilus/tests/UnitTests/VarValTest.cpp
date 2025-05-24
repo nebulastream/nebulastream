@@ -267,7 +267,7 @@ TEST_F(VarValTest, writeToMemoryTest)
 
 TEST_F(VarValTest, readFromMemoryTest)
 {
-    auto testVarValReadFromMemory = []<typename T>(const T value, const PhysicalType::Type& type)
+    auto testVarValReadFromMemory = []<typename T>(const T value, const DataType::Type& type)
     {
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));
@@ -277,18 +277,18 @@ TEST_F(VarValTest, readFromMemoryTest)
         return 0;
     };
 
-    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, PhysicalType::Type::INT8);
-    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, PhysicalType::Type::INT16);
-    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, PhysicalType::Type::INT32);
-    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, PhysicalType::Type::INT64);
-    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, PhysicalType::Type::UINT8);
-    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, PhysicalType::Type::UINT16);
-    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, PhysicalType::Type::UINT32);
-    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, PhysicalType::Type::UINT64);
-    testVarValReadFromMemory.operator()<float>(someRandomNumber, PhysicalType::Type::FLOAT32);
-    testVarValReadFromMemory.operator()<double>(someRandomNumber, PhysicalType::Type::FLOAT64);
-    testVarValReadFromMemory.operator()<bool>(true, PhysicalType::Type::BOOLEAN);
-    testVarValReadFromMemory.operator()<bool>(false, PhysicalType::Type::BOOLEAN);
+    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, DataType::Type::INT8);
+    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, DataType::Type::INT16);
+    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, DataType::Type::INT32);
+    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, DataType::Type::INT64);
+    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, DataType::Type::UINT8);
+    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, DataType::Type::UINT16);
+    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, DataType::Type::UINT32);
+    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, DataType::Type::UINT64);
+    testVarValReadFromMemory.operator()<float>(someRandomNumber, DataType::Type::FLOAT32);
+    testVarValReadFromMemory.operator()<double>(someRandomNumber, DataType::Type::FLOAT64);
+    testVarValReadFromMemory.operator()<bool>(true, DataType::Type::BOOLEAN);
+    testVarValReadFromMemory.operator()<bool>(false, DataType::Type::BOOLEAN);
 }
 
 TEST_F(VarValTest, operatorBoolTest)

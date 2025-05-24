@@ -63,58 +63,58 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
     const auto stringValue = constantFunction.getConstantValue();
-    switch (const auto [physicalType] = constantFunction.getDataType(); physicalType.type)
+    switch (constantFunction.getDataType().type)
     {
-        case PhysicalType::Type::UINT8: {
+        case DataType::Type::UINT8: {
             auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
             return ConstantUInt8ValueFunction(intValue);
         };
-        case PhysicalType::Type::UINT16: {
+        case DataType::Type::UINT16: {
             auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
             return ConstantUInt16ValueFunction(intValue);
         };
-        case PhysicalType::Type::UINT32: {
+        case DataType::Type::UINT32: {
             auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
             return ConstantUInt32ValueFunction(intValue);
         };
-        case PhysicalType::Type::UINT64: {
+        case DataType::Type::UINT64: {
             auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
             return ConstantUInt64ValueFunction(intValue);
         };
-        case PhysicalType::Type::INT8: {
+        case DataType::Type::INT8: {
             auto intValue = static_cast<int8_t>(std::stoi(stringValue));
             return ConstantInt8ValueFunction(intValue);
         };
-        case PhysicalType::Type::INT16: {
+        case DataType::Type::INT16: {
             auto intValue = static_cast<int16_t>(std::stoi(stringValue));
             return ConstantInt16ValueFunction(intValue);
         };
-        case PhysicalType::Type::INT32: {
+        case DataType::Type::INT32: {
             auto intValue = static_cast<int32_t>(std::stoi(stringValue));
             return ConstantInt32ValueFunction(intValue);
         };
-        case PhysicalType::Type::INT64: {
+        case DataType::Type::INT64: {
             auto intValue = static_cast<int64_t>(std::stol(stringValue));
             return ConstantInt64ValueFunction(intValue);
         };
-        case PhysicalType::Type::FLOAT32: {
+        case DataType::Type::FLOAT32: {
             auto floatValue = std::stof(stringValue);
             return ConstantFloatValueFunction(floatValue);
         };
-        case PhysicalType::Type::FLOAT64: {
+        case DataType::Type::FLOAT64: {
             auto doubleValue = std::stod(stringValue);
             return ConstantDoubleValueFunction(doubleValue);
         };
-        case PhysicalType::Type::BOOLEAN: {
+        case DataType::Type::BOOLEAN: {
             auto boolValue = static_cast<int>(static_cast<bool>(std::stoi(stringValue))) == 1;
             return ConstantBooleanValueFunction(boolValue);
         };
-        case PhysicalType::Type::CHAR:
+        case DataType::Type::CHAR:
             break;
-        case PhysicalType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };
-        case PhysicalType::Type::UNDEFINED: {
+        case DataType::Type::UNDEFINED: {
             throw UnknownPhysicalType("the UNKNOWN type is not supported");
         };
     }

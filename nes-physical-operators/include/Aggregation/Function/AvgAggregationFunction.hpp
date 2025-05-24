@@ -29,12 +29,11 @@ class AvgAggregationFunction : public AggregationFunction
 {
 public:
     AvgAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        PhysicalType countType);
-
+        DataType countType);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -50,7 +49,7 @@ public:
     ~AvgAggregationFunction() override = default;
 
 private:
-    PhysicalType countType;
+    DataType countType;
 };
 
 }

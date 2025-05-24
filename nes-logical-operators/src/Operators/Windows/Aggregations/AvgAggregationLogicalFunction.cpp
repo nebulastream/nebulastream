@@ -72,21 +72,20 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
     if (onField.getDataType().isInteger())
     {
-        if (onField.getDataType().physicalType.isSigned)
+        if (onField.getDataType().isSignedInteger())
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::INT64)).get<FieldAccessLogicalFunction>();
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64)).get<FieldAccessLogicalFunction>();
         }
         else
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
         }
     }
     else
     {
-        newOnField
-            = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
     }
 
     ///Set fully qualified name for the as Field

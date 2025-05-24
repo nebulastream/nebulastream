@@ -41,7 +41,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Avg";
-    static constexpr PhysicalType::Type partialAggregateStampType = PhysicalType::Type::UNDEFINED;
-    static constexpr PhysicalType::Type finalAggregateStampType = PhysicalType::Type::FLOAT64;
+    static constexpr DataType::Type partialAggregateStampType = DataType::Type::UNDEFINED;
+    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 }

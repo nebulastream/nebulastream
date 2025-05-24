@@ -29,8 +29,8 @@ class MaxAggregationFunction : public AggregationFunction
 {
 public:
     MaxAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(

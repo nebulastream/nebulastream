@@ -32,7 +32,7 @@
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED)) { };
+    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)) { };
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(std::move(std::move(dataType))) { };
