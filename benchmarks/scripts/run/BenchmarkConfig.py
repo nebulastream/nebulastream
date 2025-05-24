@@ -59,6 +59,7 @@ class BenchmarkConfig:
         self.buffers_in_global_buffer_manager = 200000
         self.buffers_per_worker = 20000
         self.buffers_in_source_local_buffer_pool = 1000
+        self.throughput_listener_time_interval = 500
         self.execution_mode = "COMPILER"
 
     # Return a dictionary representation of the configuration
@@ -83,6 +84,7 @@ class BenchmarkConfig:
             "buffers_in_global_buffer_manager": self.buffers_in_global_buffer_manager,
             "buffers_per_worker": self.buffers_per_worker,
             "buffers_in_source_local_buffer_pool": self.buffers_in_source_local_buffer_pool,
+            "throughput_listener_time_interval": self.throughput_listener_time_interval,
             "execution_mode": self.execution_mode
         }
 
