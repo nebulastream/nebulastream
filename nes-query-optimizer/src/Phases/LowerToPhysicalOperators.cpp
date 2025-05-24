@@ -31,8 +31,8 @@
 namespace NES::LowerToPhysicalOperators
 {
 
-static RewriteRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+static RewriteRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
+    const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument, const QueryId& queryId)
 {
     /// Try to resolve rewrite rule for the current logical operator
     const auto rule = [](const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
@@ -44,7 +44,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
         throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
     }(logicalOperator, registryArgument);
     /// We apply the rule and receive a subgraph
-    const auto [root, leafs] = rule->apply(logicalOperator);
+    const auto [root, leafs] = rule->apply(logicalOperator, queryId);
     INVARIANT(
         leafs.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
@@ -60,7 +60,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
                 logicalOperator.getChildren().size() == 1,
                 "Empty lowering results of operators with multiple keys are not supported for {}",
                 logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument, queryId);
         }
         return {};
     }
@@ -75,10 +75,10 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
 
     std::ranges::for_each(
         std::views::zip(children, leafs),
-        [&registryArgument](const auto& zippedPair)
+        [&registryArgument, queryId](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;
-            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
+            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument, queryId);
             leaf->addChild(rootNodeOfLoweredChild);
         });
     return root;
@@ -91,7 +91,7 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::Quer
     newRootOperators.reserve(queryPlan.rootOperators.size());
     for (const auto& logicalRoot : queryPlan.rootOperators)
     {
-        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument, queryPlan.getQueryId()));
     }
 
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");

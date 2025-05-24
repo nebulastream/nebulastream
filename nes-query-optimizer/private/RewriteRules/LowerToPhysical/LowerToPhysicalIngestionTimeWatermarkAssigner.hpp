@@ -26,7 +26,7 @@ struct LowerToPhysicalIngestionTimeWatermarkAssigner : AbstractRewriteRule
 {
     explicit LowerToPhysicalIngestionTimeWatermarkAssigner(NES::Configurations::QueryOptimizerConfiguration conf)
         : conf(std::move(conf)) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator, QueryId queryId) override;
 
 private:
     NES::Configurations::QueryOptimizerConfiguration conf;

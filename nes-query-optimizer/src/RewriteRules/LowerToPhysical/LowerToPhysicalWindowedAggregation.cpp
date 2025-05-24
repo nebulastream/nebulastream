@@ -140,7 +140,7 @@ std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysical
 }
 }
 
-RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
