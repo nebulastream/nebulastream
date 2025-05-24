@@ -20,6 +20,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 # Files can either be stored directly in the testdata/small folder, but this is only permitted for small files or
 # referenced via a hash an fetched from a remote server on demand. Large files have to be uploaded to bench.nebula.stream/data (ask a maintainer)!
 include(ExternalData)
+set(ExternalData_OBJECT_STORES ${CMAKE_SOURCE_DIR}/.cache/testdata)
 set(ExternalData_URL_TEMPLATES
         "https://tubcloud.tu-berlin.de/s/28Tr2wTd73Ggeed/download?files=%(algo)_%(hash)"
 )

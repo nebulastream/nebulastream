@@ -19,7 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -32,16 +32,41 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : sliceAndWindowStore(std::move(sliceAndWindowStore))
+    : workGuard(boost::asio::make_work_guard(ioContext))
+    , sliceAndWindowStore(std::move(sliceAndWindowStore))
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
+    /*for (auto i = 0UL; i < std::thread::hardware_concurrency(); ++i)
+    {
+        ioThreads.emplace_back([this]() { ioContext.run(); });
+    }*/
+    //ioThread = std::thread([this]() { ioContext.run(); });
+    //ioContext.run();
+}
+
+WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
+{
+    workGuard.reset();
+    /*ioContext.stop();
+    for (auto& thread : ioThreads)
+    {
+        thread.join();
+    }*/
+    /*if (ioThread.joinable())
+    {
+        ioThread.join();
+    }*/
 }
 
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
+    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(sliceAndWindowStore.get()))
+    {
+        sliceStore->setWorkerThreads(numberOfWorkerThreads);
+    }
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
@@ -60,6 +85,10 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
     return *sliceAndWindowStore;
 }
 
+boost::asio::io_context& WindowBasedOperatorHandler::getIoContext()
+{
+    return ioContext;
+}
 
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {

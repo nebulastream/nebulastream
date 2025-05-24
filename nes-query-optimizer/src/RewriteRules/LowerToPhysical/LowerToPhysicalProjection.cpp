@@ -33,7 +33,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator, QueryId)
 {
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];

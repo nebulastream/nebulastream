@@ -116,6 +116,48 @@ public:
         return value.value.load(std::memory_order_relaxed);
     }
 
+    std::vector<std::pair<SequenceNumber::Underlying, T>>
+    getNextSequenceNumbersAndValues(uint64_t numGapsAllowed, uint64_t maxNumSeqNumbers) const
+    {
+        auto currentBlock = std::atomic_load(&head);
+        /// get the current sequence number and access the associated block
+        const auto currentSequenceNumber = currentSeq.load();
+        auto targetBlockIndex = currentSequenceNumber / BlockSize;
+        currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
+        /// read the value from the correct slot.
+        auto seqIndexInBlock = currentSequenceNumber % BlockSize;
+
+        std::vector<std::pair<SequenceNumber::Underlying, T>> containers;
+        while (numGapsAllowed > 0 && maxNumSeqNumbers > 0)
+        {
+            if (seqIndexInBlock >= BlockSize)
+            {
+                auto nextBlock = std::atomic_load(&currentBlock->next);
+                if (nextBlock == nullptr)
+                {
+                    break;
+                }
+                currentBlock = nextBlock;
+                seqIndexInBlock = 0;
+            }
+
+            // TODO try out different memory orders for load
+            auto& container = currentBlock->log[seqIndexInBlock];
+            if (const auto seqNumber = container.seq.load(); seqNumber != 0)
+            {
+                containers.emplace_back(seqNumber, container.value.load());
+                --maxNumSeqNumbers;
+            }
+            else
+            {
+                --numGapsAllowed;
+            }
+
+            ++seqIndexInBlock;
+        }
+        return containers;
+    }
+
 private:
     /// @brief Emplace a value T to the specific location of the passed sequence number
     ///

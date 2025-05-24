@@ -30,7 +30,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator, QueryId)
 {
     const auto source = logicalOperator.get<UnionLogicalOperator>();
     auto inputSchemas = logicalOperator.getInputSchemas();
