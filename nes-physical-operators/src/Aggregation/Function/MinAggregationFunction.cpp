@@ -31,10 +31,7 @@ namespace NES
 {
 
 MinAggregationFunction::MinAggregationFunction(
-    PhysicalType inputType,
-    PhysicalType resultType,
-    PhysicalFunction inputFunction,
-    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }

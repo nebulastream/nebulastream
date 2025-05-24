@@ -86,7 +86,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     inputStamp = onField.getDataType();
-    finalAggregateStamp = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
+    finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 

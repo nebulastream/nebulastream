@@ -42,9 +42,9 @@ public:
         bufferManager = Memory::BufferManager::create(4096, 10);
 
         schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                     .addField("t1", PhysicalType::Type::UINT16)
-                     .addField("t2", PhysicalType::Type::BOOLEAN)
-                     .addField("t3", PhysicalType::Type::FLOAT64);
+                     .addField("t1", DataType::Type::UINT16)
+                     .addField("t2", DataType::Type::BOOLEAN)
+                     .addField("t3", DataType::Type::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;

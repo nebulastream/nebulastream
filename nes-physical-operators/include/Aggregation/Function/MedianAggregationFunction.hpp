@@ -30,8 +30,8 @@ class MedianAggregationFunction : public AggregationFunction
 {
 public:
     MedianAggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);

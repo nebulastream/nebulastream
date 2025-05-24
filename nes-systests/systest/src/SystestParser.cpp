@@ -76,13 +76,13 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
         DataType dataType;
-        if (auto type = magic_enum::enum_cast<PhysicalType::Type>(arguments[i]); type.has_value())
+        if (auto type = magic_enum::enum_cast<DataType::Type>(arguments[i]); type.has_value())
         {
             dataType = DataTypeProvider::provideDataType(type.value());
         }
         else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
         }
         else
         {

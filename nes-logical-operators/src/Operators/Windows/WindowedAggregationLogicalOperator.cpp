@@ -150,8 +150,8 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
 
         copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "start";
         copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "end";
-        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
-        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
+        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
+        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
     }
     else
     {

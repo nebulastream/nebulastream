@@ -66,8 +66,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     std::unordered_map<std::string, std::filesystem::path> sourceNamesToFilepath;
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
         {"CHECKSUM",
-         {{.type = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), .name = "S$Count"},
-          {.type = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), .name = "S$Checksum"}}}};
+         {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Count"},
+          {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))

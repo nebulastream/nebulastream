@@ -242,7 +242,7 @@ inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view ra
 /// Unfolds the tuples into the TestTupleBuffer.
 /// Example usage (assumes a bufferManager (shared_ptr to BufferManager object) is available):
 ///     using TestTuple = std::tuple<int, bool>;
-///     SchemaPtr schema = Schema::create()->addField("INT", PhysicalType::Type::INT32)->addField("BOOL", PhysicalType::Type::BOOLEAN);
+///     SchemaPtr schema = Schema::create()->addField("INT", DataType::Type::INT32)->addField("BOOL", DataType::Type::BOOLEAN);
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>

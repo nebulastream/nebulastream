@@ -38,7 +38,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& oth
 }
 
 GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
     , left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
 {
