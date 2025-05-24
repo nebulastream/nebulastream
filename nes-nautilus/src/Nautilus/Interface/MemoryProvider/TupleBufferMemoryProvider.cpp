@@ -87,7 +87,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
         {
             return storeFunction->second(value, fieldReference);
         }
-        throw UnsupportedOperation("Physical Type: {} is currently not supported", physicalType);
+        throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
     if (physicalType.type == DataType::Type::VARSIZED)
@@ -99,7 +99,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
         *fieldReferenceCastedU32 = childIndex;
         return value;
     }
-    throw NotImplemented("Physical Type: type {} is currently not supported", physicalType);
+    throw UnknownDataType("Physical Type: type {} is currently not supported", physicalType);
 }
 
 

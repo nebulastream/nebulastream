@@ -59,9 +59,10 @@ EXCEPTION(UnknownExpressionArgumentType, 2116, "unknown expression argument type
 EXCEPTION(UnknownWatermarkStrategy, 2117, "unknown watermark strategy")
 EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
 EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
-EXCEPTION(UnsupportedOperation, 2120, "tried to execute an unsupported operation")
+EXCEPTION(UnknownOperation, 2120, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2121, "unknown parser type")
 EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
+EXCEPTION(UnknownDataType, 2123, "unsupported data type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

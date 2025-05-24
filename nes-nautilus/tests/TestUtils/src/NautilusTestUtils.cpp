@@ -223,7 +223,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
                 else
                 {
-                    throw UnknownParserType("Unsupported data type {}", physicalType);
+                    throw UnknownDataType("Unsupported data type {}", physicalType);
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
