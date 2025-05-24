@@ -19,6 +19,7 @@
 #include <string>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Sources
 {

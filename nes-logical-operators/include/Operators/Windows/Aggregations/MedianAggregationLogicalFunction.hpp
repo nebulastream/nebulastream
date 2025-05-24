@@ -16,7 +16,8 @@
 
 #include <memory>
 #include <string_view>
-#include <DataTypes/DataTypeProvider.hpp>
+
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>

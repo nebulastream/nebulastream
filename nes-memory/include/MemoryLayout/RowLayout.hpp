@@ -40,7 +40,7 @@ public:
     RowLayout(const RowLayout&);
 
     /// @brief Factory to create a RowLayout
-    static std::shared_ptr<RowLayout> create(Schema schema, uint64_t bufferSize);
+    static std::shared_ptr<RowLayout> create(const Schema& schema, uint64_t bufferSize);
 
     /// Gets the offset in bytes of all fields within a single tuple.
     /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.

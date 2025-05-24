@@ -98,8 +98,12 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
         newChildren.push_back(node.withInferredDataType(schema));
     }
     /// check if children dataType is correct
-    INVARIANT(left.getDataType().isBoolean(), "the dataType of left child must be boolean, but was: {}", left.getDataType());
-    INVARIANT(left.getDataType().isBoolean(), "the dataType of right child must be boolean, but was: {}", right.getDataType());
+    INVARIANT(
+        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
+    INVARIANT(
+        left.getDataType().isType(DataType::Type::BOOLEAN),
+        "the dataType of right child must be boolean, but was: {}",
+        right.getDataType());
     return this->withChildren(newChildren);
 }
 

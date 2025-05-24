@@ -15,6 +15,7 @@
 #include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 

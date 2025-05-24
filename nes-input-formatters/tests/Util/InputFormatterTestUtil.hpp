@@ -146,7 +146,10 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
-    const std::string& filePath, Schema schema, std::shared_ptr<Memory::BufferManager> sourceBufferPool, int numberOfLocalBuffersInSource);
+    const std::string& filePath,
+    const Schema& schema,
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    int numberOfLocalBuffersInSource);
 
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema);
 

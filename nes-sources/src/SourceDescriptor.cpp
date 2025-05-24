@@ -26,7 +26,7 @@ namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(
-    Schema schema,
+    const Schema& schema,
     std::string logicalSourceName,
     std::string sourceType,
     const int numberOfBuffersInSourceLocalBufferPool,

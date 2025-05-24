@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

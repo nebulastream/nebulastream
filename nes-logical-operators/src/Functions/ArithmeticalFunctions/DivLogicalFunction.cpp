@@ -80,7 +80,7 @@ LogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType());
+    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
     return copy;
 };
 

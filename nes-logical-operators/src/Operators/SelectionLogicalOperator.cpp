@@ -85,7 +85,7 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
     }
 
     copy.predicate = predicate.withInferredDataType(firstSchema);
-    if (not copy.predicate.getDataType().isBoolean())
+    if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }

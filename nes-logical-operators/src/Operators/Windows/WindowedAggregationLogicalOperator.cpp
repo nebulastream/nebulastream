@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -21,12 +23,13 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -166,13 +169,13 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         {
             auto newKey = key.withInferredDataType(firstSchema).get<FieldAccessLogicalFunction>();
             newKeys.push_back(newKey);
-            copy.outputSchema.addField(Schema::Field(newKey.getFieldName(), newKey.getDataType()));
+            copy.outputSchema.addField(newKey.getFieldName(), newKey.getDataType());
         }
         copy.groupingKey = newKeys;
     }
     for (const auto& agg : copy.aggregationFunctions)
     {
-        copy.outputSchema.addField(Schema::Field(agg->asField.getFieldName(), agg->asField.getDataType()));
+        copy.outputSchema.addField(agg->asField.getFieldName(), agg->asField.getDataType());
     }
     return copy;
 }

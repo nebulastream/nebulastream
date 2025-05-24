@@ -13,12 +13,15 @@
 */
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <thread>
 #include <utility>
+
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -28,6 +31,7 @@
 #include <Sinks/FileSink.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
@@ -48,7 +52,7 @@ namespace NES::IntegrationTestUtil
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    Schema schema,
+    const Schema& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -66,7 +70,7 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](Schema schema)
+    auto getPhysicalTypes = [](const Schema& schema)
     {
         std::vector<DataType> retVector;
         for (const auto& field : schema.getFields())
@@ -133,7 +137,7 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    Schema schema,
+    const Schema& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
@@ -176,14 +180,20 @@ void writeFieldValueToTupleBuffer(
             break;
         }
         case NES::DataType::Type::FLOAT32: {
-            auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
-            tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
-            break;
+            if (const auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", ".")))
+            {
+                tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
+                break;
+            }
+            throw UnknownDataType("Value {} is not a valid float", inputString);
         }
         case NES::DataType::Type::FLOAT64: {
-            auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
-            tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
-            break;
+            if (const auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", ".")))
+            {
+                tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
+                break;
+            }
+            throw UnknownDataType("Value {} is not a valid double", inputString);
         }
         case NES::DataType::Type::CHAR: {
             ///verify that only a single char was transmitted
@@ -191,9 +201,9 @@ void writeFieldValueToTupleBuffer(
             {
                 NES_FATAL_ERROR(
                     "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString.c_str());
-                throw std::invalid_argument("Value " + inputString + " is not a char");
+                throw UnknownDataType("Value {} is not a valid char", inputString);
             }
-            char value = inputString.at(0);
+            const char value = inputString.at(0);
             tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
             break;
         }

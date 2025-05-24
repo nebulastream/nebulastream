@@ -15,7 +15,9 @@
 #pragma once
 #include <cstddef>
 #include <ostream>
+#include <string>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -39,7 +41,7 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(Schema schema);
+    explicit CSVFormat(const Schema& schema);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.

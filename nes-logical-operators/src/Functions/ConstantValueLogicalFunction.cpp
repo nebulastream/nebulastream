@@ -31,8 +31,8 @@
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string value)
-    : constantValue(std::move(value)), dataType(std::move(std::move(dataType)))
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString)
+    : constantValue(std::move(constantValueAsString)), dataType(std::move(std::move(dataType)))
 {
 }
 

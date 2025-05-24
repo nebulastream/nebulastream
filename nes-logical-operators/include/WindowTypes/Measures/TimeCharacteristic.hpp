@@ -18,6 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -37,7 +38,7 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit);
+    TimeCharacteristic(Type type, Schema::Field field, const TimeUnit& unit);
 
     /// @brief Factory to create a time characteristic for ingestion time window
     /// @param unit the time unit of the ingestion time
@@ -48,8 +49,8 @@ public:
     /// @param unit the time unit of the EventTime, defaults to milliseconds
     /// @param field the field from which we want to extract the time.
     /// @return std::shared_ptr<TimeCharacteristic>
-    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& field, const TimeUnit& unit);
-    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& field);
+    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit);
+    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& fieldAccess);
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;

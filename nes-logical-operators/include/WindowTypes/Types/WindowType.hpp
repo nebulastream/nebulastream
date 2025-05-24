@@ -13,10 +13,10 @@
 */
 
 #pragma once
-#include <DataTypes/Schema.hpp>
 
-#include <memory>
-#include <vector>
+#include <string>
+
+#include <DataTypes/Schema.hpp>
 
 namespace NES::Windowing
 {
