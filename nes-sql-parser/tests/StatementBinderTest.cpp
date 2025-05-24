@@ -70,7 +70,7 @@ TEST_F(StatementBinderTest, BindQuery)
     /// see the AntlrSQLQueryParserTest and the Systests
     /// In the future this will require setting up the source catalog correctly as well
     const std::string queryString = "SELECT a FROM inputStream WHERE b < UINT32(5) INTO outputStream";
-    const auto statement = binder->parseAndBind(queryString);
+    const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<std::shared_ptr<QueryPlan>>(*statement));
 }
@@ -78,7 +78,7 @@ TEST_F(StatementBinderTest, BindQuery)
 TEST_F(StatementBinderTest, BindCreateBindSource)
 {
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32, attribute2 VARSIZED)";
-    const auto statement1 = binder->parseAndBind(createLogicalSourceStatement);
+    const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
     ASSERT_TRUE(statement1.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
     const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
@@ -93,7 +93,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
 
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCAL' as `SOURCE`.LOCATION, -1 as `SOURCE`.BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
-    const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement);
+    const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "File"}, {"filePath", "/dev/null"}};
     const Configurations::DescriptorConfig::Config descriptorConfig
@@ -113,7 +113,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(physicalSource.getPhysicalSourceId(), 0);
 
     const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE 0";
-    const auto statement3 = binder->parseAndBind(dropPhysicalSourceStatement);
+    const auto statement3 = binder->parseAndBindSingle(dropPhysicalSourceStatement);
     ASSERT_TRUE(statement3.has_value());
     ASSERT_TRUE(std::holds_alternative<DropPhysicalSourceStatement>(*statement3));
     const auto droppedResult = sourceStatementHandler->apply(std::get<DropPhysicalSourceStatement>(*statement3));
@@ -125,7 +125,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(remainingPhysicalSources.value().size(), 0);
 
     const std::string dropLogicalSourceStatement = "DROP LOGICAL SOURCE testSource";
-    const auto statement4 = binder->parseAndBind(dropLogicalSourceStatement);
+    const auto statement4 = binder->parseAndBindSingle(dropLogicalSourceStatement);
     ASSERT_TRUE(statement4.has_value());
     ASSERT_TRUE(std::holds_alternative<DropLogicalSourceStatement>(*statement4));
     const auto dropped2Result = sourceStatementHandler->apply(std::get<DropLogicalSourceStatement>(*statement4));
@@ -149,7 +149,7 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
     /// Misspelled location
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCA' as `SOURCE`.LOCATION, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`))";
-    const auto statement = binder->parseAndBind(createPhysicalSourceStatement);
+    const auto statement = binder->parseAndBindSingle(createPhysicalSourceStatement);
     ASSERT_FALSE(statement.has_value());
 
     /// TODO after #805 uncomment test for invalid parser type
@@ -161,20 +161,20 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
     /// Invalid logical source
     const std::string createPhysicalSourceStatement3 = "CREATE PHYSICAL SOURCE FOR invalidSource TYPE File SET ('LOCAL' as "
                                                        "`SOURCE`.LOCATION, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`)";
-    const auto statement3 = binder->parseAndBind(createPhysicalSourceStatement3);
+    const auto statement3 = binder->parseAndBindSingle(createPhysicalSourceStatement3);
     ASSERT_FALSE(statement3.has_value());
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
 {
     const std::string queryString = "DROP QUERY 12";
-    const auto statement = binder->parseAndBind(queryString);
+    const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
     ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), 12);
 
     const std::string queryString2 = "DROP QUERY -5";
-    const auto statement2 = binder->parseAndBind(queryString2);
+    const auto statement2 = binder->parseAndBindSingle(queryString2);
     ASSERT_FALSE(statement2.has_value());
     ASSERT_EQ(statement2.error().code(), ErrorCode::InvalidQuerySyntax);
 }
@@ -187,14 +187,14 @@ TEST_F(StatementBinderTest, ShowLogicalSources)
     const std::string invalidFormatQueryString = "SHOW LOGICAL SOURCES WHERE NAME = 'testSource' FORMAT INVALID_FORMAT";
     const std::string formatInInvalidPositionString = "SHOW LOGICAL SOURCES FORMAT JSON WHERE NAME = 'testSource' ";
 
-    const auto allSourcesStatementExp = binder->parseAndBind(allLogicalQueryString);
+    const auto allSourcesStatementExp = binder->parseAndBindSingle(allLogicalQueryString);
     ASSERT_TRUE(allSourcesStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*allSourcesStatementExp));
     const auto [name, format] = std::get<ShowLogicalSourcesStatement>(*allSourcesStatementExp);
     ASSERT_FALSE(name.has_value());
     ASSERT_TRUE(format == ShowStatementFormat::JSON);
 
-    const auto filteredSourcesStatementExp = binder->parseAndBind(filteredLogicalQueryString);
+    const auto filteredSourcesStatementExp = binder->parseAndBindSingle(filteredLogicalQueryString);
     ASSERT_TRUE(filteredSourcesStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*filteredSourcesStatementExp));
     const auto [name2, format2] = std::get<ShowLogicalSourcesStatement>(*filteredSourcesStatementExp);
@@ -203,9 +203,9 @@ TEST_F(StatementBinderTest, ShowLogicalSources)
     ASSERT_TRUE(format2 == ShowStatementFormat::TEXT);
 
 
-    const auto invalidFormatStatementExp = binder->parseAndBind(invalidFormatQueryString);
+    const auto invalidFormatStatementExp = binder->parseAndBindSingle(invalidFormatQueryString);
     ASSERT_FALSE(invalidFormatStatementExp.has_value());
 
-    const auto formatInInvalidPositionStatementExp = binder->parseAndBind(formatInInvalidPositionString);
+    const auto formatInInvalidPositionStatementExp = binder->parseAndBindSingle(formatInInvalidPositionString);
     ASSERT_FALSE(formatInInvalidPositionStatementExp.has_value());
 }

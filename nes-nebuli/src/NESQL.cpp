@@ -29,12 +29,12 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <YAML/YAMLBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#include <nlohmann/detail/meta/call_std/end.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
@@ -42,6 +42,8 @@
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include "SQLQueryParser/AntlrSQLQueryParser.hpp"
 #include "SQLQueryParser/StatementBinder.hpp"
+
+#include "StatementHandler.hpp"
 
 
 int main(int argc, char** argv)
@@ -75,14 +77,52 @@ int main(int argc, char** argv)
         }
 
         auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
-        auto optimizer = NES::CLI::Optimizer{sourceCatalog};
+        auto optimizer = std::make_shared<NES::CLI::Optimizer>(sourceCatalog);
         auto binder = NES::StatementBinder{sourceCatalog, std::bind(NES::AntlrSQLQueryParser::bindLogicalQueryPlan, std::placeholders::_1)};
 
         auto client = std::make_shared<const GRPCClient>(CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-        NES::CLI::Nebuli nebuli{client};
+        auto nebuli = std::make_shared<NES::CLI::Nebuli>(client);
 
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
+        NES::QueryStatementHandler {nebuli, optimizer};
 
+        auto input = program.get("-i");
+        std::string inputString;
+        if (input == "-")
+        {
+            std::istreambuf_iterator<char> begin(std::cin), end;
+            inputString = std::string(begin, end);
+        }
+        else
+        {
+            auto fileInputStream = std::ifstream(input);
+            if (not fileInputStream)
+            {
+                throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+            }
+            std::istreambuf_iterator<char> begin(fileInputStream), end;
+            inputString = std::string(begin, end);
+        }
 
+        auto binderResult = binder.parseAndBind(inputString);
+        if (not binderResult.has_value())
+        {
+            throw binderResult.error();
+        }
+        std::vector<NES::Statement> validStatements(binderResult.value().size());
+        for (auto& statementResult : binderResult.value())
+        {
+            if (not statementResult.has_value())
+            {
+                throw statementResult.error();
+            }
+            validStatements.push_back(statementResult.value());
+        }
+
+        for (auto& statement : validStatements)
+        {
+            sourceStatementHandler.apply(statement);
+        }
 
 
         bool handled = false;

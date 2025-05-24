@@ -18,9 +18,8 @@ get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-operators OPERATORS_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 get_source(nes-yaml-binder YAML_BINDER_SOURCE_FILES)
-get_source(nes-binder BINDER_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES} ${BINDER_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES})
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
@@ -45,6 +44,15 @@ target_include_directories(nes-nebuli
 target_include_directories(nes-nebuli
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+add_executable(nes-nesql src/NESQL.cpp)
+set_property(TARGET nes-nesql PROPERTY ENABLE_EXPORTS ON)
+target_link_libraries(nes-nesql PUBLIC nes-nebuli-lib argparse::argparse nes-sql-parser)
+
+target_include_directories(nes-nesql
+        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
+)
+
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})

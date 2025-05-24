@@ -475,7 +475,7 @@ public:
         throw InvalidStatement("Unrecognized DROP statement");
     }
 
-    BindingResult bind(AntlrSQLParser::StatementContext* statementAST) const
+    std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
         if (statementAST->query() != nullptr)
         {
@@ -517,7 +517,8 @@ StatementBinder::StatementBinder(
 {
 }
 StatementBinder::~StatementBinder() = default;
-std::expected<std::vector<BindingResult>, Exception> StatementBinder::parseAndBind(const std::string_view statementString) const noexcept
+std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
+StatementBinder::parseAndBind(const std::string_view statementString) const noexcept
 {
     try
     {
@@ -532,13 +533,32 @@ std::expected<std::vector<BindingResult>, Exception> StatementBinder::parseAndBi
         {
             return std::unexpected{InvalidQuerySyntax("{}", statementString)};
         }
-        return tree->statement() | std::views::transform([this](auto* statementAST) { return impl->bind(statementAST); })
-            | std::ranges::to<std::vector>();
+
+        return std::expected<std::vector<std::expected<Statement, Exception>>, Exception>{
+            tree->statement() | std::views::transform([this](auto* statementAST) { return impl->bind(statementAST); })
+            | std::ranges::to<std::vector>()};
     }
     catch (antlr4::ParseCancellationException& e)
     {
         return std::unexpected{InvalidQuerySyntax("{}", e)};
     }
+}
+std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::string_view statementStrings) const noexcept
+{
+    auto allParsed = parseAndBind(statementStrings);
+    if (allParsed.has_value())
+    {
+        if (allParsed->size() > 1)
+        {
+            return std::unexpected{InvalidQuerySyntax("Expected a single statement, but got multiple")};
+        }
+        if (allParsed->empty())
+        {
+            return std::unexpected{InvalidQuerySyntax("Expected a single statement, but got none")};
+        }
+        return allParsed->at(0);
+    }
+    return std::unexpected{allParsed.error()};
 }
 
 std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj)

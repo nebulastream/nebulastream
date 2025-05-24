@@ -111,8 +111,6 @@ using Statement = std::variant<
     ShowQueries,
     DropQueryStatement>;
 
-using BindingResult = std::expected<Statement, Exception>;
-
 
 class StatementBinder
 {
@@ -129,7 +127,8 @@ public:
     /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
     ~StatementBinder();
 
-    [[nodiscard]] std::expected<std::vector<BindingResult>, Exception> parseAndBind(std::string_view statementString) const noexcept;
+    [[nodiscard]] std::expected<std::vector<std::expected<Statement, Exception>>, Exception> parseAndBind(std::string_view statementString) const noexcept;
+    [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const noexcept;
 };
 }
 
