@@ -13,7 +13,7 @@
 */
 
 #include <sstream>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -43,7 +43,7 @@ SourceDescriptor::SourceDescriptor(
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
-    const auto schemaString = sourceDescriptor.schema.toString();
+    const auto schemaString = fmt::format("{}", sourceDescriptor.schema);
     const auto parserConfigString = fmt::format(
         "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,
@@ -63,7 +63,7 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        const auto schemaString = schema.toString();
+        const auto schemaString = schema;
         const auto parserConfigString = fmt::format(
             "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
             parserConfig.parserType,

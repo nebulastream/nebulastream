@@ -16,13 +16,13 @@
 
 #include <memory>
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <Util/Registry.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-using DataTypeRegistryReturnType = std::shared_ptr<DataType>;
+using DataTypeRegistryReturnType = DataType;
 struct DataTypeRegistryArguments
 {
 };

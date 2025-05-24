@@ -17,7 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,8 +28,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -38,7 +38,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& oth
 }
 
 GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    : dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
     , left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
 {
@@ -60,12 +60,12 @@ std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} > {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-std::shared_ptr<DataType> GreaterLogicalFunction::getDataType() const
+DataType GreaterLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction GreaterLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction GreaterLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;

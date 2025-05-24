@@ -17,15 +17,11 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -66,15 +62,14 @@ uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
 
 MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSize(bufferSize), schema(std::move(schema)), recordSize(0)
 {
-    for (size_t fieldIndex = 0; fieldIndex < this->schema.getFieldCount(); fieldIndex++)
+    for (size_t fieldIndex = 0; fieldIndex < this->schema.getNumberOfFields(); fieldIndex++)
     {
-        const DefaultPhysicalTypeFactory physicalDataTypeFactory;
-        const auto field = this->schema.getFieldByIndex(fieldIndex);
-        auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field.getDataType());
-        physicalFieldSizes.emplace_back(physicalFieldSize->size());
-        recordSize += physicalFieldSize->size();
-        physicalTypes.emplace_back(std::move(physicalFieldSize));
-        nameFieldIndexMap[field.getName()] = fieldIndex;
+        const auto field = this->schema.getFieldAt(fieldIndex);
+        auto physicalFieldSizeInBytes = field.dataType.physicalType.getSizeInBytes();
+        physicalFieldSizes.emplace_back(physicalFieldSizeInBytes);
+        physicalTypes.emplace_back(field.dataType.physicalType);
+        recordSize += physicalFieldSizeInBytes;
+        nameFieldIndexMap[field.name] = fieldIndex;
     }
     /// calculate the buffer capacity only if the record size is larger then zero
     capacity = recordSize > 0 ? bufferSize / recordSize : 0;
@@ -95,7 +90,7 @@ uint64_t MemoryLayout::getCapacity() const
     return capacity;
 }
 
-Schema MemoryLayout::getSchema() const
+const Schema& MemoryLayout::getSchema() const
 {
     return schema;
 }
@@ -110,9 +105,9 @@ void MemoryLayout::setBufferSize(const uint64_t bufferSize)
     MemoryLayout::bufferSize = bufferSize;
 }
 
-const PhysicalType& MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
+PhysicalType MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
 {
-    return *physicalTypes[fieldIndex];
+    return physicalTypes[fieldIndex];
 }
 
 std::vector<std::string> MemoryLayout::getKeyFieldNames() const

@@ -21,7 +21,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
@@ -30,11 +29,11 @@ class AvgAggregationFunction : public AggregationFunction
 {
 public:
     AvgAggregationFunction(
-        std::unique_ptr<PhysicalType> inputType,
-        std::unique_ptr<PhysicalType> resultType,
+        PhysicalType inputType,
+        PhysicalType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::unique_ptr<PhysicalType> countType);
+        PhysicalType countType);
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
@@ -51,7 +50,7 @@ public:
     ~AvgAggregationFunction() override = default;
 
 private:
-    std::unique_ptr<PhysicalType> countType;
+    PhysicalType countType;
 };
 
 }

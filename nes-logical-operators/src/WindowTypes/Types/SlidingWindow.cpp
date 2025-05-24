@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>

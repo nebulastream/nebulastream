@@ -14,21 +14,18 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
-#include <Common/DataTypes/DataType.hpp>
+#include <DataTypes/DataType.hpp>
 
-namespace NES
+namespace NES::DataTypeProvider
 {
 
-class VariableSizedDataType : public DataType
-{
-public:
-    inline VariableSizedDataType() noexcept { }
+std::optional<DataType> tryProvideDataType(const std::string& type);
 
-    ~VariableSizedDataType() override = default;
-    [[nodiscard]] bool operator==(const DataType& other) const override;
-    [[nodiscard]] std::shared_ptr<DataType> join(const DataType& otherDataType) const override;
-    [[nodiscard]] std::string toString() const override;
-};
+/// @param type name of the data type (must be the exact name: INT8, INT16, CHAR, BOOLEAN, ...)
+/// Throws an UnknownPluginType, if the name does not match any type enum
+DataType provideDataType(const std::string& type);
 
+DataType provideDataType(PhysicalType::Type type);
 }

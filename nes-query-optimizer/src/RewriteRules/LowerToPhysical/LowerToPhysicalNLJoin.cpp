@@ -21,9 +21,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
-#include <API/TimeUnit.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <DataTypes/Schema.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -108,17 +108,17 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
     }
 
     /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
-    auto timeStampFieldName = windowType->getTimeCharacteristic().field->getName();
+    auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
     auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
     /// Lambda function for extracting the timestamp from a schema
     auto findTimeStampFieldName = [&](const Schema& schema)
     {
-        for (const auto& field : schema)
+        for (const auto& field : schema.getFields())
         {
-            if (field.getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
+            if (field.name.find(timeStampFieldNameWithoutSourceName) != std::string::npos)
             {
-                return field.getName();
+                return field.name;
             }
         }
         return std::string();

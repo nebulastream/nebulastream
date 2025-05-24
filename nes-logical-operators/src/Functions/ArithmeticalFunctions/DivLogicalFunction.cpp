@@ -17,7 +17,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,7 +27,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -47,12 +47,12 @@ bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::shared_ptr<DataType> DivLogicalFunction::getDataType() const
+DataType DivLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction DivLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -80,7 +80,7 @@ LogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType()->join(*children[1].getDataType());
+    copy.dataType = children[0].getDataType().join(children[1].getDataType());
     return copy;
 };
 
@@ -93,7 +93,7 @@ std::string DivLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("DivLogicalFunction({} / {} : {})", left.explain(verbosity), right.explain(verbosity), dataType->toString());
+        return fmt::format("DivLogicalFunction({} / {} : {})", left.explain(verbosity), right.explain(verbosity), dataType);
     }
     return fmt::format("{} / {}", left.explain(verbosity), right.explain(verbosity));
 }

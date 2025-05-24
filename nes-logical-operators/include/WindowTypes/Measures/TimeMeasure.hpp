@@ -13,8 +13,13 @@
 */
 
 #pragma once
+
 #include <cstdint>
 #include <string>
+
+#include <memory>
+#include <DataTypes/Schema.hpp>
+
 namespace NES::Windowing
 {
 /// A time based window measure.

@@ -16,7 +16,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
@@ -53,8 +53,7 @@ std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format(
-            "unionWith(OpId: {}, leftSchema: {}, rightSchema: {})", id, leftInputSchema.toString(), rightInputSchema.toString());
+        return fmt::format("unionWith(OpId: {}, leftSchema: {}, rightSchema: {})", id, leftInputSchema, rightInputSchema);
     }
     return "unionWith";
 }
@@ -84,36 +83,33 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
     ///validate that only two different type of schema were present
     INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
-    copy.leftInputSchema.clear();
-    copy.rightInputSchema.clear();
+    copy.leftInputSchema = Schema{copy.leftInputSchema.memoryLayoutType};
+    copy.rightInputSchema = Schema{copy.rightInputSchema.memoryLayoutType};
     if (distinctSchemas.size() == 1)
     {
-        copy.leftInputSchema.copyFields(distinctSchemas[0]);
-        copy.rightInputSchema.copyFields(distinctSchemas[0]);
+        copy.leftInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
+        copy.rightInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
     }
     else
     {
-        copy.leftInputSchema.copyFields(distinctSchemas[0]);
-        copy.rightInputSchema.copyFields(distinctSchemas[1]);
+        copy.leftInputSchema.addFieldsFromOtherSchema(distinctSchemas[0]);
+        copy.rightInputSchema.addFieldsFromOtherSchema(distinctSchemas[1]);
     }
 
-    if (!leftInputSchema.hasSameTypes(rightInputSchema))
+    if (std::ranges::none_of(leftInputSchema.getFields(), [&](const auto& field) { return leftInputSchema.contains(field.name); }))
     {
         throw CannotInferSchema(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
-            leftInputSchema.toString(),
-            rightInputSchema.toString());
+            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}", leftInputSchema, rightInputSchema);
     }
 
-    if (leftInputSchema.getLayoutType() != rightInputSchema.getLayoutType())
+    if (leftInputSchema.memoryLayoutType != rightInputSchema.memoryLayoutType)
     {
         throw CannotInferSchema("Left and right should have same memory layout");
     }
 
     ///Copy the schema of left input
-    copy.outputSchema.clear();
-    copy.outputSchema.copyFields(leftInputSchema);
-    copy.outputSchema.setLayoutType(leftInputSchema.getLayoutType());
+    copy.outputSchema = Schema{};
+    copy.outputSchema.addFieldsFromOtherSchema(leftInputSchema);
     return copy;
 }
 
@@ -218,15 +214,15 @@ LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputS
 {
     auto copy = *this;
     INVARIANT(inputSchemas.size() == 2, "Expected 2 input schemas.");
-    copy.leftInputSchema.copyFields(inputSchemas[0]);
-    copy.rightInputSchema.copyFields(inputSchemas[1]);
+    copy.leftInputSchema.addFieldsFromOtherSchema(inputSchemas[0]);
+    copy.rightInputSchema.addFieldsFromOtherSchema(inputSchemas[1]);
     return copy;
 }
 
 LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
 {
     auto copy = *this;
-    copy.outputSchema.copyFields(outputSchema);
+    copy.outputSchema.addFieldsFromOtherSchema(outputSchema);
     return copy;
 }
 

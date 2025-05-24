@@ -21,7 +21,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ExecutionContext.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
@@ -41,8 +40,8 @@ class AggregationFunction
 {
 public:
     AggregationFunction(
-        std::unique_ptr<PhysicalType> inputType,
-        std::unique_ptr<PhysicalType> resultType,
+        PhysicalType inputType,
+        PhysicalType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
@@ -74,8 +73,8 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    const std::unique_ptr<PhysicalType> inputType;
-    const std::unique_ptr<PhysicalType> resultType;
+    PhysicalType inputType;
+    PhysicalType resultType;
     const PhysicalFunction inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };

@@ -15,7 +15,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
@@ -23,9 +24,6 @@
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
@@ -69,23 +67,26 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     auto newOnField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(dynamic_cast<const Numeric*>(newOnField.getDataType().get()), "aggregations on non numeric fields is not supported.");
+    INVARIANT(newOnField.getDataType().isNumeric(), "aggregations on non numeric fields is not supported.");
 
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
-    if (const auto* integerDataType = dynamic_cast<const Integer*>(onField.getDataType().get()); integerDataType)
+    if (onField.getDataType().isInteger())
     {
-        if (integerDataType->getIsSigned())
+        if (onField.getDataType().physicalType.isSigned)
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::INT64)).get<FieldAccessLogicalFunction>();
+            newOnField
+                = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::INT64)).get<FieldAccessLogicalFunction>();
         }
         else
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::UINT64)).get<FieldAccessLogicalFunction>();
+            newOnField
+                = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64)).get<FieldAccessLogicalFunction>();
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(LogicalType::FLOAT64)).get<FieldAccessLogicalFunction>();
+        newOnField
+            = newOnField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
     }
 
     ///Set fully qualified name for the as Field

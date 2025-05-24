@@ -14,18 +14,15 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(Schema schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -38,6 +35,11 @@ ColumnLayout::ColumnLayout(const Schema& schema, const uint64_t bufferSize) : Me
 ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-constructor-init)
     : MemoryLayout(other.bufferSize, other.schema), columnOffsets(other.columnOffsets)
 {
+}
+
+std::shared_ptr<ColumnLayout> ColumnLayout::create(Schema schema, uint64_t bufferSize)
+{
+    return std::make_shared<ColumnLayout>(std::move(schema), bufferSize);
 }
 
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const

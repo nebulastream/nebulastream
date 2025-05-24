@@ -18,8 +18,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <API/TimeUnit.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
@@ -63,7 +63,7 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
             id,
             onField.explain(verbosity),
             unit.getMillisecondsConversionMultiplier(),
-            inputSchema.toString(),
+            inputSchema,
             inputOriginIdsStr);
     }
     return "WATERMARK_ASSIGNER(Event time)";

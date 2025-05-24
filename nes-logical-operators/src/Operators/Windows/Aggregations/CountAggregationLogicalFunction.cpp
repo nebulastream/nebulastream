@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
@@ -24,7 +25,6 @@
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -64,23 +64,32 @@ std::string_view CountAggregationLogicalFunction::getName() const noexcept
 
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
-    const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    const auto asFieldName = asField.getFieldName();
-
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        const auto asFieldName = asField.getFieldName();
+
+        ///If on and as field name are different then append the attribute name resolver from on field to the as field
+        if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+        {
+            asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        }
+        else
+        {
+            const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+            asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        }
+
+        /// a count aggregation is always on an uint 64
+        this->onField
+            = onField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+        this->asField
+            = asField.withDataType(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64)).get<FieldAccessLogicalFunction>();
     }
     else
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
     }
-
-    /// a count aggregation is always on an uint 64
-    this->onField = onField.withDataType(DataTypeProvider::provideDataType(LogicalType::UINT64)).get<FieldAccessLogicalFunction>();
-    this->asField = asField.withDataType(DataTypeProvider::provideDataType(LogicalType::UINT64)).get<FieldAccessLogicalFunction>();
 }
 
 NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const

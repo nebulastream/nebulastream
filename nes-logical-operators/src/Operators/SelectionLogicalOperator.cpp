@@ -32,7 +32,6 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/Boolean.hpp>
 
 namespace NES
 {
@@ -86,7 +85,7 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
     }
 
     copy.predicate = predicate.withInferredDataType(firstSchema);
-    if (*copy.predicate.getDataType() != Boolean())
+    if (not copy.predicate.getDataType().isBoolean())
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }

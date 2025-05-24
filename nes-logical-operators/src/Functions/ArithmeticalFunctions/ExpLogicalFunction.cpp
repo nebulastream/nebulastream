@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -25,7 +26,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -45,12 +45,12 @@ bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::shared_ptr<DataType> ExpLogicalFunction::getDataType() const
+DataType ExpLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -89,7 +89,7 @@ std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ExpLogicalFunction({} : {})", child.explain(verbosity), dataType->toString());
+        return fmt::format("ExpLogicalFunction({} : {})", child.explain(verbosity), dataType);
     }
     return fmt::format("EXP({})", child.explain(verbosity));
 }

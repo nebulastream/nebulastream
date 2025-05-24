@@ -18,12 +18,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -32,7 +31,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 struct FieldOffsets
 {
     Record::RecordFieldIdentifier fieldIdentifier;
-    std::shared_ptr<PhysicalType> type;
+    PhysicalType type;
     uint64_t fieldOffset;
 };
 

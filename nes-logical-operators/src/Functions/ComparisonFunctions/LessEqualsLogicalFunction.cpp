@@ -17,7 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,8 +28,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -40,7 +40,7 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 LessEqualsLogicalFunction::LessEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    , dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
 {
 }
 
@@ -61,12 +61,12 @@ std::string LessEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} <= {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-std::shared_ptr<DataType> LessEqualsLogicalFunction::getDataType() const
+DataType LessEqualsLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction LessEqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;

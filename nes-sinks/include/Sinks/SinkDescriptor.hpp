@@ -17,9 +17,9 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
 

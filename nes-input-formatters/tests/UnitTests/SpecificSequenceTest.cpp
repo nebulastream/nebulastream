@@ -14,15 +14,13 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
-#include <TestTaskQueue.hpp>
 
 
 namespace NES

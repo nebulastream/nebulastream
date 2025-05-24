@@ -46,7 +46,7 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbos
         {
             inputOriginIdsStr = fmt::format(", inputOriginIds: [{}]", fmt::join(inputOriginIds, ", "));
         }
-        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {}, inputSchema: {}{})", id, inputSchema.toString(), inputOriginIdsStr);
+        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {}, inputSchema: {}{})", id, inputSchema, inputOriginIdsStr);
     }
     return "INGESTION_TIME_WATERMARK_ASSIGNER";
 }

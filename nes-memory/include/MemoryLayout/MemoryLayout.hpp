@@ -18,9 +18,8 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -69,8 +68,8 @@ public:
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] const PhysicalType& getPhysicalType(uint64_t fieldIndex) const;
+    [[nodiscard]] const Schema& getSchema() const;
+    [[nodiscard]] PhysicalType getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
@@ -83,7 +82,7 @@ protected:
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
+    std::vector<PhysicalType> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
     std::vector<std::string> keyFieldNames;
 };
