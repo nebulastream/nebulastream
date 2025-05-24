@@ -60,6 +60,12 @@ public:
            DumpMode::NONE,
            fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
 
+    UIntOption throughputListenerTimeInterval
+        = {"throughputListenerTimeInterval",
+           "1000",
+           "Time interval in milliseconds for throughput listener output.",
+           {std::make_shared<NumberValidation>()}};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -69,7 +75,8 @@ private:
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersInSourceLocalPools,
             &bufferSizeInBytes,
-            &dumpQueryCompilationIntermediateRepresentations};
+            &dumpQueryCompilationIntermediateRepresentations,
+            &throughputListenerTimeInterval};
     }
 };
 }
