@@ -34,6 +34,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
+#include <ThroughputListener.hpp>
 
 namespace NES
 {
@@ -43,10 +44,7 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
-    , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
+    : bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
@@ -58,6 +56,52 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.queryOptimizer.operatorBufferSize.getValue());
     }
+
+    /// Writing the current throughput to the log
+    auto callback = [](std::ofstream& file, const ThroughputListener::CallBackParams& callBackParams)
+    {
+        /// Helper function to format the given value in SI units
+        auto formatValue = [](double value, const std::string_view suffix)
+        {
+            constexpr std::array<const char*, 5> units = {"", "k", "M", "G", "T"};
+            int unitIndex = 0;
+
+            while (value >= 1000 && unitIndex < 4)
+            {
+                value /= 1000;
+                unitIndex++;
+            }
+
+            return fmt::format("{:.3f} {}{}", value, units[unitIndex], suffix);
+        };
+
+        const auto bytesPerSecondMessage = formatValue(callBackParams.throughputInBytesPerSec, "B/s");
+        const auto tuplesPerSecondMessage = formatValue(callBackParams.throughputInTuplesPerSec, "Tup/s");
+        const auto memoryConsumptionMessage = formatValue(callBackParams.memoryConsumption, "B");
+        file << fmt::format(
+            "Throughput for queryId {} in window {}-{} is {} / {} and memory consumption is {}\n",
+            callBackParams.queryId,
+            callBackParams.windowStart,
+            callBackParams.windowEnd,
+            bytesPerSecondMessage,
+            tuplesPerSecondMessage,
+            memoryConsumptionMessage);
+
+        /// We need to flush the file now as the worker might be killed abruptly
+        file.flush();
+    };
+    constexpr auto timeIntervalInMilliSeconds = 100;
+    auto throughputListener = std::make_shared<ThroughputListener>(
+        fmt::format("BenchmarkStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()),
+        timeIntervalInMilliSeconds,
+        callback);
+
+    const auto printStatisticListener = std::make_shared<PrintingStatisticListener>(
+        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+    queryEngineStatisticsListener = {printStatisticListener, throughputListener};
+    systemEventListener = printStatisticListener;
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();
+    throughputListener->setBufferManager(nodeEngine->getBufferManager());
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
@@ -70,7 +114,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     {
         plan.setQueryId(QueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        systemEventListener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         auto result = compiler->compileQuery(std::move(request));
         return nodeEngine->registerCompiledQueryPlan(std::move(result));

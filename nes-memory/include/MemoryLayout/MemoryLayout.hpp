@@ -45,6 +45,15 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
 class MemoryLayout
 {
 public:
+    /**
+     * @brief Enum to identify the type of field
+     */
+    enum class FieldType : uint8_t
+    {
+        KEY = 0,
+        PAYLOAD = 1
+    };
+
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
@@ -52,6 +61,8 @@ public:
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
+
+    static std::shared_ptr<MemoryLayout> createMemoryLayout(const Schema& schema, uint64_t bufferSize);
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
@@ -74,8 +85,11 @@ public:
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
+    std::vector<std::tuple<FieldType, uint64_t>> getGroupedFieldTypeSizes() const;
     bool operator==(const MemoryLayout& rhs) const = default;
     bool operator!=(const MemoryLayout& rhs) const = default;
+
+    Schema createKeyFieldsOnlySchema() const;
 
 protected:
     uint64_t bufferSize;

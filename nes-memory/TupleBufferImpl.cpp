@@ -46,7 +46,7 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
 MemorySegment::MemorySegment(
     uint8_t* ptr,
-    uint32_t size,
+    const uint32_t size,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock) /// NOLINT (readability-non-const-parameter)
     : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
@@ -186,14 +186,14 @@ bool BufferControlBlock::release()
             child->controlBlock->release();
         }
         children.clear();
-        auto recycler = std::move(owningBufferRecycler);
-        recycleCallback(owner, recycler.get());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
             owningThreads.clear();
         }
 #endif
+        auto recycler = std::move(owningBufferRecycler);
+        recycleCallback(owner, recycler.get());
         return true;
     }
     else
@@ -238,6 +238,16 @@ uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
 void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
 {
     this->numberOfTuples = numberOfTuples;
+}
+
+uint64_t BufferControlBlock::getUsedMemorySize() const noexcept
+{
+    return usedMemorySize;
+}
+
+void BufferControlBlock::setUsedMemorySize(const uint64_t usedMemorySize)
+{
+    this->usedMemorySize = usedMemorySize;
 }
 
 Timestamp BufferControlBlock::getWatermark() const noexcept

@@ -25,7 +25,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
     auto source = logicalOperator.get<UnionLogicalOperator>();

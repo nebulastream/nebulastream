@@ -26,7 +26,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     auto selection = logicalOperator.get<SelectionLogicalOperator>();

@@ -40,7 +40,7 @@ struct RewriteRuleResultSubgraph
 /// For now, the interface only considers lowering rules (logical operator to physical subgraph)
 struct AbstractRewriteRule
 {
-    virtual RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) = 0;
+    virtual RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator, QueryId queryId) = 0;
     virtual ~AbstractRewriteRule() = default;
 };
 

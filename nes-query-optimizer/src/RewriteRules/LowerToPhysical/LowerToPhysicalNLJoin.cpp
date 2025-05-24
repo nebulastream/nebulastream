@@ -40,6 +40,7 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -147,7 +148,7 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
         | std::ranges::to<std::vector<std::string>>();
 };
 
-RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator, QueryId queryId)
 {
     PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected two origin id vector");
@@ -188,9 +189,30 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto probeOperator
         = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
 
-    const uint64_t numberOfOriginIds = inputOriginIds.size();
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    if (conf.sliceStoreType.getValue() == SliceStoreType::FILE_BACKED)
+    {
+        sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
+            windowType->getSize().getTime(),
+            windowType->getSlide().getTime(),
+            SliceStoreInfo(
+                conf.numWatermarkGapsAllowed.getValue(),
+                conf.maxNumSequenceNumbers.getValue(),
+                conf.fileDescriptorBufferSize.getValue(),
+                conf.minReadStateSize.getValue(),
+                conf.minWriteStateSize.getValue(),
+                conf.fileOperationTimeDelta.getValue(),
+                conf.fileLayout.getValue()),
+            MemoryControllerInfo(conf.fileBackedWorkingDir.getValue(), queryId, logicalOperator.getOutputOriginIds()[0]),
+            conf.watermarkPredictorType,
+            inputOriginIds);
+    }
+    else
+    {
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+            windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());
+    }
+
     auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(

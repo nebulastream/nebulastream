@@ -93,7 +93,10 @@ DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 }
 
 std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreate(
-    const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+    const Timestamp timestamp,
+    WorkerThreadId,
+    JoinBuildSideType,
+    const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
     /// We first check, if the slice already exist in the slice store
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
@@ -172,7 +175,8 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(
+    const SliceEnd sliceEnd, Memory::AbstractBufferProvider*, const Memory::MemoryLayouts::MemoryLayout*, const JoinBuildSideType)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
