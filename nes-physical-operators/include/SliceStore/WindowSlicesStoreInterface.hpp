@@ -22,11 +22,18 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES
 {
+
+enum class SliceStoreType : uint8_t
+{
+    DEFAULT,
+    FILE_BACKED
+};
 
 /// This struct stores a slice and the window info
 struct SlicesAndWindowInfo
@@ -50,8 +57,11 @@ class WindowSlicesStoreInterface
 public:
     virtual ~WindowSlicesStoreInterface() = default;
     /// Retrieves the slices that corresponds to the timestamp. If no slices exist for the timestamp, they are created by calling the method createNewSlice
-    virtual std::vector<std::shared_ptr<Slice>>
-    getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+    virtual std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        JoinBuildSideType joinBuildSide,
+        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
         = 0;
 
     /// Retrieves all slices that can be triggered by the given global watermark
@@ -61,7 +71,12 @@ public:
         = 0;
 
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
-    virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) = 0;
+    virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
+        SliceEnd sliceEnd,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        JoinBuildSideType joinBuildSide)
+        = 0;
 
     /// Retrieves all current non-deleted slices that have not been triggered yet
     /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp

@@ -41,7 +41,7 @@ void checkWindowsTriggerProxy(
     const bool lastChunk,
     const OriginId originId)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
@@ -51,7 +51,7 @@ void checkWindowsTriggerProxy(
 
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(piplineContext != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
@@ -61,11 +61,10 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
 /// The slice store needs to know in how many pipelines this operator appears, and consequently, how many terminations it will receive
 void registerActivePipeline(OperatorHandler* ptrOpHandler)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
-
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))

@@ -77,6 +77,9 @@ class UnpooledChunksManager
     /// UnpooledBufferData is a shared_ptr, as we pass a shared_ptr to anyone that requires access to an unpooled buffer chunk
     folly::Synchronized<std::unordered_map<std::thread::id, std::shared_ptr<folly::Synchronized<UnpooledChunk>>>> allLocalUnpooledBuffers;
 
+    /// Holds the accumulated total size of all chunks and is updated whenever getUnpooledBuffer is called
+    std::atomic<size_t> unpooledBufferChunksSize;
+
     /// Returns two pointers wrapped in a pair
     /// std::get<0>: the key that is being used in the unordered_map of a ChunkControlBlock
     /// std::get<1>: pointer to the memory address that is large enough for neededSize
@@ -87,6 +90,7 @@ class UnpooledChunksManager
 public:
     explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource);
     size_t getNumberOfUnpooledBuffers() const;
+    size_t getTotalSizeOfUnpooledBufferChunks() const;
     Memory::TupleBuffer
     getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler);
 };

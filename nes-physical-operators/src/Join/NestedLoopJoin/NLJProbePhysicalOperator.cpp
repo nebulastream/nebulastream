@@ -45,12 +45,21 @@ namespace NES
 
 namespace
 {
-NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
+NLJSlice* getNLJSliceRefFromEndProxy(
+    OperatorHandler* ptrOpHandler,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const JoinBuildSideType joinBuildSide,
+    const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
+    PRECONDITION(ptrOpHandler != nullptr, "op handler should not be null");
+    PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
+    PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
+
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
+    const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
     return dynamic_cast<NLJSlice*>(slice.value().get());
@@ -155,8 +164,20 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
 
     /// Getting the left and right paged vector
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto sliceRefLeft = invoke(
+        getNLJSliceRefFromEndProxy,
+        operatorHandlerMemRef,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(leftMemoryProvider->getMemoryLayout().get()),
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left),
+        sliceIdLeft);
+    const auto sliceRefRight = invoke(
+        getNLJSliceRefFromEndProxy,
+        operatorHandlerMemRef,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(rightMemoryProvider->getMemoryLayout().get()),
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right),
+        sliceIdRight);
 
     const auto leftPagedVectorRef = invoke(
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)

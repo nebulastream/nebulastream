@@ -39,27 +39,28 @@ public:
     };
 
     PagedVector() = default;
+    virtual ~PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
-    void moveAllPages(PagedVector& other);
+    virtual void moveAllPages(PagedVector& other);
 
     /// Copies all pages from other to this
-    void copyFrom(const PagedVector& other);
+    virtual void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
     [[nodiscard]] const Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
     [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
-    [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
+    [[nodiscard]] virtual uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const { return pages.getLastPage(); }
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
-    [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+    [[nodiscard]] virtual uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
-private:
+protected:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
     struct PagesWrapper
     {

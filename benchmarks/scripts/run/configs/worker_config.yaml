@@ -1,0 +1,22 @@
+worker:
+  numberOfBuffersInGlobalBufferManager: 2000000
+  numberOfBuffersPerWorker: 1000
+  bufferSizeInBytes: 4096
+  queryOptimizer:
+    executionMode: COMPILER
+    pageSize: 4096
+    numWatermarkGapsAllowed: 1
+    maxNumSequenceNumbers: 1
+    fileDescriptorBufferSize: 4096
+    minReadStateSize: 0
+    minWriteStateSize: 0
+    fileOperationTimeDelta: 0
+    fileLayout: NO_SEPARATION
+    watermarkPredictorType: KALMAN
+    sliceStoreType: DEFAULT
+    fileBackedWorkingDir: ""
+
+  queryEngine:
+    numberOfWorkerThreads: 1
+    taskQueueSize: 1000
+#    statisticsDir: TBA

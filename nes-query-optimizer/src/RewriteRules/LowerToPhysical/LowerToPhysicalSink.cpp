@@ -25,7 +25,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
     auto sink = logicalOperator.get<SinkLogicalOperator>();

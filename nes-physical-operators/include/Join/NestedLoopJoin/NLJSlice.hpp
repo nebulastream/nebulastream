@@ -20,8 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
+#include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES
@@ -42,12 +41,32 @@ public:
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
-    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
+    Nautilus::Interface::FileBackedPagedVector* getPagedVectorRef(JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+
+    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a write lock for combinePagedVectorsMutex.
     void combinePagedVectors();
 
+    /// Acquires and releases a write lock for combinePagedVectorsMutex.
+    void acquireCombinePagedVectorsLock();
+    void releaseCombinePagedVectorsLock();
+
+    /// Returns true if combinePagedVectors() method has already been called. This does not acquire a lock for combinePagedVectorsMutex.
+    bool pagedVectorsCombined() const;
+
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if paged vectors were already combined.
+    size_t getStateSizeInMemoryForThreadId(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
+
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if paged vectors were already combined.
+    size_t getStateSizeOnDiskForThreadId(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
+
 private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
+    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;
+    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
+    bool combinedPagedVectors;
 };
 }

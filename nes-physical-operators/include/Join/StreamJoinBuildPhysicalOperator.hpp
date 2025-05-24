@@ -36,6 +36,9 @@ public:
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
 
+    /// Updates the slices in the slice store and passes/emits slices that are ready to the second join phase (probe) for further processing
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
 protected:
     const JoinBuildSideType joinBuildSide;
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
