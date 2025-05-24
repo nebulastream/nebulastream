@@ -78,6 +78,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
     worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
     worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
+    worker_config_yaml["worker"][
+        "throughputListenerTimeInterval"] = current_benchmark_config.throughput_listener_time_interval
 
     # Query Optimizer Configuration
     worker_config_yaml["worker"]["queryOptimizer"]["executionMode"] = current_benchmark_config.execution_mode
