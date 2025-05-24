@@ -1,4 +1,5 @@
 worker:
+  throughputListenerTimeInterval: 1000
   numberOfBuffersInGlobalBufferManager: 2000000
   numberOfBuffersPerWorker: 1000
   bufferSizeInBytes: 4096
