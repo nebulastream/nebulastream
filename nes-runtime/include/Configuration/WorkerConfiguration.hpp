@@ -65,6 +65,12 @@ public:
     QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    UIntOption throughputListenerTimeInterval
+        = {"throughputListenerTimeInterval",
+           "1000",
+           "Time interval in milliseconds for throughput listener output.",
+           {std::make_shared<NumberValidation>()}};
+
 private:
     std::vector<Configurations::BaseOption*> getOptions() override
     {
@@ -79,6 +85,7 @@ private:
             &logLevel,
             &queryCompiler,
             &configPath,
+            &throughputListenerTimeInterval
         };
     }
 };
