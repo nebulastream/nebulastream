@@ -14,18 +14,16 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(Schema schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -38,6 +36,11 @@ RowLayout::RowLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLa
 RowLayout::RowLayout(const RowLayout& other)
     : MemoryLayout(other.bufferSize, other.schema), fieldOffSets(other.fieldOffSets) /// NOLINT(*-copy-constructor-init)
 {
+}
+
+std::shared_ptr<RowLayout> RowLayout::create(Schema schema, uint64_t bufferSize)
+{
+    return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const

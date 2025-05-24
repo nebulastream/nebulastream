@@ -105,7 +105,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     {
         if (not outputSchema.getFieldNames().empty())
         {
-            return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema.toString());
+            return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema);
         }
         return fmt::format(
             "PROJECTION(opId: {}, fields: [{}])",
@@ -114,7 +114,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     }
     if (not outputSchema.getFieldNames().empty())
     {
-        return fmt::format("PROJECTION(schema={})", outputSchema.toString());
+        return fmt::format("PROJECTION(schema={})", outputSchema);
     }
     return fmt::format(
         "PROJECTION(fields: [{}])",
@@ -136,7 +136,7 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
 
     auto copy = *this;
     copy.inputSchema = firstSchema;
-    copy.outputSchema.clear();
+    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
 
     std::vector<LogicalFunction> newFunctions;
     for (const auto& function : functions)

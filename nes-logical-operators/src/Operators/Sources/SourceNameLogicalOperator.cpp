@@ -16,7 +16,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>

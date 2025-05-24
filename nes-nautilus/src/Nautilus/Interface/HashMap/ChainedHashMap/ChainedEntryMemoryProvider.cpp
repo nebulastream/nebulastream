@@ -15,8 +15,7 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -25,7 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -42,17 +41,14 @@ ChainedEntryMemoryProvider::createFieldOffsets(
     std::vector<MemoryProvider::FieldOffsets> fieldsKey;
     std::vector<MemoryProvider::FieldOffsets> fieldsValue;
     uint64_t offset = sizeof(ChainedHashMapEntry);
-    const DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (const auto& fieldName : fieldNameKeys)
     {
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
-        const auto fieldSize = physicalType->size();
-        fieldsKey.emplace_back(
-            FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = std::move(physicalType), .fieldOffset = offset});
-        offset += fieldSize;
+        fieldsKey.emplace_back(MemoryProvider::FieldOffsets{
+            .fieldIdentifier = fieldValue.name, .type = fieldValue.dataType.physicalType, .fieldOffset = offset});
+        offset += fieldValue.dataType.physicalType.getSizeInBytes();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -60,11 +56,9 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
-        const auto fieldSize = physicalType->size();
-        fieldsValue.emplace_back(
-            FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = std::move(physicalType), .fieldOffset = offset});
-        offset += fieldSize;
+        fieldsValue.emplace_back(MemoryProvider::FieldOffsets{
+            .fieldIdentifier = fieldValue.name, .type = fieldValue.dataType.physicalType, .fieldOffset = offset});
+        offset += fieldValue.dataType.physicalType.getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
 }
@@ -79,7 +73,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, *type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
             return varVal;
         }
     }

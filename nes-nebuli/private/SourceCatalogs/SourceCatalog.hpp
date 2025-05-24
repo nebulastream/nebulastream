@@ -21,7 +21,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 
 namespace NES
@@ -117,7 +117,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if update was successful
-    bool updateLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema);
+    bool updateLogicalSource(const std::string& logicalSourceName, Schema schema);
 
 private:
     /// @brief test if logical source with this name exists

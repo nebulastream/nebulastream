@@ -23,12 +23,12 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -43,8 +43,8 @@ struct LogicalFunctionConcept
     virtual ~LogicalFunctionConcept() = default;
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
 
-    [[nodiscard]] virtual std::shared_ptr<DataType> getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const = 0;
+    [[nodiscard]] virtual DataType getDataType() const = 0;
+    [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
     [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
 
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
@@ -113,8 +113,8 @@ struct LogicalFunction
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const;
-    [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
@@ -145,15 +145,12 @@ private:
         }
         [[nodiscard]] SerializableFunction serialize() const override { return data.serialize(); }
         [[nodiscard]] std::string_view getType() const override { return data.getType(); }
-        [[nodiscard]] std::shared_ptr<DataType> getDataType() const override { return data.getDataType(); }
+        [[nodiscard]] DataType getDataType() const override { return data.getDataType(); }
         [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override
         {
             return data.withInferredDataType(schema);
         }
-        [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const override
-        {
-            return data.withDataType(dataType);
-        }
+        [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return data.withDataType(dataType); }
         [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))

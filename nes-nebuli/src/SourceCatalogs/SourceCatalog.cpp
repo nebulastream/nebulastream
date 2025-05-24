@@ -17,14 +17,13 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/LogicalSource.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Catalogs::Source
 {
@@ -266,16 +265,16 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
 {
     std::unique_lock lock(catalogMutex);
     std::map<std::string, std::string> allLogicalSourceAsString;
-    const auto allLogicalSource = getAllLogicalSource();
+    const std::map<std::string, Schema> allLogicalSource = getAllLogicalSource();
 
     for (const auto& [name, schema] : allLogicalSource)
     {
-        allLogicalSourceAsString[name] = schema.toString();
+        allLogicalSourceAsString[name] = fmt::format("{}", schema);
     }
     return allLogicalSourceAsString;
 }
 
-bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
+bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
@@ -287,7 +286,7 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, st
         return false;
     }
     NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
-    logicalSourceNameToSchemaMapping[logicalSourceName] = *schema;
+    logicalSourceNameToSchemaMapping[logicalSourceName] = schema;
     return true;
 }
 

@@ -17,8 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -27,11 +28,10 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataType> dataType, std::string value)
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string value)
     : constantValue(std::move(value)), dataType(std::move(std::move(dataType)))
 {
 }
@@ -41,12 +41,12 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLo
 {
 }
 
-std::shared_ptr<DataType> ConstantValueLogicalFunction::getDataType() const
+DataType ConstantValueLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction ConstantValueLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -81,7 +81,7 @@ std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) co
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ConstantValueLogicalFunction({} : {})", constantValue, dataType->toString());
+        return fmt::format("ConstantValueLogicalFunction({} : {})", constantValue, dataType);
     }
     return constantValue;
 }

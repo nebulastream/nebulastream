@@ -19,8 +19,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>

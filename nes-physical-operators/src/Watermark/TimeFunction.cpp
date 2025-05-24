@@ -14,7 +14,7 @@
 
 #include <cstdint>
 #include <utility>
-#include <API/TimeUnit.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>

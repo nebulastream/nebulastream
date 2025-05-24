@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -25,13 +26,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
 ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
+    : dataType(left.getDataType().join(right.getDataType())), left(left), right(right)
 {
 }
 
@@ -56,12 +56,12 @@ std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CONCAT({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
-std::shared_ptr<DataType> ConcatLogicalFunction::getDataType() const
+DataType ConcatLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction ConcatLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -88,7 +88,7 @@ LogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType()->join(*children[1].getDataType());
+    copy.dataType = children[0].getDataType().join(children[1].getDataType());
     return copy;
 };
 

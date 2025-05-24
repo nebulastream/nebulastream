@@ -17,7 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,8 +28,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -35,7 +35,7 @@ namespace NES
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    , dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
 {
 }
 
@@ -55,12 +55,12 @@ bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::shared_ptr<DataType> EqualsLogicalFunction::getDataType() const
+DataType EqualsLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction EqualsLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;

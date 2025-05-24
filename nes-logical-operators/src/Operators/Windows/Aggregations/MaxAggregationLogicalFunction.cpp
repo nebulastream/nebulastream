@@ -16,7 +16,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -24,7 +24,6 @@
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES
@@ -59,10 +58,7 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(
-        dynamic_cast<const Numeric*>(onField.getDataType().get()),
-        "aggregations on non numeric fields is not supported, but got {}",
-        onField.getDataType()->toString());
+    INVARIANT(onField.getDataType().isNumeric(), "aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
 
     ///Set fully qualified name for the as Field
     auto onFieldName = onField.getFieldName();

@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <API/TimeUnit.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 

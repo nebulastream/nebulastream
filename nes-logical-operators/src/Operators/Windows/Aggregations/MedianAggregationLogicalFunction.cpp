@@ -15,15 +15,14 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 #include <utility>
 #include <AggregationLogicalFunctionRegistry.hpp>
@@ -69,10 +68,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(
-        dynamic_cast<const Numeric*>(onField.getDataType().get()),
-        "aggregations on non numeric fields is not supported, but got {}",
-        onField.getDataType()->toString());
+    INVARIANT(onField.getDataType().isNumeric(), "aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -90,7 +86,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     inputStamp = onField.getDataType();
-    finalAggregateStamp = DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+    finalAggregateStamp = DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 

@@ -17,14 +17,13 @@
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
 
 AggregationFunction::AggregationFunction(
-    std::unique_ptr<PhysicalType> inputType,
-    std::unique_ptr<PhysicalType> resultType,
+    PhysicalType inputType,
+    PhysicalType resultType,
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : inputType(std::move(inputType))

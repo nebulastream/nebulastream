@@ -20,13 +20,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -39,7 +39,7 @@ public:
     static constexpr std::string_view NAME = "FieldAccess";
 
     explicit FieldAccessLogicalFunction(std::string fieldName);
-    FieldAccessLogicalFunction(std::shared_ptr<DataType> dataType, std::string fieldName);
+    FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
@@ -50,8 +50,8 @@ public:
     friend bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
     friend bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
 
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const override;
+    [[nodiscard]] DataType getDataType() const override;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
@@ -75,7 +75,7 @@ public:
 
 private:
     std::string fieldName;
-    std::shared_ptr<DataType> dataType;
+    DataType dataType;
 };
 
 }

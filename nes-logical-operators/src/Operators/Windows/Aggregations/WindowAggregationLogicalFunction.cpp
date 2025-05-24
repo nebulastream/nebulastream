@@ -15,28 +15,25 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <fmt/format.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::shared_ptr<DataType> inputStamp,
-    std::shared_ptr<DataType> partialAggregateStamp,
-    std::shared_ptr<DataType> finalAggregateStamp,
-    const FieldAccessLogicalFunction& onField)
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
     : WindowAggregationLogicalFunction(
           std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
 {
 }
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::shared_ptr<DataType> inputStamp,
-    std::shared_ptr<DataType> partialAggregateStamp,
-    std::shared_ptr<DataType> finalAggregateStamp,
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
     FieldAccessLogicalFunction onField,
     FieldAccessLogicalFunction asField)
     : inputStamp(std::move(inputStamp))
@@ -52,17 +49,17 @@ std::string WindowAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-std::shared_ptr<DataType> WindowAggregationLogicalFunction::getInputStamp() const
+DataType WindowAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-std::shared_ptr<DataType> WindowAggregationLogicalFunction::getPartialAggregateStamp() const
+DataType WindowAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-std::shared_ptr<DataType> WindowAggregationLogicalFunction::getFinalAggregateStamp() const
+DataType WindowAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }

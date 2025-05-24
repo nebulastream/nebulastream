@@ -16,8 +16,10 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,15 +28,13 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)) { };
+    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED)) { };
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> dataType, std::string fieldName)
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(std::move(std::move(dataType))) { };
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
@@ -49,7 +49,7 @@ bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) c
 bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
 {
     const bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
-    const bool dataTypesMatch = *rhs.dataType == *lhs.dataType;
+    const bool dataTypesMatch = rhs.dataType == lhs.dataType;
     return fieldNamesMatch and dataTypesMatch;
 }
 
@@ -74,7 +74,7 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FieldAccessLogicalFunction({}{})", fieldName, dataType ? fmt::format(" [{}]", dataType->toString()) : "");
+        return fmt::format("FieldAccessLogicalFunction({}{})", fieldName, dataType);
     }
     return fieldName;
 }
@@ -85,19 +85,18 @@ LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& s
     INVARIANT(existingField, "field is not part of the schema");
 
     auto copy = *this;
-    copy.dataType = existingField.value().getDataType();
-    copy.fieldName = existingField.value().getName();
+    copy.dataType = existingField.value().dataType;
+    copy.fieldName = existingField.value().name;
     return copy;
 }
 
-std::shared_ptr<DataType> FieldAccessLogicalFunction::getDataType() const
+DataType FieldAccessLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction FieldAccessLogicalFunction::withDataType(std::shared_ptr<DataType> newStamp) const
+LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& newStamp) const
 {
-    PRECONDITION(newStamp != nullptr, "newStamp is null in FieldAccessLogicalFunction::withStamp");
     auto copy = *this;
     copy.dataType = newStamp;
     return copy;

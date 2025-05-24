@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -36,7 +36,7 @@ static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const Schema& schema,
+    Schema schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
@@ -56,7 +56,7 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const Schema& schema,
+    Schema schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider);
 

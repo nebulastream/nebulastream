@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -25,7 +26,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -38,12 +38,12 @@ AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& 
 {
 }
 
-std::shared_ptr<DataType> AbsoluteLogicalFunction::getDataType() const
+DataType AbsoluteLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -91,7 +91,7 @@ std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("AbsoluteLogicalFunction({} : {})", child.explain(verbosity), dataType->toString());
+        return fmt::format("AbsoluteLogicalFunction({} : {})", child.explain(verbosity), dataType);
     }
     return fmt::format("ABS({})", child.explain(verbosity));
 }

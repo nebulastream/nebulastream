@@ -17,10 +17,10 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -30,9 +30,9 @@ class WindowAggregationLogicalFunction
 public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
-    [[nodiscard]] std::shared_ptr<DataType> getInputStamp() const;
-    [[nodiscard]] std::shared_ptr<DataType> getPartialAggregateStamp() const;
-    [[nodiscard]] std::shared_ptr<DataType> getFinalAggregateStamp() const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
 
     [[nodiscard]] std::string toString() const;
     bool operator==(const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const;
@@ -44,21 +44,18 @@ public:
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
-    std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
+    DataType inputStamp, partialAggregateStamp, finalAggregateStamp;
     FieldAccessLogicalFunction onField, asField;
 
 protected:
     explicit WindowAggregationLogicalFunction(
-        std::shared_ptr<DataType> inputStamp,
-        std::shared_ptr<DataType> partialAggregateStamp,
-        std::shared_ptr<DataType> finalAggregateStamp,
+        DataType inputStamp,
+        DataType partialAggregateStamp,
+        DataType finalAggregateStamp,
         FieldAccessLogicalFunction onField,
         FieldAccessLogicalFunction asField);
 
     explicit WindowAggregationLogicalFunction(
-        std::shared_ptr<DataType> inputStamp,
-        std::shared_ptr<DataType> partialAggregateStamp,
-        std::shared_ptr<DataType> finalAggregateStamp,
-        const FieldAccessLogicalFunction& onField);
+        DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
 };
 }

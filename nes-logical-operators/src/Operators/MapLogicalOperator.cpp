@@ -88,7 +88,10 @@ LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> input
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
         NES_TRACE("The field {} is already in the schema, so we updated its type.", fieldName);
-        copy.outputSchema.replaceField(fieldName, copy.mapFunction.getField().getDataType());
+        if (not copy.outputSchema.replaceTypeOfField(fieldName, copy.mapFunction.getField().getDataType()))
+        {
+            throw CannotInferSchema("Could not replace field {} with {}", fieldName, copy.mapFunction.getField().getDataType());
+        }
     }
     else
     {

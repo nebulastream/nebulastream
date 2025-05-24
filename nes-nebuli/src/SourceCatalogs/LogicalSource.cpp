@@ -15,13 +15,13 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/LogicalSource.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalSourceName, const Schema& schema)
+std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalSourceName, Schema schema)
 {
     return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
