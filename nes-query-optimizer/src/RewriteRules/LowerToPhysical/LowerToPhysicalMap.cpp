@@ -26,7 +26,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
     auto map = logicalOperator.get<MapLogicalOperator>();

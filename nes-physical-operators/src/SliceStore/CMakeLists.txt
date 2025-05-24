@@ -13,4 +13,9 @@
 add_source_files(nes-physical-operators
         Slice.cpp
         DefaultTimeBasedSliceStore.cpp
+        FileBackedTimeBasedSliceStore.cpp
 )
+
+add_subdirectory(FileDescriptor)
+add_subdirectory(MemoryController)
+add_subdirectory(WatermarkPredictor)
