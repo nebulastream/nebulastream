@@ -129,7 +129,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 else if constexpr (std::is_same_v<T, nautilus::val<double>> || std::is_same_v<T, nautilus::val<float>>)
                 {
                     /// For floating points, we do not support the >> operator, as it is not defined for floats.
-                    throw UnsupportedOperation("Cannot hash floating point values.");
+                    throw UnknownOperation("Cannot hash floating point values.");
                 }
                 else
                 {

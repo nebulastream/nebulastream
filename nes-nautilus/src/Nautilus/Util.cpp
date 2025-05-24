@@ -77,10 +77,10 @@ VarVal createNautilusMinValue(const DataType::Type physicalType)
         case DataType::Type::FLOAT64:
             return Util::createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
         default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
         }
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+    throw UnknownDataType("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
 }
 
 VarVal createNautilusMaxValue(const DataType::Type physicalType)
@@ -108,7 +108,7 @@ VarVal createNautilusMaxValue(const DataType::Type physicalType)
         case DataType::Type::FLOAT64:
             return Util::createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
         default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
         }
     }
 }
