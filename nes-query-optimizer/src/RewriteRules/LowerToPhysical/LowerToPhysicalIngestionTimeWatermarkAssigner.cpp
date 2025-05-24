@@ -26,7 +26,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator, QueryId)
 {
     PRECONDITION(logicalOperator.tryGet<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());

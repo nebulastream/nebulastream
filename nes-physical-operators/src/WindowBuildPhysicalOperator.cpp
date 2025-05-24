@@ -41,7 +41,7 @@ void checkWindowsTriggerProxy(
     const bool lastChunk,
     const OriginId originId)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
@@ -51,13 +51,12 @@ void checkWindowsTriggerProxy(
 
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(piplineContext != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->triggerAllWindows(piplineContext);
 }
-
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))

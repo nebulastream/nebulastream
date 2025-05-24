@@ -1,0 +1,54 @@
+query: |
+  SOME QUERY STRING
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+#    filePath: "/dev/null"
+    filePath: "/tmp/csv_sink.csv"
+    append: false
+logical:
+  - name: tcp_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: UINT64
+      - name: payload
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+  - name: tcp_source2
+    schema:
+      - name: id2
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: payload
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+physical:
+  - logical: tcp_source
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5010
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
+  - logical: tcp_source2
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5011
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
