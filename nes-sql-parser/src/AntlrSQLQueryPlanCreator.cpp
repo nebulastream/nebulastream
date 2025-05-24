@@ -304,7 +304,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
             break;
         case AntlrSQLLexer::MINUS:
             function = MulLogicalFunction(
-                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "-1"), innerFunction);
+                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64), "-1"), innerFunction);
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);

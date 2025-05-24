@@ -40,8 +40,8 @@ class AggregationFunction
 {
 public:
     AggregationFunction(
-        PhysicalType inputType,
-        PhysicalType resultType,
+        DataType inputType,
+        DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
@@ -73,8 +73,8 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    PhysicalType inputType;
-    PhysicalType resultType;
+    DataType inputType;
+    DataType resultType;
     const PhysicalFunction inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };

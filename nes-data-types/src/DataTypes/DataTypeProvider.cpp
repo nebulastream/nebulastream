@@ -48,7 +48,7 @@ DataType provideDataType(const std::string& type)
     throw UnknownPluginType("Unknown data type: {}", type);
 }
 
-DataType provideDataType(const PhysicalType::Type type)
+DataType provideDataType(const DataType::Type type)
 {
     const auto typeAsString = std::string(magic_enum::enum_name(type));
     return provideDataType(typeAsString);

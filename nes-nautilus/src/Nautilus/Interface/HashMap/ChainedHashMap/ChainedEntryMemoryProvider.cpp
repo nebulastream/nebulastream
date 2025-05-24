@@ -46,9 +46,9 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsKey.emplace_back(MemoryProvider::FieldOffsets{
-            .fieldIdentifier = fieldValue.name, .type = fieldValue.dataType.physicalType, .fieldOffset = offset});
-        offset += fieldValue.dataType.physicalType.getSizeInBytes();
+        fieldsKey.emplace_back(
+            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
+        offset += fieldValue.dataType.getSizeInBytes();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -56,9 +56,9 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsValue.emplace_back(MemoryProvider::FieldOffsets{
-            .fieldIdentifier = fieldValue.name, .type = fieldValue.dataType.physicalType, .fieldOffset = offset});
-        offset += fieldValue.dataType.physicalType.getSizeInBytes();
+        fieldsValue.emplace_back(
+            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
+        offset += fieldValue.dataType.getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
 }

@@ -133,9 +133,9 @@ public:
     static std::unique_ptr<Interface::HashFunction> getMurMurHashFunction();
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
-    /// For example, the call createSchemaFromBasicTypes({PhysicalType::Type::INT_32, PhysicalType::Type::FLOAT}, 1) will create a schema with the fields field1 and field2
-    static Schema createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes);
-    static Schema createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes, uint64_t typeIdxOffset);
+    /// For example, the call createSchemaFromBasicTypes({DataType::Type::INT_32, DataType::Type::FLOAT}, 1) will create a schema with the fields field1 and field2
+    static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes);
+    static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(

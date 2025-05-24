@@ -48,15 +48,15 @@ public:
         const auto memoryLayout = GetParam();
         bufferManager = Memory::BufferManager::create(4096, 10);
         schema = Schema{memoryLayout}
-                     .addField("test$t1", PhysicalType::Type::UINT16)
-                     .addField("test$t2", PhysicalType::Type::BOOLEAN)
-                     .addField("test$t3", PhysicalType::Type::FLOAT64);
+                     .addField("test$t1", DataType::Type::UINT16)
+                     .addField("test$t2", DataType::Type::BOOLEAN)
+                     .addField("test$t3", DataType::Type::FLOAT64);
 
         varSizedDataSchema = Schema{memoryLayout}
-                                 .addField("test$t1", PhysicalType::Type::UINT16)
-                                 .addField("test$t2", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED))
-                                 .addField("test$t3", PhysicalType::Type::FLOAT64)
-                                 .addField("test$t4", DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
+                                 .addField("test$t1", DataType::Type::UINT16)
+                                 .addField("test$t2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
+                                 .addField("test$t3", DataType::Type::FLOAT64)
+                                 .addField("test$t4", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();

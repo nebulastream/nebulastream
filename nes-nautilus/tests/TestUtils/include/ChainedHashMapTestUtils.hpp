@@ -76,9 +76,7 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<PhysicalType::Type>& keyTypes,
-        const std::vector<PhysicalType::Type>& valueTypes,
-        Configurations::ExecutionMode backend);
+        const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, Configurations::ExecutionMode backend);
 
     std::string compareExpectedWithActual(
         const Memory::TupleBuffer& inputBufferKeys,
