@@ -13,26 +13,26 @@
 */
 
 #include <memory>
+#include <ostream>
+#include <string>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
 
 
 namespace NES::Windowing
 {
 
-TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
+TimeCharacteristic::TimeCharacteristic(const Type type) : type(type), unit(TimeUnit{1})
 {
 }
 
-TimeCharacteristic::TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit)
-    : field(std::move(field)), type(type), unit(std::move(unit))
+TimeCharacteristic::TimeCharacteristic(const Type type, Schema::Field field, const TimeUnit& unit)
+    : field(std::move(field)), type(type), unit(unit)
 {
 }
 TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess)

@@ -14,16 +14,15 @@
 
 #include <cstddef>
 #include <iostream>
-#include <memory>
-#include <numeric>
 #include <optional>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -96,7 +95,6 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
     ///Check how many matching fields were found log an ERROR
     if (not matchedFields.empty())
     {
-        INVARIANT(matchedFields.size() >= 1, "Found ambiguous field with name: {}", fieldName);
         return matchedFields.front();
     }
     NES_WARNING("Schema: field with name {} does not exist", fieldName);

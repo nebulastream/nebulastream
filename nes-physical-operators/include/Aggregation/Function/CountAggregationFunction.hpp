@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <memory>
 #include <Aggregation/Function/AggregationFunction.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

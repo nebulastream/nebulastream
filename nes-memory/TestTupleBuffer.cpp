@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -19,6 +20,8 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -117,12 +120,12 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(Schema schema) const
+std::string DynamicTuple::toString(const Schema& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
+        const auto* const fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
         const auto dataType = schema.getFieldAt(i).dataType;
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
@@ -149,43 +152,37 @@ bool DynamicTuple::operator!=(const DynamicTuple& other) const
 {
     return !(*this == other);
 }
+
 bool DynamicTuple::operator==(const DynamicTuple& other) const
 {
-    if (!(this->memoryLayout->getSchema() == other.memoryLayout->getSchema()))
+    if (this->memoryLayout->getSchema() != other.memoryLayout->getSchema())
     {
         NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
         return false;
     }
-    for (const auto& field : this->memoryLayout->getSchema().getFields())
-    {
-        if (!other.memoryLayout->getSchema().getFieldByName(field.name))
-        {
-            NES_ERROR("Field with name {} is not contained in both tuples!", field.name);
-            return false;
-        }
 
-        auto thisDynamicField = (*this)[field.name];
-        auto otherDynamicField = other[field.name];
-
-        if (field.dataType.isType(DataType::Type::VARSIZED))
+    return std::ranges::all_of(
+        this->memoryLayout->getSchema().getFields(),
+        [this, &other](const auto& field)
         {
-            const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
-            const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
-            if (thisString != otherString)
+            if (!other.memoryLayout->getSchema().getFieldByName(field.name))
             {
+                NES_ERROR("Field with name {} is not contained in both tuples!", field.name);
                 return false;
             }
-        }
-        else
-        {
-            if (thisDynamicField != otherDynamicField)
-            {
-                return false;
-            }
-        }
-    }
 
-    return true;
+            auto thisDynamicField = (*this)[field.name];
+            auto otherDynamicField = other[field.name];
+
+            if (field.dataType.isType(DataType::Type::VARSIZED))
+            {
+                const auto thisString = readVarSizedData(buffer, thisDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
+                const auto otherString
+                    = readVarSizedData(other.buffer, otherDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
+                return thisString == otherString;
+            }
+            return thisDynamicField == otherDynamicField;
+        });
 }
 
 std::string DynamicField::toString() const
@@ -269,12 +266,12 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(Schema schema) const
+std::string TestTupleBuffer::toString(const Schema& schema) const
 {
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(Schema schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -371,14 +368,14 @@ const MemoryLayout& TestTupleBuffer::getMemoryLayout() const
     return *memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, Schema schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto memoryLayout = std::make_shared<RowLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
-    else if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto memoryLayout = std::make_shared<ColumnLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);

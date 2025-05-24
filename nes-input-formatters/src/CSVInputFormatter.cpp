@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 #include <strings.h>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>

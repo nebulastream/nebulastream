@@ -19,6 +19,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -288,11 +290,11 @@ ChainedHashMapRef::ChainedHashMapRef(
     /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
     for (const auto& field : nautilus::static_iterable(fieldKeys))
     {
-        if (field.type.type == DataType::Type::FLOAT32 or field.type.type == DataType::Type::FLOAT64)
+        if (field.type.isFloat())
         {
             throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
         }
-        if (field.type.type == DataType::Type::VARSIZED)
+        if (field.type.isType(DataType::Type::VARSIZED))
         {
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
         }

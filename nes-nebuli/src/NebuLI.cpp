@@ -49,10 +49,8 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
-namespace YAML
+namespace
 {
-using namespace NES::CLI;
-
 NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
     try
@@ -64,6 +62,11 @@ NES::DataType stringToFieldType(const std::string& fieldNodeType)
         throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
     }
 }
+}
+
+namespace YAML
+{
+using namespace NES::CLI;
 
 template <>
 struct convert<SchemaField>
@@ -161,7 +164,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    Schema schema,
+    const Schema& schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -281,7 +284,7 @@ std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& fileP
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
+SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
 {
 }
 

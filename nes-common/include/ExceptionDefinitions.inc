@@ -62,7 +62,7 @@ EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type
 EXCEPTION(UnknownOperation, 2120, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2121, "unknown parser type")
 EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
-EXCEPTION(UnknownDataType, 2123, "unsupported data type")
+EXCEPTION(UnknownDataType, 2123, "unknown data type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

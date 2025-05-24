@@ -13,6 +13,9 @@
 */
 
 #include <memory>
+#include <gtest/gtest.h>
+
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -20,6 +23,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
+
 namespace NES::Memory::MemoryLayouts
 {
 

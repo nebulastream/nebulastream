@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -111,14 +112,14 @@ bool TupleBufferMemoryProvider::includesField(
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
-std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, Schema schema)
+std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
         return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
     }
-    else if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
         return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));

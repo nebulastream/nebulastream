@@ -58,7 +58,7 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     auto newChild = child.withInferredDataType(schema);
-    if (not newChild.getDataType().isBoolean())
+    if (not newChild.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType());
     }

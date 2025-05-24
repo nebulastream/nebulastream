@@ -116,11 +116,8 @@ TEST_F(SchemaTest, addFieldTest)
         {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema.getFieldAt(fieldCnt) == curField);
-            EXPECT_TRUE(testSchema.getFieldByName(curField.name).has_value());
-            if (testSchema.getFieldByName(curField.name).has_value())
-            {
-                EXPECT_TRUE(testSchema.getFieldByName(curField.name).value() == curField);
-            }
+            const auto field = testSchema.getFieldByName(curField.name);
+            EXPECT_TRUE(field.has_value() and field.value() == curField);
         }
     }
 }
@@ -147,11 +144,22 @@ TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
     const auto fieldByName4 = schemaUnderTest.getFieldByName("id");
     const auto fieldByName5 = schemaUnderTest.getFieldByName("initialbid");
 
-    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value() << " are not equal";
-    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value() << " are not equal";
-    EXPECT_EQ(field3, fieldByName3.value()) << "Field 3 " << field3 << " and field by name 3 " << fieldByName3.value() << " are not equal";
-    EXPECT_EQ(field4, fieldByName4.value()) << "Field 4 " << field4 << " and field by name 4 " << fieldByName4.value() << " are not equal";
-    EXPECT_EQ(field5, fieldByName5.value()) << "Field 5 " << field5 << " and field by name 5 " << fieldByName5.value() << " are not equal";
+    EXPECT_TRUE(fieldByName1.has_value());
+    EXPECT_TRUE(fieldByName2.has_value());
+    EXPECT_TRUE(fieldByName3.has_value());
+    EXPECT_TRUE(fieldByName4.has_value());
+    EXPECT_TRUE(fieldByName5.has_value());
+
+    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(field3, fieldByName3.value()) << "Field 3 " << field3 << " and field by name 3 " << fieldByName3.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(field4, fieldByName4.value()) << "Field 4 " << field4 << " and field by name 4 " << fieldByName4.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(field5, fieldByName5.value()) << "Field 5 " << field5 << " and field by name 5 " << fieldByName5.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(SchemaTest, replaceFieldTest)
@@ -189,11 +197,8 @@ TEST_F(SchemaTest, replaceFieldTest)
         {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema.getFieldAt(fieldCnt) == curField);
-            EXPECT_TRUE(testSchema.getFieldByName(curField.name).has_value());
-            if (testSchema.getFieldByName(curField.name).has_value())
-            {
-                EXPECT_TRUE(testSchema.getFieldByName(curField.name).value() == curField);
-            }
+            const auto field = testSchema.getFieldByName(curField.name);
+            EXPECT_TRUE(field.has_value() and field.value() == curField);
         }
 
         /// Replacing multiple fields with new data types
@@ -207,11 +212,8 @@ TEST_F(SchemaTest, replaceFieldTest)
         {
             const auto& curField = replacingFields[fieldCnt];
             EXPECT_TRUE(testSchema.getFieldAt(fieldCnt) == curField);
-            EXPECT_TRUE(testSchema.getFieldByName(curField.name).has_value());
-            if (testSchema.getFieldByName(curField.name).has_value())
-            {
-                EXPECT_TRUE(testSchema.getFieldByName(curField.name).value() == curField);
-            }
+            const auto field = testSchema.getFieldByName(curField.name);
+            EXPECT_TRUE(field.has_value() and field.value() == curField);
         }
     }
 }
@@ -311,7 +313,7 @@ TEST_F(SchemaTest, copyTest)
 {
     const auto testSchema
         = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
-    const auto testSchemaCopy = testSchema;
+    const auto& testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), testSchemaCopy.getSizeOfSchemaInBytes());
     ASSERT_EQ(testSchema.memoryLayoutType, testSchemaCopy.memoryLayoutType);
@@ -322,11 +324,8 @@ TEST_F(SchemaTest, copyTest)
     {
         const auto& curField = testSchemaCopy.getFieldAt(fieldCnt);
         EXPECT_TRUE(testSchema.getFieldAt(fieldCnt) == curField);
-        EXPECT_TRUE(testSchema.getFieldByName(curField.name).has_value());
-        if (testSchema.getFieldByName(curField.name).has_value())
-        {
-            EXPECT_TRUE(testSchema.getFieldByName(curField.name).value() == curField);
-        }
+        const auto field = testSchema.getFieldByName(curField.name);
+        EXPECT_TRUE(field.has_value() and field.value() == curField);
     }
 }
 

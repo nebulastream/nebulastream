@@ -18,6 +18,7 @@
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <Aggregation/Function/MedianAggregationFunction.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>

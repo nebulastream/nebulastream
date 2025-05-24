@@ -95,10 +95,10 @@ DataType FieldAccessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& newStamp) const
+LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.dataType = newStamp;
+    copy.dataType = dataType;
     return copy;
 }
 

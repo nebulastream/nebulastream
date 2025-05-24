@@ -18,6 +18,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 

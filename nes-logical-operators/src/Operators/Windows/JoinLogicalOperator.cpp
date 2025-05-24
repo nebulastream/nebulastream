@@ -18,8 +18,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -118,7 +120,7 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     }
 
     auto inputSchema = leftInputSchema;
-    inputSchema.addFieldsFromOtherSchema(rightInputSchema);
+    inputSchema.appendFieldsFromOtherSchema(rightInputSchema);
     copy.joinFunction = joinFunction.withInferredDataType(inputSchema);
     copy.windowType->inferStamp(inputSchema);
     return copy;

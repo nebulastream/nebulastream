@@ -25,16 +25,16 @@ namespace NES
 class PhysicalSource
 {
 public:
-    static std::shared_ptr<PhysicalSource> create(Sources::SourceDescriptor&& sourceDescriptor);
+    static std::shared_ptr<PhysicalSource> create(Sources::SourceDescriptor sourceDescriptor);
 
     const std::string& getLogicalSourceName() const;
 
-    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(Schema schema);
+    [[nodiscard]] std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(Schema schema) const;
 
-    std::string toString();
+    [[nodiscard]] std::string toString() const;
 
 private:
-    explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor);
+    explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor sourceDescriptor);
 
     std::string logicalSourceName;
     Sources::SourceDescriptor sourceDescriptor;
