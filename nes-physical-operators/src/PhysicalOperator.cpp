@@ -17,7 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -226,8 +226,8 @@ std::string PhysicalOperatorWrapper::explain(ExplainVerbosity) const
         "pipelineLocation: {} )",
         physicalOperator.toString(),
         physicalOperator.getId(),
-        inputSchema ? inputSchema->toString() : "none",
-        outputSchema ? outputSchema->toString() : "none",
+        inputSchema,
+        outputSchema,
         magic_enum::enum_name(pipelineLocation));
 }
 

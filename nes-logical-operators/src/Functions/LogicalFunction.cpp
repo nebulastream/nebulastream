@@ -17,12 +17,12 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -69,14 +69,12 @@ LogicalFunction LogicalFunction::withChildren(const std::vector<LogicalFunction>
     return self->withChildren(children);
 }
 
-std::shared_ptr<DataType> LogicalFunction::getDataType() const
+DataType LogicalFunction::getDataType() const
 {
-    auto s = self->getDataType();
-    PRECONDITION(s != nullptr, "Invariant violation: dataType is null in LogicalFunction::getDataType()");
-    return s;
+    return self->getDataType();
 }
 
-LogicalFunction LogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction LogicalFunction::withDataType(const DataType& dataType) const
 {
     return self->withDataType(std::move(dataType));
 }

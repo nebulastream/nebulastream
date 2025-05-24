@@ -13,8 +13,7 @@
 */
 
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -39,17 +38,14 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
             throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
         auto originalSchema = sourceCatalog->getSchemaForLogicalSource(source.getLogicalSourceName());
-        schema = schema.copyFields(originalSchema);
-        schema.setLayoutType(originalSchema.getLayoutType());
+        schema.addFieldsFromOtherSchema(originalSchema);
+        schema.memoryLayoutType = originalSchema.memoryLayoutType;
         auto qualifierName = source.getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
-        for (auto& field : schema)
-        {
-            if (!field.getName().starts_with(qualifierName))
-            {
-                field.setName(qualifierName + field.getName());
-            }
-        }
+        std::ranges::for_each(
+            schema.getFields()
+                | std::views::filter([&qualifierName](const auto& field) { return not field.name.starts_with(qualifierName); }),
+            [&qualifierName, &schema](auto& field) { schema.renameField(field.name, qualifierName + field.name); });
         auto result = replaceOperator(queryPlan, source, source.withSchema(schema));
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);

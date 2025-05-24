@@ -18,9 +18,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -40,7 +40,6 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -89,32 +88,39 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     const auto& rightInputSchema = inputSchemas[1];
 
     auto copy = *this;
-    copy.outputSchema.clear();
+    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
     copy.leftInputSchema = leftInputSchema;
     copy.rightInputSchema = rightInputSchema;
 
-    auto sourceNameLeft = leftInputSchema.getQualifierNameForSystemGeneratedFields();
-    auto sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
-    auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
-
-    copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
-    copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, BasicType::UINT64);
-    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, BasicType::UINT64);
-
-    for (const auto& field : leftInputSchema)
+    const auto newQualifierForSystemField = [](const Schema& leftSchema, const Schema& rightSchema)
     {
-        copy.outputSchema.addField(field.getName(), field.getDataType());
+        const auto sourceNameLeft = leftSchema.getSourceNameQualifier();
+        const auto sourceNameRight = rightSchema.getSourceNameQualifier();
+        if (not(sourceNameLeft and sourceNameRight))
+        {
+            throw TypeInferenceException("Schemas of Join operator must have source names.");
+        }
+        return sourceNameLeft.value() + sourceNameRight.value() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    }(leftInputSchema, rightInputSchema);
+
+    copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "start";
+    copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "end";
+    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
+    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
+
+    for (const auto& field : leftInputSchema.getFields())
+    {
+        copy.outputSchema.addField(field.name, field.dataType);
     }
-    for (const auto& field : rightInputSchema)
+    for (const auto& field : rightInputSchema.getFields())
     {
-        copy.outputSchema.addField(field.getName(), field.getDataType());
+        copy.outputSchema.addField(field.name, field.dataType);
     }
 
     auto inputSchema = leftInputSchema;
-    auto combinedSchema = inputSchema.copyFields(rightInputSchema);
-    copy.joinFunction = joinFunction.withInferredDataType(combinedSchema);
-    copy.windowType->inferStamp(combinedSchema);
+    inputSchema.addFieldsFromOtherSchema(rightInputSchema);
+    copy.joinFunction = joinFunction.withInferredDataType(inputSchema);
+    copy.windowType->inferStamp(inputSchema);
     return copy;
 }
 
@@ -252,10 +258,7 @@ SerializableOperator JoinLogicalOperator::serialize() const
         auto timeChar = timeBasedWindow->getTimeCharacteristic();
         auto timeCharProto = WindowInfos_TimeCharacteristic();
         timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_Event_time);
-        if (timeChar.field)
-        {
-            timeCharProto.set_field(timeChar.field->getName());
-        }
+        timeCharProto.set_field(timeChar.field.name);
         timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
         windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
         if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType))

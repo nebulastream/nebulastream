@@ -23,7 +23,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -33,7 +33,6 @@
 #include <ErrorHandling.hpp>
 #include <options.hpp>
 #include <static.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES::Nautilus::TestUtils
 {
 
@@ -134,9 +133,9 @@ public:
     static std::unique_ptr<Interface::HashFunction> getMurMurHashFunction();
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
-    /// For example, the call createSchemaFromBasicTypes({BasicType::INT_32, BasicType::FLOAT}, 1) will create a schema with the fields field1 and field2
-    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes);
-    static std::shared_ptr<Schema> createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, uint64_t typeIdxOffset);
+    /// For example, the call createSchemaFromBasicTypes({PhysicalType::Type::INT_32, PhysicalType::Type::FLOAT}, 1) will create a schema with the fields field1 and field2
+    static Schema createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes);
+    static Schema createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(

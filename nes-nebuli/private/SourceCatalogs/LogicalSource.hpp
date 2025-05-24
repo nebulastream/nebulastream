@@ -17,7 +17,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 namespace NES
 {
 
@@ -29,7 +29,7 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 class LogicalSource
 {
 public:
-    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, const Schema& schema);
+    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, Schema schema);
 
     [[nodiscard]] std::string getLogicalSourceName();
     [[nodiscard]] Schema getSchema();

@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -25,7 +26,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -50,17 +50,17 @@ std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SqrtLogicalFunction({} : {})", child.explain(verbosity), dataType->toString());
+        return fmt::format("SqrtLogicalFunction({} : {})", child.explain(verbosity), dataType);
     }
     return fmt::format("SQRT({})", child.explain(verbosity));
 }
 
-std::shared_ptr<DataType> SqrtLogicalFunction::getDataType() const
+DataType SqrtLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction SqrtLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;

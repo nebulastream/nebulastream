@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Registry.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -30,7 +30,7 @@ struct LogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
     std::vector<LogicalFunction> children;
-    std::shared_ptr<DataType> dataType;
+    DataType dataType;
 };
 
 class LogicalFunctionRegistry

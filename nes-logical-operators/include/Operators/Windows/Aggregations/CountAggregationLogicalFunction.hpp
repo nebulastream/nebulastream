@@ -16,11 +16,11 @@
 
 #include <memory>
 #include <string_view>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -41,8 +41,8 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Count";
-    static constexpr LogicalType inputAggregateStampType = LogicalType::FLOAT64;
-    static constexpr LogicalType partialAggregateStampType = LogicalType::FLOAT64;
-    static constexpr LogicalType finalAggregateStampType = LogicalType::FLOAT64;
+    static constexpr PhysicalType::Type inputAggregateStampType = PhysicalType::Type::FLOAT64;
+    static constexpr PhysicalType::Type partialAggregateStampType = PhysicalType::Type::FLOAT64;
+    static constexpr PhysicalType::Type finalAggregateStampType = PhysicalType::Type::FLOAT64;
 };
 }

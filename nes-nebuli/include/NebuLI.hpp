@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Common/DataTypes/DataType.hpp>
+#include <DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -33,11 +33,11 @@ namespace NES::CLI
 struct SchemaField
 {
     SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
+    SchemaField(std::string name, NES::DataType type);
     SchemaField() = default;
 
     std::string name;
-    std::shared_ptr<NES::DataType> type;
+    NES::DataType type;
 };
 
 struct Sink

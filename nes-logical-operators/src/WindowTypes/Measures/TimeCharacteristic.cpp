@@ -14,7 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
+
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +31,7 @@ TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1)
 {
 }
 
-TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
+TimeCharacteristic::TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit)
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
@@ -41,7 +42,7 @@ TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalF
 
 TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit)
 {
-    auto keyField = std::make_shared<AttributeField>(fieldAccess.getFieldName(), fieldAccess.getDataType());
+    auto keyField = Schema::Field(fieldAccess.getFieldName(), fieldAccess.getDataType());
     return {Type::EventTime, keyField, unit};
 }
 
@@ -78,16 +79,8 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
-{
-    const auto fieldsEqual = (this->field == nullptr && other.field == nullptr)
-        || (this->field != nullptr && other.field != nullptr && this->field->isEqual(*other.field));
-    return fieldsEqual && type == other.type && unit == other.unit;
-}
-
 std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
 {
-    std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
-    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);
+    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), timeCharacteristic.field);
 }
 }

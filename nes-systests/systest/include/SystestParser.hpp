@@ -22,7 +22,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Common/DataTypes/DataType.hpp>
+#include <DataTypes/DataType.hpp>
 
 namespace NES::Systest
 {
@@ -63,9 +63,9 @@ public:
     /// Type definitions ///
     struct Field
     {
-        std::shared_ptr<DataType> type;
+        DataType type;
         std::string name;
-        bool operator==(const Field& other) const { return *type == *other.type && name == other.name; }
+        bool operator==(const Field& other) const { return type == other.type && name == other.name; }
         bool operator!=(const Field& other) const = default;
     };
     using Schema = std::vector<Field>;

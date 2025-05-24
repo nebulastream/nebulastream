@@ -20,13 +20,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -38,7 +38,7 @@ class ConstantValueLogicalFunction final : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "ConstantValue";
 
-    ConstantValueLogicalFunction(std::shared_ptr<DataType> dataType, std::string constantValueAsString);
+    ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString);
     ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
@@ -48,8 +48,8 @@ public:
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const override;
+    [[nodiscard]] DataType getDataType() const override;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
@@ -72,7 +72,7 @@ public:
 
 private:
     const std::string constantValue;
-    std::shared_ptr<DataType> dataType;
+    DataType dataType;
 };
 }
 FMT_OSTREAM(NES::ConstantValueLogicalFunction);

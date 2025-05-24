@@ -24,7 +24,7 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Logger/Formatter.hpp>

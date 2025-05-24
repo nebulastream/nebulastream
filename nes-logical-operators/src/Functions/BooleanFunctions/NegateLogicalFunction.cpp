@@ -17,7 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,15 +28,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), child(std::move(std::move(child)))
+    : dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN)), child(std::move(std::move(child)))
 {
 }
 
@@ -59,20 +58,19 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     auto newChild = child.withInferredDataType(schema);
-    if (*newChild.getDataType() != Boolean())
+    if (not newChild.getDataType().isBoolean())
     {
-        throw CannotInferSchema(
-            "Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType()->toString());
+        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType());
     }
     return withChildren({newChild});
 }
 
-std::shared_ptr<DataType> NegateLogicalFunction::getDataType() const
+DataType NegateLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction NegateLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;

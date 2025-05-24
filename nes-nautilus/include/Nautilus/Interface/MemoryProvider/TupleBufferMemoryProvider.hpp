@@ -16,13 +16,12 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -35,7 +34,7 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const Schema& schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, Schema schema);
 
     [[nodiscard]] virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const = 0;
 

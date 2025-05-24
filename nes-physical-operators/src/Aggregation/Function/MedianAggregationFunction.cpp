@@ -28,17 +28,17 @@
 #include <ExecutionContext.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
 
 namespace NES
 {
 
 MedianAggregationFunction::MedianAggregationFunction(
-    std::unique_ptr<PhysicalType> inputType,
-    std::unique_ptr<PhysicalType> resultType,
+    PhysicalType inputType,
+    PhysicalType resultType,
     PhysicalFunction inputFunction,
-    Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
+    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , memProviderPagedVector(std::move(memProviderPagedVector))
 {
@@ -142,7 +142,8 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
     const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
     const VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue = (medianValue1.castToType(*resultType) + medianValue2.castToType(*resultType)) / two.castToType(*resultType);
+    const auto medianValue
+        = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
 
     /// Adding the median to the result record
     Record resultRecord;

@@ -16,8 +16,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
@@ -28,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -48,12 +48,12 @@ bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::shared_ptr<DataType> RenameLogicalFunction::getDataType() const
+DataType RenameLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction RenameLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction RenameLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -91,7 +91,7 @@ std::string RenameLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FieldRenameFunction({} => {} : {})", child.explain(verbosity), newFieldName, dataType->toString());
+        return fmt::format("FieldRenameFunction({} => {} : {})", child.explain(verbosity), newFieldName, dataType);
     }
     return fmt::format("FieldRename({} => {})", child.explain(verbosity), newFieldName);
 }
@@ -103,7 +103,7 @@ LogicalFunction RenameLogicalFunction::withInferredDataType(const Schema& schema
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
     {
-        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema.toString());
+        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema);
     }
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -116,15 +116,14 @@ LogicalFunction RenameLogicalFunction::withInferredDataType(const Schema& schema
     }
     else
     {
-        auto newFieldAttribute = schema.getFieldByName(newFieldName);
-        if (newFieldAttribute)
+        if (auto newFieldAttribute = schema.getFieldByName(newFieldName))
         {
-            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema.toString());
+            throw FieldAlreadyExists("New field with name {} already exists in the schema: {}", newFieldName, schema);
         }
     }
     /// assign the dataType of this field access with the type of this field.
     auto copy = *this;
-    copy.dataType = fieldAttribute.value().getDataType();
+    copy.dataType = fieldAttribute.value().dataType;
     copy.newFieldName = fieldName;
     return copy;
 }

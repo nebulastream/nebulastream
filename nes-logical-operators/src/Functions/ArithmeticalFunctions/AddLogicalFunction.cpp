@@ -16,7 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -25,13 +26,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
 AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
+    : dataType(left.getDataType().join(right.getDataType())), left(left), right(right)
 {
 }
 
@@ -39,12 +39,12 @@ AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : dataTy
 {
 }
 
-std::shared_ptr<DataType> AddLogicalFunction::getDataType() const
+DataType AddLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction AddLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -72,7 +72,7 @@ LogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType()->join(*children[1].getDataType());
+    copy.dataType = children[0].getDataType().join(children[1].getDataType());
     return copy;
 };
 
@@ -97,7 +97,7 @@ std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("AddLogicalFunction({} + {} : {})", left.explain(verbosity), right.explain(verbosity), dataType->toString());
+        return fmt::format("AddLogicalFunction({} + {} : {})", left.explain(verbosity), right.explain(verbosity), dataType);
     }
     return fmt::format("{} + {}", left.explain(verbosity), right.explain(verbosity));
 }

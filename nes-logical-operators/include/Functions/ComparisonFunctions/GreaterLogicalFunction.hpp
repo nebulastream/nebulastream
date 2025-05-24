@@ -18,12 +18,12 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -40,8 +40,8 @@ public:
 
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType> dataType) const override;
+    [[nodiscard]] DataType getDataType() const override;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
@@ -51,7 +51,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
 private:
-    std::shared_ptr<DataType> dataType;
+    DataType dataType;
     LogicalFunction left, right;
 };
 }

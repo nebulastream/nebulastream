@@ -17,7 +17,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,8 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -83,12 +82,12 @@ LogicalFunction FieldAssignmentLogicalFunction::getAssignment() const
 }
 
 
-std::shared_ptr<DataType> FieldAssignmentLogicalFunction::getDataType() const
+DataType FieldAssignmentLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction FieldAssignmentLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction FieldAssignmentLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -121,9 +120,8 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto dataType = copy.logicalFunction.getDataType()->join(*copy.fieldAccess.getDataType());
-        copy.fieldAccess
-            = fieldAccess.withFieldName(existingField.value().getName()).withDataType(dataType).get<FieldAccessLogicalFunction>();
+        const auto dataType = copy.logicalFunction.getDataType().join(copy.fieldAccess.getDataType());
+        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType).get<FieldAccessLogicalFunction>();
     }
     else
     {
@@ -140,7 +138,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
         }
     }
 
-    if (!copy.fieldAccess.getDataType() || (dynamic_cast<const Undefined*>(copy.fieldAccess.getDataType().get()) != nullptr))
+    if (copy.fieldAccess.getDataType().isUndefined())
     {
         copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
     }

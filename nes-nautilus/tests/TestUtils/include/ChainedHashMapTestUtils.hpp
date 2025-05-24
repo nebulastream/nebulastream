@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -32,7 +32,6 @@
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
 #include <NautilusTestUtils.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -55,7 +54,7 @@ struct TestParams
     TestParams() = default;
     TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue& minMaxNumberOfBuckets, const MinMaxValue& minMaxPageSize);
     uint64_t numberOfItems{}, numberOfBuckets{}, pageSize{};
-    std::vector<std::shared_ptr<Schema>> keyDataTypes, valueDataTypes;
+    std::vector<Schema> keyDataTypes, valueDataTypes;
 };
 
 class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
@@ -77,7 +76,9 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, Configurations::ExecutionMode backend);
+        const std::vector<PhysicalType::Type>& keyTypes,
+        const std::vector<PhysicalType::Type>& valueTypes,
+        Configurations::ExecutionMode backend);
 
     std::string compareExpectedWithActual(
         const Memory::TupleBuffer& inputBufferKeys,

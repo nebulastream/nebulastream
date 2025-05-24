@@ -21,9 +21,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -43,7 +42,6 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -144,17 +142,16 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
 
     copy.windowType->inferStamp(firstSchema);
     copy.inputSchema = firstSchema;
-    copy.outputSchema.clear();
+    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
-        const auto& sourceName = firstSchema.getQualifierNameForSystemGeneratedFields();
-        const auto& newQualifierForSystemField = sourceName;
+        const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
-        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
-        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, BasicType::UINT64);
-        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, BasicType::UINT64);
+        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "start";
+        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "end";
+        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
+        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
     }
     else
     {
@@ -169,13 +166,13 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         {
             auto newKey = key.withInferredDataType(firstSchema).get<FieldAccessLogicalFunction>();
             newKeys.push_back(newKey);
-            copy.outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getDataType()));
+            copy.outputSchema.addField(Schema::Field(newKey.getFieldName(), newKey.getDataType()));
         }
         copy.groupingKey = newKeys;
     }
     for (const auto& agg : copy.aggregationFunctions)
     {
-        copy.outputSchema.addField(AttributeField(agg->asField.getFieldName(), agg->asField.getDataType()));
+        copy.outputSchema.addField(Schema::Field(agg->asField.getFieldName(), agg->asField.getDataType()));
     }
     return copy;
 }
@@ -344,10 +341,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
         auto timeChar = timeBasedWindow->getTimeCharacteristic();
         auto timeCharProto = WindowInfos_TimeCharacteristic();
         timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_Event_time);
-        if (timeChar.field)
-        {
-            timeCharProto.set_field(timeChar.field->getName());
-        }
+        timeCharProto.set_field(timeChar.field.name);
         timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
         windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
         if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType))

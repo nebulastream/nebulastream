@@ -18,8 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <API/AttributeField.hpp>
-#include <API/TimeUnit.hpp>
+#include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 
@@ -38,7 +37,7 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
+    TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit);
 
     /// @brief Factory to create a time characteristic for ingestion time window
     /// @param unit the time unit of the ingestion time
@@ -55,7 +54,7 @@ public:
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;
 
-    [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
+    [[nodiscard]] bool operator==(const TimeCharacteristic& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
 
     [[nodiscard]] std::string getTypeAsString() const;
@@ -63,7 +62,7 @@ public:
 
     void setTimeUnit(const TimeUnit& unit);
 
-    std::shared_ptr<AttributeField> field;
+    Schema::Field field;
 
 private:
     Type type;

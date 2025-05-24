@@ -17,7 +17,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -26,9 +28,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -37,7 +36,7 @@ OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : dataType(
 }
 
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    : dataType(DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN))
     , left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
 {
@@ -59,12 +58,12 @@ std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} OR {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-std::shared_ptr<DataType> OrLogicalFunction::getDataType() const
+DataType OrLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction OrLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -99,14 +98,8 @@ LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) co
         children.push_back(node.withInferredDataType(schema));
     }
     /// check if children dataType is correct
-    INVARIANT(
-        *left.getDataType().get() == Boolean(),
-        "the dataType of left child must be boolean, but was: {}",
-        left.getDataType().get()->toString());
-    INVARIANT(
-        *right.getDataType().get() == Boolean(),
-        "the dataType of right child must be boolean, but was: {}",
-        right.getDataType().get()->toString());
+    INVARIANT(left.getDataType().isBoolean(), "the dataType of left child must be boolean, but was: {}", left.getDataType());
+    INVARIANT(right.getDataType().isBoolean(), "the dataType of right child must be boolean, but was: {}", right.getDataType());
     return this->withChildren(children);
 }
 
