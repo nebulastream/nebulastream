@@ -133,7 +133,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    throw UnsupportedOperation("This function is not supported here");
+    throw UnknownOperation("This function is not supported here");
 }
 size_t FixedSizeBufferPool::getBufferSize() const
 {
@@ -145,11 +145,11 @@ size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 }
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
-    throw UnsupportedOperation("This function is not supported here");
+    throw UnknownOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
-    throw UnsupportedOperation("This function is not supported here");
+    throw UnknownOperation("This function is not supported here");
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t bufferSize)
 {

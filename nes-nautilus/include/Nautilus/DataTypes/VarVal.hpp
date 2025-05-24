@@ -40,7 +40,7 @@ namespace NES::Nautilus
                 } \
                 else \
                 { \
-                    throw UnsupportedOperation( \
+                    throw UnknownOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(LHS).name() + " " \
                         + typeid(RHS).name()); \
                     return detail::var_val_t(lhsVal); \
@@ -58,7 +58,7 @@ namespace NES::Nautilus
             { \
                 if constexpr (!requires(RHS r) { op r; }) \
                 { \
-                    throw UnsupportedOperation( \
+                    throw UnknownOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(decltype(rhsVal)).name()); \
                     return detail::var_val_t(rhsVal); \
                 } \
@@ -76,7 +76,7 @@ namespace NES::Nautilus
     { \
         if constexpr (!requires { func(val); }) \
         { \
-            throw UnsupportedOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
+            throw UnknownOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
             return NES::Nautilus::detail::var_val_t(val); \
         } \
         else \
@@ -162,7 +162,7 @@ public:
                 using removedCVRefT1 = std::remove_cvref_t<T1>;
                 if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
-                    throw UnsupportedOperation("Cannot cast VariableSizedData to anything else.");
+                    throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
                 }
                 else
                 {
