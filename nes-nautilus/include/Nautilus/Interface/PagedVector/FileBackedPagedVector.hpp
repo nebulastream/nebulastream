@@ -33,14 +33,14 @@ public:
     boost::asio::awaitable<void> writeToFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        std::shared_ptr<FileWriter> fileWriter,
+        const std::shared_ptr<FileWriter>& fileWriter,
         FileLayout fileLayout);
 
     /// Reads the projected fields of all tuples from fileStorage.
     void readFromFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        FileReader& fileReader,
+        const std::shared_ptr<FileReader>& fileReader,
         FileLayout fileLayout);
 
     /// Deletes the projected fields of all tuples.
@@ -55,16 +55,30 @@ private:
     /// Appends a new page to the keyPages vector if the last page is full.
     void appendKeyPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
-    boost::asio::awaitable<void>
-    writePayloadAndKeysToSeparateFiles(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, std::shared_ptr<FileWriter> fileWriter);
+    boost::asio::awaitable<void> writePayloadAndKeysToSeparateFiles(
+        const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        const std::shared_ptr<FileWriter>& fileWriter);
 
     boost::asio::awaitable<void> writePayloadOnlyToFile(
+        const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        std::shared_ptr<FileWriter> fileWriter);
+        const std::shared_ptr<FileWriter>& fileWriter);
 
     void readSeparatelyFromFiles(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Memory::AbstractBufferProvider* bufferProvider, FileReader& fileReader);
+        const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const std::shared_ptr<FileReader>& fileReader);
+
+    static boost::asio::awaitable<void>
+    writeVarSizedAndStoreIdx(char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter);
+    static void readVarSizedAndStoreIdx(
+        char* ptrOnPage,
+        const Memory::TupleBuffer& page,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const std::shared_ptr<FileReader>& fileReader);
 
     /// As we allow tuples to be partially written to disk, i.e. only key field data is kept in memory, the remaining data subsequently has
     /// a different schema/memory layout and must therefore be stored separately from any new incoming tuples.
