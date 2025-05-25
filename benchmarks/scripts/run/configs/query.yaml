@@ -14,8 +14,6 @@ logical:
         type: UINT64
       - name: value
         type: UINT64
-      - name: payload
-        type: UINT64
       - name: timestamp
         type: UINT64
   - name: tcp_source2
@@ -23,8 +21,6 @@ logical:
       - name: id2
         type: UINT64
       - name: value2
-        type: UINT64
-      - name: payload
         type: UINT64
       - name: timestamp
         type: UINT64
@@ -34,8 +30,6 @@ logical:
         type: UINT64
       - name: value3
         type: UINT64
-      - name: payload
-        type: UINT64
       - name: timestamp
         type: UINT64
   - name: tcp_source4
@@ -44,10 +38,10 @@ logical:
         type: UINT64
       - name: value4
         type: UINT64
-      - name: payload
-        type: UINT64
       - name: timestamp
         type: UINT64
+      - name: payload
+        type: VARSIZED
 physical:
   - logical: tcp_source
     parserConfig:
