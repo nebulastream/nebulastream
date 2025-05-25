@@ -57,12 +57,10 @@ private:
 
     std::vector<char> writeMemoryPool;
     std::vector<char*> freeWriteBuffers;
-    std::condition_variable writeMemoryPoolCondition;
     std::mutex writeMemoryPoolMutex;
 
     std::vector<char> readMemoryPool;
     std::vector<char*> freeReadBuffers;
-    std::condition_variable readMemoryPoolCondition;
     std::mutex readMemoryPoolMutex;
 
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether
