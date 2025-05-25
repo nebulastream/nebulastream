@@ -142,13 +142,20 @@ def create_all_benchmark_configs():
             f"INTO csv_sink;"
         )
 
-    # Join with four streams
+    # Join with two streams and variable sized data
+    for window_size, slide in WINDOW_SIZE_SLIDE:
+        QUERIES.append(
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source4) ON id = id4 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
+        )
+
+    # Join with three streams
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
             f"SELECT * FROM (SELECT * FROM tcp_source) "
             f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
             f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INNER JOIN (SELECT * FROM tcp_source4) ON id = id4 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
             f"INTO csv_sink;"
         )
 
