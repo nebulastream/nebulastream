@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <functional>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <boost/asio.hpp>
 
 namespace NES
@@ -42,6 +43,7 @@ public:
 
     boost::asio::awaitable<void> write(const void* data, size_t size);
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
+    boost::asio::awaitable<uint32_t> writeVarSized(const void* data, size_t size);
 
     boost::asio::awaitable<void> flush();
     void flushAndDeallocateBuffers();
@@ -51,7 +53,6 @@ private:
     static boost::asio::awaitable<void> flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size);
 
     boost::asio::io_context& ioCtx;
-
     boost::asio::posix::stream_descriptor file;
     boost::asio::posix::stream_descriptor keyFile;
 
@@ -61,6 +62,8 @@ private:
     size_t writeKeyBufferPos;
     size_t bufferSize;
 
+    uint32_t varSizedCnt;
+    std::string filePath;
     std::function<char*()> allocate;
     std::function<void(char*)> deallocate;
 };
@@ -77,6 +80,7 @@ public:
 
     size_t read(void* dest, size_t size);
     size_t readKey(void* dest, size_t size);
+    std::unique_ptr<Memory::TupleBuffer> readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
     size_t read(void* dest, size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;
