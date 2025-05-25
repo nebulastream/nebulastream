@@ -43,7 +43,7 @@ public:
 
             const auto interval
                 = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 / ingestionRate : 0)));
-            //std::cout << "Interval: " << static_cast<uint64_t>(interval.count()) << std::endl;
+            std::cout << "Ingestion interval: " << static_cast<uint64_t>(interval.count()) << '\n';
             auto nextSendTime = std::chrono::high_resolution_clock::now();
 
             while (running && (countLimit == 0 || counter < countLimit))
@@ -57,10 +57,10 @@ public:
                     payload = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
                 }
 
-                value = valueDistrib(gen);
-
+                const auto value = valueDistrib(gen);
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
                     + std::to_string(timestamp) + '\n';
+
                 //std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
 
@@ -101,7 +101,6 @@ private:
     int timeStep;
     double ingestionRate;
     uint64_t counter = 0;
-    int value = 0;
     int payload = 0;
     int timestamp = 0;
     bool running = true;
@@ -141,7 +140,8 @@ public:
             cleanup(-1);
         }
         std::cout << "Server listening on " << host << ":" << port << '\n';
-        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit)) << '\n';
+        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit))
+                  << "Ingestion rate: " << (ingestionRate == 0 ? "unlimited" : std::to_string(ingestionRate)) << '\n';
 
         try
         {

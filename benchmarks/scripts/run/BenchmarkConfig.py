@@ -125,9 +125,31 @@ def create_all_benchmark_configs():
     ]
 
     QUERIES = []
+
+    # Simple join with two streams
     for window_size, slide in WINDOW_SIZE_SLIDE:
         QUERIES.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) INTO csv_sink;"
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
+        )
+
+    # Join with two streams and multiple keys
+    for window_size, slide in WINDOW_SIZE_SLIDE:
+        QUERIES.append(
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
+        )
+
+    # Join with four streams
+    for window_size, slide in WINDOW_SIZE_SLIDE:
+        QUERIES.append(
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INNER JOIN (SELECT * FROM tcp_source4) ON id = id4 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
         )
 
     # Return all possible configurations
