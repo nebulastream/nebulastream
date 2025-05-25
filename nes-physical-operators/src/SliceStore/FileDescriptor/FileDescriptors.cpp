@@ -117,7 +117,7 @@ boost::asio::awaitable<void> FileWriter::writeKey(const void* data, size_t size)
     co_return;
 }
 
-boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data, size_t size)
+boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data)
 {
     const auto filePathStr = filePath + fmt::format("_{}.dat", varSizedCnt);
     const auto fd = open(filePathStr.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -129,7 +129,8 @@ boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data, siz
     boost::asio::posix::stream_descriptor varSizedFile(ioCtx);
     varSizedFile.assign(fd);
 
-    co_await flushBuffer(varSizedFile, static_cast<const char*>(data), size);
+    auto varSizedDataSize = *static_cast<const uint32_t*>(data) + sizeof(uint32_t);
+    co_await flushBuffer(varSizedFile, static_cast<const char*>(data), varSizedDataSize);
     varSizedFile.close();
 
     co_return varSizedCnt++;
@@ -268,7 +269,7 @@ size_t FileReader::readKey(void* dest, const size_t size)
     return read(dest, size, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd, keyFile);
 }
 
-std::unique_ptr<Memory::TupleBuffer> FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
+Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
 {
     const auto filePathStr = filePath + fmt::format("_{}.dat", idx);
     std::ifstream varSizedFile(filePathStr, std::ios::in | std::ios::binary);
@@ -292,7 +293,7 @@ std::unique_ptr<Memory::TupleBuffer> FileReader::readVarSized(Memory::AbstractBu
         {
             throw std::ios_base::failure("Failed to read variable sized data from file");
         }
-        return std::make_unique<Memory::TupleBuffer>(buffer.value());
+        return buffer.value();
     }
     else
     {

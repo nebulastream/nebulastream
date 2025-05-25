@@ -50,8 +50,10 @@ public:
      */
     enum class FieldType : uint8_t
     {
-        KEY = 0,
-        PAYLOAD = 1
+        KEY,
+        KEY_VARSIZED,
+        PAYLOAD,
+        PAYLOAD_VARSIZED
     };
 
     /// @brief Constructor for MemoryLayout.
