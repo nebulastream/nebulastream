@@ -14,6 +14,7 @@
 
 #include <filesystem>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -32,6 +33,8 @@ FileWriter::FileWriter(
     , writeBufferPos(0)
     , writeKeyBufferPos(0)
     , bufferSize(bufferSize)
+    , varSizedCnt(0)
+    , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
 {
@@ -112,6 +115,24 @@ boost::asio::awaitable<void> FileWriter::writeKey(const void* data, size_t size)
         }
     }
     co_return;
+}
+
+boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data, size_t size)
+{
+    const auto filePathStr = filePath + fmt::format("_{}.dat", varSizedCnt);
+    const auto fd = open(filePathStr.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0)
+    {
+        throw std::runtime_error("Failed to open variable sized data file for writing");
+    }
+
+    boost::asio::posix::stream_descriptor varSizedFile(ioCtx);
+    varSizedFile.assign(fd);
+
+    co_await flushBuffer(varSizedFile, static_cast<const char*>(data), size);
+    varSizedFile.close();
+
+    co_return varSizedCnt++;
 }
 
 boost::asio::awaitable<void> FileWriter::flush()
@@ -245,6 +266,38 @@ size_t FileReader::readKey(void* dest, const size_t size)
     }
 
     return read(dest, size, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd, keyFile);
+}
+
+std::unique_ptr<Memory::TupleBuffer> FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
+{
+    const auto filePathStr = filePath + fmt::format("_{}.dat", idx);
+    std::ifstream varSizedFile(filePathStr, std::ios::in | std::ios::binary);
+    if (!varSizedFile.is_open())
+    {
+        throw std::runtime_error("Failed to open variable sized data file for reading");
+    }
+
+    uint32_t varSizedDataSize;
+    varSizedFile.read(reinterpret_cast<char*>(&varSizedDataSize), sizeof(uint32_t));
+    if ((varSizedFile.fail() && !varSizedFile.eof()) || varSizedFile.gcount() != sizeof(uint32_t))
+    {
+        throw std::ios_base::failure("Failed to read variable sized data size from file");
+    }
+
+    if (auto buffer = bufferProvider->getUnpooledBuffer(varSizedDataSize + sizeof(uint32_t)); buffer.has_value())
+    {
+        *buffer.value().getBuffer<uint32_t>() = varSizedDataSize;
+        varSizedFile.read(buffer.value().getBuffer<char>() + sizeof(uint32_t), varSizedDataSize);
+        if ((varSizedFile.fail() && !varSizedFile.eof()) || varSizedFile.gcount() != varSizedDataSize)
+        {
+            throw std::ios_base::failure("Failed to read variable sized data from file");
+        }
+        return std::make_unique<Memory::TupleBuffer>(buffer.value());
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+    }
 }
 
 size_t
