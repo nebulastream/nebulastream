@@ -321,7 +321,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
                         auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
-                        pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
+                        pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
                         memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
                     }
                     // TODO handle wrong predictions
@@ -423,7 +423,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             const auto fileLayout = memoryController->getFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
             auto* const pagedVector
                 = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
-            pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout.value());
+            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout.value());
             memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
         }
     }
