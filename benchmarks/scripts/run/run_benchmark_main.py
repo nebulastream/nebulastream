@@ -39,7 +39,7 @@ MEASURE_INTERVAL = 5
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
-WORKING_DIR = ".cache/benchmarks"
+WORKING_DIR = f".cache/benchmarks/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -240,11 +240,8 @@ def run_benchmark(current_benchmark_config):
     single_node_process = []
     stop_process = []
     try:
-
-        start_ports = get_start_ports()
-
         # Starting the TCP servers
-        [source_processes, tcp_server_ports] = start_tcp_servers(start_ports, current_benchmark_config)
+        [source_processes, tcp_server_ports] = start_tcp_servers(get_start_ports(), current_benchmark_config)
 
         # Creating a new output folder and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
