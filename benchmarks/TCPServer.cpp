@@ -27,8 +27,19 @@
 class ClientHandler
 {
 public:
-    ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep, const double ingestionRate)
-        : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
+    ClientHandler(
+        const int clientSocket,
+        const sockaddr_in address,
+        const int countLimit,
+        const int timeStep,
+        const double ingestionRate,
+        const bool varSized)
+        : clientSocket(clientSocket)
+        , address(address)
+        , countLimit(countLimit)
+        , timeStep(timeStep)
+        , ingestionRate(ingestionRate)
+        , varSized(varSized)
     {
     }
 
@@ -52,14 +63,11 @@ public:
                 {
                     std::this_thread::sleep_until(nextSendTime);
                     nextSendTime += interval;
-
-                    const auto now = std::chrono::high_resolution_clock::now();
-                    payload = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
                 }
 
                 const auto value = valueDistrib(gen);
-                std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
-                    + std::to_string(timestamp) + '\n';
+                std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(timestamp)
+                    + (varSized ? ",str:" + std::to_string(value) : "") + '\n';
 
                 //std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
@@ -100,8 +108,8 @@ private:
     uint64_t countLimit;
     int timeStep;
     double ingestionRate;
+    bool varSized;
     uint64_t counter = 0;
-    int payload = 0;
     int timestamp = 0;
     bool running = true;
 };
@@ -109,8 +117,14 @@ private:
 class CounterServer
 {
 public:
-    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep, const double ingestionRate)
-        : host(host), port(port), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
+    CounterServer(
+        const std::string& host,
+        const int port,
+        const uint64_t countLimit,
+        const int timeStep,
+        const double ingestionRate,
+        const bool varSized)
+        : host(host), port(port), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate), varSized(varSized)
     {
     }
 
@@ -154,7 +168,7 @@ public:
                 {
                     std::cout << "\nShutting down server because it failed to accept client on socket " << clientSocket << "...\n";
                 }
-                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep, ingestionRate);
+                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep, ingestionRate, varSized);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
                 clients.push_back(std::move(client));
@@ -207,6 +221,7 @@ private:
     uint64_t countLimit = 0;
     int timeStep = 1;
     double ingestionRate = 0;
+    bool varSized = false;
     int serverSocket;
     sockaddr_in serverAddress;
     std::vector<ClientHandler> clients;
@@ -220,6 +235,7 @@ int main(const int argc, char* argv[])
     uint64_t countLimit = 0;
     int timeStep = 1;
     double ingestionRate = 0;
+    bool varSized = false;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -243,11 +259,15 @@ int main(const int argc, char* argv[])
         {
             ingestionRate = std::stod(argv[++i]);
         }
+        else if (std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--var-sized") == 0)
+        {
+            varSized = true;
+        }
     }
 
     try
     {
-        CounterServer server(host, port, countLimit, timeStep, ingestionRate);
+        CounterServer server(host, port, countLimit, timeStep, ingestionRate, varSized);
         server.start();
     }
     catch (const std::exception& e)
