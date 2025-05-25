@@ -173,8 +173,12 @@ char* MemoryController::allocateReadBuffer()
         return nullptr;
     }
 
-    std::unique_lock lock(readMemoryPoolMutex);
-    readMemoryPoolCondition.wait(lock, [this] { return !freeReadBuffers.empty(); });
+    std::scoped_lock lock(readMemoryPoolMutex);
+    if (freeReadBuffers.empty())
+    {
+        /// This should not happen as we deallocate buffers after updating slices
+        throw std::runtime_error("No read buffers available for allocation!");
+    }
 
     char* buffer = freeReadBuffers.back();
     freeReadBuffers.pop_back();
@@ -191,7 +195,6 @@ void MemoryController::deallocateReadBuffer(char* buffer)
 
     const std::scoped_lock lock(readMemoryPoolMutex);
     freeReadBuffers.push_back(buffer);
-    readMemoryPoolCondition.notify_one();
 }
 
 char* MemoryController::allocateWriteBuffer()
@@ -201,8 +204,12 @@ char* MemoryController::allocateWriteBuffer()
         return nullptr;
     }
 
-    std::unique_lock lock(writeMemoryPoolMutex);
-    writeMemoryPoolCondition.wait(lock, [this] { return !freeWriteBuffers.empty(); });
+    std::scoped_lock lock(writeMemoryPoolMutex);
+    if (freeWriteBuffers.empty())
+    {
+        /// This should not happen as we deallocate buffers after updating slices
+        throw std::runtime_error("No write buffers available for allocation!");
+    }
 
     char* buffer = freeWriteBuffers.back();
     freeWriteBuffers.pop_back();
@@ -219,7 +226,6 @@ void MemoryController::deallocateWriteBuffer(char* buffer)
 
     const std::scoped_lock lock(writeMemoryPoolMutex);
     freeWriteBuffers.push_back(buffer);
-    writeMemoryPoolCondition.notify_one();
 }
 
 }
