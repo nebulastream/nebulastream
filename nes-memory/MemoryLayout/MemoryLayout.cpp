@@ -150,19 +150,37 @@ std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGrou
     std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
     for (auto fieldIdx = 0UL; fieldIdx < schema.getFieldCount(); ++fieldIdx)
     {
-        auto fieldType = FieldType::PAYLOAD;
-        if (std::ranges::find(keyFieldNames, schema.getFieldNames()[fieldIdx]) != keyFieldNames.end())
-        {
-            fieldType = FieldType::KEY;
-        }
-
+        FieldType fieldType;
         uint64_t fieldSize = getFieldSize(fieldIdx);
-        if (!fieldTypeSizes.empty())
+        if (Util::instanceOf<VariableSizedDataType>(schema.getFieldByIndex(fieldIdx).getDataType()))
         {
-            if (const auto [lastFieldType, lastFieldSize] = fieldTypeSizes.back(); lastFieldType == fieldType)
+            if (std::ranges::find(keyFieldNames, schema.getFieldNames()[fieldIdx]) != keyFieldNames.end())
             {
-                fieldSize += lastFieldSize;
-                fieldTypeSizes.pop_back();
+                fieldType = FieldType::KEY_VARSIZED;
+            }
+            else
+            {
+                fieldType = FieldType::PAYLOAD_VARSIZED;
+            }
+        }
+        else
+        {
+            if (std::ranges::find(keyFieldNames, schema.getFieldNames()[fieldIdx]) != keyFieldNames.end())
+            {
+                fieldType = FieldType::KEY;
+            }
+            else
+            {
+                fieldType = FieldType::PAYLOAD;
+            }
+
+            if (!fieldTypeSizes.empty())
+            {
+                if (const auto [lastFieldType, lastFieldSize] = fieldTypeSizes.back(); lastFieldType == fieldType)
+                {
+                    fieldSize += lastFieldSize;
+                    fieldTypeSizes.pop_back();
+                }
             }
         }
 

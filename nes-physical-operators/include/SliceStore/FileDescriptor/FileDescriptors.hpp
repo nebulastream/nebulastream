@@ -24,7 +24,6 @@ namespace NES
 
 enum class FileLayout : uint8_t
 {
-    NO_SEPARATION_KEEP_KEYS,
     NO_SEPARATION,
     SEPARATE_PAYLOAD,
     SEPARATE_KEYS
@@ -43,7 +42,7 @@ public:
 
     boost::asio::awaitable<void> write(const void* data, size_t size);
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
-    boost::asio::awaitable<uint32_t> writeVarSized(const void* data, size_t size);
+    boost::asio::awaitable<uint32_t> writeVarSized(const void* data);
 
     boost::asio::awaitable<void> flush();
     void flushAndDeallocateBuffers();
@@ -80,7 +79,7 @@ public:
 
     size_t read(void* dest, size_t size);
     size_t readKey(void* dest, size_t size);
-    std::unique_ptr<Memory::TupleBuffer> readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
+    Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
     size_t read(void* dest, size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;

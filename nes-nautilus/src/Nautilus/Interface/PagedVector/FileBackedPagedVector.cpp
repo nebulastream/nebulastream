@@ -42,29 +42,44 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
 boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const std::shared_ptr<FileWriter> fileWriter,
+    const std::shared_ptr<FileWriter>& fileWriter,
     FileLayout fileLayout)
 {
-    // TODO remove once fileLayout is chosen adaptively
+    /// We cannot separate keys and payload if there are no keys
     fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : FileLayout::NO_SEPARATION;
 
-    PRECONDITION(!memoryLayout->getSchema().containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
-    PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == FileLayout::NO_SEPARATION,
-        "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
     /*PRECONDITION(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
+    static const auto ContainsVarSizedData = memoryLayout->getSchema().containsVarSizedDataField();
+    static const auto GroupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+
     switch (fileLayout)
     {
         /// Write all tuples consecutivley to file
-        case FileLayout::NO_SEPARATION_KEEP_KEYS:
         case FileLayout::NO_SEPARATION: {
-            for (const auto& [_, page] : pages)
+            for (auto& [_, page] : pages)
             {
                 const auto numTuplesOnPage = page.getNumberOfTuples();
+                if (ContainsVarSizedData)
+                {
+                    auto* pagePtr = page.getBuffer();
+                    for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
+                    {
+                        for (const auto& [fieldType, fieldSize] : GroupedFieldTypeSizes)
+                        {
+                            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
+                                || fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
+                            {
+                                co_await writeVarSizedAndStoreIdx(reinterpret_cast<char*>(pagePtr), page, fileWriter);
+                            }
+                            pagePtr += fieldSize;
+                        }
+                    }
+                }
+
                 co_await fileWriter->write(page.getBuffer(), numTuplesOnPage * memoryLayout->getTupleSize());
                 numTuplesOnDisk += numTuplesOnPage;
             }
@@ -72,12 +87,12 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
         }
         /// Write only payload to file and append key field data to designated pagedVectorKeys
         case FileLayout::SEPARATE_PAYLOAD: {
-            co_await writePayloadOnlyToFile(memoryLayout, bufferProvider, fileWriter);
+            co_await writePayloadOnlyToFile(GroupedFieldTypeSizes, memoryLayout, bufferProvider, fileWriter);
             break;
         }
         /// Write designated pagedVectorKeys to key file first and then remaining payload and key field data to separate files
         case FileLayout::SEPARATE_KEYS: {
-            co_await writePayloadAndKeysToSeparateFiles(memoryLayout, fileWriter);
+            co_await writePayloadAndKeysToSeparateFiles(GroupedFieldTypeSizes, memoryLayout, fileWriter);
             break;
         }
     }
@@ -87,27 +102,23 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
 void FileBackedPagedVector::readFromFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    FileReader& fileReader,
+    const std::shared_ptr<FileReader>& fileReader,
     FileLayout fileLayout)
 {
-    // TODO remove once fileLayout is chosen adaptively
+    /// We cannot separate keys and payload if there are no keys
     fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : FileLayout::NO_SEPARATION;
 
-    PRECONDITION(!memoryLayout->getSchema().containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
-    PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == FileLayout::NO_SEPARATION,
-        "Cannot separate key field data and payload as there are no key fields");
     // TODO fix this method and remove preconditon
     /*PRECONDITION(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
+    static const auto ContainsVarSizedData = memoryLayout->getSchema().containsVarSizedDataField();
+    static const auto GroupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
-        case FileLayout::NO_SEPARATION_KEEP_KEYS: {
-            keyPages.clear();
-        }
         case FileLayout::NO_SEPARATION: {
             // TODO just append new page disregarding the number of tuples on the last page?
             const auto tupleSize = memoryLayout->getTupleSize();
@@ -116,10 +127,27 @@ void FileBackedPagedVector::readFromFile(
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
 
-            while (const auto bytesRead = fileReader.read(lastPagePtr, tuplesToRead * tupleSize))
+            while (const auto bytesRead = fileReader->read(lastPagePtr, tuplesToRead * tupleSize))
             {
                 const auto tuplesRead = bytesRead / tupleSize;
                 lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + tuplesRead);
+
+                if (ContainsVarSizedData)
+                {
+                    for (auto tupleIdx = 0UL; tupleIdx < tuplesRead; ++tupleIdx)
+                    {
+                        for (const auto& [fieldType, fieldSize] : GroupedFieldTypeSizes)
+                        {
+                            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
+                                || fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
+                            {
+                                readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                            }
+                            lastPagePtr += fieldSize;
+                        }
+                    }
+                }
+
                 appendPageIfFull(bufferProvider, memoryLayout);
                 lastPage = pages.back().buffer;
                 lastPagePtr = lastPage.getBuffer();
@@ -131,7 +159,7 @@ void FileBackedPagedVector::readFromFile(
         /// Read payload and key field data from separate files first and then remaining designated pagedVectorKeys and payload from file
         case FileLayout::SEPARATE_PAYLOAD:
         case FileLayout::SEPARATE_KEYS: {
-            readSeparatelyFromFiles(memoryLayout, bufferProvider, fileReader);
+            readSeparatelyFromFiles(GroupedFieldTypeSizes, memoryLayout, bufferProvider, fileReader);
             break;
         }
     }
@@ -143,11 +171,6 @@ void FileBackedPagedVector::truncate(const FileLayout fileLayout)
     // TODO append key field data to designated pagedVectorKeys to be able to write all tuples to file but keep keys in memory, alternatively create mew FileLayout and do this in writeToFile()->writePayloadOnlyToFile()
     switch (fileLayout)
     {
-        /// Append key field data to designated pagedVectorKeys
-        case FileLayout::NO_SEPARATION_KEEP_KEYS: {
-            // TODO
-            break;
-        }
         /// Do nothing as key field data has just been written to designated pagedVectorKeys
         case FileLayout::SEPARATE_PAYLOAD: {
             break;
@@ -204,33 +227,43 @@ void FileBackedPagedVector::appendKeyPageIfFull(
 }
 
 boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const std::shared_ptr<FileWriter> fileWriter)
+    const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const std::shared_ptr<FileWriter>& fileWriter)
 {
-    const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout
-        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
-    const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+    static const auto KeyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
+    static const auto KeyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(KeyFieldsOnlySchema, memoryLayout->getBufferSize());
 
     for (const auto& keyPage : keyPages)
     {
-        co_await fileWriter->writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
+        co_await fileWriter->writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * KeyFieldsOnlyMemoryLayout->getTupleSize());
     }
 
-    for (const auto& [_, page] : pages)
+    for (auto& [_, page] : pages)
     {
-        const auto* pagePtr = page.getBuffer();
+        auto* pagePtr = page.getBuffer();
         const auto numTuplesOnPage = page.getNumberOfTuples();
         for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
         {
             for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
-                if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
+                switch (fieldType)
                 {
-                    co_await fileWriter->writeKey(pagePtr, fieldSize);
-                }
-                else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
-                {
-                    co_await fileWriter->write(pagePtr, fieldSize);
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED: {
+                        co_await writeVarSizedAndStoreIdx(reinterpret_cast<char*>(pagePtr), page, fileWriter);
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY: {
+                        co_await fileWriter->writeKey(pagePtr, fieldSize);
+                        break;
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED: {
+                        co_await writeVarSizedAndStoreIdx(reinterpret_cast<char*>(pagePtr), page, fileWriter);
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD: {
+                        co_await fileWriter->write(pagePtr, fieldSize);
+                        break;
+                    }
                 }
                 pagePtr += fieldSize;
             }
@@ -241,37 +274,49 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
 }
 
 boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
+    const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
-    const std::shared_ptr<FileWriter> fileWriter)
+    const std::shared_ptr<FileWriter>& fileWriter)
 {
-    const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout
-        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
-    const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+    static const auto KeyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
+    static const auto KeyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(KeyFieldsOnlySchema, memoryLayout->getBufferSize());
 
-    for (const auto& [_, page] : pages)
+    for (auto& [_, page] : pages)
     {
-        const auto* pagePtr = page.getBuffer();
+        auto* pagePtr = page.getBuffer();
         const auto numTuplesOnPage = page.getNumberOfTuples();
         for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
         {
             // TODO appendPageIfFull only when page is full not for each tuple
-            appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
+            appendKeyPageIfFull(bufferProvider, KeyFieldsOnlyMemoryLayout.get());
             auto& lastKeyPage = keyPages.back();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
-            auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
+            auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * KeyFieldsOnlyMemoryLayout->getTupleSize();
 
             for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
-                if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
+                switch (fieldType)
                 {
-                    std::memcpy(lastKeyPagePtr, pagePtr, fieldSize);
-                    lastKeyPagePtr += fieldSize;
-                }
-                else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
-                {
-                    co_await fileWriter->write(pagePtr, fieldSize);
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED: {
+                        const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(pagePtr);
+                        auto varSizedData = page.loadChildBuffer(*varSizedDataIdx);
+                        const auto newIdx = lastKeyPage.storeChildBuffer(varSizedData);
+                        memcpy(pagePtr, &newIdx, sizeof(uint32_t));
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY: {
+                        std::memcpy(lastKeyPagePtr, pagePtr, fieldSize);
+                        lastKeyPagePtr += fieldSize;
+                        break;
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED: {
+                        co_await writeVarSizedAndStoreIdx(reinterpret_cast<char*>(pagePtr), page, fileWriter);
+                    }
+                    case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD: {
+                        co_await fileWriter->write(pagePtr, fieldSize);
+                        break;
+                    }
                 }
                 pagePtr += fieldSize;
             }
@@ -283,12 +328,14 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
 }
 
 void FileBackedPagedVector::readSeparatelyFromFiles(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Memory::AbstractBufferProvider* bufferProvider, FileReader& fileReader)
+    const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const std::shared_ptr<FileReader>& fileReader)
 {
-    const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout
-        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
-    const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
+    static const auto KeyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
+    static const auto KeyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(KeyFieldsOnlySchema, memoryLayout->getBufferSize());
 
     const auto* keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
     while (true)
@@ -303,7 +350,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
         if (keyPagePtr != nullptr)
         {
             if (const auto& currKeyPage = keyPages.front();
-                keyPagePtr >= currKeyPage.getBuffer() + currKeyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize())
+                keyPagePtr >= currKeyPage.getBuffer() + currKeyPage.getNumberOfTuples() * KeyFieldsOnlyMemoryLayout->getTupleSize())
             {
                 keyPages.erase(keyPages.begin());
                 keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;
@@ -313,22 +360,44 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
 
         for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
         {
-            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
+            switch (fieldType)
             {
-                if (fileReader.readKey(lastPagePtr, fieldSize) == 0)
-                {
-                    if (keyPagePtr != nullptr)
+                case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED:
+                case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY: {
+                    if (fileReader->readKey(lastPagePtr, fieldSize) == 0)
                     {
-                        std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
-                        keyPagePtr += fieldSize;
+                        if (keyPagePtr != nullptr)
+                        {
+                            // TODO cleanup
+                            std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
+                            keyPagePtr += fieldSize;
+
+                            if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED)
+                            {
+                                const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(lastPagePtr);
+                                auto varSizedData = keyPages.front().loadChildBuffer(*varSizedDataIdx);
+                                const auto newIdx = lastPage.storeChildBuffer(varSizedData);
+                                memcpy(lastPagePtr, &newIdx, sizeof(uint32_t));
+                            }
+                        }
                     }
+                    else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED)
+                    {
+                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                    }
+                    break;
                 }
-            }
-            else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
-            {
-                if (fileReader.read(lastPagePtr, fieldSize) == 0)
-                {
-                    return;
+                case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED:
+                case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD: {
+                    if (fileReader->read(lastPagePtr, fieldSize) == 0)
+                    {
+                        return;
+                    }
+                    if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
+                    {
+                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                    }
+                    break;
                 }
             }
             lastPagePtr += fieldSize;
@@ -336,6 +405,27 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
         lastPage.setNumberOfTuples(numTuplesLastPage + 1);
         --numTuplesOnDisk;
     }
+}
+
+boost::asio::awaitable<void> FileBackedPagedVector::writeVarSizedAndStoreIdx(
+    char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter)
+{
+    const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(ptrOnPage);
+    const auto& varSizedData = page.loadChildBuffer(*varSizedDataIdx);
+    const auto fileIdx = co_await fileWriter->writeVarSized(varSizedData.getBuffer());
+    memcpy(ptrOnPage, &fileIdx, sizeof(uint32_t));
+}
+
+void FileBackedPagedVector::readVarSizedAndStoreIdx(
+    char* ptrOnPage,
+    const Memory::TupleBuffer& page,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const std::shared_ptr<FileReader>& fileReader)
+{
+    const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(ptrOnPage);
+    auto varSizedData = fileReader->readVarSized(bufferProvider, *varSizedDataIdx);
+    const auto newIdx = page.storeChildBuffer(varSizedData);
+    memcpy(ptrOnPage, &newIdx, sizeof(uint32_t));
 }
 
 }
