@@ -35,7 +35,7 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 10
+MEASURE_INTERVAL = 5
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.

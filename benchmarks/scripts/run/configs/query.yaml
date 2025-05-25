@@ -5,7 +5,6 @@ sink:
   type: File
   config:
     inputFormat: CSV
-#    filePath: "/dev/null"
     filePath: "/tmp/csv_sink.csv"
     append: false
 logical:
@@ -24,6 +23,26 @@ logical:
       - name: id2
         type: UINT64
       - name: value2
+        type: UINT64
+      - name: payload
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+  - name: tcp_source3
+    schema:
+      - name: id3
+        type: UINT64
+      - name: value3
+        type: UINT64
+      - name: payload
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+  - name: tcp_source4
+    schema:
+      - name: id4
+        type: UINT64
+      - name: value4
         type: UINT64
       - name: payload
         type: UINT64
@@ -49,6 +68,28 @@ physical:
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: 5011
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
+  - logical: tcp_source3
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5012
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
+  - logical: tcp_source4
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5013
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
