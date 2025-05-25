@@ -91,8 +91,8 @@ class BenchmarkConfig:
 
 def create_all_benchmark_configs():
     NUM_TUPLES_TO_GENERATE = [0]  # 0 means the source will run indefinitely
-    TIMESTAMP_INCREMENT = [1, 10, 100, 1000, 10000]
-    INGESTION_RATE = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
+    TIMESTAMP_INCREMENT = [1]
+    INGESTION_RATE = [0]  # 0 means the source will ingest tuples as fast as possible
 
     NO_PHYSICAL_SOURCES = [1]
     NUMBER_OF_WORKER_THREADS = [4]
@@ -112,7 +112,10 @@ def create_all_benchmark_configs():
     # Adding queries with different window sizes.
     WINDOW_SIZE_SLIDE = [
         # Representing a tumbling window of 10s, resulting in 1 concurrent window
-        (10 * 1000, 10 * 1000),
+        # (10 * 1000, 10 * 1000),
+
+        # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
+        (1000 * 1000 * 1000, 1000 * 1000 * 1000),
 
         # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
         # (10 * 1000, 100),
