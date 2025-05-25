@@ -151,6 +151,9 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 cmd = f"{TCP_SERVER} -p {port} -n {current_benchmark_config.num_tuples_to_generate} -t {current_benchmark_config.timestamp_increment} -i {current_benchmark_config.ingestion_rate}"
+                # Add variable sized data flag to last tcp server
+                if port == starting_ports[-1]:
+                    cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
