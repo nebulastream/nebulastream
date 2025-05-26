@@ -29,14 +29,14 @@ namespace NES
 PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, Nautilus::Configurations::ExecutionMode executionMode)
     : queryId(id), executionMode(executionMode) { };
 
-static void printPipelineRecursive(const Pipeline* pipeline, std::ostream& os, int indentLevel)
+static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
     const std::string indent(indentLevel * 2, ' ');
     os << indent << *pipeline << "\n";
     for (const auto& succ : pipeline->getSuccessors())
     {
         os << indent << "Successor Pipeline:\n";
-        printPipelineRecursive(succ.get(), os, indentLevel + 1);
+        os << indent << "  " << *succ << "\n";
     }
 }
 
@@ -48,7 +48,7 @@ std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
     {
         os << "------------------\n";
         os << "Root Pipeline " << i << ":\n";
-        printPipelineRecursive(plan.getPipelines()[i].get(), os, 1);
+        printPipeline(plan.getPipelines()[i].get(), os, 1);
     }
     return os;
 }
