@@ -48,8 +48,8 @@ public:
         std::cout << "New connection from " << inet_ntoa(address.sin_addr) << '\n';
         try
         {
-            std::random_device rd;
-            std::mt19937 gen(rd());
+            //std::random_device rd;
+            std::mt19937 gen(42);
             std::uniform_int_distribution valueDistrib(0, 10000);
 
             const auto interval
