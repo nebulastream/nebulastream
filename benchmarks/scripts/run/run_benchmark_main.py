@@ -22,6 +22,7 @@ import datetime
 import yaml
 import pathlib
 import copy
+import pandas as pd
 import BenchmarkConfig
 
 
@@ -66,7 +67,7 @@ def create_output_folder():
     return folder_name
 
 
-def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports):
+def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports, iteration):
     # Creating a dest path for the worker and query config yaml file
     dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
     dest_path_query = os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)
@@ -116,6 +117,9 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         query_config_yaml = yaml.safe_load(input_file)
     query_config_yaml["query"] = current_benchmark_config.query
 
+    # Change the csv sink file
+    query_config_yaml["sink"]["config"]["filePath"] = f"/tmp/csv_sink_{iteration}.csv"
+
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
     assert len(tcp_server_ports) % len(query_config_yaml[
                                            "physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
@@ -152,7 +156,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
             for attempt in range(max_retries):
                 cmd = f"{TCP_SERVER} -p {port} -n {current_benchmark_config.num_tuples_to_generate} -t {current_benchmark_config.timestamp_increment} -i {current_benchmark_config.ingestion_rate}"
                 # Add variable sized data flag to last tcp server
-                if port == starting_ports[-1]:
+                if port == starting_ports[-1] or port == starting_ports[-2]:
                     cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
@@ -180,12 +184,17 @@ def submitting_query(query_file):
     cmd = f"cat {query_file} | {NEBULI_PATH} register -x -s localhost:8080"
     # print(f"Submitting the query via {cmd}...")
     # shell=True is needed to pipe the output of cat to the register command
-    result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE,  # Capture standard output
-                            stderr=subprocess.PIPE,  # Capture standard error
-                            text=True  # Decode output to a string
-                            )
+    process = subprocess.Popen(
+        cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
     # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
-    query_id = result.stdout.strip()
+    stdout, stderr = process.communicate()
+    query_id = stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
 
@@ -233,9 +242,10 @@ def get_start_ports():
 
 
 # Benchmark loop
-def run_benchmark(current_benchmark_config):
+def run_benchmark(current_benchmark_config, iteration):
     # Defining here two empty lists so that we can use it in the finally
     output_folder = ""
+    working_dir = ""
     source_processes = []
     single_node_process = []
     stop_process = []
@@ -245,7 +255,9 @@ def run_benchmark(current_benchmark_config):
 
         # Creating a new output folder and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
-        copy_and_modify_configs(output_folder, create_working_dir(), current_benchmark_config, tcp_server_ports)
+        working_dir = create_working_dir()
+        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports,
+                                iteration)
 
         # Waiting before starting the single node worker
         time.sleep(WAIT_BETWEEN_COMMANDS)
@@ -276,7 +288,16 @@ def run_benchmark(current_benchmark_config):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
 
+        # Delete working directory
+        shutil.rmtree(working_dir)
+
         return output_folder
+
+
+def load_csv(file_path):
+    if os.path.getsize(file_path) == 0:  # Check if the file is empty
+        return pd.DataFrame()  # Return an empty DataFrame
+    return pd.read_csv(file_path)
 
 
 if __name__ == "__main__":
@@ -289,7 +310,7 @@ if __name__ == "__main__":
     for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=1):
         start_time = time.time()
 
-        output_folders.append(run_benchmark(benchmark_config))
+        output_folders.append(run_benchmark(benchmark_config, i))
         time.sleep(1)  # Sleep for a second to allow the system to clean up
 
         end_time = time.time()
@@ -310,6 +331,58 @@ if __name__ == "__main__":
         # Print ETA and finish time in cyan
         print(
             f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+
+    # Compare the results of default slice store and file backed variant
+    file1 = f"/tmp/csv_sink_{1}.csv"
+    file2 = f"/tmp/csv_sink_{2}.csv"
+
+    df1 = load_csv(file1)
+    df2 = load_csv(file2)
+
+    # Check if either DataFrame is empty
+    if df1.empty and df2.empty:
+        print("Both files are empty.")
+    elif df1.empty:
+        print("File1 is empty.")
+        print(f"File2 has {len(df2)} rows with keys: {list(df2['tcp_source4$id4:UINT64'])}")
+    elif df2.empty:
+        print("File2 is empty.")
+        print(f"File1 has {len(df1)} rows with keys: {list(df1['tcp_source4$id4:UINT64'])}")
+    else:
+        # Set the key column as the index
+        key_column = "tcp_source4$id4:UINT64"
+        df1.set_index(key_column, inplace=True)
+        df2.set_index(key_column, inplace=True)
+
+        # Align rows based on the key column
+        common_keys = df1.index.intersection(df2.index)
+        df1_aligned = df1.loc[common_keys]
+        df2_aligned = df2.loc[common_keys]
+
+        # Compare rows and find differences
+        differences = []
+        for key in common_keys:
+            if not df1_aligned.loc[key].equals(df2_aligned.loc[key]):
+                differences.append((key, df1_aligned.loc[key].to_dict(), df2_aligned.loc[key].to_dict()))
+
+        # Print the differences
+        if not differences:
+            print("The rows with common keys are identical.")
+        else:
+            print("Differences found:")
+            for diff in differences:
+                print(f"Key {diff[0]} differs:")
+                print(f"File1: {diff[1]}")
+                print(f"File2: {diff[2]}")
+
+        # Identify additional keys in each file
+        extra_keys_file1 = df1.index.difference(df2.index)
+        extra_keys_file2 = df2.index.difference(df1.index)
+
+        if not extra_keys_file1.empty:
+            print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
+        if not extra_keys_file2.empty:
+            print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
 
     # Calling the postprocessing main
     # post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
