@@ -117,8 +117,11 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         query_config_yaml = yaml.safe_load(input_file)
     query_config_yaml["query"] = current_benchmark_config.query
 
-    # Change the csv sink file
-    query_config_yaml["sink"]["config"]["filePath"] = f"/tmp/csv_sink_{iteration}.csv"
+    # Change the csv sink file and delete current contents
+    csv_file = f"/tmp/csv_sink_{iteration}.csv"
+    query_config_yaml["sink"]["config"]["filePath"] = csv_file
+    if os.path.exists(csv_file):
+        os.remove(csv_file)
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
     assert len(tcp_server_ports) % len(query_config_yaml[
@@ -289,6 +292,7 @@ def run_benchmark(current_benchmark_config, iteration):
                 shutil.move(source_file, output_folder)
 
         # Delete working directory
+        print("Deleting working directory...\n")
         shutil.rmtree(working_dir)
 
         return output_folder
@@ -332,6 +336,7 @@ if __name__ == "__main__":
         print(
             f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
+    print("\nStarting post processing...\n")
     # Compare the results of default slice store and file backed variant
     file1 = f"/tmp/csv_sink_{1}.csv"
     file2 = f"/tmp/csv_sink_{2}.csv"
