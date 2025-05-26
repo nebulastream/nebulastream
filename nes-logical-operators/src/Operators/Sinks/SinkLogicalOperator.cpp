@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -116,7 +118,6 @@ std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 1, "Sink should have one input");
     auto copy = *this;
     copy.inputOriginIds = ids[0];
     return copy;
