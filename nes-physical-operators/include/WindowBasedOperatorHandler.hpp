@@ -22,12 +22,33 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Stores the metadata for a RecordBuffer
+struct BufferMetaData
+{
+    BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
+    {
+    }
+
+    [[nodiscard]] std::string toString() const
+    {
+        return fmt::format("BufferMetadata(waterMarkTs: {}, seqNumber: {}, originId: {})", watermarkTs, seqNumber, originId);
+    }
+
+    Timestamp watermarkTs;
+    SequenceData seqNumber;
+    OriginId originId;
+};
+
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
 /// The build phase is the phase where the operator adds tuples to window(s) / the state.

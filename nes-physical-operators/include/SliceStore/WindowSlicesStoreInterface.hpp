@@ -28,7 +28,6 @@
 namespace NES
 {
 
-
 /// This struct stores a slice and the window info
 struct SlicesAndWindowInfo
 {

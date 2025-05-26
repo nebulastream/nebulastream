@@ -29,11 +29,7 @@ namespace NES
 class SliceAssigner
 {
 public:
-    explicit SliceAssigner(const uint64_t windowSize, const uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide)
-    {
-        INVARIANT(
-            windowSize >= windowSlide, "Currently the window assigner does not support windows with a larger slide then the window size.");
-    }
+    explicit SliceAssigner(const uint64_t windowSize, const uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide) { }
 
     SliceAssigner(const SliceAssigner& other) = default;
     SliceAssigner(SliceAssigner&& other) noexcept = default;
@@ -48,8 +44,9 @@ public:
     [[nodiscard]] SliceStart getSliceStartTs(const Timestamp ts) const
     {
         const auto timestampRaw = ts.getRawValue();
-        auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
-        auto prevWindowStart = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
+        const auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
+        const auto prevWindowStart
+            = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
         return SliceStart(std::max(prevSlideStart, prevWindowStart));
     }
 
@@ -63,6 +60,37 @@ public:
         const auto nextWindowEnd
             = timestampRaw < windowSize ? windowSize : timestampRaw + windowSlide - ((timestampRaw - windowSize) % windowSlide);
         return SliceEnd(std::min(nextSlideEnd, nextWindowEnd));
+    }
+
+    /// Retrieves all window identifiers that correspond to this slice
+    /// It might happen that for a particular slice no windows are getting returned.
+    /// For example, size of 10 and slide of 20 would mean that there do not exist a window from [10-20]
+    [[nodiscard]] std::vector<WindowInfo> getAllWindowsForSlice(const Slice& slice) const
+    {
+        std::vector<WindowInfo> allWindows;
+
+        const auto sliceStart = slice.getSliceStart().getRawValue();
+        const auto sliceEnd = slice.getSliceEnd().getRawValue();
+
+        /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
+        /// In our window model, a window is always the size of the window size.
+        auto firstWindowEnd = std::max((sliceEnd), windowSize);
+        auto lastWindowEnd = sliceStart + windowSize;
+
+        if ((firstWindowEnd - windowSize) % windowSlide != 0)
+        {
+            /// firstWindowEnd is no valid windowEnd for the window parameters size and slide.
+            /// essentially means, it is the firstWindowStart in which the slice is not contained, and we can use that to derive the required parameters
+            lastWindowEnd = firstWindowEnd + windowSize - windowSlide;
+            firstWindowEnd = sliceStart + windowSlide;
+        }
+
+        for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
+        {
+            allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
+        }
+
+        return allWindows;
     }
 
     [[nodiscard]] uint64_t getWindowSize() const { return windowSize; }
