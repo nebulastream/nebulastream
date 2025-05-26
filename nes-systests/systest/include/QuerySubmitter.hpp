@@ -37,7 +37,7 @@ public:
     virtual void unregisterQuery(QueryId query) = 0;
 
     /// Blocks until atleast one query has finished (or potentially failed)
-    virtual std::vector<Runtime::QuerySummary> finishedQueries() = 0;
+    virtual std::vector<QuerySummary> finishedQueries() = 0;
 };
 
 /// Launches an in process NebulaStream worker.
@@ -55,7 +55,7 @@ public:
 
     void unregisterQuery(QueryId query) override;
 
-    std::vector<Runtime::QuerySummary> finishedQueries() override;
+    std::vector<QuerySummary> finishedQueries() override;
 
     explicit LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration);
 };
@@ -75,7 +75,7 @@ public:
 
     void unregisterQuery(QueryId query) override;
 
-    std::vector<Runtime::QuerySummary> finishedQueries() override;
+    std::vector<QuerySummary> finishedQueries() override;
 
     explicit RemoteWorkerQuerySubmitter(const std::string& serverURI);
 };

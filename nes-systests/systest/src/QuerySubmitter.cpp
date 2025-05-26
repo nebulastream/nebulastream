@@ -33,7 +33,8 @@
 
 namespace
 {
-NES::Runtime::QuerySummary deserialize(const QuerySummaryReply& reply)
+/*
+NES::QuerySummary deserialize(const QuerySummaryReply& reply)
 {
     auto deserializeError = [](const QueryRunSummary& runSummery) -> std::optional<NES::Exception>
     {
@@ -46,23 +47,25 @@ NES::Runtime::QuerySummary deserialize(const QuerySummaryReply& reply)
 
     auto deserializeRun = [deserializeError](const QueryRunSummary& runSummery)
     {
-        return NES::Runtime::QueryRunSummary{
+        return NES::QueryRunSummary{
             .start = std::chrono::system_clock::time_point(std::chrono::milliseconds(runSummery.startunixtimeinms())),
             .running = std::chrono::system_clock::time_point(std::chrono::milliseconds(runSummery.runningunixtimeinms())),
             .stop = std::chrono::system_clock::time_point(std::chrono::milliseconds(runSummery.stopunixtimeinms())),
             .error = deserializeError(runSummery)};
     };
 
-    return NES::Runtime::QuerySummary{
+    return NES::QuerySummary{
         .queryId = NES::QueryId(reply.queryid()),
-        .currentStatus = static_cast<NES::Runtime::Execution::QueryStatus>(reply.status()),
+        .currentStatus = static_cast<NES::QueryStatus>(reply.status()),
         .runs = std::views::transform(reply.runs(), deserializeRun) | std::ranges::to<std::vector>()};
 }
+*/
 }
+
 
 NES::QueryId NES::Systest::LocalWorkerQuerySubmitter::registerQuery(const Query& query)
 {
-    return worker.registerQuery(query.queryPlan->copy());
+    return worker.registerQuery(query.queryPlan);
 }
 void NES::Systest::LocalWorkerQuerySubmitter::startQuery(QueryId query)
 {
@@ -71,23 +74,23 @@ void NES::Systest::LocalWorkerQuerySubmitter::startQuery(QueryId query)
 }
 void NES::Systest::LocalWorkerQuerySubmitter::stopQuery(QueryId query)
 {
-    worker.stopQuery(query, Runtime::QueryTerminationType::Graceful);
+    worker.stopQuery(query, QueryTerminationType::Graceful);
 }
 void NES::Systest::LocalWorkerQuerySubmitter::unregisterQuery(QueryId query)
 {
     worker.unregisterQuery(query);
 }
-std::vector<NES::Runtime::QuerySummary> NES::Systest::LocalWorkerQuerySubmitter::finishedQueries()
+std::vector<NES::QuerySummary> NES::Systest::LocalWorkerQuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<Runtime::QuerySummary> results;
+        std::vector<QuerySummary> results;
         for (auto id : ids)
         {
             if (auto summary = worker.getQuerySummary(id))
             {
-                if (summary->currentStatus == Runtime::Execution::QueryStatus::Failed
-                    || summary->currentStatus == Runtime::Execution::QueryStatus::Stopped)
+                if (summary->currentStatus == QueryStatus::Failed
+                    || summary->currentStatus == QueryStatus::Stopped)
                 {
                     results.emplace_back(std::move(*summary));
                 }
@@ -113,7 +116,7 @@ NES::Systest::LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configu
 }
 NES::QueryId NES::Systest::RemoteWorkerQuerySubmitter::registerQuery(const Query& query)
 {
-    return QueryId(client.registerQuery(*query.queryPlan));
+    return QueryId(client.registerQuery(query.queryPlan));
 }
 void NES::Systest::RemoteWorkerQuerySubmitter::startQuery(QueryId query)
 {
@@ -127,17 +130,17 @@ void NES::Systest::RemoteWorkerQuerySubmitter::unregisterQuery(QueryId query)
 {
     client.unregister(query.getRawValue());
 }
-std::vector<NES::Runtime::QuerySummary> NES::Systest::RemoteWorkerQuerySubmitter::finishedQueries()
+std::vector<NES::QuerySummary> NES::Systest::RemoteWorkerQuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<Runtime::QuerySummary> results;
+        std::vector<QuerySummary> results;
         for (auto id : ids)
         {
             auto summary = client.status(id.getRawValue());
-            if (summary.status() == QueryStatus::Failed || summary.status() == QueryStatus::Stopped)
+            if (summary.currentStatus == QueryStatus::Failed || summary.currentStatus == QueryStatus::Stopped)
             {
-                results.emplace_back(deserialize(summary));
+                results.emplace_back(std::move(summary));
             }
         }
         if (results.empty())

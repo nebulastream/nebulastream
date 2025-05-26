@@ -15,9 +15,8 @@
 #include <cstdint>
 #include <optional>
 #include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
+#include <ExecutionContext.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -105,10 +104,10 @@ std::optional<PhysicalOperator> WindowProbePhysicalOperator::getChild() const
 {
     return child;
 }
-void WindowOperatorProbe::terminate(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
-    nautilus::invoke(terminateProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
-    Operator::terminate(executionCtx);
+    nautilus::invoke(terminateProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+    PhysicalOperatorConcept::terminate(executionCtx);
 }
 
 void WindowProbePhysicalOperator::setChild(PhysicalOperator child)

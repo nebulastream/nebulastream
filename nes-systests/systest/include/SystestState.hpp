@@ -111,10 +111,10 @@ struct RunningQuery
 {
     Query query;
     QueryId queryId = INVALID_QUERY_ID;
+    QueryExecutionInfo queryExecutionInfo;
     QuerySummary querySummary;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
-    bool passed = false;
 
     std::chrono::duration<double> getElapsedTime() const
     {

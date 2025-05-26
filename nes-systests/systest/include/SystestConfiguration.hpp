@@ -62,7 +62,7 @@ the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
-    Configurations::BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
+    NES::Configurations::BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
