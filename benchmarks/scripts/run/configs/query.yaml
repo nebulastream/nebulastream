@@ -40,7 +40,17 @@ logical:
         type: UINT64
       - name: timestamp
         type: UINT64
-      - name: payload
+      - name: payload4
+        type: VARSIZED
+  - name: tcp_source5
+    schema:
+      - name: id5
+        type: UINT64
+      - name: value5
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+      - name: payload5
         type: VARSIZED
 physical:
   - logical: tcp_source
@@ -84,6 +94,17 @@ physical:
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: 5013
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
+  - logical: tcp_source5
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5014
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
