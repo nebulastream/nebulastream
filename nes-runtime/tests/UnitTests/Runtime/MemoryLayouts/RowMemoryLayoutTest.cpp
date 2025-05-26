@@ -58,7 +58,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
                               .addField("t3", DataType::Type::UINT8);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 }
 
@@ -73,7 +73,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -97,7 +97,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -124,7 +124,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -161,7 +161,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -202,7 +202,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -255,7 +255,7 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -280,7 +280,7 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
                               .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(bufferManager->getBufferSize(), schema));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -320,7 +320,7 @@ TEST_F(RowMemoryLayoutTest, getFieldOffset)
                             .addField("t1", DataType::Type::UINT8)
                             .addField("t2", DataType::Type::UINT8)
                             .addField("t3", DataType::Type::UINT8);
-    const auto columnLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    const auto columnLayout = RowLayout::create(bufferManager->getBufferSize(), schema);
 
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
