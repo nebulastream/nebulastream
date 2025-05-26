@@ -116,12 +116,12 @@ std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(con
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, schema);
         return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
     }
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
+        auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, schema);
         return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
     }
     throw NotImplemented("Currently only row and column layout are supported");
