@@ -24,6 +24,6 @@ target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-create_registries_for_component(PhysicalFunction)
+create_registries_for_component(PhysicalFunction AggregationFunction)
 
 add_tests_if_enabled(tests)
