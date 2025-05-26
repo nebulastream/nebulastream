@@ -165,7 +165,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         else if (name == "Median")
         {
             auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                logicalOperator.getInputSchemas()[0], NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE);
+                NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
             auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
             aggregationFunctions.emplace_back(std::make_shared<MedianAggregationFunction>(
                 std::move(physicalInputType),

@@ -22,7 +22,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(Schema schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, std::move(schema))
+ColumnLayout::ColumnLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -37,9 +37,9 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(uint64_t bufferSize, Schema schema)
 {
-    return std::make_shared<ColumnLayout>(schema, bufferSize);
+    return std::make_shared<ColumnLayout>(bufferSize, std::move(schema));
 }
 
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const

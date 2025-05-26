@@ -52,7 +52,7 @@ public:
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;
-            ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NO_THROW(layout = RowLayout::create(bufferManager->getBufferSize(), schema));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -61,7 +61,7 @@ public:
         else
         {
             std::shared_ptr<ColumnLayout> layout;
-            ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NO_THROW(layout = ColumnLayout::create(bufferManager->getBufferSize(), schema));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
