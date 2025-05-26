@@ -158,8 +158,7 @@ void buildPipelineRecursively(
             {
                 buildPipelineRecursively(child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
             }
-        }
-        else
+        } else
         {
             currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
             if (opWrapper->getHandler() && opWrapper->getHandlerId())
