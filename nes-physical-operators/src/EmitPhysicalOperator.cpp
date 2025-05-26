@@ -139,7 +139,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
-    const auto tupleSize = memoryProvider->getMemoryLayout()->getSchema().getSchemaSizeInBytes();
+    const auto tupleSize = memoryProvider->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
     const auto usedMemorySize = numRecords * tupleSize;
 
     recordBuffer.setNumRecords(numRecords);

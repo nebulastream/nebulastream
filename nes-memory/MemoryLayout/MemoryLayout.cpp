@@ -82,12 +82,12 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSiz
 
 std::shared_ptr<MemoryLayout> MemoryLayout::createMemoryLayout(const Schema& schema, const uint64_t bufferSize)
 {
-    switch (schema.getLayoutType())
+    switch (schema.memoryLayoutType)
     {
         case Schema::MemoryLayoutType::ROW_LAYOUT:
-            return std::make_shared<RowLayout>(schema, bufferSize);
+            return RowLayout::create(bufferSize, schema);
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
-            return std::make_shared<ColumnLayout>(schema, bufferSize);
+            return ColumnLayout::create(bufferSize, schema);
         default: {
             NES_FATAL_ERROR("Unknown memory layout type");
             return nullptr;
@@ -147,15 +147,17 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
 
 std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGroupedFieldTypeSizes() const
 {
+    auto keyFieldNameCnt = 0UL;
     std::vector<std::tuple<FieldType, uint64_t>> fieldTypeSizes;
-    for (auto fieldIdx = 0UL; fieldIdx < schema.getFieldCount(); ++fieldIdx)
+    for (auto fieldIdx = 0UL; fieldIdx < schema.getNumberOfFields(); ++fieldIdx)
     {
         FieldType fieldType;
         uint64_t fieldSize = getFieldSize(fieldIdx);
-        if (Util::instanceOf<VariableSizedDataType>(schema.getFieldByIndex(fieldIdx).getDataType()))
+        if (schema.getFieldAt(fieldIdx).dataType.isType(DataType::Type::VARSIZED))
         {
-            if (std::ranges::find(keyFieldNames, schema.getFieldNames()[fieldIdx]) != keyFieldNames.end())
+            if (std::ranges::find(keyFieldNames, schema.getFieldAt(fieldIdx).name) != keyFieldNames.end())
             {
+                keyFieldNameCnt++;
                 fieldType = FieldType::KEY_VARSIZED;
             }
             else
@@ -165,8 +167,9 @@ std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGrou
         }
         else
         {
-            if (std::ranges::find(keyFieldNames, schema.getFieldNames()[fieldIdx]) != keyFieldNames.end())
+            if (std::ranges::find(keyFieldNames, schema.getFieldAt(fieldIdx).name) != keyFieldNames.end())
             {
+                keyFieldNameCnt++;
                 fieldType = FieldType::KEY;
             }
             else
@@ -187,15 +190,19 @@ std::vector<std::tuple<MemoryLayout::FieldType, uint64_t>> MemoryLayout::getGrou
         fieldTypeSizes.emplace_back(std::make_tuple(fieldType, fieldSize));
     }
 
+    if (keyFieldNames.size() != keyFieldNameCnt)
+    {
+        throw std::runtime_error("Size of keyFieldNames vector does not match the number of found key fields");
+    }
     return fieldTypeSizes;
 }
 
 Schema MemoryLayout::createKeyFieldsOnlySchema() const
 {
-    auto keyFieldsOnlySchema = Schema(schema.getLayoutType());
+    auto keyFieldsOnlySchema = Schema(schema.memoryLayoutType);
     for (const auto& keyFieldName : keyFieldNames)
     {
-        keyFieldsOnlySchema.addField(keyFieldName, schema.getFieldByName(keyFieldName).value().getDataType());
+        keyFieldsOnlySchema.addField(keyFieldName, schema.getFieldByName(keyFieldName).value().dataType);
     }
     return keyFieldsOnlySchema;
 }
