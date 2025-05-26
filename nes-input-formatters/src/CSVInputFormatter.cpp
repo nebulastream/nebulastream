@@ -527,7 +527,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
-        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSchemaSizeInBytes());
+        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
 
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
@@ -553,7 +553,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
-        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSchemaSizeInBytes());
+        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -634,7 +634,7 @@ void CSVInputFormatter::flushFinalTuple(
     {
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
-        finalFormattedBuffer.setUsedMemorySize(progressTracker.getNumTuplesInTBFormatted() * schema.getSchemaSizeInBytes());
+        finalFormattedBuffer.setUsedMemorySize(progressTracker.getNumTuplesInTBFormatted() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
