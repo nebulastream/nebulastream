@@ -116,7 +116,6 @@ std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 1, "Sink should have one input");
     auto copy = *this;
     copy.inputOriginIds = ids[0];
     return copy;
