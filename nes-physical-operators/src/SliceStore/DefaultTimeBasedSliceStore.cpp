@@ -24,6 +24,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Locks.hpp>
@@ -85,28 +86,6 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBas
     return *this;
 }
 
-std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(const Slice& slice) const
-{
-    std::vector<WindowInfo> allWindows;
-
-    const auto sliceStart = slice.getSliceStart().getRawValue();
-    const auto sliceEnd = slice.getSliceEnd().getRawValue();
-    const auto windowSize = sliceAssigner.getWindowSize();
-    const auto windowSlide = sliceAssigner.getWindowSlide();
-
-    /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
-    /// In our window model, a window is always the size of the window size.
-    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
-    const auto lastWindowEnd = sliceStart + windowSize;
-
-    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
-    {
-        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
-    }
-
-    return allWindows;
-}
-
 DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 {
     deleteState();
@@ -132,7 +111,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     slicesWriteLocked->emplace(sliceEnd, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
-    for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
+    for (auto windowInfo : sliceAssigner.getAllWindowsForSlice(*newSlice))
     {
         auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
         INVARIANT(
