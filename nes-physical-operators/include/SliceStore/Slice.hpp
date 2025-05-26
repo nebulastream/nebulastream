@@ -27,6 +27,30 @@ namespace NES
 {
 
 
+/// Stores the information of a window. The start, end, and the identifier
+struct WindowInfo
+{
+    WindowInfo(const Timestamp windowStart, const Timestamp windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        if (windowEnd < windowStart)
+        {
+            this->windowStart = Timestamp(0);
+        }
+    }
+
+    WindowInfo(const uint64_t windowStart, const uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        if (windowEnd < windowStart)
+        {
+            this->windowStart = Timestamp(0);
+        }
+    }
+
+    bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+    Timestamp windowStart;
+    Timestamp windowEnd;
+};
+
 /// This enum helps to keep track of the status of a window by classifying the stages of the join
 /// The state transitions are as follows:
 ///                Current State |     Action                        | Next State

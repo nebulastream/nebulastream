@@ -60,10 +60,6 @@ public:
     uint64_t getWindowSize() const override;
 
 private:
-    /// Retrieves all window identifiers that correspond to this slice
-    std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
-
-
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
