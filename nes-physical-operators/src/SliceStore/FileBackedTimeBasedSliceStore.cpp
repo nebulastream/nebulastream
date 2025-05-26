@@ -320,9 +320,12 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     // TODO investigate why numTuples and numPages can be zero
                     if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
-                        auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
-                        pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
-                        memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                        // TODO why would fileReader be zero
+                        if (auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide))
+                        {
+                            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
+                            memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                        }
                     }
                     // TODO handle wrong predictions
                     break;
