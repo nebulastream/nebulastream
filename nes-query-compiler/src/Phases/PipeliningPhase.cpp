@@ -56,6 +56,26 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
 
+/// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
+std::shared_ptr<Pipeline> createNewPiplineWithScan(
+    const std::shared_ptr<Pipeline>& prevPipeline,
+    OperatorPipelineMap& pipelineMap,
+    const PhysicalOperatorWrapper& wrappedOpAfterScan,
+    uint64_t configuredBufferSize)
+{
+    auto schema = wrappedOpAfterScan.getInputSchema();
+    INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
+
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
+    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+
+    const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    prevPipeline->addSuccessor(newPipeline, prevPipeline);
+    pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
+    newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
+    return newPipeline;
+}
+
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
@@ -122,16 +142,37 @@ void buildPipelineRecursively(
     /// it should close the pipeline without adding a default emit
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
-        currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
-        if (opWrapper->getHandler() && opWrapper->getHandlerId())
+        if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
-            currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
+            /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
+            /// current operator to create a new pipeline
+            auto newPipeline = createNewPiplineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+            if (opWrapper->getHandler().has_value())
+            {
+                /// Create an operator handler for the custom emit operator
+                const OperatorHandlerId operatorHandlerIndex = opWrapper->getHandlerId().value();
+                newPipeline->getOperatorHandlers().emplace(operatorHandlerIndex, opWrapper->getHandler().value());
+            }
+
+            for (auto& child : opWrapper->getChildren())
+            {
+                buildPipelineRecursively(child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            }
         }
-        pipelineMap.emplace(opId, currentPipeline);
-        for (auto& child : opWrapper->getChildren())
+        else
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
+            if (opWrapper->getHandler() && opWrapper->getHandlerId())
+            {
+                currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
+            }
+            pipelineMap.emplace(opId, currentPipeline);
+            for (auto& child : opWrapper->getChildren())
+            {
+                buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            }
         }
+
         return;
     }
 
