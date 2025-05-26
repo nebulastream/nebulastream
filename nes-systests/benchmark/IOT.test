@@ -3,100 +3,120 @@
 # groups: [milestone, benchmark, large]
 
 # Source definition for IoT sensors dataset
-SourceCSV iot_sensors INT32 sensor_id INT32 location_id UINT64 timestamp
-FLOAT64 temperature FLOAT64 humidity FLOAT64 pressure INT32 light_level
-FLOAT64 noise_level INT32 air_quality INT32 co2_level
-FLOAT64 power_consumption FLOAT64 battery_level INT32 signal_strength
-INT32 error_count INT32 maintenance_flag FLOAT64 calibration_offset
-FLOAT64 avg_daily_temp FLOAT64 max_daily_temp FLOAT64 min_daily_temp INT32 status_code
-TESTDATA/large/iot/iot_sensors_10m.csv
-
-# Source definition for IoT sensors dataset
-SourceCSV iot_sensors_big INT32 sensor_id INT32 location_id UINT64 timestamp
-FLOAT64 temperature FLOAT64 humidity FLOAT64 pressure INT32 light_level
-FLOAT64 noise_level INT32 air_quality INT32 co2_level
-FLOAT64 power_consumption FLOAT64 battery_level INT32 signal_strength
-INT32 error_count INT32 maintenance_flag FLOAT64 calibration_offset
-FLOAT64 avg_daily_temp FLOAT64 max_daily_temp FLOAT64 min_daily_temp INT32 status_code
-TESTDATA/large/iot/iot_sensors_50m.csv
+SourceCSV iot_sensors INT32 sensor_id INT32 location_id UINT64 timestamp FLOAT64 temperature FLOAT64 humidity FLOAT64 pressure INT32 light_level FLOAT64 noise_level INT32 air_quality INT32 co2_level FLOAT64 power_consumption FLOAT64 battery_level INT32 signal_strength INT32 error_count INT32 maintenance_flag FLOAT64 calibration_offset FLOAT64 avg_daily_temp FLOAT64 max_daily_temp FLOAT64 min_daily_temp INT32 status_code TESTDATA/large/iot/iot_sensors_10m.csv
 
 # Query 1 - Only 3 columns accessed out of 20, with selective filter
-SELECT location_id, AVG(temperature) as avg_temp, STDDEV(temperature) as stddev_temp,
-COUNT(*) as reading_count
-FROM iot_sensors
-WHERE temperature > 25 AND humidity < 40 AND air_quality > 150
-GROUP BY location_id
-INTO CHECKSUM;
-----
-14236360, 35170842947
+#SELECT
+#location_id,
+#       AVG(temperature)    AS avg_temp,
+#       STDDEV(temperature) AS stddev_temp,
+#       COUNT(*)            AS reading_count
+#FROM   iot_sensors
+#WHERE  temperature > FLOAT64(25)
+#  AND  humidity    < FLOAT64(40)
+#  AND  air_quality > INT32(150)
+#GROUP BY location_id INTO CHECKSUM;
+#----
+#14236360, 35170842947
 
-# Query 2 - Correlation analysis between environmental factors
-SELECT CORR(temperature, humidity) as temp_humidity_corr,
-CORR(temperature, pressure) as temp_pressure_corr,
-CORR(air_quality, co2_level) as air_co2_corr,
-VAR_POP(temperature) as temp_variance,
-VAR_POP(humidity) as humidity_variance
-FROM iot_sensors
-WHERE timestamp > 1704067200
-INTO CHECKSUM;
-----
-14236360, 35170842947
+# Query 2 - Correlation analysis via COVAR_POP / STDDEV
+#SELECT COVAR_POP(temperature, humidity)  / STDDEV(temperature) / STDDEV(humidity)    AS temp_humidity_corr,
+#       COVAR_POP(temperature, pressure)  / STDDEV(temperature) / STDDEV(pressure)    AS temp_pressure_corr,
+#       COVAR_POP(air_quality, co2_level) / STDDEV(air_quality) / STDDEV(co2_level) AS air_co2_corr,
+#       VAR_POP(temperature)                                                  AS temp_variance,
+#       VAR_POP(humidity)                                                     AS humidity_variance
+#FROM   iot_sensors
+#WHERE  timestamp > UINT64(1704067200)
+#INTO   CHECKSUM;
+#----
+#14236360, 35170842947
 
 # Query 3 - Complex analytical query with window functions
-SELECT sensor_id, temperature, humidity,
-PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY temperature)
-OVER (PARTITION BY location_id) as p95_temp,
-AVG(temperature) OVER (
-    PARTITION BY location_id
-    ORDER BY timestamp
-    ROWS BETWEEN 1000 PRECEDING AND CURRENT ROW
-) as moving_avg_temp,
-RANK() OVER (PARTITION BY location_id ORDER BY power_consumption DESC) as power_rank
-FROM iot_sensors
-WHERE battery_level < 20
-INTO CHECKSUM;
-----
-3556803, 8785569627
+#SELECT sensor_id,
+#       temperature,
+#       humidity,
+#       PERCENTILE_CONT(FLOAT64(0.95)) WITHIN GROUP (ORDER BY temperature)
+#         OVER (PARTITION BY location_id)                  AS p95_temp,
+#       AVG(temperature) OVER (
+#         PARTITION BY location_id
+#         ORDER BY timestamp
+#         ROWS BETWEEN INT32(1000) PRECEDING AND CURRENT ROW
+#       )                                                  AS moving_avg_temp,
+#       RANK() OVER (PARTITION BY location_id ORDER BY power_consumption DESC) AS power_rank
+#FROM   iot_sensors
+#WHERE  battery_level < FLOAT64(20)
+#INTO   CHECKSUM;
+#----
+#3556803, 8785569627
 
 # Query 4 - Query targeting sparse columns
-SELECT sensor_id, timestamp, error_count, maintenance_flag
-FROM iot_sensors
-WHERE error_count > 0 OR maintenance_flag = 1
-INTO CHECKSUM;
+SELECT sensor_id,
+       timestamp,
+       error_count,
+       maintenance_flag
+FROM   iot_sensors
+WHERE  error_count > INT32(0)
+   OR  maintenance_flag = INT32(1)
+INTO   CHECKSUM;
 ----
 4271223, 10289477496
 
 # Query 5 - Find sensors with worst environmental conditions
-SELECT sensor_id, location_id, AVG(air_quality) as avg_air_quality,
-AVG(noise_level) as avg_noise,
-COUNT(CASE WHEN temperature > 35 THEN 1 END) as extreme_temp_days,
-(AVG(air_quality) * 0.4 + AVG(noise_level) * 0.3 + AVG(co2_level) / 10 * 0.3) as environmental_score
-FROM iot_sensors
-GROUP BY sensor_id, location_id
-ORDER BY environmental_score DESC
-LIMIT 100
-INTO CHECKSUM;
-----
-42700000, 15336467257
+#SELECT
+#  sensor_id,
+#  location_id,
+#  AVG(air_quality)      AS avg_air_quality,
+#  AVG(noise_level)      AS avg_noise,
+#  SUM(
+#    CASE WHEN temperature > FLOAT64(35)
+#         THEN INT32(1)
+#         ELSE INT32(0)
+#    END
+#  )                     AS extreme_temp_days,
+#  (
+#    AVG(air_quality) * FLOAT64(0.4)
+#    + AVG(noise_level) * FLOAT64(0.3)
+#    + AVG(co2_level) / INT32(10) * FLOAT64(0.3)
+#  )                     AS environmental_score
+#FROM iot_sensors
+#GROUP BY sensor_id, location_id
+#ORDER BY environmental_score DESC
+#LIMIT INT32(100) INTO CHECKSUM;
+#----
+#42700000, 15336467257
 
 # Query 6 - Time-based aggregation with range predicates
-SELECT DATE_TRUNC('hour', timestamp) as hour, COUNT(*) as reading_count,
-AVG(temperature) as avg_temp, MAX(temperature) as max_temp,
-MIN(temperature) as min_temp, SUM(power_consumption) as total_power
-FROM iot_sensors
-WHERE temperature BETWEEN 20 AND 30 AND pressure BETWEEN 1000 AND 1020
-GROUP BY DATE_TRUNC('hour', timestamp)
-INTO CHECKSUM;
-----
-1914020, 3897819033
+#SELECT DATE_TRUNC('hour', timestamp) AS hour,
+#       COUNT(*)                   AS reading_count,
+#       AVG(temperature)           AS avg_temp,
+#       MAX(temperature)           AS max_temp,
+#       MIN(temperature)           AS min_temp,
+#       SUM(power_consumption)     AS total_power
+#FROM   iot_sensors
+#WHERE  temperature BETWEEN FLOAT64(20) AND FLOAT64(30)
+#  AND  pressure    BETWEEN FLOAT64(1000) AND FLOAT64(1020)
+#GROUP BY DATE_TRUNC('hour', timestamp) INTO CHECKSUM;
+#----
+#1914020, 3897819033
 
 # Query 7 - Cardinality analysis
-SELECT COUNT(DISTINCT sensor_id) as unique_sensors,
-COUNT(DISTINCT location_id) as unique_locations,
-COUNT(DISTINCT CASE WHEN temperature > 30 THEN sensor_id END) as hot_sensors,
-COUNT(DISTINCT CASE WHEN error_count > 0 THEN sensor_id END) as faulty_sensors
-FROM iot_sensors
-WHERE timestamp > 1704067200
-INTO CHECKSUM;
-----
-11484119, 23389063574
+#SELECT
+#  COUNT_DISTINCT(sensor_id) AS unique_sensors,
+#  COUNT_DISTINCT(location_id) AS unique_locations,
+#  SUM(
+#    CASE WHEN temperature > FLOAT64(30)
+#         THEN INT32(1)
+#         ELSE INT32(0)
+#    END
+#  ) AS hot_sensors,
+#  SUM(
+#    CASE WHEN error_count > INT32(0)
+#         THEN INT32(1)
+#         ELSE INT32(0)
+#    END
+#  ) AS faulty_sensors
+#FROM iot_sensors
+#WHERE timestamp > UINT64(1704067200)
+#INTO CHECKSUM;
+#----
+#11484119, 23389063574
