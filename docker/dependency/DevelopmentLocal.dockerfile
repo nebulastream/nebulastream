@@ -20,8 +20,7 @@ RUN apt update && apt install -y \
     git\
     pkg-config\
     libelf-dev\
-    linux-tools-common \
-    linux-tools-`uname -r`
+    linux-tools-common
 
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
