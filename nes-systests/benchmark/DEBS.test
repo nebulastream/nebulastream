@@ -10,7 +10,7 @@ SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZ
 
 # Query 0b - Simple Source Sink with solarPanels stream
 #SELECT * FROM consumers  WHERE consumedPower <= UINT8(3) INTO CHECKSUM;
-SELECT * FROM solarPanels  WHERE producedPower <= UINT8(3) INTO CHECKSUM;
+SELECT * FROM solarPanels  WHERE producedPower >= UINT8(3) INTO CHECKSUM;
 ----
 14236360, 35170842947
 

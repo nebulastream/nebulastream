@@ -3,7 +3,7 @@
 # groups: [milestone, benchmark, large]
 
 # Source definition for IoT sensors dataset
-SourceCSV iot_sensors INT32 sensor_id INT32 location_id UINT64 timestamp FLOAT64 temperature FLOAT64 humidity FLOAT64 pressure INT32 light_level FLOAT64 noise_level INT32 air_quality INT32 co2_level FLOAT64 power_consumption FLOAT64 battery_level INT32 signal_strength INT32 error_count INT32 maintenance_flag FLOAT64 calibration_offset FLOAT64 avg_daily_temp FLOAT64 max_daily_temp FLOAT64 min_daily_temp INT32 status_code TESTDATA/large/iot/iot_sensors_10m.csv
+SourceCSV iot_sensors INT32 sensor_id INT32 location_id UINT64 timestamp FLOAT64 temperature FLOAT64 humidity FLOAT64 pressure INT32 light_level FLOAT64 noise_level INT32 air_quality INT32 co2_level FLOAT64 power_consumption FLOAT64 battery_level INT32 signal_strength INT32 error_count INT32 maintenance_flag FLOAT64 calibration_offset FLOAT64 avg_daily_temp FLOAT64 max_daily_temp FLOAT64 min_daily_temp INT32 status_code TESTDATA/iot/iot_sensors_10m.csv
 
 # Query 1 - Only 3 columns accessed out of 20, with selective filter
 #SELECT
