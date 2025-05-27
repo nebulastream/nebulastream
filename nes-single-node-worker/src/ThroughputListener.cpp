@@ -28,10 +28,15 @@ namespace
 
 Timestamp convertToTimeStamp(const ChronoClock::time_point timePoint)
 {
-    const unsigned long milliSecondsSinceEpoch
-        = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint).time_since_epoch().count();
+    const auto milliSecondsSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint.time_since_epoch()).count();
     INVARIANT(milliSecondsSinceEpoch > 0, "milliSecondsSinceEpoch should be larger than 0 but are {}", milliSecondsSinceEpoch);
     return Timestamp(milliSecondsSinceEpoch);
+}
+
+std::chrono::system_clock::time_point convertToSystemClock(const std::chrono::high_resolution_clock::time_point& highResTimePoint)
+{
+    const auto durationSinceEpoch = highResTimePoint.time_since_epoch();
+    return std::chrono::system_clock::time_point(std::chrono::duration_cast<std::chrono::system_clock::duration>(durationSinceEpoch));
 }
 
 void threadRoutine(
@@ -107,7 +112,7 @@ void threadRoutine(
             if (noEventSeenFor > static_cast<long>(timeIntervalInMilliSeconds))
             {
                 /// We call the callback and set the throughput to 0 and create a window of the current time
-                const auto curTime = convertToTimeStamp(curTimePoint);
+                const auto curTime = convertToTimeStamp(convertToSystemClock(curTimePoint));
                 const auto windowStart = sliceAssigner.getSliceStartTs(curTime);
                 const auto windowEnd = sliceAssigner.getSliceEndTs(curTime);
                 const ThroughputListener::CallBackParams callbackParams
