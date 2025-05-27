@@ -11,6 +11,8 @@
 # limitations under the License.
 add_plugin_as_library(RustFile Source nes-sources-registry rust_file_source_plugin_library RustFileSource.cpp)
 add_plugin_as_library(RustFile SourceValidation nes-sources-registry rust_file_validation_plugin_library RustFileSource.cpp)
+add_plugin_as_library(RustFile InlineData nes-sources-registry rust_file_inline_data_plugin_library RustFileSource.cpp)
+add_plugin_as_library(RustFile FileData nes-sources-registry rust_file_file_data_plugin_library RustFileSource.cpp)
 target_include_directories(rust_file_validation_plugin_library
         PUBLIC include
         PRIVATE .
@@ -18,6 +20,8 @@ target_include_directories(rust_file_validation_plugin_library
 
 add_dependencies(rust_file_source_plugin_library rust_build)
 add_dependencies(rust_file_validation_plugin_library rust_build)
+add_dependencies(rust_file_inline_data_plugin_library rust_build)
+add_dependencies(rust_file_file_data_plugin_library rust_build)
 target_link_libraries(rust_file_source_plugin_library PRIVATE rust-example)
 
 set(RUST_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust-example-cxx")

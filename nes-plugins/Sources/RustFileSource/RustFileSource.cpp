@@ -22,6 +22,8 @@ limitations under the License.
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 #include "cxx.hpp"
 #include "lib.rs.hpp"
 
@@ -50,13 +52,7 @@ namespace NES::Sources
 
     std::size_t RustFileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
     {
-        auto before = std::chrono::high_resolution_clock::now().time_since_epoch();
-        auto result = this->impl->fill_tuple_buffer(tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
-        auto after = std::chrono::high_resolution_clock::now().time_since_epoch();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count();
-        std::cout << "RustFileSource needed " << elapsed << "μs to fillTupleBuffer of "
-                  << tupleBuffer.getBufferSize() << "bytes." << std::endl;
-        return result;
+        return this->impl->fill_tuple_buffer(tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
     }
 
     NES::Configurations::DescriptorConfig::Config RustFileSource::validateAndFormat(
@@ -84,6 +80,48 @@ namespace NES::Sources
     SourceRegistryReturnType SourceGeneratedRegistrar::RegisterRustFileSource(SourceRegistryArguments sourceRegistryArguments)
     {
         return std::make_unique<RustFileSource>(sourceRegistryArguments.sourceDescriptor);
+    }
+
+    InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterRustFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+    {
+        if (systestAdaptorArguments.attachSource.tuples)
+        {
+            if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+                filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                filePath->second = systestAdaptorArguments.testFilePath;
+                if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+                {
+                    /// Write inline tuples to test file.
+                    for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
+                    {
+                        testFile << tuple << "\n";
+                    }
+                    testFile.flush();
+                    return systestAdaptorArguments.physicalSourceConfig;
+                }
+                throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+            }
+            throw InvalidConfigParameter("A RustFileSource config must contain filePath parameter");
+        }
+        throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+    }
+
+    FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterRustFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+    {
+        /// Check that the test data dir is defined and that the 'filePath' parameter is set
+        /// Replace the 'TESTDATA' placeholder in the filepath
+        if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+        {
+            if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+                filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                filePath->second = attachSourceFilePath.value();
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A RustFileSource config must contain filePath parameter.");
+        }
+        throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
     }
 
 }
