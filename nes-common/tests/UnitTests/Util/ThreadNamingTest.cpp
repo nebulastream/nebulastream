@@ -16,12 +16,11 @@
 #include <cstring>
 #include <string_view>
 #include <pthread.h>
-#include <unistd.h>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES

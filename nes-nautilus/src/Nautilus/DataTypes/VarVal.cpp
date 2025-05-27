@@ -13,20 +13,22 @@
 */
 
 #include <cstdint>
-#include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 
 #include <type_traits>
+#include <variant>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <fmt/format.h>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <val_concepts.hpp>
 
 
 namespace NES::Nautilus

@@ -14,9 +14,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>

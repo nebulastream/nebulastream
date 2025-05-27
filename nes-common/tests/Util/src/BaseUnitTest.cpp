@@ -11,8 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <chrono>
+#include <exception>
+#include <future>
 #include <memory>
+#include <sstream>
+#include <utility>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
 namespace NES

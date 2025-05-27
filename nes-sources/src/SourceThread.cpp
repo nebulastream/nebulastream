@@ -18,13 +18,14 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <thread>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>

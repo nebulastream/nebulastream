@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -28,6 +30,8 @@
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {

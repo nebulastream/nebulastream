@@ -17,8 +17,9 @@
 #include <memory>
 #include <optional>
 #include <ranges>
-#include <regex>
+#include <string>
 #include <utility>
+#include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
@@ -53,7 +54,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
-#include <Util/Common.hpp>
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>

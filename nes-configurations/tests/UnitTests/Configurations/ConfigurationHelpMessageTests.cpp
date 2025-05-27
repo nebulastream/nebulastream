@@ -12,15 +12,19 @@
     limitations under the License.
 */
 
-#include <fstream>
-#include <iostream>
+#include <cstddef>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Util.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 

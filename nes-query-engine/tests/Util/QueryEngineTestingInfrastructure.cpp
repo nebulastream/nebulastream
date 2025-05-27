@@ -17,6 +17,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <future>
 #include <initializer_list>
@@ -37,6 +38,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <CompiledQueryPlan.hpp>

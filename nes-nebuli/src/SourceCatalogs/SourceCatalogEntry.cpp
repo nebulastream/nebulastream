@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+#include <sstream>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>

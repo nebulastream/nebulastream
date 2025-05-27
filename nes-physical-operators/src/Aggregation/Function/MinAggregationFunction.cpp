@@ -14,7 +14,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <Aggregation/Function/MinAggregationFunction.hpp>
@@ -23,9 +22,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <ExecutionContext.hpp>
-#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES

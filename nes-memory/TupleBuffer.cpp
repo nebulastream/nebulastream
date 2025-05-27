@@ -13,10 +13,15 @@
 */
 
 #include <cstdint>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 

@@ -13,15 +13,20 @@
 */
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <utility>
+#include <vector>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <static.hpp>
+#include <val.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {

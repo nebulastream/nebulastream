@@ -16,8 +16,8 @@
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
 

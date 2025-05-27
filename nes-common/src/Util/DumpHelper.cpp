@@ -17,6 +17,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <string_view>
 #include <utility>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>

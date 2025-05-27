@@ -36,10 +36,8 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
-#include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>

@@ -30,7 +30,6 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>

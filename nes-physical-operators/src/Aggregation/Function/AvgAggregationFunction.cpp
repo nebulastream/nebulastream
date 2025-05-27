@@ -14,7 +14,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <Aggregation/Function/AvgAggregationFunction.hpp>
@@ -22,8 +21,8 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/std/cstring.h>
+#include <ExecutionContext.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>

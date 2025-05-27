@@ -19,6 +19,7 @@
 #include <iterator>
 #include <memory>
 #include <ranges>
+#include <thread>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>

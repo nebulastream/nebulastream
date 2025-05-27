@@ -12,7 +12,11 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/SourceDescriptor.hpp>

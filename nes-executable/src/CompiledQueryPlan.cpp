@@ -17,7 +17,6 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/Ranges.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 

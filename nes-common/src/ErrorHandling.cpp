@@ -12,10 +12,16 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
 #include <exception>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <Util/Logger/Logger.hpp>
+#include <cpptrace/basic.hpp>
+#include <fmt/base.h>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <from_current.hpp>
