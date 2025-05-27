@@ -13,17 +13,26 @@
 */
 
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <ranges>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+#include <ErrorHandling.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 

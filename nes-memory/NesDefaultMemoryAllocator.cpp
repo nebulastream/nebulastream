@@ -14,7 +14,6 @@
 
 #include <cstdlib>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory

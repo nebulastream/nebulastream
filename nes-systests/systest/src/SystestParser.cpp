@@ -19,7 +19,6 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -28,7 +27,6 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>

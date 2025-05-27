@@ -18,6 +18,8 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -28,6 +30,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
 
 namespace NES

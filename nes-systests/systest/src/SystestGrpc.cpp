@@ -13,14 +13,24 @@
 */
 
 
+#include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/empty.pb.h>
 #include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestGrpc.hpp>
 
 GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel))

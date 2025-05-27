@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <chrono>
 #include <memory>
 #include <utility>
-#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>

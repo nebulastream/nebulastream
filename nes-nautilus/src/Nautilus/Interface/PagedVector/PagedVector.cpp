@@ -13,8 +13,6 @@
 */
 
 #include <cstdint>
-#include <memory>
-#include <utility>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>

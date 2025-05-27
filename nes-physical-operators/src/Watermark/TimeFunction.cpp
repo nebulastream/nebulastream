@@ -16,7 +16,6 @@
 #include <utility>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>

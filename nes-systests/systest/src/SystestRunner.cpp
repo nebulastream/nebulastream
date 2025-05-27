@@ -12,20 +12,29 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <cmath>
+#include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <regex>
+#include <stop_token>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -34,19 +43,21 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <fmt/std.h>
-#include <folly/MPMCQueue.h>
+#include <folly/Synchronized.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestGrpc.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>

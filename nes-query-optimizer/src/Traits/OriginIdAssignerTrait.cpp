@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <ostream>
 #include <typeinfo>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>

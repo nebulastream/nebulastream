@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <ostream>
-#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/LogLevel.hpp>

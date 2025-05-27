@@ -13,11 +13,13 @@
 */
 
 
+#include <sstream>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
 

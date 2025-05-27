@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <fstream>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -27,7 +27,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>

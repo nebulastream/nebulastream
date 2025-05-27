@@ -18,7 +18,6 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
-#include <span>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -28,6 +27,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>

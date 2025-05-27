@@ -14,7 +14,6 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
 #include <tuple>
 #include <vector>
@@ -23,9 +22,11 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 

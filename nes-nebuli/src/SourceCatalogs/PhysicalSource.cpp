@@ -17,7 +17,6 @@
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 

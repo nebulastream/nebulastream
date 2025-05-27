@@ -12,13 +12,17 @@
     limitations under the License.
 */
 
-#include <algorithm>
+#include <cstdint>
 #include <numeric>
-#include <sstream>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Util.hpp>
+#include <std/ostream.h>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
+#include <val.hpp>
 
 namespace NES::Nautilus
 {

@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -25,6 +23,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>

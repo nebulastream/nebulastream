@@ -12,14 +12,17 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -30,11 +33,13 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
+#include <google/protobuf/empty.pb.h>
 #include <google/protobuf/text_format.h>
+#include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
@@ -43,8 +48,13 @@
 #include <IntegrationTestUtil.hpp>
 
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/TestTupleBuffer.hpp>
+#include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 

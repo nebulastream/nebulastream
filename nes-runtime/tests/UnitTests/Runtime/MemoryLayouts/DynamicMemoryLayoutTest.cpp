@@ -12,17 +12,22 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
+#include <tuple>
 #include <gtest/gtest.h>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/ColumnLayoutField.hpp>
-#include <MemoryLayout/RowLayoutField.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {

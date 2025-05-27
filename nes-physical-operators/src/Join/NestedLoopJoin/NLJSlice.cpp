@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>

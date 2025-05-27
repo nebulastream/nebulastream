@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>

@@ -18,11 +18,16 @@
 #include <map>
 #include <random>
 #include <thread>
+#include <tuple>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>

@@ -25,7 +25,6 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <FileSource.hpp>

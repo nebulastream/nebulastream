@@ -13,6 +13,7 @@
 */
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>

@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <random>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StdInt.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>

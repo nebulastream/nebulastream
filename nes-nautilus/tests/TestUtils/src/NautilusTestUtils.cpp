@@ -38,7 +38,6 @@
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Common.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>

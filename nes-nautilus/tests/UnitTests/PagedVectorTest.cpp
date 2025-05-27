@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -23,15 +22,10 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Common.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,8 +37,6 @@
 #include <NautilusTestUtils.hpp>
 #include <PagedVectorTestUtils.hpp>
 #include <options.hpp>
-#include <val.hpp>
-#include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface
 {

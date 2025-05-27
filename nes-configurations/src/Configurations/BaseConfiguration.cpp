@@ -13,14 +13,21 @@
 */
 
 #include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
-#include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Configurations

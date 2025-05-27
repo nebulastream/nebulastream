@@ -12,15 +12,9 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
-#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
 #include <SerializableDataType.pb.h>
 
 namespace NES

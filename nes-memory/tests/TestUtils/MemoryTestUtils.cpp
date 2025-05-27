@@ -17,7 +17,6 @@
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
 

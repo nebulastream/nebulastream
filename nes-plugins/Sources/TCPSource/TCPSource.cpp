@@ -27,6 +27,7 @@
 #include <vector>
 #include <sys/select.h>
 
+#include <cstdio>
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h> /// For read
@@ -37,7 +38,6 @@
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
 #include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
