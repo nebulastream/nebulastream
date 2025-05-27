@@ -18,7 +18,6 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -55,34 +54,6 @@ std::shared_ptr<DecomposedQueryPlan> LowerLogicalToPhysicalOperators::apply(std:
     const std::vector<std::shared_ptr<Node>> nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
     {
-        if (Util::instanceOf<LogicalSelectionOperator>(node))
-        {
-          auto filterOperator=  Util::as<LogicalSelectionOperator>(node);
-          auto fieldNames = filterOperator->getFieldNamesUsedByFilterPredicate();
-          auto schema = Schema::create(filterOperator->getOutputSchema()->getLayoutType());
-          /// add only fields used by filter predicate to schema
-          for (const auto& fieldName : fieldNames)
-          {
-            const auto field = filterOperator->getOutputSchema()->getFieldByName(fieldName);
-            if (field.has_value())
-                schema->addField(field.value());
-          }
-          filterOperator->setOutputSchema(schema);
-          /// update sink to receive altered fields
-          auto sinkSchema = schema->copy();
-          sinkSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
-            for (const auto& parent : decomposedQueryPlan->getRootOperators())
-            {
-                if (Util::instanceOf<SinkLogicalOperator>(parent))
-                {
-                    auto sink = Util::as<SinkLogicalOperator>(parent);
-                    sink->sinkDescriptor->schema = sinkSchema;
-                    sink->setInputSchema(sinkSchema);
-                    sink->setOutputSchema(sinkSchema);
-                    //decomposedQueryPlan->replaceRootOperator(parent, sink);
-                }
-            }
-        }
         provider->lower(*decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));
     }
     return decomposedQueryPlan;
