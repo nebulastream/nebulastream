@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <WindowProbePhysicalOperator.hpp>
@@ -144,7 +145,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     nautilus::invoke(
         +[](EmittedAggregationWindow* emittedAggregationWindow)
         {
-            NES_INFO(
+            NES_TRACE(
                 "Resetting final hash map of emitted aggregation window start at {} and end at {}",
                 emittedAggregationWindow->windowInfo.windowStart,
                 emittedAggregationWindow->windowInfo.windowEnd);
