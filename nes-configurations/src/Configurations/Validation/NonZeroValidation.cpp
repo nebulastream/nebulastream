@@ -13,6 +13,7 @@
 */
 
 #include <regex>
+#include <string>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 
 namespace NES::Configurations

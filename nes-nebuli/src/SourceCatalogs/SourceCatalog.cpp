@@ -12,14 +12,19 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/LogicalSource.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>

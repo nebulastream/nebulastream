@@ -13,7 +13,6 @@
 */
 
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <Functions/ConcatPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>

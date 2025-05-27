@@ -12,25 +12,30 @@
     limitations under the License.
 */
 
-#include <filesystem>
-#include <fstream>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <Runtime/BufferManager.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <boost/asio.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <SingleNodeWorkerRPCService.pb.h>
+#include <SingleNodeWorkerConfiguration.hpp>
 
-#include <boost/asio.hpp>
 
 namespace NES::Testing
 {

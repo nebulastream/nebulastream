@@ -18,10 +18,12 @@
 #include <fstream>
 #include <iomanip>
 #include <ios>
+#include <istream>
 #include <numeric>
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>

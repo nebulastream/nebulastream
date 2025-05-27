@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <regex>
+#include <string>
 #include <Configurations/Validation/IpValidation.hpp>
 
 namespace NES::Configurations

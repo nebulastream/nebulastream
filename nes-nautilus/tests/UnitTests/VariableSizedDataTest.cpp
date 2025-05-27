@@ -12,18 +12,24 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <ios>
 #include <iosfwd>
 #include <random>
+#include <utility>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <gtest/gtest.h>
 #include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
-#include <nautilus/std/iostream.h>
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {

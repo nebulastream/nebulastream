@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -19,11 +20,11 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include <val.hpp>
 
 namespace NES
 {

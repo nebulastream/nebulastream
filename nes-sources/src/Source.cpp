@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Sources/Source.hpp>
 
 namespace NES::Sources

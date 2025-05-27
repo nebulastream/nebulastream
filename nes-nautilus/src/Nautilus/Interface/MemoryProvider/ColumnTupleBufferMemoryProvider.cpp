@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <vector>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -21,8 +22,11 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <val.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {

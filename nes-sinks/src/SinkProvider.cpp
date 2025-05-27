@@ -14,8 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sinks/SinkProvider.hpp>

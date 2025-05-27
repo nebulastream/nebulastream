@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -23,9 +22,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/PrintSink.hpp>
-#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <SinksParsing/CSVFormat.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Configurations/BaseOption.hpp>
 
 namespace NES::Configurations

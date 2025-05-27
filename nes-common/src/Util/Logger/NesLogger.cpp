@@ -12,12 +12,18 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
+#include <spdlog/common.h>
 #include <spdlog/details/periodic_worker.h>
+#include <spdlog/logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>

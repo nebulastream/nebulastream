@@ -21,7 +21,6 @@
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <stdexcept>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -36,7 +35,6 @@
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
-#include <MemoryTestUtils.hpp>
 #include <TestSource.hpp>
 
 namespace

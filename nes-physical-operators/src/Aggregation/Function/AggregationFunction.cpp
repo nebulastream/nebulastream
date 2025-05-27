@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <DataTypes/DataType.hpp>

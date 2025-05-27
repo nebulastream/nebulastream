@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <optional>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>

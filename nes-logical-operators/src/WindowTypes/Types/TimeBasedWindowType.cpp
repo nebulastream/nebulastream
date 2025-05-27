@@ -14,7 +14,6 @@
 
 #include <utility>
 #include <DataTypes/Schema.hpp>
-#include <Util/Common.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>

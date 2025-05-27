@@ -17,8 +17,12 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES

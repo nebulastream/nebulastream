@@ -14,12 +14,21 @@
 
 #include <cstddef>
 #include <fstream>
+#include <initializer_list>
 #include <iostream>
+#include <memory>
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <google/protobuf/empty.pb.h>
 #include <google/protobuf/text_format.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <magic_enum/magic_enum.hpp>
@@ -27,6 +36,7 @@
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <SingleNodeWorkerRPCService.pb.h>
 
 using namespace std::literals;
 

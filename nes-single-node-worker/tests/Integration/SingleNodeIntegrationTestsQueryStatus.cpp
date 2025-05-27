@@ -13,11 +13,15 @@
 */
 
 #include <chrono>
+#include <cstddef>
 #include <thread>
 #include <vector>
 
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <grpcpp/support/status.h>
@@ -26,6 +30,7 @@
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES::Testing

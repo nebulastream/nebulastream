@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

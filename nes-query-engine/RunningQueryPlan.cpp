@@ -27,8 +27,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Ranges.hpp>
+#include <Sources/SourceReturnType.hpp>
 #include <absl/functional/any_invocable.h>
 #include <CompiledQueryPlan.hpp>
 #include <EngineLogger.hpp>

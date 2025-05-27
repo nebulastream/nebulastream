@@ -13,12 +13,16 @@
 */
 
 
-#include <iomanip>
+#include <cstdint>
+#include <ostream>
+#include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
+#include <ErrorHandling.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Nautilus
 {

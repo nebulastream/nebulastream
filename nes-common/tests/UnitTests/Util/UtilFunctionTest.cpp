@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <vector>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Strings.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

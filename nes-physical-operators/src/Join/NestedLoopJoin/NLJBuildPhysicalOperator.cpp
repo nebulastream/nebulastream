@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
@@ -23,9 +22,8 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <nautilus/val_enum.hpp>

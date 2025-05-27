@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <string>
+#include <ostream>
 #include <Sinks/Sink.hpp>
 
 namespace NES::Sinks

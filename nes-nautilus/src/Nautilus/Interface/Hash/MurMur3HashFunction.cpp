@@ -14,6 +14,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>

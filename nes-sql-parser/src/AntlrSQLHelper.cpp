@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Parsers
 {

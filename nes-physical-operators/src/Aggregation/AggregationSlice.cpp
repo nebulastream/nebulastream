@@ -13,8 +13,11 @@
 */
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <numeric>
+#include <utility>
+#include <vector>
 #include <Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>

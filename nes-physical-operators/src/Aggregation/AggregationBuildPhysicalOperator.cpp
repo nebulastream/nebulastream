@@ -27,7 +27,6 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>

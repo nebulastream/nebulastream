@@ -13,22 +13,25 @@
 */
 
 
+#include <cstdint>
 #include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <numeric>
+#include <ostream>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <SingleNodeWorkerRPCService.pb.h>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 
 namespace NES::Testing

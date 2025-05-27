@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
