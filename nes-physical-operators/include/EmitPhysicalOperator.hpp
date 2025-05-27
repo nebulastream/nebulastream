@@ -41,7 +41,7 @@ public:
         ExecutionContext& ctx,
         RecordBuffer& recordBuffer,
         const nautilus::val<uint64_t>& numRecords,
-        const nautilus::val<bool>& isLastChunk) const;
+        const nautilus::val<bool>& potentialLastChunk) const;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;

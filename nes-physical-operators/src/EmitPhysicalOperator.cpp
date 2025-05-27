@@ -130,28 +130,37 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerId));
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
-    const nautilus::val<bool>& isLastChunk) const
+    const nautilus::val<bool>& potentialLastChunk) const
 {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
-    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerId));
-    recordBuffer.setLastChunk(isLastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
-    ctx.emitBuffer(recordBuffer);
 
-    if (isLastChunk == true)
+    /// Chunk Logic. Order matters.
+    /// A worker thread will clean up the sequence state for the current sequence number if its told it is the last
+    /// chunk number. Thus it is important to query the state first to get the next chunk number, before asking for the lastChunk
+    /// as this will mark the current chunknumber as processed and my allow a different worker thread to concurrently clean up.
+    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerId));
+    if (potentialLastChunk && isLastChunk(ctx, operatorHandlerId))
     {
         removeSequenceState(ctx, operatorHandlerId);
+        recordBuffer.setLastChunk(true);
     }
+    else
+    {
+        recordBuffer.setLastChunk(false);
+    }
+
+    ctx.emitBuffer(recordBuffer);
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(

@@ -25,3 +25,5 @@ target_include_directories(nes-physical-operators PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 create_registries_for_component(PhysicalFunction)
+
+add_tests_if_enabled(tests)
