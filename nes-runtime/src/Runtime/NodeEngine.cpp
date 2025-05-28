@@ -155,6 +155,7 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                 ;
                 auto plan = predecessorPlans.front();
                 if (predecessorPlan->getDecomposedQueryVersion() > highestSeenVersion) {
+                    NES_ERROR("Version {} is higher than version {} updating predecessor plan", plan->getDecomposedQueryVersion(), highestSeenVersion)
                     highestSeenVersion = predecessorPlan->getDecomposedQueryVersion();
                     predecessorPlan = plan;
                 }
@@ -163,7 +164,8 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
         }
     }
     //return false;
-    return predecessorPlan && predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
+    NES_ERROR("Returning result for existence of precessor")
+    return (predecessorPlan != nullptr) && predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
 }
 
 bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData) {
