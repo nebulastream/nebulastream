@@ -27,7 +27,6 @@
 #include <SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Locks.hpp>
 #include <folly/Synchronized.h>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -74,15 +73,13 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(other.writeExecTimeFunction)
     , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
+    , slicesInMemory(other.slicesInMemory)
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , sliceStoreInfo(other.sliceStoreInfo)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
 {
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
-
+    slicesInMemoryMutexes = std::vector<std::mutex>(other.numberOfWorkerThreads);
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
     {
         watermarkPredictorUpdateCnt.emplace(origin, count.load());
@@ -96,24 +93,20 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
+    , slicesInMemory(std::move(other.slicesInMemory))
+    , slicesInMemoryMutexes(std::move(other.slicesInMemoryMutexes))
     , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
     , sliceStoreInfo(std::move(other.sliceStoreInfo))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
 {
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore& other)
 {
     DefaultTimeBasedSliceStore::operator=(other);
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
-
+    slicesInMemoryMutexes = std::vector<std::mutex>(other.numberOfWorkerThreads);
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
     {
         watermarkPredictorUpdateCnt.emplace(origin, count.load());
@@ -124,6 +117,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     writeExecTimeFunction = other.writeExecTimeFunction;
     readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
+    slicesInMemory = other.slicesInMemory;
     alteredSlicesPerThread = other.alteredSlicesPerThread;
     sliceStoreInfo = other.sliceStoreInfo;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
@@ -134,15 +128,14 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
 {
     DefaultTimeBasedSliceStore::operator=(std::move(other));
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 
     watermarkProcessor = std::move(other.watermarkProcessor);
     watermarkPredictors = std::move(other.watermarkPredictors);
     writeExecTimeFunction = std::move(other.writeExecTimeFunction);
     readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
+    slicesInMemory = std::move(other.slicesInMemory);
+    slicesInMemoryMutexes = std::move(other.slicesInMemoryMutexes);
     alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
     sliceStoreInfo = std::move(other.sliceStoreInfo);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
@@ -162,15 +155,19 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const JoinBuildSideType joinBuildSide,
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
-    const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
     const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
+    auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
+
     for (const auto& slice : slicesVec)
     {
         alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(slice);
-        if (const auto sliceEnd = slice->getSliceEnd(); !slicesInMemoryLocked->contains({sliceEnd, joinBuildSide}))
+
+        /// We acquire the lock for each invocation as slicesVec should only contain one element and we do not want to lock while adding to alteredSlicesPerThread
+        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
+        if (const auto sliceEnd = slice->getSliceEnd(); !slicesInMemoryMap.contains({sliceEnd, joinBuildSide}))
         {
-            (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
+            slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
         }
     }
     return slicesVec;
@@ -242,14 +239,17 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         }
     }
 
+    for (const auto& slice : slicesToDelete)
     {
-        const auto slicesInMemoryLocked = slicesInMemory.wlock();
-        for (const auto& slice : slicesToDelete)
+        const auto sliceEnd = slice->getSliceEnd();
+        memoryController->deleteSliceFiles(sliceEnd);
+
+        for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
         {
-            const auto sliceEnd = slice->getSliceEnd();
-            memoryController->deleteSliceFiles(sliceEnd);
-            slicesInMemoryLocked->erase({sliceEnd, JoinBuildSideType::Left});
-            slicesInMemoryLocked->erase({sliceEnd, JoinBuildSideType::Right});
+            auto& slicesInMemoryMap = slicesInMemory[threadId];
+            const std::scoped_lock lock(slicesInMemoryMutexes[threadId]);
+            slicesInMemoryMap.erase({sliceEnd, JoinBuildSideType::Left});
+            slicesInMemoryMap.erase({sliceEnd, JoinBuildSideType::Right});
         }
     }
 
@@ -260,15 +260,16 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
 void FileBackedTimeBasedSliceStore::deleteState()
 {
     DefaultTimeBasedSliceStore::deleteState();
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    slicesInMemoryLocked->clear();
-    alteredSlicesPerThread.clear();
     // TODO delete memCtrl and state from ssd if there is any
 }
 
 void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     this->numberOfWorkerThreads = numberOfWorkerThreads;
+
+    /// Store which slices are in memory per thread to reduce attempted concurrent accesses
+    slicesInMemory.resize(numberOfWorkerThreads);
+    slicesInMemoryMutexes = std::vector<std::mutex>(numberOfWorkerThreads);
 
     /// Initialise maps to keep track of altered slices
     for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
@@ -292,7 +293,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const JoinBuildSideType joinBuildSide,
-    const UpdateSlicesMetaData metaData)
+    const UpdateSlicesMetaData& metaData)
 {
     const auto& [watermark, seqNumber, originId] = metaData.bufferMetaData;
     watermarkProcessor->updateWatermark(watermark, seqNumber, originId);
@@ -305,6 +306,11 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
     for (const auto& [slice, operation, fileLayout] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
     {
+        if (slice == nullptr)
+        {
+            continue;
+        }
+
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         nljSlice->acquireCombinePagedVectorsLock();
@@ -333,8 +339,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 case FileOperation::WRITE: {
                     if (pagedVector->getNumberOfPages() > 0)
                     {
-                        const auto slicesInMemoryLocked = slicesInMemory.wlock();
-                        (*slicesInMemoryLocked)[{slice->getSliceEnd(), joinBuildSide}] = false;
+                        auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
+                        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
+                        slicesInMemoryMap[{slice->getSliceEnd(), joinBuildSide}] = false;
 
                         const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
@@ -358,7 +365,8 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId)
 {
-    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> slicesToUpdate;
+    /// Reserve space for every altered slice as we might update al of them
+    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> slicesToUpdate(alteredSlicesPerThread.size());
     for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
@@ -408,18 +416,18 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const JoinBuildSideType joinBuildSide)
 {
-    // TODO use rlock and conditions (-map)
-    const auto sliceEnd = slice->getSliceEnd();
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    if ((*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}])
-    {
-        /// Slice has already been read from file for this build side
-        return;
-    }
-
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
+    const auto sliceEnd = slice->getSliceEnd();
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
+        auto& slicesInMemoryMap = slicesInMemory[threadId];
+        const std::scoped_lock lock(slicesInMemoryMutexes[threadId]);
+        if (slicesInMemoryMap[{sliceEnd, joinBuildSide}])
+        {
+            /// Slice has already been read from file for this thread and build side
+            continue;
+        }
+
         /// Only read from file if the slice was written out earlier for this build side
         if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
@@ -429,8 +437,9 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout.value());
             memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
         }
+
+        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
     }
-    (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
 }
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
