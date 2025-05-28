@@ -44,8 +44,6 @@ MemoryController::MemoryController(
 
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
-    fileLayouts.resize(numWorkerThreads);
-    fileLayoutMutexes = std::vector<std::mutex>(numWorkerThreads);
 }
 
 MemoryController::~MemoryController()
@@ -93,36 +91,6 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
     }
 
     return nullptr;
-}
-
-void MemoryController::setFileLayout(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide, const FileLayout fileLayout)
-{
-    auto& layoutMap = fileLayouts[threadId.getRawValue()];
-    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
-    layoutMap[{sliceEnd, joinBuildSide}] = fileLayout;
-}
-
-std::optional<FileLayout>
-MemoryController::getFileLayout(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
-{
-    const auto& layoutMap = fileLayouts[threadId.getRawValue()];
-    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
-    if (const auto it = layoutMap.find({sliceEnd, joinBuildSide}); it != layoutMap.end())
-    {
-        return it->second;
-    }
-    return {};
-}
-
-void MemoryController::deleteFileLayout(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
-{
-    auto& layoutMap = fileLayouts[threadId.getRawValue()];
-    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
-    if (const auto it = layoutMap.find({sliceEnd, joinBuildSide}); it != layoutMap.end())
-    {
-        layoutMap.erase(it);
-    }
 }
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
