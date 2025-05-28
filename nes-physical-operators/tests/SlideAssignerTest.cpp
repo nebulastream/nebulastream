@@ -43,6 +43,16 @@ public:
     {
         BaseUnitTest::SetUp();
     }
+
+    void validateWindows(int windowSize, int windowSlide, const std::shared_ptr<Slice>& newSlice, const std::vector<std::pair<int, int>>& expectedWindows) {
+        DefaultTimeBasedSliceStore store = DefaultTimeBasedSliceStore(windowSize,windowSlide,2);
+        auto windowInfo = store.getAllWindowInfosForSlice(*newSlice);
+
+        for (size_t j = 0; j < windowInfo.size(); ++j) {
+            EXPECT_EQ(windowInfo[j].windowStart, Timestamp(expectedWindows[j].first));
+            EXPECT_EQ(windowInfo[j].windowEnd, Timestamp(expectedWindows[j].second));
+        }
+    }
 };
 
 TEST_F(SlideAssignerTest, getSlice_divider_10_2)
@@ -70,13 +80,9 @@ TEST_F(SlideAssignerTest, getSlice_divider_10_2)
             {{4, 14}, {6, 16}, {8, 18}, {10, 20},{12, 22}  },
 
         };
-        auto windowInfo = store.getAllWindowInfosForSlice(*newSlice);
 
-        for (size_t j = 0; j < windowInfo.size(); ++j)
-        {
-            EXPECT_EQ(windowInfo[j].windowStart,  Timestamp(windows[i][j].first));
-            EXPECT_EQ(windowInfo[j].windowEnd,  Timestamp(windows[i][j].second));
-        }
+        validateWindows(windowSize, windowSlide, newSlice, windows[i]);
+
     }
 
 }
@@ -88,7 +94,7 @@ TEST_F(SlideAssignerTest, getSlice_non_divider_10_3)
     std::vector<int> timestamps = {8, 9, 10, 11, 12};
     std::vector<std::pair<int, int>> slices = {{6, 9}, {9, 10}, {10, 12}, {10, 12}, {12, 13}};
     SliceAssigner sliceAssigner = SliceAssigner(windowSize, windowSlide);
-    DefaultTimeBasedSliceStore store = DefaultTimeBasedSliceStore(windowSize,windowSlide,2);
+
 
     for (size_t i = 0; i < timestamps.size(); ++i)
     {
@@ -106,13 +112,8 @@ TEST_F(SlideAssignerTest, getSlice_non_divider_10_3)
             {{3, 13}, {6, 16}, {9,19}, {12, 22}}
 
         };
-        auto windowInfo = store.getAllWindowInfosForSlice(*newSlice);
 
-        for (size_t j = 0; j < windowInfo.size(); ++j)
-        {
-            EXPECT_EQ(windowInfo[j].windowStart,  Timestamp(windows[i][j].first));
-            EXPECT_EQ(windowInfo[j].windowEnd,  Timestamp(windows[i][j].second));
-        }
+        validateWindows(windowSize, windowSlide, newSlice, windows[i]);
     }
 
 }
@@ -143,13 +144,8 @@ TEST_F(SlideAssignerTest, getSlice_non_divider_10_4)
             {{4, 14}, {8, 18}, {12, 22}},
             {{8, 18}, {12, 22}}
         };
-        auto windowInfo = store.getAllWindowInfosForSlice(*newSlice);
 
-        for (size_t j = 0; j < windowInfo.size(); ++j)
-        {
-            EXPECT_EQ(windowInfo[j].windowStart,  Timestamp(windows[i][j].first));
-            EXPECT_EQ(windowInfo[j].windowEnd,  Timestamp(windows[i][j].second));
-        }
+        validateWindows(windowSize, windowSlide, newSlice, windows[i]);
     }
 
 }
