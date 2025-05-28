@@ -81,7 +81,7 @@ void MQTTSource::open()
     }
 }
 
-size_t MQTTSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token& stopToken)
+size_t MQTTSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken)
 {
     size_t tbOffset = 0;
     const auto tbSize = tupleBuffer.getBufferSize();

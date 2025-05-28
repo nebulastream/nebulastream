@@ -48,7 +48,7 @@ public:
     /// Open connection to MQTT broker.
     void open() override;
 
-    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken) override;
 
     /// Close connection to MQTT broker.
     void close() override;
