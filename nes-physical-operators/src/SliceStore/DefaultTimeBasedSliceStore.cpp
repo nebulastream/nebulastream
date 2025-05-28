@@ -99,8 +99,14 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(co
 
     /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
     /// In our window model, a window is always the size of the window size.
-    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
-    const auto lastWindowEnd = sliceStart + windowSize;
+    auto firstWindowEnd = std::max((sliceEnd), windowSize);
+    auto lastWindowEnd = sliceStart+ windowSize;
+
+    if ((firstWindowEnd - windowSize) % windowSlide != 0){ // firstWindowEnd is no valid windowEnd for the window parameters size and slide
+        // essentially means, it is the firstWindowStart in which the slice is not contained and we can use that to derive the required parameters
+          lastWindowEnd = firstWindowEnd + windowSize - windowSlide;
+          firstWindowEnd = sliceStart + windowSlide;
+        }
 
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
     {
