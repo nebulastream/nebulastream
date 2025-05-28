@@ -105,7 +105,7 @@ def main():
         print("They can be turned into errors to fully prevent them by")
         print("deleting them from the WarningsAsErrors exclusion list in .clang-tidy")
         print()
-        for w in not_occuring_warnings:
+        for w in sorted(not_occuring_warnings):  # sorted for readability
             print(f"- `{w}`")
         print()
 
