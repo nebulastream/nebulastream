@@ -1,0 +1,35 @@
+# name: bug/ProjectWindowAggregationsStartEndAndWithRenames.test
+# description:
+#  - Make sure that the fields introduced by a window operator (start, end) only get projected if SELECT'd.
+#  - Test projecting different names for window operator fields.
+# groups: [Aggregation, WindowOperators, Projection]
+
+# Source definitions
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+12,12,1001
+1,2,1002
+
+SINK sinkSum UINT64 stream$sumValue
+SINK sinkSumSameName UINT64 stream$value
+SINK sinkSumRenamedWindowStartEnd UINT64 stream$windowStart UINT64 stream$windowEnd UINT64 stream$value
+
+# window_start, end, id should not be projected by default, only the sumValue
+SELECT SUM(value) AS sumValue FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkSum;
+----
+3
+12
+
+# Rename also works with a name that appears in input stream
+SELECT SUM(value) AS value FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkSumSameName;
+----
+3
+12
+
+
+
+# Renaming window start and end
+SELECT start AS windowStart, end AS windowEnd, SUM(value) AS value FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkSumRenamedWindowStartEnd;
+----
+0 5000 3
+0 5000 12

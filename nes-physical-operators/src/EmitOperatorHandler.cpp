@@ -46,21 +46,21 @@ void EmitOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 bool EmitOperatorHandler::processChunkNumber(
     const SequenceNumberForOriginId seqNumberOriginId, const ChunkNumber chunkNumber, const bool isLastChunk)
 {
-    auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
-    auto& chunkState = (*lockedMap)[seqNumberOriginId];
+    const auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
+    auto& [lastChunkNumber, seenChunks] = (*lockedMap)[seqNumberOriginId];
     if (isLastChunk)
     {
-        chunkState.lastChunkNumber = chunkNumber.getRawValue();
+        lastChunkNumber = chunkNumber.getRawValue();
     }
-    chunkState.seenChunks++;
+    seenChunks++;
     NES_TRACE(
         "seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}",
         seqNumberOriginId,
         chunkNumber,
         isLastChunk,
-        chunkState.seenChunks,
-        chunkState.lastChunkNumber)
-    return chunkState.seenChunks == chunkState.lastChunkNumber;
+        seenChunks,
+        lastChunkNumber)
+    return seenChunks == lastChunkNumber;
 }
 
 }

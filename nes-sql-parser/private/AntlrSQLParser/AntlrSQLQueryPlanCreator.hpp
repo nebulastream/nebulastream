@@ -32,7 +32,6 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 
 public:
     [[nodiscard]] LogicalPlan getQueryPlan() const;
-    void poppush(const AntlrSQLHelper& helper);
 
     /// Parsing listener methods (enter/exit pairs)
     void enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;
@@ -43,8 +42,6 @@ public:
     void exitFromClause(AntlrSQLParser::FromClauseContext* context) override;
     void enterWhereClause(AntlrSQLParser::WhereClauseContext* context) override;
     void exitWhereClause(AntlrSQLParser::WhereClauseContext* context) override;
-    void enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context) override;
-    void exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context) override;
     void enterComparisonOperator(AntlrSQLParser::ComparisonOperatorContext* context) override;
     void exitComparison(AntlrSQLParser::ComparisonContext* context) override;
     void enterFunctionCall(AntlrSQLParser::FunctionCallContext* context) override;
@@ -72,12 +69,12 @@ public:
     void exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context) override;
     void exitTumblingWindow(AntlrSQLParser::TumblingWindowContext* context) override;
     void exitSlidingWindow(AntlrSQLParser::SlidingWindowContext* context) override;
+    void exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context) override;
     void exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context) override;
     void exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context) override;
     void exitLogicalNot(AntlrSQLParser::LogicalNotContext* context) override;
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
-    void enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
 };
 
