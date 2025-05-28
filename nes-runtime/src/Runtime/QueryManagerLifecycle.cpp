@@ -150,42 +150,47 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         auto sourcesToReuse = executableQueryPlan->getSourcesToReuse();
         bool registeredAsSuccessor = false;
 
-        // 3a. pre-start net sources
-        for (const auto& source : netSources) {
 
-            //check if source is an existing source to be reused
-            if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
-                if (!registeredAsSuccessor) {
-                    auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+        {
+            std::scoped_lock lock(queryMutex);
+            // 3a. pre-start net sources
+            for (const auto& source : netSources) {
 
-                    if (predecessorPlans.size() > 1) {
-                        NES_FATAL_ERROR(
-                            "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
-                            source->getOperatorId());
+                //check if source is an existing source to be reused
+                if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
+                    if (!registeredAsSuccessor) {
+                        auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+
+                        if (predecessorPlans.size() > 1) {
+                            NES_FATAL_ERROR(
+                                "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+                                source->getOperatorId());
+                        }
+
+                        NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
+
+                        auto predecessorPlan = predecessorPlans.front();
+                        NES_ERROR("Found predecessor {} with version {} for plan {} with version {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion(), executableQueryPlan->getDecomposedQueryId(), executableQueryPlan->getDecomposedQueryVersion());;;
+
+                        predecessorPlan->addSuccessorPlan(executableQueryPlan);
+                        registeredAsSuccessor = true;
                     }
 
-                    NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
-
-                    auto predecessorPlan = predecessorPlans.front();
-                    NES_ERROR("Found predecessor {} with version {} for plan {} with version {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion(), executableQueryPlan->getDecomposedQueryId(), executableQueryPlan->getDecomposedQueryVersion());;;
-
-                    predecessorPlan->addSuccessorPlan(executableQueryPlan);
-                    registeredAsSuccessor = true;
+                    //do not bind
+                    continue;
                 }
 
-                //do not bind
-                continue;
-            }
-
-            std::stringstream s;
-            s << source;
-            std::string sourceString = s.str();
-            if (!source->bind()) {
-                NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
-            } else {
-                NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+                std::stringstream s;
+                s << source;
+                std::string sourceString = s.str();
+                if (!source->bind()) {
+                    NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
+                } else {
+                    NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
+                }
             }
         }
+
 		//todo: before starting any sources, check that incremental property is set
         // 3b. start net sources
         for (const auto& source : netSources) {
@@ -221,7 +226,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
 std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::getQepsForSource(std::shared_ptr<DataSource> source) {
     std::scoped_lock lock(queryMutex);
     //todo iterare over all pairs in map and print them
-    printSourceToQepMapping();
+    // printSourceToQepMapping();
     return sourceToQEPMapping[source->getOperatorId()];
 }
 
