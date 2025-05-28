@@ -538,7 +538,7 @@ void printQueryResultToStdOut(
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (runningQuery.passed)
     {
-        std::cout << "PASSED" << queryPerformanceMessage << '\n';
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
     }
     else
     {
