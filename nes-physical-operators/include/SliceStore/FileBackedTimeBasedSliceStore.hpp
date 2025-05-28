@@ -27,7 +27,6 @@
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
-#include <folly/Synchronized.h>
 
 namespace NES
 {
@@ -103,7 +102,7 @@ public:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         JoinBuildSideType joinBuildSide,
-        UpdateSlicesMetaData metaData);
+        const UpdateSlicesMetaData& metaData);
 
 private:
     std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>>
@@ -147,7 +146,8 @@ private:
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
     /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory. TODO
     std::shared_ptr<MemoryController> memoryController;
-    folly::Synchronized<std::map<std::pair<SliceEnd, JoinBuildSideType>, bool>> slicesInMemory;
+    std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, bool>> slicesInMemory;
+    std::vector<std::mutex> slicesInMemoryMutexes;
     std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
     SliceStoreInfo sliceStoreInfo;
