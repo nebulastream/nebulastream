@@ -13,4 +13,5 @@
 add_source_files(nes-systest-sources
     SourceTypes.cpp
     SystestSourceYAMLBinder.cpp
+    TCPDataServer.cpp
 )

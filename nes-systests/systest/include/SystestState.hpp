@@ -217,6 +217,7 @@ public:
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
         , testFileMap(std::move(testFileMap))
+        , dataServerThreads(std::make_shared<std::vector<std::jthread>>())
     {
     }
 
