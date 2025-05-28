@@ -60,7 +60,7 @@ class SystestAdapter(BenchmarkAdapter):
                     "unit": "B/s"
                 },
                 context={"benchmark_language": "systest"},
-                tags={"name": result["query name"] + " [B/s]"},
+                tags={"name": result["query name"] + "_Bps"},
             ))
 
         return benchmarkResults
