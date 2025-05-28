@@ -56,10 +56,10 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
               decomposedQueryPlan->toString());
     auto timeout = std::chrono::milliseconds(10);
     while (nodeEngine->hasDifferentSuccessor(decomposedQueryPlan)) {
-        NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
-                  decomposedQueryPlan->getVersion(),
-                  decomposedQueryPlan->getDecomposedQueryId(),
-                  timeout.count());
+        // NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
+        //           decomposedQueryPlan->getVersion(),
+        //           decomposedQueryPlan->getDecomposedQueryId(),
+        //           timeout.count());
         std::this_thread::sleep_for(timeout);
     }
     bool success = false;

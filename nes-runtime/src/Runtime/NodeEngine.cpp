@@ -135,7 +135,7 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
         auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
         // queryManager->printSourceToQepMapping();
         if (networkSourceDescriptor) {
-            NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
+            // NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
             auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
             if (source) {
                 auto predecessorPlans = queryManager->getQepsForSource(source);
@@ -145,18 +145,16 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                         "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
                         source->getOperatorId());
                 }
-                NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
-                NES_ERROR("Found predecessor {} with version {} for plan {} with version {}",
-                          predecessorPlans.front()->getDecomposedQueryId(),
-                          predecessorPlans.front()->getDecomposedQueryVersion(),
-                          decomposedQueryPlan->getDecomposedQueryId(),
-                          decomposedQueryPlan->getVersion());
-                ;
-                ;
+                // NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
+                // NES_ERROR("Found predecessor {} with version {} for plan {} with version {}",
+                //           predecessorPlans.front()->getDecomposedQueryId(),
+                //           predecessorPlans.front()->getDecomposedQueryVersion(),
+                //           decomposedQueryPlan->getDecomposedQueryId(),
+                //           decomposedQueryPlan->getVersion());
                 auto plan = predecessorPlans.front();
                 auto planVersion = plan->getDecomposedQueryVersion();
                 if (!lowestSeenVersion.has_value() || planVersion < lowestSeenVersion.value()) {
-                    NES_ERROR("Version {} is lower than previous version", planVersion);
+                    // NES_ERROR("Version {} is lower than previous version", planVersion);
                     lowestSeenVersion = planVersion;
                     predecessorPlan = plan;
                 }
@@ -165,7 +163,7 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
         }
     }
     //return false;
-    NES_ERROR("Returning result for existence of precessor")
+    // NES_ERROR("Returning result for existence of precessor")
     return (predecessorPlan != nullptr) && predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
 }
 

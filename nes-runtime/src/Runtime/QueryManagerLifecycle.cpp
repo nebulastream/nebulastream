@@ -168,10 +168,10 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
                                 source->getOperatorId());
                         }
 
-                        NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
+                        // NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
 
                         auto predecessorPlan = predecessorPlans.front();
-                        NES_ERROR("Found predecessor {} with version {} for plan {} with version {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion(), executableQueryPlan->getDecomposedQueryId(), executableQueryPlan->getDecomposedQueryVersion());;;
+                        // NES_ERROR("Found predecessor {} with version {} for plan {} with version {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion(), executableQueryPlan->getDecomposedQueryId(), executableQueryPlan->getDecomposedQueryVersion());;;
 
                         predecessorPlan->addSuccessorPlan(executableQueryPlan);
                         registeredAsSuccessor = true;

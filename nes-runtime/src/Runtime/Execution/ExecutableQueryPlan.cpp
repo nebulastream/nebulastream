@@ -416,7 +416,7 @@ bool ExecutableQueryPlan::hasDifferenSuccessor(DecomposedQueryPlanVersion succes
     auto lockedSuccessor = this->successor.wlock();
     //return !(*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion);
     if (*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion) {
-        NES_ERROR("hasDifferenSuccessor: successor version {} is not equal to {} ", successorVersion, (*lockedSuccessor)->decomposedQueryVersion);
+        // NES_ERROR("hasDifferenSuccessor: successor version {} is not equal to {} ", successorVersion, (*lockedSuccessor)->decomposedQueryVersion);
         return true;
     }
     return false;
@@ -435,7 +435,7 @@ bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
     {
         auto lockedSuccessor = this->successor.wlock();
         if (*lockedSuccessor != nullptr && successor->decomposedQueryVersion != (*lockedSuccessor)->decomposedQueryVersion) {
-            NES_ERROR("successor version {} is not equal to {} ", successor->decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
+            // NES_ERROR("successor version {} is not equal to {} ", successor->decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
             throw SuccessorAlreadySetException();
         }
         *lockedSuccessor = successor;
