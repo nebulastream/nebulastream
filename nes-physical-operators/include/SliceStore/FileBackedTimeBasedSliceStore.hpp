@@ -105,7 +105,7 @@ public:
         const UpdateSlicesMetaData& metaData);
 
 private:
-    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>>
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
     getSlicesToUpdate(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
 
     void readSliceFromFiles(
