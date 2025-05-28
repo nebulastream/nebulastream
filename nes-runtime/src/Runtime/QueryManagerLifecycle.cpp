@@ -13,6 +13,7 @@
 */
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>

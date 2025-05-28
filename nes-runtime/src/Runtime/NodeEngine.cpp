@@ -129,9 +129,11 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
 }
 
 bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    Execution::ExecutableQueryPlanPtr predecessorPlan;
+    DecomposedQueryPlanVersion highestSeenVersion(0);
     for (auto src : decomposedQueryPlan->getSourceOperators()) {
         auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-        queryManager->printSourceToQepMapping();
+        // queryManager->printSourceToQepMapping();
         if (networkSourceDescriptor) {
             NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
             auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
@@ -151,12 +153,17 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                           decomposedQueryPlan->getVersion());
                 ;
                 ;
-                auto predecessorPlan = predecessorPlans.front();
-                return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
+                auto plan = predecessorPlans.front();
+                if (predecessorPlan->getDecomposedQueryVersion() > highestSeenVersion) {
+                    highestSeenVersion = predecessorPlan->getDecomposedQueryVersion();
+                    predecessorPlan = plan;
+                }
+                // return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
             }
         }
     }
-    return false;
+    //return false;
+    return predecessorPlan && predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
 }
 
 bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData) {
