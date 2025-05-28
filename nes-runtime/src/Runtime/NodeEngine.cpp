@@ -155,7 +155,7 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                 ;
                 auto plan = predecessorPlans.front();
                 auto planVersion = plan->getDecomposedQueryVersion();
-                if (!lowestSeenVersion.has_value() || planVersion > lowestSeenVersion.value()) {
+                if (!lowestSeenVersion.has_value() || planVersion < lowestSeenVersion.value()) {
                     NES_ERROR("Version {} is lower than previous version", planVersion);
                     lowestSeenVersion = planVersion;
                     predecessorPlan = plan;
