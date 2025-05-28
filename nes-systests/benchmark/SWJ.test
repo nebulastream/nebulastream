@@ -25,10 +25,26 @@ INTO CHECKSUM;
 ----
 1002925,3789103442
 
-# Q3 = Q2 but with slicing not divider of window size
+# Q3 = Q2 but with slicing not divider of window size 3
 SELECT *
 FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 3 MINUTES)
 INTO CHECKSUM;
 ----
 1671122 6326803955
+
+# Q4 = Q2 but with slicing not divider of window size 4
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 4 MINUTES)
+INTO CHECKSUM;
+----
+# 1253422 count flink
+
+# Q5 = Q2 but with slicing not divider of window size 7
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 7 MINUTES)
+INTO CHECKSUM;
+----
+# 716368 count flink
