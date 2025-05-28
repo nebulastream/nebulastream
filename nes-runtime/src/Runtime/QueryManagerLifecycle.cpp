@@ -225,7 +225,7 @@ std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::getQepsForS
     return sourceToQEPMapping[source->getOperatorId()];
 }
 
-std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::printSourceToQepMapping() {
+void AbstractQueryManager::printSourceToQepMapping() {
     std::scoped_lock lock(queryMutex);
     for (auto& pair : sourceToQEPMapping) {
         NES_ERROR("Source {} has {} predecessors", pair.first, pair.second.size());

@@ -549,7 +549,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
     std::vector<Execution::ExecutableQueryPlanPtr> getQepsForSource(std::shared_ptr<DataSource> source);
-    std::vector<Execution::ExecutableQueryPlanPtr> printSourceToQepMapping();
+    void printSourceToQepMapping();
 };
 
 class DynamicQueryManager : public AbstractQueryManager {
