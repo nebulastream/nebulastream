@@ -130,7 +130,7 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
 
 bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     Execution::ExecutableQueryPlanPtr predecessorPlan;
-    DecomposedQueryPlanVersion highestSeenVersion(0);
+    std::optional<DecomposedQueryPlanVersion> lowestSeenVersion = std::nullopt;
     for (auto src : decomposedQueryPlan->getSourceOperators()) {
         auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
         // queryManager->printSourceToQepMapping();
@@ -155,9 +155,9 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                 ;
                 auto plan = predecessorPlans.front();
                 auto planVersion = plan->getDecomposedQueryVersion();
-                if (planVersion > highestSeenVersion) {
-                    NES_ERROR("Version {} is higher than version {} updating predecessor plan", planVersion, highestSeenVersion)
-                    highestSeenVersion = planVersion;
+                if (!lowestSeenVersion.has_value() || planVersion > lowestSeenVersion.value()) {
+                    NES_ERROR("Version {} is lower than previous version", planVersion);
+                    lowestSeenVersion = planVersion;
                     predecessorPlan = plan;
                 }
                 // return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
