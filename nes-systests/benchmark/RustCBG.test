@@ -1,10 +1,10 @@
-# name: Rust.test
-# description: Testing the RustFileSource
+# name: RustCBG.test
+# description: Testing the RustFileSourceCBG
 # groups: [benchmark]
 
 # Source definitions
 Source solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp
-Attach RustFile solarPanels FILE
+Attach RustFileCBG solarPanels FILE
 TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv
 
 # Query 0b - Simple Source Sink with solarPanels stream

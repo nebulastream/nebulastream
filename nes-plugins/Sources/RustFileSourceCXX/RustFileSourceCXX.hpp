@@ -25,18 +25,18 @@ limitations under the License.
 namespace NES::Sources
 {
 
-class RustFileSource : public Source
+class RustFileSourceCXX : public Source
 {
 public:
-    static constexpr std::string_view NAME = "RustFile";
+    static constexpr std::string_view NAME = "RustFileCXX";
 
-    explicit RustFileSource(const SourceDescriptor& sourceDescriptor);
-    ~RustFileSource() override = default;
+    explicit RustFileSourceCXX(const SourceDescriptor& sourceDescriptor);
+    ~RustFileSourceCXX() override = default;
 
-    RustFileSource(const RustFileSource&) = delete;
-    RustFileSource& operator=(const RustFileSource&) = delete;
-    RustFileSource(RustFileSource&&) = delete;
-    RustFileSource& operator=(RustFileSource&&) = delete;
+    RustFileSourceCXX(const RustFileSourceCXX&) = delete;
+    RustFileSourceCXX& operator=(const RustFileSourceCXX&) = delete;
+    RustFileSourceCXX(RustFileSourceCXX&&) = delete;
+    RustFileSourceCXX& operator=(RustFileSourceCXX&&) = delete;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 

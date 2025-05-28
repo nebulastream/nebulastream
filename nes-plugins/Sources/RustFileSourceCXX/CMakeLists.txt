@@ -9,20 +9,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-add_plugin_as_library(RustFile Source nes-sources-registry rust_file_source_plugin_library RustFileSource.cpp)
-add_plugin_as_library(RustFile SourceValidation nes-sources-registry rust_file_validation_plugin_library RustFileSource.cpp)
-add_plugin_as_library(RustFile InlineData nes-sources-registry rust_file_inline_data_plugin_library RustFileSource.cpp)
-add_plugin_as_library(RustFile FileData nes-sources-registry rust_file_file_data_plugin_library RustFileSource.cpp)
-target_include_directories(rust_file_validation_plugin_library
+add_plugin_as_library(RustFileCXX Source nes-sources-registry rust_file_cxx_source_plugin_library RustFileSourceCXX.cpp)
+add_plugin_as_library(RustFileCXX SourceValidation nes-sources-registry rust_file_cxx_validation_plugin_library RustFileSourceCXX.cpp)
+add_plugin_as_library(RustFileCXX InlineData nes-sources-registry rust_file_cxx_inline_data_plugin_library RustFileSourceCXX.cpp)
+add_plugin_as_library(RustFileCXX FileData nes-sources-registry rust_file_cxx_file_data_plugin_library RustFileSourceCXX.cpp)
+target_include_directories(rust_file_cxx_validation_plugin_library
         PUBLIC include
         PRIVATE .
 )
 
-add_dependencies(rust_file_source_plugin_library rust_build)
-add_dependencies(rust_file_validation_plugin_library rust_build)
-add_dependencies(rust_file_inline_data_plugin_library rust_build)
-add_dependencies(rust_file_file_data_plugin_library rust_build)
-target_link_libraries(rust_file_source_plugin_library PRIVATE rust-example)
+add_dependencies(rust_file_cxx_source_plugin_library rust_build_cxx)
+add_dependencies(rust_file_cxx_validation_plugin_library rust_build_cxx)
+add_dependencies(rust_file_cxx_inline_data_plugin_library rust_build_cxx)
+add_dependencies(rust_file_cxx_file_data_plugin_library rust_build_cxx)
+target_link_libraries(rust_file_cxx_source_plugin_library PRIVATE rust-example-cxx)
 
 set(RUST_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust-example-cxx")
 set(RUST_BUILD_MODE "release")
@@ -48,10 +48,10 @@ add_custom_command(
         VERBATIM
 )
 
-add_custom_target(rust_build ALL
+add_custom_target(rust_build_cxx ALL
         DEPENDS ${RUST_LIB_PATH_COMMON} ${FFI_HEADER} ${RUST_LIB_HEADER} ${RUST_LIB_CPP}
 )
-add_library(rust-example STATIC IMPORTED)
-set_target_properties(rust-example PROPERTIES
+add_library(rust-example-cxx STATIC IMPORTED)
+set_target_properties(rust-example-cxx PROPERTIES
         IMPORTED_LOCATION ${RUST_LIB_PATH_COMMON}
 )

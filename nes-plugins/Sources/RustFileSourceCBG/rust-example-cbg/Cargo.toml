@@ -1,5 +1,5 @@
 [package]
-name = "rust-example-cbindgen"
+name = "rust-example-cbg"
 version = "0.1.0"
 edition = "2024"
 

@@ -3,5 +3,5 @@ parserConfig:
   type: CSV
   fieldDelimiter: ','
 sourceConfig:
-  type: RustFile
+  type: RustFileCBG
   filePath: PLACEHOLDER

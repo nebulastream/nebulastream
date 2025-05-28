@@ -1,0 +1,13 @@
+# name: RustCXX.test
+# description: Testing the RustFileSourceCXX
+# groups: [benchmark]
+
+# Source definitions
+Source solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp
+Attach RustFileCXX solarPanels FILE
+TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv
+
+# Query 0b - Simple Source Sink with solarPanels stream
+SELECT * FROM solarPanels INTO CHECKSUM;
+----
+42700000, 74759775379
