@@ -110,7 +110,7 @@ void buildPipelineRecursively(
 {
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
-    if (auto it = pipelineMap.find(opId); it != pipelineMap.end())
+    if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
         currentPipeline->addSuccessor(it->second, currentPipeline);
         return;
@@ -130,7 +130,7 @@ void buildPipelineRecursively(
         }
         pipelineMap.emplace(opId, newPipeline);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
-        auto newPipelinePtr = currentPipeline->getSuccessors().back();
+        const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
@@ -158,7 +158,8 @@ void buildPipelineRecursively(
             {
                 buildPipelineRecursively(child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
             }
-        } else
+        }
+        else
         {
             currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
             if (opWrapper->getHandler() && opWrapper->getHandlerId())
@@ -183,7 +184,7 @@ void buildPipelineRecursively(
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
-        auto newPipeline = std::make_shared<Pipeline>(*sink);
+        const auto newPipeline = std::make_shared<Pipeline>(*sink);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap.emplace(opId, newPipelinePtr);
@@ -201,9 +202,9 @@ void buildPipelineRecursively(
         {
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }
-        auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
+        const auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
-        auto newPipelinePtr = currentPipeline->getSuccessors().back();
+        const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
         addDefaultScan(newPipelinePtr, *opWrapper, configuredBufferSize);
         for (auto& child : opWrapper->getChildren())
@@ -214,7 +215,17 @@ void buildPipelineRecursively(
     }
 
     /// Case 5: Fusible operator – add it to the current pipeline
-    currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
+    if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
+    {
+        /// If the current operator is a fusible operator and the prev operator was an emit operator, we need to add a scan before the
+        /// current operator to create a new pipeline.
+        createNewPiplineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+    }
+    else
+    {
+        currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
+    }
+
     if (opWrapper->getHandler() && opWrapper->getHandlerId())
     {
         currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
@@ -251,6 +262,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
         for (const auto& child : rootWrapper->getChildren())
         {
             buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            NES_DEBUG("Constructed pipelines: {}", *pipelinedPlan);
         }
     }
 

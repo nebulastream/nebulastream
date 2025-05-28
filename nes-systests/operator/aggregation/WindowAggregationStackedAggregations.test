@@ -36,10 +36,9 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$sumValue
 SINK sinkStreamNonKeyed UINT64 stream$start UINT64 stream$end UINT64 stream$sumValue
 
-
 # Two window aggregations
-SELECT SUM(value) as sumValue FROM (
-    SELECT SUM(value) as value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
+SELECT start, end, id, SUM(value) AS sumValue FROM (
+    SELECT id, start, SUM(value) as value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
 ) WHERE id < UINT32(10) GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStream;
 ----
 0 2000 1 1
@@ -56,8 +55,8 @@ SELECT SUM(value) as sumValue FROM (
 8000 10000 1 17
 
 # Two window aggregations with one larger tumbling and one larger sliding window
-SELECT SUM(value) as sumValue FROM (
-    SELECT SUM(value) as value FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec)
+SELECT start, end, id, SUM(value) AS sumValue FROM (
+    SELECT id, start, SUM(value) as value FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec)
 ) GROUP BY id WINDOW SLIDING(start, size 10 sec, advance by 5 sec) INTO sinkStream;
 ----
 0 10000 1 51
@@ -71,8 +70,8 @@ SELECT SUM(value) as sumValue FROM (
 20000 30000 1 41
 
 # Two window aggregations with a keyed sliding and then a keyed tumbling window
-SELECT SUM(inputValue) as sumValue FROM (
-    SELECT SUM(value) as inputValue FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 2 sec)
+SELECT start, end, id, SUM(inputValue) AS sumValue FROM (
+    SELECT id, start, SUM(value) as inputValue FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 2 sec)
 ) WHERE id < UINT32(10) GROUP BY id WINDOW SLIDING(start, size 1 sec, advance by 500 ms) INTO sinkStream;
 ----
 0 1000 1 1
@@ -100,9 +99,9 @@ SELECT SUM(inputValue) as sumValue FROM (
 
 
 # Three window aggregations with a sliding (keyed), then a tumbling (keyed), and then a tumbling window
-SELECT SUM(inputValue2) as sumValue FROM (
-    SELECT SUM(inputValue1) as inputValue2 FROM (
-        SELECT SUM(value) as inputValue1 FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+SELECT start, end, SUM(inputValue2) AS sumValue FROM (
+    SELECT id, start, SUM(inputValue1) AS inputValue2 FROM (
+        SELECT id, start, SUM(value) AS inputValue1 FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
     )  GROUP BY id WINDOW TUMBLING(start, size 1 sec)
 ) WHERE id < UINT32(10) WINDOW TUMBLING(start, size 2 sec) INTO sinkStreamNonKeyed;
 ----

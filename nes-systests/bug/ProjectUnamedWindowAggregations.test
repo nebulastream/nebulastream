@@ -1,0 +1,18 @@
+# name: bug/ProjectUnamedWindowAggregations.test
+# description: Aggregations without an AS do not get projected
+# groups: [Aggregation, WindowOperators, Projection]
+
+# Source definitions
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+1,2,1001
+12,12,1001
+
+
+SINK sinkStream UINT64 stream$value_Sum
+
+# Aggregations without a name also get projected
+SELECT SUM(value) FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStream;
+----
+3
+12

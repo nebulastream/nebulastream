@@ -56,6 +56,8 @@ public:
     bool isSetOperation = false;
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
+    bool hasUnnamedAggregation = false;
+
     bool isInFunctionCall() const { return not functionBuilder.empty(); }
     bool isInAggFunction() const { return not windowAggs.empty(); }
 
