@@ -220,8 +220,22 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
 
 std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::getQepsForSource(std::shared_ptr<DataSource> source) {
     std::scoped_lock lock(queryMutex);
+    //todo iterare over all pairs in map and print them
+    printSourceToQepMapping();
     return sourceToQEPMapping[source->getOperatorId()];
 }
+
+std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::printSourceToQepMapping() {
+    std::scoped_lock lock(queryMutex);
+    for (auto& pair : sourceToQEPMapping) {
+        NES_ERROR("Source {} has {} predecessors", pair.first, pair.second.size());
+        for (auto& qep : pair.second) {
+            NES_ERROR("Predecessor {} with version {} for plan {} with version {}", qep->getDecomposedQueryId(), qep->getDecomposedQueryVersion(), qep->getSharedQueryId(), qep->getSharedQueryVersion());
+        }
+    }
+}
+
+
 
 bool MultiQueueQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, bool replay) {
     auto ret = AbstractQueryManager::registerExecutableQueryPlan(qep, replay);
