@@ -47,6 +47,7 @@ public:
     void validateWindows(int windowSize, int windowSlide, const std::shared_ptr<Slice>& newSlice, const std::vector<std::pair<int, int>>& expectedWindows) {
         DefaultTimeBasedSliceStore store = DefaultTimeBasedSliceStore(windowSize,windowSlide,2);
         auto windowInfo = store.getAllWindowInfosForSlice(*newSlice);
+        EXPECT_EQ(windowInfo.size(),expectedWindows.size());
 
         for (size_t j = 0; j < windowInfo.size(); ++j) {
             EXPECT_EQ(windowInfo[j].windowStart, Timestamp(expectedWindows[j].first));
@@ -77,7 +78,7 @@ TEST_F(SlideAssignerTest, getSlice_divider_10_2)
             {{0, 10}, {2, 12},  {4, 14}, {6, 16}, {8, 18}},
             {{2, 12},  {4, 14}, {6, 16}, {8, 18}, {10, 20}},
             {{2, 12},  {4, 14}, {6, 16}, {8, 18}, {10, 20}},
-            {{4, 14}, {6, 16}, {8, 18}, {10, 20},{12, 22}  },
+            {{4, 14}, {6, 16}, {8, 18}, {10, 20},{12, 22} },
 
         };
 
@@ -122,7 +123,7 @@ TEST_F(SlideAssignerTest, getSlice_non_divider_10_4)
 {
     int windowSize = 10;
     int windowSlide = 4;
-    std::vector<int> timestamps = {8, 9, 10, 11, 12, 13};
+    std::vector<int> timestamps = {8, 9, 10, 11, 12, 13, 14};
     std::vector<std::pair<int, int>> slices = {{8, 10}, {8, 10}, {10, 12}, {10, 12}, {12, 14}, {12, 14}, {14, 16}};
     SliceAssigner sliceAssigner = SliceAssigner(windowSize, windowSlide);
     DefaultTimeBasedSliceStore store = DefaultTimeBasedSliceStore(windowSize,windowSlide,2);
@@ -143,6 +144,38 @@ TEST_F(SlideAssignerTest, getSlice_non_divider_10_4)
             {{4, 14}, {8, 18}, {12, 22}},
             {{4, 14}, {8, 18}, {12, 22}},
             {{8, 18}, {12, 22}}
+        };
+
+        validateWindows(windowSize, windowSlide, newSlice, windows[i]);
+    }
+
+}
+
+TEST_F(SlideAssignerTest, getSlice_non_divider_10_7)
+{
+    int windowSize = 10;
+    int windowSlide = 7;
+    std::vector<int> timestamps = {8, 9, 10, 11, 12, 13, 14};
+    std::vector<std::pair<int, int>> slices = {{7, 10}, {7, 10}, {10, 14}, {10, 14}, {10, 14}, {10, 14}, {14, 17}};
+    SliceAssigner sliceAssigner = SliceAssigner(windowSize, windowSlide);
+    DefaultTimeBasedSliceStore store = DefaultTimeBasedSliceStore(windowSize,windowSlide,2);
+
+    for (size_t i = 0; i < timestamps.size(); ++i)
+    {
+        const auto sliceStart = sliceAssigner.getSliceStartTs(Timestamp(timestamps[i]));
+        EXPECT_EQ(sliceStart, Timestamp(slices[i].first));
+        const auto sliceEnd = sliceAssigner.getSliceEndTs(Timestamp(timestamps[i]));
+        EXPECT_EQ(sliceEnd, Timestamp(slices[i].second));
+        const std::shared_ptr<Slice> newSlice = std::make_shared<Slice>(sliceStart, sliceEnd);
+
+        std::vector<std::vector<std::pair<int, int>>> windows = {
+            {{0, 10}, {7, 17}},
+            {{0, 10}, {7, 17}},
+            {{7, 17}},
+            {{7, 17}},
+            {{7, 17}},
+            {{7, 17}},
+            {{7, 17}, {14, 24}}
         };
 
         validateWindows(windowSize, windowSlide, newSlice, windows[i]);
