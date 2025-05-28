@@ -33,10 +33,6 @@ public:
     getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide, boost::asio::io_context& ioCtx);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
-    void setFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide, FileLayout fileLayout);
-    std::optional<FileLayout> getFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    void deleteFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
@@ -66,10 +62,6 @@ private:
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether
     std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
     std::vector<std::mutex> fileWriterMutexes;
-
-    /// FileLayouts are grouped by thread id thus reducing the wait time to acquire locks
-    std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, FileLayout>> fileLayouts;
-    std::vector<std::mutex> fileLayoutMutexes;
 
     std::filesystem::path workingDir;
     QueryId queryId;

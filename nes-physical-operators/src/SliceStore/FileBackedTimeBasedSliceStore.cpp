@@ -304,7 +304,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 
     /// Write and read all selected slices to and from disk
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (const auto& [slice, operation, fileLayout] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
+    for (const auto& [slice, operation] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
     {
         if (slice == nullptr)
         {
@@ -329,8 +329,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                         // TODO why would fileReader be zero
                         if (auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide))
                         {
-                            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
-                            memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
                         }
                     }
                     // TODO handle wrong predictions
@@ -344,11 +343,11 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                         slicesInMemoryMap[{slice->getSliceEnd(), joinBuildSide}] = false;
 
                         const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
-                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
+                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
                         /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
                         co_await fileWriter->flush();
                         fileWriter->deallocateBuffers();
-                        pagedVector->truncate(fileLayout);
+                        pagedVector->truncate(sliceStoreInfo.fileLayout);
                     }
                     // TODO handle wrong predictions
                     break;
@@ -362,11 +361,11 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     co_return;
 }
 
-std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId)
 {
     /// Reserve space for every altered slice as we might update al of them
-    std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> slicesToUpdate(alteredSlicesPerThread.size());
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate(alteredSlicesPerThread.size());
     for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
@@ -385,11 +384,13 @@ std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> FileB
                 >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
-            if (const auto fileLayout = memoryController->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
+            auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
+            const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
+            if (!slicesInMemoryMap[{sliceEnd, joinBuildSide}])
             {
-                slicesToUpdate.emplace_back(slice, FileOperation::READ, fileLayout.value());
+                slicesToUpdate.emplace_back(slice, FileOperation::READ);
             }
-            /// Slice is already being read back if no FileLayout was found
+            /// Slice is already being read back if map entry is true
         }
         else if (
             stateSizeInMemory > sliceStoreInfo.minWriteStateSize
@@ -401,8 +402,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, FileOperation, FileLayout>> FileB
                 < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
-            memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, sliceStoreInfo.fileLayout);
-            slicesToUpdate.emplace_back(slice, FileOperation::WRITE, sliceStoreInfo.fileLayout);
+            slicesToUpdate.emplace_back(slice, FileOperation::WRITE);
         }
         /// Slice should not be written out or read back in any other case
     }
@@ -431,11 +431,9 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         /// Only read from file if the slice was written out earlier for this build side
         if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
-            const auto fileLayout = memoryController->getFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
             auto* const pagedVector
                 = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
-            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout.value());
-            memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
         }
 
         slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
