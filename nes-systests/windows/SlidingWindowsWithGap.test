@@ -11,7 +11,7 @@ SINK sinkStreamAgg UINT64 stream$start UINT64 stream$end UINT64 stream$value UIN
 
 
 # Query 1 - Sliding Window Aggregation with a gap
-SELECT value, COUNT(id) AS id_count, SUM(id) AS id_sum, MIN(id) AS id_min
+SELECT start, end, value, COUNT(id) AS id_count, SUM(id) AS id_sum, MIN(id) AS id_min
 FROM stream
 GROUP BY (value)
 WINDOW SLIDING(timestamp, size 3 sec, advance by 4 sec)

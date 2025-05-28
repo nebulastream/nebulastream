@@ -74,6 +74,7 @@ private:
         return {
             &localWorkerHost,
             &rpcPort,
+            &configPath,
             &queryEngineConfiguration,
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersPerWorker,

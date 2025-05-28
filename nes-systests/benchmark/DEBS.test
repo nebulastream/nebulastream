@@ -39,7 +39,7 @@ SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO CHECKS
 
 
 # Query 7 - Window aggregations with tumbling windows
-SELECT groupId, SUM(producedPower) AS producedPower
+SELECT start, end, groupId, SUM(producedPower) AS producedPower
 FROM solarPanels
 GROUP BY groupId
 WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
@@ -48,7 +48,7 @@ INTO CHECKSUM;
 1914020, 3897819033
 
 # Query 8 - Window aggregations with sliding windows
-SELECT groupId, SUM(producedPower) AS producedPower
+SELECT start, end, groupId, SUM(producedPower) AS producedPower
 FROM solarPanels
 GROUP BY groupId
 WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)

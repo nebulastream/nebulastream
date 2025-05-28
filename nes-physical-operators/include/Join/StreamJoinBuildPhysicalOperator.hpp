@@ -25,7 +25,6 @@
 namespace NES
 {
 /// This class is the first phase of the stream join. The actual implementation is not part of this class
-/// It only takes care of the close() and terminate() functionality as these are universal
 class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator
 {
 public:
