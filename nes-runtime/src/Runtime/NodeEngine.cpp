@@ -112,13 +112,13 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
     NES_DEBUG("Runtime::deployExecutableQueryPlan: successfully register query");
 
     bool successStart = false;
-        try {
-            successStart = startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(),
-                                                    executableQueryPlan->getDecomposedQueryId(),
-                                                    executableQueryPlan->getDecomposedQueryVersion());
-        } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
-            throw error;
-        }
+    try {
+        successStart = startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(),
+                                                executableQueryPlan->getDecomposedQueryId(),
+                                                executableQueryPlan->getDecomposedQueryVersion());
+    } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+        throw error;
+    }
     if (!successStart) {
         NES_ERROR("Runtime::deployExecutableQueryPlan: failed to start query");
         return false;
@@ -131,6 +131,7 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
 bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     for (auto src : decomposedQueryPlan->getSourceOperators()) {
         auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+        queryManager->printSourceToQepMapping();
         if (networkSourceDescriptor) {
             NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
             auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
@@ -143,7 +144,13 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                         source->getOperatorId());
                 }
                 NES_ERROR("Found predecessors for source {}:", source->getOperatorId());
-                NES_ERROR("Found predecessor {} with version {} for plan {} with version {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion(), decomposedQueryPlan->getDecomposedQueryId(), decomposedQueryPlan->getVersion());;;
+                NES_ERROR("Found predecessor {} with version {} for plan {} with version {}",
+                          predecessorPlans.front()->getDecomposedQueryId(),
+                          predecessorPlans.front()->getDecomposedQueryVersion(),
+                          decomposedQueryPlan->getDecomposedQueryId(),
+                          decomposedQueryPlan->getVersion());
+                ;
+                ;
                 auto predecessorPlan = predecessorPlans.front();
                 return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
             }
