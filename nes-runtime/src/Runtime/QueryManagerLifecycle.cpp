@@ -230,7 +230,7 @@ std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::printSource
     for (auto& pair : sourceToQEPMapping) {
         NES_ERROR("Source {} has {} predecessors", pair.first, pair.second.size());
         for (auto& qep : pair.second) {
-            NES_ERROR("Predecessor {} with version {} for plan {} with version {}", qep->getDecomposedQueryId(), qep->getDecomposedQueryVersion(), qep->getSharedQueryId(), qep->getSharedQueryVersion());
+            NES_ERROR("Predecessor {} with version {} for plan {} with version {}", qep->getDecomposedQueryId(), qep->getDecomposedQueryVersion(), qep->getSharedQueryId(), qep->getDecomposedQueryVersion());
         }
     }
 }
