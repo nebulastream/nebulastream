@@ -30,7 +30,7 @@ namespace NES::Configurations
 
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
-static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 1024;
+static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 enum class StreamJoinStrategy : uint8_t
 {
     NESTED_LOOP_JOIN
