@@ -38,7 +38,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <ErrorHandling.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <SystestConfiguration.hpp>
 
 
@@ -61,6 +62,11 @@ struct SystestField
 {
     DataType type;
     std::string name;
+    friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
+    {
+        os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
+        return os;
+    }
     bool operator==(const SystestField& other) const = default;
     bool operator!=(const SystestField& other) const = default;
 };
@@ -257,6 +263,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 /// returns a vector of queries to run derived for our testfilemap
 std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals);
 }
+
+FMT_OSTREAM(NES::Systest::SystestField);
 
 template <>
 struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
