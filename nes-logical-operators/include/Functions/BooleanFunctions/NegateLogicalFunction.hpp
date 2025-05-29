@@ -35,6 +35,7 @@ public:
 
     explicit NegateLogicalFunction(LogicalFunction child);
     NegateLogicalFunction(const NegateLogicalFunction& other);
+    NegateLogicalFunction(NegateLogicalFunction&&) noexcept = default;
     ~NegateLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
