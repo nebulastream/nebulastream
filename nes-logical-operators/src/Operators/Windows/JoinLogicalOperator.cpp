@@ -309,11 +309,11 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
 {
     PRECONDITION(arguments.inputSchemas.size() == 2, "Expected two input schemas, but got {}", arguments.inputSchemas.size());
 
-    auto functionVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION];
-    auto joinTypeVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_TYPE];
-    auto windowInfoVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_INFOS];
-    auto windowStartVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
-    auto windowEndVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
+    auto functionVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION);
+    auto joinTypeVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_TYPE);
+    auto windowInfoVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_INFOS);
+    auto windowStartVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME);
+    auto windowEndVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME);
 
     if (std::holds_alternative<FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
         and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant))
