@@ -1,6 +1,6 @@
 name: Build, Run and Benchmark Systests
 on:
-  workflow_call:
+  workflow_dispatch:
         inputs:
           run_reason:
             required: true
