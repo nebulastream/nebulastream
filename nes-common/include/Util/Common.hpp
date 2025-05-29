@@ -120,4 +120,25 @@ std::shared_ptr<T> copyPtr(std::experimental::propagate_const<std::shared_ptr<T>
     return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
 }
 
+
+/// Creates new unique temporary directory with a custom prefix
+std::filesystem::path createTempDir(std::string_view prefix);
+
+class TempDirectoryCleanup
+{
+    std::optional<std::filesystem::path> deleteOnExit;
+    void cleanup() noexcept;
+
+public:
+    explicit TempDirectoryCleanup(std::filesystem::path delete_on_exit);
+    ~TempDirectoryCleanup();
+    TempDirectoryCleanup(const TempDirectoryCleanup& other) = delete;
+    TempDirectoryCleanup(TempDirectoryCleanup&& other) noexcept;
+    TempDirectoryCleanup& operator=(const TempDirectoryCleanup& other) = delete;
+    TempDirectoryCleanup& operator=(TempDirectoryCleanup&& other) noexcept;
+};
+
+/// Convert an errno value into an error message string
+std::string errnoString(int error);
+
 }
