@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-systest-lib
+        SystestExecutor.cpp
         SystestParser.cpp
         SystestRunner.cpp
         SystestState.cpp
