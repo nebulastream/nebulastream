@@ -28,10 +28,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         std::string query(reinterpret_cast<const char*>(data), size);
         auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        for (auto op : plan.rootOperators)
-        {
-            auto _ = op.explain(NES::ExplainVerbosity::Debug);
-        }
+        std::cout << plan << std::endl;
         return 0;
     }
     CPPTRACE_CATCH(...)
