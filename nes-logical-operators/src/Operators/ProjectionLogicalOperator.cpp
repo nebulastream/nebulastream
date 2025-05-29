@@ -300,8 +300,8 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    const auto functionVariant = arguments.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
-    const auto asterisk = std::get<bool>(arguments.config[ProjectionLogicalOperator::ConfigParameters::ASTERISK]);
+    const auto functionVariant = arguments.config.at(ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME);
+    const auto asterisk = std::get<bool>(arguments.config.at(ProjectionLogicalOperator::ConfigParameters::ASTERISK));
 
     if (const auto* projection = std::get_if<ProjectionList>(&functionVariant))
     {
