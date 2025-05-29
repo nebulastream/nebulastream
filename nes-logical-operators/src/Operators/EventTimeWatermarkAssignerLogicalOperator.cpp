@@ -208,8 +208,8 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto timeVariant = arguments.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS];
-    auto functionVariant = arguments.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION];
+    auto timeVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS);
+    auto functionVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION);
 
     if (std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant))
     {
