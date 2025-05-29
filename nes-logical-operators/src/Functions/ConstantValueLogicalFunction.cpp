@@ -115,9 +115,11 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    std::cout << arguments.children.size() << std::endl;
     PRECONDITION(
         arguments.config.contains("constantValueAsString"), "ConstantValueLogicalFunction requires a constantValueAsString in its config");
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
+    std::cout << arguments.children.size() << std::endl;
     return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString);
 }
 
