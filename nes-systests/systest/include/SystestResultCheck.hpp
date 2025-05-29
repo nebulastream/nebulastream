@@ -31,17 +31,7 @@
 namespace NES::Systest
 {
 
-struct FieldResult
-{
-    DataType type;
-    std::string valueAsString;
-};
-using MapFieldNameToValue = std::unordered_map<std::string, FieldResult>;
-
 static constexpr auto EPSILON = 1e-5;
-bool operator!=(const FieldResult& left, const FieldResult& right);
-bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right);
-bool operator!=(const MapFieldNameToValue& left, const MapFieldNameToValue& right);
 
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right, const double epsilonAllowed)
@@ -108,9 +98,6 @@ struct QueryResult
     SystestSchema fields;
     std::vector<std::string> result;
 };
-
-/// loads the query result for a sep
-std::optional<QueryResult> loadQueryResult(const SystestQuery& query);
 
 /// Returns an error message or an empty optional if the query result is correct
 std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap);

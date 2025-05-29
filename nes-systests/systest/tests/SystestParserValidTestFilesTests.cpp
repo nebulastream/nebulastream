@@ -174,11 +174,10 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
-    ASSERT_TRUE(
-        std::ranges::all_of(
-            expectedResults,
-            [&systestStarterGlobals](const auto& expectedResult)
-            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedResults,
+        [&systestStarterGlobals](const auto& expectedResult)
+        { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -277,11 +276,10 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
-    ASSERT_TRUE(
-        std::ranges::all_of(
-            expectedResults,
-            [&systestStarterGlobals](const auto& expectedResult)
-            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedResults,
+        [&systestStarterGlobals](const auto& expectedResult)
+        { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)

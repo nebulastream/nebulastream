@@ -294,8 +294,8 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 
 }
 
-std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, uint64_t maxConcurrency, QuerySubmitter& submitter, const QueryResultMap& queryResultMap)
+std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries, uint64_t maxConcurrency, QuerySubmitter& submitter, const QueryResultMap& queryResultMap)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
