@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <SystestStarter.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <random>
 #include <vector>
 #include <unistd.h>
@@ -297,9 +301,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     }
     return config;
 }
-}
 
-static void runEndlessMode(
+void runEndlessMode(
     std::vector<NES::Systest::SystestQuery> queries,
     NES::Configuration::SystestConfiguration& config,
     const NES::Systest::QueryResultMap& queryResultMap)
@@ -411,30 +414,24 @@ void setupLogging()
     createSymlink(absoluteLogPath, symlinkPath);
 }
 
-int main(int argc, const char** argv)
+SystestMainResult executeSystests(Configuration::SystestConfiguration config)
 {
-    using namespace NES;
-
     setupLogging();
 
     CPPTRACE_TRY
     {
         /// Read the configuration
-        auto config = Systest::readConfiguration(argc, argv);
         std::filesystem::remove_all(config.workingDir.getValue());
         std::filesystem::create_directory(config.workingDir.getValue());
 
         Systest::SystestStarterGlobals systestStarterGlobals{
             config.workingDir.getValue(), config.testDataDir.getValue(), Systest::loadTestFileMap(config)};
         auto queries = loadQueries(systestStarterGlobals);
-        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
         if (queries.empty())
         {
             std::stringstream outputMessage;
             outputMessage << "No queries were run.";
-            NES_ERROR("{}", outputMessage.str());
-            std::cout << outputMessage.str() << '\n';
-            return 1;
+            return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = outputMessage.str()};
         }
 
         if (config.endlessMode)
@@ -442,8 +439,6 @@ int main(int argc, const char** argv)
             runEndlessMode(queries, config, systestStarterGlobals.getQueryResultMap());
             std::exit(1);
         }
-
-        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
 
         if (config.randomQueryOrder)
         {
@@ -488,19 +483,21 @@ int main(int argc, const char** argv)
         {
             std::stringstream outputMessage;
             outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
-            NES_ERROR("{}", outputMessage.str());
-            std::cout << '\n' << outputMessage.str() << '\n';
-            return 1;
+            return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = outputMessage.str()};
         }
         std::stringstream outputMessage;
         outputMessage << '\n' << "All queries passed.";
-        NES_INFO("{}", outputMessage.str());
-        std::cout << outputMessage.str() << '\n';
-        return 0;
+        return {.returnType = SystestMainResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
     }
     CPPTRACE_CATCH(...)
     {
         tryLogCurrentException();
-        return getCurrentErrorCode();
+        const auto currentErrorCode = getCurrentErrorCode();
+        return {
+            .returnType = SystestMainResult::ReturnType::FAILED_WITH_EXCEPTION_CODE,
+            .outputMessage = fmt::format("Failed with exception code: {}", currentErrorCode),
+            .errorCode = currentErrorCode};
     }
+    return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = "Fatal error, should never reach this point."};
+}
 }
