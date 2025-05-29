@@ -39,6 +39,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
 #include <gtest/gtest.h>
@@ -72,7 +73,22 @@ class SmallFilesTest : public Testing::BaseUnitTest
         {"Food", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
          TestFile{.fileName = "Food", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
-         TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
+         TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}},
+        {"HL7_ACK_Message", /// Self-made HL7 message containing all fields of the ACK 2.5.1 HL7 trigger event except for the SFT segment. Proof of concept, no semantic meaning behind the values in the message.
+         TestFile{
+             .fileName = "HL7_ACK_Message",
+             .schemaFieldTypes
+             = {VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, INT32,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, INT32,    VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, INT32,    INT32,    VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, INT8,     INT8,     INT8,     INT8,     INT8,     VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED, VARSIZED,
+                VARSIZED, VARSIZED, VARSIZED, INT32,    INT32,    INT32,    INT32,    VARSIZED, VARSIZED, VARSIZED, VARSIZED}}}};
 
 public:
     static void SetUpTestCase()
@@ -276,7 +292,7 @@ public:
             size_t numBytesInNextChunk = 0;
             size_t numTuplesInNextChunk = 0;
             std::vector<std::pair<size_t, size_t>> offsets;
-            for (const auto& [bufferIdx, buffer] : resultBufferVec | std::views::enumerate)
+            for (const auto& [bufferIdx, buffer] : resultBufferVec | NES::views::enumerate)
             {
                 if (const auto sizeOfCurrentBufferInBytes = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
                     numBytesInNextChunk + sizeOfCurrentBufferInBytes > 4096)
@@ -497,6 +513,31 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
             .sizeOfRawBuffers = 4096});
 }
 
+/// The ACK message schema does not include the SFT segment of HL7 v2.5.1 to not stretch the schema out more than it already is
+TEST_F(SmallFilesTest, testAckMessageHL7SingleThreaded)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "HL7_ACK_Message",
+            .formatterType = "HL7",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 256});
+}
+
+TEST_F(SmallFilesTest, testAckMessageHL7MultiThreaded)
+{
+    runTest(
+        TestConfig{
+            .testFileName = "HL7_ACK_Message",
+            .formatterType = "HL7",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
+}
+
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(
@@ -542,6 +583,17 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .numberOfIterations = 1,
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 16});
+}
+
+TEST_F(SmallFilesTest, testAckMessage)
+{
+    runTest<true>(
+        {.testFileName = "HL7_ACK_Message",
+         .formatterType = "CSV",
+         .hasSpanningTuples = true,
+         .numberOfIterations = 1,
+         .numberOfThreads = 8,
+         .sizeOfRawBuffers = 1024});
 }
 
 
@@ -597,6 +649,5 @@ TEST_F(SmallFilesTest, DISABLED_testSpaceCraftTelemetryDataBinary)
             .numberOfThreads = 1,
             .sizeOfRawBuffers = 4096});
 }
-
 }
 /// NOLINTEND(readability-magic-numbers)

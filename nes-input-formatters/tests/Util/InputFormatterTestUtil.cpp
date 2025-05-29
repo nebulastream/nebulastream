@@ -130,6 +130,10 @@ createInputFormatterTask(const std::shared_ptr<Schema>& schema, std::string form
         {
             return {{"type", formatterType}, {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
         }
+        if (formatterType == "HL7")
+        {
+            return {{"type", formatterType}, {"segmentDelimiter", "\n"}, {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
+        }
         return {
             {"type", formatterType},
             {"tupleDelimiter", "\n"},
