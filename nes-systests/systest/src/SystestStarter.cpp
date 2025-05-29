@@ -15,11 +15,13 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <random>
 #include <vector>
 #include <unistd.h>
@@ -297,12 +299,11 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     }
     return config;
 }
-}
 
-static void runEndlessMode(
+void runEndlessMode(
     std::vector<NES::Systest::SystestQuery> queries,
     NES::Configuration::SystestConfiguration& config,
-    NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap)
 {
     using namespace NES;
     std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
@@ -411,39 +412,44 @@ void setupLogging()
     createSymlink(absoluteLogPath, symlinkPath);
 }
 
-int main(int argc, const char** argv)
+struct SystestMainResult
 {
-    using namespace NES;
+    enum class ReturnType : uint8_t
+    {
+        FAILED,
+        FAILED_WITH_EXCEPTION_CODE,
+        SUCCESS,
+    };
+    ReturnType returnType;
+    std::string outputMessage;
+    std::optional<uint64_t> exceptionCode = std::nullopt;
+};
 
+SystestMainResult executeSystests(Configuration::SystestConfiguration config)
+{
     setupLogging();
 
     CPPTRACE_TRY
     {
         /// Read the configuration
-        auto config = Systest::readConfiguration(argc, argv);
         std::filesystem::remove_all(config.workingDir.getValue());
         std::filesystem::create_directory(config.workingDir.getValue());
 
-        auto testMap = Systest::loadTestFileMap(config);
-        Systest::QueryResultMap queryResultMap{};
-        const auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), queryResultMap);
-        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
+        Systest::SystestStarterGlobals systestStarterGlobals{
+            config.workingDir.getValue(), config.testDataDir.getValue(), Systest::loadTestFileMap(config)};
+        auto queries = loadQueries(systestStarterGlobals);
         if (queries.empty())
         {
             std::stringstream outputMessage;
             outputMessage << "No queries were run.";
-            NES_ERROR("{}", outputMessage.str());
-            std::cout << outputMessage.str() << '\n';
-            return 1;
+            return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = outputMessage.str()};
         }
 
         if (config.endlessMode)
         {
-            runEndlessMode(queries, config, queryResultMap);
+            runEndlessMode(queries, config, systestStarterGlobals.getQueryResultMap());
             std::exit(1);
         }
-
-        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
 
         if (config.randomQueryOrder)
         {
@@ -488,19 +494,21 @@ int main(int argc, const char** argv)
         {
             std::stringstream outputMessage;
             outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
-            NES_ERROR("{}", outputMessage.str());
-            std::cout << '\n' << outputMessage.str() << '\n';
-            return 1;
+            return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = outputMessage.str()};
         }
         std::stringstream outputMessage;
         outputMessage << '\n' << "All queries passed.";
-        NES_INFO("{}", outputMessage.str());
-        std::cout << outputMessage.str() << '\n';
-        return 0;
+        return {.returnType = SystestMainResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
     }
     CPPTRACE_CATCH(...)
     {
         tryLogCurrentException();
-        return getCurrentExceptionCode();
+        const auto exceptionCode = getCurrentExceptionCode();
+        return {
+            .returnType = SystestMainResult::ReturnType::FAILED_WITH_EXCEPTION_CODE,
+            .outputMessage = fmt::format("Failed with exception code: {}", exceptionCode),
+            .exceptionCode = exceptionCode};
     }
+    return {.returnType = SystestMainResult::ReturnType::FAILED, .outputMessage = "Fatal error, should never reach this point."};
+}
 }

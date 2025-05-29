@@ -36,7 +36,7 @@ target_compile_definitions(nes-systest-lib PRIVATE
 find_package(argparse CONFIG REQUIRED)
 
 # Add the systest executable
-add_executable(systest src/SystestStarter.cpp)
+add_executable(systest src/SystestMain.cpp)
 target_compile_definitions(systest PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
