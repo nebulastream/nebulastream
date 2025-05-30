@@ -154,10 +154,15 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     processes = []
     ports = []
     max_retries = 10
-    for port in starting_ports:
+    for j, port in enumerate(starting_ports):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
-                cmd = f"{TCP_SERVER} -p {port} -n {current_benchmark_config.num_tuples_to_generate} -t {current_benchmark_config.timestamp_increment} -i {current_benchmark_config.ingestion_rate}"
+                remainingServers = len(starting_ports) - j
+                cmd = f"{TCP_SERVER} -p {port} " \
+                      f"-k {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS} " \
+                      f"-n {current_benchmark_config.num_tuples_to_generate} " \
+                      f"-t {current_benchmark_config.timestamp_increment} " \
+                      f"-i {current_benchmark_config.ingestion_rate}"
                 # Add variable sized data flag to last tcp server
                 if port == starting_ports[-1] or port == starting_ports[-2]:
                     cmd += " -v"
