@@ -59,6 +59,8 @@ class BinarySource : public DataSource {
      */
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
+    void openFile();
+
     /**
      * @brief override the toString method for the binary source
      * @return returns string describing the binary source
