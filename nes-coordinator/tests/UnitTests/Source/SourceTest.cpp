@@ -315,7 +315,8 @@ class BinarySourceProxy : public BinarySource {
                        numSourceLocalBuffers,
                        GatheringMode::INTERVAL_MODE,
                        "defaultPhysicalStreamName",
-                       successors){};
+                       successors,
+                       0){};
 
   private:
     FRIEND_TEST(SourceTest, testBinarySourceGetType);
