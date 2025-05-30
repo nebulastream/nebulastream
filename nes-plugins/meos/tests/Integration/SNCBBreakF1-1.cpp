@@ -130,7 +130,7 @@ TEST_F(ReadSNCB, testF2) {
         ASSERT_EQ(sizeof(InputValue), press->getSchemaSizeInBytes());
 
         const size_t tupleSize = sizeof(InputValue);
-        const size_t safeTuplesPerBuffer = 10; 
+        const size_t safeTuplesPerBuffer = 36; 
         
         NES_INFO("InputValue size={} bytes", tupleSize);
         NES_INFO("Using conservative value of {} tuples per buffer", safeTuplesPerBuffer);
@@ -139,7 +139,7 @@ TEST_F(ReadSNCB, testF2) {
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "nrok5-VTC1030-NES.csv");
         csvSourceType->setNumberOfTuplesToProducePerBuffer(safeTuplesPerBuffer);    
         csvSourceType->setGatheringInterval(0);                      
-        csvSourceType->setNumberOfBuffersToProduce(100);
+        csvSourceType->setNumberOfBuffersToProduce(10);
         csvSourceType->setSkipHeader(true);            
 
       
@@ -155,10 +155,10 @@ TEST_F(ReadSNCB, testF2) {
                         // .map(Attribute("timestamp") = Attribute("press$start"))
                         // .map(Attribute("variationPCFA") = Attribute("PCFA_max_value") - Attribute("PCFA_min_value"))
                         // .filter(Attribute("variationPCFA") > 0.4)
-                        .project(Attribute("timestamp"),
+                        .project(Attribute("start"),
+                                Attribute("end"),
                                 Attribute("id"),
-                                Attribute("PCFA_min_value"),                                    
-                                Attribute("time"));
+                                Attribute("PCFA_min_value"));
 
 
         NES_INFO("Query defined, setting up test harness");

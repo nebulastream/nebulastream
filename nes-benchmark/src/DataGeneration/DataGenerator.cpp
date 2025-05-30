@@ -23,6 +23,7 @@
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <DataGeneration/SNCBDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -84,6 +85,25 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<ClusterMonitoringDataGenerator>();
     } else if (type == "ManufacturingEquipment") {
         return std::make_unique<ManufacturingEquipmentDataGenerator>();
+    } else if (type == "SNCB") {
+        // Parse SNCB-specific parameters if provided
+        std::string csvPath = "/media/psf/Home/Parallels/nebulaQueryAPI/data/selected_columns_df.csv";
+        uint64_t minSpeed = 0;
+        uint64_t maxSpeed = 120;
+        double minLongitude = 4.0;
+        double maxLongitude = 6.5;
+        double minLatitude = 49.5;
+        double maxLatitude = 51.5;
+        
+        if (!generatorNode["csvPath"].IsNone()) csvPath = generatorNode["csvPath"].As<std::string>();
+        if (!generatorNode["minSpeed"].IsNone()) minSpeed = generatorNode["minSpeed"].As<uint64_t>();
+        if (!generatorNode["maxSpeed"].IsNone()) maxSpeed = generatorNode["maxSpeed"].As<uint64_t>();
+        if (!generatorNode["minLongitude"].IsNone()) minLongitude = generatorNode["minLongitude"].As<double>();
+        if (!generatorNode["maxLongitude"].IsNone()) maxLongitude = generatorNode["maxLongitude"].As<double>();
+        if (!generatorNode["minLatitude"].IsNone()) minLatitude = generatorNode["minLatitude"].As<double>();
+        if (!generatorNode["maxLatitude"].IsNone()) maxLatitude = generatorNode["maxLatitude"].As<double>();
+        
+        return std::make_unique<SNCBDataGenerator>(csvPath, minSpeed, maxSpeed, minLongitude, maxLongitude, minLatitude, maxLatitude);
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }

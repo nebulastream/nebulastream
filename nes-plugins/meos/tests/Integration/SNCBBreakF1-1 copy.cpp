@@ -168,47 +168,46 @@ TEST_F(ReadSNCB, testF2) {
                             .filter(Attribute("PCFF_bar") >= 0)
                             .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10), Seconds(1)))
                             .byKey(Attribute("id"))
-                            .apply(Min(Attribute("PCFA_bar")));
-
-                            //     Max(Attribute("PCFA_bar"))->as(Attribute("PCFA_max_value")))
-                            // .map(Attribute("timestamp") = Attribute("gps$start"))
-                            // .map(Attribute("variationPCFA") = Attribute("PCFA_max_value") - Attribute("PCFA_min_value"))
-                            // .filter(Attribute("variationPCFA") > 0.4)
+                            .apply(Min(Attribute("PCFA_bar"))->as(Attribute("PCFA_min_value")),
+                                    Max(Attribute("PCFA_bar"))->as(Attribute("PCFA_max_value")))
+                            .map(Attribute("timestamp") = Attribute("gps$start"))
+                            .map(Attribute("variationPCFA") = Attribute("PCFA_max_value") - Attribute("PCFA_min_value"))
+                            .filter(Attribute("variationPCFA") > 0.4)
                             .project(Attribute("timestamp"),
                                             Attribute("id"),
                                             Attribute("PCFA_bar"),
                                             Attribute("time"));
 
 
-        // // Part B - Orange
-        // auto pcffVariationQueryNot = Query::from("cfa")
-        //                             .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)),Seconds(10), Seconds(1)))
-        //                             .byKey(Attribute("id"))
-        //                             .apply(Min(Attribute("PCFF_bar"))->as(Attribute("PCFF_min_value_f")),
-        //                                 Max(Attribute("PCFF_bar"))->as(Attribute("PCFF_max_value_f")))
-        //                             .map(Attribute("timestamp") = Attribute("cfa$start"))
-        //                             .map(Attribute("variationPCFF_f") = Attribute("PCFF_max_value_f") - Attribute("PCFF_min_value_f"))
-        //                             .filter(Attribute("variationPCFF_f") < 0.1)
-        //                             .project(Attribute("cfa$start"),
-        //                                     Attribute("id"),
-        //                                     Attribute("timestamp"),
-        //                                     Attribute("PCFF_min_value_f"),
-        //                                     Attribute("PCFF_max_value_f"),
-        //                                     Attribute("variationPCFF_f"));
+        // Part B - Orange
+        auto pcffVariationQueryNot = Query::from("cfa")
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)),Seconds(10), Seconds(1)))
+                                    .byKey(Attribute("id"))
+                                    .apply(Min(Attribute("PCFF_bar"))->as(Attribute("PCFF_min_value_f")),
+                                        Max(Attribute("PCFF_bar"))->as(Attribute("PCFF_max_value_f")))
+                                    .map(Attribute("timestamp") = Attribute("cfa$start"))
+                                    .map(Attribute("variationPCFF_f") = Attribute("PCFF_max_value_f") - Attribute("PCFF_min_value_f"))
+                                    .filter(Attribute("variationPCFF_f") < 0.1)
+                                    .project(Attribute("cfa$start"),
+                                            Attribute("id"),
+                                            Attribute("timestamp"),
+                                            Attribute("PCFF_min_value_f"),
+                                            Attribute("PCFF_max_value_f"),
+                                            Attribute("variationPCFF_f"));
 
-        // Part C - Green
-        // auto noEventAfter5s = cfaCheckQuery
-        //                     .andWith(pcffVariationQueryNot)
-        //                     .window(TumblingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10)))
-        //                     .filter(Attribute("gps$id") == Attribute("cfa$id"))
-        //                     .project(Attribute("gps$id").as("id"),
-        //                             Attribute("$timestamp"),
-        //                             Attribute("gps$PCFA_min_value").as("PCFA_min_value"),
-        //                             Attribute("gps$PCFA_max_value").as("PCFA_max_value"),
-        //                             Attribute("gps$variationPCFA").as("variationPCFA"),
-        //                             Attribute("cfa$PCFF_min_value_f").as("PCFF_min_value_f"),
-        //                             Attribute("cfa$PCFF_max_value_f").as("PCFF_max_value_f"),
-        //                             Attribute("cfa$variationPCFF_f").as("variationPCFF_f"));
+        Part C - Green
+        auto noEventAfter5s = cfaCheckQuery
+                            .andWith(pcffVariationQueryNot)
+                            .window(TumblingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10)))
+                            .filter(Attribute("gps$id") == Attribute("cfa$id"))
+                            .project(Attribute("gps$id").as("id"),
+                                    Attribute("$timestamp"),
+                                    Attribute("gps$PCFA_min_value").as("PCFA_min_value"),
+                                    Attribute("gps$PCFA_max_value").as("PCFA_max_value"),
+                                    Attribute("gps$variationPCFA").as("variationPCFA"),
+                                    Attribute("cfa$PCFF_min_value_f").as("PCFF_min_value_f"),
+                                    Attribute("cfa$PCFF_max_value_f").as("PCFF_max_value_f"),
+                                    Attribute("cfa$variationPCFF_f").as("variationPCFF_f"));
 
 
         NES_INFO("Query defined, setting up test harness");

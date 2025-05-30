@@ -93,7 +93,9 @@ TEST_F(MeosDeploy, testIntersectionThresold) {
                                  Attribute("timestamp", BasicType::UINT64)) == 1;
         auto query =
             Query::from("ais")
-                .window(ThresholdWindow::of(ThresholExpression))
+                .window(ThresholdWindow::of(teintersects(Attribute("longitude", BasicType::FLOAT64),
+                                 Attribute("latitude", BasicType::FLOAT64),
+                                 Attribute("timestamp", BasicType::UINT64)) == 1))
                 .apply(Sum(Attribute("mmsi", BasicType::UINT64)));
 
         // Create the test harness and attach the CSV source

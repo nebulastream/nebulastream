@@ -166,6 +166,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         .joinWith(weatherQuery)
         .where(Attribute("timestamp") == Attribute("weather$timestamp"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)));
+        
         // .filter(readT(
         //     Attribute("weather$timestamp"),
         //     Attribute("weather$gps_lat"),    // Correct field name from schema

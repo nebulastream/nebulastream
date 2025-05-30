@@ -17,6 +17,7 @@ add_source_files(nes-benchmark
         DataGenerator.cpp
         DefaultDataGenerator.cpp
         ZipfianDataGenerator.cpp
-        YSBDataGenerator.cpp)
+        YSBDataGenerator.cpp
+        SNCBDataGenerator.cpp)
 
 

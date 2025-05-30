@@ -73,3 +73,12 @@ nes-onnx-->nes-execution
 nes-benchmark-->nes-coordinator
 nes-worker-->nes-execution
 ```
+
+# Try various query API endpoints
+curl -X POST http://127.0.0.1:8081/query/submit -H "Content-Type: application/json" -d '{
+  "queryPlan": "FROM test_source SELECT * INTO output"
+}'
+
+curl -X POST http://127.0.0.1:8081/query/create -H "Content-Type: application/json" -d '{
+  "queryPlan": "FROM test_source SELECT * INTO output"
+}'
