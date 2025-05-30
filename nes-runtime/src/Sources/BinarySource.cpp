@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
+#include <filesystem>
 
 namespace NES {
 
