@@ -291,7 +291,7 @@ def run_benchmark(current_benchmark_config, iteration):
 
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
-            if file_name.startswith("nes-stats-") or file_name.startswith("benchmark-stats-") or file_name.endswith(
+            if file_name.startswith("EngineStats_") or file_name.startswith("BenchmarkStats_") or file_name.endswith(
                     ".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
