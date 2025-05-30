@@ -36,7 +36,8 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+WAIT_BEFORE_QUERY_STOP = 5
+MEASURE_INTERVAL = 8
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
@@ -154,10 +155,15 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     processes = []
     ports = []
     max_retries = 10
-    for port in starting_ports:
+    for j, port in enumerate(starting_ports):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
-                cmd = f"{TCP_SERVER} -p {port} -n {current_benchmark_config.num_tuples_to_generate} -t {current_benchmark_config.timestamp_increment} -i {current_benchmark_config.ingestion_rate}"
+                remainingServers = len(starting_ports) - j
+                cmd = f"{TCP_SERVER} -p {port} " \
+                      f"-k {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS + 2 * WAIT_BETWEEN_COMMANDS} " \
+                      f"-n {current_benchmark_config.num_tuples_to_generate} " \
+                      f"-t {current_benchmark_config.timestamp_increment} " \
+                      f"-i {current_benchmark_config.ingestion_rate}"
                 # Add variable sized data flag to last tcp server
                 if port == starting_ports[-1] or port == starting_ports[-2]:
                     cmd += " -v"
@@ -275,9 +281,10 @@ def run_benchmark(current_benchmark_config, iteration):
         # Submitting the query and waiting couple of seconds before stopping the query
         query_id = submitting_query(os.path.abspath(os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)))
 
-        print(f"Waiting for {MEASURE_INTERVAL}s before stopping the query...")
-        time.sleep(MEASURE_INTERVAL)  # Allow query engine stats to be printed
+        print(f"Waiting for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
+        time.sleep(MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP)  # Allow query engine stats to be printed
         stop_process = stop_query(query_id)
+        print(f"Query {query_id} was stopped")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = source_processes + [single_node_process] + [stop_process]
