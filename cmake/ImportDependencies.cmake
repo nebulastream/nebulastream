@@ -124,7 +124,8 @@ if (NOT VCPKG_HOST_OS MATCHES "Linux")
     message(FATAL_ERROR "Only linux is supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
 endif ()
 
-SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
+#SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
+SET(VCPKG_TARGET_TRIPLET arm64-linux-none-local-zynq)
 SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-none-${VCPKG_STDLIB}")
 
 message(STATUS "VPCKG target triplet: ${VCPKG_TARGET_TRIPLET}")
