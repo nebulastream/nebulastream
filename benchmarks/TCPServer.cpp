@@ -120,11 +120,18 @@ public:
     CounterServer(
         const std::string& host,
         const int port,
+        const int timeoutSeconds,
         const uint64_t countLimit,
         const int timeStep,
         const double ingestionRate,
         const bool varSized)
-        : host(host), port(port), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate), varSized(varSized)
+        : host(host)
+        , port(port)
+        , timeoutSeconds(timeoutSeconds)
+        , countLimit(countLimit)
+        , timeStep(timeStep)
+        , ingestionRate(ingestionRate)
+        , varSized(varSized)
     {
     }
 
@@ -155,12 +162,24 @@ public:
         }
         std::cout << "Server listening on " << host << ":" << port << '\n';
         std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit))
-                  << "Ingestion rate: " << (ingestionRate == 0 ? "unlimited" : std::to_string(ingestionRate)) << '\n';
+                  << " Ingestion rate: " << (ingestionRate == 0 ? "unlimited" : std::to_string(ingestionRate)) << '\n';
 
+        std::cout << "Shutting down server in " << std::to_string(timeoutSeconds) << "seconds...\n";
+        const auto startTime = std::chrono::high_resolution_clock::now();
         try
         {
             while (running)
             {
+                if (timeoutSeconds > 0)
+                {
+                    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
+                    if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >= timeoutSeconds)
+                    {
+                        std::cout << "Timeout reached. Shutting down server...\n";
+                        break;
+                    }
+                }
+
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
                 const int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
@@ -218,6 +237,7 @@ public:
 private:
     std::string host = "0.0.0.0";
     int port = 5020;
+    int timeoutSeconds = 0;
     uint64_t countLimit = 0;
     int timeStep = 1;
     double ingestionRate = 0;
@@ -232,6 +252,7 @@ int main(const int argc, char* argv[])
 {
     std::string host = "0.0.0.0";
     int port = 5020;
+    int timeoutSeconds = 0;
     uint64_t countLimit = 0;
     int timeStep = 1;
     double ingestionRate = 0;
@@ -246,6 +267,10 @@ int main(const int argc, char* argv[])
         else if (std::strcmp(argv[i], "-p") == 0 || std::strcmp(argv[i], "--port") == 0)
         {
             port = std::stoi(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "-k") == 0 || std::strcmp(argv[i], "--kill") == 0)
+        {
+            timeoutSeconds = std::stoi(argv[++i]);
         }
         else if (std::strcmp(argv[i], "-n") == 0 || std::strcmp(argv[i], "--count-limit") == 0)
         {
@@ -267,7 +292,7 @@ int main(const int argc, char* argv[])
 
     try
     {
-        CounterServer server(host, port, countLimit, timeStep, ingestionRate, varSized);
+        CounterServer server(host, port, timeoutSeconds, countLimit, timeStep, ingestionRate, varSized);
         server.start();
     }
     catch (const std::exception& e)
