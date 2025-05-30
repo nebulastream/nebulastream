@@ -498,4 +498,194 @@ inline constexpr auto enumerate = fn{};
 
 }
 
+/// std::ranges::to
+/// Libc++ already provides an implementation for std::ranges::to so the implementation is libstdc++ specific
+#ifndef _LIBCPP_VERSION
+namespace ranges
+{
+namespace detail
+{
+template <typename Container>
+constexpr bool reservable_container
+    = std::ranges::sized_range<Container> && requires(Container& c, std::ranges::range_size_t<Container> n) {
+          c.reserve(n);
+          { c.capacity() } -> std::same_as<decltype(n)>;
+          { c.max_size() } -> std::same_as<decltype(n)>;
+      };
+
+template <typename ContainerType, typename RangeType>
+constexpr bool toable = requires {
+    requires(
+        !std::ranges::input_range<ContainerType>
+        || std::convertible_to<std::ranges::range_reference_t<RangeType>, std::ranges::range_value_t<ContainerType>>);
+};
+}
+
+struct from_range_t
+{
+    explicit from_range_t() = default;
+};
+inline constexpr from_range_t from_range{};
+
+/// @cond undocumented
+namespace detail
+{
+template <typename _Rg, typename Tp>
+concept container_compatible_range = std::ranges::input_range<_Rg> && std::convertible_to<std::ranges::range_reference_t<_Rg>, Tp>;
+}
+
+template <typename IterType>
+using iter_category = typename std::iterator_traits<IterType>::iterator_category;
+
+template <typename ContainerType, std::ranges::input_range RangeType, typename... Args>
+requires(!std::ranges::view<ContainerType>)
+constexpr ContainerType to [[nodiscard]] (RangeType&& r, Args&&... args)
+{
+    static_assert(!std::is_const_v<ContainerType> && !std::is_volatile_v<ContainerType>);
+    static_assert(std::is_class_v<ContainerType>);
+
+    if constexpr (detail::toable<ContainerType, RangeType>)
+    {
+        if constexpr (std::constructible_from<ContainerType, RangeType, Args...>)
+            return ContainerType(std::forward<RangeType>(r), std::forward<Args>(args)...);
+        else if constexpr (std::constructible_from<ContainerType, from_range_t, RangeType, Args...>)
+            return ContainerType(from_range, std::forward<RangeType>(r), std::forward<Args>(args)...);
+        else if constexpr (requires {
+                               requires std::ranges::common_range<RangeType>;
+                               typename iter_category<std::ranges::iterator_t<RangeType>>;
+                               requires std::derived_from<iter_category<std::ranges::iterator_t<RangeType>>, std::input_iterator_tag>;
+                               requires std::constructible_from<
+                                   ContainerType,
+                                   std::ranges::iterator_t<RangeType>,
+                                   std::ranges::sentinel_t<RangeType>,
+                                   Args...>;
+                           })
+            return ContainerType(std::ranges::begin(r), std::ranges::end(r), std::forward<Args>(args)...);
+        else
+        {
+            static_assert(std::constructible_from<ContainerType, Args...>);
+            ContainerType c(std::forward<Args>(args)...);
+            if constexpr (std::ranges::sized_range<RangeType> && detail::reservable_container<ContainerType>)
+                c.reserve(static_cast<std::ranges::range_size_t<ContainerType>>(std::ranges::size(r)));
+            auto it = std::ranges::begin(r);
+            const auto sent = std::ranges::end(r);
+            while (it != sent)
+            {
+                if constexpr (requires { c.emplace_back(*it); })
+                    c.emplace_back(*it);
+                else if constexpr (requires { c.push_back(*it); })
+                    c.push_back(*it);
+                else if constexpr (requires { c.emplace(c.end(), *it); })
+                    c.emplace(c.end(), *it);
+                else
+                    c.insert(c.end(), *it);
+                ++it;
+            }
+            return c;
+        }
+    }
+    else
+    {
+        static_assert(std::ranges::input_range<std::ranges::range_reference_t<RangeType>>);
+        return ranges::to<ContainerType>(
+            ref_view(r)
+                | std::views::transform(
+                    []<typename _Elt>(_Elt&& elem)
+                    {
+                        using _ValT = std::ranges::range_value_t<ContainerType>;
+                        return ranges::to<_ValT>(std::forward<_Elt>(elem));
+                    }),
+            std::forward<Args>(args)...);
+    }
+}
+
+namespace detail
+{
+template <typename RangeType>
+struct _InputIter
+{
+    using iterator_category = std::input_iterator_tag;
+    using value_type = std::ranges::range_value_t<RangeType>;
+    using difference_type = ptrdiff_t;
+    using pointer = std::add_pointer_t<std::ranges::range_reference_t<RangeType>>;
+    using reference = std::ranges::range_reference_t<RangeType>;
+    reference operator*() const;
+    pointer operator->() const;
+    _InputIter& operator++();
+    _InputIter operator++(int);
+    bool operator==(const _InputIter&) const;
+};
+
+template <template <typename...> typename ContainerType, std::ranges::input_range RangeType, typename... Args>
+using DeducerExpre1 = decltype(ContainerType(std::declval<RangeType>(), std::declval<Args>()...));
+
+template <template <typename...> typename ContainerType, std::ranges::input_range RangeType, typename... Args>
+using DeducerExpre2 = decltype(ContainerType(from_range, std::declval<RangeType>(), std::declval<Args>()...));
+
+template <template <typename...> typename ContainerType, std::ranges::input_range RangeType, typename... Args>
+using DeducerExpre3
+    = decltype(ContainerType(std::declval<_InputIter<RangeType>>(), std::declval<_InputIter<RangeType>>(), std::declval<Args>()...));
+
+}
+
+template <template <typename...> typename ContainerType, std::ranges::input_range RangeType, typename... Args>
+constexpr auto to [[nodiscard]] (RangeType&& r, Args&&... args)
+{
+    using detail::DeducerExpre1;
+    using detail::DeducerExpre2;
+    using detail::DeducerExpre3;
+    if constexpr (requires { typename DeducerExpre1<ContainerType, RangeType, Args...>; })
+        return ranges::to<DeducerExpre1<ContainerType, RangeType, Args...>>(std::forward<RangeType>(r), std::forward<Args>(args)...);
+    else if constexpr (requires { typename DeducerExpre2<ContainerType, RangeType, Args...>; })
+        return ranges::to<DeducerExpre2<ContainerType, RangeType, Args...>>(std::forward<RangeType>(r), std::forward<Args>(args)...);
+    else if constexpr (requires { typename DeducerExpre3<ContainerType, RangeType, Args...>; })
+        return ranges::to<DeducerExpre3<ContainerType, RangeType, Args...>>(std::forward<RangeType>(r), std::forward<Args>(args)...);
+    else
+        static_assert(false); /// Cannot deduce container specialization.
+}
+
+namespace detail
+{
+template <typename ContainerType>
+struct To
+{
+    template <typename RangeType, typename... Args>
+    requires requires { ranges::to<ContainerType>(std::declval<RangeType>(), std::declval<Args>()...); }
+    constexpr auto operator()(RangeType&& r, Args... args) const
+    {
+        return ranges::to<ContainerType>(std::forward<RangeType>(r), std::forward<Args>(args)...);
+    }
+};
+}
+
+template <typename ContainerType, typename... Args>
+requires(!std::ranges::view<ContainerType>)
+constexpr auto to [[nodiscard]] (Args&&... args)
+{
+    using detail::To;
+    return views::adaptor::Partial<To<ContainerType>, std::decay_t<Args>...>{0, std::forward<Args>(args)...};
+}
+
+namespace detail
+{
+template <template <typename...> typename ContainerType>
+struct To2
+{
+    template <typename RangeType, typename... Args>
+    requires requires { ranges::to<ContainerType>(std::declval<RangeType>(), std::declval<Args>()...); }
+    constexpr auto operator()(RangeType&& r, Args... args) const
+    {
+        return ranges::to<ContainerType>(std::forward<RangeType>(r), std::forward<Args>(args)...);
+    }
+};
+}
+
+template <template <typename...> typename ContainerType, typename... Args>
+constexpr auto to [[nodiscard]] (Args&&... args)
+{
+    using detail::To2;
+    return views::adaptor::Partial<To2<ContainerType>, std::decay_t<Args>...>{0, std::forward<Args>(args)...};
+}
+}
+
 ///NOLINTEND
