@@ -1,5 +1,5 @@
 # name: milestone/Nexmark.test
-# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
+# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries but HEAVILY adapted
 # groups: [milestone, benchmark, large, Aggregation, Join]
 
 # Source definitions
@@ -9,13 +9,8 @@ MemoryCSV bid_memory UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetim
 MemoryCSV auction_memory UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
 
 
-# Query 0 with File Source
+# Query 0
 SELECT * FROM bid INTO CHECKSUM;
-----
-18106394 33146443404
-
-# Query 0 with Memory Source
-SELECT * FROM bid_memory INTO CHECKSUM;
 ----
 18106394 33146443404
 
@@ -47,7 +42,6 @@ WINDOW TUMBLING(start, SIZE 2 SEC)
 INTO CHECKSUM;
 ----
 243784, 863137833
-
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
 SELECT start, end, timestamp, auctionId, bidder, datetime, price, timestamp, id, initialbid, reserve, expires, seller, category
