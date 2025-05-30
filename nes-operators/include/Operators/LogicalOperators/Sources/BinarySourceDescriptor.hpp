@@ -40,11 +40,15 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
+    void setNumberOfTuples(uint32_t);
+    uint32_t getNumberOfTuples();
+
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string sourceName, std::string filePath);
 
     std::string filePath;
+    uint32_t numberOfTuples;
 };
 
 using BinarySourceDescriptorPtr = std::shared_ptr<BinarySourceDescriptor>;

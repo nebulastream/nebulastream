@@ -32,7 +32,8 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            const std::string& physicalSourceName,
-                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                           uint32_t numberOfBuffers)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -55,6 +56,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
     }
     input.seekg(0, std::ifstream::beg);
     tupleSize = schema->getSchemaSizeInBytes();
+    this->numberOfBuffersToProduce = numberOfBuffers;
 }
 
 std::optional<Runtime::TupleBuffer> BinarySource::receiveData() {
