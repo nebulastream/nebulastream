@@ -88,6 +88,10 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
             {
                 protoVar.mutable_function_list()->CopyFrom(arg);
             }
+            else if constexpr (std::is_same_v<U, NES::ProjectionList>)
+            {
+                protoVar.mutable_projections()->CopyFrom(arg);
+            }
             else if constexpr (std::is_same_v<U, NES::AggregationFunctionList>)
             {
                 protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
@@ -133,6 +137,8 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             return protoVar.function_list();
         case SerializableVariantDescriptor::kAggregationFunctionList:
             return protoVar.aggregation_function_list();
+        case SerializableVariantDescriptor::kProjections:
+            return protoVar.projections();
         case SerializableVariantDescriptor::kWindowInfos:
             return protoVar.window_infos();
         default:

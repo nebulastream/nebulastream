@@ -10,8 +10,8 @@ Source stream INT64 id INT64 value UINT64 timestamp
 5,312,2012
 6,22,2021
 
-SINK sinkIdx3ValueTimeStamp INT64 stream$id_x_3 INT64 stream$value UINT64 stream$timestamp
-SINK sinkIdNewValueNewTimeStamp INT64 stream$id_new INT64 stream$value_new UINT64 stream$timestamp
+SINK sinkIdx3ValueTimeStamp INT64 id_x_3 INT64 stream$value UINT64 stream$timestamp
+SINK sinkIdNewValueNewTimeStamp INT64 id_new INT64 value_new UINT64 stream$timestamp
 
 # Filter and then map
 SELECT id * UINT32(3) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1) INTO sinkIdx3ValueTimeStamp

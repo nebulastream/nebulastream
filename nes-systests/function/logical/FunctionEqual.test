@@ -5,8 +5,8 @@
 Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23.3,42.42
 
-SINK sink10Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$bool3 BOOLEAN stream$bool4 BOOLEAN stream$bool5 BOOLEAN stream$bool6 BOOLEAN stream$bool7 BOOLEAN stream$bool8 BOOLEAN stream$bool9 BOOLEAN stream$bool10
-SINK sink20Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$bool3 BOOLEAN stream$bool4 BOOLEAN stream$bool5 BOOLEAN stream$bool6 BOOLEAN stream$bool7 BOOLEAN stream$bool8 BOOLEAN stream$bool9 BOOLEAN stream$bool10 BOOLEAN stream$bool11 BOOLEAN stream$bool12 BOOLEAN stream$bool13 BOOLEAN stream$bool14 BOOLEAN stream$bool15 BOOLEAN stream$bool16 BOOLEAN stream$bool17 BOOLEAN stream$bool18 BOOLEAN stream$bool19 BOOLEAN stream$bool20
+SINK sink10Booleans BOOLEAN bool1 BOOLEAN bool2 BOOLEAN bool3 BOOLEAN bool4 BOOLEAN bool5 BOOLEAN bool6 BOOLEAN bool7 BOOLEAN bool8 BOOLEAN bool9 BOOLEAN bool10
+SINK sink20Booleans BOOLEAN bool1 BOOLEAN bool2 BOOLEAN bool3 BOOLEAN bool4 BOOLEAN bool5 BOOLEAN bool6 BOOLEAN bool7 BOOLEAN bool8 BOOLEAN bool9 BOOLEAN bool10 BOOLEAN bool11 BOOLEAN bool12 BOOLEAN bool13 BOOLEAN bool14 BOOLEAN bool15 BOOLEAN bool16 BOOLEAN bool17 BOOLEAN bool18 BOOLEAN bool19 BOOLEAN bool20
 
 
 # Since equals is commutative, e.g., 'i8 == f32' equals 'f32 == i8', so we check only one direction.
