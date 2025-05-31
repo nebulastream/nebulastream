@@ -22,6 +22,7 @@
 #include <fstream>
 #include <functional>
 #include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -519,33 +520,42 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     INVARIANT(token == ErrorToken, "Expected ERROR token");
 
     /// Read the error code
-    std::string errorCodeStr;
-    if (!(stream >> errorCodeStr))
+    std::string errorStr;
+    if (!(stream >> errorStr))
     {
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
 
-    /// Convert string to ErrorCode
-    try
+    uint64_t code;
+    std::regex numberRegex("^\\d+$");
+    if (std::regex_match(errorStr, numberRegex))
     {
-        expectation.code = std::stoi(errorCodeStr);
-    }
-    catch (const std::exception&)
+        /// String is a valid integer
+        code = std::stoull(errorStr);
+        if (!errorCodeExists(code))
+        {
+            throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
+        }
+    } else if (auto codeOpt = errorTypeExists(errorStr))
     {
-        throw SLTUnexpectedToken("invalid error code: {}", errorCodeStr);
+        code = codeOpt.value();
     }
+    else
+    {
+        throw SLTUnexpectedToken("invalid error type: {} is not defined in ErrorDefinitions.inc", errorStr);
+    }
+
+    /// Convert string to ErrorCode and validate it exists
+    expectation.code = code;
 
     /// Read optional error message
     std::string message;
-    if (std::getline(stream, message))
-    {
+    if (std::getline(stream, message)) {
         /// Trim leading whitespace
         message.erase(0, message.find_first_not_of(" \t"));
-        if (!message.empty())
-        {
+        if (!message.empty()) {
             /// Remove surrounding quotes if present
-            if (message.front() == '"' && message.back() == '"')
-            {
+            if (message.front() == '"' && message.back() == '"') {
                 message = message.substr(1, message.length() - 2);
             }
             expectation.message = message;
