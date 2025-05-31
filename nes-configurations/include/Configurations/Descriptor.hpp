@@ -72,7 +72,8 @@ public:
         EnumWrapper,
         FunctionList,
         AggregationFunctionList,
-        WindowInfos>;
+        WindowInfos,
+        ProjectionList>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Plans/LogicalPlanBuilder.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -26,7 +28,6 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -36,7 +37,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -54,10 +54,12 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
     return queryPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::addProjection(std::vector<LogicalFunction> functions, const LogicalPlan& queryPlan)
+LogicalPlan LogicalPlanBuilder::addProjection(
+    std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add projection operator to query plan");
-    return promoteOperatorToRoot(queryPlan, ProjectionLogicalOperator(std::move(functions)));
+    return promoteOperatorToRoot(
+        queryPlan, ProjectionLogicalOperator(std::move(projections), ProjectionLogicalOperator::Asterisk(asterisk)));
 }
 
 LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan)
@@ -68,16 +70,6 @@ LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, 
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
     return promoteOperatorToRoot(queryPlan, SelectionLogicalOperator(std::move(selectionFunction)));
-}
-
-LogicalPlan LogicalPlanBuilder::addMap(const LogicalFunction& mapFunction, const LogicalPlan& queryPlan)
-{
-    NES_TRACE("LogicalPlanBuilder: add map operator to query plan");
-    if (mapFunction.tryGet<RenameLogicalFunction>())
-    {
-        throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
-    }
-    return promoteOperatorToRoot(queryPlan, MapLogicalOperator(mapFunction.get<FieldAssignmentLogicalFunction>()));
 }
 
 LogicalPlan LogicalPlanBuilder::addWindowAggregation(
