@@ -1,0 +1,6 @@
+# name: invalid_error.dymmy
+# description: Test file used in SystestParserInvalidTestFileTest
+
+SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;
+----
+ERROR 9999000 "expected error message"
