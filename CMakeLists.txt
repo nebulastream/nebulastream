@@ -267,6 +267,3 @@ if (CODE_COVERAGE)
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
     target_code_coverage(nes-nebuli-lib PUBLIC AUTO ALL)
 endif ()
-
-#string(REPLACE "-Wconstant-conversion" "" VCPKG_CXX_FLAGS "${VCPKG_CXX_FLAGS}")
-#string(REPLACE "-Wbitwise-instead-of-logical" "" VCPKG_CXX_FLAGS "${VCPKG_CXX_FLAGS}")
