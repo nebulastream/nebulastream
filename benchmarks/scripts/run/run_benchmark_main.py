@@ -85,22 +85,6 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     # Query Optimizer Configuration
     worker_config_yaml["worker"]["queryOptimizer"]["executionMode"] = current_benchmark_config.execution_mode
     worker_config_yaml["worker"]["queryOptimizer"]["pageSize"] = current_benchmark_config.page_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "numWatermarkGapsAllowed"] = current_benchmark_config.num_watermark_gaps_allowed
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
-    worker_config_yaml["worker"]["queryOptimizer"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "minWriteStateSize"] = current_benchmark_config.min_write_state_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
-    worker_config_yaml["worker"]["queryOptimizer"]["fileLayout"] = current_benchmark_config.file_layout
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
-    worker_config_yaml["worker"]["queryOptimizer"]["sliceStoreType"] = current_benchmark_config.slice_store_type
-    worker_config_yaml["worker"]["queryOptimizer"]["fileBackedWorkingDir"] = working_dir
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
