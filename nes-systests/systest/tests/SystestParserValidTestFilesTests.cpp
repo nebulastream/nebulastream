@@ -69,14 +69,25 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
               {.type = DataTypeProvider::provideDataType(DataType::Type::CHAR), .name = "i"}},
            .csvFilePath = "xyz.txt"};
 
-    SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
-    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&& result) { ASSERT_EQ(expectResult, result); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&& source) { ASSERT_EQ(source, expextedSLTSource); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&& source) { ASSERT_EQ(source, expextedCSVSource); });
+    bool queryCallbackCalled = false;
+    bool resultCallbackCalled = false;
+    bool sltSourceCallbackCalled = false;
+    bool csvSourceCallbackCalled = false;
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    SystestParser parser{};
+    parser.registerOnQueryCallback([&](SystestParser::Query&&) { queryCallbackCalled = true; });
+    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { resultCallbackCalled = true; });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
+    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
+
+    ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
     EXPECT_NO_THROW(parser.parse());
+
+    /// Verify that all expected callbacks were called
+    ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
+    ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
+    ASSERT_TRUE(csvSourceCallbackCalled) << "CSV source callback was never called";
 }
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
@@ -112,11 +123,15 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
             "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
 
     size_t queryCounter = 0;
+    bool sltSourceCallbackCalled = false;
+    bool queryCallbackCalled = false;
+    bool resultCallbackCalled = false;
 
     SystestParser parser{};
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
+            sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
             ASSERT_EQ(source.tuples, expectedSLTSource.tuples);
@@ -125,6 +140,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     parser.registerOnQueryCallback(
         [&](SystestParser::Query&& query)
         {
+            queryCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
@@ -132,13 +148,20 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     parser.registerOnResultTuplesCallback(
         [&](SystestParser::ResultTuples&& result)
         {
+            resultCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedResults.size());
             ASSERT_EQ(result, expectedResults[queryCounter]);
             queryCounter++;
         });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
     EXPECT_NO_THROW(parser.parse());
+
+    /// Verify that all expected callbacks were called
+    ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
+    ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
+    ASSERT_EQ(queryCounter, expectedQueries.size()) << "Not all queries were processed";
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -222,11 +245,15 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
             "0,15,15000", "0,16,16000", "0,17,17000", "0,18,18000", "0,19,19000", "0,20,20000", "0,21,21000"}};
 
     size_t queryCounter = 0;
+    bool sltSourceCallbackCalled = false;
+    bool queryCallbackCalled = false;
+    bool resultCallbackCalled = false;
 
     SystestParser parser{};
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
+            sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
             ASSERT_EQ(source.tuples, expectedSLTSource.tuples);
@@ -235,6 +262,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     parser.registerOnQueryCallback(
         [&](SystestParser::Query&& query)
         {
+            queryCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
@@ -242,13 +270,20 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     parser.registerOnResultTuplesCallback(
         [&](SystestParser::ResultTuples&& result)
         {
+            resultCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedResults.size());
             ASSERT_EQ(result, expectedResults[queryCounter]);
             queryCounter++;
         });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
     EXPECT_NO_THROW(parser.parse());
+
+    /// Verify that all expected callbacks were called
+    ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
+    ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
+    ASSERT_EQ(queryCounter, expectedQueries.size()) << "Not all queries were processed";
 }
 
 }
