@@ -45,8 +45,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
     const auto* const filename = TEST_DATA_DIR "valid.dummy";
 
-    const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
-    const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
+    const auto* const expectQuery1 = R"(SELECT * FROM e123 WHERE id >= UINT32(10) INTO sink)";
+    const auto* const expectQuery2 = R"(SELECT * FROM e124 WHERE i >= INT8(10) INTO sink)";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
     SystestParser::SLTSource expextedSLTSource
         = {.name = "e123",
@@ -106,18 +106,46 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
                                 "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
 
     /// Expected queries and results
-    const auto* const expectedQuery1 = R"(Query::from("window")
-    .filter(Attribute("value") == 1)
-    .SINK;)";
+    const auto* const expectedQuery1 = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)";
+    const auto* const expectedQuery2 = R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow)";
+    const auto* const expectedQuery3 = R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow)";
+    const auto* const expectedQuery4
+        = R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow)";
+    const auto* const expectedQuery5 = R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow)";
 
-    const auto* const expectedQuery2 = R"(Query::from("window")
-    .filter(Attribute("value") != 1)
-    .SINK;)";
-
-    std::vector<std::string> expectedQueries = {expectedQuery1, expectedQuery2};
+    std::vector<std::string> expectedQueries = {expectedQuery1, expectedQuery2, expectedQuery3, expectedQuery4, expectedQuery5};
 
     std::vector<std::vector<std::string>> expectedResults
         = {{"1,1,1000", "12,1,1001", "4,1,1002"},
+           {"12,1,1001", "11,2,2001", "16,2,2002", "11,3,3001"},
+           {"1,1,1000",
+            "12,1,1001",
+            "4,1,1002",
+            "1,2,2000",
+            "11,2,2001",
+            "16,2,2002",
+            "1,3,3000",
+            "11,3,3001",
+            "1,3,3003",
+            "1,3,3200",
+            "1,4,4000",
+            "1,5,5000",
+            "1,6,6000",
+            "1,7,7000",
+            "1,8,8000",
+            "1,9,9000",
+            "1,10,10000"},
+           {"1,5,5000",
+            "1,6,6000",
+            "1,7,7000",
+            "1,8,8000",
+            "1,9,9000",
+            "1,10,10000",
+            "1,11,11000",
+            "1,12,12000",
+            "1,13,13000",
+            "1,14,14000",
+            "1,15,15000"},
            {"1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",   "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",
             "1,6,6000",   "1,7,7000",   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
             "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
@@ -179,31 +207,18 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
                                 "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
 
-    std::vector<std::string> expectedQueries = {
-        R"(Query::from("window")
-    .filter(Attribute("value") == 1)
-    .SINK;)",
+    std::vector<std::string> expectedQueries
+        = {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
 
-        R"(Query::from("window")
-    .filter(Attribute("id") >= 10)
-    .SINK;)",
+           R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow)",
 
-        R"(Query::from("window")
-    .filter(Attribute("timestamp") <= 10000)
-    .SINK;)",
+           R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow)",
 
-        R"(Query::from("window")
-    .filter(Attribute("timestamp") >=  5000)
-    .filter(Attribute("timestamp") <=  15000)
-    .SINK;)",
+           R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow)",
 
-        R"(Query::from("window")
-    .filter(Attribute("value") !=  1)
-    .SINK;)",
+           R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow)",
 
-        R"(Query::from("window")
-    .filter(Attribute("id") = Attribute("id") - 1)
-    .SINK;)"};
+           R"(SELECT * FROM window WHERE id = id - UINT64(1) INTO sinkWindow)"};
 
     std::vector<std::vector<std::string>> expectedResults
         = {{"1,1,1000", "12,1,1001", "4,1,1002"},
