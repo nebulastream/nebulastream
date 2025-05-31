@@ -536,7 +536,8 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
         {
             throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
         }
-    } else if (auto codeOpt = errorTypeExists(errorStr))
+    }
+    else if (auto codeOpt = errorTypeExists(errorStr))
     {
         code = codeOpt.value();
     }
@@ -550,13 +551,24 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
 
     /// Read optional error message
     std::string message;
-    if (std::getline(stream, message)) {
+    if (std::getline(stream, message))
+    {
         /// Trim leading whitespace
         message.erase(0, message.find_first_not_of(" \t"));
-        if (!message.empty()) {
-            /// Remove surrounding quotes if present
-            if (message.front() == '"' && message.back() == '"') {
+        if (!message.empty())
+        {
+            /// Validate quotes are properly paired
+            if (message.front() == '"')
+            {
+                if (message.back() != '"')
+                {
+                    throw SLTUnexpectedToken("unmatched quote in error message: {}", message);
+                }
                 message = message.substr(1, message.length() - 2);
+            }
+            else if (message.back() == '"')
+            {
+                throw SLTUnexpectedToken("unmatched quote in error message: {}", message);
             }
             expectation.message = message;
         }
