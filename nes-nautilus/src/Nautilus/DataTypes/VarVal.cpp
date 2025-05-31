@@ -13,6 +13,8 @@
 */
 #include <Nautilus/DataTypes/VarVal.hpp>
 
+#include <Nautilus/DataTypes/VarVal.hpp>
+
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -164,6 +166,9 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::INT64: {
             return {Util::readValueFromMemRef<int64_t>(memRef)};
         }
+        case DataType::Type::CHAR: {
+            return {Util::readValueFromMemRef<char>(memRef)};
+        }
         case DataType::Type::UINT8: {
             return {Util::readValueFromMemRef<uint8_t>(memRef)};
         }
@@ -182,7 +187,6 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::FLOAT64: {
             return {Util::readValueFromMemRef<double>(memRef)};
         }
-        case DataType::Type::CHAR:
         case DataType::Type::VARSIZED:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
