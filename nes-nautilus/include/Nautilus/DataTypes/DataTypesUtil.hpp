@@ -80,6 +80,13 @@ inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVa
              int64Value.writeToMemory(memoryReference);
              return value;
          }},
+        {DataType::Type::CHAR,
+         [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
+         {
+             const VarVal uint8Value = value.cast<nautilus::val<char>>();
+             uint8Value.writeToMemory(memoryReference);
+             return value;
+         }},
         {DataType::Type::UINT8,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {

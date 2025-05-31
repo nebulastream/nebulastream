@@ -25,7 +25,7 @@ class FunctionProvider
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
     /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
-    static PhysicalFunction lowerFunction(LogicalFunction nodeFunction);
+    static PhysicalFunction lowerFunction(LogicalFunction logicalFunction);
 
 private:
     static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
