@@ -1,0 +1,14 @@
+# name: error_expectation.dummy
+# description: Test file for error expectations
+
+Source window UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+12,1,1001
+4,1,1002
+
+SINK sinkWindow UINT64 id UINT64 value UINT64 timestamp
+
+# Use explicit error code
+SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;
+----
+ERROR 1003 "expected error message"

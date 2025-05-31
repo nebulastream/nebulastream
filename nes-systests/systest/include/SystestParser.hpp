@@ -37,6 +37,7 @@ enum class TokenType : uint8_t
     SINK,
     QUERY,
     RESULT_DELIMITER,
+    ERROR_EXPECTATION,
 };
 
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
@@ -93,6 +94,13 @@ public:
         bool operator==(const Sink& other) const = default;
     };
 
+    struct ErrorExpectation
+    {
+        uint64_t code;
+        std::optional<std::string> message;
+        bool operator==(const ErrorExpectation& other) const = default;
+    };
+
     using Query = std::string;
     using ResultTuples = std::vector<std::string>;
 
@@ -101,6 +109,7 @@ public:
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
+    using ErrorExpectationCallback = std::function<void(ErrorExpectation&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -108,7 +117,7 @@ public:
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
-
+    void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
     void parse();
 
@@ -131,12 +140,14 @@ private:
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] Query expectQuery();
+    [[nodiscard]] ErrorExpectation expectError() const;
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
     SinkCallback onSinkCallback;
+    ErrorExpectationCallback onErrorExpectationCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;
