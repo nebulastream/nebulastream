@@ -1,6 +1,5 @@
-# name: filter/Filter.test
-# description: Simple filter tests
-# groups: [Filter]
+# name: filter.dummy
+# description: Filter operator tests used in SystestParserValidTestFileTest
 
 # LLVM LIT configuration
 # RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
@@ -36,29 +35,25 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 1,20,20000
 1,21,21000
 
+SINK sinkWindow UINT64 id UINT64 value UINT64 timestamp
+
 # Filter equal
-Query::from("window")
-    .filter(Attribute("value") == 1)
-    .SINK;
+SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow
 ----
 1,1,1000
 12,1,1001
 4,1,1002
 
-# Filter less than or equal
-Query::from("window")
-    .filter(Attribute("id") >= 10)
-    .SINK;
+# Filter greater than or equal
+SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow
 ----
-12, 1,1001
-11, 2,2001
-16, 2,2002
-11, 3,3001
+12,1,1001
+11,2,2001
+16,2,2002
+11,3,3001
 
 # Filter less than or equal
-Query::from("window")
-    .filter(Attribute("timestamp") <= 10000)
-    .SINK;
+SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow
 ----
 1,1,1000
 12,1,1001
@@ -79,10 +74,7 @@ Query::from("window")
 1,10,10000
 
 # Filter between
-Query::from("window")
-    .filter(Attribute("timestamp") >=  5000)
-    .filter(Attribute("timestamp") <=  15000)
-    .SINK;
+SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow
 ----
 1,5,5000
 1,6,6000
@@ -97,9 +89,7 @@ Query::from("window")
 1,15,15000
 
 # Filter not equal
-Query::from("window")
-    .filter(Attribute("value") !=  1)
-    .SINK;
+SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow
 ----
 1,2,2000
 11,2,2001
@@ -127,11 +117,8 @@ Query::from("window")
 1,20,20000
 1,21,21000
 
-
-# Filter subtracting
-Query::from("window")
-    .filter(Attribute("id") = Attribute("id") - 1)
-    .SINK;
+# Filter arithmetic
+SELECT * FROM window WHERE id = id - UINT64(1) INTO sinkWindow
 ----
 0,1,1000
 11,1,1001
