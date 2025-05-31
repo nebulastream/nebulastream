@@ -36,6 +36,7 @@ private:
     const T value;
 };
 
+using ConstantCharValueFunction = ConstantValuePhysicalFunction<char>;
 using ConstantInt8ValueFunction = ConstantValuePhysicalFunction<int8_t>;
 using ConstantInt16ValueFunction = ConstantValuePhysicalFunction<int16_t>;
 using ConstantInt32ValueFunction = ConstantValuePhysicalFunction<int32_t>;
