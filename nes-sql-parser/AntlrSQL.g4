@@ -176,7 +176,8 @@ booleanExpression
 
 /// Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
-    aggregationClause? windowClause watermarkClause?;
+    aggregationClause? windowClause watermarkClause?
+    | windowClause aggregationClause? watermarkClause?;
 
 aggregationClause
     : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* (
