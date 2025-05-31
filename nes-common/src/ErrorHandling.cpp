@@ -24,6 +24,7 @@
 #include <cpptrace/basic.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <from_current.hpp>
 
 /// formater for cpptrace::nullable
@@ -182,4 +183,30 @@ uint64_t getCurrentExceptionCode()
     }
 }
 
+}
+
+/// errorCodeExists() and errorTypeExists() use internally magic_enum. To work with our generated error code enum we have to define
+/// min and max in advance
+namespace magic_enum::customize
+{
+template <>
+struct enum_range<NES::ErrorCode>
+{
+    static constexpr int min = 1000;
+    static constexpr int max = 10000;
+};
+}
+
+namespace NES
+{
+
+bool errorCodeExists(ErrorCode code) noexcept
+{
+    return magic_enum::enum_cast<ErrorCode>(code).has_value();
+}
+
+std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view codeOrTypeStr) noexcept
+{
+    return magic_enum::enum_cast<ErrorCode>(codeOrTypeStr);
+}
 }
