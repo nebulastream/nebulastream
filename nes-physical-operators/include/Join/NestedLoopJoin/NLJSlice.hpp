@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
@@ -40,9 +39,7 @@ public:
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
-    Nautilus::Interface::PagedVector* getPagedVectorRef(JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
-
-    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a write lock for combinePagedVectorsMutex.
+    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
 private:

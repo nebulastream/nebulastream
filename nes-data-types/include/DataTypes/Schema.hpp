@@ -106,9 +106,6 @@ public:
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 
-    ///@brief returns true if this schema contains at least one variable sized data field
-    bool containsVarSizedDataField() const;
-
     /// Public members that we get and set.
     MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
 
