@@ -55,8 +55,8 @@ public:
     void exitJoinRelation(AntlrSQLParser::JoinRelationContext* context) override;
     void enterWindowClause(AntlrSQLParser::WindowClauseContext* context) override;
     void exitWindowClause(AntlrSQLParser::WindowClauseContext* context) override;
-    void enterAggregationClause(AntlrSQLParser::AggregationClauseContext* context) override;
-    void exitAggregationClause(AntlrSQLParser::AggregationClauseContext* context) override;
+    void enterGroupByClause(AntlrSQLParser::GroupByClauseContext* context) override;
+    void exitGroupByClause(AntlrSQLParser::GroupByClauseContext* context) override;
     void enterJoinCriteria(AntlrSQLParser::JoinCriteriaContext* context) override;
     void enterJoinType(AntlrSQLParser::JoinTypeContext* context) override;
     void exitJoinType(AntlrSQLParser::JoinTypeContext* context) override;
