@@ -17,11 +17,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp> /// NOLINT(misc-include-cleaner) used in macro for NES::Logger::{getInstance(), shutdown()}
 #include <cpptrace/cpptrace.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -126,6 +128,9 @@ Exception wrapExternalException();
 /// @warning This function should be used only in a catch block.
 [[nodiscard]] uint64_t getCurrentExceptionCode();
 
+[[nodiscard]] bool errorCodeExists(ErrorCode code) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view codeOrTypeStr) noexcept;
+
 /// `ErrorCode` needs to be hidden in `ErrorCodeDetail` namespace to not interfere with the throw function with the same name.
 /// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
 namespace ErrorCodeDetail
@@ -138,4 +143,7 @@ enum ErrorCode
 };
 }
 using ErrorCode = ErrorCodeDetail::ErrorCode;
+
+[[nodiscard]] bool errorCodeExists(std::uint64_t code) noexcept;
+[[nodiscard]] bool errorTypeExists(std::string_view name) noexcept;
 }
