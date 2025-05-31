@@ -50,4 +50,42 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
+TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
+{
+    const auto* const filename = TEST_DATA_DIR "invalid_error.dummy";
+
+    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
+
+    SystestParser parser{};
+    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_EQ(query, expectQuery); });
+
+    parser.registerOnErrorExpectationCallback(
+        [&](SystestParser::ErrorExpectation&&)
+        {
+            /// nop, ensure parsing
+        });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
+{
+    const auto* const filename = TEST_DATA_DIR "invalid_error_message.dummy";
+
+    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
+
+    SystestParser parser{};
+    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_EQ(query, expectQuery); });
+
+    parser.registerOnErrorExpectationCallback(
+        [&](SystestParser::ErrorExpectation&&)
+        {
+            /// nop, ensure parsing
+        });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }
