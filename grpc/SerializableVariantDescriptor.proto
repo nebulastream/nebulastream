@@ -54,6 +54,14 @@ message FunctionList {
   repeated SerializableFunction functions = 1;
 }
 
+message ProjectionList {
+  message Projection {
+    optional string identifier = 1;
+    SerializableFunction function = 2;
+  }
+  repeated Projection projections = 1;
+}
+
 message SerializableAggregationFunction {
     string type = 1;
     SerializableFunction on_field = 2;
@@ -83,5 +91,6 @@ message SerializableVariantDescriptor {
     FunctionList function_list = 11;
     AggregationFunctionList aggregation_function_list = 12;
     WindowInfos window_infos = 13;
+    ProjectionList projections = 14;
   }
 }
