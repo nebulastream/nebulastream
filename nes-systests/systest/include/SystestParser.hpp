@@ -123,6 +123,8 @@ private:
     [[nodiscard]] std::optional<TokenType> nextToken();
     /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
+    /// Look ahead at the next token without consuming it
+    [[nodiscard]] std::optional<TokenType> peekToken() const;
 
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;

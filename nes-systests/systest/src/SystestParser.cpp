@@ -306,6 +306,27 @@ std::optional<TokenType> SystestParser::nextToken()
     return getTokenIfValid(potentialToken);
 }
 
+std::optional<TokenType> SystestParser::peekToken() const
+{
+    size_t peekLine = currentLine + 1;
+    /// Skip empty lines and comments
+    while (peekLine < lines.size() && emptyOrComment(lines[peekLine]))
+    {
+        ++peekLine;
+    }
+    if (peekLine >= lines.size())
+    {
+        return std::nullopt;
+    }
+
+    std::string potentialToken;
+    std::istringstream stream(lines[peekLine]);
+    stream >> potentialToken;
+
+    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
+    return getTokenIfValid(potentialToken);
+}
+
 SystestParser::Sink SystestParser::expectSink() const
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
