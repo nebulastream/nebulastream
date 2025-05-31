@@ -168,6 +168,9 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::INT64: {
             return {Util::readValueFromMemRef<int64_t>(memRef)};
         }
+        case DataType::Type::CHAR: {
+            return {Util::readValueFromMemRef<char>(memRef)};
+        }
         case DataType::Type::UINT8: {
             return {Util::readValueFromMemRef<uint8_t>(memRef)};
         }
@@ -186,7 +189,6 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::FLOAT64: {
             return {Util::readValueFromMemRef<double>(memRef)};
         }
-        case DataType::Type::CHAR:
         case DataType::Type::VARSIZED:
         case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::UNDEFINED:
