@@ -65,8 +65,12 @@ if (NOT _NES_TOOLCHAIN_FILE)
     set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
     # Specify the cross-compiler
-    set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
-    set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
+    set(CMAKE_C_COMPILER clang)
+    set(CMAKE_CXX_COMPILER clang++)
+
+    # Specify the target flags for Clang
+    set(CMAKE_C_FLAGS "--target=aarch64-linux-gnu" CACHE STRING "C compiler flags")
+    set(CMAKE_CXX_FLAGS "--target=aarch64-linux-gnu" CACHE STRING "C++ compiler flags")
 
     # Specify the target environment (sysroot)
     set(CMAKE_FIND_ROOT_PATH /data/ntantow/ESPAT/zcu106_sysroot)
