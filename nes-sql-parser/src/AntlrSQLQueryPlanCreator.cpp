@@ -903,19 +903,19 @@ void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationCont
     AntlrSQLBaseListener::exitSetOperation(context);
 }
 
-void AntlrSQLQueryPlanCreator::enterAggregationClause(AntlrSQLParser::AggregationClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterGroupByClause(AntlrSQLParser::GroupByClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
     helper.isGroupBy = true;
     poppush(helper);
-    AntlrSQLBaseListener::enterAggregationClause(context);
+    AntlrSQLBaseListener::enterGroupByClause(context);
 }
 
-void AntlrSQLQueryPlanCreator::exitAggregationClause(AntlrSQLParser::AggregationClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
     helper.isGroupBy = false;
     poppush(helper);
-    AntlrSQLBaseListener::exitAggregationClause(context);
+    AntlrSQLBaseListener::exitGroupByClause(context);
 }
 }
