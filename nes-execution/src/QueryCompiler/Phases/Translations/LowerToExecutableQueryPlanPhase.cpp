@@ -371,7 +371,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         case SourceType::BINARY_SOURCE: {
             auto binarySourceType = physicalSourceType->as<BinarySourceType>();
             auto sourceDesk = BinarySourceDescriptor::create(schema, binarySourceType->getLogicalSourceName(), binarySourceType->getFilePath()->getValue())->as<BinarySourceDescriptor>();
-            sourceDesk-> setNumberOfTuples(binarySourceType.get()->getNumberOfTuples());
+            sourceDesk->setNumberOfTuples(binarySourceType.get()->getNumberOfTuples());
             return sourceDesk;
         }
         case SourceType::SENSE_SOURCE: {
