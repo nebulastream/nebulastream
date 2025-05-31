@@ -100,7 +100,7 @@ functionTable
 
 fromStatement: fromClause fromStatementBody+;
 
-fromStatementBody: selectClause whereClause? aggregationClause?;
+fromStatementBody: selectClause whereClause? groupByClause?;
 
 selectClause : SELECT (hints+=hint)* namedExpressionSeq;
 
@@ -176,10 +176,10 @@ booleanExpression
 
 /// Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
-    aggregationClause? windowClause watermarkClause?
-    | windowClause aggregationClause? watermarkClause?;
+    groupByClause? windowClause watermarkClause?
+    | windowClause groupByClause? watermarkClause?;
 
-aggregationClause
+groupByClause
     : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* (
       WITH kind=ROLLUP
     | WITH kind=CUBE
