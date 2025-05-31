@@ -64,7 +64,7 @@ void BinarySource::openFile() {
     }
 
     if (generatedBuffers % 100 == 0) {
-        NES_ERROR("buffers read {}", generatedBuffers / 100);
+        NES_ERROR("buffers read {} out of {}", generatedBuffers / 100, bufferManager->getAvailableBuffers());
     }
 
     if (generatedBuffers > 0) {
