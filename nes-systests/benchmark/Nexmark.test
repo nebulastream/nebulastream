@@ -44,12 +44,10 @@ INTO CHECKSUM;
 
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
-# TODO #700 The projection type inference cannot differentiate between bid.timestamp and auction.timestamp, so we removed them.
-# The projection simply sees twice the string timestamp and thus differentiate between bid.timestamp and auction.timestamp.
-SELECT start, end, auctionId, bidder, datetime, price, id, initialbid, reserve, expires, seller, category
-    FROM (SELECT * FROM bid)
+SELECT start, end, bid_timestamp, auctionId, bidder, datetime, price, auction_timestamp, id, initialbid, reserve, expires, seller, category
+    FROM (SELECT *, timestamp as bid_timestamp FROM bid)
 INNER JOIN
-    (SELECT * FROM auction)
+    (SELECT *, timestamp as auction_timestamp FROM auction)
 ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
 ----
-9149189 35887394308
+9149189 44872388544
