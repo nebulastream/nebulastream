@@ -86,13 +86,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {
-            &executionMode,
-            &pageSize,
-            &numberOfPartitions,
-            &joinStrategy,
-            &pipelinesTxtFilePath,
-            &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &operatorBufferSize};
     }
 };
 

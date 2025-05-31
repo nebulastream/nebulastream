@@ -9,19 +9,6 @@ ARG GID=1000
 ARG USERNAME=ubuntu
 ARG ROOTLESS=false
 
-# Installing perf version corresponding to the hosts kernel
-RUN apt update && apt install -y \
-    python3\
-    python3-dev\
-    libdw-dev\
-    libunwind-dev\
-    flex\
-    bison\
-    git\
-    pkg-config\
-    libelf-dev\
-    linux-tools-common
-
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
     (deluser ubuntu || true) && \

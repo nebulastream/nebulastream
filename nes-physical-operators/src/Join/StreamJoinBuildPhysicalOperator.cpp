@@ -19,8 +19,6 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <nautilus/val_enum.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES
@@ -36,11 +34,4 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     , memoryProvider(std::move(std::move(memoryProvider)))
 {
 }
-
-void StreamJoinBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    /// Call the base class close method to ensure checkWindowsTrigger is called
-    WindowBuildPhysicalOperator::close(executionCtx, recordBuffer);
-}
-
 }

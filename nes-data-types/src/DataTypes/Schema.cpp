@@ -203,16 +203,4 @@ auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
     return fields.cend();
 }
 
-bool Schema::containsVarSizedDataField() const
-{
-    for (const auto& attribute : fields)
-    {
-        if (attribute.dataType.isType(DataType::Type::VARSIZED))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 }
