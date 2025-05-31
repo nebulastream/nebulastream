@@ -42,13 +42,15 @@ static constexpr auto SLTSourceToken = "Source"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
+static constexpr auto ErrorToken = "ERROR"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
+static const std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
     = {{{CSVSourceToken, TokenType::CSV_SOURCE},
         {SLTSourceToken, TokenType::SLT_SOURCE},
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
-        {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
+        {ResultDelimiter, TokenType::RESULT_DELIMITER},
+        {ErrorToken, TokenType::ERROR_EXPECTATION}}};
 
 static bool emptyOrComment(const std::string& line)
 {
@@ -169,6 +171,11 @@ void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
     this->onCSVSourceCallback = std::move(callback);
 }
 
+void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback callback)
+{
+    this->onErrorExpectationCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
 void SystestParser::parse()
@@ -209,6 +216,17 @@ void SystestParser::parse()
             token = nextToken();
             if (token == TokenType::RESULT_DELIMITER)
             {
+                /// Look ahead for error expectation
+                if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
+                {
+                    token = nextToken(); /// we move savely to the next token (which is ERROR)
+                    auto expectation = expectError();
+                    if (onErrorExpectationCallback)
+                    {
+                        onErrorExpectationCallback(std::move(expectation));
+                    }
+                }
+                /// else: we expect tuples
                 auto tuples = expectTuples();
                 if (onResultTuplesCallback)
                 {
@@ -217,12 +235,16 @@ void SystestParser::parse()
             }
             else
             {
-                throw SLTUnexpectedToken("expected result delimiter `{}` after query", ResultDelimiter);
+                throw SLTUnexpectedToken("expected result delimiter `{}` or error token `{}` after query", ResultDelimiter, ErrorToken);
             }
         }
         else if (token == TokenType::RESULT_DELIMITER)
         {
             throw SLTUnexpectedToken("unexpected occurrence of result delimiter `{}`", ResultDelimiter);
+        }
+        else if (token == TokenType::ERROR_EXPECTATION)
+        {
+            throw SLTUnexpectedToken("unexpected occurrence of error expectation");
         }
         else if (token == TokenType::INVALID)
         {
@@ -480,5 +502,56 @@ SystestParser::Query SystestParser::expectQuery()
     }
     INVARIANT(!query.empty(), "when expecting a query keyword the query should not be empty");
     return query;
+}
+
+SystestParser::ErrorExpectation SystestParser::expectError() const
+{
+    /// Expects the form:
+    /// ERROR <CODE> "optional error message to check"
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    ErrorExpectation expectation;
+    const auto& line = lines[currentLine];
+    std::istringstream stream(line);
+
+    /// Skip the ERROR token
+    std::string token;
+    stream >> token;
+    INVARIANT(token == ErrorToken, "Expected ERROR token");
+
+    /// Read the error code
+    std::string errorCodeStr;
+    if (!(stream >> errorCodeStr))
+    {
+        throw SLTUnexpectedToken("failed to read error code in: {}", line);
+    }
+
+    /// Convert string to ErrorCode
+    try
+    {
+        expectation.code = std::stoi(errorCodeStr);
+    }
+    catch (const std::exception&)
+    {
+        throw SLTUnexpectedToken("invalid error code: {}", errorCodeStr);
+    }
+
+    /// Read optional error message
+    std::string message;
+    if (std::getline(stream, message))
+    {
+        /// Trim leading whitespace
+        message.erase(0, message.find_first_not_of(" \t"));
+        if (!message.empty())
+        {
+            /// Remove surrounding quotes if present
+            if (message.front() == '"' && message.back() == '"')
+            {
+                message = message.substr(1, message.length() - 2);
+            }
+            expectation.message = message;
+        }
+    }
+
+    return expectation;
 }
 }

@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <cstddef>
 #include <string>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -22,6 +22,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 
 namespace NES::Systest
@@ -48,7 +49,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery1 = R"(SELECT * FROM e123 WHERE id >= UINT32(10) INTO sink)";
     const auto* const expectQuery2 = R"(SELECT * FROM e124 WHERE i >= INT8(10) INTO sink)";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expextedSLTSource
+    SystestParser::SLTSource expectedSLTSource
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
@@ -301,4 +302,36 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     ASSERT_EQ(queryCounter, expectedQueries.size()) << "Not all queries were processed";
 }
 
+TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
+{
+    const auto* const filename = TEST_DATA_DIR "error_expectation.dummy";
+
+    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
+    const uint64_t expectErrorCode = 1003;
+    const std::string expectErrorMessage = "expected error message";
+
+    bool queryCallbackCalled = false;
+    bool errorCallbackCalled = false;
+
+    SystestParser parser{};
+    parser.registerOnQueryCallback(
+        [&](SystestParser::Query&& query)
+        {
+            ASSERT_EQ(query, expectQuery);
+            queryCallbackCalled = true;
+        });
+
+    parser.registerOnErrorExpectationCallback(
+        [&](SystestParser::ErrorExpectation&& expectation)
+        {
+            ASSERT_EQ(expectation.code, expectErrorCode);
+            ASSERT_EQ(expectation.message, expectErrorMessage);
+            errorCallbackCalled = true;
+        });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(queryCallbackCalled);
+    ASSERT_TRUE(errorCallbackCalled);
+}
 }
