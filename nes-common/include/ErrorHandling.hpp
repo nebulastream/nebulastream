@@ -145,5 +145,5 @@ enum ErrorCode
 using ErrorCode = ErrorCodeDetail::ErrorCode;
 
 [[nodiscard]] bool errorCodeExists(std::uint64_t code) noexcept;
-[[nodiscard]] bool errorTypeExists(std::string_view name) noexcept;
+[[nodiscard]] std::optional<uint64_t> errorTypeExists(std::string_view name) noexcept;
 }
