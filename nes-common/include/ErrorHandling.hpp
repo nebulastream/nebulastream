@@ -67,13 +67,6 @@ private:
     inline Exception name(fmt::format_string<Args...> fmt_msg, Args&&... args) \
     { \
         return Exception(fmt::format("{}; {}", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
-    } \
-    namespace ErrorCode \
-    { \
-    enum \
-    { \
-        name = code \
-    }; \
     }
 
 #include <ExceptionDefinitions.inc>
@@ -133,4 +126,16 @@ Exception wrapExternalException();
 /// @warning This function should be used only in a catch block.
 [[nodiscard]] uint64_t getCurrentExceptionCode();
 
+/// `ErrorCode` needs to be hidden in `ErrorCodeDetail` namespace to not interfere with the throw function with the same name.
+/// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
+namespace ErrorCodeDetail
+{
+enum ErrorCode
+{
+#define EXCEPTION(name, code, msg) name = (code),
+#include <ExceptionDefinitions.inc>
+#undef EXCEPTION
+};
+}
+using ErrorCode = ErrorCodeDetail::ErrorCode;
 }

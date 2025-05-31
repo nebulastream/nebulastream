@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#pragma once
+/// NOTE: we have to omitt the pragma once to enable macro triggering mutliple times
 
 /// NOLINT(clang-diagnostic-error)
 #ifndef EXCEPTION
