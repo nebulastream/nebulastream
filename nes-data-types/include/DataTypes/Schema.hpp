@@ -120,6 +120,9 @@ private:
     std::unordered_map<std::string, size_t> nameToField;
 };
 
+/// Returns a copy of the input schema without any source qualifier on the schema fields
+Schema withoutSourceQualifier(const Schema& input);
+
 }
 
 FMT_OSTREAM(NES::Schema);
