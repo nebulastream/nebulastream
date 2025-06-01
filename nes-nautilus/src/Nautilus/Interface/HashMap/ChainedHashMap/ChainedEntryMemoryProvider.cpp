@@ -73,8 +73,18 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
-            return varVal;
+            if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+            {
+                const auto varSizedDataPtr
+                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
+                VariableSizedData varSizedData(varSizedDataPtr);
+                return varSizedData;
+            }
+            else
+            {
+                const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
+                return varVal;
+            }
         }
     }
     throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);

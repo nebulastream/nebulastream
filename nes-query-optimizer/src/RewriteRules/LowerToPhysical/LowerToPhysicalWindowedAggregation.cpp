@@ -191,7 +191,6 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
-    auto inputSchema = aggregation.getInputSchemas()[0];
     auto outputSchema = aggregation.getOutputSchema();
     auto inputOriginIds = aggregation.getInputOriginIds()[0];
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
@@ -207,9 +206,16 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     uint64_t keySize = 0;
     std::vector<PhysicalFunction> keyFunctions;
+    auto newInputSchema = aggregation.getInputSchemas()[0];
     for (auto& nodeFunctionKey : aggregation.getGroupingKeys())
     {
-        const auto& loweredFunctionType = nodeFunctionKey.getDataType();
+        auto loweredFunctionType = nodeFunctionKey.getDataType();
+        if (loweredFunctionType.isType(DataType::Type::VARSIZED))
+        {
+            loweredFunctionType.type = DataType::Type::VARSIZED_POINTER_REP;
+            bool fieldReplaceSuccess = newInputSchema.replaceTypeOfField(nodeFunctionKey.getFieldName(), loweredFunctionType);
+            INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
+        }
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
         keySize += DataTypeProvider::provideDataType(loweredFunctionType.type).getSizeInBytes();
     }
@@ -219,7 +225,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, fieldValueNames);
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 
     const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
 
@@ -235,10 +241,10 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto probe = AggregationProbePhysicalOperator(windowAggregation, handlerId, windowMetaData);
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        build, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        probe, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::SCAN, std::vector{buildWrapper});
+        probe, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::SCAN, std::vector{buildWrapper});
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), buildWrapper);

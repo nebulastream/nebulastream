@@ -82,7 +82,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
                                   auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
-                                  return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+                                  return "\"" + Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx) + "\"";
                               }
                               return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
                           });

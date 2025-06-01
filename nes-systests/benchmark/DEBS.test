@@ -10,7 +10,7 @@ SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZ
 # Query 0a - Simple Source Sink with consumers stream
 SELECT * FROM consumers INTO CHECKSUM;
 ----
-42700000, 105028347050
+42700000, 107931947050
 
 # Query 0b - Simple Source Sink with solarPanels stream
 SELECT * FROM solarPanels INTO CHECKSUM;
@@ -20,17 +20,17 @@ SELECT * FROM solarPanels INTO CHECKSUM;
 # Query 1 - Filter tuples
 SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) INTO CHECKSUM;
 ----
-14236360, 35170842947
+14236360, 36138915427
 
 # Query 2 - Filter with multiple attributes
 SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) AND sectorId = INT32(1) INTO CHECKSUM;
 ----
-3556803, 8785569627
+3556803, 9027432231
 
 # Query 3 - Filter with complex expression
 SELECT * FROM consumers WHERE consumedPower >= FLOAT64(1) AND consumedPower < FLOAT64(61) INTO CHECKSUM;
 ----
-4271223, 10289477496
+4271223, 10579920660
 
 # Query 4 - Filter with complex expression
 SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO CHECKSUM;
