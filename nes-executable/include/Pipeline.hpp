@@ -55,9 +55,9 @@ struct Pipeline
     [[nodiscard]] bool isSinkPipeline() const;
 
     void appendOperator(const PhysicalOperator& newOp);
-    void prependOperator(PhysicalOperator newOp);
+    void prependOperator(const PhysicalOperator& newOp);
 
-    friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);
+    friend std::ostream& operator<<(std::ostream& os, const Pipeline&);
 
     [[nodiscard]] std::optional<Nautilus::Configurations::ExecutionMode> getExecutionMode() const;
     void setExecutionMode(Nautilus::Configurations::ExecutionMode mode);
