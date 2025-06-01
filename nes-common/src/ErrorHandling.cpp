@@ -90,7 +90,7 @@ std::optional<const cpptrace::stacktrace_frame> Exception::where() const noexcep
 
 std::ostream& operator<<(std::ostream& os, const Exception& e)
 {
-    os << fmt::format("({}): {}", static_cast<int>(e.code()), e.what());
+    os << fmt::format("({}): {}", e.code(), e.what());
     return os;
 }
 

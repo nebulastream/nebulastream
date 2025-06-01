@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -509,6 +510,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
 {
     /// Expects the form:
     /// ERROR <CODE> "optional error message to check"
+    /// ERROR <ERRORTYPE STR> "optional error message to check"
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     ErrorExpectation expectation;
     const auto& line = lines[currentLine];
@@ -526,28 +528,24 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
 
-    uint64_t code;
-    std::regex numberRegex("^\\d+$");
+    std::regex const numberRegex("^\\d+$");
     if (std::regex_match(errorStr, numberRegex))
     {
         /// String is a valid integer
-        code = std::stoull(errorStr);
+        auto code = std::stoul(errorStr);
         if (!errorCodeExists(code))
         {
             throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
         }
-    }
-    else if (auto codeOpt = errorTypeExists(errorStr))
+        expectation.code = static_cast<ErrorCode>(code);
+    } else if (auto codeOpt = errorTypeExists(errorStr))
     {
-        code = codeOpt.value();
+        expectation.code = codeOpt.value();
     }
     else
     {
         throw SLTUnexpectedToken("invalid error type: {} is not defined in ErrorDefinitions.inc", errorStr);
     }
-
-    /// Convert string to ErrorCode and validate it exists
-    expectation.code = code;
 
     /// Read optional error message
     std::string message;

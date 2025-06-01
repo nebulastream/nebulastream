@@ -804,7 +804,7 @@ void QueryCatalog::start(
                     },
                     [](Terminated&&) { return Terminated{Terminated::Failed}; });
 
-                exception.what() += fmt::format(" In Query {}.", queryId);
+                exception.what() += fmt::format(" in Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
                 listener->logQueryFailure(queryId, std::move(exception), timestamp);
             }
