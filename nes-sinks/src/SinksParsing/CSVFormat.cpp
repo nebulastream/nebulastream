@@ -91,7 +91,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
                                       [&](const std::shared_ptr<VariableSizedDataPhysicalType>&)
                                       {
                                           auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
-                                          return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+                                          return "\"" + Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx) + "\"";
                                       },
                                       [&](const std::shared_ptr<BasicPhysicalType>& type)
                                       { return type->convertRawToString(&tuple[formattingContext.offsets[index]]); },
