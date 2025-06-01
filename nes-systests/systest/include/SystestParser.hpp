@@ -96,7 +96,7 @@ public:
 
     struct ErrorExpectation
     {
-        uint64_t code;
+        ErrorCode code;
         std::optional<std::string> message;
         bool operator==(const ErrorExpectation& other) const = default;
     };
