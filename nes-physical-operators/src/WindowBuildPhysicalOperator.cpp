@@ -13,6 +13,8 @@
 */
 #include <WindowBuildPhysicalOperator.hpp>
 
+#include <WindowBuildPhysicalOperator.hpp>
+
 #include <memory>
 #include <optional>
 #include <utility>
@@ -79,9 +81,8 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
-{
-    setupChild(executionCtx);
+void WindowBuildPhysicalOperator::setup(ExecutionContext&) const {
+    /*noop*/
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
