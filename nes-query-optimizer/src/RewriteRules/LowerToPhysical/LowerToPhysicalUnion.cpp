@@ -12,31 +12,54 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalUnion.hpp>
+
 #include <memory>
+#include <optional>
+#include <ranges>
+#include <vector>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalUnion.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <UnionPhysicalOperator.hpp>
+#include <UnionRenamePhysicalOperator.hpp>
 
 namespace NES
 {
 
 RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
-    auto source = logicalOperator.get<UnionLogicalOperator>();
-
+    const auto source = logicalOperator.get<UnionLogicalOperator>();
     auto inputSchemas = logicalOperator.getInputSchemas();
-    PRECONDITION(inputSchemas.size() == 2, "UnionLogicalOperator should have exactly two schema, but has {}", inputSchemas.size());
-    auto physicalOperator = UnionPhysicalOperator();
+    auto outputSchema = logicalOperator.getOutputSchema();
+
+    PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
+
+    auto renames = inputSchemas
+        | std::views::transform(
+                       [&](const auto& schema)
+                       {
+                           return std::make_shared<PhysicalOperatorWrapper>(
+                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
+                               schema,
+                               outputSchema,
+                               PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+                       })
+        | std::ranges::to<std::vector>();
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-    return {.root = wrapper, .leafs = {wrapper, wrapper}};
+        UnionPhysicalOperator(),
+        source.getOutputSchema(),
+        logicalOperator.getOutputSchema(),
+        std::nullopt,
+        std::nullopt,
+        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
+        renames);
+
+    return {.root = wrapper, .leafs = renames};
 }
 
 RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterUnionRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
