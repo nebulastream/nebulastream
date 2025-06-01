@@ -24,7 +24,7 @@ import pathlib
 import copy
 import pandas as pd
 import BenchmarkConfig
-
+import PostProcessing
 
 # Configuration for execution
 BUILD_DIR = "cmake-build-relnologging"
@@ -41,7 +41,15 @@ MEASURE_INTERVAL = 8
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
-WORKING_DIR = f".cache/benchmarks/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}"
+DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
+COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
+COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
+BENCHMARK_STATS_FILE = "BenchmarkStats_"
+ENGINE_STATS_FILE = "EngineStats_"
+PIPELINE_TXT = "pipelines.txt"
+ENGINE_STATISTICS_CSV_PATH = f"benchmarks/data/{DATETIME_NOW}/engine_statistics.csv"
+BENCHMARK_STATISTICS_CSV_PATH = f"benchmarks/data/{DATETIME_NOW}/benchmark_statistics.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -85,6 +93,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
 
     # Query Optimizer Configuration
     worker_config_yaml["worker"]["queryOptimizer"]["executionMode"] = current_benchmark_config.execution_mode
+    worker_config_yaml["worker"]["queryOptimizer"]["pipelinesTxtFilePath"] = os.path.abspath(
+        os.path.join(output_folder, PIPELINE_TXT))
     worker_config_yaml["worker"]["queryOptimizer"]["pageSize"] = current_benchmark_config.page_size
     worker_config_yaml["worker"]["queryOptimizer"][
         "numWatermarkGapsAllowed"] = current_benchmark_config.num_watermark_gaps_allowed
@@ -118,11 +128,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         query_config_yaml = yaml.safe_load(input_file)
     query_config_yaml["query"] = current_benchmark_config.query
 
-    # Change the csv sink file and delete current contents
-    csv_file = f"/tmp/csv_sink_{iteration}.csv"
-    query_config_yaml["sink"]["config"]["filePath"] = csv_file
-    if os.path.exists(csv_file):
-        os.remove(csv_file)
+    # Change the csv sink file
+    query_config_yaml["sink"]["config"]["filePath"] = os.path.abspath(os.path.join(output_folder, "csv_sink.csv"))
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
     assert len(tcp_server_ports) % len(query_config_yaml[
@@ -293,8 +300,8 @@ def run_benchmark(current_benchmark_config, iteration):
 
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
-            if file_name.startswith("EngineStats_") or file_name.startswith("BenchmarkStats_") or file_name.endswith(
-                    ".log"):
+            if file_name.startswith(ENGINE_STATS_FILE) or file_name.startswith(
+                    BENCHMARK_STATS_FILE) or file_name.endswith(".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
 
@@ -343,64 +350,65 @@ if __name__ == "__main__":
         print(
             f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
-    print("\nStarting post processing...\n")
-    # Compare the results of default slice store and file backed variant
-    file1 = f"/tmp/csv_sink_{1}.csv"
-    file2 = f"/tmp/csv_sink_{2}.csv"
-
-    df1 = load_csv(file1)
-    df2 = load_csv(file2)
-
-    # Check if either DataFrame is empty
-    if df1.empty and df2.empty:
-        print("Both files are empty.")
-    elif df1.empty:
-        print("File1 is empty.")
-        print(f"File2 has {len(df2)} rows with keys: {list(df2['tcp_source4$id4:UINT64'])}")
-    elif df2.empty:
-        print("File2 is empty.")
-        print(f"File1 has {len(df1)} rows with keys: {list(df1['tcp_source4$id4:UINT64'])}")
-    else:
-        # Set the key column as the index
-        key_column = "tcp_source4$id4:UINT64"
-        df1.set_index(key_column, inplace=True)
-        df2.set_index(key_column, inplace=True)
-
-        # Align rows based on the key column
-        common_keys = df1.index.intersection(df2.index)
-        df1_aligned = df1.loc[common_keys]
-        df2_aligned = df2.loc[common_keys]
-
-        # Compare rows and find differences
-        differences = []
-        for key in common_keys:
-            if not df1_aligned.loc[key].equals(df2_aligned.loc[key]):
-                differences.append((key, df1_aligned.loc[key].to_dict(), df2_aligned.loc[key].to_dict()))
-
-        # Print the differences
-        if not differences:
-            print("The rows with common keys are identical.")
-        else:
-            print("Differences found:")
-            for diff in differences:
-                print(f"Key {diff[0]} differs:")
-                print(f"File1: {diff[1]}")
-                print(f"File2: {diff[2]}")
-
-        # Identify additional keys in each file
-        extra_keys_file1 = df1.index.difference(df2.index)
-        extra_keys_file2 = df2.index.difference(df1.index)
-
-        if not extra_keys_file1.empty:
-            print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
-        if not extra_keys_file2.empty:
-            print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
+    # print("\nStarting post processing...\n")
+    # # Compare the results of default slice store and file backed variant
+    # file1 = f"/tmp/csv_sink_{1}.csv"
+    # file2 = f"/tmp/csv_sink_{2}.csv"
+    #
+    # df1 = load_csv(file1)
+    # df2 = load_csv(file2)
+    #
+    # # Check if either DataFrame is empty
+    # if df1.empty and df2.empty:
+    #     print("Both files are empty.")
+    # elif df1.empty:
+    #     print("File1 is empty.")
+    #     print(f"File2 has {len(df2)} rows with keys: {list(df2['tcp_source4$id4:UINT64'])}")
+    # elif df2.empty:
+    #     print("File2 is empty.")
+    #     print(f"File1 has {len(df1)} rows with keys: {list(df1['tcp_source4$id4:UINT64'])}")
+    # else:
+    #     # Set the key column as the index
+    #     key_column = "tcp_source4$id4:UINT64"
+    #     df1.set_index(key_column, inplace=True)
+    #     df2.set_index(key_column, inplace=True)
+    #
+    #     # Align rows based on the key column
+    #     common_keys = df1.index.intersection(df2.index)
+    #     df1_aligned = df1.loc[common_keys]
+    #     df2_aligned = df2.loc[common_keys]
+    #
+    #     # Compare rows and find differences
+    #     differences = []
+    #     for key in common_keys:
+    #         if not df1_aligned.loc[key].equals(df2_aligned.loc[key]):
+    #             differences.append((key, df1_aligned.loc[key].to_dict(), df2_aligned.loc[key].to_dict()))
+    #
+    #     # Print the differences
+    #     if not differences:
+    #         print("The rows with common keys are identical.")
+    #     else:
+    #         print("Differences found:")
+    #         for diff in differences:
+    #             print(f"Key {diff[0]} differs:")
+    #             print(f"File1: {diff[1]}")
+    #             print(f"File2: {diff[2]}")
+    #
+    #     # Identify additional keys in each file
+    #     extra_keys_file1 = df1.index.difference(df2.index)
+    #     extra_keys_file2 = df2.index.difference(df1.index)
+    #
+    #     if not extra_keys_file1.empty:
+    #         print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
+    #     if not extra_keys_file2.empty:
+    #         print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
 
     # Calling the postprocessing main
-    # post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
-    #                                                WORKER_STATISTICS_CSV_PATH,
-    #                                                CACHE_STATISTICS_CSV_PATH, PIPELINE_TXT)
-    # post_processing.main()
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
+                                                    BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
+                                                    COMBINED_BENCHMARK_STATISTICS_FILE, ENGINE_STATISTICS_CSV_PATH,
+                                                    BENCHMARK_STATISTICS_CSV_PATH)
+    post_processing.main()
 
     # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
     # copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
