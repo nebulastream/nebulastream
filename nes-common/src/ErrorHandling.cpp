@@ -88,6 +88,12 @@ std::optional<const cpptrace::stacktrace_frame> Exception::where() const noexcep
     return std::nullopt;
 }
 
+std::ostream& operator<<(std::ostream& os, const Exception& e)
+{
+    os << fmt::format("({}): {}", static_cast<int>(e.code()), e.what());
+    return os;
+}
+
 constexpr std::string_view ansiColorReset = "\u001B[0m";
 
 std::string formatLogMessage(const Exception& e)
