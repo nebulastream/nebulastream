@@ -81,17 +81,26 @@ if (ENABLE_LARGE_TESTS)
     set(sliceCaches NONE LRU FIFO SECOND_CHANCE)
     set(sortBufferByTimestamps false)
     set(numberOfEntriesSliceCaches 1 1000)
-    set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
+    set(joinStrategies HASH_JOIN) # We simply test here with a hash join, as a NLJ takes way too long
     foreach (sortBufferByTimestamp IN LISTS sortBufferByTimestamps)
         foreach (sliceCache IN LISTS sliceCaches)
             foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
                 foreach (joinStrategy IN LISTS joinStrategies)
                     ExternalData_Add_Test(TEST_DATA_LARGE
-                            NAME systest_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}
+                            NAME systest_joins_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}
                             COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy} --data ${LARGE_DATA} --groups Join -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=${joinStrategy})
                 endforeach ()
+
+                # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
+                # is still small enough to finish the test in minutes.
+                set(joinStrategy NESTED_LOOP_JOIN)
                 ExternalData_Add_Test(TEST_DATA_LARGE
-                        NAME systest_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}
+                        NAME systest_joins_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}
+                        COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy} --data ${LARGE_DATA} --groups NestedLoopJoin -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=${joinStrategy})
+
+
+                ExternalData_Add_Test(TEST_DATA_LARGE
+                        NAME systest_aggregations_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}
                         COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp} --data ${LARGE_DATA} --groups Aggregation -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
             endforeach ()
         endforeach ()
