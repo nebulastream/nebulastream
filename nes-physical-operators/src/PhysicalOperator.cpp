@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <PhysicalOperator.hpp>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,7 +28,6 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ExecutionContext.hpp>
-#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -121,9 +122,11 @@ std::optional<PhysicalOperator> PhysicalOperator::getChild() const
     return self->getChild();
 }
 
-void PhysicalOperator::setChild(PhysicalOperator child)
+PhysicalOperator PhysicalOperator::withChild(PhysicalOperator child) const
 {
-    self->setChild(std::move(child));
+    auto copy = self->clone();
+    copy->setChild(std::move(child));
+    return {copy};
 }
 
 void PhysicalOperator::setup(ExecutionContext& executionCtx) const
