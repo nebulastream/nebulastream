@@ -5,7 +5,7 @@ sink:
   type: File
   config:
     inputFormat: CSV
-    filePath: "/tmp/csv_sink.csv"
+    filePath: "/dev/null"
     append: false
 logical:
   - name: tcp_source
