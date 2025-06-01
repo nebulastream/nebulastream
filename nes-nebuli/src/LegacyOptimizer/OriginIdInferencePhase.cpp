@@ -14,6 +14,9 @@
 
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 
+#include <algorithm>
+#include <iterator>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -49,7 +52,12 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 
     if (not hasTrait<OriginIdAssignerTrait>(visitingOperator.getTraitSet()))
     {
-        copy = copy.withOutputOriginIds(childOriginIds[0]);
+        std::unordered_set<OriginId> outputOriginIds;
+        for (auto& originIds : childOriginIds)
+        {
+            std::ranges::copy(originIds, std::inserter(outputOriginIds, outputOriginIds.begin()));
+        }
+        copy = copy.withOutputOriginIds({outputOriginIds.begin(), outputOriginIds.end()});
     }
 
     return copy.withChildren(newChildren);
