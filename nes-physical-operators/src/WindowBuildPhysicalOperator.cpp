@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <WindowBuildPhysicalOperator.hpp>
+
 #include <memory>
 #include <optional>
 #include <utility>
@@ -25,7 +27,6 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
-#include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -79,9 +80,8 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
-{
-    setupChild(executionCtx);
+void WindowBuildPhysicalOperator::setup(ExecutionContext&) const {
+    /*noop*/
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
