@@ -5,6 +5,7 @@ worker:
   bufferSizeInBytes: 4096
   queryOptimizer:
     executionMode: COMPILER
+    pipelinesTxtFilePath: ""
     pageSize: 4096
     numWatermarkGapsAllowed: 1
     maxNumSequenceNumbers: 1

@@ -22,122 +22,51 @@ from tqdm import tqdm
 import multiprocessing
 
 
-# Converting a cache hits and misses file to two dictionaries
-def parse_lines_to_dataframe(file):
-    with open(file, 'r') as input_file:
-        lines = input_file.readlines()
-
-    # Initialize dictionaries to hold the hits and misses data
-    hits_data = {}
-    misses_data = {}
-
-    # Regular expression to extract information
-    pattern = re.compile(r'Hits: (\d+) Misses: (\d+) for worker thread (\d+)(?: and join build side (\w+))?')
-
-    for line in lines:
-        match = pattern.search(line)
-        if match:
-            hits, misses, thread_id, build_side = match.groups()
-            # Determine the column name
-            if build_side:
-                column_name = f'worker_{thread_id}_{build_side}'
-            else:
-                column_name = f'worker_{thread_id}'
-
-            # Store the hits and misses in the dictionaries with prefixes
-            hits_column_name = f'hits_{column_name}'
-            misses_column_name = f'misses_{column_name}'
-
-            if hits_column_name not in hits_data:
-                hits_data[hits_column_name] = []
-                misses_data[misses_column_name] = []
-
-            hits_data[hits_column_name] = (int(hits))
-            misses_data[misses_column_name] = (int(misses))
-
-    # Adding a total hits and misses column
-    hits_data["hits_total"] = sum(hit for hit in hits_data.values())
-    misses_data["misses_total"] = sum(miss for miss in misses_data.values())
-
-    return hits_data, misses_data
-
-
-def find_pipeline_number(log_text):
-    lines = log_text.split('\n')
-    for i, line in enumerate(lines):
-        if "Pipeline:" in line:
-            pipeline_number = int(line.split(":")[1].strip())
-            # Check the subsequent lines for "Build" until the next "Pipeline"
-            for j in range(i + 1, len(lines)):
-                if "Pipeline:" in lines[j]:
-                    break
-                elif "Build" in lines[j]:
-                    return [pipeline_number]
-    return None
+unit_multipliers = {'': 1, 'k': 10 ** 3, 'M': 10 ** 6, 'G': 10 ** 9, 'T': 10 ** 12}
 
 
 # This class stores some methods that we need to call after all benchmarks have been run
 class PostProcessing:
 
-    def __init__(self, input_folders, benchmark_config_file, combined_csv_file_name, worker_statistics_csv_path, cache_statistics_csv_path, cache_hits_misses_name, pipeline_txt):
+    def __init__(self, input_folders, benchmark_config_file, engine_statistics_file, benchmark_statistics_file,
+                 combined_engine_file, combined_benchmark_file, engine_statistics_csv_path,
+                 benchmark_statistics_csv_path):
         self.input_folders = input_folders
         self.benchmark_config_file = benchmark_config_file
-        self.worker_statistics_csv_path = worker_statistics_csv_path
-        self.cache_statistics_csv_path = cache_statistics_csv_path
-        self.cache_hits_misses_name = cache_hits_misses_name
-        self.combined_csv_file_name = combined_csv_file_name
-        self.pipeline_txt = pipeline_txt
-
+        self.engine_statistics_file = engine_statistics_file
+        self.benchmark_statistics_file = benchmark_statistics_file
+        self.combined_engine_file = combined_engine_file
+        self.combined_benchmark_file = combined_benchmark_file
+        self.engine_statistics_csv_path = engine_statistics_csv_path
+        self.benchmark_statistics_csv_path = benchmark_statistics_csv_path
 
     def main(self):
-        print("Starting post processing")
+        print("Starting post processing...")
 
         number_of_cores = multiprocessing.cpu_count()
         with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
-            futures = {executor.submit(self.convert_statistics_to_csv, f): f for f in self.input_folders}
+            futures = {executor.submit(self.convert_engine_statistics_to_csv, f): f for f in self.input_folders}
+            results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+        with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+            futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
-        # Now, we can combine the worker and the cache statistics into two separate csv files
-        self.combine_worker_statistics()
-        self.combine_cache_statistics()
-
-        print("Finished post processing")
-
-
-    # Gathering all cache statistic files across all folders
-    def combine_cache_statistics(self):
-        cache_statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in self.input_folders for f in os.listdir(input_folder_name) if self.cache_hits_misses_name in f]
-        print(f"Found {len(cache_statistic_files)} cache statistic files in {self.input_folders}")
-        cache_stats_combined_df = pd.DataFrame()
-        for idx, [input_folder, cache_stat_file] in enumerate(cache_statistic_files):
-            # Reading the benchmark configs and the hits and misses
-            with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
-                benchmark_config_yaml = yaml.safe_load(file)
-
-            (hits_dict, misses_dict) = parse_lines_to_dataframe(cache_stat_file)
-
-            # Combine the dictionaries
-            combined_dict = {**hits_dict, **misses_dict, **benchmark_config_yaml.copy()}
-            new_row_df = pd.DataFrame([combined_dict])
-            cache_stats_combined_df = pd.concat([cache_stats_combined_df, new_row_df], ignore_index=True)
-
-        cache_stats_combined_df = cache_stats_combined_df.fillna(0, downcast='infer')
-        cache_stats_combined_df["slice_cache"] = cache_stats_combined_df["slice_cache_type"].astype(str) + "_" + cache_stats_combined_df["numberOfEntriesSliceCache"].astype(str)
-
-        # Writing the combined dataframe to a csv file
-        cache_stats_combined_df.to_csv(self.cache_statistics_csv_path, index=False)
-        print(f"Done with combining all cache statistics to {self.cache_statistics_csv_path}!")
+        # Now, we can combine the engine and benchmark statistics into two separate csv files
+        self.combine_engine_statistics()
+        self.combine_benchmark_statistics()
 
     # Converting query engine statistics to a csv file
-    def combine_worker_statistics(self):
+    def combine_engine_statistics(self):
+        print("Combining all query engine statistics...")
         # Gathering all statistic files across all folders
-        statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in self.input_folders for f in os.listdir(input_folder_name) if self.combined_csv_file_name in f]
-        print(f"Found {len(statistic_files)} worker statistic files in {self.input_folders}")
+        statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in
+                           self.input_folders for f in os.listdir(input_folder_name) if self.combined_engine_file in f]
+
+        print(f"Found {len(statistic_files)} query engine statistic files in {self.input_folders}")
         combined_df = pd.DataFrame()
-        no_statistics_files = len(statistic_files)
-        cnt_rows = 0
+
         for idx, [input_folder, stat_file] in enumerate(statistic_files):
-            #print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
+            # print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
             df = pd.read_csv(stat_file)
 
             # Normalize all timestamps to the minimal start timestamp of any task
@@ -147,37 +76,54 @@ class PostProcessing:
             df['start_time_normalized'] = df['start_time'] - min_start_time
             df['end_time_normalized'] = df['end_time'] - min_start_time
 
-            # Sorting the dataframe
+            # Sorting the DataFrame
             df = df.sort_values(by='task_id').reset_index(drop=True)
 
-            # Adding this dataframe to the global one
-            cnt_rows += len(df)
+            # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
-        combined_df["slice_cache"] = combined_df["slice_cache_type"].astype(str) + "_" + combined_df["numberOfEntriesSliceCache"].astype(str)
-        combined_df["degree_of_disorder"] = combined_df["degree_of_disorder"].astype(str) + "_" + combined_df["shuffle_strategy"].astype(str)
+        # Writing the combined DataFrame to a csv file
+        combined_df.to_csv(self.engine_statistics_csv_path, index=False)
 
-        # Writing the combined dataframe to a csv file
-        combined_df.to_csv(self.worker_statistics_csv_path, index=False)
-        print(f"Done with combining all query engine statistics to {self.worker_statistics_csv_path}!")
+    # Converting benchmark statistics to a csv file
+    def combine_benchmark_statistics(self):
+        print("Combining all benchmark statistics...")
+        # Gathering all statistic files across all folders
+        statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in
+                           self.input_folders for f in os.listdir(input_folder_name) if
+                           self.combined_benchmark_file in f]
 
-    def convert_statistics_to_csv(self, input_folder):
-        pipeline_txt_path = os.path.join(input_folder, self.pipeline_txt)
-        with open(pipeline_txt_path, 'r') as file:
-            interesting_pipelines = find_pipeline_number(file.read())
+        print(f"Found {len(statistic_files)} benchmark statistic files in {self.input_folders}")
+        combined_df = pd.DataFrame()
 
-        pattern_worker_file = r"^worker_\d+\.txt$"
+        for idx, [input_folder, stat_file] in enumerate(statistic_files):
+            # print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
+            df = pd.read_csv(stat_file)
+
+            # Normalize all timestamps to the minimal start timestamp of any task
+            min_start_time = df['window_start'].min()
+            df['window_start_normalized'] = df['window_start'] - min_start_time
+            # df['window_end_normalized'] = df['window_end'] - min_start_time
+
+            # Adding this DataFrame to the global one
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+        # Writing the combined DataFrame to a csv file
+        combined_df.to_csv(self.benchmark_statistics_csv_path, index=False)
+
+    def convert_engine_statistics_to_csv(self, input_folder):
+        pattern_engine_statistics_file = rf"^{re.escape(self.engine_statistics_file)}[\w\.\-]+\.stats$"
         pattern_task_details = (r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
                                 r"Task (?P<task_id>\d+) for Pipeline (?P<pipeline>\d+).*?"
                                 r"(?P<action>Started|Completed)(?:\. Number of Tuples: (?P<num_tuples>\d+))?")
 
-        # Gathering all statistic files across all folders
-        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if re.match(pattern_worker_file, f)]
+        # Gathering all statistic files. For now, there should only be one
+        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                           re.match(pattern_engine_statistics_file, f)]
         combined_df = pd.DataFrame()
-        no_statistics_files = len(statistic_files)
-        cnt_rows = 0
+
         for idx, stat_file in enumerate(statistic_files):
-            #print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
             with open(stat_file, 'r') as file:
                 log_text = file.read()
 
@@ -209,13 +155,13 @@ class PostProcessing:
                         "end_time": timestamp,
                         "duration": duration,  # Seconds
                         "num_tuples": task_info["num_tuples"],
-                        "throughput": throughput,  # tup/s
+                        "throughput": throughput,  # Tup/s
                         "pipeline_id": pipeline_id
                     })
 
                     records.append(new_record)
 
-            # Create DataFrame and
+            # Create DataFrame from records
             df = pd.DataFrame(records)
 
             # Normalize all timestamps to the minimal start timestamp of any task
@@ -223,17 +169,82 @@ class PostProcessing:
             df['start_time_normalized'] = df['start_time'] - min_start_time
             df['end_time_normalized'] = df['end_time'] - min_start_time
 
-            # Sorting the dataframe
+            # Sort the DataFrame
             df = df.sort_values(by='task_id').reset_index(drop=True)
 
-            # Remove everything that has a pipeline id not in interesting_pipelines
-            if interesting_pipelines is not None:
-                df = df[df['pipeline_id'].isin(interesting_pipelines)]
-
-            # Write the created dataframe to the csv file
+            # Write the created DataFrame to the csv file
             df.to_csv(stat_file + ".csv", index=False)
 
             # Adding this dataframe to the global one
-            cnt_rows += len(df)
             combined_df = pd.concat([combined_df, df], ignore_index=True)
-            combined_df.to_csv(os.path.join(input_folder, self.combined_csv_file_name), index=False)
+            combined_df.to_csv(os.path.join(input_folder, self.combined_engine_file), index=False)
+
+    def convert_benchmark_statistics_to_csv(self, input_folder):
+        interesting_queries = [1]
+
+        pattern_engine_statistics_file = rf"^{re.escape(self.benchmark_statistics_file)}[\w\.\-]+\.stats$"
+        pattern_throughput_details = (
+            r"Throughput for queryId (?P<query_id>\d+) in window (?P<window_start>\d+)-(?P<window_end>\d+) "
+            r"is (?P<throughput_data>[\d\.]+ (?P<data_prefix>[kMGT]?))B/s / (?P<throughput_tuples>[\d\.]+ "
+            r"(?P<tuple_prefix>[kMGT]?))Tup/s and memory consumption is (?P<memory>[\d\.]+ (?P<memory_prefix>[kMGT]?))B")
+
+        # Gathering all statistic files. For now, there should only be one
+        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                           re.match(pattern_engine_statistics_file, f)]
+        combined_df = pd.DataFrame()
+
+        for idx, stat_file in enumerate(statistic_files):
+            # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            with open(stat_file, 'r') as file:
+                log_text = file.read()
+
+            with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
+                benchmark_config_yaml = yaml.safe_load(file)
+
+            records = []
+            for match in re.finditer(pattern_throughput_details, log_text):
+                query_id = int(match.group("query_id"))
+                window_start = int(match.group("window_start"))
+                # window_end = int(match.group("window_end"))
+
+                # Convert throughput_data, throughput_tuples, and memory to base units
+                throughput_data = int(
+                    float(match.group("throughput_data").split()[0]) * unit_multipliers[match.group("data_prefix")])
+                throughput_tuples = int(
+                    float(match.group("throughput_tuples").split()[0]) * unit_multipliers[match.group("tuple_prefix")])
+                memory = int(float(match.group("memory").split()[0]) * unit_multipliers[match.group("memory_prefix")])
+
+                new_record = benchmark_config_yaml.copy()
+                new_record['query'] = new_record['query'].replace(";", "")
+
+                new_record.update({
+                    "query_id": query_id,
+                    "window_start": window_start,
+                    "throughput_data": throughput_data,  # B/s
+                    "throughput_tuples": throughput_tuples,  # Tup/s
+                    "memory": memory  # Bytes
+                })
+
+                records.append(new_record)
+
+            # Create DataFrame from records
+            df = pd.DataFrame(records)
+
+            # Normalize all timestamps to the minimal window start of any record
+            min_start_time = df['window_start'].min()
+            df['window_start_normalized'] = df['window_start'] - min_start_time
+            # df['window_end_normalized'] = df['window_end'] - min_start_time
+
+            # Sort the DataFrame
+            #df = df.sort_values(by=["query_id", "window_start"]).reset_index(drop=True)
+
+            # Remove everything that has a query id not in interesting_queries
+            if interesting_queries is not None:
+                df = df[df['query_id'].isin(interesting_queries)]
+
+            # Write the created DataFrame to the csv file
+            df.to_csv(stat_file + ".csv", index=False)
+
+            # Adding this DataFrame to the global one
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+            combined_df.to_csv(os.path.join(input_folder, self.combined_benchmark_file), index=False)
