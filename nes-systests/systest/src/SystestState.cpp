@@ -40,6 +40,57 @@
 namespace NES::Systest
 {
 
+std::filesystem::path
+Query::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
+{
+    auto resultDir = workingDir / "results";
+    if (not is_directory(resultDir))
+    {
+        create_directory(resultDir);
+        std::cout << "Created working directory: file://" << resultDir.string() << "\n";
+    }
+
+    return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
+}
+
+std::filesystem::path Query::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
+{
+    auto sourceDir = workingDir / "sources";
+    if (not is_directory(sourceDir))
+    {
+        create_directory(sourceDir);
+        std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
+    }
+
+    return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
+}
+
+Query::Query(
+    TestName name,
+    std::string queryDefinition,
+    std::filesystem::path sqlLogicTestFile,
+    LogicalPlan queryPlan,
+    const uint64_t queryIdInFile,
+    std::filesystem::path workingDir,
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
+    SystestParser::Schema sinkSchema)
+    : name(std::move(name))
+    , queryDefinition(std::move(queryDefinition))
+    , sqlLogicTestFile(std::move(sqlLogicTestFile))
+    , queryPlan(std::move(queryPlan))
+    , queryIdInFile(queryIdInFile)
+    , workingDir(std::move(workingDir))
+    , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
+    , expectedSinkSchema(std::move(sinkSchema))
+{
+}
+
+std::filesystem::path Query::resultFile() const
+{
+    return resultFile(workingDir, name, queryIdInFile);
+}
+
+
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {
     TestFileMap testFiles;
@@ -308,6 +359,79 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
         }
     }
     return os;
+}
+
+std::chrono::duration<double> RunningQuery::getElapsedTime() const
+{
+    INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+    const auto lastRun = querySummary.runs.back();
+    INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+    return std::chrono::duration_cast<std::chrono::duration<double>>(lastRun.stop.value() - lastRun.running.value());
+}
+
+std::string RunningQuery::getThroughput() const
+{
+    INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+    const auto lastRun = querySummary.runs.back();
+    INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+    if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
+    {
+        return "";
+    }
+
+    /// Calculating the throughput in bytes per second and tuples per second
+    const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
+    const auto bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
+    const auto tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
+
+    auto formatUnits = [](double throughput)
+    {
+        /// Format throughput in SI units, e.g. 1.234 MB/s instead of 1234000 B/s
+        const std::array<std::string, 5> units = {"", "k", "M", "G", "T"};
+        uint64_t unitIndex = 0;
+        constexpr auto nextUnit = 1000;
+        while (throughput >= nextUnit && unitIndex < units.size() - 1)
+        {
+            throughput /= nextUnit;
+            unitIndex++;
+        }
+        return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
+    };
+    return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+}
+
+std::string TestFile::getLogFilePath() const
+{
+    if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
+    {
+        /// Set the correct logging path when using docker
+        /// To do this, we need to combine the path to the host's nebula-stream root with the path to the file.
+        /// We assume that the last part of hostNebulaStreamRoot is the common folder name.
+        auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
+
+        /// Find the position of the common folder in the file path
+        auto filePathIter = file.begin();
+        if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
+        {
+            filePathIter = std::next(it);
+        }
+
+        /// Combining the path to the host's nebula-stream root with the path to the file
+        std::filesystem::path resultPath(hostNebulaStreamRoot);
+        for (; filePathIter != file.end(); ++filePathIter)
+        {
+            resultPath /= *filePathIter;
+        }
+
+        return resultPath.string();
+    }
+
+    /// Set the correct logging path without docker
+    return std::filesystem::path(file);
 }
 
 }
