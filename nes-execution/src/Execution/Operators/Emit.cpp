@@ -126,14 +126,14 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
 }
 
 void Emit::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
-    const nautilus::val<bool>& isLastChunk) const
+    const nautilus::val<bool>& potentialLastChunk) const
 {
     const auto tupleSize = memoryProvider->getMemoryLayout()->getSchema()->getSchemaSizeInBytes();
     const auto usedMemorySize = numRecords * tupleSize;
@@ -143,15 +143,24 @@ void Emit::emitRecordBuffer(
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
-    recordBuffer.setLastChunk(isLastChunk);
-    recordBuffer.setCreationTs(ctx.currentTs);
     recordBuffer.setUsedMemorySize(usedMemorySize);
-    ctx.emitBuffer(recordBuffer);
 
-    if (isLastChunk == true)
+    /// Chunk Logic. Order matters.
+    /// A worker thread will clean up the sequence state for the current sequence number if its told it is the last
+    /// chunk number. Thus it is important to query the state first to get the next chunk number, before asking for the lastChunk
+    /// as this will mark the current chunknumber as processed and my allow a different worker thread to concurrently clean up.
+    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
+    if (potentialLastChunk && isLastChunk(ctx, operatorHandlerIndex))
     {
         removeSequenceState(ctx, operatorHandlerIndex);
+        recordBuffer.setLastChunk(true);
     }
+    else
+    {
+        recordBuffer.setLastChunk(false);
+    }
+
+    ctx.emitBuffer(recordBuffer);
 }
 
 Emit::Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
