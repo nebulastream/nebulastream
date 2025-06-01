@@ -55,7 +55,7 @@ struct Pipeline
     [[nodiscard]] bool isSinkPipeline() const;
 
     void appendOperator(const PhysicalOperator& newOp);
-    void prependOperator(PhysicalOperator newOp);
+    void prependOperator(const PhysicalOperator& newOp);
 
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);
 
