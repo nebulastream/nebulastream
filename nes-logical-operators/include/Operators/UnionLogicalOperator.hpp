@@ -61,7 +61,8 @@ private:
     static constexpr std::string_view NAME = "Union";
 
     std::vector<LogicalOperator> children;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
+    std::vector<Schema> inputSchemas;
+    Schema outputSchema;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 };

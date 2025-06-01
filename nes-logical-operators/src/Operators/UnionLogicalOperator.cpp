@@ -12,18 +12,23 @@
     limitations under the License.
 */
 
+#include <Operators/UnionLogicalOperator.hpp>
+
 #include <algorithm>
+#include <functional>
+#include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -42,9 +47,8 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto* const rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
     {
-        return leftInputSchema == rhsOperator->leftInputSchema && rightInputSchema == rhsOperator->rightInputSchema
-            && getOutputSchema() == rhsOperator->getOutputSchema() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+        return getInputSchemas() == rhsOperator->getInputSchemas() && getOutputSchema() == rhsOperator->getOutputSchema()
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }
@@ -53,60 +57,44 @@ std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("unionWith(OpId: {}, leftSchema: {}, rightSchema: {})", id, leftInputSchema, rightInputSchema);
+        if (!outputSchema.hasFields())
+        {
+            return fmt::format("UnionWith(OpId: {}, {})", id, outputSchema);
+        }
+
+        return fmt::format("UnionWith(OpId: {})", id);
     }
-    return "unionWith";
+    return "UnionWith";
 }
 
 LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    const auto& leftInputSchema = inputSchemas[0];
-    const auto& rightInputSchema = inputSchemas[1];
-
+    PRECONDITION(!inputSchemas.empty(), "Union expects at least one child");
     auto copy = *this;
-    std::vector<Schema> distinctSchemas;
 
-    /// Identify different type of schemas from children operators
-    for (const auto& child : children)
+    /// If all input schemas are identical including the source qualifier the union keeps the source qualifier.
+    /// Compares adjacent elements and returs the first pair where they are not equal.
+    /// If all of them are equal this returns the end iterator
+    const auto allSchemasEqualWithQualifier = std::ranges::adjacent_find(inputSchemas, std::ranges::not_equal_to{}) == inputSchemas.end();
+    if (!allSchemasEqualWithQualifier)
     {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::ranges::find_if(
-            distinctSchemas,
-
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
+        auto inputsWithoutSourceQualifier = inputSchemas | std::views::transform(withoutSourceQualifier);
+        const auto allSchemasEqualWithoutQualifier
+            = std::ranges::adjacent_find(inputsWithoutSourceQualifier, std::ranges::not_equal_to{}) == inputsWithoutSourceQualifier.end();
+        if (!allSchemasEqualWithoutQualifier)
         {
-            distinctSchemas.push_back(childOutputSchema);
+            throw CannotInferSchema("Missmatch between union schemas.\n{}", fmt::join(inputSchemas, "\n"));
         }
-    }
-
-    copy.leftInputSchema = Schema{copy.leftInputSchema.memoryLayoutType};
-    copy.rightInputSchema = Schema{copy.rightInputSchema.memoryLayoutType};
-    if (distinctSchemas.size() == 1)
-    {
-        copy.leftInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
-        copy.rightInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
+        /// drop the qualifier
+        copy.outputSchema = withoutSourceQualifier(inputSchemas[0]);
     }
     else
     {
-        copy.leftInputSchema.appendFieldsFromOtherSchema(distinctSchemas[0]);
-        copy.rightInputSchema.appendFieldsFromOtherSchema(distinctSchemas[1]);
+        ///Input schema will be the output schema
+        copy.outputSchema = inputSchemas[0];
     }
 
-    if (std::ranges::none_of(leftInputSchema.getFields(), [&](const auto& field) { return leftInputSchema.contains(field.name); }))
-    {
-        throw CannotInferSchema(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}", leftInputSchema, rightInputSchema);
-    }
-
-    if (leftInputSchema.memoryLayoutType != rightInputSchema.memoryLayoutType)
-    {
-        throw CannotInferSchema("Left and right should have same memory layout");
-    }
-
-    ///Copy the schema of left input
-    copy.outputSchema = Schema{};
-    copy.outputSchema.appendFieldsFromOtherSchema(leftInputSchema);
+    copy.inputSchemas = std::move(inputSchemas);
     return copy;
 }
 
@@ -124,7 +112,7 @@ LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> 
 
 std::vector<Schema> UnionLogicalOperator::getInputSchemas() const
 {
-    return {leftInputSchema, rightInputSchema};
+    return inputSchemas;
 };
 
 Schema UnionLogicalOperator::getOutputSchema() const
@@ -144,7 +132,7 @@ std::vector<OriginId> UnionLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator UnionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 2, "Union should have two inputs");
+    PRECONDITION(!ids.empty(), "Union should have at least one input");
     auto copy = *this;
     copy.inputOriginIds = ids;
     return copy;
@@ -209,10 +197,9 @@ SerializableOperator UnionLogicalOperator::serialize() const
 
 LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
 {
+    PRECONDITION(!inputSchemas.empty(), "Expected at least input schema");
     auto copy = *this;
-    INVARIANT(inputSchemas.size() == 2, "Expected 2 input schemas.");
-    copy.leftInputSchema.appendFieldsFromOtherSchema(inputSchemas[0]);
-    copy.rightInputSchema.appendFieldsFromOtherSchema(inputSchemas[1]);
+    copy.inputSchemas = std::move(inputSchemas);
     return copy;
 }
 
