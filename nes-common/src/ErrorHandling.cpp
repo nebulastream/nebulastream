@@ -56,7 +56,7 @@ constexpr bool logWithStacktrace = true;
 constexpr bool logWithStacktrace = false;
 #endif
 
-Exception::Exception(std::string message, const uint64_t code) : message(std::move(message)), errorCode(code)
+Exception::Exception(std::string message, const uint64_t code) : message(std::move(message)), errorCode(static_cast<ErrorCode>(code))
 {
 }
 
@@ -70,7 +70,7 @@ const char* Exception::what() const noexcept
     return message.c_str();
 }
 
-uint64_t Exception::code() const noexcept
+ErrorCode Exception::code() const noexcept
 {
     return errorCode;
 }
@@ -167,7 +167,7 @@ Exception wrapExternalException()
 }
 
 
-uint64_t getCurrentExceptionCode()
+ErrorCode getCurrentErrorCode()
 {
     try
     {

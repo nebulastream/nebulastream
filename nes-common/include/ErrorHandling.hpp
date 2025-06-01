@@ -19,6 +19,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp> /// NOLINT(misc-include-cleaner) used in macro for NES::Logger::{getInstance(), shutdown()}
 #include <cpptrace/cpptrace.hpp>
@@ -27,6 +28,20 @@
 
 namespace NES
 {
+
+/// Represents error codes as strong type.
+/// `ErrorCode` needs to be hidden in `ErrorCodeDetail` namespace to not interfere with the throw function with the same name.
+/// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
+namespace ErrorCodeDetail
+{
+enum ErrorCode
+{
+#define EXCEPTION(name, code, msg) name = (code),
+#include <ExceptionDefinitions.inc>
+#undef EXCEPTION
+};
+}
+using ErrorCode = ErrorCodeDetail::ErrorCode;
 
 /// This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
 /// We use cpptrace's lazy stacktrace collection because the eager stacktrace collection became too slow with static project linking.
@@ -41,12 +56,12 @@ public:
 
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
-    [[nodiscard]] uint64_t code() const noexcept;
+    [[nodiscard]] ErrorCode code() const noexcept;
     [[nodiscard]] std::optional<const cpptrace::stacktrace_frame> where() const noexcept;
 
 private:
     std::string message;
-    uint64_t errorCode;
+    ErrorCode errorCode;
 };
 
 
@@ -126,24 +141,13 @@ Exception wrapExternalException();
 
 /// @brief This function is used to get the current exception code.
 /// @warning This function should be used only in a catch block.
-[[nodiscard]] uint64_t getCurrentExceptionCode();
+[[nodiscard]] ErrorCode getCurrentErrorCode();
 
-[[nodiscard]] bool errorCodeExists(ErrorCode code) noexcept;
-[[nodiscard]] std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view codeOrTypeStr) noexcept;
-
-/// `ErrorCode` needs to be hidden in `ErrorCodeDetail` namespace to not interfere with the throw function with the same name.
-/// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
-namespace ErrorCodeDetail
-{
-enum ErrorCode
-{
-#define EXCEPTION(name, code, msg) name = (code),
-#include <ExceptionDefinitions.inc>
-#undef EXCEPTION
-};
+[[nodiscard]] bool errorCodeExists(uint64_t code) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view name) noexcept;
 }
-using ErrorCode = ErrorCodeDetail::ErrorCode;
 
-[[nodiscard]] bool errorCodeExists(std::uint64_t code) noexcept;
-[[nodiscard]] std::optional<uint64_t> errorTypeExists(std::string_view name) noexcept;
+namespace fmt
+{
+FMT_FORMAT_AS(NES::ErrorCodeDetail::ErrorCode, std::uint64_t);
 }
