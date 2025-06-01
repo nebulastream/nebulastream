@@ -115,7 +115,7 @@ struct PhysicalOperator
     PhysicalOperator& operator=(const PhysicalOperator& other);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    void setChild(PhysicalOperator child);
+    [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& executionCtx) const;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
@@ -154,6 +154,14 @@ struct PhysicalOperator
     }
 
 private:
+    /// Constructs a PhysicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
+    /// @param op The operator to wrap.
+    template <IsPhysicalOperator T>
+    PhysicalOperator(std::shared_ptr<T> op) : self(std::move(op)) /// NOLINT
+    {
+    }
+
     struct Concept : PhysicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : PhysicalOperatorConcept(existingId) { }
@@ -193,7 +201,7 @@ private:
         }
     };
 
-    std::shared_ptr<Concept> self;
+    std::shared_ptr<const Concept> self;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PhysicalOperator& op)
