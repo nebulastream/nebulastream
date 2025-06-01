@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
+
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -22,9 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <CompiledQueryPlan.hpp>
@@ -43,8 +44,7 @@ namespace
 {
 struct LoweringContext
 {
-    std::unordered_map<std::shared_ptr<Sinks::SinkDescriptor>, std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>>>
-        sinks;
+    std::vector<Sink> sinks;
     std::vector<Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
 };
@@ -127,7 +127,13 @@ void processSource(
 void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
 {
     const auto sinkOperator = pipeline->getRootOperator().get<SinkPhysicalOperator>().getDescriptor();
-    loweringContext.sinks[sinkOperator].emplace_back(predecessor);
+    auto it = std::ranges::find(loweringContext.sinks, pipeline->getPipelineId(), &Sink::id);
+    if (it == loweringContext.sinks.end())
+    {
+        loweringContext.sinks.emplace_back(pipeline->getPipelineId(), sinkOperator, std::vector<Predecessor>{});
+        it = loweringContext.sinks.end() - 1;
+    }
+    it->predecessor.emplace_back(predecessor);
 }
 
 std::unique_ptr<ExecutablePipelineStage>
@@ -192,13 +198,9 @@ std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPla
     }
 
     auto pipelines = std::move(loweringContext.pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();
-    auto sinks = std::move(loweringContext.sinks)
-        | std::views::transform([](auto descriptorAndPredecessors)
-                                { return Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)); })
-        | std::ranges::to<std::vector>();
 
     return CompiledQueryPlan::create(
-        pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
+        pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(loweringContext.sinks), std::move(loweringContext.sources));
 }
 
 }
