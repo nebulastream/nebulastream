@@ -20,6 +20,7 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp> /// NOLINT(misc-include-cleaner) used in macro for NES::Logger::{getInstance(), shutdown()}
 #include <cpptrace/cpptrace.hpp>
@@ -58,6 +59,8 @@ public:
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] ErrorCode code() const noexcept;
     [[nodiscard]] std::optional<const cpptrace::stacktrace_frame> where() const noexcept;
+
+    friend std::ostream& operator<<(std::ostream& os, const Exception& ex);
 
 private:
     std::string message;
@@ -144,10 +147,11 @@ Exception wrapExternalException();
 [[nodiscard]] ErrorCode getCurrentErrorCode();
 
 [[nodiscard]] bool errorCodeExists(uint64_t code) noexcept;
-[[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view name) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view name) noexcept;
 }
 
 namespace fmt
 {
 FMT_FORMAT_AS(NES::ErrorCodeDetail::ErrorCode, std::uint64_t);
+FMT_OSTREAM(NES::Exception);
 }
