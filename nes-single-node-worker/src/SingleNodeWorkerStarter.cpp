@@ -49,6 +49,6 @@ int main(const int argc, const char* argv[])
     CPPTRACE_CATCH(...)
     {
         NES::tryLogCurrentException();
-        return NES::getCurrentExceptionCode();
+        return NES::getCurrentErrorCode();
     }
 }

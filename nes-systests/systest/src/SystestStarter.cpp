@@ -499,6 +499,6 @@ int main(int argc, const char** argv)
     CPPTRACE_CATCH(...)
     {
         tryLogCurrentException();
-        return getCurrentExceptionCode();
+        return getCurrentErrorCode();
     }
 }
