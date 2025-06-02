@@ -38,11 +38,8 @@ namespace NES
 NLJOperatorHandler::NLJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
-    : StreamJoinOperatorHandler(
-          inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(leftMemoryProvider), std::move(rightMemoryProvider))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
 {
 }
 
