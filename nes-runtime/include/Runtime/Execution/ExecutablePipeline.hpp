@@ -245,7 +245,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
     std::atomic<bool> isMigrationPipeline;
-    ThreadBarrierPtr preSerBarrier = std::make_shared<ThreadBarrier>(4);
+    ThreadBarrierPtr preSerBarrier = std::make_shared<ThreadBarrier>(8);
     std::condition_variable conditionSerialized;
     std::once_flag serializeOnceFlag;
     std::mutex serializeMtx;
