@@ -31,9 +31,8 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(
-          std::make_unique<QueryCompilation::QueryCompiler>(
-              configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
+    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
+          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
     /// Writing the current throughput to the log

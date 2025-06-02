@@ -38,8 +38,12 @@ void HJOperatorHandler::setNautilusCleanupExec(
 {
     switch (buildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Right: rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec); break;
-        case QueryCompilation::JoinBuildSideType::Left: leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec); break;
+        case QueryCompilation::JoinBuildSideType::Right:
+            rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
+            break;
+        case QueryCompilation::JoinBuildSideType::Left:
+            leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
+            break;
             std::unreachable();
     }
 }
@@ -49,8 +53,10 @@ HJOperatorHandler::getNautilusCleanupExec(const QueryCompilation::JoinBuildSideT
 {
     switch (buildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Right: return rightCleanupStateNautilusFunction;
-        case QueryCompilation::JoinBuildSideType::Left: return leftCleanupStateNautilusFunction;
+        case QueryCompilation::JoinBuildSideType::Right:
+            return rightCleanupStateNautilusFunction;
+        case QueryCompilation::JoinBuildSideType::Left:
+            return leftCleanupStateNautilusFunction;
     }
     std::unreachable();
 }
@@ -74,7 +80,8 @@ void HJOperatorHandler::emitSliceIdsToProbe(
         INVARIANT(hashJoinSlice != nullptr, "HashMapSlice must be of type HashMapSlice!");
         for (uint64_t hashMapIdx = 0; hashMapIdx < hashJoinSlice->getNumberOfHashMapsPerSide(buildSide); ++hashMapIdx)
         {
-            if (auto* hashMap = hashJoinSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), buildSide); hashMap and hashMap->getNumberOfTuples() > 0)
+            if (auto* hashMap = hashJoinSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), buildSide);
+                hashMap and hashMap->getNumberOfTuples() > 0)
             {
                 allHashMaps.emplace_back(hashMap);
                 totalNumberOfTuples += hashMap->getNumberOfTuples();

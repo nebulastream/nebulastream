@@ -44,7 +44,9 @@ NodeEngineBuilder::NodeEngineBuilder(
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     auto bufferManager = Memory::BufferManager::create(
-        workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(), workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads.getValue());
+        workerConfiguration.bufferSizeInBytes.getValue(),
+        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+        workerConfiguration.queryEngineConfiguration.numberOfWorkerThreads.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
 

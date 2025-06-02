@@ -15,8 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <ranges>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <Execution/Functions/Function.hpp>

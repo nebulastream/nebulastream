@@ -16,10 +16,10 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
-#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/HashMapOptions.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>

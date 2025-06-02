@@ -621,7 +621,12 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
     partialTuple.append(lastPartialTuple);
     const auto stateOfPartialTuple = static_cast<FormattedTupleIs>(not(partialTuple.empty()));
     progressTracker.processCurrentTuple(
-        std::move(partialTuple), fieldDelimiter, fieldParseFunctions, fieldSizes, *pipelineExecutionContext.getBufferManager(), pipelineExecutionContext.getId());
+        std::move(partialTuple),
+        fieldDelimiter,
+        fieldParseFunctions,
+        fieldSizes,
+        *pipelineExecutionContext.getBufferManager(),
+        pipelineExecutionContext.getId());
     progressTracker.progressOneTuple();
     return stateOfPartialTuple;
 }

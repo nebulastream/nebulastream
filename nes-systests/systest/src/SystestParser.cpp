@@ -464,7 +464,6 @@ SystestParser::CSVSource SystestParser::expectMemorySource() const
 
     source.fields = parseSchemaFields(arguments);
     return source;
-
 }
 
 SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)

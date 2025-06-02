@@ -32,7 +32,8 @@
 
 namespace NES::Runtime::Execution
 {
-namespace {
+namespace
+{
 Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* pipelineCtx)
 {
     return pipelineCtx->getBufferManager().get();

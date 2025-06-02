@@ -14,9 +14,11 @@
 
 #include <Execution/Functions/ExecutableFunctionCastField.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-ExecutableFunctionCastField::ExecutableFunctionCastField(std::unique_ptr<Function> childFunction, std::shared_ptr<PhysicalType> castToType) : castToType(std::move(castToType)), childFunction(std::move(childFunction))
+ExecutableFunctionCastField::ExecutableFunctionCastField(std::unique_ptr<Function> childFunction, std::shared_ptr<PhysicalType> castToType)
+    : castToType(std::move(castToType)), childFunction(std::move(childFunction))
 {
 }
 

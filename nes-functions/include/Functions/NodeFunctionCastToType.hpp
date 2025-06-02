@@ -17,10 +17,12 @@
 #include <Functions/NodeFunctionUnary.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /// Casts the input field name to the provided data type
-class NodeFunctionCastToType : public NodeFunctionUnary {
+class NodeFunctionCastToType : public NodeFunctionUnary
+{
 public:
     static std::shared_ptr<NodeFunction> create(std::shared_ptr<DataType> castToType);
 

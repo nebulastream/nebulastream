@@ -47,7 +47,8 @@ public:
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
-    void setNautilusCleanupExec(std::shared_ptr<NautilusCleanupExec> nautilusCleanupExec, const QueryCompilation::JoinBuildSideType& buildSide);
+    void
+    setNautilusCleanupExec(std::shared_ptr<NautilusCleanupExec> nautilusCleanupExec, const QueryCompilation::JoinBuildSideType& buildSide);
     std::shared_ptr<NautilusCleanupExec> getNautilusCleanupExec(const QueryCompilation::JoinBuildSideType& buildSide) const;
 
 private:

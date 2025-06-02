@@ -14,7 +14,8 @@
 
 #include <Functions/NodeFunctionCastToType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 std::shared_ptr<NodeFunction> NodeFunctionCastToType::create(std::shared_ptr<DataType> castToType)
 {
@@ -68,7 +69,6 @@ std::ostream& NodeFunctionCastToType::toDebugString(std::ostream& os) const
 std::ostream& NodeFunctionCastToType::toQueryPlanString(std::ostream& os) const
 {
     return os << std::format("Cast to {}", castToType->toString());
-
 }
 
 }

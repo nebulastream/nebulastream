@@ -75,7 +75,10 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -397,7 +400,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                     return hashMapOptions;
                 };
 
-                const auto pageSizePerKey = queryCompilerConfig.numberOfRecordsPerKey.getValue() * buildOperator->getInputSchema()->getSchemaSizeInBytes();
+                const auto pageSizePerKey
+                    = queryCompilerConfig.numberOfRecordsPerKey.getValue() * buildOperator->getInputSchema()->getSchemaSizeInBytes();
                 memoryProvider->getMemoryLayout()->setBufferSize(pageSizePerKey);
                 if (queryCompilerConfig.sliceCacheType == QueryCompilation::Configurations::SliceCacheType::NONE)
                 {

@@ -50,9 +50,11 @@ protected:
         Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
-        const nautilus::val<Timestamp>& windowEnd) const; const
+        const nautilus::val<Timestamp>& windowEnd) const;
+    const
 
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
+        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>
+            leftMemoryProvider;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
 };
 }

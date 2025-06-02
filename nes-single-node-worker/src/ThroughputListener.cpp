@@ -100,7 +100,8 @@ void threadRoutine(
         {
             /// Check if we have see no event for more than timeIntervalInMilliSeconds. If this is the case, we invoke the callback with a throughput of 0
             const auto curTimePoint = std::chrono::high_resolution_clock::now();
-            const auto noEventSeenFor = std::chrono::duration_cast<std::chrono::milliseconds>(curTimePoint - startTimeNoEventsTriggered).count();
+            const auto noEventSeenFor
+                = std::chrono::duration_cast<std::chrono::milliseconds>(curTimePoint - startTimeNoEventsTriggered).count();
             if (noEventSeenFor > static_cast<long>(timeIntervalInMilliSeconds))
             {
                 /// We call the callback and set the throughput to 0 and create a window of the current time

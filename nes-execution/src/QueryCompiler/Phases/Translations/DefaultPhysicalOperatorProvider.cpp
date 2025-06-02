@@ -304,12 +304,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
                     const auto rightFieldNewName = rightField.value()->getName() + "_" + std::to_string(counter++);
                     leftFieldAccess.value()->updateFieldName(leftFieldNewName);
                     rightFieldAccess.value()->updateFieldName(rightFieldNewName);
-                    leftJoinNames.emplace_back(
-                        PhysicalOperators::FieldNamesExtension{
-                            leftField.value()->getName(), leftFieldNewName, leftField.value()->getDataType(), joinedDataType});
-                    rightJoinNames.emplace_back(
-                        PhysicalOperators::FieldNamesExtension{
-                            rightField.value()->getName(), rightFieldNewName, rightField.value()->getDataType(), joinedDataType});
+                    leftJoinNames.emplace_back(PhysicalOperators::FieldNamesExtension{
+                        leftField.value()->getName(), leftFieldNewName, leftField.value()->getDataType(), joinedDataType});
+                    rightJoinNames.emplace_back(PhysicalOperators::FieldNamesExtension{
+                        rightField.value()->getName(), rightFieldNewName, rightField.value()->getDataType(), joinedDataType});
                 }
             });
 

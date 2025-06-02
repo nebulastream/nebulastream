@@ -39,7 +39,6 @@ Interface::HashMap* getAggHashMapProxy(
 class AggregationBuild final : public HashMapOptions, public WindowOperatorBuild
 {
 public:
-
     friend Interface::HashMap* getAggHashMapProxy(
         const AggregationOperatorHandler* operatorHandler,
         const Timestamp timestamp,
