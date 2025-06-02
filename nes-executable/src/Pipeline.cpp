@@ -62,7 +62,7 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     const std::string_view modeName = pipeline.getExecutionMode() ? magic_enum::enum_name(*pipeline.getExecutionMode()) : kNoMode;
 
     fmt::format_to(
-        std::back_inserter(buf), "{}Pipeline(ID({}), Provider({}))\n", indentStr, pipeline.getPipelineId().getRawValue(), modeName);
+        std::back_inserter(buf), "{}Pipeline(), Provider({}))\n", indentStr, modeName);
 
     fmt::format_to(
         std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));

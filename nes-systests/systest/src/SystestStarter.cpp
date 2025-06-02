@@ -17,9 +17,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestExecutor.hpp>
+#include <FSMTransitionMonitor.hpp>
 
 int main(int argc, const char** argv)
 {
+    NES::FSMTransitionReporter fsmReporter;
+
     auto startTime = std::chrono::high_resolution_clock::now();
 
     switch (const auto [returnType, outputMessage, exceptionCode] = NES::executeSystests(NES::readConfiguration(argc, argv)); returnType)

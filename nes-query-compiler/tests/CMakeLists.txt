@@ -10,8 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(PipelineBuilder)
+function(add_nes_query_compiler_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-query-compiler nes-memory nes-logical-operators)
+    target_include_directories(${TARGET_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
+endfunction()
 
-add_source_files(nes-query-compiler
-        LowerToCompiledQueryPlanPhase.cpp
-)
+add_nes_query_compiler_test(pipeline-building-tests "PipelineBuildingTest.cpp")
