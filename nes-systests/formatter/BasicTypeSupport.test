@@ -1,6 +1,6 @@
-# name: parser/BasicTypeSupport.test
-# description: parser tests
-# groups: [Parser]
+# name: formatter/BasicTypeSupport.test
+# description: formatter tests
+# groups: [Formatter]
 
 # NOTE: assumes that raw tuple buffers are of page size (4096 bytes)
 
@@ -10,7 +10,7 @@ false,a,127,32767,2147483647,9223372036854775807,0,0,0,0,34028234663852885981170
 
 SINK sinkMultiBuffer BOOLEAN multiBuffer$field_1 CHAR multiBuffer$field_2 INT8 multiBuffer$field_3 INT16 multiBuffer$field_4 INT32 multiBuffer$field_5 INT64 multiBuffer$field_6 UINT8 multiBuffer$field_7 UINT16 multiBuffer$field_8 UINT32 multiBuffer$field_9 UINT64 multiBuffer$field_10 FLOAT32 multiBuffer$field_11 FLOAT64 multiBuffer$field_12
 
-# Description: Check that the parser supports all basic types.
+# Description: Check that the formatter supports all basic types.
 # Sets: true/false for bool, lower/uppercase for char and min/max values for integers/floats
 SELECT * FROM multiBuffer INTO sinkMultiBuffer
 ----
