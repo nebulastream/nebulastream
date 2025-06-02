@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <PhysicalPlanBuilder.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -23,7 +25,6 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
-#include <PhysicalPlanBuilder.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 
@@ -36,7 +37,10 @@ PhysicalPlanBuilder::PhysicalPlanBuilder(QueryId id) : queryId(id)
 
 void PhysicalPlanBuilder::addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink)
 {
-    PRECONDITION(sink->getPhysicalOperator().tryGet<SinkPhysicalOperator>(), "Expects SinkOperators as roots");
+    if (!sink->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    {
+        throw CannotDeserialize("Expects SinkOperators as roots");
+    }
     sinks.emplace_back(std::move(sink));
 }
 
