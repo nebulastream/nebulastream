@@ -183,9 +183,20 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         {
             const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
+            if (auto varSizedDataTypes = std::dynamic_pointer_cast<VariableSizedDataType>(loweredFunctionType);
+                varSizedDataTypes != nullptr)
+            {
+                /// We store the pointer to the string value in the entry. Therefore, we need to change the size of the data type
+                varSizedDataTypes->representation = VariableSizedDataType::Representation::POINTER;
+                auto field = *buildOperator->getInputSchema()->getFieldByName(nodeFunctionKey->getFieldName());
+                std::dynamic_pointer_cast<VariableSizedDataType>(field->getDataType())->representation
+                    = VariableSizedDataType::Representation::POINTER;
+            }
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+            auto physicalType = typeFactory.getPhysicalType(loweredFunctionType);
+            keySize += physicalType->size();
         }
+
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
@@ -260,8 +271,18 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         {
             const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
+            if (auto varSizedDataTypes = std::dynamic_pointer_cast<VariableSizedDataType>(loweredFunctionType);
+                varSizedDataTypes != nullptr)
+            {
+                /// We store the pointer to the string value in the entry. Therefore, we need to change the size of the data type
+                varSizedDataTypes->representation = VariableSizedDataType::Representation::POINTER;
+                auto field = *probeOperator->getInputSchema()->getFieldByName(nodeFunctionKey->getFieldName());
+                std::dynamic_pointer_cast<VariableSizedDataType>(field->getDataType())->representation
+                    = VariableSizedDataType::Representation::POINTER;
+            }
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+            auto physicalType = typeFactory.getPhysicalType(loweredFunctionType);
+            keySize += physicalType->size();
         }
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
@@ -339,8 +360,18 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         const auto nodeFunctionKey
                             = NodeFunctionFieldAccess::create(inputSchema.getFieldByName(fieldName).value()->getDataType(), fieldName);
                         const auto loweredFunctionType = nodeFunctionKey->getStamp();
+                        if (auto varSizedDataTypes = std::dynamic_pointer_cast<VariableSizedDataType>(loweredFunctionType);
+                            varSizedDataTypes != nullptr)
+                        {
+                            /// We store the pointer to the string value in the entry. Therefore, we need to change the size of the data type
+                            varSizedDataTypes->representation = VariableSizedDataType::Representation::POINTER;
+                            auto field = *inputSchema.getFieldByName(fieldName);
+                            std::dynamic_pointer_cast<VariableSizedDataType>(field->getDataType())->representation
+                                = VariableSizedDataType::Representation::POINTER;
+                        }
                         keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-                        keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+                        auto physicalType = typeFactory.getPhysicalType(loweredFunctionType);
+                        keySize += physicalType->size();
                     }
                     const auto pageSize = queryCompilerConfig.pageSize.getValue();
                     const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
@@ -439,8 +470,18 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         const auto nodeFunctionKey
                             = NodeFunctionFieldAccess::create(inputSchema.getFieldByName(fieldName).value()->getDataType(), fieldName);
                         const auto loweredFunctionType = nodeFunctionKey->getStamp();
+                        if (auto varSizedDataTypes = std::dynamic_pointer_cast<VariableSizedDataType>(loweredFunctionType);
+                            varSizedDataTypes != nullptr)
+                        {
+                            /// We store the pointer to the string value in the entry. Therefore, we need to change the size of the data type
+                            varSizedDataTypes->representation = VariableSizedDataType::Representation::POINTER;
+                            auto field = *inputSchema.getFieldByName(fieldName);
+                            std::dynamic_pointer_cast<VariableSizedDataType>(field->getDataType())->representation
+                                = VariableSizedDataType::Representation::POINTER;
+                        }
                         keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-                        keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+                        auto physicalType = typeFactory.getPhysicalType(loweredFunctionType);
+                        keySize += physicalType->size();
                     }
                     const auto pageSize = queryCompilerConfig.pageSize.getValue();
                     const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();

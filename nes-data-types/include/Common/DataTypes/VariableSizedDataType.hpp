@@ -36,6 +36,14 @@ public:
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
 
     std::string toString() override;
+
+    /// Stores how the variable sized data is represented, either as a pointer or as an index with a child buffer
+    enum class Representation
+    {
+        INDEX,
+        POINTER
+    };
+    Representation representation;
 };
 
 }

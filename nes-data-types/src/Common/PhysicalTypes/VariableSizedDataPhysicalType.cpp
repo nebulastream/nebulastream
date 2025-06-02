@@ -22,8 +22,16 @@ namespace NES
 
 uint64_t VariableSizedDataPhysicalType::size() const
 {
-    /// returning the size of the index to the child buffer that contains the VariableSizedData data
-    return sizeVal;
+    switch (representation)
+    {
+        case VariableSizedDataType::Representation::INDEX:
+            /// returning the size of the index to the child buffer that contains the VariableSizedData data
+            return sizeof(uint32_t);
+        case VariableSizedDataType::Representation::POINTER:
+            /// returning the size of a pointer
+            return sizeof(int8_t*);
+    }
+    std::unreachable();
 }
 
 std::string VariableSizedDataPhysicalType::convertRawToString(const void* data) const noexcept
@@ -55,7 +63,7 @@ std::string VariableSizedDataPhysicalType::convertRawToStringWithoutFill(const v
 
 std::string VariableSizedDataPhysicalType::toString() const noexcept
 {
-    return "VariableSizedData " + std::to_string(sizeVal);
+    return "VariableSizedData ";
 }
 
 }

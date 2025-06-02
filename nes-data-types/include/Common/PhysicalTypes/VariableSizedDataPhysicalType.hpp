@@ -17,7 +17,9 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
@@ -27,13 +29,20 @@ namespace NES
 class VariableSizedDataPhysicalType final : public PhysicalType
 {
 public:
-    explicit VariableSizedDataPhysicalType(std::shared_ptr<DataType> type) noexcept : PhysicalType(std::move(type)) { }
+    explicit VariableSizedDataPhysicalType(
+        std::shared_ptr<DataType> type, const VariableSizedDataType::Representation representation) noexcept
+        : PhysicalType(std::move(type)), representation(representation)
+    {
+    }
 
     ~VariableSizedDataPhysicalType() override = default;
 
     static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type) noexcept
     {
-        return std::make_shared<VariableSizedDataPhysicalType>(type);
+        const auto varSizedDataType = std::dynamic_pointer_cast<VariableSizedDataType>(type);
+        INVARIANT(varSizedDataType != nullptr, "Variable sized data type is not a variable sized data type.");
+        const auto representation = varSizedDataType->representation;
+        return std::make_shared<VariableSizedDataPhysicalType>(type, representation);
     }
 
     [[nodiscard]] uint64_t size() const override;
@@ -45,7 +54,7 @@ public:
     [[nodiscard]] std::string toString() const noexcept override;
 
 private:
-    static constexpr size_t sizeVal = sizeof(uint32_t);
+    VariableSizedDataType::Representation representation;
 };
 
 
