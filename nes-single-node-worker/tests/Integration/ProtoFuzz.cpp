@@ -13,7 +13,6 @@
 */
 
 #include <chrono>
-#include <iostream>
 #include <thread>
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
 #include <from_current.hpp>
@@ -29,7 +28,6 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
 
     CPPTRACE_TRY
     {
-        std::cout << "---\n" << sqp.DebugString() << "---" << std::endl;
         auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
         NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
         auto qid = snw.registerQuery(dqp);
@@ -50,6 +48,5 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
     }
     CPPTRACE_CATCH(...)
     {
-        NES::tryLogCurrentException();
     }
 }
