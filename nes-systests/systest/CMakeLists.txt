@@ -73,11 +73,6 @@ if (NOT CODE_COVERAGE)
 endif (NOT CODE_COVERAGE)
 
 if (ENABLE_LARGE_TESTS)
-    ExternalData_Add_Test(TEST_DATA_LARGE
-            NAME systest_large
-            # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000)
-
     set(sliceCaches NONE LRU FIFO SECOND_CHANCE)
     set(sortBufferByTimestamps false)
     set(numberOfEntriesSliceCaches 1 1000)
@@ -101,7 +96,7 @@ if (ENABLE_LARGE_TESTS)
 
                 ExternalData_Add_Test(TEST_DATA_LARGE
                         NAME systest_aggregations_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}
-                        COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp} --data ${LARGE_DATA} --groups Aggregation -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
+                        COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp} --data ${LARGE_DATA} --groups Aggregation -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=HASH_JOIN)
             endforeach ()
         endforeach ()
     endforeach ()
