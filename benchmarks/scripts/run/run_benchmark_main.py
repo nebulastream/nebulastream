@@ -42,14 +42,13 @@ WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
 DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+RESULTS_DIR = f"benchmarks/data/{DATETIME_NOW}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
 PIPELINE_TXT = "pipelines.txt"
-ENGINE_STATISTICS_CSV_PATH = f"benchmarks/data/{DATETIME_NOW}/engine_statistics.csv"
-BENCHMARK_STATISTICS_CSV_PATH = f"benchmarks/data/{DATETIME_NOW}/benchmark_statistics.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -59,6 +58,13 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
+
+
+def create_result_dir():
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    # print(f"Created working dir {folder_name}...")
+    return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
+            os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE)]
 
 
 def create_working_dir():
@@ -404,10 +410,11 @@ if __name__ == "__main__":
     #         print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
 
     # Calling the postprocessing main
+    engine_stats_csv_path, benchmark_stats_csv_path = create_result_dir()
     post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
                                                     BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
-                                                    COMBINED_BENCHMARK_STATISTICS_FILE, ENGINE_STATISTICS_CSV_PATH,
-                                                    BENCHMARK_STATISTICS_CSV_PATH)
+                                                    COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
+                                                    benchmark_stats_csv_path)
     post_processing.main()
 
     # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
