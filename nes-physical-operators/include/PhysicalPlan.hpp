@@ -21,7 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <PhysicalOperator.hpp>
+#include <PhysicalOperatorWrapper.hpp>
 
 namespace NES
 {
