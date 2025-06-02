@@ -205,7 +205,7 @@ bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
 
     numberOfWrittenBuffers++;
 
-     // NES_ERROR("number of written: {}", numberOfWrittenBuffers);
+      NES_ERROR("number of written: {}", numberOfWrittenBuffers);
 
     if (numberOfWrittenBuffers == numberOfBuffers) {
         shutdown();
