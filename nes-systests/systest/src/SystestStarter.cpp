@@ -102,7 +102,21 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .default_value(false)
         .implicit_value(true);
 
-    program.parse_args(argc, argv);
+    try
+    {
+        program.parse_args(argc, argv);
+    }
+    catch (const std::runtime_error& err)
+    {
+        std::cerr << "Error parsing arguments: " << err.what() << std::endl;
+        std::cerr << program << std::endl;
+        std::exit(1);
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Unexpected error during argument parsing: " << err.what() << std::endl;
+        std::exit(1);
+    }
 
     auto config = Configuration::SystestConfiguration();
 
