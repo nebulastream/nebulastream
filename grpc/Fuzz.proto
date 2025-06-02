@@ -22,17 +22,8 @@ import "SerializableVariantDescriptor.proto";
 package NES;
 
 message FConstantValueLF {
-    oneof value {
-        int32 int_value = 1;
-        uint32 uint_value = 2;
-        int64 long_value = 3;
-        uint64 ulong_value = 4;
-        bool bool_value = 5;
-        fixed32 char_value = 6;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
-        float float_value = 7;
-        double double_value = 8;
-        string string_value = 9;
-    }
+    string valAsStr = 1;
+    SerializableDataType dataType = 2;
 }
 
 message FFieldAccLF {
@@ -47,7 +38,7 @@ message FValue {
     }
 }
 
-message FComparison {
+message FPredicate {
     FValue left = 1;
     FValue right = 2;
     enum Type {
@@ -56,12 +47,7 @@ message FComparison {
         GE = 2;
         GT = 3;
     }
-}
-
-message FPredicate {
-    FValue left = 1;
-    FValue right = 2;
-    FComparison cmp = 3;
+    Type type = 3;
 }
 
 message FSelect { FPredicate predicate = 1; }
@@ -103,17 +89,14 @@ message FOp {
         FBinaryOp binOp = 2;
         FUnaryOp unOp = 3;
     }
+    uint64 outputOriginId = 4;
 }
 
 message FSinkOp{
-    oneof child {
-        SerializableSourceDescriptor source = 1;
-        FBinaryOp binOp = 2;
-        FUnaryOp unOp = 3;
-    }
-    SerializableSinkDescriptor sinkDescriptor = 4;
+    FOp child = 1;
+    SerializableSinkDescriptor sinkDescriptor = 2;
 }
 
 message FQueryPlan{
-    repeated FSinkOp rootOperators = 1;
+    FSinkOp rootOperator = 1;
 }
