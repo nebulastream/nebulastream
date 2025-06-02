@@ -105,15 +105,15 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
 
 struct QueryResult
 {
-    SystestParser::Schema fields;
+    SystestSchema fields;
     std::vector<std::string> result;
 };
 
 /// loads the query result for a sep
-std::optional<QueryResult> loadQueryResult(const Query& query);
+std::optional<QueryResult> loadQueryResult(const SystestQuery& query);
 
 /// Returns an error message or an empty optional if the query result is correct
-std::optional<std::string> checkResult(const RunningQuery& runningQuery);
+std::optional<std::string> checkResult(const RunningQuery& runningQuery, QueryResultMap& queryResultMap);
 
 
 }

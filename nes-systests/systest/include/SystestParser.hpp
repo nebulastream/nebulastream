@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <SystestState.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
@@ -63,19 +64,10 @@ public:
     [[nodiscard]] bool loadString(const std::string& str);
 
     /// Type definitions ///
-    struct Field
-    {
-        DataType type;
-        std::string name;
-        bool operator==(const Field& other) const { return type == other.type && name == other.name; }
-        bool operator!=(const Field& other) const = default;
-    };
-    using Schema = std::vector<Field>;
-
     struct CSVSource
     {
         std::string name;
-        Schema fields;
+        SystestSchema fields;
         std::string csvFilePath;
         bool operator==(const CSVSource& other) const = default;
     };
@@ -83,7 +75,7 @@ public:
     struct SLTSource
     {
         std::string name;
-        Schema fields;
+        SystestSchema fields;
         std::vector<std::string> tuples;
         bool operator==(const SLTSource& other) const = default;
     };
@@ -91,7 +83,7 @@ public:
     struct Sink
     {
         std::string name;
-        Schema fields;
+        SystestSchema fields;
         bool operator==(const Sink& other) const = default;
     };
 
@@ -102,10 +94,9 @@ public:
         bool operator==(const ErrorExpectation& other) const = default;
     };
 
-    using Query = std::string;
     using ResultTuples = std::vector<std::string>;
 
-    using QueryCallback = std::function<void(Query&&)>;
+    using QueryCallback = std::function<void(std::string, size_t)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
@@ -114,13 +105,12 @@ public:
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
-    void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
-    void parse();
+    void parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, std::string_view fileName);
 
 private:
     /// Substitution rules ///
@@ -140,11 +130,10 @@ private:
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
-    [[nodiscard]] Query expectQuery();
+    [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
 
     QueryCallback onQueryCallback;
-    ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
     SinkCallback onSinkCallback;

@@ -35,6 +35,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
@@ -61,9 +62,9 @@ static bool emptyOrComment(const std::string& line)
 }
 
 /// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
-SystestParser::Schema parseSchemaFields(const std::vector<std::string>& arguments)
+SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
 {
-    SystestParser::Schema schema;
+    SystestSchema schema;
     if (arguments.size() % 2 != 0)
     {
         if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
@@ -152,11 +153,6 @@ void SystestParser::registerOnQueryCallback(QueryCallback callback)
     this->onQueryCallback = std::move(callback);
 }
 
-void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
-{
-    this->onResultTuplesCallback = std::move(callback);
-}
-
 void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
     this->onSLTSourceCallback = std::move(callback);
@@ -179,8 +175,10 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
 
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
-void SystestParser::parse()
+void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, const std::string_view testFileName)
 {
+    size_t currentQueryNumberInTest = 0;
+    size_t currentResultNumber = 0;
     while (auto token = nextToken())
     {
         if (token == TokenType::CSV_SOURCE)
@@ -209,39 +207,36 @@ void SystestParser::parse()
         }
         else if (token == TokenType::QUERY)
         {
-            auto query = expectQuery();
             if (onQueryCallback)
             {
-                onQueryCallback(std::move(query));
+                onQueryCallback(expectQuery(), currentQueryNumberInTest);
             }
-            token = nextToken();
-            if (token == TokenType::RESULT_DELIMITER)
+            ++currentQueryNumberInTest;
+        }
+        else if (token == TokenType::RESULT_DELIMITER)
+        {
+            /// Look ahead for error expectation
+            if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
             {
-                /// Look ahead for error expectation
-                if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
+                token = nextToken(); /// we move savely to the next token (which is ERROR)
+                auto expectation = expectError();
+                if (onErrorExpectationCallback)
                 {
-                    token = nextToken(); /// we move savely to the next token (which is ERROR)
-                    auto expectation = expectError();
-                    if (onErrorExpectationCallback)
-                    {
-                        onErrorExpectationCallback(std::move(expectation));
-                    }
-                }
-                /// else: we expect tuples
-                auto tuples = expectTuples();
-                if (onResultTuplesCallback)
-                {
-                    onResultTuplesCallback(std::move(tuples));
+                    onErrorExpectationCallback(std::move(expectation));
                 }
             }
             else
             {
-                throw SLTUnexpectedToken("expected result delimiter `{}` or error token `{}` after query", ResultDelimiter, ErrorToken);
+                auto tuples = expectTuples();
+                /// place the results in the query result map using the unique 'result file path' as key
+                queryResultMap.emplace(SystestQuery::resultFile(workingDir, testFileName, currentResultNumber), expectTuples());
+                ++currentResultNumber;
+                INVARIANT(
+                    currentResultNumber == currentQueryNumberInTest,
+                    "Found {} results and {} queries, which does not match.",
+                    currentResultNumber,
+                    currentQueryNumberInTest);
             }
-        }
-        else if (token == TokenType::RESULT_DELIMITER)
-        {
-            throw SLTUnexpectedToken("unexpected occurrence of result delimiter `{}`", ResultDelimiter);
         }
         else if (token == TokenType::ERROR_EXPECTATION)
         {
@@ -485,10 +480,10 @@ SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
     return tuples;
 }
 
-SystestParser::Query SystestParser::expectQuery()
+std::string SystestParser::expectQuery()
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    std::string query;
+    std::string queryString;
     bool firstLine = true;
     while (currentLine < lines.size())
     {
@@ -502,15 +497,15 @@ SystestParser::Query SystestParser::expectQuery()
             }
             if (!firstLine)
             {
-                query += "\n";
+                queryString += "\n";
             }
-            query += lines[currentLine];
+            queryString += lines[currentLine];
             firstLine = false;
         }
         currentLine++;
     }
-    INVARIANT(!query.empty(), "when expecting a query keyword the query should not be empty");
-    return query;
+    INVARIANT(!queryString.empty(), "when expecting a query keyword the queryString should not be empty");
+    return queryString;
 }
 
 SystestParser::ErrorExpectation SystestParser::expectError() const
