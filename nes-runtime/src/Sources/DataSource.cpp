@@ -241,6 +241,8 @@ bool DataSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
                     std::unique_lock lock(startStopMutex);// this mutex guards the thread variable
                     wasGracefullyStopped = Runtime::QueryTerminationType::Reconfiguration;
                     reconfigurationMarker = std::move(marker);
+                    NES_ERROR("send marker");
+                    queryManager->propagateReconfigurationMarker(reconfigurationMarker.value(), shared_from_base<DataSource>());
                 }
                 bool expected = true;
                 if (!running.compare_exchange_strong(expected, false)) {
@@ -572,6 +574,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
+    NES_ERROR("sleep for 5s");
     sleep(5);
     auto marker = ReconfigurationMarker::create();
     auto metadata = std::make_shared<DrainQueryMetadata>(1);
