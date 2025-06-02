@@ -152,7 +152,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortio
         return {};
     }
     asked[id] = true;
-    auto numberOfThreads = 8;
+    auto numberOfThreads = 16;
     size_t totalSize = stateToTransfer.size();
 
     std::vector<Runtime::TupleBuffer> portion;
@@ -725,6 +725,6 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
               deploymentTimesVec.push_back(p.second);
           }
           return deploymentTimesVec;
-      }()), asked(8, false) {}
+      }()), asked(16, false) {}
 
 }// namespace NES::Runtime::Execution::Operators
