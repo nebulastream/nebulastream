@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+
 #include <functional>
 #include <unordered_map>
 #include <utility>
@@ -20,7 +22,6 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
@@ -74,7 +75,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         }
         const auto baseIt = baseOps.find(id);
 
-        INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
+        if (baseIt == baseOps.end())
+        {
+            throw CannotDeserialize("Unknown operator id: {}", id);
+        }
         const LogicalOperator op = baseIt->second;
 
         const auto& serializedOp = serializedQueryPlan.operatormap().at(id);
