@@ -30,10 +30,12 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
+#include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
+#include <options.hpp>
 #include <static.hpp>
 #include <val_ptr.hpp>
 
@@ -137,13 +139,18 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
             copyOfEntriesPerPage = entriesPerPage,
             copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Interface::HashMap>>& hashMaps)
     {
-        for (const auto& hashMap :
-             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
-        {
+        /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+        /// ReSharper disable once CppPassValueParameterByConstReference
+        /// NOLINTBEGIN(performance-unnecessary-value-param)
+        nautilus::engine::Options options;
+        options.setOption("engine.Compilation", true);
+        const nautilus::engine::NautilusEngine nautilusEngine(options);
+        static auto cleanupStateNautilusFunc = nautilusEngine.registerFunction(std::function(
+            [copyOfFieldKeys, copyOfFieldValues, copyOfAggregationPhysicalFunctions, copyOfEntriesPerPage, copyOfEntrySize](
+                nautilus::val<Nautilus::Interface::HashMap*> hashMap)
             {
-                /// Using here the .get() is fine, as we are not moving the hashMap pointer.
                 const Interface::ChainedHashMapRef hashMapRef(
-                    hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
                 for (const auto entry : hashMapRef)
                 {
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
@@ -154,7 +161,14 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
                         state = state + aggFunction->getSizeOfStateInBytes();
                     }
                 }
-            }
+            }));
+        /// NOLINTEND(performance-unnecessary-value-param)
+
+        for (const auto& hashMap :
+             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
+        {
+            /// Calling the compiled nautilus function
+            cleanupStateNautilusFunc(hashMap.get());
         }
     };
 }

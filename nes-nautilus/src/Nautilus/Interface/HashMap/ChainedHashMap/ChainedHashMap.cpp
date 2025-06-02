@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <bit>
 #include <cstdint>
@@ -18,7 +19,6 @@
 #include <functional>
 #include <string>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
@@ -59,8 +59,7 @@ ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize,
     , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
     , entries(nullptr)
     , mask(numberOfChains - 1)
-    /// Setting the default destructor callback to a dummy function, thus we can call it without having to check if it is set
-    , destructorCallBack(+[](ChainedHashMapEntry*) { })
+    , destructorCallBack({})
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
@@ -178,7 +177,7 @@ uint64_t ChainedHashMap::getNumberOfChains() const
 void ChainedHashMap::clear() noexcept
 {
     /// Deleting all entries in the hash map
-    if (entries != nullptr)
+    if (entries != nullptr and destructorCallBack != nullptr)
     {
         /// Calling for every value in the hash map the destructor callback
         /// We start here by iterating over all entries while starting in the entry space

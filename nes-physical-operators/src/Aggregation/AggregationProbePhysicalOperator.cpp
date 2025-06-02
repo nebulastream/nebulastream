@@ -136,8 +136,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
-        auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-        for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+        for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+             const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
             outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
@@ -148,6 +148,14 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
         outputRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
         executeChild(executionCtx, outputRecord);
+
+        /// As we are creating a new hash map for the probe operator, we call the cleanup function for the aggregation functions
+        for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+             const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+        {
+            aggFunction->cleanup(finalStatePtr);
+            finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
+        }
     }
 
     /// As we are creating a new hash map for the probe operator, we have to reset/destroy the final hash map of the emitted aggregation window
