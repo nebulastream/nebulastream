@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Phases/LowerToPhysicalOperators.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <ranges>
@@ -94,7 +96,10 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::Quer
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
 
-    INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
+    if (newRootOperators.empty())
+    {
+        throw CannotDeserialize("Plan must have at least one root operator");
+    }
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
     physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
     physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
