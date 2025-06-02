@@ -63,3 +63,8 @@ add_executable(snw-proto-fuzz ProtoFuzz.cpp)
 target_link_libraries(snw-proto-fuzz PUBLIC nes-common nes-runtime nes-single-node-worker-lib)
 target_compile_options(snw-proto-fuzz PRIVATE -fsanitize=fuzzer)
 target_link_options(snw-proto-fuzz PRIVATE -fsanitize=fuzzer)
+
+add_executable(snw-strict-fuzz PrtStrictGrammarFuzz.cpp)
+target_link_libraries(snw-strict-fuzz PUBLIC nes-common nes-runtime nes-single-node-worker-lib)
+target_compile_options(snw-strict-fuzz PRIVATE -fsanitize=fuzzer)
+target_link_options(snw-strict-fuzz PRIVATE -fsanitize=fuzzer)
