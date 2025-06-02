@@ -1,5 +1,5 @@
 # name: milestone/YahooStreamingBenchmark.test
-# description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
+# description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks) with changed data types
 # groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
