@@ -16,6 +16,7 @@
 #include <iostream>
 #include <thread>
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
+#include <from_current.hpp>
 #include "Runtime/QueryTerminationType.hpp"
 #include "SerializableQueryPlan.pb.h"
 #include "Serialization/QueryPlanSerializationUtil.hpp"
@@ -26,38 +27,29 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
 {
     NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
 
-    if (sqp.rootoperatorids().empty())
+    CPPTRACE_TRY
     {
-        return;
-    }
-
-    for (auto o : sqp.operatormap())
-    {
-        for (auto c : o.second.children_ids())
+        std::cout << "---\n" << sqp.DebugString() << "---" << std::endl;
+        auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
+        NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
+        auto qid = snw.registerQuery(dqp);
+        snw.startQuery(qid);
+        snw.stopQuery(qid, NES::QueryTerminationType::Graceful);
+        while (true)
         {
-            if (!sqp.operatormap().contains(c))
+            if (snw.getQuerySummary(qid)->currentStatus <= NES::QueryStatus::Running)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+            else
             {
                 return;
             }
         }
     }
-
-    std::cout << "---\n" << sqp.DebugString() << "---" << std::endl;
-    auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
-    NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
-    auto qid = snw.registerQuery(dqp);
-    snw.startQuery(qid);
-    snw.stopQuery(qid, NES::QueryTerminationType::Graceful);
-    while (true)
+    CPPTRACE_CATCH(...)
     {
-        if (snw.getQuerySummary(qid)->currentStatus <= NES::QueryStatus::Running)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            continue;
-        }
-        else
-        {
-            return;
-        }
+        NES::tryLogCurrentException();
     }
 }
