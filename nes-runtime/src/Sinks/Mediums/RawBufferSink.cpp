@@ -107,7 +107,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     // This results in ExecutionResult::Error for the task.
     numberOfReceivedBuffers++;
 
-    NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
+     // NES_ERROR("got buffer {}", inputBuffer.getSequenceNumber());
 
     if (!isOpen) {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
@@ -252,7 +252,7 @@ bool RawBufferSink::writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers) 
 
     numberOfWrittenBuffers += buffers.size();
 
-    NES_ERROR("number of written: {}", buffers.size());
+    // NES_ERROR("number of written: {}", buffers.size());
 
     // Optional: Flush or shutdown logic
     if (numberOfWrittenBuffers == buffers.front().getWatermark()) {

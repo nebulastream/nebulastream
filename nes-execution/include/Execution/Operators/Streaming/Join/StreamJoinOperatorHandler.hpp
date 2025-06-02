@@ -379,7 +379,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     bool setForReuse = false;
     SharedJoinApproach approach = SharedJoinApproach::UNSHARED;
     std::vector<TupleBuffer> stateToTransfer{};
-    std::vector<bool> asked{false, false, false, false};
+    std::vector<bool> asked;
 };
 
 /**

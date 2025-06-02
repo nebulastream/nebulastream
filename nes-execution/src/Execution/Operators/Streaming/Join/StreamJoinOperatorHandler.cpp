@@ -154,10 +154,6 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortio
     asked[id] = true;
     auto numberOfThreads = 8;
     size_t totalSize = stateToTransfer.size();
-    size_t chunkSize = (totalSize + numberOfThreads - 1) / numberOfThreads;
-
-    size_t startIdx = id * chunkSize;
-    size_t endIdx = std::min(startIdx + chunkSize, totalSize);
 
     std::vector<Runtime::TupleBuffer> portion;
     for (size_t i = id; i < totalSize; i += numberOfThreads) {
@@ -729,6 +725,6 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
               deploymentTimesVec.push_back(p.second);
           }
           return deploymentTimesVec;
-      }()) {}
+      }()), asked(8, false) {}
 
 }// namespace NES::Runtime::Execution::Operators
