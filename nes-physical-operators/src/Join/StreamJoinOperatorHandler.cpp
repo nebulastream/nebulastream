@@ -32,12 +32,8 @@ namespace NES
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    , leftMemoryProvider(std::move(leftMemoryProvider))
-    , rightMemoryProvider(std::move(rightMemoryProvider))
 {
 }
 
