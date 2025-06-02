@@ -33,9 +33,7 @@ public:
     StreamJoinOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
 protected:
     void triggerSlices(
@@ -50,8 +48,5 @@ protected:
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx)
         = 0;
-
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
 };
 }
