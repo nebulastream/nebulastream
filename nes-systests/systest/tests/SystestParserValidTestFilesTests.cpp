@@ -48,11 +48,11 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expextedSLTSource
+    SystestParser::SLTSource expectedSLTSource
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
-    SystestParser::CSVSource expextedCSVSource
+    SystestParser::CSVSource expectedCSVSource
         = {.name = "e124",
            .fields
            = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"},
@@ -70,13 +70,13 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
            .csvFilePath = "xyz.txt"};
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
-    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&& result) { ASSERT_EQ(expectResult, result); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&& source) { ASSERT_EQ(source, expextedSLTSource); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&& source) { ASSERT_EQ(source, expextedCSVSource); });
+    parser.registerOnQueryCallback([&](const std::string& query, size_t) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource& source) { ASSERT_EQ(source, expectedSLTSource); });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource& source) { ASSERT_EQ(source, expectedCSVSource); });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    EXPECT_NO_THROW(parser.parse());
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
 }
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
@@ -123,22 +123,15 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](const std::string& query, size_t)
         {
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](SystestParser::ResultTuples&& result)
-        {
-            ASSERT_LT(queryCounter, expectedResults.size());
-            ASSERT_EQ(result, expectedResults[queryCounter]);
-            queryCounter++;
-        });
-
     ASSERT_TRUE(parser.loadFile(filename));
-    EXPECT_NO_THROW(parser.parse());
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -233,22 +226,15 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](const std::string& query, size_t)
         {
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](SystestParser::ResultTuples&& result)
-        {
-            ASSERT_LT(queryCounter, expectedResults.size());
-            ASSERT_EQ(result, expectedResults[queryCounter]);
-            queryCounter++;
-        });
-
     ASSERT_TRUE(parser.loadFile(filename));
-    EXPECT_NO_THROW(parser.parse());
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
 }
 
 }

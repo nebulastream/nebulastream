@@ -31,7 +31,7 @@
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestState.hpp>
 
-NES::QueryId NES::Systest::LocalWorkerQuerySubmitter::registerQuery(const Query& query)
+NES::QueryId NES::Systest::LocalWorkerQuerySubmitter::registerQuery(const SystestQuery& query)
 {
     return worker.registerQuery(query.queryPlan);
 }
@@ -98,7 +98,7 @@ NES::Systest::LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configu
     : worker(configuration)
 {
 }
-NES::QueryId NES::Systest::RemoteWorkerQuerySubmitter::registerQuery(const Query& query)
+NES::QueryId NES::Systest::RemoteWorkerQuerySubmitter::registerQuery(const SystestQuery& query)
 {
     return QueryId(client.registerQuery(query.queryPlan));
 }

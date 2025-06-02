@@ -31,7 +31,7 @@ class QuerySubmitter
 {
 public:
     virtual ~QuerySubmitter() = default;
-    virtual QueryId registerQuery(const Query& query) = 0;
+    virtual QueryId registerQuery(const SystestQuery& query) = 0;
     virtual void startQuery(QueryId query) = 0;
     virtual void stopQuery(QueryId query) = 0;
     virtual void unregisterQuery(QueryId query) = 0;
@@ -48,7 +48,7 @@ class LocalWorkerQuerySubmitter final : public QuerySubmitter
     SingleNodeWorker worker;
 
 public:
-    QueryId registerQuery(const Query& query) override;
+    QueryId registerQuery(const SystestQuery& query) override;
 
     void startQuery(QueryId query) override;
 
@@ -70,7 +70,7 @@ class RemoteWorkerQuerySubmitter final : public QuerySubmitter
     const GRPCClient client;
 
 public:
-    QueryId registerQuery(const Query& query) override;
+    QueryId registerQuery(const SystestQuery& query) override;
 
     void startQuery(QueryId query) override;
 

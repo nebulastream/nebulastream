@@ -33,7 +33,6 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <SystestConfiguration.hpp>
-#include <SystestParser.hpp>
 
 
 namespace NES::Systest
@@ -41,12 +40,21 @@ namespace NES::Systest
 using TestName = std::string;
 using TestGroup = std::string;
 
-struct Query
+struct SystestField
+{
+    DataType type;
+    std::string name;
+    bool operator==(const SystestField& other) const { return type == other.type && name == other.name; }
+    bool operator!=(const SystestField& other) const = default;
+};
+using SystestSchema = std::vector<SystestField>;
+
+struct SystestQuery
 {
     static std::filesystem::path
     resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
     {
-        auto resultDir = workingDir / "results";
+        const auto resultDir = workingDir / "results";
         if (not is_directory(resultDir))
         {
             create_directory(resultDir);
@@ -68,24 +76,24 @@ struct Query
         return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
     }
 
-    Query() = default;
-    explicit Query(
+    SystestQuery() = default;
+    explicit SystestQuery(
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
         LogicalPlan queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
-        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-        SystestParser::Schema sinkSchema)
+        SystestSchema sinkSchema,
+        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
         , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
         , workingDir(std::move(workingDir))
-        , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
         , expectedSinkSchema(std::move(sinkSchema))
+        , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
     {
     }
 
@@ -97,14 +105,14 @@ struct Query
     LogicalPlan queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
+    SystestSchema expectedSinkSchema;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
-    SystestParser::Schema expectedSinkSchema;
 };
 
 
 struct RunningQuery
 {
-    Query query;
+    SystestQuery query;
     QueryId queryId = INVALID_QUERY_ID;
     QuerySummary querySummary;
     std::optional<uint64_t> bytesProcessed{0};
@@ -199,18 +207,23 @@ struct TestFile
     std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
 
-    std::vector<Query> queries;
+    std::vector<SystestQuery> queries;
 };
 
 /// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<TestName, TestFile>;
+using QueryResultMap = std::unordered_map<std::filesystem::path, std::vector<std::string>>;
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir);
+std::vector<SystestQuery> loadQueries(
+    TestFileMap& testmap,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    QueryResultMap& queryResultMap);
 }
 
 template <>
