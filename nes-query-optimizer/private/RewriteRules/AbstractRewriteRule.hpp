@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
-#include <PhysicalOperator.hpp>
+#include <PhysicalOperatorWrapper.hpp>
 
 namespace NES
 {
