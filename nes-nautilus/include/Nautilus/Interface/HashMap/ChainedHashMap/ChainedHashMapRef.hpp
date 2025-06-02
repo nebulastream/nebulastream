@@ -41,10 +41,22 @@ public:
     /// Especially a wrapper around a ChainedHashMapEntry.
     struct ChainedEntryRef
     {
-        void copyKeysToEntry(const Nautilus::Record& keys) const;
-        void copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const;
-        void copyValuesToEntry(const Nautilus::Record& values) const;
-        void copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const;
+        void copyKeysToEntry(
+            const Nautilus::Record& keys,
+            const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+            const nautilus::val<WorkerThreadId>& workerThreadId) const;
+        void copyKeysToEntry(
+            const ChainedEntryRef& otherEntryRef,
+            const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+            const nautilus::val<WorkerThreadId>& workerThreadId) const;
+        void copyValuesToEntry(
+            const Nautilus::Record& values,
+            const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+            const nautilus::val<WorkerThreadId>& workerThreadId) const;
+        void copyValuesToEntry(
+            const ChainedEntryRef& otherEntryRef,
+            const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+            const nautilus::val<WorkerThreadId>& workerThreadId) const;
         [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
         [[nodiscard]] Record getKey() const;
         [[nodiscard]] Record getValue() const;
@@ -54,11 +66,13 @@ public:
         [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
+            const nautilus::val<ChainedHashMap*>& hashMapRef,
             std::vector<MemoryProvider::FieldOffsets> fieldsKey,
             std::vector<MemoryProvider::FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
+            const nautilus::val<ChainedHashMap*>& hashMapRef,
             MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
             MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues);
 
@@ -69,6 +83,7 @@ public:
 
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
+        nautilus::val<ChainedHashMap*> hashMapRef;
         MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys;
         MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues;
     };
@@ -112,13 +127,13 @@ public:
         const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<WorkerThreadId>& workerThreadId) override;
+        const nautilus::val<WorkerThreadId>& workerThreadId) override;
     void insertOrUpdateEntry(
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<WorkerThreadId>& workerThreadId) override;
+        const nautilus::val<WorkerThreadId>& workerThreadId) override;
     nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) override;
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;

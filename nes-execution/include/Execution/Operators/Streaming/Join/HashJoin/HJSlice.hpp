@@ -28,7 +28,8 @@ public:
     HJSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfHashMaps);
     ~HJSlice() override;
 
-    Nautilus::Interface::HashMap* getHashMapPtr(const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType& buildSide) const;
+    Nautilus::Interface::HashMap*
+    getHashMapPtr(const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType& buildSide) const;
     [[nodiscard]] Nautilus::Interface::HashMap* getHashMapPtrOrCreate(
         WorkerThreadId workerThreadId,
         const QueryCompilation::JoinBuildSideType& buildSide,

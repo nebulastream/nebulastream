@@ -85,7 +85,8 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             Memory::AbstractBufferProvider* bufferProvider,
             const WorkerThreadId workerThreadId,
             const uint64_t sizeOfEntry,
-            const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider, workerThreadId); },
+            const uint64_t numberOfEntries)
+        { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider, workerThreadId); },
         globalOperatorHandler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
         executionCtx.workerThreadId,
@@ -100,29 +101,27 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             options.setOption("engine.Compilation", true);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
             const auto cleanupStateNautilusFunction
-                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                    std::function(
-                        [copyOfFieldKeys = buildOperator->fieldKeys,
-                         copyOfFieldValues = buildOperator->fieldValues,
-                         copyOfEntriesPerPage = buildOperator->entriesPerPage,
-                         copyOfEntrySize = buildOperator->entrySize,
-                         copyOfAggregationFunctions
-                         = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
+                    [copyOfFieldKeys = buildOperator->fieldKeys,
+                     copyOfFieldValues = buildOperator->fieldValues,
+                     copyOfEntriesPerPage = buildOperator->entriesPerPage,
+                     copyOfEntrySize = buildOperator->entrySize,
+                     copyOfAggregationFunctions = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                    {
+                        const Interface::ChainedHashMapRef hashMapRef(
+                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                        for (const auto entry : hashMapRef)
                         {
-                            const Interface::ChainedHashMapRef hashMapRef(
-                                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                            for (const auto entry : hashMapRef)
+                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                             {
-                                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                    entry, copyOfFieldKeys, copyOfFieldValues);
-                                auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-                                for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                                {
-                                    aggFunction->cleanup(state);
-                                    state = state + aggFunction->getSizeOfStateInBytes();
-                                }
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
                             }
-                        })));
+                        }
+                    })));
             operatorHandler->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
@@ -277,7 +276,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, fieldKeys, fieldValues);
             auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
             {
@@ -290,7 +289,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
 
 
     /// Updating the aggregation states
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
+    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {

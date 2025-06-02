@@ -66,31 +66,30 @@ void HJBuild::setup(ExecutionContext& executionCtx) const
             options.setOption("engine.Compilation", true);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
             const auto cleanupStateNautilusFunction
-                = std::make_shared<HJOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                    std::function(
-                        [copyOfFieldKeys = buildOperator->fieldKeys,
-                         copyOfFieldValues = buildOperator->fieldValues,
-                         copyOfEntriesPerPage = buildOperator->entriesPerPage,
-                         copyOfEntrySize = buildOperator->entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                = std::make_shared<HJOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
+                    [copyOfFieldKeys = buildOperator->fieldKeys,
+                     copyOfFieldValues = buildOperator->fieldValues,
+                     copyOfEntriesPerPage = buildOperator->entriesPerPage,
+                     copyOfEntrySize = buildOperator->entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                    {
+                        const Interface::ChainedHashMapRef hashMapRef(
+                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                        for (const auto entry : hashMapRef)
                         {
-                            const Interface::ChainedHashMapRef hashMapRef(
-                                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                            for (const auto entry : hashMapRef)
-                            {
-                                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                    entry, copyOfFieldKeys, copyOfFieldValues);
-                                const auto state = entryRefReset.getValueMemArea();
-                                nautilus::invoke(
-                                    +[](int8_t* pagedVectorMemArea) -> void
-                                    {
-                                        /// Calls the destructor of the PagedVector
-                                        auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
-                                            pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                                        pagedVector->~PagedVector();
-                                    },
-                                    state);
-                            }
-                        })));
+                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                            const auto state = entryRefReset.getValueMemArea();
+                            nautilus::invoke(
+                                +[](int8_t* pagedVectorMemArea) -> void
+                                {
+                                    /// Calls the destructor of the PagedVector
+                                    auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
+                                        pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                                    pagedVector->~PagedVector();
+                                },
+                                state);
+                        }
+                    })));
             operatorHandler->setNautilusCleanupExec(std::move(cleanupStateNautilusFunction), buildSide);
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
@@ -131,7 +130,7 @@ void HJBuild::execute(ExecutionContext& ctx, Record& record) const
         [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, fieldKeys, fieldValues);
             const auto state = entryRefReset.getValueMemArea();
             nautilus::invoke(
                 +[](int8_t* pagedVectorMemArea) -> void
@@ -146,7 +145,7 @@ void HJBuild::execute(ExecutionContext& ctx, Record& record) const
         ctx.workerThreadId);
 
     /// Inserting the tuple into the corresponding hash entry
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
+    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, fieldKeys, fieldValues);
     auto entryMemArea = entryRef.getValueMemArea();
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider, ctx.workerThreadId);

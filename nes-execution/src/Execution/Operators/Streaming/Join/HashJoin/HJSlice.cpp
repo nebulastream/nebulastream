@@ -114,9 +114,7 @@ HJSlice::~HJSlice()
         if (not cleanupFunction)
         {
             const bool allNullptr = std::ranges::all_of(hashMaps, [](const auto& ptr) { return ptr == nullptr; });
-            INVARIANT(
-                allNullptr,
-                "The cleanup function should be set before the slice is destroyed. Have you called setCleanupFunction?");
+            INVARIANT(allNullptr, "The cleanup function should be set before the slice is destroyed. Have you called setCleanupFunction?");
             return;
         }
 

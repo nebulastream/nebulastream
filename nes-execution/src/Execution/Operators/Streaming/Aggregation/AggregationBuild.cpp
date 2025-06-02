@@ -50,7 +50,7 @@ Interface::HashMap* getAggHashMapProxy(
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(),
-        cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
+         cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
          buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
@@ -90,8 +90,7 @@ void AggregationBuild::setup(ExecutionContext& executionCtx) const
             options.setOption("engine.Compilation", true);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
             const auto cleanupStateNautilusFunction
-                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                std::function(
+                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
                     [copyOfFieldKeys = buildOperator->fieldKeys,
                      copyOfFieldValues = buildOperator->fieldValues,
                      copyOfEntriesPerPage = buildOperator->entriesPerPage,
@@ -102,7 +101,8 @@ void AggregationBuild::setup(ExecutionContext& executionCtx) const
                             hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
                         for (const auto entry : hashMapRef)
                         {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
+                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
                             auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
                             for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                             {
@@ -125,12 +125,8 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getAggHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<const AggregationBuild*>(this));
+    const auto hashMapPtr
+        = invoke(getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuild*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
@@ -149,7 +145,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
         [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, fieldKeys, fieldValues);
             auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
             {
@@ -157,11 +153,12 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
-        ctx.pipelineMemoryProvider.bufferProvider, ctx.workerThreadId);
+        ctx.pipelineMemoryProvider.bufferProvider,
+        ctx.workerThreadId);
 
 
     /// Updating the aggregation states
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
+    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {

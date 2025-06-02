@@ -39,24 +39,36 @@
 
 namespace NES::Nautilus::Interface
 {
-void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(const Nautilus::Record& keys) const
+void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
+    const Nautilus::Record& keys,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId) const
 {
-    memoryProviderKeys.writeRecord(entryRef, keys);
+    memoryProviderKeys.writeRecord(entryRef, hashMapRef, bufferProvider, workerThreadId, keys);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const
+void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
+    const ChainedEntryRef& otherEntryRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId) const
 {
-    memoryProviderKeys.writeEntryRef(entryRef, otherEntryRef.entryRef);
+    memoryProviderKeys.writeEntryRef(entryRef, hashMapRef, bufferProvider, workerThreadId, otherEntryRef.entryRef);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(const Nautilus::Record& values) const
+void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
+    const Nautilus::Record& values,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId) const
 {
-    memoryProviderValues.writeRecord(entryRef, values);
+    memoryProviderValues.writeRecord(entryRef, hashMapRef, bufferProvider, workerThreadId, values);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const
+void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
+    const ChainedEntryRef& otherEntryRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId) const
 {
-    memoryProviderValues.writeEntryRef(entryRef, otherEntryRef.entryRef);
+    memoryProviderValues.writeEntryRef(entryRef, hashMapRef, bufferProvider, workerThreadId, otherEntryRef.entryRef);
 }
 
 VarVal ChainedHashMapRef::ChainedEntryRef::getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const
@@ -136,17 +148,22 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
     std::vector<MemoryProvider::FieldOffsets> fieldsKey,
     std::vector<MemoryProvider::FieldOffsets> fieldsValue)
-    : entryRef(entryRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
+    : entryRef(entryRef), hashMapRef(hashMapRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
 {
 }
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
     MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
     MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues)
-    : entryRef(entryRef), memoryProviderKeys(std::move(memoryProviderKeys)), memoryProviderValues(std::move(memoryProviderValues))
+    : entryRef(entryRef)
+    , hashMapRef(hashMapRef)
+    , memoryProviderKeys(std::move(memoryProviderKeys))
+    , memoryProviderValues(std::move(memoryProviderValues))
 {
 }
 
@@ -165,7 +182,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::R
     auto entry = findChain(hash);
     while (entry)
     {
-        const ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+        const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
         {
             return entry;
@@ -184,7 +201,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef(chainEntry, fieldKeys, fieldValues);
+    const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
     const auto entryRef = findEntry(otherEntryRef);
     return entryRef;
 }
@@ -214,8 +231,8 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider, workerThreadId), fieldKeys, fieldValues};
-    newEntryRef.copyKeysToEntry(recordKey);
+    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider, workerThreadId), hashMapRef, fieldKeys, fieldValues};
+    newEntryRef.copyKeysToEntry(recordKey, bufferProvider, workerThreadId);
 
 
     /// Calling the onInsert lambda function to insert values or anything else that the user wants.
@@ -237,7 +254,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef(chainEntry, fieldKeys, fieldValues);
+    const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
     if (const auto entryRef = findEntry(otherEntryRef))
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
@@ -250,8 +267,8 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
     const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider, workerThreadId);
-    const ChainedEntryRef newEntryRef(newEntry, fieldKeys, fieldValues);
-    newEntryRef.copyKeysToEntry(otherEntryRef);
+    const ChainedEntryRef newEntryRef(newEntry, hashMapRef, fieldKeys, fieldValues);
+    newEntryRef.copyKeysToEntry(otherEntryRef, bufferProvider, workerThreadId);
     if (onInsert)
     {
         auto castedEntryRef = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
@@ -326,15 +343,6 @@ ChainedHashMapRef::ChainedHashMapRef(
     , entriesPerPage(entriesPerPage)
     , entrySize(entrySize)
 {
-    /// Checking if we have a float32 or float64 field in the key fields. We currently do not support this.
-    /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
-    for (const auto& field : nautilus::static_iterable(fieldKeys))
-    {
-        if (std::dynamic_pointer_cast<VariableSizedDataType>(field.type->type))
-        {
-            throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
-        }
-    }
 }
 
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
@@ -393,7 +401,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<uint64_t>& tupleIndex,
     const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
     const std::vector<MemoryProvider::FieldOffsets>& fieldValues)
-    : hashMapRef(hashMapRef), currentEntry({nullptr, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
+    : hashMapRef(hashMapRef), currentEntry({nullptr, hashMapRef, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
 {
     const auto numberOfEntries = nautilus::invoke(
         +[](const HashMap* hashMap) -> uint64_t
@@ -420,6 +428,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
             { return dynamic_cast<const ChainedHashMap*>(hashMap)->getStartOfChain(chainIndexVal); },
             hashMapRef,
             chainIndex),
+        hashMapRef,
         fieldKeys,
         fieldKeys);
     numberOfChains

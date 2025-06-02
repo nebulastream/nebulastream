@@ -26,6 +26,7 @@
 #include <static.hpp>
 #include <val.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -77,8 +78,18 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
-            return varVal;
+            if (PhysicalTypes::isVariableSizedData(type))
+            {
+                const auto varSizedDataPtr
+                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
+                VariableSizedData varSizedData(varSizedDataPtr);
+                return varSizedData;
+            }
+            else
+            {
+                const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+                return varVal;
+            }
         }
     }
     throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
@@ -96,7 +107,42 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
     return record;
 }
 
-void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record& record) const
+namespace
+{
+void storeVarSized(
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    nautilus::val<Memory::AbstractBufferProvider*> bufferProviderRef,
+    const nautilus::val<WorkerThreadId> workerThreadId,
+    const nautilus::val<int8_t*>& memoryAddress,
+    const VariableSizedData& variableSizedData)
+{
+    nautilus::invoke(
+        +[](ChainedHashMap* hashMap,
+            Memory::AbstractBufferProvider* bufferProvider,
+            const WorkerThreadId workerThreadIdVal,
+            const int8_t** memoryAddressInEntry,
+            const int8_t* varSizedData,
+            const uint64_t varSizedDataSize)
+        {
+            const auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize, workerThreadIdVal);
+            std::memcpy(spaceForVarSizedData, varSizedData, varSizedDataSize);
+            *memoryAddressInEntry = spaceForVarSizedData;
+        },
+        hashMapRef,
+        bufferProviderRef,
+        workerThreadId,
+        memoryAddress,
+        variableSizedData.getReference(),
+        variableSizedData.getTotalSize());
+}
+}
+
+void ChainedEntryMemoryProvider::writeRecord(
+    const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
+    const Record& record) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
@@ -104,18 +150,38 @@ void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapE
         const auto& entryRefCopy = entryRef;
         auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
         const auto memoryAddress = castedEntryAddress + fieldOffset;
-        value.writeToMemory(memoryAddress);
+        if (PhysicalTypes::isVariableSizedData(type))
+        {
+            auto varSizedValue = value.cast<VariableSizedData>();
+            storeVarSized(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+        }
+        else
+        {
+            value.writeToMemory(memoryAddress);
+        }
     }
 }
 
 void ChainedEntryMemoryProvider::writeEntryRef(
-    const nautilus::val<ChainedHashMapEntry*>& entryRef, const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
+    const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
+    const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
         const auto value = readVarVal(otherEntryRef, fieldIdentifier);
         const auto memoryAddress = static_cast<nautilus::val<int8_t*>>(entryRef) + nautilus::val<uint64_t>(fieldOffset);
-        value.writeToMemory(memoryAddress);
+        if (PhysicalTypes::isVariableSizedData(type))
+        {
+            auto varSizedValue = value.cast<VariableSizedData>();
+            storeVarSized(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+        }
+        else
+        {
+            value.writeToMemory(memoryAddress);
+        }
     }
 }
 

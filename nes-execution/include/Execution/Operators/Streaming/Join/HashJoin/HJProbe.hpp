@@ -25,7 +25,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-// TODO add doc here
+/// Performs the second phase of the join. The tuples are joined via probing the previously built hash tables
 class HJProbe final : public StreamJoinProbe
 {
 public:

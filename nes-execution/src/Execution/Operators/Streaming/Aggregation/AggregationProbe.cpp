@@ -78,17 +78,20 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         const Interface::ChainedHashMapRef currentMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
         for (const auto entry : currentMap)
         {
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, hashMapPtr, fieldKeys, fieldValues);
 
-            /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
-            /// We do this by iterating over the aggregation functions and combining all aggregation states into a global state.
+            /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation statesssh to
             finalHashMap.insertOrUpdateEntry(
                 entryRef.entryRef,
-                [fieldKeys = fieldKeys, fieldValues = fieldValues, &executionCtx, &entryRef, &aggregationFunctions = aggregationFunctions](
-                    const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
+                [fieldKeys = fieldKeys,
+                 fieldValues = fieldValues,
+                 &executionCtx,
+                 &entryRef,
+                 &aggregationFunctions = aggregationFunctions,
+                 hashMapPtr = hashMapPtr](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, fieldKeys, fieldValues);
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, hashMapPtr, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
@@ -98,12 +101,16 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                [fieldKeys = fieldKeys, fieldValues = fieldValues, &executionCtx, &entryRef, &aggregationFunctions = aggregationFunctions](
-                    const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
+                [fieldKeys = fieldKeys,
+                 fieldValues = fieldValues,
+                 &executionCtx,
+                 &entryRef,
+                 &aggregationFunctions = aggregationFunctions,
+                 hashMapPtr = hashMapPtr](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, fieldKeys, fieldValues);
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, hashMapPtr, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
@@ -123,7 +130,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
     /// Lowering, each aggregation state in the final hash map and passing the record to the child
     for (const auto entry : finalHashMap)
     {
-        const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+        const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, finalHashMapPtr, fieldKeys, fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         auto finalStatePtr = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());

@@ -103,14 +103,14 @@ void HJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) c
             for (const auto rightEntry : rightHashMap)
             {
                 const Interface::ChainedHashMapRef::ChainedEntryRef rightEntryRef(
-                    rightEntry, rightHashMapBasedOptions.fieldKeys, rightHashMapBasedOptions.fieldValues);
+                    rightEntry, rightHashMapPtr, rightHashMapBasedOptions.fieldKeys, rightHashMapBasedOptions.fieldValues);
 
                 /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
                 if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
                 {
                     /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
                     const Interface::ChainedHashMapRef::ChainedEntryRef leftEntryRef(
-                        leftEntry, leftHashMapBasedOptions.fieldKeys, leftHashMapBasedOptions.fieldValues);
+                        leftEntry, leftHashMapPtr, leftHashMapBasedOptions.fieldKeys, leftHashMapBasedOptions.fieldValues);
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
                     auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
                     Interface::PagedVectorRef leftPagedVector(leftPagedVectorMem, leftMemoryProvider);

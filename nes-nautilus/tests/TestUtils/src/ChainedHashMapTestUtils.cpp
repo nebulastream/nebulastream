@@ -195,10 +195,14 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 const nautilus::val<WorkerThreadId> workerThreadIdVal(INITIAL<WorkerThreadId>);
                 auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
-                    recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal, workerThreadIdVal);
+                    recordKey,
+                    *NautilusTestUtils::getMurMurHashFunction(),
+                    ASSERT_VIOLATION_FOR_ON_INSERT,
+                    bufferManagerVal,
+                    workerThreadIdVal);
 
                 const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(foundEntry);
-                const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, fieldKeys, fieldValues);
+                const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, hashMapVal, fieldKeys, fieldValues);
 
                 /// Writing the read value from the chained hash map into the buffer.
                 Record outputRecord;
@@ -235,7 +239,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
                 /// Writing the read value from the chained hash map into the buffer.
                 const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
                 Record outputRecord;
-                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, hashMapVal, fieldKeys, fieldValues);
                 const auto keyRecord = entryRef.getKey();
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
@@ -273,8 +277,8 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
                     [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
                     {
                         const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(entry);
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, fieldKeys, fieldValues);
-                        ref.copyValuesToEntry(recordValue);
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, hashMapVal, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue, bufferManagerVal, workerThreadIdVal);
                     },
                     bufferManagerVal,
                     workerThreadIdVal);
@@ -311,8 +315,8 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                     *NautilusTestUtils::getMurMurHashFunction(),
                     [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
                     {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
-                        ref.copyValuesToEntry(recordValue);
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue, bufferManagerVal, workerThreadIdVal);
                     },
                     bufferManagerVal,
                     workerThreadIdVal);
@@ -320,8 +324,8 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                     foundEntry,
                     [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
                     {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
-                        ref.copyValuesToEntry(recordValue);
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue, bufferManagerVal, workerThreadIdVal);
                     },
                     ASSERT_VIOLATION_FOR_ON_INSERT,
                     bufferManagerVal,
