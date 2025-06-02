@@ -130,7 +130,7 @@ EXCEPTION(FunctionNotImplemented, 9001, "function not implemented")
 EXCEPTION(UnknownWindowingStrategy, 9002, "unknown windowing strategy")
 EXCEPTION(UnknownWindowType, 9003, "unknown window type")
 EXCEPTION(UnknownPhysicalType, 9004, "unknown physical type")
-EXCEPTION(UnknownJoinStrategy, 9005, "unknown join strategy")
+EXCEPTION(UnknownJoinStrategy, 2103, "unknown join strategy")
 EXCEPTION(UnknownPluginType, 9006, "unknown plugin type")
 EXCEPTION(DeprecatedFeature, 9007, "deprecated operator used")
 ```
