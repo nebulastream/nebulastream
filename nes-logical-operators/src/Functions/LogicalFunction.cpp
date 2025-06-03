@@ -30,7 +30,7 @@ LogicalFunction& LogicalFunction::operator=(const LogicalFunction& other)
 {
     if (this != &other)
     {
-        self = other.self->clone();
+        self = other.self;
     }
     return *this;
 }
@@ -44,7 +44,7 @@ LogicalFunction::LogicalFunction() : self(nullptr)
 {
 }
 
-LogicalFunction::LogicalFunction(const LogicalFunction& other) : self(other.self->clone())
+LogicalFunction::LogicalFunction(const LogicalFunction& other) : self(other.self)
 {
 }
 
