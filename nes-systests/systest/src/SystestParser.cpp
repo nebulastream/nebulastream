@@ -278,12 +278,14 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (potentialToken.starts_with(QueryToken))
+    if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
     /// Lookup in map
-    const auto* it = std::ranges::find_if(stringToToken, [&potentialToken](const auto& pair) { return pair.first == potentialToken; });
+    const auto* it = std::ranges::find_if(stringToToken, [&potentialToken](const auto& pair) { 
+        return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken);
+    });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -365,7 +367,7 @@ SystestParser::Sink SystestParser::expectSink() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(discard == SinkToken, "Expected first word to be `{}` for sink statement", SLTSourceToken);
+    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(SinkToken), "Expected first word to be `{}` for sink statement", SLTSourceToken);
 
     /// Read the source name and check if successful
     if (!(lineAsStream >> sink.name))
@@ -400,7 +402,7 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(discard == SLTSourceToken, "Expected first word to be `{}` for source statement", SLTSourceToken);
+    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(SLTSourceToken), "Expected first word to be `{}` for source statement", SLTSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
@@ -438,7 +440,7 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: " + line);
     }
-    INVARIANT(discard == CSVSourceToken, "Expected first word to be `{}` for csv source statement", CSVSourceToken);
+    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(CSVSourceToken), "Expected first word to be `{}` for csv source statement", CSVSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
@@ -465,7 +467,7 @@ SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (lines[currentLine] == ResultDelimiter || ignoreFirst))
+    if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))
     {
         currentLine++;
     }
@@ -488,7 +490,7 @@ SystestParser::Query SystestParser::expectQuery()
         if (!emptyOrComment(lines[currentLine]))
         {
             /// Query definition ends with result delimiter.
-            if (lines[currentLine] == ResultDelimiter)
+            if (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter))
             {
                 --currentLine;
                 break;
@@ -519,7 +521,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     /// Skip the ERROR token
     std::string token;
     stream >> token;
-    INVARIANT(token == ErrorToken, "Expected ERROR token");
+    INVARIANT(Util::toLowerCase(token) == Util::toLowerCase(ErrorToken), "Expected ERROR token");
 
     /// Read the error code
     std::string errorStr;
@@ -528,7 +530,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
 
-    std::regex const numberRegex("^\\d+$");
+    const std::regex numberRegex("^\\d+$");
     if (std::regex_match(errorStr, numberRegex))
     {
         /// String is a valid integer
@@ -538,7 +540,8 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
             throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
         }
         expectation.code = static_cast<ErrorCode>(code);
-    } else if (auto codeOpt = errorTypeExists(errorStr))
+    }
+    else if (auto codeOpt = errorTypeExists(errorStr))
     {
         expectation.code = codeOpt.value();
     }
