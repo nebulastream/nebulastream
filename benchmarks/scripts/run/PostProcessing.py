@@ -62,7 +62,7 @@ class PostProcessing:
         statistic_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in
                            self.input_folders for f in os.listdir(input_folder_name) if self.combined_engine_file in f]
 
-        print(f"Found {len(statistic_files)} query engine statistic files in {self.input_folders}")
+        print(f"Found {len(statistic_files)} query engine statistic files in {os.path.dirname(self.input_folders[0])}")
         combined_df = pd.DataFrame()
 
         for idx, [input_folder, stat_file] in enumerate(statistic_files):
@@ -93,7 +93,7 @@ class PostProcessing:
                            self.input_folders for f in os.listdir(input_folder_name) if
                            self.combined_benchmark_file in f]
 
-        print(f"Found {len(statistic_files)} benchmark statistic files in {self.input_folders}")
+        print(f"Found {len(statistic_files)} benchmark statistic files in {os.path.dirname(self.input_folders[0])}")
         combined_df = pd.DataFrame()
 
         for idx, [input_folder, stat_file] in enumerate(statistic_files):
@@ -161,6 +161,10 @@ class PostProcessing:
 
                     records.append(new_record)
 
+            if len(records) == 0:
+                print(f"WARNING: {stat_file} produced no data")
+                continue
+
             # Create DataFrame from records
             df = pd.DataFrame(records)
 
@@ -207,6 +211,10 @@ class PostProcessing:
                 window_start = int(match.group("window_start"))
                 # window_end = int(match.group("window_end"))
 
+                # Skip this line if query id is not in interesting_queries
+                if interesting_queries is not None and query_id not in interesting_queries:
+                    continue
+
                 # Convert throughput_data, throughput_tuples, and memory to base units
                 throughput_data = int(
                     float(match.group("throughput_data").split()[0]) * unit_multipliers[match.group("data_prefix")])
@@ -227,6 +235,10 @@ class PostProcessing:
 
                 records.append(new_record)
 
+            if len(records) == 0:
+                print(f"WARNING: {stat_file} produced no data")
+                continue
+
             # Create DataFrame from records
             df = pd.DataFrame(records)
 
@@ -237,10 +249,6 @@ class PostProcessing:
 
             # Sort the DataFrame
             #df = df.sort_values(by=["query_id", "window_start"]).reset_index(drop=True)
-
-            # Remove everything that has a query id not in interesting_queries
-            if interesting_queries is not None:
-                df = df[df['query_id'].isin(interesting_queries)]
 
             # Write the created DataFrame to the csv file
             df.to_csv(stat_file + ".csv", index=False)
