@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <expected>
 #include <memory>
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
@@ -22,6 +23,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>

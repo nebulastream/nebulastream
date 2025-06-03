@@ -12,17 +12,14 @@
     limitations under the License.
 */
 
-#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 
 namespace NES::Systest
@@ -46,10 +43,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
     const auto* const filename = TEST_DATA_DIR "valid.dummy";
 
-    const auto* const expectQuery1 = R"(SELECT * FROM e123 WHERE id >= UINT32(10) INTO sink)";
-    const auto* const expectQuery2 = R"(SELECT * FROM e124 WHERE i >= INT8(10) INTO sink)";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expectedSLTSource
+    const SystestParser::SLTSource expectedSLTSource
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
