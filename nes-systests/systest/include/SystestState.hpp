@@ -18,6 +18,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <expected>
 #include <filesystem>
 #include <iostream>
 #include <iterator>
@@ -32,8 +33,10 @@
 #include <Plans/LogicalPlan.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
+#include <SystestRunner.hpp>
 
 
 namespace NES::Systest
@@ -52,22 +55,24 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        LogicalPlan queryPlan,
-        const uint64_t queryIdInFile,
+        std::expected<LogicalPlan, Exception> queryPlan,
+        uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-        SystestParser::Schema sinkSchema);
+        SystestParser::Schema sinkSchema,
+        std::optional<ExpectedError> expectedError);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
 
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    LogicalPlan queryPlan;
+    std::expected<LogicalPlan, Exception> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
     SystestParser::Schema expectedSinkSchema;
+    std::optional<ExpectedError> expectedError;
 };
 
 
@@ -79,6 +84,7 @@ struct RunningQuery
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;
+    std::optional<Exception> exception;
 
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;

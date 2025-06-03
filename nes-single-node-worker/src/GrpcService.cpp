@@ -53,19 +53,19 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
-        auto queryId = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
-        response->set_queryid(queryId.getRawValue());
-        return grpc::Status::OK;
+        auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
+        if (result.has_value())
+        {
+            response->set_queryid(result->getRawValue());
+            return grpc::Status::OK;
+        }
+        return handleError(result.error(), context);
     }
-    CPPTRACE_CATCH(const Exception& e)
+    CPPTRACE_CATCH(const std::exception& e)
     {
         return handleError(e, context);
     }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {

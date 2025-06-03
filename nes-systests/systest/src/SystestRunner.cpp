@@ -33,10 +33,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
@@ -46,9 +48,6 @@
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-
-#include <DataTypes/DataType.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <QuerySubmitter.hpp>
@@ -231,21 +230,36 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             }
 
             config.query = query;
-            auto plan = createFullySpecifiedQueryPlan(config);
-            std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
-            for (const auto& logicalSource : NES::getOperatorByType<SourceDescriptorLogicalOperator>(*plan))
+            try
             {
-                if (const auto sourceName = logicalSource.getSourceDescriptor().getLogicalSource().getLogicalSourceName();
-                    sourceNamesToFilepath.contains(sourceName))
+                auto plan = createFullySpecifiedQueryPlan(config);
+                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+                for (const auto& logicalSource : NES::getOperatorByType<SourceDescriptorLogicalOperator>(*plan))
                 {
-                    auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
-                    entry = {sourceNamesToFilepath.at(sourceName), entry.second + 1};
-                    continue;
+                    if (const auto sourceName = logicalSource.getSourceDescriptor().getLogicalSource().getLogicalSourceName();
+                        sourceNamesToFilepath.contains(sourceName))
+                    {
+                        auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
+                        entry = {sourceNamesToFilepath.at(sourceName), entry.second + 1};
+                        continue;
+                    }
+                    throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
                 }
-                throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
+                INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
+                plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
             }
-            INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-            plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
+            catch (Exception& e)
+            {
+                plans.emplace_back(std::unexpected(e), query, sinkNamesToSchema[sinkName]);
+            }
+        });
+
+    parser.registerOnErrorExpectationCallback(
+        [&](SystestParser::ErrorExpectation&& errorExpectation)
+        {
+            /// Error always belongs to the last parsed plan
+            auto& lastPlan = plans.back();
+            lastPlan.expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
         });
     try
     {
@@ -261,71 +275,158 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 }
 /// NOLINTEND(readability-function-cognitive-complexity)
 
-
-std::vector<RunningQuery> runQueries(const std::vector<Query>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& submitter)
+namespace
 {
-    std::vector<std::shared_ptr<RunningQuery>> terminatedQueries;
-    std::vector<std::shared_ptr<RunningQuery>> runningQueries;
-    std::vector<std::shared_ptr<RunningQuery>> failedQueries;
-    size_t queryFinishedCounter = 0;
-    std::vector queriesToRunReverseOrder(queries.rbegin(), queries.rend());
-
-    while (!queriesToRunReverseOrder.empty() || !runningQueries.empty())
+template <typename ErrorCallable>
+void reportResult(
+    std::shared_ptr<RunningQuery>& runningQuery,
+    std::size_t& finishedCount,
+    std::size_t total,
+    std::vector<std::shared_ptr<RunningQuery>>& failed,
+    ErrorCallable&& errorBuilder)
+{
+    std::string msg = errorBuilder();
+    runningQuery->passed = msg.empty();
+    printQueryResultToStdOut(*runningQuery, msg, finishedCount++, total, "");
+    if (!msg.empty())
     {
-        for (size_t concurrentQueries = runningQueries.size();
-             concurrentQueries < numConcurrentQueries && !queriesToRunReverseOrder.empty();
-             ++concurrentQueries)
-        {
-            auto query = std::move(queriesToRunReverseOrder.back());
-            queriesToRunReverseOrder.pop_back();
+        failed.push_back(runningQuery);
+    }
+}
 
-            auto id = submitter.registerQuery(query);
-            if (id == INVALID<QueryId>)
+bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
+{
+    return runningQuery->passed;
+}
+
+}
+
+std::vector<RunningQuery> runQueries(const std::vector<Query>& queries, size_t maxConcurrency, QuerySubmitter& submitter)
+{
+    std::queue<Query> pending;
+    for (auto it = queries.rbegin(); it != queries.rend(); ++it)
+    {
+        pending.push(*it);
+    }
+
+    std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
+    std::vector<std::shared_ptr<RunningQuery>> failed;
+    std::size_t finished = 0;
+
+    const auto startMoreQueries = [&]
+    {
+        while (active.size() < maxConcurrency && !pending.empty())
+        {
+            Query q = std::move(pending.front());
+            pending.pop();
+
+            /// Parsing
+            if (!q.queryPlan)
             {
-                auto failedQuery = std::make_shared<RunningQuery>(query, id);
-                failedQuery->passed = false;
-                failedQueries.emplace_back(std::move(failedQuery));
+                auto runningQuery = std::make_shared<RunningQuery>(q);
+                runningQuery->exception = q.queryPlan.error();
+                reportResult(
+                    runningQuery,
+                    finished,
+                    queries.size(),
+                    failed,
+                    [&]
+                    {
+                        if (q.expectedError and q.expectedError->code == runningQuery->exception->code())
+                        {
+                            return std::string{};
+                        }
+                        return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
+                    });
+                continue; /// skip registration
             }
-            submitter.startQuery(id);
-            auto runningQuery = std::make_shared<RunningQuery>(query, id);
-            runningQuery->passed = false;
-            runningQueries.emplace_back(std::move(runningQuery));
-        }
 
-        for (auto querySummary : submitter.finishedQueries())
-        {
-            if (auto currentQuery
-                = std::ranges::find(runningQueries, querySummary.queryId, [](const auto& runningQuery) { return runningQuery->queryId; });
-                currentQuery != runningQueries.end())
+            /// Registration
+            if (auto reg = submitter.registerQuery(*q.queryPlan))
             {
-                if (auto queryFailed = querySummary.runs.back().error)
-                {
-                    fmt::println(std::cerr, "Query {} failed with exception: {}", querySummary.queryId, queryFailed->what());
-                    failedQueries.emplace_back(*currentQuery);
-                }
-                auto error = checkResult(**currentQuery);
-                auto result = std::make_shared<RunningQuery>((*currentQuery)->query, (*currentQuery)->queryId);
-                result->passed = not error.has_value();
-                printQueryResultToStdOut(*result, error.value_or(""), queryFinishedCounter++, queries.size(), "");
-                if (error)
-                {
-                    failedQueries.emplace_back(std::move(result));
-                }
-                else
-                {
-                    terminatedQueries.emplace_back(std::move(result));
-                }
-                std::erase_if(runningQueries, [&](const auto& runningQuery) { return runningQuery->queryId == (*currentQuery)->queryId; });
+                submitter.startQuery(*reg);
+                active.emplace(*reg, std::make_shared<RunningQuery>(q, *reg));
             }
             else
             {
-                throw TestException("Received non registered queryId: {}", (*currentQuery)->queryId);
+                auto runningQuery = std::make_shared<RunningQuery>(q);
+                runningQuery->exception = reg.error();
+                reportResult(
+                    runningQuery,
+                    finished,
+                    queries.size(),
+                    failed,
+                    [&]
+                    {
+                        if (q.expectedError && q.expectedError->code == runningQuery->exception->code())
+                        {
+                            return std::string{};
+                        }
+                        return fmt::format("unexpected registration error: {}", *runningQuery->exception);
+                    });
             }
+        }
+    };
+
+    while (not pending.empty() or not active.empty())
+    {
+        startMoreQueries();
+
+        for (const auto& summary : submitter.finishedQueries())
+        {
+            auto it = active.find(summary.queryId);
+            if (it == active.end())
+            {
+                throw TestException("received unregistered queryId: {}", summary.queryId);
+            }
+
+            auto& runningQuery = it->second;
+
+            if (summary.currentStatus == QueryStatus::Failed)
+            {
+                runningQuery->exception = summary.runs.back().error;
+                reportResult(
+                    runningQuery,
+                    finished,
+                    queries.size(),
+                    failed,
+                    [&]
+                    {
+                        if (runningQuery->query.expectedError
+                            and runningQuery->query.expectedError->code == runningQuery->exception->code())
+                        {
+                            return std::string{};
+                        }
+                        return fmt::format("unexpected runtime error: {}", *runningQuery->exception);
+                    });
+            }
+            else
+            {
+                reportResult(
+                    runningQuery,
+                    finished,
+                    queries.size(),
+                    failed,
+                    [&]
+                    {
+                        if (runningQuery->query.expectedError)
+                        {
+                            return fmt::format("expected error {} but query succeeded", runningQuery->query.expectedError->code);
+                        }
+                        runningQuery->querySummary = summary;
+                        if (auto err = checkResult(*runningQuery))
+                        {
+                            return *err;
+                        }
+                        return std::string{};
+                    });
+            }
+            active.erase(it);
         }
     }
 
-    return terminatedQueries | std::views::filter([](const auto& query) { return !query->passed; })
-        | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>();
+    auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
+    return {failedViews.begin(), failedViews.end()};
 }
 
 namespace
@@ -360,7 +461,20 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const auto totalQueries = queries.size();
     for (const auto& queryToRun : queries)
     {
-        const auto queryId = submitter.registerQuery(queryToRun);
+        if (not queryToRun.queryPlan.has_value())
+        {
+            std::cout << "skip failing query: " << queryToRun.name << std::endl;
+            continue;
+        }
+
+        const auto registrationResult = submitter.registerQuery(queryToRun.queryPlan.value());
+        if (not registrationResult.has_value())
+        {
+            std::cout << "skip failing query: " << queryToRun.name << std::endl;
+            continue;
+        }
+        auto queryId = registrationResult.value();
+
         auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);

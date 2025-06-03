@@ -146,8 +146,8 @@ Exception wrapExternalException();
 /// @warning This function should be used only in a catch block.
 [[nodiscard]] ErrorCode getCurrentErrorCode();
 
-[[nodiscard]] bool errorCodeExists(uint64_t code) noexcept;
-[[nodiscard]] std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view name) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorCodeExists(uint64_t code) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view name) noexcept;
 }
 
 namespace fmt

@@ -18,27 +18,35 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 
 namespace NES::Systest
 {
-/// Forward refs to avoid cyclic deps with SystestState
+/// Forward declarations
 struct Query;
 struct RunningQuery;
+class QuerySubmitter;
+
+struct ExpectedError
+{
+    ErrorCode code;
+    std::optional<std::string> message;
+};
 
 struct LoadedQueryPlan
 {
-    LogicalPlan queryPlan;
+    std::expected<LogicalPlan, Exception> queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
+    std::optional<ExpectedError> expectedError;
 };
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
