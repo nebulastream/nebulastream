@@ -46,7 +46,6 @@ INTO sinkStream;
 2000,3000,16,2
 1500,2500,16,2
 
-
 # Test aggregation syntax with group by before window definition
 SELECT SUM(value) as sumValue
 FROM stream
@@ -57,3 +56,22 @@ INTO sinkStream;
 ----
 2000,3000,16,2
 1500,2500,16,2
+
+# Negative test: GroupBy before where
+SELECT SUM(value) as sumValue
+FROM stream
+GROUP BY id
+WHERE id > UINT32(15)
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+INTO sinkStream;
+----
+ERROR 2000 # invalid query syntax
+
+# Negative test: Missing WINDOW definition
+SELECT SUM(value) as sumValue
+FROM stream
+WHERE id > UINT32(15)
+GROUP BY id
+INTO sinkStream;
+----
+ERROR 2000 # invalid query syntax
