@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
