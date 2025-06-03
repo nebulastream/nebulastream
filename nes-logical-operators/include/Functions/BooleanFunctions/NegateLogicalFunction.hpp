@@ -34,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Negate";
 
     explicit NegateLogicalFunction(LogicalFunction child);
-    NegateLogicalFunction(const NegateLogicalFunction& other);
-    ~NegateLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

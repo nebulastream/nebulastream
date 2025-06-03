@@ -31,10 +31,6 @@ namespace NES
 
 FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : dataType(other.getDataType()), child(other.child)
-{
-}
-
 DataType FloorLogicalFunction::getDataType() const
 {
     return dataType;

@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Add";
 
     AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-    AddLogicalFunction(const AddLogicalFunction& other);
-    ~AddLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

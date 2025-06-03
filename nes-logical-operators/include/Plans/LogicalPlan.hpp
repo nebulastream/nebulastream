@@ -39,10 +39,6 @@ public:
     explicit LogicalPlan(LogicalOperator rootOperator);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
 
-    LogicalPlan(const LogicalPlan& other);
-    LogicalPlan(LogicalPlan&& other) noexcept;
-    LogicalPlan& operator=(LogicalPlan&& other) noexcept;
-
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
 

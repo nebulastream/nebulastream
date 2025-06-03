@@ -33,10 +33,6 @@ AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) :
 {
 }
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : dataType(other.dataType), child(other.child)
-{
-}
-
 DataType AbsoluteLogicalFunction::getDataType() const
 {
     return dataType;

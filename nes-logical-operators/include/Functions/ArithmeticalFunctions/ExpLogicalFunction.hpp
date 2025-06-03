@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Exp";
 
     explicit ExpLogicalFunction(const LogicalFunction& child);
-    ExpLogicalFunction(const ExpLogicalFunction& other);
-    ~ExpLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

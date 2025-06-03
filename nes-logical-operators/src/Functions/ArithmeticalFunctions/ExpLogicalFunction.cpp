@@ -31,10 +31,6 @@ namespace NES
 
 ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : child(other.getChildren()[0])
-{
-}
-
 bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const ExpLogicalFunction*>(&rhs))

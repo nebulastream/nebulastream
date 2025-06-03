@@ -31,10 +31,6 @@ namespace NES
 
 CeilLogicalFunction::CeilLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : dataType(other.dataType), child(other.child)
-{
-}
-
 DataType CeilLogicalFunction::getDataType() const
 {
     return dataType;

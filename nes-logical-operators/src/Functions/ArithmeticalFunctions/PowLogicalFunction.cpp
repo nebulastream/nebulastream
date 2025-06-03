@@ -33,10 +33,6 @@ namespace NES
 PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
 
-PowLogicalFunction::PowLogicalFunction(const PowLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const PowLogicalFunction*>(&rhs))

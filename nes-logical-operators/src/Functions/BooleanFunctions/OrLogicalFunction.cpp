@@ -30,10 +30,6 @@
 
 namespace NES
 {
-OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
     , left(std::move(std::move(left)))

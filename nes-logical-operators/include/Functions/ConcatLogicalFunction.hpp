@@ -34,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Concat";
 
     ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-    ConcatLogicalFunction(const ConcatLogicalFunction& other);
-    ~ConcatLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

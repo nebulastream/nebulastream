@@ -32,7 +32,6 @@ public:
         const std::shared_ptr<WindowAggregation>& windowAggregationOperator,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
-    AggregationProbePhysicalOperator(const AggregationProbePhysicalOperator& other);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 };
 
