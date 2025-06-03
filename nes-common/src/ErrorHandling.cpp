@@ -206,12 +206,12 @@ struct enum_range<NES::ErrorCode>
 namespace NES
 {
 
-bool errorCodeExists(ErrorCode code) noexcept
+std::optional<ErrorCode> errorCodeExists(uint64_t code) noexcept
 {
-    return magic_enum::enum_cast<ErrorCode>(code).has_value();
+    return magic_enum::enum_cast<ErrorCode>(code);
 }
 
-std::optional<ErrorCode> errorCodeOrTypeExists(std::string_view codeOrTypeStr) noexcept
+std::optional<ErrorCode> errorTypeExists(std::string_view codeOrTypeStr) noexcept
 {
     return magic_enum::enum_cast<ErrorCode>(codeOrTypeStr);
 }
