@@ -7,9 +7,6 @@ name: PR Review Reminder
 on: 
     schedule:
         - cron: '0 7 * * 1-5'
-        - cron: '45 10 * * 1-5'
-        - cron: '0 14 * * 1-5'
-
 jobs:
     remind-to-review:
         runs-on: ubuntu-latest
