@@ -26,11 +26,13 @@ namespace NES
 ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
     : data(size + sizeof(uint32_t))
 {
-    /// We are copying the data into the function's memory. This is necessary as the data might be destroyed after the function is created.
-    /// In the constructor, we have allocated the memory for the data via the make_unique<>(). Thus, we have to copy here the
-    /// data into the function's memory. As we expect the first four bytes to be the size of the data, we use a bit_cast to set the size.
-    /// Afterward, we copy the value into the data.
+    /// We copy the value into the data vector owned by the function
+    /// since the value might be destroyed during the lifetime of the function.
+    /// In the constructor, we have allocated the memory for the value via the std::vector ctor.
+    ///
+    /// The first four bytes of the VariableSizedData contain the size...
     *std::bit_cast<uint32_t*>(data.data()) = size;
+    /// ...followed by the value
     std::memcpy(data.data() + sizeof(uint32_t), value, size);
 }
 
