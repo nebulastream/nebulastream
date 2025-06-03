@@ -26,6 +26,7 @@ import pandas as pd
 import BenchmarkConfig
 import PostProcessing
 
+
 # Configuration for execution
 BUILD_DIR = "cmake-build-relnologging"
 SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
@@ -60,15 +61,15 @@ CONFIG_FILES = {
 }
 
 
-def create_result_dir():
+def create_results_dir():
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    # print(f"Created working dir {folder_name}...")
+    # print(f"Created results dir {folder_name}...")
     return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
             os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE)]
 
 
-def create_working_dir():
-    folder_name = os.path.join(WORKING_DIR, "working_dir")
+def create_working_dir(output_folder):
+    folder_name = os.path.join(output_folder, "working_dir")
     os.makedirs(folder_name, exist_ok=True)
     # print(f"Created working dir {folder_name}...")
     return folder_name
@@ -277,9 +278,8 @@ def run_benchmark(current_benchmark_config, iteration):
 
         # Creating a new output folder and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
-        working_dir = create_working_dir()
-        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports,
-                                iteration)
+        working_dir = create_working_dir(output_folder)
+        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports, iteration)
 
         # Waiting before starting the single node worker
         time.sleep(WAIT_BETWEEN_COMMANDS)
@@ -410,7 +410,7 @@ if __name__ == "__main__":
     #         print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
 
     # Calling the postprocessing main
-    engine_stats_csv_path, benchmark_stats_csv_path = create_result_dir()
+    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
     post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
                                                     BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
                                                     COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
