@@ -20,9 +20,9 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <val.hpp>
-#include <val_ptr.hpp>
 
 namespace NES::Nautilus
 {
