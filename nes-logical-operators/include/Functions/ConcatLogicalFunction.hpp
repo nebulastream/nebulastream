@@ -52,7 +52,6 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
 private:
-    const std::string constantValue;
     DataType dataType;
     LogicalFunction left;
     LogicalFunction right;
