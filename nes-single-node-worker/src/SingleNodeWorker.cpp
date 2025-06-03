@@ -56,7 +56,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
+std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) const
 {
     try
     {
@@ -70,7 +70,7 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
     catch (Exception& e)
     {
         tryLogCurrentException();
-        return INVALID_QUERY_ID;
+        return std::unexpected(e);
     }
 }
 

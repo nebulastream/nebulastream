@@ -69,11 +69,12 @@ Query::Query(
     TestName name,
     std::string queryDefinition,
     std::filesystem::path sqlLogicTestFile,
-    LogicalPlan queryPlan,
+    std::expected<LogicalPlan, Exception> queryPlan,
     const uint64_t queryIdInFile,
     std::filesystem::path workingDir,
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-    SystestParser::Schema sinkSchema)
+    SystestParser::Schema sinkSchema,
+    std::optional<ExpectedError> expectedError)
     : name(std::move(name))
     , queryDefinition(std::move(queryDefinition))
     , sqlLogicTestFile(std::move(sqlLogicTestFile))
@@ -82,6 +83,7 @@ Query::Query(
     , workingDir(std::move(workingDir))
     , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
     , expectedSinkSchema(std::move(sinkSchema))
+    , expectedError(expectedError)
 {
 }
 
@@ -124,7 +126,7 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath] : loadedPlans)
+    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath, expectedError] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
@@ -140,7 +142,8 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                     queryIdInFile,
                     workingDir,
                     sourceNamesToFilepath,
-                    sinkSchema);
+                    sinkSchema,
+                    expectedError);
             }
         }
         else
@@ -153,7 +156,8 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                 queryIdInFile,
                 workingDir,
                 sourceNamesToFilepath,
-                sinkSchema);
+                sinkSchema,
+                expectedError);
         }
         ++queryIdInFile;
     }

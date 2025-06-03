@@ -13,6 +13,8 @@
 */
 
 #pragma once
+
+#include <expected>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -31,7 +33,7 @@ class QuerySubmitter
 {
 public:
     virtual ~QuerySubmitter() = default;
-    virtual QueryId registerQuery(const Query& query) = 0;
+    virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
     virtual void startQuery(QueryId query) = 0;
     virtual void stopQuery(QueryId query) = 0;
     virtual void unregisterQuery(QueryId query) = 0;
@@ -48,18 +50,12 @@ class LocalWorkerQuerySubmitter final : public QuerySubmitter
     SingleNodeWorker worker;
 
 public:
-    QueryId registerQuery(const Query& query) override;
-
+    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;
     void startQuery(QueryId query) override;
-
     void stopQuery(QueryId query) override;
-
     void unregisterQuery(QueryId query) override;
-
     QuerySummary waitForQueryTermination(QueryId query) override;
-
     std::vector<QuerySummary> finishedQueries() override;
-
     explicit LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration);
 };
 
@@ -70,18 +66,12 @@ class RemoteWorkerQuerySubmitter final : public QuerySubmitter
     const GRPCClient client;
 
 public:
-    QueryId registerQuery(const Query& query) override;
-
+    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;
     void startQuery(QueryId query) override;
-
     void stopQuery(QueryId query) override;
-
     void unregisterQuery(QueryId query) override;
-
     QuerySummary waitForQueryTermination(QueryId query) override;
-
     std::vector<QuerySummary> finishedQueries() override;
-
     explicit RemoteWorkerQuerySubmitter(const std::string& serverURI);
 };
 }

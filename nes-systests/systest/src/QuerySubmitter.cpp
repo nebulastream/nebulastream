@@ -31,25 +31,28 @@
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestState.hpp>
 
-NES::QueryId NES::Systest::LocalWorkerQuerySubmitter::registerQuery(const Query& query)
+namespace NES::Systest
 {
-    return worker.registerQuery(query.queryPlan);
+
+std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
+{
+    return worker.registerQuery(plan);
 }
-void NES::Systest::LocalWorkerQuerySubmitter::startQuery(QueryId query)
+void LocalWorkerQuerySubmitter::startQuery(QueryId query)
 {
     worker.startQuery(query);
     ids.emplace(query);
 }
-void NES::Systest::LocalWorkerQuerySubmitter::stopQuery(QueryId query)
+void LocalWorkerQuerySubmitter::stopQuery(QueryId query)
 {
     worker.stopQuery(query, QueryTerminationType::Graceful);
 }
-void NES::Systest::LocalWorkerQuerySubmitter::unregisterQuery(QueryId query)
+void LocalWorkerQuerySubmitter::unregisterQuery(QueryId query)
 {
     worker.unregisterQuery(query);
 }
 
-NES::QuerySummary NES::Systest::LocalWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
+QuerySummary LocalWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
 {
     while (true)
     {
@@ -65,7 +68,7 @@ NES::QuerySummary NES::Systest::LocalWorkerQuerySubmitter::waitForQueryTerminati
     }
 }
 
-std::vector<NES::QuerySummary> NES::Systest::LocalWorkerQuerySubmitter::finishedQueries()
+std::vector<QuerySummary> LocalWorkerQuerySubmitter::finishedQueries()
 {
     while (true)
     {
@@ -94,27 +97,27 @@ std::vector<NES::QuerySummary> NES::Systest::LocalWorkerQuerySubmitter::finished
         return results;
     }
 }
-NES::Systest::LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration)
+LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : worker(configuration)
 {
 }
-NES::QueryId NES::Systest::RemoteWorkerQuerySubmitter::registerQuery(const Query& query)
+std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
-    return QueryId(client.registerQuery(query.queryPlan));
+    return QueryId(client.registerQuery(plan));
 }
-void NES::Systest::RemoteWorkerQuerySubmitter::startQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::startQuery(QueryId query)
 {
     client.start(query.getRawValue());
 }
-void NES::Systest::RemoteWorkerQuerySubmitter::stopQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::stopQuery(QueryId query)
 {
     client.stop(query.getRawValue());
 }
-void NES::Systest::RemoteWorkerQuerySubmitter::unregisterQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::unregisterQuery(QueryId query)
 {
     client.unregister(query.getRawValue());
 }
-NES::QuerySummary NES::Systest::RemoteWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
+QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
 {
     while (true)
     {
@@ -126,7 +129,7 @@ NES::QuerySummary NES::Systest::RemoteWorkerQuerySubmitter::waitForQueryTerminat
         }
     }
 }
-std::vector<NES::QuerySummary> NES::Systest::RemoteWorkerQuerySubmitter::finishedQueries()
+std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
 {
     while (true)
     {
@@ -153,7 +156,8 @@ std::vector<NES::QuerySummary> NES::Systest::RemoteWorkerQuerySubmitter::finishe
         return results;
     }
 }
-NES::Systest::RemoteWorkerQuerySubmitter::RemoteWorkerQuerySubmitter(const std::string& serverURI)
+RemoteWorkerQuerySubmitter::RemoteWorkerQuerySubmitter(const std::string& serverURI)
     : client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()))
 {
+}
 }

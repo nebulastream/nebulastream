@@ -283,9 +283,8 @@ std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialTok
         return TokenType::QUERY;
     }
     /// Lookup in map
-    const auto* it = std::ranges::find_if(stringToToken, [&potentialToken](const auto& pair) { 
-        return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken);
-    });
+    const auto* it = std::ranges::find_if(
+        stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -367,7 +366,8 @@ SystestParser::Sink SystestParser::expectSink() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(SinkToken), "Expected first word to be `{}` for sink statement", SLTSourceToken);
+    INVARIANT(
+        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken), "Expected first word to be `{}` for sink statement", SLTSourceToken);
 
     /// Read the source name and check if successful
     if (!(lineAsStream >> sink.name))
@@ -402,7 +402,10 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(SLTSourceToken), "Expected first word to be `{}` for source statement", SLTSourceToken);
+    INVARIANT(
+        Util::toLowerCase(discard) == Util::toLowerCase(SLTSourceToken),
+        "Expected first word to be `{}` for source statement",
+        SLTSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
@@ -440,7 +443,10 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: " + line);
     }
-    INVARIANT(Util::toLowerCase(discard) == Util::toLowerCase(CSVSourceToken), "Expected first word to be `{}` for csv source statement", CSVSourceToken);
+    INVARIANT(
+        Util::toLowerCase(discard) == Util::toLowerCase(CSVSourceToken),
+        "Expected first word to be `{}` for csv source statement",
+        CSVSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))

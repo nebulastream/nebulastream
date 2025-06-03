@@ -13,6 +13,7 @@
 add_nes_test_systest(slt-parser-test
         "SystestParserTests.cpp"
         "SystestParserInvalidTestFilesTests.cpp"
-        "SystestParserValidTestFilesTests.cpp")
+        "SystestParserValidTestFilesTests.cpp"
+        "SystestRunnerTest.cpp")
 
 target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
