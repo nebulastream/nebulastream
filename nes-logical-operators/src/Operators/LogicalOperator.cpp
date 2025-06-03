@@ -38,7 +38,7 @@ LogicalOperator::LogicalOperator() : self(nullptr)
 {
 }
 
-LogicalOperator::LogicalOperator(const LogicalOperator& other) : self(other.self->clone())
+LogicalOperator::LogicalOperator(const LogicalOperator& other) : self(other.self)
 {
 }
 
@@ -48,7 +48,7 @@ LogicalOperator& LogicalOperator::operator=(const LogicalOperator& other)
 {
     if (this != &other)
     {
-        self = other.self->clone();
+        self = other.self;
     }
     return *this;
 }
