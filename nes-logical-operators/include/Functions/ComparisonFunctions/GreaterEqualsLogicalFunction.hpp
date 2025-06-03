@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "GreaterEquals";
 
     GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
-    GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other);
-    ~GreaterEqualsLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;

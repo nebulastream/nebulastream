@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Floor";
 
     explicit FloorLogicalFunction(const LogicalFunction& child);
-    FloorLogicalFunction(const FloorLogicalFunction& other);
-    ~FloorLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

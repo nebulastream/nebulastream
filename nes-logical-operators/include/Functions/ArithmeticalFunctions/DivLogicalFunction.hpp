@@ -30,11 +30,9 @@ namespace NES
 class DivLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    ~DivLogicalFunction() noexcept override = default;
     static constexpr std::string_view NAME = "Div";
 
     DivLogicalFunction(const LogicalFunction& left, LogicalFunction right);
-    DivLogicalFunction(const DivLogicalFunction& other);
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

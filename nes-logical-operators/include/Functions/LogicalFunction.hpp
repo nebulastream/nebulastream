@@ -79,9 +79,6 @@ struct LogicalFunction
     /// Constructs a NullLogicalFunction
     LogicalFunction();
 
-    LogicalFunction(const LogicalFunction& other);
-    LogicalFunction(LogicalFunction&&) noexcept = default;
-
     /// Attempts to get the underlying function as type T.
     /// @tparam T The type to try to get the function as.
     /// @return std::optional<T> The function if it is of type T, nullopt otherwise.
@@ -108,8 +105,6 @@ struct LogicalFunction
         }
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
-
-    LogicalFunction& operator=(const LogicalFunction& other);
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 

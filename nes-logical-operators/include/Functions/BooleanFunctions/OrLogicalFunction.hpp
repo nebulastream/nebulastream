@@ -33,7 +33,6 @@ public:
     static constexpr std::string_view NAME = "Or";
 
     OrLogicalFunction(LogicalFunction left, LogicalFunction right);
-    OrLogicalFunction(const OrLogicalFunction& other);
 
     [[nodiscard]] SerializableFunction serialize() const override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;

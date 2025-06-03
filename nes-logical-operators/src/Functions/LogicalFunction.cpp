@@ -26,25 +26,12 @@
 namespace NES
 {
 
-LogicalFunction& LogicalFunction::operator=(const LogicalFunction& other)
-{
-    if (this != &other)
-    {
-        self = other.self;
-    }
-    return *this;
-}
-
 bool LogicalFunction::operator==(const LogicalFunction& other) const
 {
     return self->equals(*other.self);
 }
 
 LogicalFunction::LogicalFunction() : self(nullptr)
-{
-}
-
-LogicalFunction::LogicalFunction(const LogicalFunction& other) : self(other.self)
 {
 }
 

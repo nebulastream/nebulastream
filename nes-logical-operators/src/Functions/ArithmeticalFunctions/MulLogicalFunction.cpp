@@ -33,10 +33,6 @@ MulLogicalFunction::MulLogicalFunction(const LogicalFunction& left, const Logica
 {
 }
 
-MulLogicalFunction::MulLogicalFunction(const MulLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const MulLogicalFunction*>(&rhs))

@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "And";
 
     AndLogicalFunction(LogicalFunction left, LogicalFunction right);
-    AndLogicalFunction(const AndLogicalFunction& other);
-    ~AndLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

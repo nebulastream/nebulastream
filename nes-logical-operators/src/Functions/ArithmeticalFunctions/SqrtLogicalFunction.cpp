@@ -31,10 +31,6 @@ namespace NES
 
 SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : dataType(other.dataType), child(other.child)
-{
-}
-
 bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     const auto* other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);

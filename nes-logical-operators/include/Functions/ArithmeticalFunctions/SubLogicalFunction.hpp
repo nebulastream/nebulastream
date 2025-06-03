@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Sub";
 
     SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-    SubLogicalFunction(const SubLogicalFunction& other);
-    ~SubLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

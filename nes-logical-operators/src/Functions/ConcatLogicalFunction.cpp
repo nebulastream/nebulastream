@@ -35,11 +35,6 @@ ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const 
 {
 }
 
-ConcatLogicalFunction::ConcatLogicalFunction(const ConcatLogicalFunction& other)
-    : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))

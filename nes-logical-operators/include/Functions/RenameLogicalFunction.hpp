@@ -38,7 +38,6 @@ public:
     static constexpr std::string_view NAME = "Rename";
 
     RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName);
-    RenameLogicalFunction(const RenameLogicalFunction& other);
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

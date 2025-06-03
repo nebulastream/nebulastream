@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Round";
 
     explicit RoundLogicalFunction(const LogicalFunction& child);
-    RoundLogicalFunction(const RoundLogicalFunction& other);
-    ~RoundLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
