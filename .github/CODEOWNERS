@@ -3,34 +3,46 @@
 
 # The maintainers are the default owners for everything in the repo. Unless a later match takes precedence, one of
 # the maintainers will be request review when someone opens a pull request.
-* @adrianmichalke @alepping @Artraxon @keyseven123 @ls-1801 @yschroeder97
+* @nebulastream/Maintainer
 
 ## We set here owners for each folder that usually encapsulates one or more components.
 ## We aim for having at least two persons per folder to have a little bit of a redundancy.
-/docker/ @keyseven123 @ls-1801
-/grpc/ @ls-1801 @adrianmichalke
-/nes-common/ @keyseven123 @adrianmichalke
-/nes-configurations/ @adrianmichalke @ls-1801
-/nes-data-types/ @alepping @adrianmichalke @ls-1801
-/nes-executable/ @alepping @keyseven123 @ls-1801
-/nes-physical-operators/ @keyseven123 @adrianmichalke
-/nes-input-formatters/ @alepping @yschroeder97 @keyseven123
-/nes-memory/ @ls-1801 @alepping @Artraxon
-/nes-nautilus/ @alepping @keyseven123 @ls-1801
-/nes-nebuli/ @ls-1801 @Artraxon @alepping
-/nes-logical-operators/ @adrianmichalke @alepping @keyseven123
-/nes-query-compiler/ @alepping @keyseven123 @adrianmichalke
-/nes-query-optimizer/ @adrianmichalke @Artraxon
-/nes-plugins/ @alepping @yschroeder97
-/nes-query-engine/ @ls-1801 @keyseven123
-/nes-runtime/ @keyseven123 @ls-1801 @adrianmichalke
-/nes-single-node-worker/ @alepping @adrianmichalke @ls-1801
-/nes-sinks/ @alepping @yschroeder97
-/nes-sources/ @alepping @yschroeder97
-/nes-sql-parser/ @Artraxon @adrianmichalke @keyseven123
-/nes-systests/ @adrianmichalke @ls-1801
-/scripts/ @keyseven123 @ls-1801
-/vcpkg/ @keyseven123 @ls-1801 @adrianmichalke
+/docker/ @nebulastream/DevOps
+/.github/ @nebulastream/DevOps
+/scripts/ @nebulastream/DevOps
+/vcpkg/ @nebulastream/DevOps
+
+/nes-common/ @nebulastream/Maintainer
+/nes-configurations/ @nebulastream/Maintainer
+
+/grpc/ @nebulastream/QuerySubmission
+/nes-data-types/ @nebulastream/QuerySubmission
+/nes-nebuli/ @nebulastream/QuerySubmission
+/nes-sql-parser/ @nebulastream/QuerySubmission
+
+/nes-physical-operators/ @nebulastream/Execution
+/nes-nautilus/ @nebulastream/Execution
+/nes-query-compiler/ @nebulastream/Execution
+
+
+/nes-memory/ @nebulastream/Memory
+/nes-runtime/ @nebulastream/Runtime
+/nes-single-node-worker/ @nebulastream/Runtime
+
+
+/nes-logical-operators/ @nebulastream/QueryOptimizer
+/nes-query-optimizer/ @nebulastream/QueryOptimizer
+
+/nes-plugins/ @nebulastream/Plugins
+
+/nes-executable/ @nebulastream/QueryEngine
+/nes-query-engine/ @nebulastream/QueryEngine
+
+/nes-input-formatters/ @nebulastream/InputOutput
+/nes-sinks/ @nebulastream/InputOutput
+/nes-sources/ @nebulastream/InputOutput
+
+/nes-systests/ @nebulastream/Testing
 
 
 # We  set here the ownership specific files or folders. This will be populated in the future
