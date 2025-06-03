@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
+#include <nautilus/val.hpp>
 
 namespace NES::Nautilus
 {
