@@ -116,7 +116,7 @@ struct LogicalOperator
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
     template <IsLogicalOperator T>
-    LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) /// NOLINT
+    LogicalOperator(const T& op) : self(std::make_shared<Model<T>>(std::move(op), std::move(op.id))) /// NOLINT
     {
     }
 
@@ -180,7 +180,6 @@ private:
     struct Concept : LogicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : LogicalOperatorConcept(existingId) { }
-        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 
@@ -192,8 +191,6 @@ private:
         explicit Model(OperatorType d) : Concept(getNextLogicalOperatorId()), data(std::move(d)) { }
 
         Model(OperatorType d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
-
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data, this->id); }
 
         [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
 
@@ -252,7 +249,7 @@ private:
         }
     };
 
-    std::unique_ptr<Concept> self;
+    std::shared_ptr<const Concept> self;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
