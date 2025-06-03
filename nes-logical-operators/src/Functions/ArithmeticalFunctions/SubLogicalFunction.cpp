@@ -32,10 +32,6 @@ namespace NES
 SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
 
-SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const SubLogicalFunction*>(&rhs))

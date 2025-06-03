@@ -53,28 +53,6 @@ void LogicalPlan::setQueryId(QueryId id)
     queryId = id;
 }
 
-LogicalPlan::LogicalPlan(const LogicalPlan& other) : queryId(other.getQueryId())
-{
-    for (const auto& op : other.rootOperators)
-    {
-        rootOperators.push_back(op);
-    }
-}
-
-LogicalPlan::LogicalPlan(LogicalPlan&& other) noexcept : rootOperators(std::move(other.rootOperators)), queryId(other.getQueryId())
-{
-}
-
-LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other) noexcept
-{
-    if (this != &other)
-    {
-        rootOperators = std::move(other.rootOperators);
-        queryId = other.getQueryId();
-    }
-    return *this;
-}
-
 LogicalPlan::LogicalPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));

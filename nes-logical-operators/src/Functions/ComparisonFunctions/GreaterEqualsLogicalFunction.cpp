@@ -31,11 +31,6 @@
 namespace NES
 {
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other)
-    : left(other.left), right(other.right), dataType(other.dataType)
-{
-}
-
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))

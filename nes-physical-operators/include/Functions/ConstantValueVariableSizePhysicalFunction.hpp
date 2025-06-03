@@ -31,7 +31,6 @@ class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionC
 {
 public:
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
-    ConstantValueVariableSizePhysicalFunction(const ConstantValueVariableSizePhysicalFunction& other) = default;
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:

@@ -36,10 +36,6 @@ NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
 {
 }
 
-NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : dataType(other.dataType), child(other.child)
-{
-}
-
 bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const NegateLogicalFunction*>(&rhs))

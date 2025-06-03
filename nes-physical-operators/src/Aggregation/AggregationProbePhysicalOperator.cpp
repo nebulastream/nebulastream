@@ -160,8 +160,4 @@ AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
 {
 }
 
-AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(const AggregationProbePhysicalOperator& other)
-
-    = default;
-
 }

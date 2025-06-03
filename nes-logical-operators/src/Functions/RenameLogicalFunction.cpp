@@ -34,10 +34,6 @@ namespace NES
 RenameLogicalFunction::RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName)
     : dataType(originalField.getDataType()), child(originalField), newFieldName(std::move(newFieldName)) { };
 
-RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
-    : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) { };
-
-
 bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const RenameLogicalFunction*>(&rhs))

@@ -32,8 +32,6 @@ public:
     static constexpr std::string_view NAME = "Mod";
 
     ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-    ModuloLogicalFunction(const ModuloLogicalFunction& other);
-    ~ModuloLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

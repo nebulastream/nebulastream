@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Equals";
 
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
-    EqualsLogicalFunction(const EqualsLogicalFunction& other);
-    ~EqualsLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

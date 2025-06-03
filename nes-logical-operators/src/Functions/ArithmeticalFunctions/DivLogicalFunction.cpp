@@ -33,10 +33,6 @@ namespace NES
 DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
     : dataType(left.getDataType()), left(left), right(std::move(std::move(right))) { };
 
-DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const DivLogicalFunction*>(&rhs))

@@ -31,11 +31,6 @@
 namespace NES
 {
 
-GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& other)
-    : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
     , left(std::move(std::move(left)))

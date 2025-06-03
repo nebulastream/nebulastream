@@ -38,21 +38,6 @@ LogicalOperator::LogicalOperator() : self(nullptr)
 {
 }
 
-LogicalOperator::LogicalOperator(const LogicalOperator& other) : self(other.self)
-{
-}
-
-LogicalOperator::LogicalOperator(LogicalOperator&&) noexcept = default;
-
-LogicalOperator& LogicalOperator::operator=(const LogicalOperator& other)
-{
-    if (this != &other)
-    {
-        self = other.self;
-    }
-    return *this;
-}
-
 std::string LogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     return self->explain(verbosity);

@@ -31,10 +31,6 @@
 namespace NES
 {
 
-LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other) : left(other.left), right(other.right), dataType(other.dataType)
-{
-}
-
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))

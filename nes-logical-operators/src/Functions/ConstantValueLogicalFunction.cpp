@@ -35,11 +35,6 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, st
 {
 }
 
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : constantValue(other.constantValue), dataType(other.dataType)
-{
-}
-
 DataType ConstantValueLogicalFunction::getDataType() const
 {
     return dataType;

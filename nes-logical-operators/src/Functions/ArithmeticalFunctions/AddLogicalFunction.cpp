@@ -34,10 +34,6 @@ AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const Logica
 {
 }
 
-AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 DataType AddLogicalFunction::getDataType() const
 {
     return dataType;
