@@ -23,6 +23,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -46,10 +47,9 @@ using TestGroup = std::string;
 
 struct Query
 {
-    static std::filesystem::path
-    resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile);
+    static std::filesystem::path resultFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t queryIdInTestFile);
 
-    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId);
+    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
     Query() = default;
     explicit Query(
         TestName name,

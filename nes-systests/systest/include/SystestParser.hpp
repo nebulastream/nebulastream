@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Systest
 {
