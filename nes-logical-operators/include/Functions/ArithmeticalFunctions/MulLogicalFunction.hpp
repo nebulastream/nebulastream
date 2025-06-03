@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Mul";
 
     MulLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-    MulLogicalFunction(const MulLogicalFunction& other);
-    ~MulLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

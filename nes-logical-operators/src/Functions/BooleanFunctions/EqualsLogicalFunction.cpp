@@ -38,11 +38,6 @@ EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFuncti
 {
 }
 
-EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other)
-    : left(other.left), right(other.right), dataType(other.dataType)
-{
-}
-
 bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))

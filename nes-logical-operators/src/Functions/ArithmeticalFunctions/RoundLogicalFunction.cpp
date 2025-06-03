@@ -31,10 +31,6 @@ namespace NES
 
 RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : dataType(other.dataType), child(other.child)
-{
-}
-
 bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (const auto* other = dynamic_cast<const RoundLogicalFunction*>(&rhs))

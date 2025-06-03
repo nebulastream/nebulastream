@@ -31,8 +31,6 @@ public:
     static constexpr std::string_view NAME = "Ceil";
 
     explicit CeilLogicalFunction(const LogicalFunction& child);
-    CeilLogicalFunction(const CeilLogicalFunction& other);
-    ~CeilLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

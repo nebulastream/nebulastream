@@ -34,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "LessEquals";
 
     LessEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
-    LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other);
-    ~LessEqualsLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

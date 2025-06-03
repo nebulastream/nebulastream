@@ -39,8 +39,6 @@ public:
     static constexpr std::string_view NAME = "ConstantValue";
 
     ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString);
-    ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
-    ~ConstantValueLogicalFunction() noexcept override = default;
 
     [[nodiscard]] std::string getConstantValue() const;
 

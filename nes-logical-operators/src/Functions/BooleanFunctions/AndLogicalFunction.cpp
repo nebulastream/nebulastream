@@ -31,10 +31,6 @@
 namespace NES
 {
 
-AndLogicalFunction::AndLogicalFunction(const AndLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
     , left(std::move(std::move(left)))

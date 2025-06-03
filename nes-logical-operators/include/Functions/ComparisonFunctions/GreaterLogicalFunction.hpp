@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Greater";
 
     GreaterLogicalFunction(LogicalFunction left, LogicalFunction right);
-    GreaterLogicalFunction(const GreaterLogicalFunction& other);
-    ~GreaterLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

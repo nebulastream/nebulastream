@@ -121,7 +121,6 @@ struct LogicalOperator
     }
 
     LogicalOperator();
-    LogicalOperator(const LogicalOperator& other);
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
@@ -149,10 +148,6 @@ struct LogicalOperator
         }
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
-
-    LogicalOperator(LogicalOperator&&) noexcept;
-
-    LogicalOperator& operator=(const LogicalOperator& other);
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;

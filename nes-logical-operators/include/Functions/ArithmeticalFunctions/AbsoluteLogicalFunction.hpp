@@ -33,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Absolute";
 
     explicit AbsoluteLogicalFunction(const LogicalFunction& child);
-    AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other);
-    ~AbsoluteLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 

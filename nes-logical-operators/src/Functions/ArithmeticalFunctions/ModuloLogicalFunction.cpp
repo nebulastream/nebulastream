@@ -29,11 +29,6 @@
 namespace NES
 {
 
-ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other)
-    : dataType(other.dataType), left(other.left), right(other.right)
-{
-}
-
 ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
 {
