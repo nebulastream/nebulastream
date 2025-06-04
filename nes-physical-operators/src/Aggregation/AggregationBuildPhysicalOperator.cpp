@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
+#include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -49,27 +50,17 @@ Interface::HashMap* getAggHashMapProxy(
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        {operatorHandler->cleanupStateNautilusFunction},
+        buildOperator->hashMapOptions.keySize,
+        buildOperator->hashMapOptions.valueSize,
+        buildOperator->hashMapOptions.pageSize,
+        buildOperator->hashMapOptions.numberOfBuckets};
     auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(),
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
-            for (const auto& slice : createdSlices)
-            {
-                const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
-                INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-                aggregationSlice->setCleanupFunction(
-                    [cleanupStateNautilusFunction](const std::vector<std::unique_ptr<Interface::HashMap>>& hashMaps)
-                    {
-                        for (const auto& hashMap : hashMaps
-                                 | std::views::filter([](const auto& hashMapPtr)
-                                                      { return hashMapPtr and hashMapPtr->getNumberOfTuples() > 0; }))
-                        {
-                            /// Calling the compiled nautilus function
-                            cleanupStateNautilusFunction->operator()(hashMap.get());
-                        }
-                    });
-            }
             return createdSlices;
         });
 
@@ -81,14 +72,9 @@ Interface::HashMap* getAggHashMapProxy(
         hashMap.size());
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
-    const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
+    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
-    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs);
+    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const

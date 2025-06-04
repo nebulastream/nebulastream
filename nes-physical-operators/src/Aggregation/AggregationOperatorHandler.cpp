@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -28,7 +29,6 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <HashMapSlice.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -43,16 +43,18 @@ AggregationOperatorHandler::AggregationOperatorHandler(
 {
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> AggregationOperatorHandler::getCreateNewSlicesFunction() const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
+    const auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
     return std::function(
-        [outputOriginId = outputOriginId,
-         numberOfWorkerThreads = numberOfWorkerThreads](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
+            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<HashMapSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
+            return {std::make_shared<AggregationSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
 }
 
@@ -68,7 +70,7 @@ void AggregationOperatorHandler::triggerSlices(
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
-            const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
+            const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
                 if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));

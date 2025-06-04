@@ -25,7 +25,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMapRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -186,6 +185,15 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::R
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEntryRef& otherEntryRef) const
 {
     return findKey(otherEntryRef.getKey(), otherEntryRef.getHash());
+}
+
+nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry)
+{
+    /// Finding the entry. If chainEntry is nullptr, there does not exist a key with the same values.
+    const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
+    const ChainedEntryRef otherEntryRef{chainEntry, hashMapRef, fieldKeys, fieldValues};
+    const auto entryRef = findEntry(otherEntryRef);
+    return entryRef;
 }
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
