@@ -106,19 +106,25 @@ fi
 # Only /// allowed, as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex matches an even number of slashes (i.e. //, ////, ...)
 # The regex does not match "://" (for e.g. https://foo)
-if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- '*.cpp' '*.hpp'
-then
-    log_error Found forbidden comments. Please use /// for doc comments, remove all else.
-fi
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
+do
+    if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "$file" > /dev/null
+    then
+        log_error "Illegal comment in $(git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "$file")"
+    fi
+done
 
 # no comment after closing bracket for namespace
 #
 # No comment after closing brackets, as voted in https://github.com/nebulastream/nebulastream-public/discussions/379
 # This is done to ensure that no one uses a comment after a closing bracket for a namespace.
-if git grep -n -E -e "}[ \t]*//.*namespace.*" -- "nes-*"
-then
-    log_error Found comment after closing bracket for namespace. Please remove.
-fi
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
+do
+    if git grep -n -E -e "}[ \t]*///.*namespace.*" -- "$file" > /dev/null
+    then
+        log_error "Illegal comment in $(git grep -n -E -e "}[ \t]*//.*namespace.*" -- "$file")"
+    fi
+done
 
 # first include in .cpp file is the corresponding .hpp file
 #
@@ -155,7 +161,6 @@ done
 
 python3 scripts/check_preamble.py || FAIL=1
 
-echo
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
 
 [ "$FAIL" = "0" ] && echo "format.sh: no problems found"
