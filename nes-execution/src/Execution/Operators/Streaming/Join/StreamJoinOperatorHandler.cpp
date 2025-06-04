@@ -119,11 +119,11 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     auto windowInfoBuffers = getWindowInfoToMigrate();
 
     metadataPtr[0] = watermarkBuffers.size();
-    NES_ERROR("Number of serialized watermark buffers: {}", watermarkBuffers.size());
+    NES_DEBUG("Number of serialized watermark buffers: {}", watermarkBuffers.size());
     metadataPtr[1] = stateBuffers.size();
-    NES_ERROR("Number of serialized state buffers: {}", stateBuffers.size());
+    NES_DEBUG("Number of serialized state buffers: {}", stateBuffers.size());
     metadataPtr[2] = windowInfoBuffers.size();
-    NES_ERROR("Number of serialized window info buffers: {}", windowInfoBuffers.size());
+    NES_DEBUG("Number of serialized window info buffers: {}", windowInfoBuffers.size());
 
     std::vector<TupleBuffer> mergedBuffers = {metadata};
 
@@ -138,7 +138,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     mergedBuffers.insert(mergedBuffers.end(),
                          std::make_move_iterator(windowInfoBuffers.begin()),
                          std::make_move_iterator(windowInfoBuffers.end()));
-    NES_ERROR("Total number of serialized buffers: {}", mergedBuffers.size());
+    NES_DEBUG("Total number of serialized buffers: {}", mergedBuffers.size());
     for (auto& buffer: mergedBuffers) {
         buffer.setWatermark(mergedBuffers.size());
     }
