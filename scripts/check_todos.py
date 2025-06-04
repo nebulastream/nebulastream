@@ -124,23 +124,17 @@ def main():
 
     if illegal_todos:
         fail = 1
-        print()
-        print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: The following TODOs are not correctly formatted!")
-        print("       A correct TODO is e.g. '/// foo TODO #123 bar' or '/// TODO #123: foo bar'") # NO_TODO_CHECK
-        print()
         # sort by file, line_no
         illegal_todos.sort(key=lambda x: (x[0], x[1]))
         for file, line_no, line in illegal_todos:
-            print(f"{file}:{line_no}:{line}")
-        print()
+            print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: TODO with incorrect format {file}:{line_no}:{line}")
+        print("Hint: A correct TODO is e.g. '/// foo TODO #123 bar' or '/// TODO #123: foo bar'") # NO_TODO_CHECK
 
     if not todo_issues:
         # No added issue references, thus nothing to check
         sys.exit(fail)
     if todo_issues and "GH_TOKEN" not in os.environ:
-        print("env var GH_TOKEN not set, not checking that these referenced issues are open:")
-        for issue in sorted(todo_issues.keys()):
-            print(f"  {'#' + str(issue) : >5}: https://github.com/{OWNER}/{REPO}/issues/{issue}")
+        print(f"env var GH_TOKEN not set, not checking if {len(todo_issues.keys())} added TODO(s) are open")
         sys.exit(fail)
 
     all_issues = set()
@@ -170,15 +164,13 @@ def main():
             break
 
     if not todo_issues_numbers.issubset(open_issues):
-        print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: The following TODOs do not have a corresponding open Issue:")
         for issue in sorted(todo_issues_numbers.difference(open_issues)):
             if issue in all_issues:
                 state = "closed"
             else:
                 state = "nonexisting"
-            print(f"\n#{issue} ({state}), referenced at:")
             for loc in todo_issues[issue]:
-                print(" ", loc)
+                print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: TODO referencing {state} Issue at {loc}")
         fail = 1
 
     sys.exit(fail)
