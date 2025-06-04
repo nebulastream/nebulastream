@@ -25,7 +25,7 @@ jobs:
       options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
-        NUM_COMMITS: ${{ inputs.number_of_commits }}
+        DISTANCE_MERGE_BASE: ${{ inputs.number_of_commits }}
     permissions:
       issues: read
       contents: read
