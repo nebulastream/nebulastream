@@ -21,12 +21,6 @@
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
 #include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/AvgAggregationFunction.hpp>
-#include <Aggregation/Function/CountAggregationFunction.hpp>
-#include <Aggregation/Function/MaxAggregationFunction.hpp>
-#include <Aggregation/Function/MedianAggregationFunction.hpp>
-#include <Aggregation/Function/MinAggregationFunction.hpp>
-#include <Aggregation/Function/SumAggregationFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -49,6 +43,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <AggregationFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -106,80 +101,33 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
 }
 
 static std::vector<std::shared_ptr<AggregationFunction>>
-getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
+getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
 {
-    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
         auto physicalInputType = DataTypeProvider::provideDataType(descriptor->getInputStamp().type);
         auto physicalFinalType = DataTypeProvider::provideDataType(descriptor->getFinalAggregateStamp().type);
 
-        auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
-        const auto aggregationResultFieldIdentifier = descriptor->asField.getFieldName();
-        if (const auto name = descriptor->getName(); name == "Avg")
+        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
+        const auto resultFieldIdentifier = descriptor->asField.getFieldName();
+        auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+           configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
+        auto memoryProvider = std::make_shared<ColumnTupleBufferMemoryProvider>(layout);
+
+        auto name = descriptor->getName();
+        auto aggregationArguments = AggregationFunctionRegistryArguments(std::move(physicalInputType), std::move(physicalFinalType), std::move(aggregationInputFunction), resultFieldIdentifier, memoryProvider);
+        if (auto aggregationFunction = AggregationFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {
-            /// We assume that the count is a u64
-            auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-            aggregationFunctions.emplace_back(std::make_shared<AvgAggregationFunction>(
-                std::move(physicalInputType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier,
-                std::move(countType)));
-        }
-        else if (name == "Sum")
-        {
-            aggregationFunctions.emplace_back(std::make_shared<SumAggregationFunction>(
-                std::move(physicalInputType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier));
-        }
-        else if (name == "Count")
-        {
-            /// We assume that a count is a u64
-            auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-            aggregationFunctions.emplace_back(std::make_shared<CountAggregationFunction>(
-                std::move(countType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier));
-        }
-        else if (name == "Max")
-        {
-            aggregationFunctions.emplace_back(std::make_shared<MaxAggregationFunction>(
-                std::move(physicalInputType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier));
-        }
-        else if (name == "Min")
-        {
-            aggregationFunctions.emplace_back(std::make_shared<MinAggregationFunction>(
-                std::move(physicalInputType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier));
-        }
-        else if (name == "Median")
-        {
-            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
-            auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
-            aggregationFunctions.emplace_back(std::make_shared<MedianAggregationFunction>(
-                std::move(physicalInputType),
-                std::move(physicalFinalType),
-                std::move(aggregationInputExpression),
-                aggregationResultFieldIdentifier,
-                std::move(memoryProvider)));
+            aggregationPhysicalFunctions.push_back(AggregationPhysicalFunction.value());
         }
         else
         {
-            throw NotImplemented();
+            throw UnknownAggregationType("unknown aggregation type: {}", name);
         }
     }
-    return aggregationFunctions;
+    return aggregationPhysicalFunctions;
 }
 
 RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
