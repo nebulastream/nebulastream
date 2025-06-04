@@ -29,7 +29,7 @@
 #include <ExecutionContext.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-
+#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -181,6 +181,13 @@ void MedianAggregationFunction::cleanup(nautilus::val<AggregationState*> aggrega
 size_t MedianAggregationFunction::getSizeOfStateInBytes() const
 {
     return sizeof(Interface::PagedVector);
+}
+
+AggregationFunctionRegistryReturnType
+AggregationFunctionGeneratedRegistrar::RegisterMedianAggregationFunction(AggregationFunctionRegistryArguments arguments)
+{
+    INVARIANT(arguments.memProviderPagedVector.has_value(), "Memory provider paged vector not set");
+    return std::make_shared<MedianAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier, arguments.memProviderPagedVector.value());
 }
 
 }

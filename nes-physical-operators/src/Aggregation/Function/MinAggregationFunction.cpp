@@ -24,6 +24,7 @@
 #include <Nautilus/Util.hpp>
 #include <ExecutionContext.hpp>
 #include <val_ptr.hpp>
+#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -97,6 +98,12 @@ void MinAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 size_t MinAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
+}
+
+AggregationFunctionRegistryReturnType
+AggregationFunctionGeneratedRegistrar::RegisterMinAggregationFunction(AggregationFunctionRegistryArguments arguments)
+{
+    return std::make_shared<MinAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }
