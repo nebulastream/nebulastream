@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -27,7 +29,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -73,7 +74,7 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join({}-{}, windowType = {}, joinFunction = {}, windowStartField={}, windowEndField={})",
+            "Join(opId: {}, outputOriginIds: [{}], windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {})",
             id,
             fmt::join(outputOriginIds, ", "),
             getWindowType()->toString(),
