@@ -120,7 +120,7 @@ def main():
             todo_no = int(tm[2])
             todo_issues[todo_no].append(f"{diff_file}:{line_no}")
         else:
-            illegal_todos.append((diff_file, line_no, line[1:]))
+            illegal_todos.append((diff_file, line_no, line))
 
     if illegal_todos:
         fail = 1
