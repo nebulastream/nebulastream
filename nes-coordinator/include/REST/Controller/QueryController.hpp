@@ -168,7 +168,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                       .joinWith(Query::from("source_2_start"))
                                       .where(Attribute("value1") == Attribute("value2"))
                                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-                                      .sink(nullOutputSinkDescriptor, WorkerId(2));
+                                      .sink(nullOutputSinkDescriptor, WorkerId(1));
             auto queryPlan = migrationQuery.getQueryPlan();
             auto join = queryPlan->getOperatorByType<LogicalJoinOperator>()[0];
 //            auto reorderBuffers = LogicalOperatorFactory::createReorderTuplesOperator();
