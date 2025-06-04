@@ -177,10 +177,8 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         workerThreadIdForPages,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
-    const Interface::PagedVectorRef leftPagedVector(
-        leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
-    const Interface::PagedVectorRef rightPagedVector(
-        rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider);
+    const Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider);
     const auto numberOfTuplesLeft = leftPagedVector.getNumberOfTuples();
     const auto numberOfTuplesRight = rightPagedVector.getNumberOfTuples();
 
