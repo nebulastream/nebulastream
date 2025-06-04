@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iosfwd>
 #include <memory>
 #include <memory_resource>
 #include <thread>
@@ -24,7 +25,9 @@
 #include <vector>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/RollingAverage.hpp>
+#include <fmt/format.h>
 #include <folly/Synchronized.h>
 
 namespace NES
@@ -36,6 +39,9 @@ class UnpooledChunksManager
 {
     static constexpr auto NUM_PRE_ALLOCATED_CHUNKS = 10;
     static constexpr auto ROLLING_AVERAGE_UNPOOLED_BUFFER_SIZE = 100;
+
+    /// Needed for allocating and deallocating memory
+    std::shared_ptr<std::pmr::memory_resource> memoryResource;
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -49,6 +55,16 @@ class UnpooledChunksManager
             uint8_t* startOfChunk = nullptr;
             std::vector<std::unique_ptr<Memory::detail::MemorySegment>> unpooledMemorySegments;
             uint64_t activeMemorySegments = 0;
+
+            friend std::ostream& operator<<(std::ostream& os, const ChunkControlBlock& chunkControlBlock)
+            {
+                return os << fmt::format(
+                           "CCB {} ({}/{}B) with {} activeMemorySegments",
+                           fmt::ptr(chunkControlBlock.startOfChunk),
+                           chunkControlBlock.usedSize,
+                           chunkControlBlock.totalSize,
+                           chunkControlBlock.activeMemorySegments);
+            }
         };
 
         explicit UnpooledChunk(uint64_t windowSize);
@@ -64,18 +80,17 @@ class UnpooledChunksManager
     /// Returns two pointers wrapped in a pair
     /// std::get<0>: the key that is being used in the unordered_map of a ChunkControlBlock
     /// std::get<1>: pointer to the memory address that is large enough for neededSize
-    std::pair<uint8_t*, uint8_t*>
-    allocateSpace(std::thread::id threadId, size_t neededSize, std::pmr::memory_resource& memoryResource, size_t alignment);
+    std::pair<uint8_t*, uint8_t*> allocateSpace(std::thread::id threadId, size_t neededSize, size_t alignment);
 
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
 public:
+    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource);
     size_t getNumberOfUnpooledBuffers() const;
-    Memory::TupleBuffer getUnpooledBuffer(
-        size_t neededSize,
-        std::pmr::memory_resource& memoryResource,
-        size_t alignment,
-        const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler);
+    Memory::TupleBuffer
+    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler);
 };
 
 }
+
+FMT_OSTREAM(NES::UnpooledChunksManager::UnpooledChunk::ChunkControlBlock);

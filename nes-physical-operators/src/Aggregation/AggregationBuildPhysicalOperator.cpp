@@ -13,8 +13,6 @@
 */
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
-#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
-
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -63,8 +61,9 @@ Interface::HashMap* getAggHashMapProxy(
                 aggregationSlice->setCleanupFunction(
                     [cleanupStateNautilusFunction](const std::vector<std::unique_ptr<Interface::HashMap>>& hashMaps)
                     {
-                        for (const auto& hashMap :
-                             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr and hashMapPtr->getNumberOfTuples() > 0; }))
+                        for (const auto& hashMap : hashMaps
+                                 | std::views::filter([](const auto& hashMapPtr)
+                                                      { return hashMapPtr and hashMapPtr->getNumberOfTuples() > 0; }))
                         {
                             /// Calling the compiled nautilus function
                             cleanupStateNautilusFunction->operator()(hashMap.get());
@@ -103,31 +102,35 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) con
             nautilus::engine::Options options;
             options.setOption("engine.Compilation", true);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
+
+            /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+            /// ReSharper disable once CppPassValueParameterByConstReference
+            /// NOLINTBEGIN(performance-unnecessary-value-param)
             const auto cleanupStateNautilusFunction
-                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                    std::function(
-                        [copyOfFieldKeys = buildOperator->hashMapOptions.fieldKeys,
-                         copyOfFieldValues = buildOperator->hashMapOptions.fieldValues,
-                         copyOfEntriesPerPage = buildOperator->hashMapOptions.entriesPerPage,
-                         copyOfEntrySize = buildOperator->hashMapOptions.entrySize,
-                         copyOfAggregationFunctions
-                         = buildOperator->aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
+                    [copyOfFieldKeys = buildOperator->hashMapOptions.fieldKeys,
+                     copyOfFieldValues = buildOperator->hashMapOptions.fieldValues,
+                     copyOfEntriesPerPage = buildOperator->hashMapOptions.entriesPerPage,
+                     copyOfEntrySize = buildOperator->hashMapOptions.entrySize,
+                     copyOfAggregationFunctions
+                     = buildOperator->aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                    {
+                        const Interface::ChainedHashMapRef hashMapRef(
+                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                        for (const auto entry : hashMapRef)
                         {
-                            const Interface::ChainedHashMapRef hashMapRef(
-                                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                            for (const auto entry : hashMapRef)
+                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                             {
-                                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                    entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
-                                auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                                for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                                {
-                                    aggFunction->cleanup(state);
-                                    state = state + aggFunction->getSizeOfStateInBytes();
-                                }
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
                             }
-                        })));
-            operatorHandler->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
+                        }
+                    })));
+            /// NOLINTEND(performance-unnecessary-value-param)
+            operatorHandler->cleanupStateNautilusFunction = cleanupStateNautilusFunction;
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerId),
         nautilus::val<const AggregationBuildPhysicalOperator*>(this));

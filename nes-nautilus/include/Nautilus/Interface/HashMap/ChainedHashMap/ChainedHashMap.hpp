@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -62,11 +64,11 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
-    static constexpr auto DEFAULT_PAGE_SIZE = 8024;
-
+    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ~ChainedHashMap() override;
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
+    int8_t* allocateSpaceForVarSized(Memory::AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const ChainedHashMapEntry* getPage(uint64_t pageIndex) const;
@@ -80,11 +82,15 @@ public:
     /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
     void setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback);
 
+    /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
+    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
+
 private:
     friend class ChainedHashMapRef;
 
     Memory::TupleBuffer entrySpace;
     std::vector<Memory::TupleBuffer> storageSpace;
+    std::vector<Memory::TupleBuffer> varSizedSpace;
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize

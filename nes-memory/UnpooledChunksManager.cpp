@@ -25,12 +25,18 @@
 #include <thread>
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES
 {
+UnpooledChunksManager::UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource)
+    : memoryResource(std::move(memoryResource))
+{
+}
 
 UnpooledChunksManager::UnpooledChunk::UnpooledChunk(const uint64_t windowSize) : lastAllocateChunkKey(nullptr), rollingAverage(windowSize)
 {
@@ -73,8 +79,8 @@ size_t UnpooledChunksManager::getNumberOfUnpooledBuffers() const
     return numOfUnpooledBuffers;
 }
 
-std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
-    const std::thread::id threadId, const size_t neededSize, std::pmr::memory_resource& memoryResource, const size_t alignment)
+std::pair<uint8_t*, uint8_t*>
+UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_t neededSize, const size_t alignment)
 {
     /// There exist two possibilities that can happen
     /// 1. We have enough space in an already allocated chunk or 2. we need to allocate a new chunk of memory
@@ -102,9 +108,10 @@ std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
     /// For now, we allocate multiple localLastAllocateChunkKeyrolling averages. If this is too small for the current bufferSize, we allocate at least the bufferSize
     const auto newAllocationSizeExact = std::max(neededSize, newRollingAverage * NUM_PRE_ALLOCATED_CHUNKS);
     const auto newAllocationSize = (newAllocationSizeExact + 4095U) & ~4095U; /// Round to the nearest multiple of 4KB (page size)
-    auto* const newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource.allocate(newAllocationSize, alignment));
+    auto* const newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource->allocate(newAllocationSize, alignment));
     if (newlyAllocatedMemory == nullptr)
     {
+        NES_WARNING("Could not allocate {} bytes for unpooled chunk!", newAllocationSize);
         return {};
     }
 
@@ -112,18 +119,21 @@ std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
     localLastAllocatedChunkKey = newlyAllocatedMemory;
     const auto localKeyForUnpooledBufferChunk = newlyAllocatedMemory;
     const auto localMemoryForNewTupleBuffer = newlyAllocatedMemory;
-    localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk].startOfChunk = newlyAllocatedMemory;
-    localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk].totalSize = newAllocationSize;
-    localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk].usedSize += neededSize;
-    localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk].activeMemorySegments += 1;
+    auto& currentAllocatedChunk = localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk];
+    currentAllocatedChunk.startOfChunk = newlyAllocatedMemory;
+    currentAllocatedChunk.totalSize = newAllocationSize;
+    currentAllocatedChunk.usedSize += neededSize;
+    currentAllocatedChunk.activeMemorySegments += 1;
+    NES_INFO(
+        "Added tuple buffer {} of {}B to: {}",
+        fmt::ptr(localMemoryForNewTupleBuffer),
+        neededSize,
+        fmt::format("{}", currentAllocatedChunk));
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
 Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
-    const size_t neededSize,
-    std::pmr::memory_resource& memoryResource,
-    size_t alignment,
-    const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler)
+    const size_t neededSize, size_t alignment, const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler)
 {
     const auto threadId = std::this_thread::get_id();
 
@@ -133,21 +143,21 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
 
     /// Getting space from the unpooled chunks manager
     const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
-        = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, memoryResource, alignment);
+        = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, alignment);
 
     /// Creating a new memory segment, and adding it to the unpooledMemorySegments
     const auto alignedBufferSize = Memory::alignBufferSize(neededSize, alignment);
     const auto controlBlockSize = Memory::alignBufferSize(sizeof(Memory::detail::BufferControlBlock), alignment);
+    const auto chunk = this->getChunk(threadId);
     auto memSegment = std::make_unique<Memory::detail::MemorySegment>(
         localMemoryForNewTupleBuffer + controlBlockSize,
         alignedBufferSize,
-        [this,
-         &copyOfMemoryResource = memoryResource,
+        [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
-         copyOfThreadId = threadId,
+         copyOfChunk = chunk,
          copyOfAlignment = alignment](Memory::detail::MemorySegment* memorySegment, Memory::BufferRecycler*)
         {
-            auto lockedLocalUnpooledBufferData = this->getChunk(copyOfThreadId)->wlock();
+            auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
             auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
             INVARIANT(
                 curUnpooledChunk.activeMemorySegments > 0,
@@ -158,18 +168,19 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
             if (curUnpooledChunk.activeMemorySegments == 0)
             {
                 /// All memory segments have been removed, therefore, we can deallocate the unpooled chunk
-                auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(copyOLastChunkPtr);
-                lockedLocalUnpooledBufferData->chunks.erase(copyOLastChunkPtr);
+                const auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(copyOLastChunkPtr);
+                auto& extractedChunkControlBlock = extractedChunk.mapped();
                 lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
                 lockedLocalUnpooledBufferData.unlock();
-                copyOfMemoryResource.deallocate(curUnpooledChunk.startOfChunk, curUnpooledChunk.totalSize, copyOfAlignment);
+                copyOfMemoryResource->deallocate(
+                    extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
             }
         });
 
     auto* leakedMemSegment = memSegment.get();
     {
         /// Inserting the memory segment into the unpooled buffer storage
-        const auto lockedLocalUnpooledBufferData = this->getChunk(threadId)->wlock();
+        const auto lockedLocalUnpooledBufferData = chunk->wlock();
         lockedLocalUnpooledBufferData->emplaceChunkControlBlock(localKeyForUnpooledBufferChunk, std::move(memSegment));
     }
 

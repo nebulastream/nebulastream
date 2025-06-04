@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <ranges>
 #include <utility>
@@ -22,7 +23,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
-#include <Engine.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -30,10 +31,8 @@ namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
-class HashMapOptions
+struct HashMapOptions
 {
-public:
-    friend class HJProbePhysicalOperator;
     HashMapOptions(
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<PhysicalFunction> keyFunctions,
@@ -96,8 +95,36 @@ public:
         , numberOfBuckets(other.numberOfBuckets)
     {
     }
+    HashMapOptions& operator=(HashMapOptions&& other) noexcept
+    {
+        hashFunction = other.hashFunction->clone();
+        keyFunctions = std::move(other.keyFunctions);
+        fieldKeys = std::move(other.fieldKeys);
+        fieldValues = std::move(other.fieldValues);
+        entriesPerPage = std::move(other.entriesPerPage);
+        entrySize = std::move(other.entrySize);
+        keySize = std::move(other.keySize);
+        valueSize = std::move(other.valueSize);
+        pageSize = std::move(other.pageSize);
+        numberOfBuckets = std::move(other.numberOfBuckets);
+        return *this;
+    };
+    HashMapOptions& operator=(const HashMapOptions& other)
+    {
+        hashFunction = other.hashFunction->clone();
+        keyFunctions = other.keyFunctions;
+        fieldKeys = other.fieldKeys;
+        fieldValues = other.fieldValues;
+        entriesPerPage = other.entriesPerPage;
+        entrySize = other.entrySize;
+        keySize = other.keySize;
+        valueSize = other.valueSize;
+        pageSize = other.pageSize;
+        numberOfBuckets = other.numberOfBuckets;
+        return *this;
+    }
+    ~HashMapOptions() = default;
 
-protected:
     /// Method that gets called, once a hash map based slice gets destroyed.
     template <typename NautilusCleanupExecFunc>
     std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>
