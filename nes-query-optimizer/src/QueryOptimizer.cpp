@@ -14,13 +14,14 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <Phases/DecideJoinTypes.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
 
 namespace NES
 {
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
+PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
     return optimize(plan, defaultQueryExecution);
 }
@@ -28,8 +29,10 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
 PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just lower to physical operators in a pure function.
-    return LowerToPhysicalOperators::apply(plan, defaultQueryExecution);
+    /// For now, we just decide the join type (if one exists in the query) and lower to physical operators in a pure function.
+    DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
+    const auto optimizedPlan = joinTypeDecider.apply(plan);
+    return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
 }
 
 }
