@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <bit>
 #include <cstdint>
@@ -18,7 +19,6 @@
 #include <functional>
 #include <string>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
@@ -92,6 +92,19 @@ ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::ra
     const auto entryStartPos = hash & mask;
     return entries[entryStartPos];
 }
+
+int8_t* ChainedHashMap::allocateSpaceForVarSized(
+    Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize, const WorkerThreadId workerThreadId)
+{
+    auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
+    if (not varSizedBuffer)
+    {
+        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
+    }
+    varSizedSpace.emplace_back(varSizedBuffer.value());
+    return varSizedBuffer.value().getBuffer<int8_t>();
+}
+
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
 {

@@ -7,6 +7,7 @@ For now, we support the following benchmark queries:
 - [Linear Road Benchmark](https://www.cs.brandeis.edu/~linearroad/linear-road.pdf): Q1 and Q2
 - [Cluster Monitoring](https://github.com/google/cluster-data/blob/master/ClusterData2011_2.md): Q2 from the [Lightsaber paper](https://lsds.doc.ic.ac.uk/sites/default/files/lightsaber-sigmod20.pdf)
 - [Manufacturing](): Q1 from the [Lightsaber paper](https://lsds.doc.ic.ac.uk/sites/default/files/lightsaber-sigmod20.pdf)
+- [Yahoo Streaming Benchmark](https://github.com/yahoo/streaming-benchmarks/tree/master)
 
 
 Additionally, we have ported some of the queries from [DEBS Tutorial 2024](https://nebula.stream/publications/nebulastreamtutorial.html).

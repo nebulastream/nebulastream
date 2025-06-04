@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cstddef>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
@@ -127,11 +127,6 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getContentSize());
-                }
-                else if constexpr (std::is_same_v<T, nautilus::val<double>> || std::is_same_v<T, nautilus::val<float>>)
-                {
-                    /// For floating points, we do not support the >> operator, as it is not defined for floats.
-                    throw UnknownOperation("Cannot hash floating point values.");
                 }
                 else
                 {
