@@ -21,14 +21,14 @@ SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
 if (USE_LIBCXX_IF_AVAILABLE)
-    # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
+    # check if libc++ available and at least version 19
     set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
     check_cxx_source_compiles("
         #include <cstddef>
         #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
             int main() { return 0; }
         #else
-            #error \"libc++ version is not 19 or above\"
+            #error \"libc++ version is below 19\"
         #endif
     " LIBCXX_VERSION_CHECK)
 
@@ -45,13 +45,13 @@ if (NOT ${USING_LIBCXX})
     # Check if Libstdc++ version is 14 or above
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
-    #include <cstddef>
-    #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
-        int main() { return 0; }
-    #else
-        #error \"libstdc++ version is not above 14\"
-    #endif
-" LIBSTDCXX_VERSION_CHECK)
+        #include <cstddef>
+        #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
+            int main() { return 0; }
+        #else
+            #error \"libstdc++ version is below 14\"
+        #endif
+    " LIBSTDCXX_VERSION_CHECK)
 
     if (LIBSTDCXX_VERSION_CHECK)
         set(USING_LIBSTDCXX ON)
