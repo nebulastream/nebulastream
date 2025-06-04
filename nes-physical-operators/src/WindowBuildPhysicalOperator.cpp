@@ -27,7 +27,6 @@
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 #include <function.hpp>
-#include <val.hpp>
 
 namespace NES
 {

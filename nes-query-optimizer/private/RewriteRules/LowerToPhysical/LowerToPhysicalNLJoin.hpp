@@ -14,24 +14,20 @@
 
 #pragma once
 
-#include <memory>
-#include <memory_resource>
-namespace NES::Memory
+#include <utility>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+
+namespace NES
 {
-/**
- * @brief The default memory resource of nes that use posix_memalign
- */
-class NesDefaultMemoryAllocator : public std::pmr::memory_resource
+struct LowerToPhysicalNLJoin : AbstractRewriteRule
 {
-public:
-    explicit NesDefaultMemoryAllocator() = default;
-    ~NesDefaultMemoryAllocator() override = default;
+    explicit LowerToPhysicalNLJoin(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    void* do_allocate(size_t bytes, size_t alignment) override;
-
-    void do_deallocate(void* p, size_t, size_t) override;
-
-    bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
+    NES::Configurations::QueryOptimizerConfiguration conf;
 };
+
 }

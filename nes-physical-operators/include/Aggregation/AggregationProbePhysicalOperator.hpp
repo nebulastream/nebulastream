@@ -15,7 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <vector>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
@@ -25,18 +26,19 @@
 namespace NES
 {
 
-class AggregationProbePhysicalOperator final : public HashMapOptions, public WindowProbePhysicalOperator
+class AggregationProbePhysicalOperator final : public WindowProbePhysicalOperator
 {
 public:
     AggregationProbePhysicalOperator(
         HashMapOptions hashMapOptions,
-        std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
+        std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
+    HashMapOptions hashMapOptions;
 };
 
 }

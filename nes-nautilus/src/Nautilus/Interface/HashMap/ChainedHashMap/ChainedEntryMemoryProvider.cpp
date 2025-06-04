@@ -11,17 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 
 #include <cstdint>
+#include <cstring>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
 
@@ -73,6 +77,13 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
+            if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+            {
+                const auto varSizedDataPtr
+                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
+                VariableSizedData varSizedData(varSizedDataPtr);
+                return varSizedData;
+            }
             const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
             return varVal;
         }
@@ -92,7 +103,38 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
     return record;
 }
 
-void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record& record) const
+namespace
+{
+void storeVarSized(
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProviderRef,
+    const nautilus::val<int8_t*>& memoryAddress,
+    const VariableSizedData& variableSizedData)
+{
+    nautilus::invoke(
+        +[](ChainedHashMap* hashMap,
+            Memory::AbstractBufferProvider* bufferProvider,
+            const int8_t** memoryAddressInEntry,
+            const int8_t* varSizedData,
+            const uint64_t varSizedDataSize)
+        {
+            auto* const spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize);
+            std::memcpy(spaceForVarSizedData, varSizedData, varSizedDataSize);
+            *memoryAddressInEntry = spaceForVarSizedData;
+        },
+        hashMapRef,
+        bufferProviderRef,
+        memoryAddress,
+        variableSizedData.getReference(),
+        variableSizedData.getTotalSize());
+}
+}
+
+void ChainedEntryMemoryProvider::writeRecord(
+    const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const Record& record) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
@@ -100,18 +142,37 @@ void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapE
         const auto& entryRefCopy = entryRef;
         auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
         const auto memoryAddress = castedEntryAddress + fieldOffset;
-        value.writeToMemory(memoryAddress);
+        if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+        {
+            auto varSizedValue = value.cast<VariableSizedData>();
+            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
+        }
+        else
+        {
+            value.writeToMemory(memoryAddress);
+        }
     }
 }
 
 void ChainedEntryMemoryProvider::writeEntryRef(
-    const nautilus::val<ChainedHashMapEntry*>& entryRef, const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
+    const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
         const auto value = readVarVal(otherEntryRef, fieldIdentifier);
         const auto memoryAddress = static_cast<nautilus::val<int8_t*>>(entryRef) + nautilus::val<uint64_t>(fieldOffset);
-        value.writeToMemory(memoryAddress);
+        if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+        {
+            auto varSizedValue = value.cast<VariableSizedData>();
+            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
+        }
+        else
+        {
+            value.writeToMemory(memoryAddress);
+        }
     }
 }
 

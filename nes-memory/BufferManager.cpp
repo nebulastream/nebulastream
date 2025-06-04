@@ -45,6 +45,7 @@ BufferManager::BufferManager(
     const uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
     , numOfAvailableBuffers(numOfBuffers)
+    , unpooledChunksManager(memoryResource)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , memoryResource(std::move(memoryResource))
@@ -223,7 +224,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager.getUnpooledBuffer(bufferSize, *memoryResource, DEFAULT_ALIGNMENT, shared_from_this());
+    return unpooledChunksManager.getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)

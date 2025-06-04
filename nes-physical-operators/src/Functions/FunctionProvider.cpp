@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Functions/FunctionProvider.hpp>
 
 #include <cstdint>
 #include <string>
@@ -23,7 +24,6 @@
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <ErrorHandling.hpp>
