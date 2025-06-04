@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <utility>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Functions/CastFieldPhysicalFunction.hpp>
 
 namespace NES
 {
-struct LowerToPhysicalNLJoin : AbstractRewriteRule
+
+CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType)
+    : castToType(std::move(castToType)), childFunction(std::move(childFunction))
 {
-    explicit LowerToPhysicalNLJoin(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+}
 
-private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
-};
-
+VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+{
+    const auto value = childFunction.execute(record, arena);
+    return value.castToType(castToType.type);
+}
 }
