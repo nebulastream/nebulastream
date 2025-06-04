@@ -31,7 +31,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i8_s1 = i8
 0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,1,1,1,1,1,1,1,1,1.0,1.0,500
 
 
-# Check if different numeric types support the equals operation for a tumbling stream with ingestion time
+# Check if different numeric types support the equals operation for a tumbling stream with event time
 SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i16_s1 = i8_s2 and i16_s1 = i16_s2 and i16_s1 = i32_s2 and
                                                       i16_s1 = i64_s2 and i16_s1 = u8_s2 and i16_s1 = u16_s2 and
                                                       i16_s1 = u32_s2 and i16_s1 = u64_s2 and i16_s1 = f32_s2 and
