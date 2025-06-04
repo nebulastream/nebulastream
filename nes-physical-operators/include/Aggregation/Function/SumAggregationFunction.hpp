@@ -47,6 +47,8 @@ public:
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~SumAggregationFunction() override = default;
+private:
+    static constexpr std::string_view NAME = "Sum";
 };
 
 }

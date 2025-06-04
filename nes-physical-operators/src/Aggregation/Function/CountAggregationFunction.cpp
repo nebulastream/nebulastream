@@ -26,6 +26,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -97,6 +98,12 @@ void CountAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 size_t CountAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
+}
+
+AggregationFunctionRegistryReturnType
+AggregationFunctionGeneratedRegistrar::RegisterCountAggregationFunction(AggregationFunctionRegistryArguments arguments)
+{
+    return std::make_shared<CountAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

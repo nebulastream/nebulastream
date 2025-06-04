@@ -51,6 +51,7 @@ public:
     ~MedianAggregationFunction() override = default;
 
 private:
+    static constexpr std::string_view NAME = "Median";
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
 };
 
