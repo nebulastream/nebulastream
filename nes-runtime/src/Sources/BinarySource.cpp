@@ -57,6 +57,10 @@ void BinarySource::openFile() {
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
+    if (generatedBuffers % 100 == 0) {
+        NES_ERROR("buffers read {} out of {}", generatedBuffers / 100, bufferManager->getAvailableBuffers());
+    }
+
     if (generatedBuffers > 0) {
         return;
     }
