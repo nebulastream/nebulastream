@@ -31,7 +31,6 @@ enum class JoinBuildSideType : uint8_t
     Left
 };
 
-
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
