@@ -27,6 +27,7 @@
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
