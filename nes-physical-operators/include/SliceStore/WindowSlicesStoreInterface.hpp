@@ -28,6 +28,22 @@
 namespace NES
 {
 
+/// Stores the information of a window. The start and end timestamp
+struct WindowInfo
+{
+    WindowInfo(const uint64_t windowStart, const uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        if (windowEnd < windowStart)
+        {
+            this->windowStart = Timestamp(0);
+        }
+    }
+
+    bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+    Timestamp windowStart;
+    Timestamp windowEnd;
+};
+
 /// This struct stores a slice and the window info
 struct SlicesAndWindowInfo
 {

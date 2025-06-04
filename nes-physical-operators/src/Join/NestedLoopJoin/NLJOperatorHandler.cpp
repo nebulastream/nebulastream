@@ -43,7 +43,8 @@ NLJOperatorHandler::NLJOperatorHandler(
 {
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOperatorHandler::getCreateNewSlicesFunction() const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
@@ -57,7 +58,7 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
         });
 }
 
-void NLJOperatorHandler::emitSliceIdsToProbe(
+void NLJOperatorHandler::emitSlicesToProbe(
     Slice& sliceLeft,
     Slice& sliceRight,
     const WindowInfo& windowInfo,

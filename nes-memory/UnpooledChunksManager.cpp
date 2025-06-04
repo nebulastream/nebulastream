@@ -124,7 +124,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     currentAllocatedChunk.totalSize = newAllocationSize;
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
-    NES_INFO(
+    NES_TRACE(
         "Added tuple buffer {} of {}B to: {}",
         fmt::ptr(localMemoryForNewTupleBuffer),
         neededSize,
