@@ -22,11 +22,26 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/Util.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES
 {
+
+/// Stores the information (i.e., start and end timestamp) of a window
+struct WindowInfo
+{
+    WindowInfo(const uint64_t windowStart, const uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        PRECONDITION(windowEnd >= windowStart, "Window end {} must be greater or equal to window start {}", windowEnd, windowStart);
+    }
+
+    bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+
+    Timestamp windowStart;
+    Timestamp windowEnd;
+};
 
 /// This struct stores a slice and the window info
 struct SlicesAndWindowInfo

@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>

@@ -29,12 +29,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
-#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
-#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
-#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
-#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -42,7 +36,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Traits/JoinImplementationTypeTrait.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -149,14 +143,6 @@ TraitSet JoinLogicalOperator::getTraitSet() const
 {
     TraitSet result = traitSet;
     result.insert(originIdTrait);
-    if (shallUseHashJoin(joinFunction))
-    {
-        result.insert(HashJoinTrait{});
-    }
-    else
-    {
-        result.insert(NestedLoopJoinTrait{});
-    }
     return result;
 }
 

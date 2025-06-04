@@ -52,7 +52,7 @@ void StreamJoinOperatorHandler::triggerSlices(
             {
                 const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
                 const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
-                emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
+                emitSlicesToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
                 ++chunkNumber;
             }
         }
