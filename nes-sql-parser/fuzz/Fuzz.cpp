@@ -14,8 +14,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cpptrace/from_current.hpp>
-#include "SQLQueryParser/AntlrSQLQueryParser.hpp"
-#include "Util/PlanRenderer.hpp"
+
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -28,6 +28,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         std::string query(reinterpret_cast<const char*>(data), size);
         auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        std::cout << "parsed" << std::endl;
         std::cout << plan << std::endl;
         return 0;
     }
