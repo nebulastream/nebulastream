@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Phases/LowerToPhysicalOperators.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -28,16 +29,45 @@
 #include <PhysicalPlanBuilder.hpp>
 #include <RewriteRuleRegistry.hpp>
 
-namespace NES::LowerToPhysicalOperators
+
+namespace NES
 {
 
-static RewriteRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+LowerToPhysicalOperators::LowerToPhysicalOperators(NES::Configurations::QueryOptimizerConfiguration queryOptimizerConfiguration)
+    : queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
+{
+}
+
+RewriteRuleResultSubgraph::SubGraphRoot LowerToPhysicalOperators::lowerOperatorRecursively(
+    const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     /// Try to resolve rewrite rule for the current logical operator
-    const auto rule = [](const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+    const auto rule = [joinStrategy = queryOptimizerConfiguration.joinStrategy.getValue()](
+                          const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
     {
-        if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument))
+        const auto logicalOperatorName = logicalOperator.getName();
+        if (logicalOperatorName == "Join")
+        {
+            switch (joinStrategy)
+            {
+                case NES::Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
+                    if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("NLJoin"), registryArgument))
+                    {
+                        return std::move(ruleOptional.value());
+                    }
+                    throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+                }
+                case NES::Configurations::StreamJoinStrategy::HASH_JOIN: {
+                    if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
+                    {
+                        return std::move(ruleOptional.value());
+                    }
+                    throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+                }
+            }
+        }
+
+        if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperatorName), registryArgument))
         {
             return std::move(ruleOptional.value());
         }
@@ -75,7 +105,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
 
     std::ranges::for_each(
         std::views::zip(children, leafs),
-        [&registryArgument](const auto& zippedPair)
+        [&registryArgument, this](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;
             auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
@@ -84,9 +114,9 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     return root;
 }
 
-PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf) /// NOLINT
+PhysicalPlan LowerToPhysicalOperators::apply(const LogicalPlan& queryPlan) /// NOLINT
 {
-    const auto registryArgument = RewriteRuleRegistryArguments{conf};
+    const auto registryArgument = RewriteRuleRegistryArguments{queryOptimizerConfiguration};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.rootOperators.size());
     for (const auto& logicalRoot : queryPlan.rootOperators)
@@ -97,8 +127,8 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::Quer
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
     physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
-    physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
-    physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
+    physicalPlanBuilder.setExecutionMode(queryOptimizerConfiguration.executionMode.getValue());
+    physicalPlanBuilder.setOperatorBufferSize(queryOptimizerConfiguration.operatorBufferSize.getValue());
     return std::move(physicalPlanBuilder).finalize();
 }
 }

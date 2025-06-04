@@ -12,18 +12,22 @@
     limitations under the License.
 */
 
-#include <Phases/LowerToPhysicalOperators.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryOptimizer.hpp>
+#pragma once
+
+#include <utility>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES
 {
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
+struct LowerToPhysicalHashJoin : AbstractRewriteRule
 {
-    /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just lower to physical operators in a pure function.
-    return LowerToPhysicalOperators::apply(plan, conf);
-}
+    explicit LowerToPhysicalHashJoin(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+
+private:
+    NES::Configurations::QueryOptimizerConfiguration conf;
+};
 
 }

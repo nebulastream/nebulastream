@@ -20,7 +20,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
