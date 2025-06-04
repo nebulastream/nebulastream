@@ -116,10 +116,15 @@ done
 #
 # CLion uses double quotes when adding includes (automatically).
 # This check warns the author of a PR about includes with double quotes to avoid burdening the reviewers
-echo
-echo "New includes with double quotes:"
-git diff --name-only $(git merge-base HEAD origin/main 2>/dev/null) | grep -E '\.cpp$|\.hpp$' | xargs -I{} git grep -n -E -e "#include \".*\"" -- {} 2>/dev/null || echo "None found"
-echo
+for file in $(git diff --name-only --merge-base origin/main -- "*.hpp" "*.cpp")
+do
+    # if an added line contains contains a quote include
+    if git diff --merge-base origin/main -- "$file" | grep "^+" | grep '#include ".*"' > /dev/null
+    then
+        echo "Warning: New include with double quotes in $(git grep -n '#include ".*"' -- "$file")"
+    fi
+done
+
 
 python3 scripts/check_preamble.py || FAIL=1
 
