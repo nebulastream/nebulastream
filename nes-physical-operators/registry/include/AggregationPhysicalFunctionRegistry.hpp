@@ -17,17 +17,18 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Util/Registry.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES
 {
 
-using AggregationFunctionRegistryReturnType = std::shared_ptr<AggregationFunction>;
-struct AggregationFunctionRegistryArguments
+using AggregationPhysicalFunctionRegistryReturnType = std::shared_ptr<AggregationPhysicalFunction>;
+struct AggregationPhysicalFunctionRegistryArguments
 {
     DataType inputType;
     DataType resultType;
@@ -36,13 +37,16 @@ struct AggregationFunctionRegistryArguments
     std::optional<std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>> memProviderPagedVector;
 };
 
-class AggregationFunctionRegistry
-    : public BaseRegistry<AggregationFunctionRegistry, std::string, AggregationFunctionRegistryReturnType, AggregationFunctionRegistryArguments>
+class AggregationPhysicalFunctionRegistry : public BaseRegistry<
+                                                AggregationPhysicalFunctionRegistry,
+                                                std::string,
+                                                AggregationPhysicalFunctionRegistryReturnType,
+                                                AggregationPhysicalFunctionRegistryArguments>
 {
 };
 }
 
 
-#define INCLUDED_FROM_REGISTRY_AGGREGATION_FUNCTION
-#include <AggregationFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_AGGREGATION_FUNCTION
+#define INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
+#include <AggregationPhysicalFunctionGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION

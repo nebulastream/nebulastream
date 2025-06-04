@@ -15,20 +15,20 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_REGISTRY_AGGREGATION_FUNCTION
-#    error "This file should not be included directly! Include instead include <AggregationFunctionRegistry.hpp>"
+#ifndef INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
+#    error "This file should not be included directly! Include instead include <AggregationPhysicalFunctionRegistry.hpp>"
 #endif
 
 #include <memory>
 #include <string>
 #include <vector>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::AggregationFunctionGeneratedRegistrar
+namespace NES::AggregationPhysicalFunctionGeneratedRegistrar
 {
 
-/// declaration of register functions for 'AggregationFunctions'
+/// declaration of register functions for 'AggregationPhysicalFunctions'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
@@ -36,10 +36,10 @@ namespace NES
 {
 template <>
 inline void
-Registrar<AggregationFunctionRegistry, std::string, AggregationFunctionRegistryReturnType, AggregationFunctionRegistryArguments>::registerAll(
+Registrar<AggregationPhysicalFunctionRegistry, std::string, AggregationPhysicalFunctionRegistryReturnType, AggregationPhysicalFunctionRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::AggregationFunctionGeneratedRegistrar;
+    using namespace NES::AggregationPhysicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

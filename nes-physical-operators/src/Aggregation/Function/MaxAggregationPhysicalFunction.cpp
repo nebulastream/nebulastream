@@ -12,30 +12,31 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/MaxAggregationPhysicalFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/MaxAggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val_ptr.hpp>
-#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
 
-MaxAggregationFunction::MaxAggregationFunction(
+MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
     DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
-void MaxAggregationFunction::lift(
+void MaxAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
@@ -52,7 +53,7 @@ void MaxAggregationFunction::lift(
     }
 }
 
-void MaxAggregationFunction::combine(
+void MaxAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
@@ -72,7 +73,7 @@ void MaxAggregationFunction::combine(
     }
 }
 
-Record MaxAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -84,7 +85,7 @@ Record MaxAggregationFunction::lower(const nautilus::val<AggregationState*> aggr
     return record;
 }
 
-void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the max value to the minimum value
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -92,19 +93,20 @@ void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     max.writeToMemory(memAreaMax);
 }
 
-void MaxAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+void MaxAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 {
 }
 
-size_t MaxAggregationFunction::getSizeOfStateInBytes() const
+size_t MaxAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
 }
 
-AggregationFunctionRegistryReturnType
-AggregationFunctionGeneratedRegistrar::RegisterMaxAggregationFunction(AggregationFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMaxAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    return std::make_shared<MaxAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+    return std::make_shared<MaxAggregationPhysicalFunction>(
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

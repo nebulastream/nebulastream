@@ -12,31 +12,32 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/SumAggregationPhysicalFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/SumAggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
 
-SumAggregationFunction::SumAggregationFunction(
+SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
     DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
-void SumAggregationFunction::lift(
+void SumAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
@@ -53,7 +54,7 @@ void SumAggregationFunction::lift(
     newSum.writeToMemory(memAreaSum);
 }
 
-void SumAggregationFunction::combine(
+void SumAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
@@ -73,7 +74,7 @@ void SumAggregationFunction::combine(
     newSum.writeToMemory(memAreaSum1);
 }
 
-Record SumAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -86,26 +87,27 @@ Record SumAggregationFunction::lower(const nautilus::val<AggregationState*> aggr
     return record;
 }
 
-void SumAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void SumAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 
-void SumAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+void SumAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 {
 }
 
-size_t SumAggregationFunction::getSizeOfStateInBytes() const
+size_t SumAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
 }
 
-AggregationFunctionRegistryReturnType
-AggregationFunctionGeneratedRegistrar::RegisterSumAggregationFunction(AggregationFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterSumAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    return std::make_shared<SumAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+    return std::make_shared<SumAggregationPhysicalFunction>(
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }
