@@ -11,6 +11,22 @@ on:
         type: string
         required: true
         description: "ref of the branch"
+      number_of_worker_threads:
+        type: string
+        description: "Number of worker threads the large scale tests should be run with"
+        default: 4
+      buffer_size:
+        type: string
+        description: "Buffer size the large scale tests should be run with"
+        default: 4096
+      page_size:
+        type: string
+        description: "Page size the large scale tests should be run with"
+        default: 4096
+      number_of_partitions:
+        type: string
+        description: "Number of partitions large scale tests should be run with"
+        default: 128
 
 jobs:
   build-and-test-linux:
@@ -41,12 +57,31 @@ jobs:
       - name: Configure NebulaStream
         run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
-        run: cmake --build build -j
-      - name: Run Large System Level Tests
-        run: ctest --test-dir build -R "^systest_large*" --output-on-failure --output-junit /junit.xml
-      - name: Upload Test Summary
+        run: cmake --build build --target systest -j
+      - name: Run large System Level Tests
+        run: |
+          echo "Running all large tests with: "
+          echo " - NUMBER_OF_WORKER_THREADS: ${{ inputs.number_of_worker_threads }}"
+          echo " - BUFFER_SIZE: ${{ inputs.buffer_size }}"
+          echo " - PAGE_SIZE: ${{ inputs.page_size }}"
+          echo " - NUMBER_OF_PARTITIONS: ${{ inputs.number_of_partitions }}"    
+
+          build/nes-systests/systest/systest \
+              --workingDir=build/nes-systests/large_scale \
+              --data build/nes-systests/testdata \
+              --groups large \
+              -- \
+              --worker.queryOptimizer.executionMode=COMPILER \
+              --worker.queryEngine.numberOfWorkerThreads=${{ inputs.number_of_worker_threads }} \
+              --worker.queryOptimizer.operatorBufferSize=${{ inputs.buffer_size }} \
+              --worker.bufferSizeInBytes=${{ inputs.buffer_size }} \
+              --worker.queryOptimizer.pageSize=${{ inputs.page_size }} \
+              --worker.queryOptimizer.numberOfPartitions=${{ inputs.number_of_partitions }} \
+              --worker.numberOfBuffersInGlobalBufferManager=200000
+
+      - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !github.event.act }}
+        if: failure() && !github.event.act
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-large.xml
-          path: /junit.xml
+          name: test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: build/nes-systests/SystemTest_*.log

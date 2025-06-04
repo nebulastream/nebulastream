@@ -72,6 +72,15 @@ jobs:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
+  run_large_scale_tests_random_config:
+    name: Large Scale Tests Random Worker Config
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/large_tests_random_worker_config.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
   test-other-configs:
     needs: [ fetch-current-main-commit, get-dev-images ]
     runs-on: [ self-hosted, linux, X64, Build ]
