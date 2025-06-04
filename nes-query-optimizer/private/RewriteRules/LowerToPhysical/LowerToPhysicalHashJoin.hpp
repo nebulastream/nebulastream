@@ -13,26 +13,21 @@
 */
 
 #pragma once
+
+#include <utility>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <PhysicalPlan.hpp>
-#include <RewriteRuleRegistry.hpp>
 
 namespace NES
 {
-class LowerToPhysicalOperators
+struct LowerToPhysicalHashJoin : AbstractRewriteRule
 {
-public:
-    explicit LowerToPhysicalOperators(NES::Configurations::QueryOptimizerConfiguration queryOptimizerConfiguration);
-    PhysicalPlan apply(const LogicalPlan& queryPlan);
+    explicit LowerToPhysicalHashJoin(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    RewriteRuleResultSubgraph::SubGraphRoot
-    lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument);
-
-    NES::Configurations::QueryOptimizerConfiguration queryOptimizerConfiguration;
+    NES::Configurations::QueryOptimizerConfiguration conf;
 };
 
 }
