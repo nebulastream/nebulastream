@@ -35,7 +35,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                            bool shouldDelayEOS,
-                           uint64_t)
+                           uint64_t numberOfBuffersToProduce)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -48,7 +48,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  false,
                  shouldDelayEOS,
                  std::move(successors)), filePath(pathToFile) {
-    this->numberOfBuffersToProduce = 0;
+    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
 }
 
 void BinarySource::openFile() {

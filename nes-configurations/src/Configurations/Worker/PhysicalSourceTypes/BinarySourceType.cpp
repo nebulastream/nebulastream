@@ -37,6 +37,11 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
+    if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
+      && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
+        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
+        NES_ERROR("numberOfBuffersToProduce {}", numberOfBuffersToProduce.get()->getValue());
+    }
 }
 
 BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName,
@@ -57,6 +62,11 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+            numberOfBuffersToProduce->setValue(
+                std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
+        NES_ERROR("numberOfBuffersToProduce {}", numberOfBuffersToProduce.get()->getValue());
+    }
 }
 
 BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
@@ -67,7 +77,12 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const s
     : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::BINARY_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
-                                                                        "file path, needed for: CSVSource, BinarySource")) {
+                                                                        "file path, needed for: CSVSource, BinarySource")),
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                                                0,
+                                                                "Number of buffers to produce.")) {
+
     NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
 
@@ -86,6 +101,8 @@ bool BinarySourceType::equal(const PhysicalSourceTypePtr& other) {
     auto otherSourceConfig = other->as<BinarySourceType>();
     return filePath->getValue() == otherSourceConfig->filePath->getValue();
 }
+
+uint32_t BinarySourceType::getNumberOfTuples() { return numberOfBuffersToProduce->getValue(); }
 
 Configurations::StringConfigOption BinarySourceType::getFilePath() const { return filePath; }
 

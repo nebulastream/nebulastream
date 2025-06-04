@@ -74,6 +74,8 @@ class BinarySourceType : public PhysicalSourceType {
      */
     void setFilePath(std::string filePath);
 
+    uint32_t getNumberOfTuples();
+
   private:
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
@@ -93,6 +95,7 @@ class BinarySourceType : public PhysicalSourceType {
     BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption filePath;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
 };
 }// namespace NES
 #endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_

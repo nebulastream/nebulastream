@@ -52,7 +52,7 @@ class BinarySource : public DataSource {
                           const std::string& physicalSourceName,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                           bool shouldDelayEOS = false,
-                          uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max());
+                          uint64_t numberOfBuffersToProduce = 0);
 
     void openFile();
 
