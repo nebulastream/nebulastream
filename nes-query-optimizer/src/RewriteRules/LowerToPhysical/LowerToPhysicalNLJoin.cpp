@@ -64,14 +64,6 @@ class TimestampField
 public:
     friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
 
-    /// The multiplier is the value which converts from the underlying time value to milliseconds.
-    /// E.g. the multiplier for a timestampfield of seconds is 1000
-    [[nodiscard]] Windowing::TimeUnit getUnit() const { return unit; }
-
-    [[nodiscard]] const std::string& getName() const { return fieldName; }
-
-    [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const { return timeFunctionType; }
-
     /// Builds the TimeFunction
     [[nodiscard]] std::unique_ptr<TimeFunction> toTimeFunction() const
     {
@@ -108,7 +100,6 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
         return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
     }
 
-    /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
     auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
     auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
@@ -158,6 +149,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
+    /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto rightInputSchema = join.getInputSchemas()[0];
     auto leftInputSchema = join.getInputSchemas()[1];
     auto outputSchema = join.getOutputSchema();
@@ -212,7 +204,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 };
 
 std::unique_ptr<AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterJoinRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
+RewriteRuleGeneratedRegistrar::RegisterNLJoinRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalNLJoin>(argument.conf);
 }

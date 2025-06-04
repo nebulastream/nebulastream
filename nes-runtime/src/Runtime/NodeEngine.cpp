@@ -101,6 +101,8 @@ QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan>
 
 void NodeEngine::startQuery(QueryId queryId)
 {
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
         systemEventListener->onEvent(StartQuerySystemEvent(queryId));
@@ -114,12 +116,14 @@ void NodeEngine::startQuery(QueryId queryId)
 
 void NodeEngine::unregisterQuery(QueryId queryId)
 {
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Unregister {}", queryId);
     queryEngine->stop(queryId);
 }
 
 void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 {
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Stop {}", queryId);
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);

@@ -13,26 +13,23 @@
 */
 
 #pragma once
-
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
+
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-class QueryOptimizer final
+/// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
+class DecideJoinTypes
 {
 public:
-    explicit QueryOptimizer(QueryExecutionConfiguration defaultQueryExecution)
-        : defaultQueryExecution(std::move(defaultQueryExecution)) { };
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan) const;
-    [[nodiscard]] static PhysicalPlan optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution);
+    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+
+    LogicalPlan apply(const LogicalPlan& queryPlan);
 
 private:
-    QueryExecutionConfiguration defaultQueryExecution;
+    LogicalOperator apply(const LogicalOperator& logicalOperator);
+    StreamJoinStrategy joinStrategy;
 };
-
 }

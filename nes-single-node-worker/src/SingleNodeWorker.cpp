@@ -90,6 +90,7 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
 {
     try
     {
+        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->startQuery(queryId);
     }
     catch (...)
@@ -103,6 +104,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
 {
     try
     {
+        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId, type);
     }
     catch (...)
@@ -116,6 +118,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
 {
     try
     {
+        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->unregisterQuery(queryId);
     }
     catch (...)
