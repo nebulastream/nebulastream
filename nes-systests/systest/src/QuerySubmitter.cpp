@@ -154,6 +154,6 @@ std::vector<NES::QuerySummary> NES::Systest::RemoteWorkerQuerySubmitter::finishe
     }
 }
 NES::Systest::RemoteWorkerQuerySubmitter::RemoteWorkerQuerySubmitter(const std::string& serverURI)
-    : client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()))
+    : client(CreateChannel(serverURI, grpc::InsecureChannelCredentials())), bloat(std::make_unique<std::string>(std::string{"test"}))
 {
 }
