@@ -41,10 +41,12 @@ public:
     /// Especially a wrapper around a ChainedHashMapEntry.
     struct ChainedEntryRef
     {
-        void copyKeysToEntry(const Record& keys) const;
-        void copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const;
-        void copyValuesToEntry(const Record& values) const;
-        void copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const;
+        void copyKeysToEntry(const Record& keys, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+        void
+        copyKeysToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+        void copyValuesToEntry(const Record& values, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+        void
+        copyValuesToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
         [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
         [[nodiscard]] Record getKey() const;
         [[nodiscard]] Record getValue() const;
@@ -54,11 +56,13 @@ public:
         [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
+            const nautilus::val<ChainedHashMap*>& hashMapRef,
             std::vector<MemoryProvider::FieldOffsets> fieldsKey,
             std::vector<MemoryProvider::FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
+            const nautilus::val<ChainedHashMap*>& hashMapRef,
             MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
             MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues);
 
@@ -69,6 +73,7 @@ public:
 
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
+        nautilus::val<ChainedHashMap*> hashMapRef;
         MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys;
         MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues;
     };

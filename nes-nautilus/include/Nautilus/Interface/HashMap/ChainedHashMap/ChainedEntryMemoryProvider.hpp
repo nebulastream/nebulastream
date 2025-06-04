@@ -23,6 +23,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -53,8 +54,16 @@ public:
     [[nodiscard]] VarVal
     readVarVal(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record::RecordFieldIdentifier& fieldName) const;
     [[nodiscard]] Record readRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef) const;
-    void writeRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record& record) const;
-    void writeEntryRef(const nautilus::val<ChainedHashMapEntry*>& entryRef, const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const;
+    void writeRecord(
+        const nautilus::val<ChainedHashMapEntry*>& entryRef,
+        const nautilus::val<ChainedHashMap*>& hashMapRef,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const Record& record) const;
+    void writeEntryRef(
+        const nautilus::val<ChainedHashMapEntry*>& entryRef,
+        const nautilus::val<ChainedHashMap*>& hashMapRef,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldIdentifiers() const;
     [[nodiscard]] const std::vector<FieldOffsets>& getAllFields() const;
