@@ -1,6 +1,6 @@
 # name: milestone/Nexmark.test
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation, Join, NestedLoopJoin]
 
 # Source definitions
 Source bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price FILE
