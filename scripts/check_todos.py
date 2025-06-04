@@ -13,6 +13,9 @@ import urllib.request
 from collections import defaultdict
 from typing import Tuple, List
 
+COLOR_RED_BOLD = "\033[1;31m"
+COLOR_RESET = "\033[0m"
+
 def run_cmd(cmd: list) -> str:
     """runs cmd, returns stdout or crashes"""
     try:
@@ -131,7 +134,7 @@ def main():
     if illegal_todos:
         fail = 1
         print()
-        print("Error: The following TODOs are not correctly formatted!")
+        print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: The following TODOs are not correctly formatted!")
         print("       A correct TODO is e.g. '/// foo TODO #123 bar' or '/// TODO #123: foo bar'") # NO_TODO_CHECK
         print()
         # sort by file, line_no
@@ -176,7 +179,7 @@ def main():
             break
 
     if not todo_issues_numbers.issubset(open_issues):
-        print("Error: The following TODOs do not have a corresponding open Issue:")
+        print(f"{COLOR_RED_BOLD}Error{COLOR_RESET}: The following TODOs do not have a corresponding open Issue:")
         for issue in sorted(todo_issues_numbers.difference(open_issues)):
             if issue in all_issues:
                 state = "closed"

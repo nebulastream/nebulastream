@@ -8,6 +8,18 @@ cd "$(git rev-parse --show-toplevel)"
 # It looks like git grep pipes the output to less, which is not closed properly.
 export GIT_PAGER=cat
 
+COLOR_YELLOW_BOLD="\e[1;33m"
+COLOR_RED_BOLD="\e[1;31m"
+COLOR_RESET="\e[0m"
+
+log_warn() {
+    echo -e "${COLOR_YELLOW_BOLD}Warning${COLOR_RESET}: $*"
+}
+log_error() {
+    FAIL=1
+    echo -e "${COLOR_RED_BOLD}Error${COLOR_RESET}: $*"
+}
+
 
 if [ -x "$(command -v clang-format-19)" ]
 then
@@ -65,8 +77,8 @@ else
     git ls-files \
       | grep --invert-match -e "\.png$" -e "\.zip$" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
-      | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }' \
-      || FAIL=1
+      | awk '$1 != $2 { exit 1 }' \
+      || log_error 'There are missing newline(s) at EOF. Please run "scripts/format.sh -i" to fix'
 fi
 
 # comment style
@@ -76,9 +88,7 @@ fi
 # The regex does not match "://" (for e.g. https://foo)
 if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- '*.cpp' '*.hpp'
 then
-    echo
-    echo Found forbidden comments. Please use /// for doc comments, remove all else.
-    FAIL=1
+    log_error Found forbidden comments. Please use /// for doc comments, remove all else.
 fi
 
 # no comment after closing bracket for namespace
@@ -87,9 +97,7 @@ fi
 # This is done to ensure that no one uses a comment after a closing bracket for a namespace.
 if git grep -n -E -e "}[ \t]*//.*namespace.*" -- "nes-*"
 then
-    echo
-    echo Found comment after closing bracket for namespace. Please remove.
-    FAIL=1
+    log_error Found comment after closing bracket for namespace. Please remove.
 fi
 
 # first include in .cpp file is the corresponding .hpp file
@@ -101,14 +109,13 @@ do
 	# check if corresponding header file exists
 	if ! git ls-files | grep "$basename.hpp" > /dev/null
 	then
-		echo "Warning: file has no corresponding header file: $file"
+		log_warn "file has no corresponding header file: $file"
 		continue
 	fi
 	# error if the first include does not contain the basename
 	if ! grep "#include" < "$file" | head -n 1 | grep "$basename.hpp" > /dev/null
 	then
-		echo "Error: First include is not the corresponding .hpp file in $file"
-		FAIL=1
+		log_error "First include is not the corresponding .hpp file in $file"
 	fi
 done
 
@@ -121,13 +128,14 @@ do
     # if an added line contains contains a quote include
     if git diff --merge-base origin/main -- "$file" | grep "^+" | grep '#include ".*"' > /dev/null
     then
-        echo "Warning: New include with double quotes in $(git grep -n '#include ".*"' -- "$file")"
+        log_warn "New include with double quotes in $(git grep -n '#include ".*"' -- "$file")"
     fi
 done
 
 
 python3 scripts/check_preamble.py || FAIL=1
 
+echo
 python3 scripts/check_todos.py || FAIL=1
 
 [ "$FAIL" = "0" ] && echo "format.sh: no problems found"
