@@ -35,6 +35,8 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include "Nautilus/Interface/NESStrongTypeRef.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Nautilus::Interface
 {
