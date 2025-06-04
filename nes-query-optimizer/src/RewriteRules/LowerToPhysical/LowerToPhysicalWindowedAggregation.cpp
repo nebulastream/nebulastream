@@ -27,7 +27,6 @@
 #include <Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Aggregation/Function/MinAggregationFunction.hpp>
 #include <Aggregation/Function/SumAggregationFunction.hpp>
-#include <Aggregation/WindowAggregation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -166,7 +165,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         {
             auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
                 NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
-            auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
+            auto memoryProvider = std::make_unique<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
             aggregationFunctions.emplace_back(std::make_shared<MedianAggregationFunction>(
                 std::move(physicalInputType),
                 std::move(physicalFinalType),
@@ -220,31 +219,45 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         keySize += DataTypeProvider::provideDataType(loweredFunctionType.type).getSizeInBytes();
     }
     const auto entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
-    const auto numberOfBuckets = NES::Configurations::DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES;
+    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
+    const auto& [fieldKeys, fieldValues]
+        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 
     const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
 
-    auto windowAggregation = std::make_shared<WindowAggregation>(
-        aggregationFunctions, std::make_unique<Interface::MurMur3HashFunction>(), fieldKeys, fieldValues, entriesPerPage, entrySize);
+    HashMapOptions hashMapOptions(
+        std::make_unique<Interface::MurMur3HashFunction>(),
+        keyFunctions,
+        fieldKeys,
+        fieldValues,
+        entriesPerPage,
+        entrySize,
+        keySize,
+        valueSize,
+        pageSize,
+        numberOfBuckets);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());
     auto handler = std::make_shared<AggregationOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
-    handler->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
-
-    auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), keyFunctions, windowAggregation);
-    auto probe = AggregationProbePhysicalOperator(windowAggregation, handlerId, windowMetaData);
+    auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationFunctions, hashMapOptions);
+    auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationFunctions, handlerId, windowMetaData);
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        probe, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::SCAN, std::vector{buildWrapper});
+        probe,
+        newInputSchema,
+        outputSchema,
+        handlerId,
+        handler,
+        PhysicalOperatorWrapper::PipelineLocation::SCAN,
+        std::vector{buildWrapper});
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), buildWrapper);

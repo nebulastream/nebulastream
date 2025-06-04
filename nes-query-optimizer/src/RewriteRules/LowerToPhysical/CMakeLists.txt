@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Join RewriteRule nes-query-optimizer LowerToPhysicalNLJoin.cpp)
+add_plugin(Join RewriteRule nes-query-optimizer LowerToPhysicalJoin.cpp)
 add_plugin(Map RewriteRule nes-query-optimizer LowerToPhysicalMap.cpp)
 add_plugin(Selection RewriteRule nes-query-optimizer LowerToPhysicalSelection.cpp)
 add_plugin(Projection RewriteRule nes-query-optimizer LowerToPhysicalProjection.cpp)
