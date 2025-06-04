@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(src)
+add_subdirectory(fuzz)
 get_source(nes-sql-parser SQL_PARSER_SOURCE_FILES)
 
 find_package(antlr4-generator CONFIG REQUIRED)
