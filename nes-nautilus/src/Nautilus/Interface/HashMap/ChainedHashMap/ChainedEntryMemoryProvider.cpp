@@ -14,14 +14,20 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 
 #include <cstdint>
+#include <cstring>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
 
@@ -80,11 +86,9 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
                 VariableSizedData varSizedData(varSizedDataPtr);
                 return varSizedData;
             }
-            else
-            {
-                const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
-                return varVal;
-            }
+
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
+            return varVal;
         }
     }
     throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
@@ -106,7 +110,7 @@ namespace
 {
 void storeVarSized(
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProviderRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProviderRef,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<int8_t*>& memoryAddress,
     const VariableSizedData& variableSizedData)
@@ -119,7 +123,7 @@ void storeVarSized(
             const int8_t* varSizedData,
             const uint64_t varSizedDataSize)
         {
-            const auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize, workerThreadIdVal);
+            auto* const spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize, workerThreadIdVal);
             std::memcpy(spaceForVarSizedData, varSizedData, varSizedDataSize);
             *memoryAddressInEntry = spaceForVarSizedData;
         },

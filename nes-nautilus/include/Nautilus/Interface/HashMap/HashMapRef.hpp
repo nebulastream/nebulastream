@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_ptr.hpp>
 
@@ -54,6 +55,10 @@ public:
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<WorkerThreadId>& workerThreadId)
         = 0;
+
+    /// This function performs a lookup to the hash map with a record
+    /// It returns either the entry or a nullptr, depending on if the record key is in the hash map or not
+    virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
 
 protected:
     nautilus::val<HashMap*> hashMapRef;

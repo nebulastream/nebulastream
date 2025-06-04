@@ -21,12 +21,14 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMapRef.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
@@ -34,8 +36,6 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include "Nautilus/Interface/NESStrongTypeRef.hpp"
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Nautilus::Interface
 {
@@ -195,6 +195,15 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::R
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEntryRef& otherEntryRef) const
 {
     return findKey(otherEntryRef.getKey(), otherEntryRef.getHash());
+}
+
+nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry)
+{
+    /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
+    const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
+    const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
+    const auto entryRef = findEntry(otherEntryRef);
+    return entryRef;
 }
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(

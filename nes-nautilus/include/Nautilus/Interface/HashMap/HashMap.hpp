@@ -14,6 +14,7 @@
 
 #pragma once
 #include <cstdint>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 
@@ -32,7 +33,7 @@ class HashMap
 public:
     virtual ~HashMap() = default;
     virtual AbstractHashMapEntry*
-    insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
+    insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId)
         = 0;
     [[nodiscard]] virtual uint64_t getNumberOfTuples() const = 0;
 };

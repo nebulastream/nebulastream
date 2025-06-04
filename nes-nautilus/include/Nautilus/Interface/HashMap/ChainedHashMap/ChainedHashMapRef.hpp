@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -127,13 +128,14 @@ public:
         const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<WorkerThreadId>& workerThreadId) override;
+        const nautilus::val<WorkerThreadId>& workerThreadId) override;
     void insertOrUpdateEntry(
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<WorkerThreadId>& workerThreadId) override;
+        const nautilus::val<WorkerThreadId>& workerThreadId) override;
+    nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) override;
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
 

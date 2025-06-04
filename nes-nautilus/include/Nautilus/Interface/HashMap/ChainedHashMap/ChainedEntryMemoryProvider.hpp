@@ -15,14 +15,15 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
