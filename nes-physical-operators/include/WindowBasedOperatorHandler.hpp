@@ -23,6 +23,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -82,7 +83,8 @@ public:
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
-    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
+    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
 
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
