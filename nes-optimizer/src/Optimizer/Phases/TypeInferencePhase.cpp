@@ -47,7 +47,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     auto sinkOperators = queryPlan->getSinkOperators();
 
     if (sourceOperators.empty() || sinkOperators.empty()) {
-        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
+        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators" + queryPlan->getQueryId().toString());
     }
 
     performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
@@ -66,7 +66,7 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
 
     if (sourceOperators.empty() || sinkOperators.empty()) {
         throw TypeInferenceException(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId),
-                                     "Found no source or sink operators");
+                                     "Found no source or sink operators" + decomposedQueryPlan->getDecomposedQueryId().toString());
     }
 
     performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId),

@@ -1005,7 +1005,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 }
             }
         } catch (std::exception& ex) {
-            NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
+            NES_ERROR("Exception occurred during pinned operator placement {}. Node id {}", ex.what(), workerNodeId.toString());
             throw ex;
         }
     }
