@@ -57,6 +57,7 @@ const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "numOfRequestExecutorThread";
 const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
+const std::string ISNORMALSOURCE = "isNormalSource";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";

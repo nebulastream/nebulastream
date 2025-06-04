@@ -41,14 +41,18 @@ class BinarySourceDescriptor : public SourceDescriptor {
     SourceDescriptorPtr copy() override;
 
     void setNumberOfTuples(uint32_t);
+    void setIsNormalSource(bool);
 
     uint32_t getNumberOfTuples();
+    bool getIsNormalSource();
+
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string sourceName, std::string filePath);
 
     std::string filePath;
     uint32_t numberOfTuples;
+    bool isNormalSource;
 };
 
 using BinarySourceDescriptorPtr = std::shared_ptr<BinarySourceDescriptor>;

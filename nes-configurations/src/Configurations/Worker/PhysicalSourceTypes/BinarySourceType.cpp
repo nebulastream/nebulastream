@@ -42,6 +42,12 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
         numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
         NES_ERROR("numberOfBuffersToProduce {}", numberOfBuffersToProduce.get()->getValue());
     }
+
+    if (!yamlConfig[Configurations::ISNORMALSOURCE].As<std::string>().empty()
+        && yamlConfig[Configurations::ISNORMALSOURCE].As<std::string>() != "\n") {
+        isNormalSource->setValue(yamlConfig[Configurations::ISNORMALSOURCE].As<bool>());
+        NES_ERROR("isNormalSource {}", isNormalSource.get()->getValue());
+    }
 }
 
 BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName,
@@ -67,6 +73,11 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
                 std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
         NES_ERROR("numberOfBuffersToProduce {}", numberOfBuffersToProduce.get()->getValue());
     }
+    if (sourceConfigMap.find(Configurations::ISNORMALSOURCE) != sourceConfigMap.end()) {
+        isNormalSource->setValue(
+            std::stoi(sourceConfigMap.find(Configurations::ISNORMALSOURCE)->second));
+        NES_ERROR("isNormalSource {}", isNormalSource.get()->getValue());
+    }
 }
 
 BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
@@ -81,7 +92,10 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const s
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 0,
-                                                                "Number of buffers to produce.")) {
+                                                                "Number of buffers to produce.")),
+        isNormalSource(Configurations::ConfigurationOption<bool>::create(Configurations::ISNORMALSOURCE,
+                                                                           true,
+                                                                           "Is normal source")) {
 
     NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
@@ -103,6 +117,8 @@ bool BinarySourceType::equal(const PhysicalSourceTypePtr& other) {
 }
 
 uint32_t BinarySourceType::getNumberOfTuples() { return numberOfBuffersToProduce->getValue(); }
+
+bool BinarySourceType::getIsNormalSource() { return isNormalSource->getValue(); }
 
 Configurations::StringConfigOption BinarySourceType::getFilePath() const { return filePath; }
 

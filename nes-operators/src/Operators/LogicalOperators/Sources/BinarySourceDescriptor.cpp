@@ -43,6 +43,14 @@ uint32_t BinarySourceDescriptor::getNumberOfTuples() {
     return numberOfTuples;
 }
 
+void BinarySourceDescriptor::setIsNormalSource(bool newFlag) {
+    isNormalSource = newFlag;
+}
+
+bool BinarySourceDescriptor::getIsNormalSource() {
+    return isNormalSource;
+}
+
 bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<BinarySourceDescriptor>()) {
         return false;

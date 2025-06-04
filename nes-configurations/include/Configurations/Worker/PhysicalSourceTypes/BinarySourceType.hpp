@@ -76,6 +76,8 @@ class BinarySourceType : public PhysicalSourceType {
 
     uint32_t getNumberOfTuples();
 
+    bool getIsNormalSource();
+
   private:
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
@@ -96,6 +98,7 @@ class BinarySourceType : public PhysicalSourceType {
 
     Configurations::StringConfigOption filePath;
     Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::BoolConfigOption isNormalSource;
 };
 }// namespace NES
 #endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_

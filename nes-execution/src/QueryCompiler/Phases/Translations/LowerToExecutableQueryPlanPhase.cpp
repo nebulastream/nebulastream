@@ -375,9 +375,10 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
         }
         case SourceType::BINARY_SOURCE: {
-                auto binarySourceType = physicalSourceType->as<BinarySourceType>();
+            auto binarySourceType = physicalSourceType->as<BinarySourceType>();
             auto sourceDesk = BinarySourceDescriptor::create(schema, binarySourceType->getLogicalSourceName(), binarySourceType->getFilePath()->getValue())->as<BinarySourceDescriptor>();
             sourceDesk->setNumberOfTuples(binarySourceType.get()->getNumberOfTuples());
+            sourceDesk->setIsNormalSource(binarySourceType.get()->getIsNormalSource());
             return sourceDesk;
         }
         case SourceType::MEMORY_SOURCE: {

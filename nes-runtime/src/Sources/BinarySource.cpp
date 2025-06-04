@@ -34,7 +34,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            GatheringMode gatheringMode,
                            const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                           bool shouldDelayEOS,
+                           bool isNormalSource,
                            uint64_t numberOfBuffersToProduce)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -46,9 +46,14 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  gatheringMode,
                  physicalSourceName,
                  false,
-                 shouldDelayEOS,
+                 isNormalSource,
                  std::move(successors)), filePath(pathToFile) {
-    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+    if (isNormalSource) {
+        this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+    } else {
+        this->numberOfBuffersToProduce = 0;
+    }
+    this->isNormalSource = isNormalSource;
 }
 
 void BinarySource::openFile() {
@@ -97,30 +102,43 @@ std::string BinarySource::toString() const {
 }
 
 void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
-    /** while(generated_tuples < num_tuples_to_process)
+    if (isNormalSource) {
+        if (input.tellg() > 0 && (unsigned) input.tellg() == fileSize) {
+            input.seekg(0, std::ifstream::beg);
+        }
+        uint64_t uint64_to_read = buf.getBufferSize() < (uint64_t) fileSize ? buf.getBufferSize() : fileSize;
+        input.read(buf.getBuffer<char>(), uint64_to_read);
+        uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;
+        buf.setNumberOfTuples(generated_tuples_this_pass);
+
+        generatedTuples += generated_tuples_this_pass;
+        generatedBuffers++;
+    } else {
+        /** while(generated_tuples < num_tuples_to_process)
      * read <buf.buffer_size> bytes data from file into buffer
      * advance internal file pointer, if we reach the file end, set to file begin
      */
 
-    uint64_t size;
-    uint64_t numberOfTuples;
-    uint64_t seqNumber;
-    uint64_t watermark;
-    input.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-    input.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
-    input.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
-    input.read(reinterpret_cast<char*>(&watermark), sizeof(uint64_t));
+        uint64_t size;
+        uint64_t numberOfTuples;
+        uint64_t seqNumber;
+        uint64_t watermark;
+        input.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+        input.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+        input.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
+        input.read(reinterpret_cast<char*>(&watermark), sizeof(uint64_t));
 
-    uint64_t uint64_to_read = buf.getBufferSize();
-    input.read(buf.getBuffer<char>(), uint64_to_read);
-    // uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;
-    // buf.setNumberOfTuples(generated_tuples_this_pass);
-    buf.setNumberOfTuples(numberOfTuples);
-    buf.setSequenceNumber(seqNumber);
-    buf.setWatermark(watermark);
-    // generatedTuples += generated_tuples_this_pass;
-    generatedBuffers++;
-    numberOfBuffersToProduce = watermark;
+        uint64_t uint64_to_read = buf.getBufferSize();
+        input.read(buf.getBuffer<char>(), uint64_to_read);
+        // uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;
+        // buf.setNumberOfTuples(generated_tuples_this_pass);
+        buf.setNumberOfTuples(numberOfTuples);
+        buf.setSequenceNumber(seqNumber);
+        buf.setWatermark(watermark);
+        // generatedTuples += generated_tuples_this_pass;
+        generatedBuffers++;
+        numberOfBuffersToProduce = watermark;
+    }
 }
 SourceType BinarySource::getType() const { return SourceType::BINARY_SOURCE; }
 

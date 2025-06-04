@@ -110,7 +110,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       numSourceLocalBuffers,
                                       sourceDescriptor->getPhysicalSourceName(),
                                       successors,
-                                      nodeEngine->getShouldDelayEOSe(),
+                                      binarySourceDescriptor->getIsNormalSource(),
                                       binarySourceDescriptor->getNumberOfTuples());
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");

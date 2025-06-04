@@ -86,6 +86,7 @@ class BinarySource : public DataSource {
 
     size_t fileSize;
     uint64_t tupleSize;
+    bool isNormalSource;
 };
 
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
