@@ -46,21 +46,23 @@ license_text_cmake = (
 """
 )
 
+COLOR_RED_BOLD = "\033[1;31m"
+COLOR_RESET = "\033[0m"
 
 if __name__ == "__main__":
 
-    git_ls_files = subprocess.run(["git", "ls-files"], capture_output=True, text=True)
+    git_ls_files = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True)
 
     result = True
 
-    files = git_ls_files.stdout.split("\n");
+    files = git_ls_files.stdout.split("\n")
     for filename in files:
         filename = filename.strip()
         if filename.endswith(".cpp") or filename.endswith(".proto"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text):
-                    print(f'File: {filename}, lacks the cpp license preamble.')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}')
                     result = False
         if filename.endswith(".hpp") or filename.endswith(".h"):
             with open(filename, "r", encoding="utf-8") as fp:
@@ -68,14 +70,14 @@ if __name__ == "__main__":
                 # Use regex to match the license text followed by any number of newlines and #pragma once
                 pattern = re.escape(license_text) + r'\s*#pragma once\s*'
                 if not re.match(pattern, content, re.DOTALL):
-                    print(f'File: {filename}, lacks the hpp license preamble with #pragma once.')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble followed by #pragma once: {filename}')
                     result = False
 
         if filename.endswith("CMakeLists.txt"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text_cmake):
-                    print(f'File: {filename}, lacks the CMakeLists license preamble.')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}')
                     result = False
 
     if not result:
