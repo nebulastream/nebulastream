@@ -14,6 +14,7 @@ from collections import defaultdict
 from typing import Tuple, List
 
 COLOR_RED_BOLD = "\033[1;31m"
+COLOR_BG_RED_FONT_WHITE = "\033[1;41m\033[1;37m"
 COLOR_RESET = "\033[0m"
 
 def run_cmd(cmd: list) -> str:
