@@ -40,43 +40,45 @@ nautilus::engine::
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// Resharper disable once CppPassValueParameterByConstReference
-    return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> bufferKey,
-            nautilus::val<Memory::TupleBuffer*> bufferValue,
-            nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
-        {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(bufferKey);
-            auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
-            auto foundEntry = hashMapRef.findOrCreateEntry(
-                recordKey,
-                *getMurMurHashFunction(),
-                [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
-                {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea)
-                        {
-                            /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                            auto* pagedVector = reinterpret_cast<Interface::PagedVector*>(pagedVectorMemArea);
-                            new (pagedVector) Interface::PagedVector();
-                        },
-                        ref.getValueMemArea());
-                },
-                bufferManagerVal);
-
-            const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
-            const RecordBuffer recordBufferValue(bufferValue);
-            for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
+    return nautilusEngine->registerFunction(
+        std::function(
+            [this, projectionAllFields](
+                nautilus::val<Memory::TupleBuffer*> bufferKey,
+                nautilus::val<Memory::TupleBuffer*> bufferValue,
+                nautilus::val<uint64_t> keyPositionVal,
+                nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+                nautilus::val<Interface::HashMap*> hashMapVal)
             {
-                auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, idxValues);
-                pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
-            }
-        }));
+                Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+                const RecordBuffer recordBufferKey(bufferKey);
+                auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+
+                auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey,
+                    *getMurMurHashFunction(),
+                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    {
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry,  fieldKeys, fieldValues);
+                        nautilus::invoke(
+                            +[](int8_t* pagedVectorMemArea)
+                            {
+                                /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
+                                auto* pagedVector = reinterpret_cast<Interface::PagedVector*>(pagedVectorMemArea);
+                                new (pagedVector) Interface::PagedVector();
+                            },
+                            ref.getValueMemArea());
+                    },
+                    bufferManagerVal);
+
+                const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
+                const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
+                const RecordBuffer recordBufferValue(bufferValue);
+                for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
+                {
+                    auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, idxValues);
+                    pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
+                }
+            }));
 }
 
 nautilus::engine::
@@ -87,32 +89,33 @@ nautilus::engine::
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> keyBufferRef,
-            nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<Memory::TupleBuffer*> outputBufferRef,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
-        {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(keyBufferRef);
-            RecordBuffer recordBufferOutput(outputBufferRef);
-            const auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
-            const auto foundEntry
-                = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
-
-            const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
-            nautilus::val<uint64_t> recordBufferIndex = 0;
-            for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
+    return nautilusEngine->registerFunction(
+        std::function(
+            [this, projectionAllFields](
+                nautilus::val<Memory::TupleBuffer*> keyBufferRef,
+                nautilus::val<uint64_t> keyPositionVal,
+                nautilus::val<Memory::TupleBuffer*> outputBufferRef,
+                nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+                nautilus::val<Interface::HashMap*> hashMapVal)
             {
-                const auto record = *it;
-                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
-                recordBufferIndex = recordBufferIndex + 1;
-                recordBufferOutput.setNumRecords(recordBufferIndex);
-            }
-        }));
+                Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
+                const RecordBuffer recordBufferKey(keyBufferRef);
+                RecordBuffer recordBufferOutput(outputBufferRef);
+                const  auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+                const auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
+
+                const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
+                const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
+                nautilus::val<uint64_t> recordBufferIndex = 0;
+                for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
+                {
+                    const auto record = *it;
+                    memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                    recordBufferIndex = recordBufferIndex + 1;
+                    recordBufferOutput.setNumRecords(recordBufferIndex);
+                }
+            }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
