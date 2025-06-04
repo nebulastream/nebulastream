@@ -13,21 +13,24 @@
 */
 
 #pragma once
-
-#include <utility>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
-struct LowerToPhysicalNLJoin : AbstractRewriteRule
+
+class CastFieldPhysicalFunction : public PhysicalFunctionConcept
 {
-    explicit LowerToPhysicalNLJoin(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+public:
+    explicit CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
+    DataType castToType;
+    PhysicalFunction childFunction;
 };
 
 }
