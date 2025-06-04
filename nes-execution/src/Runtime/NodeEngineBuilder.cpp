@@ -101,7 +101,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
         //get the list of queue where to pin from the config
         auto numberOfQueues = workerConfiguration->numberOfQueues.getValue();
-
+        NES_ERROR("num of buffers: {}", workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue());
         //create one buffer manager per queue
         if (numberOfQueues == 1) {
             bufferManagers.push_back(
