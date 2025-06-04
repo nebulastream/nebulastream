@@ -33,8 +33,7 @@ public:
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
-        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        DataType countType);
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -50,7 +49,8 @@ public:
     ~AvgAggregationFunction() override = default;
 
 private:
-    DataType countType;
+    static constexpr std::string_view NAME = "Avg";
+    static constexpr DataType countType = DataType{DataType::Type::UINT64};
 };
 
 }

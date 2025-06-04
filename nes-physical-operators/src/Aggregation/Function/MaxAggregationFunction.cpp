@@ -24,6 +24,7 @@
 #include <Nautilus/Util.hpp>
 #include <ExecutionContext.hpp>
 #include <val_ptr.hpp>
+#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -98,6 +99,12 @@ void MaxAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 size_t MaxAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
+}
+
+AggregationFunctionRegistryReturnType
+AggregationFunctionGeneratedRegistrar::RegisterMaxAggregationFunction(AggregationFunctionRegistryArguments arguments)
+{
+    return std::make_shared<MaxAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }
