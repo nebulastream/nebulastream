@@ -1,0 +1,39 @@
+# name: join/JoinWithDifferentDataTypes.test
+# description: Test join operator and the join function performs the join operation with variable sized data
+# groups: [WindowOperators, Join]
+
+Source stream1 VARSIZED key1_s1 VARSIZED key2_s1 INT8 i8_s1 INT16 i16_s1 INT32 i32_s1 INT64 i64_s1 UINT8 u8_s1 UINT16 u16_s1 UINT32 u32_s1 UINT64 u64_s1 FLOAT32 f32_s1 FLOAT64 f64_s1 UINT64 ts INLINE
+key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100
+
+Source stream2 VARSIZED key1_s2 VARSIZED key2_s2 INT8 i8_s2 INT16 i16_s2 INT32 i32_s2 INT64 i64_s2 UINT8 u8_s2 UINT16 u16_s2 UINT32 u32_s2 UINT64 u64_s2 FLOAT32 f32_s2 FLOAT64 f64_s2 UINT64 ts INLINE
+key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+key123Text,falseKey2,2,2,2,2,2,2,2,2,2,2,501
+falseKey1,otherKey566CoolText,3,3,3,3,3,3,3,3,3,3,502
+key123Text,falseKey2,4,4,4,4,4,4,4,4,4,4,503
+falseKey1,otherKey566CoolText,5,5,5,5,5,5,5,5,5,5,504
+key123Text,falseKey2,6,6,6,6,6,6,6,6,6,6,505
+key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506
+key123Text,falseKey2,8,8,8,8,8,8,8,8,8,8,507
+falseKey1,otherKey566CoolText,9,9,9,9,9,9,9,9,9,9,508
+falseKey1,otherKey566CoolText,10,10,10,10,10,10,10,10,10,10,509
+
+SINK sinkStream1Stream2 UINT64 stream1stream2$start UINT64 stream1stream2$end VARSIZED stream1$key1_s1 VARSIZED stream1$key2_s1 INT8 stream1$i8_s1 INT16 stream1$i16_s1 INT32 stream1$i32_s1 INT64 stream1$i64_s1 UINT8 stream1$u8_s1 UINT16 stream1$u16_s1 UINT32 stream1$u32_s1 UINT64 stream1$u64_s1 FLOAT32 stream1$f32_s1 FLOAT64 stream1$f64_s1 UINT64 stream1$ts VARSIZED stream2$key1_s2 VARSIZED stream2$key2_s2 INT8 stream2$i8_s2 INT16 stream2$i16_s2 INT32 stream2$i32_s2 INT64 stream2$i64_s2 UINT8 stream2$u8_s2 UINT16 stream2$u16_s2 UINT32 stream2$u32_s2 UINT64 stream2$u64_s2 FLOAT32 stream2$f32_s2 FLOAT64 stream2$f64_s2 UINT64 stream2$ts
+
+# Check if variable sized data support the equals operation for a tumbling stream with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON key1_s1 == key1_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
+----
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,2,2,2,2,2,2,2,2,2,2,501
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,4,4,4,4,4,4,4,4,4,4,503
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,6,6,6,6,6,6,6,6,6,6,505
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,8,8,8,8,8,8,8,8,8,8,507
+
+
+# Check if variable sized data support the equals operation for a tumbling stream with event time for multiple keys
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON key1_s1 == key1_s2 AND key2_s1 == key2_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
+----
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506

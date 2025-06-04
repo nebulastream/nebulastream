@@ -15,24 +15,20 @@
 #pragma once
 
 #include <utility>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
-
-class QueryOptimizer final
+struct LowerToPhysicalHashJoin : AbstractRewriteRule
 {
-public:
-    explicit QueryOptimizer(QueryExecutionConfiguration defaultQueryExecution)
-        : defaultQueryExecution(std::move(defaultQueryExecution)) { };
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan) const;
-    [[nodiscard]] static PhysicalPlan optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution);
+    explicit LowerToPhysicalHashJoin(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    QueryExecutionConfiguration defaultQueryExecution;
+    QueryExecutionConfiguration conf;
 };
 
 }

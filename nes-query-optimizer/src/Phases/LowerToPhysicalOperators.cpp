@@ -22,6 +22,9 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
@@ -32,18 +35,50 @@
 namespace NES::LowerToPhysicalOperators
 {
 
-static RewriteRuleResultSubgraph::SubGraphRoot
+namespace
+{
+std::unique_ptr<AbstractRewriteRule>
+resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+{
+    const auto logicalOperatorName = logicalOperator.getName();
+    if (logicalOperatorName == "Join")
+    {
+        auto traitSet = logicalOperator.getTraitSet();
+        const auto foundIter
+            = std::ranges::find_if(traitSet, [](const Trait& trait) { return trait.tryGet<ImplementationTypeTrait>().has_value(); });
+        PRECONDITION(foundIter != traitSet.end(), "Join operator must have an implementation type trait");
+        switch (const auto implementationTrait = foundIter->get<ImplementationTypeTrait>(); implementationTrait.implementationType)
+        {
+            case JoinImplementation::HASH_JOIN: {
+                if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
+                {
+                    return std::move(ruleOptional.value());
+                }
+                throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+            }
+            case JoinImplementation::NESTED_LOOP_JOIN: {
+                if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("NLJoin"), registryArgument))
+                {
+                    return std::move(ruleOptional.value());
+                }
+                throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+            }
+        }
+    }
+    if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperatorName), registryArgument))
+    {
+        return std::move(ruleOptional.value());
+    }
+    throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+}
+}
+
+RewriteRuleResultSubgraph::SubGraphRoot
 lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     /// Try to resolve rewrite rule for the current logical operator
-    const auto rule = [](const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
-    {
-        if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument))
-        {
-            return std::move(ruleOptional.value());
-        }
-        throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
-    }(logicalOperator, registryArgument);
+    const auto rule = resolveRewriteRule(logicalOperator, registryArgument);
+
     /// We apply the rule and receive a subgraph
     const auto [root, leafs] = rule->apply(logicalOperator);
     INVARIANT(

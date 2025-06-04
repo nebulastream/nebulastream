@@ -28,12 +28,21 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -69,6 +78,7 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     }
     return false;
 }
+
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
@@ -139,6 +149,14 @@ TraitSet JoinLogicalOperator::getTraitSet() const
 {
     TraitSet result = traitSet;
     result.insert(originIdTrait);
+    if (shallUseHashJoin(joinFunction))
+    {
+        result.insert(HashJoinTrait{});
+    }
+    else
+    {
+        result.insert(NestedLoopJoinTrait{});
+    }
     return result;
 }
 
