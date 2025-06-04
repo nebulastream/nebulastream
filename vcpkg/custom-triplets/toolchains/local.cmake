@@ -14,6 +14,7 @@
 # 1. Enable the mold linker if it is available on the the system
 # 2. Enable CCache if it is available on the system
 
+
 if (NOT _NES_TOOLCHAIN_FILE)
     set(_NES_TOOLCHAIN_FILE 1)
 
@@ -37,8 +38,12 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE NAMES clang++ clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
-    find_program(CLANG_EXECUTABLE NAMES clang clang-$ENV{LLVM_TOOLCHAIN_VERSION})
+    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
+    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION})
+
+
+    set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
+    set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
 
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if (NOT _CMAKE_IN_TRY_COMPILE)
