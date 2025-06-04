@@ -62,7 +62,7 @@ if __name__ == "__main__":
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text):
-                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}:1')
                     result = False
         if filename.endswith(".hpp") or filename.endswith(".h"):
             with open(filename, "r", encoding="utf-8") as fp:
@@ -70,14 +70,14 @@ if __name__ == "__main__":
                 # Use regex to match the license text followed by any number of newlines and #pragma once
                 pattern = re.escape(license_text) + r'\s*#pragma once\s*'
                 if not re.match(pattern, content, re.DOTALL):
-                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble followed by #pragma once: {filename}')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble followed by #pragma once: {filename}:1')
                     result = False
 
         if filename.endswith("CMakeLists.txt"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text_cmake):
-                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}')
+                    print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}:1')
                     result = False
 
     if not result:
