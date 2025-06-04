@@ -36,6 +36,23 @@ else
     log_fatal could not find clang-format 19 in PATH, please install.
 fi
 
+# calculate distance to base branch
+#
+# Ideally, we would want to use e.g. git diff --merge-base origin/main,
+# but when running in CI, this can lead to 'fatal: no merge base found'
+#
+# So instead, we obstain the distance to the base branch in CI from github
+# and locally we calculate it.
+#
+# c.f. bc88d4e05760f60f12524eff1a205cf5c85d14d2
+# c.f. https://github.com/nebulastream/nebulastream/pull/677
+if [ -v CI ]
+then
+    [ -v DISTANCE_MERGE_BASE ] || log_fatal Running in CI but DISTANCE_MERGE_BASE not set
+else
+    DISTANCE_MERGE_BASE=$(git rev-list --count origin/main..HEAD)
+fi
+
 if [ "$#" -gt 0 ] && [ "$1" != "-i" ]
 then
     cat << EOF
@@ -105,7 +122,7 @@ fi
 
 # first include in .cpp file is the corresponding .hpp file
 #
-for file in $(git diff --name-only --merge-base origin/main -- "*.cpp")
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
 do
 	# remove path and .cpp suffix, i.e. /foo/bar.cpp -> bar
 	basename=$(basename "$file" .cpp)
@@ -126,10 +143,10 @@ done
 #
 # CLion uses double quotes when adding includes (automatically).
 # This check warns the author of a PR about includes with double quotes to avoid burdening the reviewers
-for file in $(git diff --name-only --merge-base origin/main -- "*.hpp" "*.cpp")
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
 do
     # if an added line contains contains a quote include
-    if git diff --merge-base origin/main -- "$file" | grep "^+" | grep '#include ".*"' > /dev/null
+    if git diff "HEAD~$DISTANCE_MERGE_BASE" -- "$file" | grep "^+" | grep '#include ".*"' > /dev/null
     then
         log_warn "New include with double quotes in $(git grep -n '#include ".*"' -- "$file")"
     fi
@@ -139,7 +156,7 @@ done
 python3 scripts/check_preamble.py || FAIL=1
 
 echo
-python3 scripts/check_todos.py || FAIL=1
+DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
 
 [ "$FAIL" = "0" ] && echo "format.sh: no problems found"
 
