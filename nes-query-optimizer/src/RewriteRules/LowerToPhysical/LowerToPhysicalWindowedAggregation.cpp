@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <numeric>
@@ -20,7 +22,7 @@
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -36,14 +38,13 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <AggregationFunctionRegistry.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -100,8 +101,8 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
     }
 }
 
-static std::vector<std::shared_ptr<AggregationFunction>>
-getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
+static std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
+    const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -113,12 +114,18 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
         auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-           configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
+            configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
         auto memoryProvider = std::make_shared<ColumnTupleBufferMemoryProvider>(layout);
 
         auto name = descriptor->getName();
-        auto aggregationArguments = AggregationFunctionRegistryArguments(std::move(physicalInputType), std::move(physicalFinalType), std::move(aggregationInputFunction), resultFieldIdentifier, memoryProvider);
-        if (auto aggregationFunction = AggregationFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
+        auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
+            std::move(physicalInputType),
+            std::move(physicalFinalType),
+            std::move(aggregationInputFunction),
+            resultFieldIdentifier,
+            memoryProvider);
+        if (auto AggregationPhysicalFunction
+            = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {
             aggregationPhysicalFunctions.push_back(AggregationPhysicalFunction.value());
         }
@@ -145,11 +152,11 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
     auto timeFunction = getTimeFunction(aggregation);
     auto* windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(aggregation.getWindowType().get());
-    auto aggregationFunctions = getAggregationFunctions(aggregation, conf);
+    auto AggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
 
     const auto valueSize = std::accumulate(
-        aggregationFunctions.begin(),
-        aggregationFunctions.end(),
+        AggregationPhysicalFunctions.begin(),
+        AggregationPhysicalFunctions.end(),
         0,
         [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
@@ -172,7 +179,12 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
 
     auto windowAggregation = std::make_shared<WindowAggregation>(
-        aggregationFunctions, std::make_unique<Interface::MurMur3HashFunction>(), fieldKeys, fieldValues, entriesPerPage, entrySize);
+        AggregationPhysicalFunctions,
+        std::make_unique<Interface::MurMur3HashFunction>(),
+        fieldKeys,
+        fieldValues,
+        entriesPerPage,
+        entrySize);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());

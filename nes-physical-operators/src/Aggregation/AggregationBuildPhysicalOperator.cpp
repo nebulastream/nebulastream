@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
+#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationSlice.hpp>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -108,7 +109,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
             const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-            for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
+            for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
             {
                 aggFunction->reset(state, ctx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
@@ -120,7 +121,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Updating the aggregation states
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-    for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
+    for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
     {
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
@@ -132,7 +133,7 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
 {
     return [copyOfFieldKeys = fieldKeys,
             copyOfFieldValues = fieldValues,
-            copyOfAggregationFunctions = aggregationFunctions,
+            copyOfAggregationPhysicalFunctions = AggregationPhysicalFunctions,
             copyOfEntriesPerPage = entriesPerPage,
             copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Interface::HashMap>>& hashMaps)
     {
@@ -147,7 +148,7 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
                 {
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
                     auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationPhysicalFunctions))
                     {
                         aggFunction->cleanup(state);
                         state = state + aggFunction->getSizeOfStateInBytes();

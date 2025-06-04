@@ -37,10 +37,10 @@ struct AggregationState
 /// It represents a single aggregation operation, e.g., sum, min, max, etc.
 /// We take the lift, combine, lower, and reset functions from the paper "General Incremental Sliding-Window Aggregation" by Kanat Tangwongsan et al.
 /// We add a reset function to reset the aggregation state to its initial state.
-class AggregationFunction
+class AggregationPhysicalFunction
 {
 public:
-    AggregationFunction(
+    AggregationPhysicalFunction(
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
@@ -71,7 +71,7 @@ public:
     /// Returns the size of the aggregation state in bytes
     [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;
 
-    virtual ~AggregationFunction();
+    virtual ~AggregationPhysicalFunction();
 
 protected:
     DataType inputType;

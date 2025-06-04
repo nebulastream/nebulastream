@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -21,7 +22,7 @@
 namespace NES
 {
 
-AggregationFunction::AggregationFunction(
+AggregationPhysicalFunction::AggregationPhysicalFunction(
     DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : inputType(std::move(inputType))
     , resultType(std::move(resultType))
@@ -30,5 +31,5 @@ AggregationFunction::AggregationFunction(
 {
 }
 
-AggregationFunction::~AggregationFunction() = default;
+AggregationPhysicalFunction::~AggregationPhysicalFunction() = default;
 }
