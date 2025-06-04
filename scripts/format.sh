@@ -10,6 +10,7 @@ export GIT_PAGER=cat
 
 COLOR_YELLOW_BOLD="\e[1;33m"
 COLOR_RED_BOLD="\e[1;31m"
+COLOR_BG_RED_FONT_WHITE="\e[41m\e[1;37m"
 COLOR_RESET="\e[0m"
 
 log_warn() {
@@ -18,6 +19,10 @@ log_warn() {
 log_error() {
     FAIL=1
     echo -e "${COLOR_RED_BOLD}Error${COLOR_RESET}: $*"
+}
+log_fatal() {
+    echo -e "${COLOR_BG_RED_FONT_WHITE}Fatal${COLOR_RESET}: $*"
+    exit 1
 }
 
 
@@ -28,9 +33,7 @@ elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "versi
 then
     CLANG_FORMAT="clang-format"
 else
-    echo could not find clang-format 19 in PATH.
-    echo please install.
-    exit 1
+    log_fatal could not find clang-format 19 in PATH, please install.
 fi
 
 if [ "$#" -gt 0 ] && [ "$1" != "-i" ]
