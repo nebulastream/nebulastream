@@ -94,21 +94,11 @@ def main():
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
 
-    if "CI" in os.environ and "NUM_COMMITS" not in os.environ:
-        print("Error: running in CI, but NUM_COMMITS not set")
-        sys.exit(1)
-    if "CI" in os.environ and "GH_TOKEN" not in os.environ:
-        print("Error: running in CI, but GH_TOKEN not set")
+    if "DISTANCE_MERGE_BASE" not in os.environ:
+        print(f"{COLOR_BG_RED_FONT_WHITE}Fatal{COLOR_RESET}: {os.path.basename(__file__)}: DISTANCE_MERGE_BASE not set in env")
         sys.exit(1)
 
-    if "NUM_COMMITS" in os.environ:
-        distance_main = os.environ["NUM_COMMITS"]
-    else:
-        merge_base = run_cmd(["git", "merge-base", "HEAD", "main"]).strip()
-        distance_main = int(run_cmd(["git", "rev-list", "--count", f"{merge_base}..HEAD"]).strip())
-        print(f"checking added TODOs for last {distance_main} commits (i.e. since forking off 'main')")
-        print("Set env var NUM_COMMITS to override the number of commits to be checked, e.g. call:")
-        print(f"\n  NUM_COMMITS=42 python3 {sys.argv[0]}\n\n")
+    distance_main = os.environ["DISTANCE_MERGE_BASE"]
 
     diff = run_cmd(["git", "diff", f"HEAD~{distance_main}", "--",
                     # Ignore patch files in our vcpkg ports
