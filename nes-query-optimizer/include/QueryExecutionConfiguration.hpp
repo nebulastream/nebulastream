@@ -31,10 +31,13 @@ namespace NES
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
+static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 
 enum class StreamJoinStrategy : uint8_t
 {
-    NESTED_LOOP_JOIN
+    NESTED_LOOP_JOIN,
+    HASH_JOIN,
+    OPTIMIZER_CHOOSES
 };
 
 class QueryExecutionConfiguration : public BaseConfiguration
@@ -58,6 +61,11 @@ public:
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NumberValidation>()}};
+    UIntOption numberOfRecordsPerKey
+        = {"numberOfRecordsPerKey",
+           std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
+           "Expected number of records per key, for example in a hash join. If set too low or high affects the performance.",
+           {std::make_shared<NumberValidation>()}};
     UIntOption operatorBufferSize
         = {"operatorBufferSize",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
@@ -65,14 +73,14 @@ public:
            {std::make_shared<NumberValidation>()}};
     EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
-           StreamJoinStrategy::NESTED_LOOP_JOIN,
-           "joinStrategy"
-           "[NESTED_LOOP_JOIN]. "};
+           StreamJoinStrategy::OPTIMIZER_CHOOSES,
+           "JoinStrategy"
+           "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize};
     }
 };
 
