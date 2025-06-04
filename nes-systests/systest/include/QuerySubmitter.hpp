@@ -22,6 +22,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestGrpc.hpp>
 #include <SystestState.hpp>
+#include <experimental/propagate_const>
 
 namespace NES::Systest
 {
@@ -68,6 +69,7 @@ class RemoteWorkerQuerySubmitter final : public QuerySubmitter
 {
     std::unordered_set<QueryId> ids;
     const GRPCClient client;
+    std::experimental::propagate_const<std::unique_ptr<std::string>> bloat;
 
 public:
     QueryId registerQuery(const Query& query) override;
