@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -30,7 +30,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -69,7 +69,7 @@ std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosi
         auto windowType = getWindowType();
         auto windowAggregation = getWindowAggregation();
         return fmt::format(
-            "WINDOW AGGREGATION({}, {}, window type: {})",
+            "WINDOW AGGREGATION(opId: {}, {}, window type: {})",
             id,
             fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
             windowType->toString());
