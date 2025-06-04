@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/ProjectionLogicalOperator.hpp>
+
 #include <cstddef>
 #include <ranges>
 #include <string>
@@ -25,7 +27,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -105,7 +106,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     {
         if (not outputSchema.getFieldNames().empty())
         {
-            return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema);
+            return fmt::format("PROJECTION(opId: {}, schema: {})", id, outputSchema);
         }
         return fmt::format(
             "PROJECTION(opId: {}, fields: [{}])",
