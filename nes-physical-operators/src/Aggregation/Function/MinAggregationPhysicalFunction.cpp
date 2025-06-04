@@ -12,30 +12,31 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/MinAggregationPhysicalFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/MinAggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val_ptr.hpp>
-#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
 
-MinAggregationFunction::MinAggregationFunction(
+MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
     DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
-void MinAggregationFunction::lift(
+void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading the old min value from the aggregation state.
@@ -50,7 +51,7 @@ void MinAggregationFunction::lift(
     }
 }
 
-void MinAggregationFunction::combine(
+void MinAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
@@ -70,7 +71,7 @@ void MinAggregationFunction::combine(
     }
 }
 
-Nautilus::Record MinAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Nautilus::Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -83,7 +84,7 @@ Nautilus::Record MinAggregationFunction::lower(const nautilus::val<AggregationSt
     return record;
 }
 
-void MinAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the min value to the maximum value
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -91,19 +92,20 @@ void MinAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     min.writeToMemory(memAreaMin);
 }
 
-void MinAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+void MinAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 {
 }
 
-size_t MinAggregationFunction::getSizeOfStateInBytes() const
+size_t MinAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
 }
 
-AggregationFunctionRegistryReturnType
-AggregationFunctionGeneratedRegistrar::RegisterMinAggregationFunction(AggregationFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMinAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    return std::make_shared<MinAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+    return std::make_shared<MinAggregationPhysicalFunction>(
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

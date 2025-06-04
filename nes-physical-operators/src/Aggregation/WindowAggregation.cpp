@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Aggregation/WindowAggregation.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/WindowAggregation.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <ErrorHandling.hpp>
@@ -26,13 +27,13 @@ namespace NES
 {
 
 WindowAggregation::WindowAggregation(
-    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> AggregationPhysicalFunctions,
     std::unique_ptr<Interface::HashFunction> hashFunction,
     std::vector<FieldOffsets> fieldKeys,
     std::vector<FieldOffsets> fieldValues,
     uint64_t entriesPerPage,
     uint64_t entrySize)
-    : aggregationFunctions(std::move(aggregationFunctions))
+    : AggregationPhysicalFunctions(std::move(AggregationPhysicalFunctions))
     , hashFunction(std::move(hashFunction))
     , fieldKeys(std::move(fieldKeys))
     , fieldValues(std::move(fieldValues))
@@ -42,14 +43,14 @@ WindowAggregation::WindowAggregation(
     INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
     INVARIANT(entrySize > 0, "The entry size must be greater than 0");
     PRECONDITION(
-        this->aggregationFunctions.size() == this->fieldValues.size(),
+        this->AggregationPhysicalFunctions.size() == this->fieldValues.size(),
         "The number of aggregation functions (here: {}) must match the number of field values (here: {})",
-        this->aggregationFunctions.size(),
+        this->AggregationPhysicalFunctions.size(),
         this->fieldValues.size());
 }
 
 WindowAggregation::WindowAggregation(const WindowAggregation& other)
-    : aggregationFunctions(other.aggregationFunctions)
+    : AggregationPhysicalFunctions(other.AggregationPhysicalFunctions)
     , hashFunction(other.hashFunction ? other.hashFunction->clone() : nullptr)
     , fieldKeys(other.fieldKeys)
     , fieldValues(other.fieldValues)
@@ -59,7 +60,7 @@ WindowAggregation::WindowAggregation(const WindowAggregation& other)
 }
 
 WindowAggregation::WindowAggregation(const std::shared_ptr<WindowAggregation>& other)
-    : aggregationFunctions(other->aggregationFunctions)
+    : AggregationPhysicalFunctions(other->AggregationPhysicalFunctions)
     , hashFunction(std::move(other->hashFunction))
     , fieldKeys(other->fieldKeys)
     , fieldValues(other->fieldValues)

@@ -12,32 +12,33 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/CountAggregationPhysicalFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/CountAggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <AggregationFunctionRegistry.hpp>
 
 namespace NES
 {
 
-CountAggregationFunction::CountAggregationFunction(
+CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
     DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
-void CountAggregationFunction::lift(
+void CountAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Nautilus::Record&)
 {
     /// Reading the old count from the aggregation state.
@@ -51,7 +52,7 @@ void CountAggregationFunction::lift(
     newCount.writeToMemory(memAreaCount);
 }
 
-void CountAggregationFunction::combine(
+void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
@@ -71,7 +72,7 @@ void CountAggregationFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Nautilus::Record CountAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Nautilus::Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -84,26 +85,27 @@ Nautilus::Record CountAggregationFunction::lower(const nautilus::val<Aggregation
     return record;
 }
 
-void CountAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void CountAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 
-void CountAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 {
 }
 
-size_t CountAggregationFunction::getSizeOfStateInBytes() const
+size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
     return inputType.getSizeInBytes();
 }
 
-AggregationFunctionRegistryReturnType
-AggregationFunctionGeneratedRegistrar::RegisterCountAggregationFunction(AggregationFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    return std::make_shared<CountAggregationFunction>(std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+    return std::make_shared<CountAggregationPhysicalFunction>(
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

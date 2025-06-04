@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <memory>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -26,10 +26,10 @@
 namespace NES
 {
 
-class AvgAggregationFunction : public AggregationFunction
+class CountAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
-    AvgAggregationFunction(
+    CountAggregationPhysicalFunction(
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
@@ -42,15 +42,11 @@ public:
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~AvgAggregationFunction() override = default;
-
-private:
-    static constexpr std::string_view NAME = "Avg";
-    static constexpr DataType countType = DataType{DataType::Type::UINT64};
+    ~CountAggregationPhysicalFunction() override = default;
 };
 
 }
