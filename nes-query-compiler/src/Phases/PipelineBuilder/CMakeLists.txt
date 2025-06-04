@@ -10,8 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(PipelineBuilder)
-
 add_source_files(nes-query-compiler
-        LowerToCompiledQueryPlanPhase.cpp
+        PipeliningBuildingDefinition.cpp
+        PipelineBuilder.cpp
 )
