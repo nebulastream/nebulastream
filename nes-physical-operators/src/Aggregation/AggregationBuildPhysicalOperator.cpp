@@ -13,8 +13,6 @@
 */
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
-#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
-
 #include <cstdint>
 #include <functional>
 #include <memory>

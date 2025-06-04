@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -19,8 +20,8 @@
 #include <limits>
 #include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -28,6 +29,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMapRef.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
@@ -35,29 +37,31 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include "Nautilus/Interface/NESStrongTypeRef.hpp"
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Nautilus::Interface
 {
-void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(const Nautilus::Record& keys) const
+void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
+    const Nautilus::Record& keys, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderKeys.writeRecord(entryRef, keys);
+    memoryProviderKeys.writeRecord(entryRef, hashMapRef, bufferProvider, keys);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const
+void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
+    const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderKeys.writeEntryRef(entryRef, otherEntryRef.entryRef);
+    memoryProviderKeys.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(const Nautilus::Record& values) const
+void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
+    const Nautilus::Record& values, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderValues.writeRecord(entryRef, values);
+    memoryProviderValues.writeRecord(entryRef, hashMapRef, bufferProvider, values);
 }
 
-void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const
+void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
+    const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderValues.writeEntryRef(entryRef, otherEntryRef.entryRef);
+    memoryProviderValues.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
 }
 
 VarVal ChainedHashMapRef::ChainedEntryRef::getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const
@@ -83,20 +87,43 @@ void ChainedHashMapRef::ChainedEntryRef::updateEntryRef(const nautilus::val<Chai
 
 nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() const
 {
+    PRECONDITION(
+        not(memoryProviderKeys.getAllFields().empty() and memoryProviderValues.getAllFields().empty()),
+        "At least keys or values need to be present to call this method!");
+
     /// We call this method solely, if we actually need the value memory area and not a VarVal.
     /// Therefore, we do not store the valueOffset in the ChainedEntryRef or the ChainedEntryMemoryProvider
-    /// During tracing the minKeyOffset is calculated and should be stored as a constant in the compiled code
-    nautilus::static_val<uint64_t> minKeyOffset = std::numeric_limits<uint64_t>::max();
-    for (const auto& field : nautilus::static_iterable(memoryProviderValues.getAllFields()))
+    /// During tracing the offset is calculated and should be stored as a constant in the compiled code
+    nautilus::static_val<uint64_t> valueMemAreaOffset(0);
+    if (memoryProviderValues.getAllFields().empty())
     {
-        const auto offset = field.fieldOffset;
-        if (minKeyOffset > offset)
+        /// We take the max offset of the keys
+        valueMemAreaOffset = std::numeric_limits<uint64_t>::min();
+        for (const auto& field : nautilus::static_iterable(memoryProviderKeys.getAllFields()))
         {
-            minKeyOffset = offset;
+            const auto offset = field.fieldOffset;
+            const auto fieldSize = field.type.getSizeInBytes();
+            if (valueMemAreaOffset < offset + fieldSize)
+            {
+                valueMemAreaOffset = offset + fieldSize;
+            }
+        }
+    }
+    else
+    {
+        /// We take the min offset of the values
+        valueMemAreaOffset = std::numeric_limits<uint64_t>::max();
+        for (const auto& field : nautilus::static_iterable(memoryProviderValues.getAllFields()))
+        {
+            const auto offset = field.fieldOffset;
+            if (valueMemAreaOffset > offset)
+            {
+                valueMemAreaOffset = offset;
+            }
         }
     }
     auto castedMemArea = static_cast<nautilus::val<int8_t*>>(entryRef);
-    auto valueMemArea = castedMemArea + minKeyOffset;
+    auto valueMemArea = castedMemArea + valueMemAreaOffset;
     return valueMemArea;
 }
 
@@ -114,17 +141,22 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
     std::vector<MemoryProvider::FieldOffsets> fieldsKey,
     std::vector<MemoryProvider::FieldOffsets> fieldsValue)
-    : entryRef(entryRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
+    : entryRef(entryRef), hashMapRef(hashMapRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
 {
 }
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
     MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
     MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues)
-    : entryRef(entryRef), memoryProviderKeys(std::move(memoryProviderKeys)), memoryProviderValues(std::move(memoryProviderValues))
+    : entryRef(entryRef)
+    , hashMapRef(hashMapRef)
+    , memoryProviderKeys(std::move(memoryProviderKeys))
+    , memoryProviderValues(std::move(memoryProviderValues))
 {
 }
 
@@ -143,7 +175,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::R
     auto entry = findChain(hash);
     while (entry)
     {
-        const ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+        const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
         {
             return entry;
@@ -174,7 +206,6 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
         keyValues.emplace_back(keyValue);
     }
 
-
     ///  If entry contains nullptr, there does not exist a key with the same values.
     const auto hashValue = hashFunction.calculate(keyValues);
     if (const auto entryRef = findKey(recordKey, hashValue))
@@ -183,8 +214,8 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), fieldKeys, fieldValues};
-    newEntryRef.copyKeysToEntry(recordKey);
+    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), hashMapRef, fieldKeys, fieldValues};
+    newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
 
 
     /// Calling the onInsert lambda function to insert values or anything else that the user wants.
@@ -205,7 +236,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef(chainEntry, fieldKeys, fieldValues);
+    const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
     if (const auto entryRef = findEntry(otherEntryRef))
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
@@ -218,8 +249,8 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
     const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider);
-    const ChainedEntryRef newEntryRef(newEntry, fieldKeys, fieldValues);
-    newEntryRef.copyKeysToEntry(otherEntryRef);
+    const ChainedEntryRef newEntryRef(newEntry, hashMapRef, fieldKeys, fieldValues);
+    newEntryRef.copyKeysToEntry(otherEntryRef, bufferProvider);
     if (onInsert)
     {
         auto castedEntryRef = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
@@ -288,19 +319,6 @@ ChainedHashMapRef::ChainedHashMapRef(
     , entriesPerPage(entriesPerPage)
     , entrySize(entrySize)
 {
-    /// Checking if we have a float32 or float64 field in the key fields. We currently do not support this.
-    /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
-    for (const auto& field : nautilus::static_iterable(fieldKeys))
-    {
-        if (field.type.isFloat())
-        {
-            throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
-        }
-        if (field.type.isType(DataType::Type::VARSIZED))
-        {
-            throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
-        }
-    }
 }
 
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
@@ -359,7 +377,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<uint64_t>& tupleIndex,
     const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
     const std::vector<MemoryProvider::FieldOffsets>& fieldValues)
-    : hashMapRef(hashMapRef), currentEntry({nullptr, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
+    : hashMapRef(hashMapRef), currentEntry({nullptr, hashMapRef, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
 {
     const auto numberOfEntries = nautilus::invoke(
         +[](const HashMap* hashMap) -> uint64_t
@@ -386,6 +404,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
             { return dynamic_cast<const ChainedHashMap*>(hashMap)->getStartOfChain(chainIndexVal); },
             hashMapRef,
             chainIndex),
+        hashMapRef,
         fieldKeys,
         fieldKeys);
     numberOfChains

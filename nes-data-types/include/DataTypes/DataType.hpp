@@ -42,12 +42,17 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
+        VARSIZED_POINTER_REP,
     };
 
     template <class T>
     [[nodiscard]] bool isSameDataType() const
     {
         if (this->type == Type::VARSIZED && std::is_same_v<std::remove_cvref_t<T>, std::uint32_t>)
+        {
+            return true;
+        }
+        if (this->type == Type::VARSIZED_POINTER_REP && std::is_same_v<std::remove_cvref_t<T>, std::uintptr_t>)
         {
             return true;
         }

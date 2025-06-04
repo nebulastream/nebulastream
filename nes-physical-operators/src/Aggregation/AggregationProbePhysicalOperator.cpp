@@ -70,22 +70,25 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
-    Interface::ChainedHashMapRef finalHashMap(finalHashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
+    Interface::ChainedHashMapRef finalHashMap(
+        finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
     for (nautilus::val<uint64_t> curHashMap = 0; curHashMap < numberOfHashMaps; ++curHashMap)
     {
         const auto hashMapPtr = nautilus::invoke(getHashMapPtrProxy, aggregationWindowRef, curHashMap);
-        const Interface::ChainedHashMapRef currentMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
+        const Interface::ChainedHashMapRef currentMap(
+            hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
         for (const auto entry : currentMap)
         {
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, hashMapPtr, fieldKeys, fieldValues);
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
+                entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
             const auto tmpRecordKey = entryRef.getKey();
 
             /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
             /// We do this by iterating over the aggregation functions and combining all aggregation states into a global state.
             finalHashMap.insertOrUpdateEntry(
                 entryRef.entryRef,
-                [fieldKeys = fieldKeys,
-                 fieldValues = fieldValues,
+                [fieldKeys = hashMapOptions.fieldKeys,
+                 fieldValues = hashMapOptions.fieldValues,
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
@@ -102,8 +105,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                [fieldKeys = fieldKeys,
-                 fieldValues = fieldValues,
+                [fieldKeys = hashMapOptions.fieldKeys,
+                 fieldValues = hashMapOptions.fieldValues,
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
@@ -130,7 +133,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// Lowering, each aggregation state in the final hash map and passing the record to the child
     for (const auto entry : finalHashMap)
     {
-        const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, finalHashMapPtr, fieldKeys, fieldValues);
+        const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
+            entry, finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -162,12 +166,12 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
     HashMapOptions hashMapOptions,
-    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
     const OperatorHandlerId operatorHandlerId,
     WindowMetaData windowMetaData)
-    : HashMapOptions(std::move(hashMapOptions))
-    , WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
-    , aggregationFunctions(std::move(aggregationFunctions))
+    : WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
+    , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
+    , hashMapOptions(std::move(hashMapOptions))
 {
 }
 }

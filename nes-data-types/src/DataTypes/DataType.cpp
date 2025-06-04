@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <DataTypes/DataType.hpp>
 
 #include <cstdint>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -135,6 +135,8 @@ uint32_t DataType::getSizeInBytes() const
         case Type::VARSIZED:
             /// Returning '4' for VARSIZED, because we represent variable sized data with a 'uint32' index to a nested buffer, containing the varsized data
             return 4;
+        case Type::VARSIZED_POINTER_REP:
+            return sizeof(int8_t*);
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -180,6 +182,7 @@ std::string DataType::formattedBytesToString(const void* data) const
             }
             return std::string{*static_cast<const char*>(data)};
         }
+        case Type::VARSIZED_POINTER_REP:
         case Type::VARSIZED: {
             /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
             using StringLengthType = uint32_t;
@@ -271,6 +274,10 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::VARSIZED};
+}
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZED_POINTER_REPDataType(DataTypeRegistryArguments)
+{
+    return DataType{.type = DataType::Type::VARSIZED_POINTER_REP};
 }
 
 bool DataType::isInteger() const
