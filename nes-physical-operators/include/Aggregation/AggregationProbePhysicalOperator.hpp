@@ -15,23 +15,28 @@
 #pragma once
 
 #include <memory>
-#include <Aggregation/WindowAggregation.hpp>
+#include <Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <HashMapOptions.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 
 namespace NES
 {
 
-class AggregationProbePhysicalOperator final : public WindowAggregation, public WindowProbePhysicalOperator
+class AggregationProbePhysicalOperator final : public HashMapOptions, public WindowProbePhysicalOperator
 {
 public:
     AggregationProbePhysicalOperator(
-        const std::shared_ptr<WindowAggregation>& windowAggregationOperator,
+        HashMapOptions hashMapOptions,
+        std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+private:
+    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
 };
 
 }
