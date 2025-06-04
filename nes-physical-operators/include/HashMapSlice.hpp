@@ -18,63 +18,80 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Engine.hpp>
 
 namespace NES
 {
 
-struct CreateNewSlicesArguments
-{
-    virtual ~CreateNewSlicesArguments() = default;
-};
-
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    CreateNewHashMapSliceArgs() = default;
-    CreateNewHashMapSliceArgs(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets)
-        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets)
+    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
+    CreateNewHashMapSliceArgs(
+        std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
+        const uint64_t keySize,
+        const uint64_t valueSize,
+        const uint64_t pageSize,
+        const uint64_t numberOfBuckets)
+        : nautilusCleanup(std::move(nautilusCleanup))
+        , keySize(keySize)
+        , valueSize(valueSize)
+        , pageSize(pageSize)
+        , numberOfBuckets(numberOfBuckets)
     {
     }
+
+    CreateNewHashMapSliceArgs(const CreateNewHashMapSliceArgs& other) = default;
+    CreateNewHashMapSliceArgs(CreateNewHashMapSliceArgs&& other) noexcept = default;
+    CreateNewHashMapSliceArgs& operator=(const CreateNewHashMapSliceArgs& other) = default;
+    CreateNewHashMapSliceArgs& operator=(CreateNewHashMapSliceArgs&& other) noexcept = default;
+
+    /// We delete the default constructor as we want to ensure that all members have been set
+    CreateNewHashMapSliceArgs() = delete;
+
     ~CreateNewHashMapSliceArgs() override = default;
-    std::optional<uint64_t> keySize;
-    std::optional<uint64_t> valueSize;
-    std::optional<uint64_t> pageSize;
-    std::optional<uint64_t> numberOfBuckets;
+    std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup;
+    uint64_t keySize;
+    uint64_t valueSize;
+    uint64_t pageSize;
+    uint64_t numberOfBuckets;
 };
 
-/// This class represents a single slice for the (keyed) aggregation. It stores the aggregation state in a hashmap.
-/// If it is a global aggregation, each hashmap contains a single entry for the keyValue = 0.
-/// In our current implementation, we have one hashmap per worker thread.
+
+/// A HashMapSlice stores a number of hashmaps per input stream. We assume that each input stream has the same number of hashmaps
+/// We store first all hashmaps of each stream followed by the hashmaps of the next stream, c.f.,
+/// +---------------------+---------------------+---------------------+---------------------+---------------------+
+/// | Stream 1: [HashMap1][HashMap2][HashMap3]... | Stream 2: [HashMap1][HashMap2][HashMap3]... | ... | Stream N: [HashMap1][HashMap2][HashMap3]... |
+/// +---------------------+---------------------+---------------------+---------------------+---------------------+
+///
+/// As the hashmap might need to clean up its state, we expect multiple clean up functions as part of the @struct CreateNewHashMapSliceArgs
+/// For each stream, we expect one cleanup function and once this HashMapSlice gets destroyed they are being called.
 class HashMapSlice : public Slice
 {
 public:
-    explicit HashMapSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfHashMaps);
+    explicit HashMapSlice(
+        SliceStart sliceStart,
+        SliceEnd sliceEnd,
+        CreateNewHashMapSliceArgs createNewHashMapSliceArgs,
+        uint64_t numberOfHashMaps,
+        uint64_t numberOfInputStreams);
 
     ~HashMapSlice() override;
-
-    /// Returns the pointer to the underlying hashmap.
-    /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
-    [[nodiscard]] virtual Nautilus::Interface::HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] virtual Nautilus::Interface::HashMap*
-    getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const CreateNewHashMapSliceArgs& hashMapArgs);
-
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const;
-    virtual void
-    setCleanupFunction(const std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>& cleanupFunction);
 
 protected:
     std::vector<std::unique_ptr<Nautilus::Interface::HashMap>> hashMaps;
-    uint64_t numberOfHashMaps;
-
-private:
-    std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> cleanupFunction;
+    CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
+    uint64_t numberOfHashMapsPerInputStream;
+    uint64_t numberOfInputStreams;
 };
 
 }
