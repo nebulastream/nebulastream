@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <ChainedHashMapCustomValueTestUtils.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <vector>
@@ -23,7 +25,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <ChainedHashMapCustomValueTestUtils.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
 #include <function.hpp>
@@ -51,6 +52,7 @@ nautilus::engine::
             Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(bufferKey);
             auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+
             auto foundEntry = hashMapRef.findOrCreateEntry(
                 recordKey,
                 *getMurMurHashFunction(),
@@ -69,7 +71,7 @@ nautilus::engine::
                 bufferManagerVal);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
+            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
@@ -103,7 +105,7 @@ nautilus::engine::
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
+            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {

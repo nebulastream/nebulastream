@@ -62,13 +62,8 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
 }
 
 PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef,
-    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-    : pagedVectorRef(pagedVectorRef)
-    , memoryProvider(memoryProvider)
-    , memoryLayout(memoryProvider->getMemoryLayout().get())
-    , bufferProvider(bufferProvider)
+    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    : pagedVectorRef(pagedVectorRef), memoryProvider(memoryProvider), memoryLayout(memoryProvider->getMemoryLayout().get())
 {
 }
 
