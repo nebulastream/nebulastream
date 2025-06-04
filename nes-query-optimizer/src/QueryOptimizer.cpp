@@ -11,26 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <QueryOptimizer.hpp>
 
-#pragma once
-
-#include <utility>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
 
 namespace NES
 {
-
-class QueryOptimizer final
+PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
-public:
-    explicit QueryOptimizer(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { };
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan) const;
-
-private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
-};
+    /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
+    /// For now, we just lower to physical operators in a pure function.
+    LowerToPhysicalOperators lowerToPhysicalOperators(conf);
+    return lowerToPhysicalOperators.apply(plan);
+}
 
 }

@@ -14,10 +14,25 @@
 
 #pragma once
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <PhysicalPlan.hpp>
+#include <RewriteRuleRegistry.hpp>
 
-namespace NES::LowerToPhysicalOperators
+namespace NES
 {
-PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf);
+class LowerToPhysicalOperators
+{
+public:
+    explicit LowerToPhysicalOperators(NES::Configurations::QueryOptimizerConfiguration queryOptimizerConfiguration);
+    PhysicalPlan apply(const LogicalPlan& queryPlan);
+    RewriteRuleResultSubgraph::SubGraphRoot
+    lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument);
+
+
+private:
+    NES::Configurations::QueryOptimizerConfiguration queryOptimizerConfiguration;
+};
+
 }
