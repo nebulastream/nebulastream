@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-executable
-        CompiledQueryPlan.cpp
-        Pipeline.cpp
-)
+add_executable(sql-parser-simple-fuzz Fuzz.cpp)
+target_link_libraries(sql-parser-simple-fuzz nes-sql-parser)
+target_compile_options(sql-parser-simple-fuzz PRIVATE -fsanitize=fuzzer)
+target_link_options(sql-parser-simple-fuzz PRIVATE -fsanitize=fuzzer)
