@@ -30,7 +30,7 @@ namespace NES
 /// Stores a sequenceNumber and an OriginId
 struct SequenceNumberForOriginId
 {
-    SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
+    SequenceNumber sequenceNumber = SequenceNumber(INVALID_SEQ_NUMBER.getRawValue() + 1);
     OriginId originId = INVALID_ORIGIN_ID;
 
     auto operator<=>(const SequenceNumberForOriginId&) const = default;
