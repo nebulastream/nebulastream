@@ -14,6 +14,8 @@ add_source_files(nes-logical-operators
         WindowAggregationLogicalFunction.cpp
 )
 
+add_subdirectory(Synopsis)
+
 add_plugin(Avg AggregationLogicalFunction nes-logical-operators AvgAggregationLogicalFunction.cpp)
 add_plugin(Count AggregationLogicalFunction nes-logical-operators CountAggregationLogicalFunction.cpp)
 add_plugin(Max AggregationLogicalFunction nes-logical-operators MaxAggregationLogicalFunction.cpp)

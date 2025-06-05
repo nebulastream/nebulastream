@@ -10,12 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Runtime)
-add_subdirectory(Pipelines)
-add_subdirectory(Listeners)
-add_subdirectory(StatisticCollection)
-
-add_source_files(nes-runtime
-        ExecutionContext.cpp
-        ExecutableQueryPlan.cpp
-)
+add_plugin(StatStoreRead LogicalOperator nes-logical-operators LogicalStatisticStoreReadOperator.cpp)
+add_plugin(StatStoreWrite LogicalOperator nes-logical-operators LogicalStatisticStoreWriteOperator.cpp)

@@ -10,12 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Runtime)
-add_subdirectory(Pipelines)
-add_subdirectory(Listeners)
-add_subdirectory(StatisticCollection)
+add_plugin(ReservoirSample AggregationPhysicalFunction nes-physical-operators ReservoirSampleFunction.cpp)
+add_plugin(ReservoirProbe WindowProbePhysicalOperator nes-physical-operators SampleFunctionProbe.cpp)
 
-add_source_files(nes-runtime
-        ExecutionContext.cpp
-        ExecutableQueryPlan.cpp
+add_source_files(nes-physical-operators
+        ReservoirSampleFunction.cpp
+        SampleFunction.cpp
+        SampleFunctionProbe.cpp
 )

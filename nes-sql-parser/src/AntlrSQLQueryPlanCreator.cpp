@@ -53,6 +53,7 @@
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/Synopsis/ReservoirSampleLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -80,7 +81,6 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
         throw InvalidQuerySyntax("Query could not be parsed");
     }
     /// Todo #421: support multiple sinks
-    INVARIANT(!sinkNames.empty(), "Need at least one sink!");
     return LogicalPlanBuilder::addSink(sinkNames.front(), queryPlans.top());
 }
 

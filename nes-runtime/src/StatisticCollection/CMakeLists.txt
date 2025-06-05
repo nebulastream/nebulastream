@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Runtime)
-add_subdirectory(Pipelines)
-add_subdirectory(Listeners)
-add_subdirectory(StatisticCollection)
 
 add_source_files(nes-runtime
-        ExecutionContext.cpp
-        ExecutableQueryPlan.cpp
+        DefaultStatisticStore.cpp
+        StatisticStoreManager.cpp
 )

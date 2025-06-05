@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(reservoir-sample-verification)
 add_subdirectory(systest-sources)
 add_tests_if_enabled(systest)
