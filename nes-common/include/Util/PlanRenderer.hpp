@@ -44,6 +44,8 @@ enum class ExplainVerbosity : uint8_t
     Short
 };
 
+const size_t MAX_EXPLAIN_SIZE = 200;
+
 /// Branch types for ASCII art rendering
 enum class BranchCase : uint8_t
 {
@@ -163,7 +165,12 @@ private:
             layerCalcQueue.pop_front();
             nodesPerLayer.current--;
 
-            const std::string currentNodeAsString = currentNode.explain(verbosity);
+            std::string currentNodeAsString = currentNode.explain(verbosity);
+            if (currentNodeAsString.size() > MAX_EXPLAIN_SIZE)
+            {
+                currentNodeAsString = currentNodeAsString.substr(0, MAX_EXPLAIN_SIZE);
+                currentNodeAsString.append("...");
+            }
             const size_t width = currentNodeAsString.size();
             const auto id = currentNode.getId().getRawValue();
             auto layerNode = std::make_shared<PrintNode>(
