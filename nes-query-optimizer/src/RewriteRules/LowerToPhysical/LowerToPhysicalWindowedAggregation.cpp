@@ -101,7 +101,9 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
     }
 }
 
-static std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
+namespace
+{
+std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
     const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
@@ -124,10 +126,10 @@ static std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationP
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             memoryProvider);
-        if (auto AggregationPhysicalFunction
+        if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {
-            aggregationPhysicalFunctions.push_back(AggregationPhysicalFunction.value());
+            aggregationPhysicalFunctions.push_back(aggregationPhysicalFunction.value());
         }
         else
         {
@@ -135,6 +137,7 @@ static std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationP
         }
     }
     return aggregationPhysicalFunctions;
+}
 }
 
 RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
@@ -152,11 +155,11 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
     auto timeFunction = getTimeFunction(aggregation);
     auto* windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(aggregation.getWindowType().get());
-    auto AggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
+    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
 
     const auto valueSize = std::accumulate(
-        AggregationPhysicalFunctions.begin(),
-        AggregationPhysicalFunctions.end(),
+        aggregationPhysicalFunctions.begin(),
+        aggregationPhysicalFunctions.end(),
         0,
         [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
@@ -179,7 +182,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
 
     auto windowAggregation = std::make_shared<WindowAggregation>(
-        AggregationPhysicalFunctions,
+        aggregationPhysicalFunctions,
         std::make_unique<Interface::MurMur3HashFunction>(),
         fieldKeys,
         fieldValues,

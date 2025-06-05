@@ -30,7 +30,7 @@ class WindowAggregation
 {
 public:
     WindowAggregation(
-        std::vector<std::shared_ptr<AggregationPhysicalFunction>> AggregationPhysicalFunctions,
+        std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         std::unique_ptr<Interface::HashFunction> hashFunction,
         std::vector<FieldOffsets> fieldKeys,
         std::vector<FieldOffsets> fieldValues,
@@ -42,7 +42,7 @@ public:
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getStateCleanupFunction()
-    std::vector<std::shared_ptr<AggregationPhysicalFunction>> AggregationPhysicalFunctions;
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     std::unique_ptr<Interface::HashFunction> hashFunction;
     std::vector<FieldOffsets> fieldKeys;
     std::vector<FieldOffsets> fieldValues;

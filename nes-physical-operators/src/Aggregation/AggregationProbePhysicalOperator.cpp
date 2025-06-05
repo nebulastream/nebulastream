@@ -91,14 +91,14 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  fieldValues = fieldValues,
                  &executionCtx,
                  &entryRef,
-                 &AggregationPhysicalFunctions
-                 = AggregationPhysicalFunctions](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
+                 &aggregationPhysicalFunctions
+                 = aggregationPhysicalFunctions](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-                    for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
                         aggFunction->combine(globalState, entryRefState, executionCtx.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
@@ -109,15 +109,15 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  fieldValues = fieldValues,
                  &executionCtx,
                  &entryRef,
-                 &AggregationPhysicalFunctions
-                 = AggregationPhysicalFunctions](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
+                 &aggregationPhysicalFunctions
+                 = aggregationPhysicalFunctions](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-                    for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
                         /// In contrast to the lambda method above, we have to reset the aggregation state before combining it with the other state
                         aggFunction->reset(globalState, executionCtx.pipelineMemoryProvider);
@@ -137,7 +137,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-        for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
+        for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
             outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
