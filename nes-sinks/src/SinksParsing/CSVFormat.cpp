@@ -32,8 +32,11 @@
 
 namespace NES::Sinks
 {
+CSVFormat::CSVFormat(const Schema& schema) : CSVFormat(schema, false)
+{
+}
 
-CSVFormat::CSVFormat(const Schema& pSchema) : schema(pSchema)
+CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : schema(pSchema), escapeStrings(escapeStrings)
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;
@@ -66,7 +69,7 @@ std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer
     return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext)
+std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext) const
 {
     std::stringstream ss;
     const auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -76,12 +79,16 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
         auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer](const auto& index)
+                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
                           {
                               const auto physicalType = formattingContext.physicalTypes[index];
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
                                   auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
+                                  if (copyOfEscapeStrings)
+                                  {
+                                      return "\"" + Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx) + "\"";
+                                  }
                                   return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
                               }
                               return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
