@@ -109,7 +109,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
             const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-            for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
+            for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
                 aggFunction->reset(state, ctx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
@@ -121,7 +121,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Updating the aggregation states
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-    for (const auto& aggFunction : nautilus::static_iterable(AggregationPhysicalFunctions))
+    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
@@ -133,7 +133,7 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
 {
     return [copyOfFieldKeys = fieldKeys,
             copyOfFieldValues = fieldValues,
-            copyOfAggregationPhysicalFunctions = AggregationPhysicalFunctions,
+            copyOfAggregationPhysicalFunctions = aggregationPhysicalFunctions,
             copyOfEntriesPerPage = entriesPerPage,
             copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Interface::HashMap>>& hashMaps)
     {

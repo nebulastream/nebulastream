@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>

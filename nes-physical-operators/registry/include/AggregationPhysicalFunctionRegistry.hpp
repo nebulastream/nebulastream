@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
-#include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
