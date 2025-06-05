@@ -71,9 +71,6 @@ if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(WARNING "This project only supports clang. You are using ${CMAKE_CXX_COMPILER_ID} in version ${CMAKE_CXX_COMPILER_VERSION}")
 endif ()
 
-# Find project version
-include(cmake/semver/GetSemanticVersion.cmake)
-
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
