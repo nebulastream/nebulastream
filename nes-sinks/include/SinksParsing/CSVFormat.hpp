@@ -42,6 +42,7 @@ public:
     };
 
     explicit CSVFormat(const Schema& schema);
+    explicit CSVFormat(const Schema& schema, bool escapeStrings);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
@@ -51,14 +52,15 @@ public:
     [[nodiscard]] std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    [[nodiscard]] static std::string
-    tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext);
+    [[nodiscard]] std::string
+    tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
 private:
     FormattingContext formattingContext;
     Schema schema;
+    bool escapeStrings;
 };
 
 }
