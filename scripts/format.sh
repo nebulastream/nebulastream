@@ -130,19 +130,20 @@ done
 #
 for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
 do
-	# remove path and .cpp suffix, i.e. /foo/bar.cpp -> bar
-	basename=$(basename "$file" .cpp)
-	# check if corresponding header file exists
-	if ! git ls-files | grep "$basename.hpp" > /dev/null
-	then
-		log_warn "file has no corresponding header file: $file"
-		continue
-	fi
-	# error if the first include does not contain the basename
-	if ! grep "#include" < "$file" | head -n 1 | grep "$basename.hpp" > /dev/null
-	then
-		log_error "First include is not the corresponding .hpp file in $file"
-	fi
+    # remove path and .cpp suffix, i.e. /foo/bar.cpp -> bar
+    basename=$(basename "$file" .cpp)
+    # check if corresponding header file exists
+    if ! git ls-files | grep "$basename.hpp" > /dev/null
+    then
+        log_warn "file has no corresponding header file: $file"
+        continue
+    fi
+    # error if the first include does not contain the basename
+    if ! grep "#include" < "$file" | head -n 1 | grep "$basename.hpp" > /dev/null
+    then
+        # line 15 shall be the first include after license preamble and one blank line
+        log_error "First include is not the corresponding .hpp file in $file:15"
+    fi
 done
 
 # warning: no includes with double quotes
