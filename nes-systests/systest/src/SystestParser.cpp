@@ -23,6 +23,7 @@
 #include <functional>
 #include <optional>
 #include <regex>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -94,15 +95,17 @@ static constexpr auto SLTSourceToken = "Source"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
+static constexpr auto GeneratorSourceToken = "SourceGenerator"s;
 static constexpr auto ErrorToken = "ERROR"s;
 
-static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
-    {{CSVSourceToken, TokenType::CSV_SOURCE},
-     {SLTSourceToken, TokenType::SLT_SOURCE},
-     {QueryToken, TokenType::QUERY},
-     {SinkToken, TokenType::SINK},
-     {ResultDelimiter, TokenType::RESULT_DELIMITER},
-     {ErrorToken, TokenType::ERROR_EXPECTATION}});
+static const std::array<std::pair<std::string_view, TokenType>, 7> stringToToken
+    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
+        {SLTSourceToken, TokenType::SLT_SOURCE},
+        {QueryToken, TokenType::QUERY},
+        {SinkToken, TokenType::SINK},
+        {ResultDelimiter, TokenType::RESULT_DELIMITER},
+        {ErrorToken, TokenType::ERROR_EXPECTATION},
+        {GeneratorSourceToken, TokenType::GENERATOR_SOURCE}}};
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -183,6 +186,11 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnGeneratorSourceCallback(GeneratorSourceCallback callback)
+{
+    this->onGeneratorSourceCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -243,6 +251,13 @@ void SystestParser::parse()
                 }
                 break;
             }
+            case TokenType::GENERATOR_SOURCE: {
+                auto generatorSource = expectGeneratorSource();
+                if (onGeneratorSourceCallback)
+                {
+                    onGeneratorSourceCallback(std::move(generatorSource));
+                }
+            }
             case TokenType::INVALID:
                 throw TestException(
                     "Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
@@ -279,6 +294,10 @@ std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialTok
     if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
+    }
+    if (potentialToken.starts_with(GeneratorSourceToken))
+    {
+        return TokenType::GENERATOR_SOURCE;
     }
     /// Lookup in map
     const auto* it = std::ranges::find_if(
@@ -581,4 +600,112 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
 
     return expectation;
 }
+
+/// To parse a GeneratorSource we expect the following format:
+/// SourceGenerator(seed 1) generatedTuples UINT64(SEQUENCE UINT64 0 10 1) field1 FLOAT64(NORMAL_DISTRIBUTION FLOAT64 0 15) field2
+SystestParser::GeneratorSource SystestParser::expectGeneratorSource()
+{
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    GeneratorSource generatorSource;
+    const auto& line = lines[currentLine];
+    auto tokenize = [](std::string_view input) -> std::vector<std::string_view>
+    {
+        std::vector<std::string_view> tokens;
+        for (const auto& token : input | std::views::split(' '))
+        {
+            auto view = std::string_view(token);
+            if (view.contains(')') || view.contains('(') || view.contains(','))
+            {
+                size_t pos = 0;
+                while (pos != std::string_view::npos)
+                {
+                    const auto newPos = view.find_first_of("(),"sv, pos);
+                    if (newPos == std::string_view::npos && pos < view.size())
+                    {
+                        tokens.push_back(view.substr(pos, view.size() - pos));
+                        break;
+                    }
+                    if (newPos == std::string_view::npos)
+                    {
+                        break;
+                    }
+                    tokens.push_back(view.substr(pos, newPos - pos));
+                    tokens.push_back(view.substr(newPos, 1));
+                    pos = newPos + 1;
+                }
+            }
+            else
+            {
+                tokens.emplace_back(view);
+            }
+        }
+        return tokens;
+    };
+    auto tokens = tokenize(line);
+    auto currentToken = tokens.begin();
+    if (*currentToken++ != "SourceGenerator")
+    {
+        NES_FATAL_ERROR("Expected 'SourceGenerator' but got '{}'", tokens.front());
+        throw SLTUnexpectedToken("Expected 'SourceGenerator' but got '{}'", tokens.front());
+    }
+    /// Parse Source Config options
+    if (*currentToken == "("sv)
+    {
+        while (*currentToken != ")"sv) /// Parse source configs
+        {
+            if (*currentToken == "seed"sv)
+            {
+                generatorSource.seed = *(++currentToken);
+
+            }
+            else if (*currentToken == "stopGeneratorWhenSequenceFinishes"sv)
+            {
+                generatorSource.stopGeneratorWhenSequenceFinishes = *(++currentToken);
+                ++currentToken;
+            }
+            else if (*currentToken == "maxRuntimeMS"sv)
+            {
+                generatorSource.maxRuntimeMS = *(++currentToken);
+                ++currentToken;
+            }
+            else
+            {
+                ++currentToken;
+            }
+        }
+        ++currentToken;
+    }
+    /// Parse source Name
+    generatorSource.name = *currentToken;
+    ++currentToken;
+
+    /// Parse Fields
+    std::vector<std::string> argumentsFields;
+    std::string fieldGeneratorSchema;
+    while (currentToken != tokens.end())
+    {
+
+        argumentsFields.emplace_back(*currentToken);
+        ++currentToken;
+
+        while (currentToken != tokens.end() && *currentToken != ")"sv)
+        {
+            if (*currentToken == "("sv)
+            {
+                ++currentToken;
+            }
+            fieldGeneratorSchema += *currentToken;
+            fieldGeneratorSchema += " "sv;
+            ++currentToken;
+        }
+        ++currentToken;
+        argumentsFields.emplace_back(*currentToken);
+        ++currentToken;
+        fieldGeneratorSchema.back() = '\n';
+    }
+    generatorSource.fields = parseSchemaFields(argumentsFields);
+    generatorSource.generatorSchema = fieldGeneratorSchema;
+    return generatorSource;
+}
+
 }

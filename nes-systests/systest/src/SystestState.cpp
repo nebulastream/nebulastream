@@ -419,13 +419,13 @@ std::string RunningQuery::getThroughput() const
     INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
     if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
     {
-        return "";
+        return "N/A B/s / N/A Tup/s";
     }
 
     /// Calculating the throughput in bytes per second and tuples per second
     const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
-    const auto bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
-    const auto tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
+    const auto bytesPerSecond = bytesProcessed == std::numeric_limits<size_t>::max() ? std::numeric_limits<double>::quiet_NaN() : static_cast<double>(bytesProcessed.value()) / duration.count();
+    const auto tuplesPerSecond = tuplesProcessed == std::numeric_limits<size_t>::max() ? std::numeric_limits<double>::quiet_NaN() : static_cast<double>(tuplesProcessed.value()) / duration.count();
 
     auto formatUnits = [](double throughput)
     {

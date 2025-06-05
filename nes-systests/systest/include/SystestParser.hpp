@@ -37,6 +37,7 @@ enum class TokenType : uint8_t
     SINK,
     QUERY,
     RESULT_DELIMITER,
+    GENERATOR_SOURCE,
     ERROR_EXPECTATION,
 };
 
@@ -93,12 +94,24 @@ public:
         bool operator==(const ErrorExpectation& other) const = default;
     };
 
+    struct GeneratorSource
+    {
+        std::string name;
+        Schema fields;
+        std::string generatorSchema;
+        std::string maxRuntimeMS {}; /// Empty string mean option is not set
+        std::string stopGeneratorWhenSequenceFinishes {};
+        std::string seed {};
+        bool operator==(const GeneratorSource& other) const = default;
+    };
+
     using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using SLTSourceCallback = std::function<void(const SLTSource&)>;
     using CSVSourceCallback = std::function<void(const CSVSource&)>;
     using SinkCallback = std::function<void(Sink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
+    using GeneratorSourceCallback = std::function<void(GeneratorSource&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -107,6 +120,8 @@ public:
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
+    void registerOnGeneratorSourceCallback(GeneratorSourceCallback callback);
+
 
     void parse();
 
@@ -130,6 +145,7 @@ private:
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
+    [[nodiscard]] GeneratorSource expectGeneratorSource();
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
@@ -137,6 +153,7 @@ private:
     CSVSourceCallback onCSVSourceCallback;
     SinkCallback onSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
+    GeneratorSourceCallback onGeneratorSourceCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;

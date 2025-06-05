@@ -233,8 +233,12 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         resultJson.push_back({
             {"query name", queryRan.query.testName},
             {"time", executionTimeInSeconds},
-            {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
-            {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
+            {"bytesPerSecond", queryRan.bytesProcessed.has_value()
+                ? static_cast<double>(queryRan.bytesProcessed.value()) / executionTimeInSeconds
+                : std::numeric_limits<double>::quiet_NaN()},
+            {"tuplesPerSecond", queryRan.tuplesProcessed.has_value()
+                ? static_cast<double>(queryRan.tuplesProcessed.value()) / executionTimeInSeconds
+                : std::numeric_limits<double>::quiet_NaN()},
         });
     }
     return failedQueries;
@@ -285,6 +289,12 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         size_t tuplesProcessed = 0;
         for (const auto& [sourcePath, sourceOccurrencesInQuery] : queryToRun.sourceNamesToFilepathAndCount | std::views::values)
         {
+            if (sourcePath.string().starts_with("memory://"))
+            {
+                bytesProcessed = std::numeric_limits<size_t>::max();
+                tuplesProcessed = std::numeric_limits<size_t>::max();
+                continue;
+            }
             bytesProcessed += (std::filesystem::file_size(sourcePath) * sourceOccurrencesInQuery);
 
             /// Counting the lines, i.e., \n in the sourcePath
@@ -292,8 +302,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             tuplesProcessed
                 += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
         }
-        ranQueries.back()->bytesProcessed = bytesProcessed;
-        ranQueries.back()->tuplesProcessed = tuplesProcessed;
+        ranQueries.back()->bytesProcessed = bytesProcessed == std::numeric_limits<size_t>::max() ? std::nullopt : std::optional{bytesProcessed};
+        ranQueries.back()->tuplesProcessed = tuplesProcessed == std::numeric_limits<size_t>::max() ? std::nullopt : std::optional{tuplesProcessed};
 
         auto errorMessage = checkResult(*ranQueries.back(), queryResultMap);
         ranQueries.back()->passed = not errorMessage.has_value();
