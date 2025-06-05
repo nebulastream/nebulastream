@@ -114,18 +114,6 @@ do
     fi
 done
 
-# no comment after closing bracket for namespace
-#
-# No comment after closing brackets, as voted in https://github.com/nebulastream/nebulastream-public/discussions/379
-# This is done to ensure that no one uses a comment after a closing bracket for a namespace.
-for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
-do
-    if git grep -n -E -e "}[ \t]*///.*namespace.*" -- "$file" > /dev/null
-    then
-        log_error "Illegal comment in $(git grep -n -E -e "}[ \t]*//.*namespace.*" -- "$file")"
-    fi
-done
-
 # first include in .cpp file is the corresponding .hpp file
 #
 for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
