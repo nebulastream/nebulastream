@@ -27,12 +27,15 @@ import BenchmarkConfig
 import PostProcessing
 
 
-# Configuration for execution
-SERVER_NAME = "armSC"
-DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
+# Configuration for compilation
+BUILD_PROJECT = False
 BUILD_DIR = "cmake-build-relnologging"
 SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
 # SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
+CMAKE_TOOLCHAIN_FILE = "/home/ntantow/Documents/NebulaStream/vcpkg/scripts/buildsystems/vcpkg.cmake"
+LOG_LEVEL = "LEVEL_NONE"
+CMAKE_BUILD_TYPE = "Release"
+USE_LIBCXX_IF_AVAILABLE = "False"  # False for using libstdcxx, True for libcxx
 NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
 SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/nes-single-node-worker")
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
@@ -45,6 +48,8 @@ MEASURE_INTERVAL = 8
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
+SERVER_NAME = "armSC"
+DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
 DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 RESULTS_DIR = f"benchmarks/data/{DATETIME_NOW}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
@@ -62,6 +67,27 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
+
+
+# Helper functions
+def clear_build_dir():
+    if os.path.exists(BUILD_DIR):
+        shutil.rmtree(BUILD_DIR)
+    os.mkdir(BUILD_DIR)
+
+
+def compile_project():
+    cmd_cmake = ["cmake",
+                 f"-DCMAKE_BUILD_TYPE={CMAKE_BUILD_TYPE}",
+                 f"-DNES_LOG_LEVEL={LOG_LEVEL}",
+                 f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_FILE}",
+                 f"-DUSE_LIBCXX_IF_AVAILABLE:BOOL={USE_LIBCXX_IF_AVAILABLE}",
+                 f"-S {SOURCE_DIR}",
+                 f"-B {BUILD_DIR}",
+                 "-G Ninja"]
+    cmd_build = f"cmake --build {BUILD_DIR} -j -- -k 0".split(" ")
+    subprocess.run(cmd_cmake, check=True)
+    subprocess.run(cmd_build, check=True)
 
 
 def create_results_dir():
@@ -344,6 +370,11 @@ def format_data_size(size_in_bytes):
 
 
 if __name__ == "__main__":
+    if BUILD_PROJECT:
+        # Removing the build folder and compiling the project
+        clear_build_dir()
+        compile_project()
+
     # Running all benchmarks
     output_folders = []
     iteration_times = []
