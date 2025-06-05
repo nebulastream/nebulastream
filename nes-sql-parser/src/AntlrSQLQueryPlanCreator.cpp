@@ -576,7 +576,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
             | std::views::transform([](auto& child) { return child.template tryGet<FieldAccessLogicalFunction>(); })
             | std::ranges::to<std::vector>();
 
-        if (std::ranges::count_if(fieldAccessFunctions, [](const auto& fieldAccessNode) { return fieldAccessNode.has_value(); }) != 1)
+        if (!(fieldAccessFunctions.size() == 1 and fieldAccessFunctions.front().has_value()))
         {
             throw InvalidQuerySyntax("A named function must have exactly one valid FieldAccessLogicalFunction child.");
         }
@@ -713,6 +713,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto rightQueryPlan = helpers.top().queryPlans[1];
     helpers.top().queryPlans.clear();
 
+    INVARIANT(helpers.top().joinFunction.has_value(), "Join has no join function!");
     const auto queryPlan = LogicalPlanBuilder::addJoin(
         leftQueryPlan, rightQueryPlan, helpers.top().joinFunction.value(), helpers.top().windowType, helpers.top().joinType);
     if (not helpers.empty())
@@ -735,8 +736,9 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
     {
         const auto innerFunction = helpers.top().joinKeyRelationHelper.back();
         helpers.top().joinKeyRelationHelper.pop_back();
+        INVARIANT(helpers.top().joinFunction.has_value(), "Join has no join function!");
         auto negatedFunction = NegateLogicalFunction(helpers.top().joinFunction.value());
-        helpers.top().joinKeyRelationHelper.push_back(negatedFunction);
+        helpers.top().joinKeyRelationHelper.emplace_back(negatedFunction);
         helpers.top().joinFunction = negatedFunction;
     }
     else

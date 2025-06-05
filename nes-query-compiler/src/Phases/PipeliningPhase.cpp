@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Phases/PipeliningPhase.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -19,7 +21,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Phases/PipeliningPhase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <EmitOperatorHandler.hpp>

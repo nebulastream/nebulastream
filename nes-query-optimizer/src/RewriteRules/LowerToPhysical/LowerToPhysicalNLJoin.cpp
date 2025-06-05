@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <ostream>
@@ -36,7 +38,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Util/Common.hpp>

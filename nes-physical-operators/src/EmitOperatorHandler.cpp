@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <EmitOperatorHandler.hpp>
+
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <EmitOperatorHandler.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
