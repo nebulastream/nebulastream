@@ -28,6 +28,8 @@ import PostProcessing
 
 
 # Configuration for execution
+SERVER_NAME = "armSC"
+DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
 BUILD_DIR = "cmake-build-relnologging"
 SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
 # SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
@@ -36,6 +38,7 @@ SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/n
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
+NUM_RUNS_PER_CONFIG = 3
 WAIT_BEFORE_SIGKILL = 5
 WAIT_BEFORE_QUERY_STOP = 5
 MEASURE_INTERVAL = 8
@@ -83,7 +86,7 @@ def create_output_folder():
     return folder_name
 
 
-def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports, iteration):
+def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports):
     # Creating a dest path for the worker and query config yaml file
     dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
     dest_path_query = os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)
@@ -139,8 +142,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     query_config_yaml["sink"]["config"]["filePath"] = os.path.abspath(os.path.join(output_folder, "csv_sink.csv"))
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
-    assert len(tcp_server_ports) % len(query_config_yaml[
-                                           "physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
+    assert len(tcp_server_ports) % len(query_config_yaml["physical"]) == 0, \
+        "The number of physical sources must be a multiple of the number of TCP server ports."
 
     # Iterating over the physical sources and writing as many in a separate list as we have configured in the benchmark config
     new_physical_sources = []
@@ -265,7 +268,7 @@ def get_start_ports():
 
 
 # Benchmark loop
-def run_benchmark(current_benchmark_config, iteration):
+def run_benchmark(current_benchmark_config):
     # Defining here two empty lists so that we can use it in the finally
     output_folder = ""
     working_dir = ""
@@ -279,7 +282,7 @@ def run_benchmark(current_benchmark_config, iteration):
         # Creating a new output folder and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
         working_dir = create_working_dir(output_folder)
-        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports, iteration)
+        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports)
 
         # Waiting before starting the single node worker
         time.sleep(WAIT_BETWEEN_COMMANDS)
@@ -324,37 +327,71 @@ def load_csv(file_path):
     return pd.read_csv(file_path)
 
 
+def get_directory_size(directory):
+    total_size = 0
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        if os.path.isfile(filepath):
+            total_size += os.path.getsize(filepath)
+    return total_size
+
+
+def format_data_size(size_in_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_in_bytes < 1024:
+            return f"{size_in_bytes:.2f} {unit}"
+        size_in_bytes /= 1024
+
+
 if __name__ == "__main__":
     # Running all benchmarks
     output_folders = []
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
-    total_iterations = len(ALL_BENCHMARK_CONFIGS)
     iteration_times = []
 
-    for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=1):
-        start_time = time.time()
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
+    num_configs = len(ALL_BENCHMARK_CONFIGS)
+    total_iterations = num_configs * NUM_RUNS_PER_CONFIG
+    print(f"Running each of the {num_configs} experiments {NUM_RUNS_PER_CONFIG} times, "
+          f"totaling {total_iterations} runs...\n")
 
-        output_folders.append(run_benchmark(benchmark_config, i))
-        time.sleep(1)  # Sleep for a second to allow the system to clean up
+    for j in range(NUM_RUNS_PER_CONFIG):
+        for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=(j * num_configs + 1)):
+            start_time = time.time()
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        iteration_times.append(elapsed_time)
+            output_folders.append(run_benchmark(benchmark_config))
+            time.sleep(1)  # Sleep for a second to allow the system to clean up
 
-        # Calculate average time per iteration
-        avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            iteration_times.append(elapsed_time)
 
-        # Estimate remaining time
-        remaining_iterations = total_iterations - i
-        remaining_time = remaining_iterations * avg_time_per_iteration
-        eta = datetime.timedelta(seconds=int(remaining_time))
+            # Calculate average time per iteration
+            avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
 
-        # Calculate estimated finish time
-        finish_time = datetime.datetime.now() + eta
+            # Estimate remaining time
+            remaining_iterations = total_iterations - i
+            remaining_time = remaining_iterations * avg_time_per_iteration
+            eta = datetime.timedelta(seconds=int(remaining_time))
 
-        # Print ETA and finish time in cyan
-        print(
-            f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+            # Calculate estimated finish time
+            finish_time = datetime.datetime.now() + eta
+
+            # Print ETA and finish time in cyan
+            print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, "
+                  f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+
+    # Calling the postprocessing main
+    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
+                                                    BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
+                                                    COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
+                                                    benchmark_stats_csv_path)
+    post_processing.main()
+
+    results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
+    copy_command = f"scp -r {SERVER_NAME}:{results_path} {DESTINATION_PATH}"
+    print(f"Done processing. Size of results is {format_data_size(get_directory_size(results_path))}. "
+          f"Copy with:\n{copy_command}")
 
     # print("\nStarting post processing...\n")
     # # Compare the results of default slice store and file backed variant
@@ -408,22 +445,3 @@ if __name__ == "__main__":
     #         print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
     #     if not extra_keys_file2.empty:
     #         print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
-
-    # Calling the postprocessing main
-    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
-                                                    BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
-                                                    COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
-                                                    benchmark_stats_csv_path)
-    post_processing.main()
-
-    # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
-    # copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
-    # print(f"Copy command: \n\"{copy_command}\"")
-
-    # output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
-    # print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
-    # print(
-    #     f"Created worker statistics CSV file at {WORKER_STATISTICS_CSV_PATH} and cache statistics CSV file at {CACHE_STATISTICS_CSV_PATH}")
-    # copy_command = f"rsync -avz --progress tower-en717:{WORKER_STATISTICS_CSV_PATH} tower-en717:{CACHE_STATISTICS_CSV_PATH} /home/nils/Downloads/"
-    # print(f"Copy command: \n\"{copy_command}\"")
