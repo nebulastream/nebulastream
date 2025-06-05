@@ -42,7 +42,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Count";
-    static constexpr DataType::Type inputAggregateStampType = DataType::Type::FLOAT64;
+    static constexpr DataType::Type inputAggregateStampType = DataType::Type::UINT64;
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
