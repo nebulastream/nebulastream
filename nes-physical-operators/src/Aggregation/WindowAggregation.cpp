@@ -27,13 +27,13 @@ namespace NES
 {
 
 WindowAggregation::WindowAggregation(
-    std::vector<std::shared_ptr<AggregationPhysicalFunction>> AggregationPhysicalFunctions,
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
     std::unique_ptr<Interface::HashFunction> hashFunction,
     std::vector<FieldOffsets> fieldKeys,
     std::vector<FieldOffsets> fieldValues,
     uint64_t entriesPerPage,
     uint64_t entrySize)
-    : AggregationPhysicalFunctions(std::move(AggregationPhysicalFunctions))
+    : aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
     , hashFunction(std::move(hashFunction))
     , fieldKeys(std::move(fieldKeys))
     , fieldValues(std::move(fieldValues))
@@ -43,14 +43,14 @@ WindowAggregation::WindowAggregation(
     INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
     INVARIANT(entrySize > 0, "The entry size must be greater than 0");
     PRECONDITION(
-        this->AggregationPhysicalFunctions.size() == this->fieldValues.size(),
+        this->aggregationPhysicalFunctions.size() == this->fieldValues.size(),
         "The number of aggregation functions (here: {}) must match the number of field values (here: {})",
-        this->AggregationPhysicalFunctions.size(),
+        this->aggregationPhysicalFunctions.size(),
         this->fieldValues.size());
 }
 
 WindowAggregation::WindowAggregation(const WindowAggregation& other)
-    : AggregationPhysicalFunctions(other.AggregationPhysicalFunctions)
+    : aggregationPhysicalFunctions(other.aggregationPhysicalFunctions)
     , hashFunction(other.hashFunction ? other.hashFunction->clone() : nullptr)
     , fieldKeys(other.fieldKeys)
     , fieldValues(other.fieldValues)
@@ -60,7 +60,7 @@ WindowAggregation::WindowAggregation(const WindowAggregation& other)
 }
 
 WindowAggregation::WindowAggregation(const std::shared_ptr<WindowAggregation>& other)
-    : AggregationPhysicalFunctions(other->AggregationPhysicalFunctions)
+    : aggregationPhysicalFunctions(other->aggregationPhysicalFunctions)
     , hashFunction(std::move(other->hashFunction))
     , fieldKeys(other->fieldKeys)
     , fieldValues(other->fieldValues)
