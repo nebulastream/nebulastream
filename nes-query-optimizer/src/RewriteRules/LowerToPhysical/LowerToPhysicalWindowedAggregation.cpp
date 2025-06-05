@@ -154,7 +154,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto inputOriginIds = aggregation.getInputOriginIds()[0];
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
     auto timeFunction = getTimeFunction(aggregation);
-    auto* windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(aggregation.getWindowType().get());
+    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation.getWindowType());
+    INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
 
     const auto valueSize = std::accumulate(
