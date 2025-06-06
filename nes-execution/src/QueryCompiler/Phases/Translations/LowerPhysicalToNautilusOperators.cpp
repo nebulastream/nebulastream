@@ -348,7 +348,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
 {
-    fieldNames = schema->getFieldNames();
     switch (schema->getLayoutType())
     {
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
