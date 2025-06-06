@@ -23,6 +23,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES
@@ -76,11 +77,19 @@ public:
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
            "JoinStrategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    BoolOption useSingleMemoryLayout
+        = {"useSingleMemoryLayout",
+            "false",
+            "If true, all operators will use the memory layout determined in memoryLayout config."};
+    EnumOption<Schema::MemoryLayoutType> memoryLayout
+        = {"memoryLayout",
+        Schema::MemoryLayoutType::ROW_LAYOUT,
+        "Memory layout to use for operators. Options: ROW_LAYOUT, COLUMNAR_LAYOUT."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize, &useSingleMemoryLayout, &memoryLayout};
     }
 };
 
