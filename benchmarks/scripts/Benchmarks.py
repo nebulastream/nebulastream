@@ -44,8 +44,8 @@ def plot_comparison(data, metric):
     plt.figure(figsize=(14, 6))
 
     # Get unique configurations for both slice store types
-    default_configs = data[data['slice_store_type'] == 'Default'][shared_config_params].drop_duplicates()
-    file_backed_configs = data[data['slice_store_type'] == 'File-Backed'][shared_config_params].drop_duplicates()
+    default_configs = data[data['slice_store_type'] == 'DEFAULT'][shared_config_params].drop_duplicates()
+    file_backed_configs = data[data['slice_store_type'] == 'FILE_BACKED'][shared_config_params].drop_duplicates()
 
     # Find a common configuration
     common_config = pd.merge(default_configs, file_backed_configs, on=shared_config_params).iloc[0:1]
@@ -93,7 +93,7 @@ for param in shared_config_params:
     plt.show()
 
 # File-Backed Only Parameter Plots
-file_backed_data = aggregated_data[aggregated_data['slice_store_type'] == 'File-Backed']
+file_backed_data = aggregated_data[aggregated_data['slice_store_type'] == 'FILE_BACKED']
 
 for param in file_backed_config_params:
     if param in file_backed_data.columns:
