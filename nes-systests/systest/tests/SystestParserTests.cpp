@@ -68,7 +68,7 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& sourceOut)
@@ -104,7 +104,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     const std::string str = queryIn + "\n" + delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback(
-        [&](const std::string& queryOut, size_t)
+        [&](const std::string& queryOut, SystestQueryId)
         {
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
@@ -112,7 +112,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadString(str));
@@ -136,7 +136,7 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
 
     const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& sourceOut)
         {
@@ -167,9 +167,9 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 
     const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&&, const size_t)
+        [&](std::vector<std::string>&&, const SystestQueryId)
         {
             /// nop
         });
@@ -197,7 +197,7 @@ TEST_F(SystestParserTest, testSubstitutionRule)
     const SystestParser::SubstitutionRule rule{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "TestSink()"; }};
     parser.registerSubstitutionRule(rule);
 
-    const SystestParser::QueryCallback callback = [&queryExpect, &callbackCalled](const std::string& query, size_t)
+    const SystestParser::QueryCallback callback = [&queryExpect, &callbackCalled](const std::string& query, SystestQueryId)
     {
         ASSERT_EQ(queryExpect, query);
         callbackCalled = true;

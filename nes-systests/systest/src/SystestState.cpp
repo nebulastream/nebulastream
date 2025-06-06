@@ -56,7 +56,7 @@ namespace NES::Systest
 {
 
 std::filesystem::path
-SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
+SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
 {
     auto resultDir = workingDir / "results";
     if (not is_directory(resultDir))
@@ -85,7 +85,7 @@ SystestQuery::SystestQuery(
     std::string queryDefinition,
     std::filesystem::path sqlLogicTestFile,
     std::expected<LogicalPlan, Exception> queryPlan,
-    const uint64_t queryIdInFile,
+    const SystestQueryId queryIdInFile,
     std::filesystem::path workingDir,
     const Schema& sinkSchema,
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
@@ -166,7 +166,7 @@ optimizeQueryPlanIfErrorFree(const LoadedQueryPlan& loadedQueryPlan)
 void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
 {
     auto loadedPlans = systestStarterGlobals.binder.loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
-    std::unordered_set<uint64_t> foundQueries;
+    std::unordered_set<SystestQueryId> foundQueries;
 
     std::ranges::for_each(
         loadedPlans
@@ -174,18 +174,18 @@ void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& sy
                 [&testfile](const auto& loadedQueryPlan)
                 {
                     return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryNumberInTest);
+                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryIdInTest);
                 }),
         [&systestStarterGlobals, &testfile, &foundQueries](const auto& filteredLoadedQueryPlan)
         {
-            foundQueries.insert(filteredLoadedQueryPlan.queryNumberInTest + 1);
+            foundQueries.insert(filteredLoadedQueryPlan.queryIdInTest);
             const auto [queryPlanOpt, sourceNamesToFilepathAndCountForQuery] = optimizeQueryPlanIfErrorFree(filteredLoadedQueryPlan);
             systestStarterGlobals.addQuery(
                 testfile.name(),
                 filteredLoadedQueryPlan.queryName,
                 testfile.file,
                 queryPlanOpt,
-                filteredLoadedQueryPlan.queryNumberInTest,
+                filteredLoadedQueryPlan.queryIdInTest,
                 systestStarterGlobals.getWorkingDir(),
                 filteredLoadedQueryPlan.sinkSchema,
                 sourceNamesToFilepathAndCountForQuery,
@@ -195,7 +195,7 @@ void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& sy
     /// Warn about queries specified via the command line that were not found in the test file
     std::ranges::for_each(
         testfile.onlyEnableQueriesWithTestQueryNumber
-            | std::views::filter([&foundQueries](auto testNumber) { return not foundQueries.contains(testNumber); }),
+            | std::views::filter([&foundQueries](const SystestQueryId testNumber) { return not foundQueries.contains(testNumber); }),
         [&testfile](const auto badTestNumber)
         {
             std::cerr << fmt::format(
@@ -235,7 +235,7 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
 
 TestFile::TestFile(const std::filesystem::path& file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
 
-TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
@@ -312,8 +312,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         }
         /// case: load a concrete set of tests
         auto scalarTestNumbers = config.testQueryNumbers.getValues();
-        const auto testNumbers = std::ranges::to<std::unordered_set<uint64_t>>(
-            scalarTestNumbers | std::views::transform([](const auto& option) { return option.getValue(); }));
+        const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
+            scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
         const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
         return TestFileMap{{testfile.file, testfile}};
@@ -481,7 +481,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
     checksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { systestStarterGlobals.addQueryResult(testFileName, correspondingQueryId, std::move(resultTuples)); });
     parser.registerSubstitutionRule(
         {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = systestStarterGlobals.getTestDataDir(); }});
@@ -582,7 +582,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](std::string query, const size_t currentQueryNumberInTest)
+        [&](std::string query, const SystestQueryId currentQueryNumberInTest)
         {
             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
@@ -631,7 +631,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
 
 
             /// Replacing the sinkName with the created unique sink name
-            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest);
+            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest.getRawValue());
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan

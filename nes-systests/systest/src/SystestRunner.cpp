@@ -18,6 +18,7 @@
 #include <cerrno>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
@@ -26,6 +27,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <queue>
 #include <ranges>
 #include <regex>
 #include <string>
@@ -50,6 +52,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -315,7 +318,7 @@ void printQueryResultToStdOut(
     const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.query.testName.size();
-    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile);
+    const auto queryNumberAsString = runningQuery.query.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
 
