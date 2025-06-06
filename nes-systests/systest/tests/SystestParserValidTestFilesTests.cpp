@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,14 +44,14 @@ public:
 
 TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "valid.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "valid.dummy";
 
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
     const SystestParser::SLTSource expectedSLTSource
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
-    SystestParser::CSVSource expectedCSVSource
+    const SystestParser::CSVSource expectedCSVSource
         = {.name = "e124",
            .fields
            = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"},
@@ -71,7 +73,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool csvSourceCallbackCalled = false;
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](std::string&&, size_t) { queryCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](const std::string&, size_t) { queryCallbackCalled = true; });
     parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
 
@@ -88,7 +90,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "comments.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "comments.dummy";
 
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
@@ -174,15 +176,16 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
-    ASSERT_TRUE(std::ranges::all_of(
-        expectedResults,
-        [&systestStarterGlobals](const auto& expectedResult)
-        { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
+    ASSERT_TRUE(
+        std::ranges::all_of(
+            expectedResults,
+            [&systestStarterGlobals](const auto& expectedResult)
+            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "filter.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";
 
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
@@ -276,15 +279,16 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
-    ASSERT_TRUE(std::ranges::all_of(
-        expectedResults,
-        [&systestStarterGlobals](const auto& expectedResult)
-        { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
+    ASSERT_TRUE(
+        std::ranges::all_of(
+            expectedResults,
+            [&systestStarterGlobals](const auto& expectedResult)
+            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 {
-    const auto* const filename = TEST_DATA_DIR "error_expectation.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "error_expectation.dummy";
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
     const uint64_t expectErrorCode = 1003;
@@ -295,7 +299,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&](std::string&& query, size_t)
+        [&](const std::string& query, size_t)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;

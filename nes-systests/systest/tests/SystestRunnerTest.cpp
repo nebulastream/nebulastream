@@ -78,10 +78,18 @@ static QuerySummary makeSummary(QueryId id, QueryStatus status, const std::share
 using ::testing::InSequence;
 using ::testing::Return;
 
-static SystestQuery makeQuery(const LogicalPlan& plan, std::optional<ExpectedError> expected = std::nullopt)
+static SystestQuery makeQuery(const LogicalPlan& plan, std::optional<ExpectedError> expected)
 {
     return SystestQuery{
-        "test_query", "SELECT * FROM test", TEST_DATA_DIR "filter.dummy", plan, 0, PATH_TO_BINARY_DIR, {}, {}, std::move(expected)};
+        "test_query",
+        "SELECT * FROM test",
+        SYSTEST_DATA_DIR "filter.dummy",
+        plan,
+        0,
+        PATH_TO_BINARY_DIR,
+        {},
+        {},
+        std::move(expected)};
 }
 /// Overload for parse‑time error
 static SystestQuery createSystestQuery(const std::unexpected<Exception>& parseErr, const ExpectedError& expected)
@@ -89,7 +97,7 @@ static SystestQuery createSystestQuery(const std::unexpected<Exception>& parseEr
     return SystestQuery{
         "test_query",
         "SELECT * FROM test",
-        TEST_DATA_DIR "filter.dummy",
+        SYSTEST_DATA_DIR "filter.dummy",
         parseErr, /// invalid plan
         0,
         PATH_TO_BINARY_DIR,
@@ -108,10 +116,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 
     auto dummyQueryResultMap = QueryResultMap{};
     const auto result = runQueries(
-        {createSystestQuery(std::move(parseError), ExpectedError{.code = expectedCode, .message = std::nullopt})},
-        1,
-        submitter,
-        dummyQueryResultMap);
+        {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, dummyQueryResultMap);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -134,7 +139,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries({makeQuery(plan)}, 1, submitter, dummyQueryResultMap);
+    const auto result = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
