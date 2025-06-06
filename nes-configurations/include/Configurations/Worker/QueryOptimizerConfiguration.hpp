@@ -23,6 +23,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES::Configurations
@@ -82,11 +83,16 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::BoolOption useSingleMemoryLayout = {"useSingleMemoryLayout",
+                                                                                  "false",
+                                                                                  "If true, all operators will use the memory layout determined in memoryLayout config."};
+    NES::Configurations::EnumOption<Schema::MemoryLayoutType> memoryLayout = {"memoryLayout", Schema::MemoryLayoutType::ROW_LAYOUT,
+                                                     "Memory layout to use for operators. Options: ROW_LAYOUT, COLUMNAR_LAYOUT."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &operatorBufferSize, &useSingleMemoryLayout, &memoryLayout};
     }
 };
 
