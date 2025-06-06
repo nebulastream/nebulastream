@@ -63,9 +63,9 @@ public:
 TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
     Configuration::SystestConfiguration config{};
-    config.testsDiscoverDir.setValue(TEST_DATA_DIR);
+    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", TEST_DATA_DIR, testFileName));
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
 
     const auto systestResult = NES::executeSystests(config);
@@ -89,8 +89,8 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     const auto& [directory, testFile] = GetParam();
     const auto testFileName = testFile + std::string(".dummy");
     Configuration::SystestConfiguration config{};
-    config.testsDiscoverDir.setValue(TEST_DATA_DIR);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", TEST_DATA_DIR, directory, testFileName));
+    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
 
