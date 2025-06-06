@@ -43,21 +43,30 @@ aggregated_data = df.groupby(grouping_columns)[numeric_columns].mean().reset_ind
 def plot_comparison(data, metric):
     plt.figure(figsize=(14, 6))
 
-    # Find a common configuration for both slice store types
-    common_config = data[shared_config_params].drop_duplicates().iloc[0].to_dict()
+    # Get unique configurations for both slice store types
+    default_configs = data[data['slice_store_type'] == 'Default'][shared_config_params].drop_duplicates()
+    file_backed_configs = data[data['slice_store_type'] == 'File-Backed'][shared_config_params].drop_duplicates()
 
-    # Filter data for the common configuration
-    default_data = data[(data['slice_store_type'] == 'Default') & (data[shared_config_params] == pd.Series(common_config)).all(axis=1)]
-    file_backed_data = data[(data['slice_store_type'] == 'File-Backed') & (data[shared_config_params] == pd.Series(common_config)).all(axis=1)]
+    # Find a common configuration
+    common_config = pd.merge(default_configs, file_backed_configs, on=shared_config_params).iloc[0:1]
 
-    if not default_data.empty and not file_backed_data.empty:
-        sns.lineplot(data=default_data, x='window_start_normalized', y=metric, label=f'Default {metric}')
-        sns.lineplot(data=file_backed_data, x='window_start_normalized', y=metric, label=f'File-Backed {metric}')
-        plt.title(f'{metric} Comparison: Default vs. File-Backed')
-        plt.xlabel('Normalized Time')
-        plt.ylabel(metric)
-        plt.legend()
-        plt.show()
+    if not common_config.empty:
+        common_config_dict = common_config.iloc[0].to_dict()
+
+        # Filter data for the common configuration
+        default_data = data[(data['slice_store_type'] == 'Default') & (data[shared_config_params] == pd.Series(common_config_dict)).all(axis=1)]
+        file_backed_data = data[(data['slice_store_type'] == 'File-Backed') & (data[shared_config_params] == pd.Series(common_config_dict)).all(axis=1)]
+
+        if not default_data.empty and not file_backed_data.empty:
+            sns.lineplot(data=default_data, x='window_start_normalized', y=metric, label=f'Default {metric}')
+            sns.lineplot(data=file_backed_data, x='window_start_normalized', y=metric, label=f'File-Backed {metric}')
+            plt.title(f'{metric} Comparison: Default vs. File-Backed')
+            plt.xlabel('Normalized Time')
+            plt.ylabel(metric)
+            plt.legend()
+            plt.show()
+        else:
+            print(f"No data available for the common configuration for {metric}.")
     else:
         print(f"No matching configurations found for both slice store types for {metric}.")
 
@@ -103,6 +112,18 @@ for param in file_backed_config_params:
             plt.ylabel('Memory')
             plt.show()
         else:
-            print(f"Parameter {param} is non-numeric and will not be plotted.")
+            plt.figure(figsize=(14, 6))
+            sns.boxplot(data=file_backed_data, x=param, y='throughput_data', color='blue')
+            plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
+            plt.xlabel(param)
+            plt.ylabel('Throughput')
+            plt.show()
+
+            plt.figure(figsize=(14, 6))
+            sns.boxplot(data=file_backed_data, x=param, y='memory', color='orange')
+            plt.title(f'Effect of {param} on Memory (File-Backed Only)')
+            plt.xlabel(param)
+            plt.ylabel('Memory')
+            plt.show()
     else:
         print(f"Parameter {param} not found in the dataset.")
