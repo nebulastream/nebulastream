@@ -34,8 +34,10 @@ df['window_start_normalized'] = df.groupby(shared_config_params)['window_start_n
     lambda x: (x - x.min()) / (x.max() - x.min()))
 
 # Aggregate data, excluding non-numeric columns from mean calculation
-numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
-aggregated_data = df.groupby(shared_config_params + ['slice_store_type', 'window_start_normalized'] + file_backed_config_params)[numeric_columns].mean().reset_index()
+grouping_columns = shared_config_params + ['slice_store_type', 'window_start_normalized'] + file_backed_config_params
+numeric_columns = [col for col in df.columns if col not in grouping_columns and pd.api.types.is_numeric_dtype(df[col])]
+
+aggregated_data = df.groupby(grouping_columns)[numeric_columns].mean().reset_index()
 
 # Visual Comparison Plot
 def plot_comparison(data, metric):
