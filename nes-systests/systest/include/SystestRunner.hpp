@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,8 +27,11 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <experimental/propagate_const>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
@@ -47,10 +51,9 @@ struct ExpectedError
 struct LoadedQueryPlan
 {
     std::expected<LogicalPlan, Exception> queryPlan;
-    std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::string queryName;
-    Schema sinkSchema;
+    std::string queryDefinition;
     std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
+    std::expected<Sinks::SinkDescriptor, Exception> outputSink;
     std::optional<ExpectedError> expectedError;
 };
 
@@ -60,6 +63,20 @@ static constexpr auto padSizeSuccess = 120;
 static constexpr auto padSizeQueryNumber = 2;
 /// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
 static constexpr auto padSizeQueryCounter = 3;
+
+class SLTSinkProvider
+{
+public:
+    explicit SLTSinkProvider(std::shared_ptr<SinkCatalog> sinkCatalog);
+    bool registerFileSink(std::string_view sinkNameInFile, const Schema& schema);
+    std::expected<Sinks::SinkDescriptor, Exception>
+    createActualSink(const std::string& sinkNameInFile, std::string_view assignedSinkName, const std::filesystem::path& filePath);
+
+private:
+    std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
+    std::unordered_map<std::string, std::function<std::expected<Sinks::SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
+        sinkProviders;
+};
 
 class SystestBinder
 {
@@ -71,7 +88,9 @@ public:
         const std::filesystem::path& testFilePath,
         const std::filesystem::path& workingDir,
         std::string_view testFileName,
-        const std::filesystem::path& testDataDir);
+        const std::filesystem::path& testDataDir,
+        const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        SLTSinkProvider& sltSinkProvider);
 
 private:
     uint64_t sourceIndex = 0;

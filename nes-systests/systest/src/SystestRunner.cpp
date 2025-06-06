@@ -19,7 +19,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
-#include <expected>
+#include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -35,25 +35,23 @@
 #include <utility>
 #include <vector>
 
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
-#include <fmt/ranges.h>
 #include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
@@ -70,24 +68,75 @@
 
 namespace NES::Systest
 {
+SLTSinkProvider::SLTSinkProvider(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog))
+{
+    auto [iter, success] = sinkProviders.emplace(
+        "Checksum",
+        [this](const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<Sinks::SinkDescriptor, Exception>
+        {
+            auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+            checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+            checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+            auto checkSumSink = this->sinkCatalog->addSinkDescriptor(
+                std::string{assignedSinkName},
+                checksumSinkSchema,
+                "Checksum",
+                std::unordered_map<std::string, std::string>{{"filePath", filePath}});
+            if (not checkSumSink.has_value())
+            {
+                return std::unexpected{SinkAlreadyExists("Failed to create checksum sink with assigned name {}", assignedSinkName)};
+            }
+            return *checkSumSink;
+        });
+    INVARIANT(success, "Failed to register checksum sink");
+}
+
+bool SLTSinkProvider::registerFileSink(const std::string_view sinkNameInFile, const Schema& schema)
+{
+    auto [iter, success] = sinkProviders.emplace(
+        sinkNameInFile,
+        [this, schema](const std::string_view assignedSinkName, std::filesystem::path filePath) noexcept
+            -> std::expected<Sinks::SinkDescriptor, Exception>
+        {
+            const auto fileSink = sinkCatalog->addSinkDescriptor(
+                std::string{assignedSinkName},
+                schema,
+                "File",
+                std::unordered_map<std::string, std::string>{{"filePath", std::move(filePath)}, {"inputFormat", "CSV"}});
+            if (not fileSink.has_value())
+            {
+                return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
+            }
+            return fileSink.value();
+        });
+    return success;
+}
+
+std::expected<Sinks::SinkDescriptor, Exception> SLTSinkProvider::createActualSink(
+    const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
+{
+    const auto sinkProviderIter = sinkProviders.find(sinkNameInFile);
+    if (sinkProviderIter == sinkProviders.end())
+    {
+        throw UnknownSink("{}", assignedSinkName);
+    }
+    return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
+}
+
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
 std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
-    std::string_view testFileName,
-    const std::filesystem::path& testDataDir)
+    const std::string_view testFileName,
+    const std::filesystem::path& testDataDir,
+    const std::shared_ptr<SourceCatalog>& sourceCatalog,
+    SLTSinkProvider& sltSinkProvider)
 {
-    auto sourceCatalog = std::make_shared<SourceCatalog>();
     std::vector<LoadedQueryPlan> plans{};
-    std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
     std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
 
-    std::unordered_map<std::string, Schema> sinkNamesToSchema{};
-    auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-    checksumSinkPair->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    checksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))
@@ -99,15 +148,12 @@ std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
     parser.registerOnSinkCallBack(
         [&](const SystestParser::Sink& sinkParsed)
         {
-            auto [sinkPair, success] = sinkNamesToSchema.emplace(sinkParsed.name, Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-            if (not success)
-            {
-                throw SourceAlreadyExists("{}", sinkParsed.name);
-            }
+            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
             for (const auto& [type, name] : sinkParsed.fields)
             {
-                sinkPair->second.addField(name, type);
+                schema.addField(name, type);
             }
+            sltSinkProvider.registerFileSink(sinkParsed.name, schema);
         });
 
     /// We add new found sources to our config
@@ -125,12 +171,11 @@ std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
                 throw SourceAlreadyExists("{}", source.name);
             }
 
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}});
+            auto sourceConfig = std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}};
             const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
 
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            const auto physicalSource
+                = sourceCatalog->addPhysicalSource(logicalSource.value(), "File", std::move(sourceConfig), parserConfig);
             if (not physicalSource.has_value())
             {
                 NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
@@ -169,12 +214,11 @@ std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
                 throw SourceAlreadyExists("{}", source.name);
             }
 
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", sourceFile}});
+            auto sourceConfig = std::unordered_map<std::string, std::string>{{"filePath", sourceFile}};
             const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
 
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            const auto physicalSource
+                = sourceCatalog->addPhysicalSource(logicalSource.value(), "File", std::move(sourceConfig), parserConfig);
             if (not physicalSource.has_value())
             {
                 NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
@@ -198,12 +242,6 @@ std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
             else
             {
                 ++currentQueryNumber;
-            }
-
-            /// We expect at least one sink to be defined in the test file
-            if (sinkNamesToSchema.empty())
-            {
-                throw TestException("No sinks defined in test file: {}", testFileName);
             }
 
             /// We have to get all sink names from the query and then create custom paths for each sink.
@@ -230,69 +268,22 @@ std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
                 return trimmedSinkName;
             }();
 
-            if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
-            {
-                throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
-            }
-
-
             /// Replacing the sinkName with the created unique sink name
             const auto sinkForQuery = sinkName + std::to_string(currentQueryNumber);
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
             const auto resultFile = Query::resultFile(workingDir, testFileName, currentQueryNumber);
-            std::shared_ptr<Sinks::SinkDescriptor> sink;
-            if (sinkName == "CHECKSUM")
-            {
-                auto validatedSinkConfig
-                    = Sinks::SinkDescriptor::validateAndFormatConfig("Checksum", {std::make_pair("filePath", resultFile)});
-                sink = std::make_shared<Sinks::SinkDescriptor>("Checksum", std::move(validatedSinkConfig), false);
-            }
-            else
-            {
-                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
-                    "File",
-                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")});
-                sink = std::make_shared<Sinks::SinkDescriptor>("File", std::move(validatedSinkConfig), false);
-            }
-            sinks.emplace(sinkForQuery, sink);
 
+            auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile);
             try
             {
                 auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                auto sinkOperators = plan.rootOperators;
-                auto sinkOperator = [](const LogicalPlan& queryPlan)
-                {
-                    const auto rootOperators = queryPlan.rootOperators;
-                    if (rootOperators.size() != 1)
-                    {
-                        throw QueryInvalid(
-                            "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-                            rootOperators.size());
-                    }
-                    const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-                    INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
-                    return sinkOp.value();
-                }(plan);
-
-
-                if (const auto sinkIter = sinks.find(sinkOperator.sinkName); sinkIter == sinks.end())
-                {
-                    throw UnknownSinkType(
-                        "Sinkname {} not specified in the configuration {}",
-                        sinkOperator.sinkName,
-                        fmt::join(std::views::keys(sinks), ","));
-                }
-                sinkOperator.sinkDescriptor = sink;
-                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
-                plan.rootOperators.at(0) = sinkOperator;
-
-                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], sourcesToFilePaths);
+                plans.emplace_back(plan, query, sourcesToFilePaths, sinkExpected);
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName]);
+                plans.emplace_back(std::unexpected(e), query, sourcesToFilePaths, sinkExpected);
             }
         });
 

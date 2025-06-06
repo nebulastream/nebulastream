@@ -26,9 +26,9 @@ message SerializableParserConfig {
 
 message SerializableSinkDescriptor
 {
-  SerializableSchema sinkSchema = 1;
-  string sinkType = 2;
-  bool addTimestamp = 3;
+  string sinkName = 1;
+  SerializableSchema sinkSchema = 2;
+  string sinkType = 3;
   map<string, SerializableVariantDescriptor> config = 4;
 }
 

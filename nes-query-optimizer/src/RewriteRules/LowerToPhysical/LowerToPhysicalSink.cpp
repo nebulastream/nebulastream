@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalSink.hpp>
+
 #include <memory>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalSink.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -29,7 +30,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
 {
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
     auto sink = logicalOperator.get<SinkLogicalOperator>();
-    auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
+    PRECONDITION(sink.sinkDescriptor.has_value(), "Expected SinkLogicalOperator to have sink descriptor");
+    auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor.value());
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     ;

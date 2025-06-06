@@ -19,6 +19,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <Configurations/Descriptor.hpp>
@@ -58,10 +59,8 @@ public:
     /// @return nullopt if the logical source is not registered anymore, otherwise a source descriptor with an assigned id
     [[nodiscard]] std::optional<SourceDescriptor> addPhysicalSource(
         const LogicalSource& logicalSource,
-        WorkerId workerId,
-        const std::string& sourceType,
-        int buffersInLocalPool,
-        NES::Configurations::DescriptorConfig::Config&& descriptorConfig,
+        std::string_view sourceType,
+        std::unordered_map<std::string, std::string> descriptorConfig,
         const ParserConfig& parserConfig);
 
     /// @brief removes a physical source
