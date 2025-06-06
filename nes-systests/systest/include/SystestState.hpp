@@ -41,11 +41,18 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <SystestConfiguration.hpp>
+#include "ErrorHandling.hpp"
+
+#include <Identifiers/NESStrongType.hpp>
 
 
 namespace NES::Systest
 {
 struct LoadedQueryPlan;
+
+using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
+static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
+static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 
 struct ExpectedError
 {
@@ -73,7 +80,8 @@ struct SystestField
 
 struct SystestQuery
 {
-    static std::filesystem::path resultFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t queryIdInTestFile);
+    static std::filesystem::path
+    resultFile(const std::filesystem::path& workingDir, std::string_view testName, SystestQueryId queryIdInTestFile);
 
     static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
     SystestQuery() = default;
@@ -82,7 +90,7 @@ struct SystestQuery
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
         std::expected<LogicalPlan, Exception> queryPlan,
-        uint64_t queryIdInFile,
+        SystestQueryId queryIdInFile,
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
@@ -94,7 +102,7 @@ struct SystestQuery
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
     std::expected<LogicalPlan, Exception> queryPlan;
-    uint64_t queryIdInFile{};
+    SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::filesystem::path workingDir;
     Schema expectedSinkSchema;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
@@ -117,14 +125,14 @@ struct RunningQuery
 };
 
 /// Assures that the number of parsed queries matches the number of parsed results
-class SystestQueryNumberAssigner
+class SystestQueryIdAssigner
 {
-    static constexpr size_t INITIAL_QUERY_NUMBER = QueryId::INITIAL;
+    static constexpr SystestQueryId::Underlying INITIAL_QUERY_NUMBER = SystestQueryId::INITIAL;
 
 public:
-    explicit SystestQueryNumberAssigner() = default;
+    explicit SystestQueryIdAssigner() = default;
 
-    [[nodiscard]] size_t getNextQueryNumber()
+    [[nodiscard]] SystestQueryId getNextQueryNumber()
     {
         if (currentQueryNumber != currentQueryResultNumber)
         {
@@ -132,10 +140,10 @@ public:
                 "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
         }
 
-        return currentQueryNumber++;
+        return SystestQueryId(currentQueryNumber++);
     }
 
-    [[nodiscard]] size_t getNextQueryResultNumber()
+    [[nodiscard]] SystestQueryId getNextQueryResultNumber()
     {
         if (currentQueryNumber != (currentQueryResultNumber + 1))
         {
@@ -143,7 +151,7 @@ public:
                 "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
         }
 
-        return currentQueryResultNumber++;
+        return SystestQueryId(currentQueryResultNumber++);
     }
 
     void skipQueryResultOfQueryWithExpectedError()
@@ -158,19 +166,19 @@ public:
     }
 
 private:
-    size_t currentQueryNumber = INITIAL_QUERY_NUMBER;
-    size_t currentQueryResultNumber = INITIAL_QUERY_NUMBER;
+    SystestQueryId::Underlying currentQueryNumber = SystestQueryId::INITIAL;
+    SystestQueryId::Underlying currentQueryResultNumber = SystestQueryId::INITIAL;
 };
 
 struct TestFile
 {
     explicit TestFile(const std::filesystem::path& file);
-    explicit TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber);
+    explicit TestFile(const std::filesystem::path& file, std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber);
     [[nodiscard]] std::string getLogFilePath() const;
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
     std::filesystem::path file;
-    std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber;
+    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
     std::vector<SystestQuery> queries;
 };
@@ -200,10 +208,8 @@ class SystestStarterGlobals
 public:
     SystestStarterGlobals() = default;
     explicit SystestStarterGlobals(std::filesystem::path workingDir, std::filesystem::path testDataDir, TestFileMap testFileMap)
-        : workingDir(std::move(workingDir))
-        , testDataDir(std::move(testDataDir))
-        , testFileMap(std::move(testFileMap))
-        , binder(SystestBinder{})
+        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), testFileMap(std::move(testFileMap))
+
     {
     }
 
@@ -217,7 +223,7 @@ private:
     friend std::vector<LoadedQueryPlan>
     loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
 
-    void addQueryResult(const std::string_view testFileName, const size_t queryResultNumber, std::vector<std::string> resultLines)
+    void addQueryResult(const std::string_view testFileName, const SystestQueryId queryResultNumber, std::vector<std::string> resultLines)
     {
         queryResultMap.emplace(SystestQuery::resultFile(workingDir, testFileName, queryResultNumber), std::move(resultLines));
     }
@@ -226,9 +232,9 @@ private:
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
         std::expected<LogicalPlan, Exception> queryPlan,
-        const uint64_t queryIdInFile,
+        const SystestQueryId queryIdInFile,
         std::filesystem::path workingDir,
-        Schema sinkSchema,
+        const Schema& sinkSchema,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
         std::optional<ExpectedError> expectedError)
     {
@@ -241,7 +247,7 @@ private:
                 std::move(queryPlan),
                 queryIdInFile,
                 std::move(workingDir),
-                std::move(sinkSchema),
+                sinkSchema,
                 std::move(sourceNamesToFilepathAndCount),
                 std::move(expectedError));
             return;

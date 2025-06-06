@@ -19,7 +19,6 @@
 #include <functional>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
@@ -94,8 +93,8 @@ public:
         bool operator==(const ErrorExpectation& other) const = default;
     };
 
-    using QueryCallback = std::function<void(std::string, size_t)>;
-    using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, size_t correspondingQueryId)>;
+    using QueryCallback = std::function<void(std::string, SystestQueryId)>;
+    using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
@@ -128,7 +127,7 @@ private:
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
-    [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst = false);
+    [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
 

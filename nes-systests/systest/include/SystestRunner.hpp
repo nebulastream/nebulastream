@@ -30,7 +30,6 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -46,7 +45,7 @@ struct LoadedQueryPlan
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::string queryName;
     Schema sinkSchema;
-    size_t queryNumberInTest;
+    SystestQueryId queryIdInTest;
     std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
     std::optional<ExpectedError> expectedError;
 };

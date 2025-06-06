@@ -74,11 +74,11 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 
     SystestParser parser{};
     QueryResultMap queryResultMap;
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { queryCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
     parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
@@ -166,16 +166,16 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const size_t currentQueryNumberInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
-            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
-            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
@@ -183,11 +183,10 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(queryResultMap.size() == expectedResults.size());
-    ASSERT_TRUE(
-        std::ranges::all_of(
-            expectedResults,
-            [&queryResultMap](const auto& expectedResult)
-            { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedResults,
+        [&queryResultMap](const auto& expectedResult)
+        { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
 }
 //
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -272,16 +271,16 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const size_t currentQueryNumberInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
-            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
-            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
@@ -289,11 +288,10 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryResultMap.size() == expectedResults.size());
-    ASSERT_TRUE(
-        std::ranges::all_of(
-            expectedResults,
-            [&queryResultMap](const auto& expectedResult)
-            { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedResults,
+        [&queryResultMap](const auto& expectedResult)
+        { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
@@ -309,7 +307,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&](const std::string& query, size_t)
+        [&](const std::string& query, SystestQueryId)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;
