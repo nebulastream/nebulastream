@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <cstddef>
 #include <string>
 
 #include <Util/Logger/LogLevel.hpp>
@@ -58,7 +57,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, const size_t) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)
@@ -67,7 +66,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    SystestStarterGlobals systestStarterGlobals{};
+    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -78,7 +77,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, size_t) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)
@@ -86,7 +85,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
             /// nop, ensure parsing
         });
 
-    SystestStarterGlobals systestStarterGlobals{};
+    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }

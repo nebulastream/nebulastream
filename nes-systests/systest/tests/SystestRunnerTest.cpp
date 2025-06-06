@@ -61,9 +61,10 @@ NES::Systest::SystestQuery makeQuery(const NES::LogicalPlan& plan, std::optional
         "SELECT * FROM test",
         SYSTEST_DATA_DIR "filter.dummy",
         plan,
-        0,
+        NES::Systest::INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,
-        NES::Schema{}, {},
+        NES::Schema{},
+        {},
         std::move(expected)};
 }
 /// Overload for parse‑time error
@@ -74,7 +75,7 @@ NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Excepti
         "SELECT * FROM test",
         SYSTEST_DATA_DIR "filter.dummy",
         parseErr, /// invalid plan
-        0,
+        NES::Systest::INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,
         NES::Schema{},
         {},
