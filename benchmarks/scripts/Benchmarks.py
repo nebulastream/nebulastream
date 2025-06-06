@@ -27,10 +27,13 @@ file_backed_config_params = [
     'num_watermark_gaps_allowed', 'watermark_predictor_type'
 ]
 
-# Normalize the window_start_normalized column
-df['window_start_normalized'] = df.groupby(shared_config_params)['window_start_normalized'].transform(
-    lambda x: (x - x.min()) / (x.max() - x.min())
-)
+# Normalize the window_start_normalized column for each configuration
+def normalize_time(group):
+    group['window_start_normalized'] = (group['window_start_normalized'] - group['window_start_normalized'].min()) / (
+            group['window_start_normalized'].max() - group['window_start_normalized'].min())
+    return group
+
+df = df.groupby(shared_config_params, group_keys=False).apply(normalize_time)
 
 # Visual Comparison Plot
 def plot_comparison(data, metric):
