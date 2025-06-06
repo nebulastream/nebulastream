@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -36,6 +37,51 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
+namespace
+{
+
+NES::QuerySummary makeSummary(const NES::QueryId id, const NES::QueryStatus status, const std::shared_ptr<NES::Exception>& err)
+{
+    NES::QuerySummary querySummary;
+    querySummary.queryId = id;
+    querySummary.currentStatus = status;
+    if (status == NES::QueryStatus::Failed && err)
+    {
+        NES::QueryRunSummary run;
+        run.error = *err;
+        querySummary.runs.push_back(run);
+    }
+    return querySummary;
+}
+
+NES::Systest::SystestQuery makeQuery(const NES::LogicalPlan& plan, std::optional<NES::Systest::ExpectedError> expected)
+{
+    return NES::Systest::SystestQuery{
+        "test_query",
+        "SELECT * FROM test",
+        SYSTEST_DATA_DIR "filter.dummy",
+        plan,
+        0,
+        PATH_TO_BINARY_DIR,
+        NES::Schema{}, {},
+        std::move(expected)};
+}
+/// Overload for parse‑time error
+NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Exception>& parseErr, const NES::Systest::ExpectedError& expected)
+{
+    return NES::Systest::SystestQuery{
+        "test_query",
+        "SELECT * FROM test",
+        SYSTEST_DATA_DIR "filter.dummy",
+        parseErr, /// invalid plan
+        0,
+        PATH_TO_BINARY_DIR,
+        NES::Schema{},
+        {},
+        expected};
+}
+}
+
 namespace NES::Systest
 {
 
@@ -50,7 +96,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 };
 
-class MockSubmitter : public QuerySubmitter
+class MockSubmitter final : public QuerySubmitter
 {
 public:
     MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
@@ -61,46 +107,9 @@ public:
     MOCK_METHOD(std::vector<QuerySummary>, finishedQueries, (), (override));
 };
 
-static QuerySummary makeSummary(QueryId id, QueryStatus status, const std::shared_ptr<Exception>& err = nullptr)
-{
-    QuerySummary s;
-    s.queryId = id;
-    s.currentStatus = status;
-    if (status == QueryStatus::Failed && err)
-    {
-        QueryRunSummary run;
-        run.error = *err;
-        s.runs.push_back(run);
-    }
-    return s;
-}
-
-using ::testing::InSequence;
-using ::testing::Return;
-
-static SystestQuery makeQuery(const LogicalPlan& plan, std::optional<ExpectedError> expected = std::nullopt)
-{
-    return SystestQuery{
-        "test_query", "SELECT * FROM test", TEST_DATA_DIR "filter.dummy", plan, 0, PATH_TO_BINARY_DIR, Schema{}, {}, std::move(expected)};
-}
-/// Overload for parse‑time error
-static SystestQuery createSystestQuery(const std::unexpected<Exception>& parseErr, const ExpectedError& expected)
-{
-    return SystestQuery{
-        "test_query",
-        "SELECT * FROM test",
-        TEST_DATA_DIR "filter.dummy",
-        parseErr, /// invalid plan
-        0,
-        PATH_TO_BINARY_DIR,
-        Schema{},
-        {},
-        expected};
-}
-
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
-    const InSequence seq;
+    const testing::InSequence seq;
     MockSubmitter submitter;
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
@@ -108,33 +117,30 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 
     auto dummyQueryResultMap = QueryResultMap{};
     const auto result = runQueries(
-        {createSystestQuery(std::move(parseError), ExpectedError{.code = expectedCode, .message = std::nullopt})},
-        1,
-        submitter,
-        dummyQueryResultMap);
+        {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, dummyQueryResultMap);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
-    const InSequence seq;
+    const testing::InSequence seq;
     MockSubmitter submitter;
-    const QueryId id{7};
+    constexpr QueryId id{7};
 
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(submitter, startQuery(id));
 
     /// Runtime fails with unexpected error code 10000
-    auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
+    const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
 
     EXPECT_CALL(submitter, finishedQueries())
-        .WillOnce(Return(std::vector{makeSummary(id, QueryStatus::Failed, runtimeErr)}))
-        .WillRepeatedly(Return(std::vector<QuerySummary>{}));
+        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Failed, runtimeErr)}))
+        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries({makeQuery(plan)}, 1, submitter, dummyQueryResultMap);
+    const auto result = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -143,16 +149,16 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
-    const InSequence seq;
+    const testing::InSequence seq;
     MockSubmitter submitter;
-    const QueryId id{11};
+    constexpr QueryId id{11};
 
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(submitter, startQuery(id));
 
     EXPECT_CALL(submitter, finishedQueries())
-        .WillOnce(Return(std::vector{makeSummary(id, QueryStatus::Stopped)}))
-        .WillRepeatedly(Return(std::vector<QuerySummary>{}));
+        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Stopped, nullptr)}))
+        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
     const LogicalPlan plan{};
 

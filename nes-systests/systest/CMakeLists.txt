@@ -26,10 +26,11 @@ get_source(nes-systest-lib SLT_SOURCE_FILES)
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-worker-lib nes-sql-parser)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_compile_definitions(nes-systest-lib PRIVATE
+target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata/"
+        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata/"
 )
 
 # Find required packages
@@ -37,11 +38,6 @@ find_package(argparse CONFIG REQUIRED)
 
 # Add the systest executable
 add_executable(systest src/SystestStarter.cpp)
-target_compile_definitions(systest PRIVATE
-        PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
-        TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        TEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata"
-)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
