@@ -66,6 +66,32 @@ def plot_comparison(data, metric):
             print(f"No data available for the common configuration for {metric}.")
     else:
         print(f"No matching configurations found for both slice store types for {metric}.")
+# def plot_comparison(data, metric):
+#     plt.figure(figsize=(14, 6))
+#     all_config_params = shared_config_params + file_backed_config_params
+#
+#     # Get unique configurations for both slice store types
+#     default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
+#     file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
+#
+#     # Find a common configuration
+#     common_config = pd.merge(default_configs, file_backed_configs, on=all_config_params)
+#
+#     if not common_config.empty:
+#         common_config_dict = common_config.iloc[0].to_dict()
+#
+#         # Filter data for the common configuration
+#         config_mask = (df[all_config_params] == pd.Series(common_config_dict)).all(axis=1)
+#         filtered = df[config_mask]
+#
+#         sns.lineplot(data=filtered, x='window_start_normalized', y=metric, hue='slice_store_type', errorbar=None)
+#         plt.title(f'{metric} Comparison: Default vs. File-Backed')
+#         plt.xlabel('Normalized Time')
+#         plt.ylabel(metric)
+#         plt.legend()
+#         plt.show()
+#     else:
+#         print(f"No matching configurations found for both slice store types for {metric}.")
 
 # Plot comparisons for both metrics
 plot_comparison(df, 'throughput_data')
