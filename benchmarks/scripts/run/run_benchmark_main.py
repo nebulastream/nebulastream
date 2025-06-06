@@ -30,8 +30,8 @@ import PostProcessing
 # Configuration for compilation
 BUILD_PROJECT = False
 BUILD_DIR = "cmake-build-relnologging"
-SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
-# SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
+# SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
+SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
 CMAKE_TOOLCHAIN_FILE = "/home/ntantow/Documents/NebulaStream/vcpkg/scripts/buildsystems/vcpkg.cmake"
 LOG_LEVEL = "LEVEL_NONE"
 CMAKE_BUILD_TYPE = "Release"
