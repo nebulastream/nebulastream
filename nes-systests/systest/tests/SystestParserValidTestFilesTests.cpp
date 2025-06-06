@@ -73,7 +73,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool csvSourceCallbackCalled = false;
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { queryCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
     parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
 
@@ -162,12 +162,12 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const size_t currentQueryNumberInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
-            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
-            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
@@ -265,12 +265,12 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const size_t currentQueryNumberInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
-            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
-            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
@@ -299,7 +299,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&](const std::string& query, size_t)
+        [&](const std::string& query, SystestQueryId)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;

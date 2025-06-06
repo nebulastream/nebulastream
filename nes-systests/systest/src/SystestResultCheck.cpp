@@ -238,7 +238,7 @@ namespace NES::Systest
 std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap)
 {
     PRECONDITION(
-        runningQuery.query.queryIdInFile <= queryResultMap.size(),
+        runningQuery.query.queryIdInFile.getRawValue() <= queryResultMap.size(),
         "No results for query with id {}. Only {} results available.",
         runningQuery.query.queryIdInFile,
         queryResultMap.size());

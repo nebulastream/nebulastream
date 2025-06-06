@@ -41,7 +41,7 @@ struct LoadedQueryPlan
     std::expected<LogicalPlan, Exception> queryPlan;
     std::string queryName;
     SystestSchema sinkSchema;
-    size_t queryNumberInTest;
+    SystestQueryId queryIdInTest;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
     std::optional<ExpectedError> expectedError;
 };

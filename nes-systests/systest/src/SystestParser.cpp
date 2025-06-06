@@ -181,7 +181,7 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const std::string_view testFileName)
 {
-    SystestQueryNumberAssigner queryNumberAssigner{};
+    SystestQueryIdAssigner queryIdAssigner{};
     while (auto token = getNextToken())
     {
         switch (token.value())
@@ -213,7 +213,7 @@ void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const st
             case TokenType::QUERY: {
                 if (onQueryCallback)
                 {
-                    onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
+                    onQueryCallback(expectQuery(), queryIdAssigner.getNextQueryNumber());
                 }
                 break;
             }
@@ -222,7 +222,7 @@ void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const st
                 if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
-                    queryNumberAssigner.skipQueryResultOfQueryWithExpectedError();
+                    queryIdAssigner.skipQueryResultOfQueryWithExpectedError();
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
@@ -231,7 +231,7 @@ void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const st
                 }
                 else
                 {
-                    systestStarterGlobals.addQueryResult(testFileName, queryNumberAssigner.getNextQueryResultNumber(), expectTuples());
+                    systestStarterGlobals.addQueryResult(testFileName, queryIdAssigner.getNextQueryResultNumber(), expectTuples());
                 }
                 break;
             }

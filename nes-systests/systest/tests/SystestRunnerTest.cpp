@@ -85,7 +85,7 @@ static SystestQuery makeQuery(const LogicalPlan& plan, std::optional<ExpectedErr
         "SELECT * FROM test",
         SYSTEST_DATA_DIR "filter.dummy",
         plan,
-        0,
+        INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,
         {},
         {},
@@ -99,7 +99,7 @@ static SystestQuery createSystestQuery(const std::unexpected<Exception>& parseEr
         "SELECT * FROM test",
         SYSTEST_DATA_DIR "filter.dummy",
         parseErr, /// invalid plan
-        0,
+        INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,
         {},
         {},

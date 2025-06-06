@@ -45,7 +45,7 @@ namespace NES::Systest
 {
 
 std::filesystem::path
-SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
+SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
 {
     auto resultDir = workingDir / "results";
     if (not is_directory(resultDir))
@@ -74,7 +74,7 @@ SystestQuery::SystestQuery(
     std::string queryDefinition,
     std::filesystem::path sqlLogicTestFile,
     std::expected<LogicalPlan, Exception> queryPlan,
-    const uint64_t queryIdInFile,
+    const SystestQueryId queryIdInFile,
     std::filesystem::path workingDir,
     SystestSchema sinkSchema,
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
@@ -126,7 +126,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
 {
     auto loadedPlans = loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
-    std::unordered_set<uint64_t> foundQueries;
+    std::unordered_set<SystestQueryId> foundQueries;
 
     std::ranges::for_each(
         loadedPlans
@@ -134,17 +134,17 @@ void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& sy
                 [&testfile](const auto& loadedQueryPlan)
                 {
                     return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryNumberInTest);
+                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryIdInTest);
                 }),
         [&systestStarterGlobals, &testfile, &foundQueries](const auto& filteredLoadedQueryPlan)
         {
-            foundQueries.insert(filteredLoadedQueryPlan.queryNumberInTest);
+            foundQueries.insert(filteredLoadedQueryPlan.queryIdInTest);
             systestStarterGlobals.addQuery(
                 testfile.name(),
                 filteredLoadedQueryPlan.queryName,
                 testfile.file,
                 filteredLoadedQueryPlan.queryPlan,
-                filteredLoadedQueryPlan.queryNumberInTest,
+                filteredLoadedQueryPlan.queryIdInTest,
                 systestStarterGlobals.getWorkingDir(),
                 filteredLoadedQueryPlan.sinkSchema,
                 filteredLoadedQueryPlan.sourceNamesToFilepathAndCount,
@@ -154,7 +154,7 @@ void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& sy
     /// Warn about queries specified via the command line that were not found in the test file
     std::ranges::for_each(
         testfile.onlyEnableQueriesWithTestQueryNumber
-            | std::views::filter([&foundQueries](auto testNumber) { return not foundQueries.contains(testNumber); }),
+            | std::views::filter([&foundQueries](const SystestQueryId testNumber) { return not foundQueries.contains(testNumber); }),
         [&testfile](const auto badTestNumber)
         {
             std::cerr << fmt::format(
@@ -194,7 +194,7 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
 
 TestFile::TestFile(const std::filesystem::path& file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
 
-TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
@@ -271,8 +271,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         }
         /// case: load a concrete set of tests
         auto scalarTestNumbers = config.testQueryNumbers.getValues();
-        const auto testNumbers = std::ranges::to<std::unordered_set<uint64_t>>(
-            scalarTestNumbers | std::views::transform([](const auto& option) { return option.getValue(); }));
+        const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
+            scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
         const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
         return TestFileMap{{testfile.file, testfile}};

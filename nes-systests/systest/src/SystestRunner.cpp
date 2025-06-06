@@ -152,7 +152,7 @@ loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesys
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](std::string query, const size_t currentQueryNumberInTest)
+        [&](std::string query, const SystestQueryId currentQueryIdInTest)
         {
             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
@@ -201,11 +201,11 @@ loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesys
 
 
             /// Replacing the sinkName with the created unique sink name
-            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest);
+            const auto sinkForQuery = sinkName + currentQueryIdInTest.toString();
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
-            const auto resultFile = SystestQuery::resultFile(systestStarterGlobals.getWorkingDir(), testFileName, currentQueryNumberInTest);
+            const auto resultFile = SystestQuery::resultFile(systestStarterGlobals.getWorkingDir(), testFileName, currentQueryIdInTest);
 
             if (sinkName == "CHECKSUM")
             {
@@ -239,11 +239,11 @@ loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesys
                     throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
                 }
                 INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-                plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourceNamesToFilepathAndCountForQuery);
+                plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], currentQueryIdInTest, sourceNamesToFilepathAndCountForQuery);
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), query, sinkNamesToSchema[sinkName], currentQueryNumberInTest);
+                plans.emplace_back(std::unexpected(e), query, sinkNamesToSchema[sinkName], currentQueryIdInTest);
             }
         });
 
@@ -525,7 +525,7 @@ void printQueryResultToStdOut(
     const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.query.testName.size();
-    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile);
+    const auto queryNumberAsString = runningQuery.query.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
 

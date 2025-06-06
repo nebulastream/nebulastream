@@ -95,7 +95,7 @@ public:
 
     using ResultTuples = std::vector<std::string>;
 
-    using QueryCallback = std::function<void(std::string, size_t)>;
+    using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
