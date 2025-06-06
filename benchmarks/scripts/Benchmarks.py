@@ -29,16 +29,13 @@ file_backed_config_params = [
 
 measurement_columns = ['throughput_data', 'memory', 'window_start_normalized']
 
-# Normalize and aggregate data
-def normalize_and_aggregate(group):
-    group['window_start_normalized'] = (group['window_start_normalized'] - group['window_start_normalized'].min()) / (
-            group['window_start_normalized'].max() - group['window_start_normalized'].min())
-    return group.mean()
-
-# Apply normalization and aggregation
+# Normalize the window_start_normalized column
 df['window_start_normalized'] = df.groupby(shared_config_params)['window_start_normalized'].transform(
     lambda x: (x - x.min()) / (x.max() - x.min()))
-aggregated_data = df.groupby(shared_config_params + ['slice_store_type', 'window_start_normalized']).mean().reset_index()
+
+# Aggregate data, excluding non-numeric columns from mean calculation
+numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+aggregated_data = df.groupby(shared_config_params + ['slice_store_type', 'window_start_normalized'] + file_backed_config_params)[numeric_columns].mean().reset_index()
 
 # Visual Comparison Plot
 def plot_comparison(data, metric):
@@ -69,26 +66,38 @@ plot_comparison(aggregated_data, 'memory')
 # Shared Parameter Plots
 for param in shared_config_params:
     plt.figure(figsize=(14, 6))
-    sns.lineplot(data=aggregated_data, x=param, y='throughput_data', hue='slice_store_type', errorbar=None, label='Throughput')
-    sns.lineplot(data=aggregated_data, x=param, y='memory', hue='slice_store_type', errorbar=None, label='Memory')
-    plt.title(f'Effect of {param} on Throughput and Memory')
+    sns.lineplot(data=aggregated_data, x=param, y='throughput_data', hue='slice_store_type', errorbar=None)
+    plt.title(f'Effect of {param} on Throughput')
     plt.xlabel(param)
-    plt.ylabel('Average Value')
-    plt.legend(title='Metric and Slice Store Type')
+    plt.ylabel('Throughput')
+    plt.legend(title='Slice Store Type')
+    plt.show()
+
+    plt.figure(figsize=(14, 6))
+    sns.lineplot(data=aggregated_data, x=param, y='memory', hue='slice_store_type', errorbar=None)
+    plt.title(f'Effect of {param} on Memory')
+    plt.xlabel(param)
+    plt.ylabel('Memory')
+    plt.legend(title='Slice Store Type')
     plt.show()
 
 # File-Backed Only Parameter Plots
 file_backed_data = aggregated_data[aggregated_data['slice_store_type'] == 'File-Backed']
 
 for param in file_backed_config_params:
-    if param in file_backed_data.columns:
+    if param in file_backed_data.columns and pd.api.types.is_numeric_dtype(file_backed_data[param]):
         plt.figure(figsize=(14, 6))
-        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue', label='Throughput')
-        sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange', label='Memory')
-        plt.title(f'Effect of {param} on Throughput and Memory (File-Backed Only)')
+        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
+        plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
         plt.xlabel(param)
-        plt.ylabel('Average Value')
-        plt.legend(title='Metric')
+        plt.ylabel('Throughput')
+        plt.show()
+
+        plt.figure(figsize=(14, 6))
+        sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
+        plt.title(f'Effect of {param} on Memory (File-Backed Only)')
+        plt.xlabel(param)
+        plt.ylabel('Memory')
         plt.show()
     else:
-        print(f"Parameter {param} not found in the dataset.")
+        print(f"Parameter {param} is non-numeric and will not be plotted.")
