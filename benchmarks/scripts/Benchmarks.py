@@ -29,11 +29,12 @@ file_backed_config_params = [
 
 # Normalize the window_start_normalized column for each configuration
 def normalize_time(group):
-    group['window_start_normalized'] = (group['window_start_normalized'] - group['window_start_normalized'].min()) / (
-            group['window_start_normalized'].max() - group['window_start_normalized'].min())
+    ts_min = group['window_start_normalized'].min()
+    ts_max = group['window_start_normalized'].max()
+    group['window_start_normalized'] = (group['window_start_normalized'] - ts_min) / (ts_max - ts_min)
     return group
 
-df = df.groupby(shared_config_params, group_keys=False).apply(normalize_time)
+df = df.groupby('slice_store_type', group_keys=False).apply(normalize_time)
 
 # Visual Comparison Plot
 def plot_comparison(data, metric):
@@ -90,27 +91,23 @@ for param in shared_config_params:
 
 # File-Backed Only Parameter Plots
 file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
-
 for param in file_backed_config_params:
-    if param in file_backed_data.columns:
-        plt.figure(figsize=(14, 6))
-        if pd.api.types.is_numeric_dtype(file_backed_data[param]):
-            sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
-        else:
-            sns.boxplot(data=file_backed_data, x=param, y='throughput_data', color='blue')
-        plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
-        plt.xlabel(param)
-        plt.ylabel('Throughput')
-        plt.show()
-
-        plt.figure(figsize=(14, 6))
-        if pd.api.types.is_numeric_dtype(file_backed_data[param]):
-            sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
-        else:
-            sns.boxplot(data=file_backed_data, x=param, y='memory', color='orange')
-        plt.title(f'Effect of {param} on Memory (File-Backed Only)')
-        plt.xlabel(param)
-        plt.ylabel('Memory')
-        plt.show()
+    plt.figure(figsize=(14, 6))
+    if pd.api.types.is_numeric_dtype(file_backed_data[param]):
+        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
     else:
-        print(f"Parameter {param} not found in the dataset.")
+        sns.boxplot(data=file_backed_data, x=param, y='throughput_data', color='blue')
+    plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
+    plt.xlabel(param)
+    plt.ylabel('Throughput')
+    plt.show()
+
+    plt.figure(figsize=(14, 6))
+    if pd.api.types.is_numeric_dtype(file_backed_data[param]):
+        sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
+    else:
+        sns.boxplot(data=file_backed_data, x=param, y='memory', color='orange')
+    plt.title(f'Effect of {param} on Memory (File-Backed Only)')
+    plt.xlabel(param)
+    plt.ylabel('Memory')
+    plt.show()
