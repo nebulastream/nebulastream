@@ -135,6 +135,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         const ChainedHashMapRef::ChainedEntryRef entryRef(entry, finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
+
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
