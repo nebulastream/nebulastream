@@ -36,6 +36,7 @@ int main(const int argc, const char* argv[])
         }
 
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
+        grpc::EnableDefaultHealthCheckService(true);
 
         grpc::ServerBuilder builder;
         builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
