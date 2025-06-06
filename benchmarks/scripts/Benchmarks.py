@@ -15,15 +15,15 @@ df = pd.read_csv("../data/amd/2025-06-05_10-15-06/combined_benchmark_statistics.
 
 # Define configuration parameters and measurement columns
 shared_config_params = [
-    'buffer_size_in_bytes', 'buffers_in_global_buffer_manager',
-    'buffers_in_source_local_buffer_pool', 'buffers_per_worker',
-    'execution_mode', 'ingestion_rate', 'number_of_worker_threads',
-    'page_size', 'query', 'task_queue_size', 'timestamp_increment'
+    'buffer_size_in_bytes', 'ingestion_rate',
+    'number_of_worker_threads', 'page_size',
+    'query', 'timestamp_increment'
 ]
 
 file_backed_config_params = [
-    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta',
-    'max_num_sequence_numbers', 'min_read_state_size', 'min_write_state_size',
+    'file_descriptor_buffer_size', 'file_layout',
+    'file_operation_time_delta', 'max_num_sequence_numbers',
+    'min_read_state_size', 'min_write_state_size',
     'num_watermark_gaps_allowed', 'watermark_predictor_type'
 ]
 
@@ -34,7 +34,7 @@ df['window_start_normalized'] = df.groupby(shared_config_params)['window_start_n
     lambda x: (x - x.min()) / (x.max() - x.min()))
 
 # Aggregate data, excluding non-numeric columns from mean calculation
-grouping_columns = shared_config_params + ['slice_store_type', 'window_start_normalized'] + file_backed_config_params
+grouping_columns = shared_config_params + ['slice_store_type', 'window_start_normalized']
 numeric_columns = [col for col in df.columns if col not in grouping_columns and pd.api.types.is_numeric_dtype(df[col])]
 
 aggregated_data = df.groupby(grouping_columns)[numeric_columns].mean().reset_index()
@@ -59,7 +59,7 @@ def plot_comparison(data, metric):
         plt.legend()
         plt.show()
     else:
-        print("No matching configurations found for both slice store types.")
+        print(f"No matching configurations found for both slice store types for {metric}.")
 
 # Plot comparisons for both metrics
 plot_comparison(aggregated_data, 'throughput_data')
@@ -87,19 +87,22 @@ for param in shared_config_params:
 file_backed_data = aggregated_data[aggregated_data['slice_store_type'] == 'File-Backed']
 
 for param in file_backed_config_params:
-    if param in file_backed_data.columns and pd.api.types.is_numeric_dtype(file_backed_data[param]):
-        plt.figure(figsize=(14, 6))
-        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
-        plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
-        plt.xlabel(param)
-        plt.ylabel('Throughput')
-        plt.show()
+    if param in file_backed_data.columns:
+        if pd.api.types.is_numeric_dtype(file_backed_data[param]):
+            plt.figure(figsize=(14, 6))
+            sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
+            plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
+            plt.xlabel(param)
+            plt.ylabel('Throughput')
+            plt.show()
 
-        plt.figure(figsize=(14, 6))
-        sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
-        plt.title(f'Effect of {param} on Memory (File-Backed Only)')
-        plt.xlabel(param)
-        plt.ylabel('Memory')
-        plt.show()
+            plt.figure(figsize=(14, 6))
+            sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
+            plt.title(f'Effect of {param} on Memory (File-Backed Only)')
+            plt.xlabel(param)
+            plt.ylabel('Memory')
+            plt.show()
+        else:
+            print(f"Parameter {param} is non-numeric and will not be plotted.")
     else:
-        print(f"Parameter {param} is non-numeric and will not be plotted.")
+        print(f"Parameter {param} not found in the dataset.")
