@@ -41,29 +41,25 @@ def normalize_and_aggregate(group):
 aggregated_data = grouped.apply(normalize_and_aggregate).reset_index()
 
 # Visualization: Baseline vs. Prototype Performance
-def plot_baseline_vs_prototype(data, config):
-    config_data = data
-    for param, value in config.items():
-        config_data = config_data[config_data[param] == value]
+def plot_slice_store_performance(data, slice_store_type):
+    sample_config_data = data[data['slice_store_type'] == slice_store_type].iloc[0:1]
 
-    if config_data.empty or len(config_data['slice_store_type'].unique()) < 2:
-        print(f"No data available for both slice store types for configuration: {config}")
+    if sample_config_data.empty:
+        print(f"No data available for slice store type: {slice_store_type}")
         return
 
     plt.figure(figsize=(14, 6))
-    sns.lineplot(data=config_data[config_data['slice_store_type'] == 'Default'], x='window_start_normalized',
-                 y='throughput_data', label='Default Throughput')
-    sns.lineplot(data=config_data[config_data['slice_store_type'] == 'File-Backed'], x='window_start_normalized',
-                 y='throughput_data', label='File-Backed Throughput')
-    plt.title(f'Throughput Comparison for Configuration')
+    sns.lineplot(data=sample_config_data, x='window_start_normalized', y='throughput_data',
+                 label=f'{slice_store_type} Throughput')
+    plt.title(f'Throughput for {slice_store_type} Slice Store')
     plt.xlabel('Normalized Time')
     plt.ylabel('Throughput')
     plt.legend()
     plt.show()
 
-# Example usage for a specific configuration
-sample_config = aggregated_data[config_params].iloc[0].to_dict()
-plot_baseline_vs_prototype(aggregated_data, sample_config)
+# Plot performance for each slice store type
+plot_slice_store_performance(aggregated_data, 'Default')
+plot_slice_store_performance(aggregated_data, 'File-Backed')
 
 # Visualization: Parameter Effects for Shared Parameters
 shared_parameters = [
@@ -75,7 +71,7 @@ shared_parameters = [
 
 for param in shared_parameters:
     plt.figure(figsize=(14, 6))
-    sns.lineplot(data=aggregated_data, x=param, y='throughput_data', hue='slice_store_type', ci=None)
+    sns.lineplot(data=aggregated_data, x=param, y='throughput_data', hue='slice_store_type', errorbar=None)
     plt.title(f'Effect of {param} on Throughput')
     plt.xlabel(param)
     plt.ylabel('Average Throughput')
@@ -92,9 +88,12 @@ file_backed_parameters = [
 file_backed_data = aggregated_data[aggregated_data['slice_store_type'] == 'File-Backed']
 
 for param in file_backed_parameters:
-    plt.figure(figsize=(14, 6))
-    sns.lineplot(data=file_backed_data, x=param, y='throughput_data', ci=None, color='blue')
-    plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
-    plt.xlabel(param)
-    plt.ylabel('Average Throughput')
-    plt.show()
+    if param in file_backed_data.columns:
+        plt.figure(figsize=(14, 6))
+        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
+        plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
+        plt.xlabel(param)
+        plt.ylabel('Average Throughput')
+        plt.show()
+    else:
+        print(f"Parameter {param} not found in the dataset.")
