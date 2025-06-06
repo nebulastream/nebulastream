@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <string>
+
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -38,7 +40,7 @@ public:
 };
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
-    const std::string filename = TEST_DATA_DIR "invalid.dummy";
+    const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&&)
@@ -51,12 +53,12 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 {
-    const auto* const filename = TEST_DATA_DIR "invalid_error.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "invalid_error.dummy";
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](std::string&& query, const size_t) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, const size_t) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)
@@ -71,12 +73,12 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 {
-    const auto* const filename = TEST_DATA_DIR "invalid_error_message.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "invalid_error_message.dummy";
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](std::string&& query, size_t) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, size_t) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)

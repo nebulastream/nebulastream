@@ -35,7 +35,7 @@ public:
     NES::Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     NES::Configurations::StringOption testDataDir
-        = {"testDataDir", TEST_DATA_DIR, "Directory to lookup test data files in. Default: " TEST_DATA_DIR};
+        = {"testDataDir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     NES::Configurations::StringOption directlySpecifiedTestFiles
         = {"directlySpecifiedTestFiles",
            "",
