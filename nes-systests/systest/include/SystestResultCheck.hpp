@@ -94,6 +94,8 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
     return compareStringAsTypeWithError<T>(left, right, EPSILON);
 }
 
+bool compareStringAsTypeWithError(DataType::Type type, const std::string& left, const std::string& right);
+
 struct QueryResult
 {
     Schema fields;
