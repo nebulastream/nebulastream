@@ -97,30 +97,115 @@ def plot_comparison(data, metric):
 plot_comparison(df, 'throughput_data')
 plot_comparison(df, 'memory')
 
+y_offsets = {
+    'DEFAULT': 0.02,
+    'FILE_BACKED': -0.02
+}
+
 # Shared Parameter Plots
 for param in shared_config_params:
+    is_numeric = pd.api.types.is_numeric_dtype(df[param])
     plt.figure(figsize=(14, 6))
-    sns.lineplot(data=df, x=param, y='throughput_data', hue='slice_store_type', errorbar=None)
+    ax = sns.lineplot(data=df, x=param, y='throughput_data', hue='slice_store_type', errorbar=None)
     plt.title(f'Effect of {param} on Throughput')
     plt.xlabel(param)
     plt.ylabel('Throughput')
     plt.legend(title='Slice Store Type')
+
+    # Get the color used for each slice_store_type line from the legend handles
+    legend_handles, legend_labels = ax.get_legend_handles_labels()
+    color_map = dict(zip(legend_labels, [handle.get_color() for handle in legend_handles]))
+
+    grouped = df.groupby(['slice_store_type', param])['throughput_data'].mean().reset_index()
+
+    # Add min/max labels for each slice_store_type
+    for slice_type in grouped['slice_store_type'].unique():
+        sub = grouped[grouped['slice_store_type'] == slice_type]
+
+        max_idx = sub['throughput_data'].idxmax()
+        min_idx = sub['throughput_data'].idxmin()
+
+        max_row = sub.loc[max_idx]
+        min_row = sub.loc[min_idx]
+
+        # Vertical offsets based on y-axis value range
+        y_offset = y_offsets[slice_type] * (grouped['throughput_data'].max() - grouped['throughput_data'].min())
+        color = color_map.get(slice_type, 'black')
+
+        ax.text(
+            max_row[param], max_row['throughput_data'] + y_offset,
+            f"max: {max_row['throughput_data']:.1f}",
+            color=color, ha='center', va='bottom', fontweight='bold'
+        )
+        ax.text(
+            min_row[param], min_row['throughput_data'] + y_offset,
+            f"min: {min_row['throughput_data']:.1f}",
+            color=color, ha='center', va='top', fontweight='bold'
+        )
+
     plt.show()
 
     plt.figure(figsize=(14, 6))
-    sns.lineplot(data=df, x=param, y='memory', hue='slice_store_type', errorbar=None)
+    ax = sns.lineplot(data=df, x=param, y='memory', hue='slice_store_type', errorbar=None)
     plt.title(f'Effect of {param} on Memory')
     plt.xlabel(param)
     plt.ylabel('Memory')
     plt.legend(title='Slice Store Type')
+
+    legend_handles, legend_labels = ax.get_legend_handles_labels()
+    color_map = dict(zip(legend_labels, [handle.get_color() for handle in legend_handles]))
+
+    grouped = df.groupby(['slice_store_type', param])['memory'].mean().reset_index()
+
+    # Add min/max labels for each slice_store_type
+    for slice_type in grouped['slice_store_type'].unique():
+        sub = grouped[grouped['slice_store_type'] == slice_type]
+
+        max_idx = sub['memory'].idxmax()
+        min_idx = sub['memory'].idxmin()
+
+        max_row = sub.loc[max_idx]
+        min_row = sub.loc[min_idx]
+
+        y_offset = y_offsets[slice_type] * (grouped['memory'].max() - grouped['memory'].min())
+        color = color_map.get(slice_type, 'black')
+
+        ax.text(
+            max_row[param], max_row['memory'] + y_offset,
+            f"max: {max_row['memory']:.1f}",
+            color=color, ha='center', va='bottom', fontweight='bold'
+        )
+        ax.text(
+            min_row[param], min_row['memory'] + y_offset,
+            f"min: {min_row['memory']:.1f}",
+            color=color, ha='center', va='top', fontweight='bold'
+        )
+
     plt.show()
 
 # File-Backed Only Parameter Plots
 file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
 for param in file_backed_config_params:
+    is_numeric = pd.api.types.is_numeric_dtype(file_backed_data[param])
     plt.figure(figsize=(14, 6))
-    if pd.api.types.is_numeric_dtype(file_backed_data[param]):
-        sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
+    if is_numeric:
+        ax = sns.lineplot(data=file_backed_data, x=param, y='throughput_data', errorbar=None, color='blue')
+        grouped = file_backed_data.groupby(param)['throughput_data'].mean().reset_index()
+        max_idx = grouped['throughput_data'].idxmax()
+        min_idx = grouped['throughput_data'].idxmin()
+        max_row = grouped.loc[max_idx]
+        min_row = grouped.loc[min_idx]
+
+        ax.text(
+            max_row[param], max_row['throughput_data'],
+            f"max: {max_row['throughput_data']:.1f}",
+            color='blue', ha='center', va='bottom', fontweight='bold'
+        )
+        ax.text(
+            min_row[param], min_row['throughput_data'],
+            f"min: {min_row['throughput_data']:.1f}",
+            color='blue', ha='center', va='top', fontweight='bold'
+        )
     else:
         sns.boxplot(data=file_backed_data, x=param, y='throughput_data', color='blue')
     plt.title(f'Effect of {param} on Throughput (File-Backed Only)')
@@ -129,8 +214,24 @@ for param in file_backed_config_params:
     plt.show()
 
     plt.figure(figsize=(14, 6))
-    if pd.api.types.is_numeric_dtype(file_backed_data[param]):
-        sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
+    if is_numeric:
+        ax = sns.lineplot(data=file_backed_data, x=param, y='memory', errorbar=None, color='orange')
+        grouped = file_backed_data.groupby(param)['memory'].mean().reset_index()
+        max_idx = grouped['memory'].idxmax()
+        min_idx = grouped['memory'].idxmin()
+        max_row = grouped.loc[max_idx]
+        min_row = grouped.loc[min_idx]
+
+        ax.text(
+            max_row[param], max_row['memory'],
+            f"max: {max_row['memory']:.1f}",
+            color='orange', ha='center', va='bottom', fontweight='bold'
+        )
+        ax.text(
+            min_row[param], min_row['memory'],
+            f"min: {min_row['memory']:.1f}",
+            color='orange', ha='center', va='top', fontweight='bold'
+        )
     else:
         sns.boxplot(data=file_backed_data, x=param, y='memory', color='orange')
     plt.title(f'Effect of {param} on Memory (File-Backed Only)')
