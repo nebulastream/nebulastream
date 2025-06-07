@@ -606,6 +606,29 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     test.stop();
 }
 
+TEST_F(QueryEngineTest, RaceBetweenFailureAndEOS)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto failingPipeline = builder.addPipeline({source});
+    builder.addSink({failingPipeline});
+
+    auto query = test.addNewQuery(std::move(builder));
+    test.pipelineControls[failingPipeline]->throwOnNthInvocation = 1;
+    test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
+
+    test.start();
+    {
+        auto queryId = query->queryId;
+        test.startQuery(std::move(query));
+        test.sourceControls[source]->injectData(identifiableData(1), 1);
+        test.sourceControls[source]->injectEoS();
+        ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+}
+
 TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
 {
     constexpr size_t numberOfSources = 2;
