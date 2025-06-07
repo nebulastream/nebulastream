@@ -53,6 +53,7 @@ def convert_metric_units(data, param, metric):
     return scaled_data, units[unit_idx]
 
 
+# %%
 # Normalize the window_start_normalized column for each configuration
 def normalize_time(group):
     ts_min = group['window_start_normalized'].min()
@@ -127,6 +128,7 @@ plot_comparison(df, 'throughput_data')
 plot_comparison(df, 'memory')
 
 
+# %%
 def plot_shared_params(data, param, metric, label):
     y_offsets = {'DEFAULT': 0.02, 'FILE_BACKED': -0.02}
     data_scaled, unit = convert_metric_units(data, param, metric)
@@ -174,6 +176,7 @@ for param in shared_config_params:
     plot_shared_params(df, param, 'memory', 'Memory')
 
 
+# %%
 def plot_file_backed_params(data, param, metric, label, color):
     data_scaled, unit = convert_metric_units(data, param, metric)
     plt.figure(figsize=(14, 6))
