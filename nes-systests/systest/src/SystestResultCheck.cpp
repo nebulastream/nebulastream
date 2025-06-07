@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -41,7 +42,6 @@
 
 namespace
 {
-
 NES::Systest::SystestSchema parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
@@ -113,11 +113,261 @@ std::optional<NES::Systest::QueryResult> loadQueryResult(const NES::Systest::Sys
     return result;
 }
 
-std::pair<std::vector<std::string>, std::vector<std::string>>
-formatResultLines(const std::vector<std::string>& expectedQueryResultLines, const std::vector<std::string>& actualQueryResultLines)
+struct ExpectedToActualFieldMap
 {
-    auto formattedExpectedResultLines = expectedQueryResultLines;
-    auto formattedActualResultLines = actualQueryResultLines;
+    struct TypeIndexPair
+    {
+        NES::DataType type;
+        std::optional<size_t> actualIndex;
+    };
+
+    std::stringstream schemaErrorStream;
+    size_t expectedResultsFieldSortIdx = 0;
+    size_t actualResultsFieldSortIdx = 0;
+    std::vector<TypeIndexPair> expectedToActualFieldMap;
+    std::vector<size_t> additionalActualFields;
+};
+
+class LineIndexIterator
+{
+public:
+    LineIndexIterator(const size_t expectedResultLinesSize, const size_t actualResultLinesSize)
+        : expectedResultLinesSize(expectedResultLinesSize)
+        , actualResultLinesSize(actualResultLinesSize)
+        , totalResultLinesSize(expectedResultLinesSize + actualResultLinesSize)
+    {
+    }
+    ~LineIndexIterator() = default;
+
+    [[nodiscard]] bool hasNext() const { return (expectedResultTupleIdx + actualResultTupleIdx) < totalResultLinesSize; }
+
+    [[nodiscard]] size_t getExpected() const { return expectedResultTupleIdx; }
+    [[nodiscard]] size_t getActual() const { return actualResultTupleIdx; }
+    void advanceExpected() { expectedResultTupleIdx++; }
+    void advanceActual() { actualResultTupleIdx++; }
+
+    [[nodiscard]] bool hasOnlyExpectedLinesLeft() const
+    {
+        return expectedResultTupleIdx < expectedResultLinesSize and actualResultTupleIdx >= actualResultLinesSize;
+    }
+    [[nodiscard]] bool hasOnlyActualLinesLeft() const
+    {
+        return actualResultTupleIdx < actualResultLinesSize and expectedResultTupleIdx >= expectedResultLinesSize;
+    }
+
+private:
+    size_t expectedResultTupleIdx = 0;
+    size_t actualResultTupleIdx = 0;
+    size_t expectedResultLinesSize = 0;
+    size_t actualResultLinesSize = 0;
+    size_t totalResultLinesSize = 0;
+};
+
+ExpectedToActualFieldMap
+compareSchemas(const NES::Systest::SystestSchema& expectedResultSchema, const NES::Systest::SystestSchema& actualResultSchema)
+{
+    ExpectedToActualFieldMap expectedToActualFieldMap{};
+    /// Check if schemas are equal. If not populate the error stream
+    if (/* hasMatchingSchema */ expectedResultSchema != actualResultSchema)
+    {
+        expectedToActualFieldMap.schemaErrorStream
+            << fmt::format("\n{} != {}", fmt::join(expectedResultSchema, ", "), fmt::join(actualResultSchema, ", "));
+    }
+    std::unordered_set<size_t> matchedActualResultFields;
+    bool hasSetSortFieldIdx = false;
+    for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema | NES::views::enumerate)
+    {
+        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema, expectedField); matchingFieldIt != actualResultSchema.end())
+        {
+            auto offset = std::ranges::distance(actualResultSchema.begin(), matchingFieldIt);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.type, offset);
+            matchedActualResultFields.emplace(offset);
+            if (not hasSetSortFieldIdx)
+            {
+                expectedToActualFieldMap.expectedResultsFieldSortIdx = expectedFieldIdx;
+                expectedToActualFieldMap.actualResultsFieldSortIdx = offset;
+                hasSetSortFieldIdx = true;
+            }
+        }
+        else
+        {
+            expectedToActualFieldMap.schemaErrorStream << fmt::format("\n- '{}' is missing from actual result schema.", expectedField);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.type, std::nullopt);
+        }
+    }
+    for (size_t i = 0; i < actualResultSchema.size(); ++i)
+    {
+        if (not matchedActualResultFields.contains(i))
+        {
+            expectedToActualFieldMap.schemaErrorStream
+                << fmt::format("\n+ '{}' is unexpected field in actual result schema.", actualResultSchema.at(i));
+            expectedToActualFieldMap.additionalActualFields.emplace_back(i);
+        }
+    }
+    return expectedToActualFieldMap;
+}
+
+enum class FieldMatchResult : uint8_t
+{
+    ALL_FIELDS_MATCHED,
+    ALL_EXISTING_FIELD_MATCHED,
+    AT_LEAST_ONE_FIELD_MISMATCHED,
+};
+
+FieldMatchResult compareMatchableExpectedFields(
+    const ExpectedToActualFieldMap& expectedToActualFieldMap,
+    const std::vector<std::string>& splitExpectedResult,
+    const std::vector<std::string>& splitActualResult)
+{
+    // Todo: replace with std::ranges::all_of
+    auto fieldMatchResult = FieldMatchResult::ALL_FIELDS_MATCHED;
+    for (const auto& [expectedIdx, typeActualPair] : expectedToActualFieldMap.expectedToActualFieldMap | NES::views::enumerate)
+    {
+        const auto& expectedField = splitExpectedResult.at(expectedIdx);
+        if (typeActualPair.actualIndex.has_value())
+        {
+            const auto& actualField = splitActualResult.at(typeActualPair.actualIndex.value());
+            if (typeActualPair.type.isType(NES::DataType::Type::FLOAT32)
+                and not NES::Systest::compareStringAsTypeWithError<float>(expectedField, actualField))
+            {
+                return FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED;
+            }
+            if (typeActualPair.type.isType(NES::DataType::Type::FLOAT64)
+                and not NES::Systest::compareStringAsTypeWithError<double>(expectedField, actualField))
+            {
+                return FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED;
+            }
+            if (expectedField != actualField)
+            {
+                return FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED;
+            }
+        }
+        else
+        {
+            fieldMatchResult = FieldMatchResult::ALL_EXISTING_FIELD_MATCHED;
+        }
+    }
+    return fieldMatchResult;
+}
+
+void populateErrorWithMatchingFields(
+    std::stringstream& errorStream,
+    const ExpectedToActualFieldMap& expectedToActualFieldMap,
+    const std::vector<std::string>& splitExpectedResult,
+    const std::vector<std::string>& splitActualResult,
+    LineIndexIterator& lineIdxIt)
+{
+    std::stringstream currentExpectedResultLineErrorStream;
+    std::stringstream currentActualResultLineErrorStream;
+    for (const auto& [expectedIdx, typeActualPair] : expectedToActualFieldMap.expectedToActualFieldMap | NES::views::enumerate)
+    {
+        const auto& expectedField = splitExpectedResult.at(expectedIdx);
+        currentExpectedResultLineErrorStream << fmt::format("{} ", expectedField);
+        if (typeActualPair.actualIndex.has_value())
+        {
+            const auto& actualField = splitActualResult.at(typeActualPair.actualIndex.value());
+            currentActualResultLineErrorStream << fmt::format("{} ", actualField);
+        }
+        else
+        {
+            currentActualResultLineErrorStream << "_ ";
+        }
+    }
+    for (const auto& additionalIdx : expectedToActualFieldMap.additionalActualFields)
+    {
+        currentExpectedResultLineErrorStream << "_ ";
+        currentActualResultLineErrorStream << fmt::format("{} ", splitActualResult.at(additionalIdx));
+    }
+    errorStream << fmt::format("\n{} | {}", currentExpectedResultLineErrorStream.str(), currentActualResultLineErrorStream.str());
+    lineIdxIt.advanceExpected();
+    lineIdxIt.advanceActual();
+}
+
+bool compareLines(
+    std::stringstream& lineComparisonErrorStream,
+    const std::string& expectedResultLine,
+    const std::string& actualResultLine,
+    const ExpectedToActualFieldMap& expectedToActualFieldMap,
+    LineIndexIterator& lineIdxIt)
+{
+    if (expectedResultLine == actualResultLine)
+    {
+        lineComparisonErrorStream << fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
+        lineIdxIt.advanceExpected();
+        lineIdxIt.advanceActual();
+        return true;
+    }
+
+    /// The lines don't string-match, but they might still be equal
+    const auto splitExpected = NES::Util::splitWithStringDelimiter<std::string>(expectedResultLine, " ");
+    const auto splitActualResult = NES::Util::splitWithStringDelimiter<std::string>(actualResultLine, " ");
+
+    if (splitExpected.size() != expectedToActualFieldMap.expectedToActualFieldMap.size())
+    {
+        lineIdxIt.advanceExpected();
+        lineComparisonErrorStream << fmt::format(
+            "\n{} | Too few expected fields (sink schema has: {}, but got {})",
+            expectedResultLine,
+            expectedToActualFieldMap.expectedToActualFieldMap.size(),
+            splitExpected.size());
+        return false;
+    }
+
+    const bool hasSameNumberOfFields = (splitExpected.size() == splitActualResult.size());
+    switch (compareMatchableExpectedFields(expectedToActualFieldMap, splitExpected, splitActualResult))
+    {
+        case FieldMatchResult::ALL_FIELDS_MATCHED: {
+            if (hasSameNumberOfFields)
+            {
+                lineComparisonErrorStream << fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
+                lineIdxIt.advanceExpected();
+                lineIdxIt.advanceActual();
+                return true;
+            }
+            populateErrorWithMatchingFields(
+                lineComparisonErrorStream, expectedToActualFieldMap, splitExpected, splitActualResult, lineIdxIt);
+            return false;
+        }
+        case FieldMatchResult::ALL_EXISTING_FIELD_MATCHED: {
+            populateErrorWithMatchingFields(
+                lineComparisonErrorStream, expectedToActualFieldMap, splitExpected, splitActualResult, lineIdxIt);
+            return false;
+        }
+        case FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED: {
+            if (expectedResultLine < actualResultLine)
+            {
+                lineComparisonErrorStream << fmt::format("\n{} | {}", expectedResultLine, std::string(expectedResultLine.size(), '_'));
+                lineIdxIt.advanceExpected();
+            }
+            else
+            {
+                lineComparisonErrorStream << fmt::format("\n{} | {}", std::string(actualResultLine.size(), '_'), actualResultLine);
+                lineIdxIt.advanceActual();
+            }
+            return false;
+        }
+    }
+    std::unreachable();
+}
+
+void sortOnField(std::vector<std::string>& results, const size_t fieldIdx)
+{
+    std::ranges::sort(
+        results,
+        [fieldIdx](const std::string& lhs, const std::string& rhs)
+        {
+            const auto lhsField = std::string_view((lhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
+            const auto rhsField = std::string_view((rhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
+            return lhsField < rhsField;
+        });
+};
+
+std::stringstream compareResults(
+    std::vector<std::string>& formattedExpectedResultLines,
+    std::vector<std::string>& formattedActualResultLines,
+    const ExpectedToActualFieldMap& expectedToActualFieldMap)
+{
+    std::stringstream lineComparisonErrorStream;
     /// We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
     /// Additionally, we remove double spaces, as we expect a single space between the fields
     std::ranges::for_each(formattedActualResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
@@ -125,116 +375,117 @@ formatResultLines(const std::vector<std::string>& expectedQueryResultLines, cons
     std::ranges::for_each(formattedActualResultLines, NES::Util::removeDoubleSpaces);
     std::ranges::for_each(formattedExpectedResultLines, NES::Util::removeDoubleSpaces);
 
-    std::ranges::sort(formattedActualResultLines);
-    std::ranges::sort(formattedExpectedResultLines);
+    sortOnField(formattedExpectedResultLines, expectedToActualFieldMap.expectedResultsFieldSortIdx);
+    sortOnField(formattedActualResultLines, expectedToActualFieldMap.actualResultsFieldSortIdx);
 
-    return std::make_pair(formattedExpectedResultLines, formattedActualResultLines);
+    // Todo: introduce strong types for expected/actual (lines/ids)
+    bool allResultTuplesMatch = true;
+    LineIndexIterator lineIdxIt{formattedExpectedResultLines.size(), formattedActualResultLines.size()};
+    while (lineIdxIt.hasNext())
+    {
+        if (lineIdxIt.hasOnlyExpectedLinesLeft())
+        {
+            const auto& expectedLine = formattedExpectedResultLines.at(lineIdxIt.getExpected());
+            lineComparisonErrorStream << fmt::format("\n{} | {}", expectedLine, std::string(expectedLine.size(), '_'));
+            lineIdxIt.advanceExpected();
+            allResultTuplesMatch = false;
+            continue;
+        }
+        if (lineIdxIt.hasOnlyActualLinesLeft())
+        {
+            const auto& actualLine = formattedActualResultLines.at(lineIdxIt.getActual());
+            lineComparisonErrorStream << fmt::format("\n{} | {}", std::string(actualLine.size(), '_'), actualLine);
+            lineIdxIt.advanceActual();
+            allResultTuplesMatch = false;
+            continue;
+        }
+        /// Both sets still have lines check if the lines are equal
+        allResultTuplesMatch &= compareLines(
+            lineComparisonErrorStream,
+            formattedExpectedResultLines.at(lineIdxIt.getExpected()),
+            formattedActualResultLines.at(lineIdxIt.getActual()),
+            expectedToActualFieldMap,
+            lineIdxIt);
+    }
+    if (allResultTuplesMatch)
+    {
+        return std::stringstream{};
+    }
+    return lineComparisonErrorStream;
 }
 
-bool hasEqualFields(
-    const NES::Systest::SystestSchema& expectedResultSchema,
-    const std::vector<std::string>& splitExpected,
-    const std::vector<std::string>& splitActualResult)
+struct QueryCheckResult
 {
-    bool isEqual = true;
-    for (const auto& [fieldIdx, expectedField] : splitExpected | NES::views::enumerate)
+    enum class Type : uint8_t
     {
-        if (expectedResultSchema.at(fieldIdx).type.isType(NES::DataType::Type::FLOAT32))
+        SCHEMAS_MISMATCH_RESULTS_MISMATCH,
+        SCHEMAS_MISMATCH_RESULTS_MATCH,
+        SCHEMAS_MATCH_RESULTS_MISMATCH,
+        SCHEMAS_MATCH_RESULTS_MATCH,
+        QUERY_NOT_FOUND,
+    };
+    explicit QueryCheckResult(std::string queryErrorStream) : type(Type::QUERY_NOT_FOUND), queryError(std::move(queryErrorStream)) { }
+    explicit QueryCheckResult(std::stringstream schemaErrorStream, std::stringstream resultErrorStream)
+        : schemaErrorStream(std::move(schemaErrorStream)), resultErrorStream(std::move(resultErrorStream))
+    {
+        if (not(this->schemaErrorStream.view().empty()) and not(this->resultErrorStream.view().empty()))
         {
-            if (not NES::Systest::compareStringAsTypeWithError<float>(expectedField, splitActualResult.at(fieldIdx)))
-            {
-                isEqual = false;
-                break;
-            }
+            this->type = Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH;
         }
-        else if (expectedResultSchema.at(fieldIdx).type.isType(NES::DataType::Type::FLOAT64))
+        else if (not(this->schemaErrorStream.view().empty()) and this->resultErrorStream.view().empty())
         {
-            if (not NES::Systest::compareStringAsTypeWithError<double>(expectedField, splitActualResult.at(fieldIdx)))
-            {
-                isEqual = false;
-                break;
-            }
+            this->type = Type::SCHEMAS_MISMATCH_RESULTS_MATCH;
         }
-        else
+        else if (this->schemaErrorStream.view().empty() and not(this->resultErrorStream.view().empty()))
         {
-            if (expectedField != splitActualResult.at(fieldIdx))
-            {
-                isEqual = false;
-                break;
-            }
+            this->type = Type::SCHEMAS_MATCH_RESULTS_MISMATCH;
+        }
+        else if (this->schemaErrorStream.view().empty() and this->resultErrorStream.view().empty())
+        {
+            this->type = Type::SCHEMAS_MATCH_RESULTS_MATCH;
         }
     }
-    return isEqual;
-}
 
-std::string createResultTupleErrorStream(
-    const std::vector<std::string>& expectedQueryResultLines,
-    const std::vector<std::string>& actualQueryResultLines,
-    const NES::Systest::SystestSchema& expectedResultSchema)
+    Type type;
+    std::string queryError{};
+    std::stringstream schemaErrorStream{};
+    std::stringstream resultErrorStream{};
+};
+
+QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery, const NES::Systest::QueryResultMap& queryResultMap)
 {
-    std::stringstream localErrorStream;
-    if (expectedQueryResultLines.size() == actualQueryResultLines.size())
+    /// Get result for running query
+    const auto queryResult = loadQueryResult(runningQuery.query);
+    if (not queryResult.has_value())
     {
-        if (/* isResultsEmpty */ expectedQueryResultLines.empty() and actualQueryResultLines.empty())
-        {
-            return "";
-        }
-
-        size_t numberOfMismatches = 0;
-        localErrorStream << "\nResult Mismatch(Tuple Mismatch)\n";
-        localErrorStream << "Expected Tuples | Actual Result Tuples";
-
-        std::ranges::for_each(
-            std::views::zip(expectedQueryResultLines, actualQueryResultLines),
-            [&localErrorStream, &numberOfMismatches, &expectedResultSchema](const auto& pair)
-            {
-                const auto& expectedLine = std::get<0>(pair);
-                const auto& actualResultLine = std::get<1>(pair);
-                auto splitExpected = NES::Util::splitWithStringDelimiter<std::string>(expectedLine, " ");
-                auto splitActualResult = NES::Util::splitWithStringDelimiter<std::string>(actualResultLine, " ");
-
-                if (splitExpected.size() != splitActualResult.size())
-                {
-                    fmt::print(localErrorStream, "\nField Count Missmatch: {} | actualResultLine", expectedLine, actualResultLine);
-                    ++numberOfMismatches;
-                    return;
-                }
-
-                if (hasEqualFields(expectedResultSchema, splitExpected, splitActualResult))
-                {
-                    fmt::print(localErrorStream, "\n          {} | {}", expectedLine, actualResultLine);
-                }
-                else
-                {
-                    localErrorStream << fmt::format("\nField Mismatch: {} | {}", expectedLine, actualResultLine);
-                    ++numberOfMismatches;
-                }
-            });
-        if (numberOfMismatches != 0)
-        {
-            return localErrorStream.str();
-        }
-        return "";
+        return QueryCheckResult{fmt::format("Failed to load query result for query: ", runningQuery.query.queryDefinition)};
     }
-    /// Sizes mismatch, log all tuples as errors
-    localErrorStream << "\nResult Mismatch(Size Mismatch)\n";
-    localErrorStream << "Expected Tuples | Actual Result Tuples";
+    auto [schemaResult, actualQueryResult] = queryResult.value();
 
-    /// Determine the larger of the two result line vectors. When the smaller vector runs out of lines, log ' (Missing) ' instead of a tuple
-    const size_t maxNumberOfResultTuples = std::max(expectedQueryResultLines.size(), actualQueryResultLines.size());
-    const auto logLine = [](const auto& lines, size_t lineIdx) { return lineIdx < lines.size() ? lines.at(lineIdx) : " (Missing) "; };
-    for (size_t lineIdx = 0; lineIdx < maxNumberOfResultTuples; ++lineIdx)
+    /// Check if the expected result is empty and if this is the case, the query result should be empty as well
+    auto expectedQueryResult = [](const NES::Systest::RunningQuery& query, const NES::Systest::QueryResultMap& resultMap)
     {
-        localErrorStream << fmt::format("\n{} | {}", logLine(expectedQueryResultLines, lineIdx), logLine(actualQueryResultLines, lineIdx));
-    }
-    return localErrorStream.str();
+        const auto currentQuery = resultMap.find(query.query.resultFile());
+        INVARIANT(
+            currentQuery != resultMap.end(),
+            "Could not find query {}:{} in result map.",
+            query.query.sqlLogicTestFile,
+            query.query.queryIdInFile);
+        return currentQuery->second;
+    }(runningQuery, queryResultMap);
+
+    /// Compare the expected and actual result schema and the expected and actual result lines/tuples
+    auto expectedToActualResultMap = compareSchemas(runningQuery.query.expectedSinkSchema, schemaResult);
+    auto resultComparisonErrorStream = compareResults(expectedQueryResult, actualQueryResult, expectedToActualResultMap);
+
+    return QueryCheckResult{std::move(expectedToActualResultMap.schemaErrorStream), std::move(resultComparisonErrorStream)};
 }
-
 }
 
 namespace NES::Systest
 {
 
+// Todo: strong types for actual/result
 std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap)
 {
     PRECONDITION(
@@ -243,59 +494,36 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery, const Q
         runningQuery.query.queryIdInFile,
         queryResultMap.size());
 
-    std::stringstream errorMessages;
-    uint64_t seenResultTupleSections = 0;
-    NES_INFO(
-        "seenResultTupleSections: {}, runningQuery.query.queryIdInFile: {}", seenResultTupleSections, runningQuery.query.queryIdInFile);
-    /// Get query result
-    const auto queryResult = loadQueryResult(runningQuery.query);
-    if (not queryResult.has_value())
+    static constexpr std::string_view SchemaMismatchMessage = "\n\n"
+                                                              "Schema Mismatch\n"
+                                                              "---------------";
+    static constexpr std::string_view ResultMismatchMessage = "\n\n"
+                                                              "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
+                                                              "-------------------------------------------------";
+
+    switch (const auto checkQueryResult = checkQuery(runningQuery, queryResultMap); checkQueryResult.type)
     {
-        errorMessages << "Failed to load query result for query: " << runningQuery.query.queryDefinition << "\n";
-        return std::nullopt;
-    }
-    auto [schemaResult, actualQueryResultLines] = queryResult.value();
-
-    /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-    const auto currentQuery = queryResultMap.find(runningQuery.query.resultFile());
-    INVARIANT(
-        currentQuery != queryResultMap.end(),
-        "Could not find query {}:{} in result map.",
-        runningQuery.query.sqlLogicTestFile,
-        runningQuery.query.queryIdInFile);
-
-    /// Get formatted and sorted result lines
-    const auto [formattedExpectedResultLines, formattedActualResultLines] = formatResultLines(currentQuery->second, actualQueryResultLines);
-
-    /// Check if schemas are equal. If not populate the error stream
-    if (/* hasMatchingSchema */ runningQuery.query.expectedSinkSchema != schemaResult)
-    {
-        errorMessages << fmt::format(
-            "\nSchema mismatch\nExpected Test Schema({})\nActual Result Schema({})\n",
-            fmt::join(runningQuery.query.expectedSinkSchema, ", "),
-            fmt::join(schemaResult, ", "));
-
-        /// We logged the mismatching schema and all tupes (sorted), there are no more checks to do, return
-        if (const auto resulTupleErrorStream
-            = createResultTupleErrorStream(formattedExpectedResultLines, formattedActualResultLines, runningQuery.query.expectedSinkSchema);
-            not resulTupleErrorStream.empty())
-        {
-            errorMessages << resulTupleErrorStream;
-            return errorMessages.str();
+        case QueryCheckResult::Type::QUERY_NOT_FOUND: {
+            return checkQueryResult.queryError;
         }
-        errorMessages << "\nAll Tuples Match";
-        return errorMessages.str();
+        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MATCH: {
+            return std::nullopt;
+        }
+        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MISMATCH: {
+            return fmt::format("{}{}", ResultMismatchMessage, checkQueryResult.resultErrorStream.str());
+        }
+        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MATCH: {
+            return fmt::format("{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream.str());
+        }
+        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
+            return fmt::format(
+                "{}{}{}{}",
+                SchemaMismatchMessage,
+                checkQueryResult.schemaErrorStream.str(),
+                ResultMismatchMessage,
+                checkQueryResult.resultErrorStream.str());
+        }
     }
-
-    /// The schemas are equal, compare the result tuples and if not equal, populate the error stream
-    if (const auto resulTupleErrorStream
-        = createResultTupleErrorStream(formattedExpectedResultLines, formattedActualResultLines, runningQuery.query.expectedSinkSchema);
-        not resulTupleErrorStream.empty())
-    {
-        errorMessages << resulTupleErrorStream;
-        return errorMessages.str();
-    }
-    return std::nullopt;
+    std::unreachable();
 }
-
 }
