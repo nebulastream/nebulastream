@@ -115,7 +115,7 @@ def plot_config_comparison(data, configs, metric, label):
             if k in data_scaled.columns:
                 mask &= data_scaled[k] == v
         subset = data_scaled[mask].copy()
-        subset['config_id'] = f'C{i+1}'  # Label for x-axis
+        subset['config_id'] = f'C{i + 1}'  # Label for x-axis
         matching_rows.append(subset)
 
     # Step 2: Combine into a single DataFrame
@@ -125,7 +125,8 @@ def plot_config_comparison(data, configs, metric, label):
     sns.barplot(data=combined, x='config_id', y=metric, hue='slice_store_type', errorbar='sd')
 
     # Add configs below
-    config_text = "\n".join([f"C{i+1}: " + ", ".join(f"{k}={v}" for k, v in config.items()) for i, config in enumerate(configs)])
+    config_text = "\n".join(
+        [f"C{i + 1}: " + ", ".join(f"{k}={v}" for k, v in config.items()) for i, config in enumerate(configs)])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.45)
     plt.figtext(0.0, -1.155, config_text, wrap=True, ha='left', fontsize=9)
@@ -172,7 +173,7 @@ def plot_shared_params(data, param, metric, label):
     if param == 'query':
         # Map long queries to short codes
         unique_queries = data_scaled[param].unique()
-        query_mapping = {q: f"Q{i+1}" for i, q in enumerate(unique_queries)}
+        query_mapping = {q: f"Q{i + 1}" for i, q in enumerate(unique_queries)}
         data_scaled[param] = data_scaled[param].map(query_mapping)
 
     plt.figure(figsize=(14, 6))
@@ -213,6 +214,7 @@ def plot_file_backed_params(data, param, metric, label, color):
     plt.ylabel(f'{label} ({unit})')
     plt.show()
 
+
 # %% Find unique configs that both slice store types have in common
 
 specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
@@ -248,7 +250,6 @@ print(f'number of common configs: {len(common_config_dicts)}')
 plot_config_comparison(df, common_config_dicts, 'throughput_data', 'Throughput / sec')
 plot_config_comparison(df, common_config_dicts, 'memory', 'Memory')
 
-
 # %% Compare slice store types for different configs over time
 
 print(f'number of common configs: {len(common_config_dicts)}')
@@ -256,14 +257,12 @@ for config in common_config_dicts:
     plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
     plot_time_comparison(df, config, 'memory', 'Memory')
 
-
 # %% Shared Parameter Plots
 
 print(f"number of queries: {len(df['query'].unique())}")
 for param in shared_config_params:
     plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
     plot_shared_params(df, param, 'memory', 'Memory')
-
 
 # %% File-Backed-Only Parameter Plots
 
