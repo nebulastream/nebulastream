@@ -18,3 +18,6 @@ endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
+
+add_executable(slice-micro-benchmark microbenchmark/SliceMicroBenchmark.cpp)
+target_link_libraries(slice-micro-benchmark nes-data-types nes-physical-operators nes-memory-test-utils nes-test-util)
