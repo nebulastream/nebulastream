@@ -83,7 +83,7 @@ BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const s
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 0,
-                                                                "Number of buffers to produce.")) {
+                                                                "Number of buffers to produce.")) {BinarySource.cpp
     NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
 
