@@ -13,24 +13,9 @@ on:
         description: "ref of the branch"
 
 jobs:
-
-  get-resources:
-    runs-on: ubuntu-latest
-    outputs:
-      number_of_jobs: ${{ steps.set-value.outputs.number_of_jobs }}
-    steps:
-      - name: Choose a number of concurrent jobs
-        id: number-of-jobs
-        shell: bash
-        run: |
-          # Our arm machines have more cores than memory (in gb). This choses a number of concurrent jobs equal to min(mem_in_gb, cpus)
-          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
-          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
-
   clean-build-and-test-linux:
     # Ensures that the build works from a clean build directory.
     name: "Clean build and tests"
-    needs: [ get-resources ]
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       env:
@@ -49,6 +34,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+      - name: Choose a number of concurrent jobs
+        id: number-of-jobs
+        shell: bash
+        run: |
+          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
+          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
+          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
       - name: Configure NebulaStream
         run: |
           rm -rf build || true
@@ -57,9 +49,9 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j ${{needs.get-resources.outputs.number_of_jobs}} -- -k 0
+          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} -- -k 0
       - name: Run Tests
-        run: ctest --test-dir build -j ${{needs.get-resources.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
+        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
       - uses: actions/upload-artifact@v4
         # Upload all log and stat files if any of the tests has failed.
         name: Upload Test Logs on Failure
@@ -72,7 +64,6 @@ jobs:
 
   build-and-test-linux:
     name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    needs: [ get-resources ]
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       volumes:
@@ -111,6 +102,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+      - name: Choose a number of concurrent jobs
+        id: number-of-jobs
+        shell: bash
+        run: |
+          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
+          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
+          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
       - name: Configure NebulaStream
         run: |
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
@@ -118,13 +116,13 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j ${{needs.get-resources.outputs.number_of_jobs}}  -- -k 0
+          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
       - name: Run Tests
         # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j ${{needs.get-resources.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600 ${ADDTIONAL_CTEST_ARGS}
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
