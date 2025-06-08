@@ -21,7 +21,8 @@
 #include <string_view>
 #include <system_error>
 #include <vector>
-#include <Util/Ranges.hpp>
+#include <Util/Expected.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Util
 {
@@ -42,32 +43,32 @@ void removeDoubleSpaces(std::string& input);
 /// From chars attempts to extract a T from string_view after removing surrounding whitespaces.
 /// Note: Implementation of T = string or string_view will return the string without performing any trimming.
 template <typename T>
-std::optional<T> from_chars(std::string_view input) = delete;
+Expected<T> from_chars(std::string_view input) = delete;
 
 /// Default implementation falls back to std::from_chars if it is availble for T
 template <typename T>
-std::optional<T> from_chars(std::string_view input)
+Expected<T> from_chars(std::string_view input)
 requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })
 {
     auto trimmed = trimWhiteSpaces(input);
     T value;
     if (auto result = std::from_chars<T>(trimmed.data(), trimmed.data() + trimmed.size(), value); result.ec != std::errc())
     {
-        return {};
+        return unexpected("Could not convert '{}' to {}: {}", input, typeid(T).name(), magic_enum::enum_name(result.ec));
     }
     return value;
 }
 
 template <>
-std::optional<float> from_chars(std::string_view input);
+Expected<float> from_chars(std::string_view input);
 template <>
-std::optional<double> from_chars(std::string_view input);
+Expected<double> from_chars(std::string_view input);
 template <>
-std::optional<std::string> from_chars(std::string_view input);
+Expected<std::string> from_chars(std::string_view input);
 template <>
-std::optional<std::string_view> from_chars(std::string_view input);
+Expected<std::string_view> from_chars(std::string_view input);
 template <>
-std::optional<bool> from_chars(std::string_view input);
+Expected<bool> from_chars(std::string_view input);
 
 /// Formats floating points similiar to flink:
 /// We preserve at least 1 digit and at most 6 digits after the decimal point
