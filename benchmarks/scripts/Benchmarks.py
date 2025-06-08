@@ -43,6 +43,11 @@ common_config_dicts = common_configs.to_dict(orient='records')
 
 
 # Define helper functions
+def chunk_configs(configs, chunk_size):
+    for i in range(0, len(configs), chunk_size):
+        yield configs[i:i + chunk_size]
+
+
 def filter_by_config(data, config):
     mask = pd.Series([True] * len(data))
     for k, v in config.items():
@@ -50,10 +55,11 @@ def filter_by_config(data, config):
     return data[mask]
 
 
-def normalize_time(data):
-    ts_min = data['window_start'].min()
-    ts_max = data['window_start'].max()
-    data['window_start_normalized'] = (data['window_start'] - ts_min) / (ts_max - ts_min)
+def normalize_time_per_group(data, param, group_col, time_col):
+    data = data.copy()
+    group_min = data.groupby(group_col)[time_col].transform('min')
+    group_max = data.groupby(group_col)[time_col].transform('max')
+    data[param] = (data[time_col] - group_min) / (group_max - group_min)
     return data
 
 
@@ -113,11 +119,11 @@ def add_min_max_labels_per_slice_store(data, metric, ax, param):
 
 # %% Compare slice store types for different configs over time
 
-def plot_config_comparison(data, configs, metric, label):
+def plot_config_comparison(data, configs, metric, label, config_id):
     param = 'config_id'
     matching_rows = []
 
-    for i, config in enumerate(configs, start=1):
+    for i, config in enumerate(configs, start=config_id+1):
         # Collect all rows for each config and map to short codes
         subset = filter_by_config(data, config).copy()
         subset[param] = f'C{i}'
@@ -130,10 +136,10 @@ def plot_config_comparison(data, configs, metric, label):
     sns.barplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd')
 
     # Add configs below
-    config_text = "\n".join([f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items()) for i, config in enumerate(configs, start=1)])
+    config_text = "\n".join([f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items() if k in shared_config_params) for i, config in enumerate(configs, start=config_id + 1)])
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.45)
-    plt.figtext(0.0, -1.155, config_text, wrap=True, ha='left', fontsize=9)
+    plt.subplots_adjust(bottom=0.5)
+    plt.figtext(0.0, -0.8, config_text, wrap=True, ha='left', fontsize=9)
 
     plt.title(f'Effect of Configs on {label}')
     plt.ylabel(f'{label} ({unit})')
@@ -142,13 +148,12 @@ def plot_config_comparison(data, configs, metric, label):
     plt.show()
 
 
-specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
+chunk_size = 25
+for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size)):
+    print(f"Plotting config chunk {i+1} (configs {(i*25)+1}-{min((i+1)*25, len(common_config_dicts))} of {len(common_config_dicts)})")
+    plot_config_comparison(df, config_chunk, 'throughput_data', 'Throughput / sec', i * chunk_size)
+    plot_config_comparison(df, config_chunk, 'memory', 'Memory', i * chunk_size)
 
-
-configs = [d for d in common_config_dicts if d["query"] == specific_query]
-print(f'number of common configs: {len(configs)}')
-plot_config_comparison(df, configs, 'throughput_data', 'Throughput / sec')
-plot_config_comparison(df, configs, 'memory', 'Memory')
 
 # %% Compare slice store types for different configs over time
 
@@ -157,7 +162,7 @@ def plot_time_comparison(data, config, metric, label):
     filtered_data = filter_by_config(data, config)
 
     if not filtered_data.empty:
-        normalized_data = filtered_data.groupby('slice_store_type', group_keys=False).apply(normalize_time)
+        normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', 'window_start')
         data_scaled, unit = convert_metric_units(normalized_data, param, metric)
 
         plt.figure(figsize=(14, 6))
@@ -198,7 +203,6 @@ specific_config = {
     'file_layout': 'NO_SEPARATION',
     'watermark_predictor_type': 'KALMAN'
 }
-
 
 # common_config_dicts = [specific_config]
 configs = [d for d in common_config_dicts if d["query"] == specific_query]
