@@ -32,9 +32,6 @@
 #include <PhysicalPlanBuilder.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Util/Common.hpp>
-#include <DataTypes/Schema.hpp>
 
 namespace NES::LowerToPhysicalOperators
 {
@@ -118,18 +115,6 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
         [&registryArgument](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;
-            // not source or sink -> adjust memoryLayout if needed
-            if (registryArgument.conf.useSingleMemoryLayout.getValue() && registryArgument.conf.memoryLayout.getValue() != registryArgument.conf.memoryLayout.getDefaultValue())
-            {
-
-                for (Schema schema : child.getInputSchemas())
-                {
-                    schema.memoryLayoutType = registryArgument.conf.memoryLayout.getValue();
-                }
-                auto schema = child.getOutputSchema();
-                schema.memoryLayoutType = registryArgument.conf.memoryLayout.getValue();
-
-            }
             auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
             leaf->addChild(rootNodeOfLoweredChild);
         });
