@@ -152,8 +152,8 @@ def plot_config_comparison(data, configs, metric, label, config_id):
 
 chunk_size = 25
 for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size)):
-    print(
-        f"Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of {len(common_config_dicts)})")
+    print(f"Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of "
+          f"{len(common_config_dicts)})")
     plot_config_comparison(df, config_chunk, 'throughput_data', 'Throughput / sec', i * chunk_size)
     plot_config_comparison(df, config_chunk, 'memory', 'Memory', i * chunk_size)
 
@@ -189,7 +189,8 @@ def plot_time_comparison(data, config, metric, label):
         print(f'No data available for the common configuration for {metric}.')
 
 
-specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
+specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
+                 'WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
 specific_config = {
     'timestamp_increment': 1,
     'ingestion_rate': 0,
@@ -209,6 +210,7 @@ specific_config = {
 
 # common_config_dicts = [specific_config]
 configs = [d for d in common_config_dicts if d["query"] == specific_query]
+
 print(f'number of common configs: {len(configs)}')
 for config in configs:
     plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
