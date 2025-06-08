@@ -123,7 +123,7 @@ def plot_config_comparison(data, configs, metric, label, config_id):
     param = 'config_id'
     matching_rows = []
 
-    for i, config in enumerate(configs, start=config_id+1):
+    for i, config in enumerate(configs, start=config_id + 1):
         # Collect all rows for each config and map to short codes
         subset = filter_by_config(data, config).copy()
         subset[param] = f'C{i}'
@@ -136,7 +136,9 @@ def plot_config_comparison(data, configs, metric, label, config_id):
     sns.barplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd')
 
     # Add configs below
-    config_text = "\n".join([f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items() if k in shared_config_params) for i, config in enumerate(configs, start=config_id + 1)])
+    config_text = "\n".join(
+        [f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items() if k in shared_config_params) for i, config in
+         enumerate(configs, start=config_id + 1)])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.5)
     plt.figtext(0.0, -0.8, config_text, wrap=True, ha='left', fontsize=9)
@@ -150,7 +152,8 @@ def plot_config_comparison(data, configs, metric, label, config_id):
 
 chunk_size = 25
 for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size)):
-    print(f"Plotting config chunk {i+1} (configs {(i*25)+1}-{min((i+1)*25, len(common_config_dicts))} of {len(common_config_dicts)})")
+    print(
+        f"Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of {len(common_config_dicts)})")
     plot_config_comparison(df, config_chunk, 'throughput_data', 'Throughput / sec', i * chunk_size)
     plot_config_comparison(df, config_chunk, 'memory', 'Memory', i * chunk_size)
 
@@ -211,6 +214,7 @@ for config in configs:
     plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
     plot_time_comparison(df, config, 'memory', 'Memory')
 
+
 # %% Shared Parameter Plots
 
 def plot_shared_params(data, param, metric, label):
@@ -246,6 +250,7 @@ print(f"number of queries: {len(df['query'].unique())}")
 for param in shared_config_params:
     plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
     plot_shared_params(df, param, 'memory', 'Memory')
+
 
 # %% File-Backed-Only Parameter Plots
 
