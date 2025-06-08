@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 
 # Load the CSV file
-df = pd.read_csv("../data/amd/2025-06-05_10-15-06/combined_benchmark_statistics.csv")
+df = pd.read_csv("data/amd/2025-06-05_10-15-06/combined_benchmark_statistics.csv")
 
 # Define configuration parameters
 shared_config_params = [
@@ -34,20 +34,27 @@ file_backed_config_params = [
     'num_watermark_gaps_allowed', 'watermark_predictor_type'
 ]
 
+# Find unique configs that both slice store types have in common
+all_config_params = shared_config_params + file_backed_config_params
+default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
+file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
+common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
+common_config_dicts = common_configs.to_dict(orient='records')
+
 
 # Define helper functions
-def normalize_time(data):
-    ts_min = data['window_start'].min()
-    ts_max = data['window_start'].max()
-    data['window_start_normalized'] = (data['window_start'] - ts_min) / (ts_max - ts_min)
-    return data
-
-
 def filter_by_config(data, config):
     mask = pd.Series([True] * len(data))
     for k, v in config.items():
         mask &= data[k] == v
     return data[mask]
+
+
+def normalize_time(data):
+    ts_min = data['window_start'].min()
+    ts_max = data['window_start'].max()
+    data['window_start_normalized'] = (data['window_start'] - ts_min) / (ts_max - ts_min)
+    return data
 
 
 def convert_metric_units(data, param, metric):
@@ -104,6 +111,8 @@ def add_min_max_labels_per_slice_store(data, metric, ax, param):
         add_min_max_labels(sub, metric, ax, param, y_offset, color)
 
 
+# %% Compare slice store types for different configs over time
+
 def plot_config_comparison(data, configs, metric, label):
     param = 'config_id'
     matching_rows = []
@@ -133,19 +142,25 @@ def plot_config_comparison(data, configs, metric, label):
     plt.show()
 
 
+print(f'number of common configs: {len(common_config_dicts)}')
+plot_config_comparison(df, common_config_dicts, 'throughput_data', 'Throughput / sec')
+plot_config_comparison(df, common_config_dicts, 'memory', 'Memory')
+
+# %% Compare slice store types for different configs over time
+
 def plot_time_comparison(data, config, metric, label):
     param = 'window_start_normalized'
-    data_scaled, unit = convert_metric_units(data, param, metric)
-    filtered_data = filter_by_config(data_scaled, config)
+    filtered_data = filter_by_config(data, config)
 
     if not filtered_data.empty:
         normalized_data = filtered_data.groupby('slice_store_type', group_keys=False).apply(normalize_time)
+        data_scaled, unit = convert_metric_units(normalized_data, param, metric)
 
         plt.figure(figsize=(14, 6))
-        ax = sns.lineplot(data=normalized_data, x=param, y=metric, hue='slice_store_type', errorbar=None)
+        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar=None)
 
         # Add labels for min and max values of metric for each slice store type
-        add_min_max_labels_per_slice_store(normalized_data, metric, ax, param)
+        add_min_max_labels_per_slice_store(data_scaled, metric, ax, param)
 
         # Add config below
         mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
@@ -161,6 +176,34 @@ def plot_time_comparison(data, config, metric, label):
     else:
         print(f'No data available for the common configuration for {metric}.')
 
+
+specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
+specific_config = {
+    'timestamp_increment': 1,
+    'ingestion_rate': 0,
+    'number_of_worker_threads': 4,
+    'buffer_size_in_bytes': 4096,
+    'page_size': 4096,
+    'query': specific_query,
+    'num_watermark_gaps_allowed': 10,
+    'max_num_sequence_numbers': np.iinfo(np.uint64).max,
+    'file_descriptor_buffer_size': 4096,
+    'min_read_state_size': 0,
+    'min_write_state_size': 0,
+    'file_operation_time_delta': 0,
+    'file_layout': 'NO_SEPARATION',
+    'watermark_predictor_type': 'KALMAN'
+}
+
+
+# common_config_dicts = [specific_config]
+common_config_dicts = common_config_dicts[common_config_dicts['query'] == specific_query]
+print(f'number of common configs: {len(common_config_dicts)}')
+for config in common_config_dicts:
+    plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
+    plot_time_comparison(df, config, 'memory', 'Memory')
+
+# %% Shared Parameter Plots
 
 def plot_shared_params(data, param, metric, label):
     data_scaled, unit = convert_metric_units(data, param, metric)
@@ -191,6 +234,13 @@ def plot_shared_params(data, param, metric, label):
     plt.show()
 
 
+print(f"number of queries: {len(df['query'].unique())}")
+for param in shared_config_params:
+    plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
+    plot_shared_params(df, param, 'memory', 'Memory')
+
+# %% File-Backed-Only Parameter Plots
+
 def plot_file_backed_params(data, param, metric, label, color):
     data_scaled, unit = convert_metric_units(data, param, metric)
     plt.figure(figsize=(14, 6))
@@ -209,57 +259,6 @@ def plot_file_backed_params(data, param, metric, label, color):
     plt.ylabel(f'{label} ({unit})')
     plt.show()
 
-
-# %% Find unique configs that both slice store types have in common
-
-specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
-specific_config = {
-    'timestamp_increment': 1,
-    'ingestion_rate': 0,
-    'number_of_worker_threads': 4,
-    'buffer_size_in_bytes': 4096,
-    'page_size': 4096,
-    'query': specific_query,
-    'num_watermark_gaps_allowed': 10,
-    'max_num_sequence_numbers': np.iinfo(np.uint64).max,
-    'file_descriptor_buffer_size': 4096,
-    'min_read_state_size': 0,
-    'min_write_state_size': 0,
-    'file_operation_time_delta': 0,
-    'file_layout': 'NO_SEPARATION',
-    'watermark_predictor_type': 'KALMAN'
-}
-
-all_config_params = shared_config_params + file_backed_config_params
-default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
-file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
-common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
-common_configs = common_configs[common_configs['query'] == specific_query]
-common_config_dicts = common_configs.to_dict(orient='records')
-# common_config_dicts = [specific_config]
-
-
-# %% Compare slice store types for different configs over time
-
-print(f'number of common configs: {len(common_config_dicts)}')
-plot_config_comparison(df, common_config_dicts, 'throughput_data', 'Throughput / sec')
-plot_config_comparison(df, common_config_dicts, 'memory', 'Memory')
-
-# %% Compare slice store types for different configs over time
-
-print(f'number of common configs: {len(common_config_dicts)}')
-for config in common_config_dicts:
-    plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
-    plot_time_comparison(df, config, 'memory', 'Memory')
-
-# %% Shared Parameter Plots
-
-print(f"number of queries: {len(df['query'].unique())}")
-for param in shared_config_params:
-    plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
-    plot_shared_params(df, param, 'memory', 'Memory')
-
-# %% File-Backed-Only Parameter Plots
 
 file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
 for param in file_backed_config_params:
