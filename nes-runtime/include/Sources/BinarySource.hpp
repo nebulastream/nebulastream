@@ -50,7 +50,10 @@ class BinarySource : public DataSource {
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
                           const std::string& physicalSourceName,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                          uint64_t numberOfBuffersToProduce = 0);
+
+    void openFile();
 
     /**
      * @brief override the receiveData method for the binary source

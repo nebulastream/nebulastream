@@ -32,7 +32,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setCompilationStrategy(CompilationStrategy::OPTIMIZE);
     options.setPipeliningStrategy(PipeliningStrategy::OPERATOR_FUSION);
     options.setFilterProcessingStrategy(FilterProcessingStrategy::BRANCHED);
-    options.setNumSourceLocalBuffers(10000);
+    options.setNumSourceLocalBuffers(600000);
     options.setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel::ALL);
     options.setWindowingStrategy(WindowingStrategy::SLICING);
     options.setQueryCompiler(QueryCompilerType::NAUTILUS_QUERY_COMPILER);

@@ -274,7 +274,8 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      StatisticId statisticId,
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
-                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                     uint32_t numberOfBuffersToProduce) {
     return std::make_shared<BinarySource>(schema,
                                           bufferManager,
                                           queryManager,
@@ -285,7 +286,8 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           numSourceLocalBuffers,
                                           GatheringMode::INTERVAL_MODE,
                                           physicalSourceName,
-                                          successors);
+                                          successors,
+                                          numberOfBuffersToProduce);
 }
 
 DataSourcePtr createSenseSource(const SchemaPtr& schema,

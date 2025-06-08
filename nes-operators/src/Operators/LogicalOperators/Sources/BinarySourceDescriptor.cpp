@@ -19,10 +19,10 @@
 namespace NES {
 
 BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath)
-    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)) {}
+    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)), numberOfTuples(0) {}
 
 BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string sourceName, std::string filePath)
-    : SourceDescriptor(std::move(schema), std::move(sourceName)), filePath(std::move(filePath)) {}
+    : SourceDescriptor(std::move(schema), std::move(sourceName)), filePath(std::move(filePath)), numberOfTuples(0) {}
 
 SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath) {
     return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(filePath)));
@@ -34,6 +34,14 @@ SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string
 }
 
 const std::string& BinarySourceDescriptor::getFilePath() const { return filePath; }
+
+void BinarySourceDescriptor::setNumberOfTuples(uint32_t num) {
+        numberOfTuples = num;
+}
+
+uint32_t BinarySourceDescriptor::getNumberOfTuples() {
+        return numberOfTuples;
+}
 
 bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<BinarySourceDescriptor>()) {

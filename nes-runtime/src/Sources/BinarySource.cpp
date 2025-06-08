@@ -32,7 +32,8 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            const std::string& physicalSourceName,
-                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                           uint64_t numberOfBuffersToProduce)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -45,19 +46,39 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  false,
                  std::move(successors)),
       input(std::ifstream(pathToFile.c_str())), filePath(pathToFile) {
+    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
+}
+
+void BinarySource::openFile() {
+    while (!std::filesystem::exists(filePath)) {
+        // NES_DEBUG("File {} does not exist yet", filePath);
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
+    }
+
+//    if (generatedBuffers % 100 == 0) {
+//        NES_ERROR("buffers read {} out of {}", generatedBuffers / 100, bufferManager->getAvailableBuffers());
+//    }
+
+    if (generatedBuffers > 0) {
+        return;
+    }
+
+    input = std::ifstream(filePath.c_str());
     if (!(input.is_open() && input.good())) {
         NES_THROW_RUNTIME_ERROR("Binary input file is not valid");
     }
     input.seekg(0, std::ifstream::end);
     fileSize = input.tellg();
     if (fileSize < 0) {
-        NES_FATAL_ERROR("ERROR: File {} is corrupted", pathToFile);
+        NES_FATAL_ERROR("ERROR: File {} is corrupted", filePath);
     }
     input.seekg(0, std::ifstream::beg);
     tupleSize = schema->getSchemaSizeInBytes();
 }
 
+
 std::optional<Runtime::TupleBuffer> BinarySource::receiveData() {
+    openFile();
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     return buf;

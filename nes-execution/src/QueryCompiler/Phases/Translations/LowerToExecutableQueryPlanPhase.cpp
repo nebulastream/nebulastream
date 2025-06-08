@@ -16,6 +16,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
@@ -29,6 +30,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
@@ -369,6 +371,12 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         case SourceType::SENSE_SOURCE: {
             auto senseSourceType = physicalSourceType->as<SenseSourceType>();
             return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
+        }
+        case SourceType::BINARY_SOURCE: {
+                auto binarySourceType = physicalSourceType->as<BinarySourceType>();
+            auto sourceDesk = BinarySourceDescriptor::create(schema, binarySourceType->getLogicalSourceName(), binarySourceType->getFilePath()->getValue())->as<BinarySourceDescriptor>();
+            sourceDesk->setNumberOfTuples(binarySourceType.get()->getNumberOfTuples());
+            return sourceDesk;
         }
         case SourceType::MEMORY_SOURCE: {
             auto memorySourceType = physicalSourceType->as<MemorySourceType>();
