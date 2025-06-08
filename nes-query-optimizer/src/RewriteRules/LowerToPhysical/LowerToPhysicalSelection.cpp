@@ -24,6 +24,7 @@
 #include <SelectionPhysicalOperator.hpp>
 
 #include <EmitPhysicalOperator.hpp>
+#include <EmitOperatorHandler.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -41,6 +42,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     auto physicalOperator = SelectionPhysicalOperator(func);
     auto inputSchema = logicalOperator.getInputSchemas()[0];
     auto outputSchema = logicalOperator.getOutputSchema();
+    /// if function left, right is field access, then use fieldname for outputschemas and swap after selection
     if (conf.useSingleMemoryLayout.getValue() &&conf.memoryLayout.getValue() != conf.memoryLayout.getDefaultValue())
     {
 
@@ -59,7 +61,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
             scanRow, schema, schema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
         auto emitWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            emitRow, schema, schema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitRow, schema, schema, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
         auto columnLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
                    conf.pageSize.getValue(), schema);
@@ -67,13 +69,13 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         auto newHandlerId = getNextOperatorHandlerId();
         auto scanCol = ScanPhysicalOperator(columnMemoryProvider, colSchema.getFieldNames());
         auto emitCol = EmitPhysicalOperator(newHandlerId, columnMemoryProvider);
-
+        auto newOperatorHandler = std::make_shared<EmitOperatorHandler>();
 
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
             scanCol, colSchema, colSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
         auto emitWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            emitCol, colSchema, colSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitCol, colSchema, colSchema, newHandlerId, newOperatorHandler,  PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
 
         inputSchema.memoryLayoutType = conf.memoryLayout.getValue();///TODO: do for all operators besides sink and source
