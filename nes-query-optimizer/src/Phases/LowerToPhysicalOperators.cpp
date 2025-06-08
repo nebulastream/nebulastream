@@ -18,7 +18,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -28,9 +27,6 @@
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Util/Common.hpp>
-#include <DataTypes/Schema.hpp>
 
 namespace NES::LowerToPhysicalOperators
 {
@@ -49,23 +45,12 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     }(logicalOperator, registryArgument);
     /// We apply the rule and receive a subgraph
     const auto [root, leafs] = rule->apply(logicalOperator);
-    if (registryArgument.conf.useSingleMemoryLayout.getValue() && registryArgument.conf.memoryLayout.getValue() != registryArgument.conf.memoryLayout.getDefaultValue())
-    {
-        /*INVARIANT(
-        leafs.size() == logicalOperator.getChildren().size() - 1, ///one more child for memory swapping
-        "Number of children after lowering must remain the same. {}, before:{}, after:{}",
-        logicalOperator,
-        logicalOperator.getChildren().size(),
-        leafs.size());*/
-    } else
-    {
-        INVARIANT(
+    INVARIANT(
         leafs.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
         logicalOperator.getChildren().size(),
         leafs.size());
-    }
     /// if the lowering result is empty we bypass the operator
     if (not root)
     {
@@ -81,42 +66,19 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     }
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
-    if (registryArgument.conf.useSingleMemoryLayout.getValue() && registryArgument.conf.memoryLayout.getValue() != registryArgument.conf.memoryLayout.getDefaultValue())
-    {
-        /*INVARIANT(
-        leafs.size() == logicalOperator.getChildren().size() - 1, ///one more child for memory swapping
-        "Number of children after lowering must remain the same. {}, before:{}, after:{}",
-        logicalOperator,
-        logicalOperator.getChildren().size(),
-        leafs.size());*/
-    } else
-    {
-        INVARIANT(
-            children.size() == leafs.size(),
-            "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
-            children.size(),
-            leafs.size(),
-            logicalOperator);
-    }
+    INVARIANT(
+        children.size() == leafs.size(),
+        "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
+        children.size(),
+        leafs.size(),
+        logicalOperator);
+
     std::ranges::for_each(
         std::views::zip(children, leafs),
         [&registryArgument](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;
-            // not source or sink -> adjust memoryLayout if needed
-            if (registryArgument.conf.useSingleMemoryLayout.getValue() && registryArgument.conf.memoryLayout.getValue() != registryArgument.conf.memoryLayout.getDefaultValue())
-            {
-
-                for (Schema schema : child.getInputSchemas())
-                {
-                    schema.memoryLayoutType = registryArgument.conf.memoryLayout.getValue();
-                }
-                auto schema = child.getOutputSchema();
-                schema.memoryLayoutType = registryArgument.conf.memoryLayout.getValue();
-
-            }
             auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
-
             leaf->addChild(rootNodeOfLoweredChild);
         });
     return root;

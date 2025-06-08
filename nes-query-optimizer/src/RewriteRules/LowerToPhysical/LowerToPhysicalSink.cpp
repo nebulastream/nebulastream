@@ -21,10 +21,6 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <EmitPhysicalOperator.hpp>
-#include <ScanPhysicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 namespace NES
 {
@@ -37,39 +33,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     ;
-    if (conf.useSingleMemoryLayout.getValue() && conf.memoryLayout.getValue() != conf.memoryLayout.getDefaultValue())
-    {
-        //add scan (row) and emit (col) behind source
-        //schema = source.outputSchema
 
-        auto schema = logicalOperator.getOutputSchema();
-        auto colSchema = *std::make_shared<Schema>(schema); //hopefully deep copy
-        colSchema.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
-
-        auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(
-            conf.pageSize.getValue(), schema);
-        auto rowMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(rowLayout);
-
-        auto scan = ScanPhysicalOperator(rowMemoryProvider, schema.getFieldNames());
-        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-
-        auto columnLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                   conf.pageSize.getValue(), schema);
-        auto columnMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnLayout);
-
-        auto handlerId = getNextOperatorHandlerId();
-        auto emit = EmitPhysicalOperator(handlerId, columnMemoryProvider);
-        auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            emit, colSchema, colSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-        const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-        scanWrapper->addChild(emitWrapper);
-        emitWrapper->addChild(wrapper);
-        return {.root = scanWrapper, .leafs = {wrapper}};
-    }
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
     return {.root = wrapper, .leafs = {leafes}};

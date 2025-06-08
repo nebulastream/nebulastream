@@ -20,11 +20,7 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <EmitPhysicalOperator.hpp>
-#include <ScanPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 namespace NES
 {
@@ -44,41 +40,6 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(
         inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
-
-    if (conf.useSingleMemoryLayout.getValue() && conf.memoryLayout.getValue() != conf.memoryLayout.getDefaultValue())
-    {
-        //add scan (row) and emit (col) behind source
-        //schema = source.outputSchema
-
-        auto schema = logicalOperator.getOutputSchema();
-        auto colSchema = *std::make_shared<Schema>(schema); //hopefully deep copy
-        colSchema.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
-
-        auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(
-            conf.pageSize.getValue(), schema);
-        auto rowMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(rowLayout);
-
-        auto scan = ScanPhysicalOperator(rowMemoryProvider, schema.getFieldNames());
-        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-
-        auto columnLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                   conf.pageSize.getValue(), schema);
-        auto columnMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnLayout);
-
-        auto handlerId = getNextOperatorHandlerId();
-        auto emit = EmitPhysicalOperator(handlerId, columnMemoryProvider);
-        auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            emit, colSchema, colSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-        const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-        wrapper->addChild(emitWrapper);
-        emitWrapper->addChild(scanWrapper);
-        return {.root = wrapper, .leafs = {emitWrapper}};
-    }
-
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
