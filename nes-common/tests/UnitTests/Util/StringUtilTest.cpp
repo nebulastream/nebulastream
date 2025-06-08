@@ -303,11 +303,11 @@ TEST(FromCharsTest, FromCharsWithBoolean)
     EXPECT_THAT(from_chars<bool>("  0  "), ::testing::Optional(false));
 
 
-    EXPECT_EQ(from_chars<bool>("false true"), std::nullopt);
-    EXPECT_EQ(from_chars<bool>("  valse "), std::nullopt);
-    EXPECT_EQ(from_chars<bool>("  11 "), std::nullopt);
-    EXPECT_EQ(from_chars<bool>("10"), std::nullopt);
-    EXPECT_EQ(from_chars<bool>("yes"), std::nullopt);
+    EXPECT_FALSE(from_chars<bool>("false true").has_value());
+    EXPECT_FALSE(from_chars<bool>("  valse ").has_value());
+    EXPECT_FALSE(from_chars<bool>("  11 ").has_value());
+    EXPECT_FALSE(from_chars<bool>("10").has_value());
+    EXPECT_FALSE(from_chars<bool>("yes").has_value());
 }
 
 TEST(FromCharsTest, ScientificNotationInput)
