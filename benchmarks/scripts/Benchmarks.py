@@ -105,28 +105,23 @@ def add_min_max_labels_per_slice_store(data, metric, ax, param):
 
 
 def plot_config_comparison(data, configs, metric, label):
-    data_scaled, unit = convert_metric_units(data, param, metric)
-    # Step 1: Collect all rows for each config dict
+    param = 'config_id'
     matching_rows = []
 
-    for i, config in enumerate(configs):
-        mask = pd.Series(True, index=data_scaled.index)
-        for k, v in config.items():
-            if k in data_scaled.columns:
-                mask &= data_scaled[k] == v
-        subset = data_scaled[mask].copy()
-        subset['config_id'] = f'C{i + 1}'  # Label for x-axis
+    for i, config in enumerate(configs, start=1):
+        # Collect all rows for each config and map to short codes
+        subset = filter_by_config(data, config).copy()
+        subset[param] = f'C{i}'
         matching_rows.append(subset)
 
-    # Step 2: Combine into a single DataFrame
     combined = pd.concat(matching_rows, ignore_index=True)
+    data_scaled, unit = convert_metric_units(combined, param, metric)
 
     plt.figure(figsize=(14, 6))
-    sns.barplot(data=combined, x='config_id', y=metric, hue='slice_store_type', errorbar='sd')
+    sns.barplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd')
 
     # Add configs below
-    config_text = "\n".join(
-        [f"C{i + 1}: " + ", ".join(f"{k}={v}" for k, v in config.items()) for i, config in enumerate(configs)])
+    config_text = "\n".join([f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items()) for i, config in enumerate(configs, start=1)])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.45)
     plt.figtext(0.0, -1.155, config_text, wrap=True, ha='left', fontsize=9)
@@ -173,7 +168,7 @@ def plot_shared_params(data, param, metric, label):
     if param == 'query':
         # Map long queries to short codes
         unique_queries = data_scaled[param].unique()
-        query_mapping = {q: f"Q{i + 1}" for i, q in enumerate(unique_queries)}
+        query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
         data_scaled[param] = data_scaled[param].map(query_mapping)
 
     plt.figure(figsize=(14, 6))
