@@ -142,9 +142,13 @@ def plot_config_comparison(data, configs, metric, label):
     plt.show()
 
 
-print(f'number of common configs: {len(common_config_dicts)}')
-plot_config_comparison(df, common_config_dicts, 'throughput_data', 'Throughput / sec')
-plot_config_comparison(df, common_config_dicts, 'memory', 'Memory')
+specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size 10000 ms, advance by 10000 ms) INTO csv_sink'
+
+
+configs = [d for d in common_config_dicts if d["query"] == specific_query]
+print(f'number of common configs: {len(configs)}')
+plot_config_comparison(df, configs, 'throughput_data', 'Throughput / sec')
+plot_config_comparison(df, configs, 'memory', 'Memory')
 
 # %% Compare slice store types for different configs over time
 
@@ -197,9 +201,9 @@ specific_config = {
 
 
 # common_config_dicts = [specific_config]
-common_config_dicts = common_config_dicts[common_config_dicts['query'] == specific_query]
-print(f'number of common configs: {len(common_config_dicts)}')
-for config in common_config_dicts:
+configs = [d for d in common_config_dicts if d["query"] == specific_query]
+print(f'number of common configs: {len(configs)}')
+for config in configs:
     plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
     plot_time_comparison(df, config, 'memory', 'Memory')
 
