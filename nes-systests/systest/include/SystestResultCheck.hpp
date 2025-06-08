@@ -15,23 +15,30 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <ostream>
+#include <ranges>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-
 static constexpr auto EPSILON = 1e-5;
 
 template <typename T>
@@ -88,22 +95,6 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
     }
 }
 
-template <typename T>
-bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
-{
-    return compareStringAsTypeWithError<T>(left, right, EPSILON);
-}
-
-bool compareStringAsTypeWithError(DataType::Type type, const std::string& left, const std::string& right);
-
-struct QueryResult
-{
-    Schema fields;
-    std::vector<std::string> result;
-};
-
 /// Returns an error message or an empty optional if the query result is correct
 std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap);
-
-
 }
