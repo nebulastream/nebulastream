@@ -41,7 +41,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <SystestConfiguration.hpp>
-#include "ErrorHandling.hpp"
+#include <ErrorHandling.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
 
@@ -208,7 +208,9 @@ class SystestStarterGlobals
 public:
     SystestStarterGlobals() = default;
     explicit SystestStarterGlobals(std::filesystem::path workingDir, std::filesystem::path testDataDir, TestFileMap testFileMap)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), testFileMap(std::move(testFileMap))
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , testFileMap(std::move(testFileMap))
 
     {
     }
