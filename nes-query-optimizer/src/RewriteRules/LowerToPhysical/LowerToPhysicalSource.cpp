@@ -51,16 +51,16 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
         //schema = source.outputSchema
 
         auto schema = logicalOperator.getOutputSchema();
-        auto rowSchema = *std::make_shared<Schema>(schema); //hopefully deep copy
-        rowSchema.memoryLayoutType = Schema::MemoryLayoutType::ROW_LAYOUT;
+        auto colSchema = *std::make_shared<Schema>(schema); //hopefully deep copy
+        colSchema.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
 
         auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(
-            conf.pageSize.getValue(), rowSchema);
+            conf.pageSize.getValue(), schema);
         auto rowMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(rowLayout);
 
         auto scan = ScanPhysicalOperator(rowMemoryProvider, schema.getFieldNames());
         auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            physicalOperator, rowSchema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
 
         auto columnLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
@@ -70,10 +70,10 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
         auto handlerId = getNextOperatorHandlerId();
         auto emit = EmitPhysicalOperator(handlerId, columnMemoryProvider);
         auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            emit, schema, schema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emit, colSchema, colSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
         const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, rowSchema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, schema, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
         wrapper->addChild(emitWrapper);
         emitWrapper->addChild(scanWrapper);
         return {.root = wrapper, .leafs = {emitWrapper}};
