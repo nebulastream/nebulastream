@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
 #include <functional>
 #include <memory>
@@ -18,7 +19,6 @@
 #include <unordered_map>
 #include <utility>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <fmt/format.h>
@@ -55,23 +55,32 @@ void CompiledExecutablePipelineStage::execute(
 nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
-    /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
-    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                               nautilus::val<const Memory::TupleBuffer*> recordBufferRef,
-                                               nautilus::val<const Arena*> arenaRef)
+    try
     {
-        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-        RecordBuffer recordBuffer(recordBufferRef);
+        /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
+        /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+        /// NOLINTBEGIN(performance-unnecessary-value-param)
+        const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                                                   nautilus::val<const Memory::TupleBuffer*> recordBufferRef,
+                                                   nautilus::val<const Arena*> arenaRef)
+        {
+            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+            RecordBuffer recordBuffer(recordBufferRef);
 
-        pipeline->getRootOperator().open(ctx, recordBuffer);
-        pipeline->getRootOperator().close(ctx, recordBuffer);
-    };
-    /// NOLINTEND(performance-unnecessary-value-param)
+            pipeline->getRootOperator().open(ctx, recordBuffer);
+            pipeline->getRootOperator().close(ctx, recordBuffer);
+        };
+        /// NOLINTEND(performance-unnecessary-value-param)
 
-    const nautilus::engine::NautilusEngine engine(options);
-    return engine.registerFunction(compiledFunction);
+        const nautilus::engine::NautilusEngine engine(options);
+        return engine.registerFunction(compiledFunction);
+    }
+    catch (...)
+    {
+        auto queryCompilerNautilusException = wrapExternalException();
+        queryCompilerNautilusException.what() += fmt::format("Could not query compile pipeline: {}", *pipeline);
+        throw queryCompilerNautilusException;
+    }
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
