@@ -182,6 +182,6 @@ jobs:
         topic: "nightly ci status"
         type: "stream"
         content: |
-          [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
+          @**ls-1801** @**Nils** [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
           If there are novel faults, please open corresponding issues/topics and notify potential owners/investigators.
           If applicable, please communicate workarounds and/or expected time-to-fix.
