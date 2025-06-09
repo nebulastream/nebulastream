@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 
 # Load the CSV file
-df = pd.read_csv("data/amd/2025-06-05_10-15-06/combined_benchmark_statistics.csv")
+df = pd.read_csv("data/amd/2025-06-05_10-15-06/new1_combined_benchmark_statistics.csv")
 
 # Define configuration parameters
 shared_config_params = [
@@ -56,11 +56,11 @@ def filter_by_config(data, config):
 
 
 def normalize_time_per_group(data, param, group_col, time_col):
-    data = data.copy()
     group_min = data.groupby(group_col)[time_col].transform('min')
     group_max = data.groupby(group_col)[time_col].transform('max')
-    data[param] = (data[time_col] - group_min) / (group_max - group_min)
-    return data
+    data_normalized = data.copy()
+    data_normalized[param] = (data_normalized[time_col] - group_min) / (group_max - group_min)
+    return data_normalized
 
 
 def convert_metric_units(data, param, metric):
@@ -160,19 +160,36 @@ for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size))
 
 # %% Compare slice store types for different configs over time
 
-def plot_time_comparison(data, config, metric, label):
+def plot_time_comparison(data, config, metric, label, plot):
     param = 'window_start_normalized'
     filtered_data = filter_by_config(data, config)
 
     if not filtered_data.empty:
-        normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', 'window_start')
-        data_scaled, unit = convert_metric_units(normalized_data, param, metric)
+        if plot == 1:
+            normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', 'window_start')
+            #data, unit = convert_metric_units(normalized_data, param, metric)
+            data, unit = [normalized_data, 'B']
+        if plot == 2:
+            param = 'window_start'
+            #data, unit = convert_metric_units(filtered_data, param, metric)
+            data, unit = [filtered_data, 'B']
+            min_ts = data[param].min()
+            data[param] = data[param] - min_ts
+        if plot == 3:
+            normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', param)
+            #data, unit = convert_metric_units(normalized_data, param, metric)
+            data, unit = [normalized_data, 'B']
+        if plot == 4:
+            #data, unit = convert_metric_units(filtered_data, param, metric)
+            data, unit = [filtered_data, 'B']
+            min_ts = data[param].min()
+            data[param] = data[param] - min_ts
 
         plt.figure(figsize=(14, 6))
-        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar=None)
+        ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None)
 
         # Add labels for min and max values of metric for each slice store type
-        add_min_max_labels_per_slice_store(data_scaled, metric, ax, param)
+        add_min_max_labels_per_slice_store(data, metric, ax, param)
 
         # Add config below
         mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
@@ -208,13 +225,19 @@ specific_config = {
     'watermark_predictor_type': 'KALMAN'
 }
 
-# common_config_dicts = [specific_config]
-configs = [d for d in common_config_dicts if d["query"] == specific_query]
+specific_rows = df[df['dir_name'] == '.cache/benchmarks/2025-06-05_10-15-06/SpillingBenchmarks_1749125641']
+specific_values = specific_rows[all_config_params].drop_duplicates()
+configs = specific_values.to_dict('records')
 
+#configs = [specific_config]
+#configs = [d for d in common_config_dicts if d["query"] == specific_query]
+
+plots = [1, 2, 3, 4]
 print(f'number of common configs: {len(configs)}')
 for config in configs:
-    plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec')
-    plot_time_comparison(df, config, 'memory', 'Memory')
+    for plot in plots:
+        plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec', plot)
+        #plot_time_comparison(df, config, 'memory', 'Memory', plot)
 
 
 # %% Shared Parameter Plots
