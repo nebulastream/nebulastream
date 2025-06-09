@@ -65,6 +65,7 @@ EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
 EXCEPTION(UnknownDataType, 2123, "unknown data type")
 EXCEPTION(UnknownSource, 2124, "unknown source")
 EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
+EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
