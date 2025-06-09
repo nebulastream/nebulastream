@@ -100,13 +100,13 @@ class PostProcessing:
             # print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
             df = pd.read_csv(stat_file)
 
-            # Normalize all timestamps to the minimal start timestamp of any task
-            min_start_time = df['window_start'].min()
-            df['window_start_normalized'] = df['window_start'] - min_start_time
-            # df['window_end_normalized'] = df['window_end'] - min_start_time
-
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+        # Shift all timestamps by the minimal start timestamp of any record
+        min_start_time = combined_df['window_start'].min()
+        combined_df['window_start_normalized'] = combined_df['window_start'] - min_start_time
+        # combined_df['window_end_normalized'] = combined_df['window_end'] - min_start_time
 
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.benchmark_statistics_csv_path, index=False)
@@ -124,6 +124,7 @@ class PostProcessing:
 
         for idx, stat_file in enumerate(statistic_files):
             # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            dir_name = os.path.dirname(stat_file)
             with open(stat_file, 'r') as file:
                 log_text = file.read()
 
@@ -150,6 +151,7 @@ class PostProcessing:
 
                     new_record['query'] = new_record['query'].replace(";", "")
                     new_record.update({
+                        "dir_name": dir_name,
                         "task_id": task_id,
                         "start_time": start_time,
                         "end_time": timestamp,
@@ -199,6 +201,7 @@ class PostProcessing:
 
         for idx, stat_file in enumerate(statistic_files):
             # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            dir_name = os.path.dirname(stat_file)
             with open(stat_file, 'r') as file:
                 log_text = file.read()
 
@@ -226,6 +229,7 @@ class PostProcessing:
                 new_record['query'] = new_record['query'].replace(";", "")
 
                 new_record.update({
+                    "dir_name": dir_name,
                     "query_id": query_id,
                     "window_start": window_start,
                     "throughput_data": throughput_data,  # B/s
@@ -242,7 +246,7 @@ class PostProcessing:
             # Create DataFrame from records
             df = pd.DataFrame(records)
 
-            # Normalize all timestamps to the minimal window start of any record
+            # Shift all timestamps by the minimal window start of any record
             min_start_time = df['window_start'].min()
             df['window_start_normalized'] = df['window_start'] - min_start_time
             # df['window_end_normalized'] = df['window_end'] - min_start_time
