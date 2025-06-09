@@ -98,11 +98,8 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::
     detail::MemorySegment* memSegment = nullptr;
     if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
     {
-        if (memSegment->controlBlock->prepare(shared_from_this()))
-        {
-            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-        }
-        throw InvalidRefCountForBuffer();
+        memSegment->controlBlock->prepare(shared_from_this());
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     return std::nullopt;
 }
@@ -111,11 +108,8 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment = nullptr;
     exclusiveBuffers.blockingRead(memSegment);
-    if (memSegment->controlBlock->prepare(shared_from_this()))
-    {
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-    }
-    throw InvalidRefCountForBuffer();
+    memSegment->controlBlock->prepare(shared_from_this());
+    return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)

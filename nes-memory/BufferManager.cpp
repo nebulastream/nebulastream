@@ -233,11 +233,8 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     return segment.transform(
         [this](detail::MemorySegment* memSegment)
         {
-            if (memSegment->controlBlock->prepare(shared_from_this()))
-            {
-                return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-            }
-            throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+            memSegment->controlBlock->prepare(shared_from_this());
+            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         });
 }
 
@@ -263,11 +260,8 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     return segment.transform(
         [this](detail::MemorySegment* memSegment)
         {
-            if (memSegment->controlBlock->prepare(shared_from_this()))
-            {
-                return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-            }
-            throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+            memSegment->controlBlock->prepare(shared_from_this());
+            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         });
 }
 
@@ -308,11 +302,8 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
     auto inserted = unpooledBuffers.wlock()->try_emplace(memoryAllocation.data(), std::move(memSegment));
     INVARIANT(inserted.second, "unpooledBuffer already contained a memory segment ptr to {}", fmt::ptr(leakedMemSegment->ptr));
 
-    if (leakedMemSegment->controlBlock->prepare(shared_from_this()))
-    {
-        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
-    }
-    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+    leakedMemSegment->controlBlock->prepare(shared_from_this());
+    return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
 }
 
 

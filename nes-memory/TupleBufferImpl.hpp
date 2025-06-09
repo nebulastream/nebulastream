@@ -80,7 +80,7 @@ public:
     /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
     /// reference counter is zero. If that's not the case, an exception is thrown.
     /// Returns true if the mem segment can be used to create a TupleBuffer.
-    bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
+    void prepare(const std::shared_ptr<BufferRecycler>& recycler);
 
     /// Increase the reference counter by one.
     BufferControlBlock* retain();

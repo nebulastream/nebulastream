@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <TupleBufferImpl.hpp>
+
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -22,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <mutex>
@@ -119,7 +121,7 @@ void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& calls
     callstack = cpptrace::raw_trace::current(1);
 }
 #endif
-bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler)
+void BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler)
 {
     int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -129,14 +131,15 @@ bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
-    if (referenceCounter.compare_exchange_strong(expected, 1))
+    if (!referenceCounter.compare_exchange_strong(expected, 1))
     {
-        const auto previousOwner = std::exchange(this->owningBufferRecycler, recycler);
-        INVARIANT(previousOwner == nullptr, "Buffer should not retain a reference to its owner while unused");
-        return true;
+        INVARIANT(false, "[BufferManager] Invalid reference counter: {}", expected);
+        NES_FATAL_ERROR("[BufferManager] Invalid reference counter: {}. Terminating...", expected);
+        std::terminate();
     }
-    NES_ERROR("Invalid reference counter: {}", expected);
-    return false;
+
+    const auto previousOwner = std::exchange(this->owningBufferRecycler, recycler);
+    INVARIANT(previousOwner == nullptr, "Buffer should not retain a reference to its owner while unused");
 }
 
 BufferControlBlock* BufferControlBlock::retain()
