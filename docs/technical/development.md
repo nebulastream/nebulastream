@@ -186,14 +186,13 @@ However, using both libraries comes with trade-offs. It limits us to the interse
 supported by both libraries. Additionally, the CI ensures that
 code compiles and runs successfully with libstdc++ and libc++ to maintain this dual compatibility.
 
-### Compiling with Libstdc++
+### Choosing a C++ Standard Library
 
-By default, NebulaStream attempts to build with libc++ if it is available on the host system (which is the case for all
-docker images).
-Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fallback to the default standard library on
-the system.
+NebulaStream can use the locally available C++ standard library (on linux usually GNU `libstdc++`) or LLVM's `libc++` (if available)
+by setting the CMake cache variable `USE_CPP_STDLIB`.
+In Docker, NebulaStream defaults to `libc++` which is pre-installed in the image.
 
-If you intend to use the docker image with libstdc++ you can get the development image by pulling
+If you intend to use the docker image with the GNU `libstdc++` you can get the development image by pulling
 
 ```shell
 docker pull nebulastream/nes-development:latest-libstdcxx
