@@ -95,7 +95,7 @@ struct RecordingEmitFunction
     std::condition_variable block;
 };
 
-void wait_for_emits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
+void waitForEmits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "wait_for_emits");
     auto records = recorder.recordedEmits.lock();
@@ -107,7 +107,7 @@ void wait_for_emits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::
         << "Timeout waiting for " << numberOfEmits << " emits";
 }
 
-void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_location location = std::source_location::current())
+void verifyNonBlockingStop(Sources::SourceThread& sourceThread, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_stop");
     auto calledStop = std::chrono::high_resolution_clock::now();
@@ -117,7 +117,7 @@ void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_l
         << "Stopping a SourceThread should be non blocking. We estimate a block with around 100 ms";
 }
 
-void verify_non_blocking_start(
+void verifyNonBlockingStart(
     Sources::SourceThread& sourceThread,
     Sources::SourceReturnType::EmitFunction emitFn,
     std::source_location location = std::source_location::current())
@@ -130,20 +130,20 @@ void verify_non_blocking_start(
         << "Starting a SourceThread should be non blocking. We estimate a block with around 100 ms";
 }
 
-void verify_no_events(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
+void verifyNoEvents(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_no_events");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(0)) << "Expected no source events to be emitted";
 }
 template <typename T>
-void verify_last_event(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
+void verifyLastEvent(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_last_event");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(::testing::Gt(0))) << "Expected source events to be emitted";
     auto& lastEvent = recorder.recordedEmits.lock()->back();
     EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << typeid(T).name() << "` event";
 }
-void verify_number_of_emits(
+void verifyNumberOfEmits(
     RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_number_of_emits");
@@ -175,13 +175,13 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
         ASSERT_TRUE(control->waitUntilOpened());
     }
 
-    verify_no_events(recorder);
+    verifyNoEvents(recorder);
     EXPECT_TRUE(control->waitUntilClosed()) << "The SourceThread destructor should stop the implementation";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation";
 }
@@ -204,24 +204,24 @@ TEST_F(SourceThreadTest, ReattemptBufferAllocation)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
 
         /// Source should not be able to open
         std::this_thread::sleep_for(DEFAULT_TIMEOUT);
         ASSERT_FALSE(control->wasOpened());
-        verify_no_events(recorder);
+        verifyNoEvents(recorder);
 
         /// Release reservation
         fixedSizeBufferProvider->destroy();
 
         /// Source should now be able to open
         ASSERT_TRUE(control->waitUntilOpened());
-        wait_for_emits(recorder, 1);
+        waitForEmits(recorder, 1);
         recorder.recordedEmits.lock()->clear();
 
-        verify_non_blocking_stop(sourceThread);
+        verifyNonBlockingStop(sourceThread);
     }
 
     EXPECT_TRUE(control->wasOpened());
@@ -240,7 +240,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
     }
 
-    verify_no_events(recorder);
+    verifyNoEvents(recorder);
     EXPECT_FALSE(control->wasOpened());
     EXPECT_FALSE(control->wasClosed()) << "The SourceThread should not close the implementation if the source was never started";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation regardless";
@@ -257,15 +257,15 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
-        wait_for_emits(recorder, 3);
-        verify_non_blocking_stop(sourceThread);
+        waitForEmits(recorder, 3);
+        verifyNonBlockingStop(sourceThread);
     }
 
-    verify_number_of_emits(recorder, 3);
-    verify_last_event<Sources::SourceReturnType::Error>(recorder);
+    verifyNumberOfEmits(recorder, 3);
+    verifyLastEvent<Sources::SourceReturnType::Error>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed()) << "The SourceThread should attempt to close the implementation if the source was started";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation regardless";
@@ -280,15 +280,15 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
-        wait_for_emits(recorder, 1);
-        verify_non_blocking_stop(sourceThread);
+        waitForEmits(recorder, 1);
+        verifyNonBlockingStop(sourceThread);
     }
 
-    verify_number_of_emits(recorder, 1);
-    verify_last_event<Sources::SourceReturnType::Error>(recorder);
+    verifyNumberOfEmits(recorder, 1);
+    verifyLastEvent<Sources::SourceReturnType::Error>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_FALSE(control->wasClosed()) << "The SourceThread should not close the implementation if the source was never started";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation regardless";
@@ -305,15 +305,15 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
-        wait_for_emits(recorder, 3);
-        verify_non_blocking_stop(sourceThread);
+        waitForEmits(recorder, 3);
+        verifyNonBlockingStop(sourceThread);
     }
 
-    verify_number_of_emits(recorder, 3);
-    verify_last_event<Sources::SourceReturnType::Data>(recorder);
+    verifyNumberOfEmits(recorder, 3);
+    verifyLastEvent<Sources::SourceReturnType::Data>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
@@ -331,17 +331,17 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     {
         Sources::SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
-        verify_non_blocking_start(
+        verifyNonBlockingStart(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
-        wait_for_emits(recorder, 3);
+        waitForEmits(recorder, 3);
         control->injectEoS();
-        wait_for_emits(recorder, 4);
-        verify_non_blocking_stop(sourceThread);
+        waitForEmits(recorder, 4);
+        verifyNonBlockingStop(sourceThread);
     }
 
-    verify_number_of_emits(recorder, 4);
-    verify_last_event<Sources::SourceReturnType::EoS>(recorder);
+    verifyNumberOfEmits(recorder, 4);
+    verifyLastEvent<Sources::SourceReturnType::EoS>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
