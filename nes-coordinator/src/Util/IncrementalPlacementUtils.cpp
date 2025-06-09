@@ -67,7 +67,9 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
-        topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
+        while (!topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId})) {
+            reachable.clear();
+        }
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
         if (reachable.contains(downstreamWorkerId)) {
