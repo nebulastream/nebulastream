@@ -102,7 +102,7 @@ else ()
     # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
     # nautilus cmake configuration to find the locally installed version of MLIR.
     SET(ENV{MLIR_DIR} "${MLIR_DIR}")
-    SET(VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
 endif ()
 
 SET(VCPKG_STDLIB "libcxx")
