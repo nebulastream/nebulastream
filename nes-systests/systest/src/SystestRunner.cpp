@@ -51,7 +51,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <fmt/std.h>
@@ -95,10 +95,37 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
     return runningQuery->passed;
 }
 
+void processQueryWithError(
+    std::shared_ptr<RunningQuery> runningQuery,
+    std::size_t& finished,
+    const size_t numQueries,
+    std::vector<std::shared_ptr<RunningQuery>>& failed,
+    const std::optional<Exception>& exception)
+{
+    runningQuery->exception = exception;
+    reportResult(
+        runningQuery,
+        finished,
+        numQueries,
+        failed,
+        [&]
+        {
+            if (runningQuery->query.expectedError and runningQuery->query.expectedError->code == runningQuery->exception->code())
+            {
+                return std::string{};
+            }
+            return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
+        });
 }
 
+}
+
+
 std::vector<RunningQuery> runQueries(
-    const std::vector<SystestQuery>& queries, uint64_t maxConcurrency, QuerySubmitter& submitter, const QueryResultMap& queryResultMap)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    const QueryResultMap& queryResultMap)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -110,66 +137,41 @@ std::vector<RunningQuery> runQueries(
     std::vector<std::shared_ptr<RunningQuery>> failed;
     std::size_t finished = 0;
 
-    const auto startMoreQueries = [&]
+    const auto startMoreQueries = [&] -> bool
     {
-        while (active.size() < maxConcurrency && !pending.empty())
+        bool hasOneMoreQueryToStart = false;
+        while (active.size() < numConcurrentQueries and not pending.empty())
         {
-            SystestQuery q = std::move(pending.front());
+            SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
 
-            /// Parsing
-            if (!q.queryPlan)
+            if (nextQuery.queryPlan)
             {
-                auto runningQuery = std::make_shared<RunningQuery>(q);
-                runningQuery->exception = q.queryPlan.error();
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
-                    {
-                        if (q.expectedError and q.expectedError->code == runningQuery->exception->code())
-                        {
-                            return std::string{};
-                        }
-                        return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
-                    });
-                continue; /// skip registration
-            }
-
-            /// Registration
-            if (auto reg = submitter.registerQuery(*q.queryPlan))
-            {
-                submitter.startQuery(*reg);
-                active.emplace(*reg, std::make_shared<RunningQuery>(q, *reg));
+                /// Registration
+                if (auto reg = querySubmitter.registerQuery(*nextQuery.queryPlan))
+                {
+                    hasOneMoreQueryToStart = true;
+                    querySubmitter.startQuery(*reg);
+                    active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
+                }
+                else
+                {
+                    processQueryWithError(std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {reg.error()});
+                }
             }
             else
             {
-                auto runningQuery = std::make_shared<RunningQuery>(q);
-                runningQuery->exception = reg.error();
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
-                    {
-                        if (q.expectedError && q.expectedError->code == runningQuery->exception->code())
-                        {
-                            return std::string{};
-                        }
-                        return fmt::format("unexpected registration error: {}", *runningQuery->exception);
-                    });
+                /// There was an error during query parsing, report the result and don't register the query
+                processQueryWithError(
+                    std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {nextQuery.queryPlan.error()});
             }
         }
+        return hasOneMoreQueryToStart;
     };
 
-    while (not pending.empty() or not active.empty())
+    while (startMoreQueries() or not(active.empty() and pending.empty()))
     {
-        startMoreQueries();
-
-        for (const auto& summary : submitter.finishedQueries())
+        for (const auto& summary : querySubmitter.finishedQueries())
         {
             auto it = active.find(summary.queryId);
             if (it == active.end())
@@ -181,21 +183,8 @@ std::vector<RunningQuery> runQueries(
 
             if (summary.currentStatus == QueryStatus::Failed)
             {
-                runningQuery->exception = summary.runs.back().error;
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
-                    {
-                        if (runningQuery->query.expectedError
-                            and runningQuery->query.expectedError->code == runningQuery->exception->code())
-                        {
-                            return std::string{};
-                        }
-                        return fmt::format("unexpected runtime error: {}", *runningQuery->exception);
-                    });
+                INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
+                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
             }
             else
             {
@@ -263,14 +252,14 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     {
         if (not queryToRun.queryPlan.has_value())
         {
-            std::cout << "skip failing query: " << queryToRun.testName << std::endl;
+            fmt::println("skip failing query: {}", queryToRun.testName);
             continue;
         }
 
         const auto registrationResult = submitter.registerQuery(queryToRun.queryPlan.value());
         if (not registrationResult.has_value())
         {
-            std::cout << "skip failing query: " << queryToRun.testName << std::endl;
+            fmt::println("skip failing query: {}", queryToRun.testName);
             continue;
         }
         auto queryId = registrationResult.value();
