@@ -155,8 +155,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         emitSelectionWrapper->getInputSchema().value(),
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
-    scanSelectionWrapper->addChild(wrapper);
-    wrapper->addChild(emitSelectionWrapper);
+    emitSelectionWrapper->addChild(wrapper);
+    wrapper->addChild(scanSelectionWrapper);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), scanSelectionWrapper);
