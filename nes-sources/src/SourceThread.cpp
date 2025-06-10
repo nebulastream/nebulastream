@@ -121,7 +121,13 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider.getBufferBlocking();
+        auto emptyBufferOpt = bufferProvider.getBufferWithTimeout(std::chrono::milliseconds(25));
+        if (!emptyBufferOpt)
+        {
+            continue;
+        }
+        auto emptyBuffer = *emptyBufferOpt;
+
         auto numReadBytes = source.fillTupleBuffer(emptyBuffer, bufferProvider, stopToken);
 
         if (numReadBytes != 0)
