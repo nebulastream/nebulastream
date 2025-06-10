@@ -32,6 +32,10 @@
 #include <PhysicalPlanBuilder.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include "Operators/Sinks/SinkLogicalOperator.hpp"
+#include "Util/Common.hpp"
+
+#include "SinkPhysicalOperator.hpp"
 
 namespace NES::LowerToPhysicalOperators
 {
@@ -126,6 +130,17 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
+    if (queryPlan.getRootOperators()[0].tryGet<SinkLogicalOperator>())
+    {
+        auto sink = queryPlan.getRootOperators()[0].get<SinkLogicalOperator>();
+        auto inputSchema = queryPlan.getRootOperators()[0].getChildren()[0].getOutputSchema();
+        sink.setOutputSchema(inputSchema);
+        //auto sinkOperator = std::make_shared<SinkLogicalOperator>()
+        //auto sinkWrapper = std::make_shared<PhysicalOperatorWrapper>(newRootOperators[0].get()->getPhysicalOperator(), inputSchema, inputSchema,
+        //                        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        //newRootOperators[0] = std::move(sinkWrapper);
+    }
+
     for (const auto& logicalRoot : queryPlan.getRootOperators())
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
