@@ -23,6 +23,7 @@
 #include <random>
 #include <vector>
 #include <unistd.h>
+
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -39,6 +40,7 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <from_current.hpp>
+
 
 using namespace std::literals;
 
@@ -297,14 +299,17 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 }
 }
 
-void shuffleQueries(std::vector<NES::Systest::Query> queries)
+void shuffleQueries(std::vector<NES::Systest::SystestQuery> queries)
 {
     std::random_device rd;
     std::mt19937 g(rd());
     std::ranges::shuffle(queries, g);
 }
 
-static void runEndlessMode(std::vector<NES::Systest::Query> queries, NES::Configuration::SystestConfiguration& config)
+static void runEndlessMode(
+    std::vector<NES::Systest::SystestQuery> queries,
+    NES::Configuration::SystestConfiguration& config,
+    NES::Systest::QueryResultMap& queryResultMap)
 {
     using namespace NES;
     std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
@@ -339,7 +344,7 @@ static void runEndlessMode(std::vector<NES::Systest::Query> queries, NES::Config
     while (true)
     {
         std::ranges::shuffle(queries, rng);
-        auto failedQueries = Systest::runQueries(queries, numberConcurrentQueries, *submitter);
+        const auto failedQueries = Systest::runQueries(queries, numberConcurrentQueries, *submitter, queryResultMap);
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
@@ -428,7 +433,8 @@ int main(int argc, const char** argv)
 
         auto testMap = Systest::loadTestFileMap(config);
         auto systestBinder = Systest::SystestBinder{};
-        auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), systestBinder);
+        Systest::QueryResultMap queryResultMap{};
+        auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), queryResultMap, systestBinder);
         if (queries.empty())
         {
             std::stringstream outputMessage;
@@ -440,7 +446,7 @@ int main(int argc, const char** argv)
 
         if (config.endlessMode)
         {
-            runEndlessMode(queries, config);
+            runEndlessMode(queries, config, queryResultMap);
             std::exit(1);
         }
 
@@ -455,7 +461,7 @@ int main(int argc, const char** argv)
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
+            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, queryResultMap);
         }
         else
         {
@@ -471,7 +477,7 @@ int main(int argc, const char** argv)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, queryResultMap);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -480,7 +486,7 @@ int main(int argc, const char** argv)
             }
             else
             {
-                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration, queryResultMap);
             }
         }
         if (not failedQueries.empty())

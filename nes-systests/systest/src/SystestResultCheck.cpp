@@ -191,7 +191,7 @@ static void populateErrorStream(
 }
 /// NOLINTEND(readability-function-cognitive-complexity)
 
-std::optional<QueryResult> loadQueryResult(const Query& query)
+std::optional<QueryResult> loadQueryResult(const SystestQuery& query)
 {
     NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
     std::ifstream resultFile(query.resultFile());
@@ -220,122 +220,99 @@ std::optional<QueryResult> loadQueryResult(const Query& query)
     return result;
 }
 
-std::optional<std::string> checkResult(const RunningQuery& runningQuery)
+std::optional<std::string> checkResult(const RunningQuery& runningQuery, QueryResultMap& queryResultMap)
 {
-    SystestParser parser{};
-    if (!parser.loadFile(runningQuery.query.sqlLogicTestFile))
-    {
-        NES_FATAL_ERROR("Failed to parse test file: {}", runningQuery.query.sqlLogicTestFile);
-        return "Failed to parse test file: " + runningQuery.query.sqlLogicTestFile.string() + "\n";
-    }
+    PRECONDITION(
+        runningQuery.query.queryIdInFile < queryResultMap.size(),
+        "No results for query with id {}. Only {} results available.",
+        runningQuery.query.queryIdInFile,
+        queryResultMap.size());
 
     std::stringstream errorMessages;
     uint64_t seenResultTupleSections = 0;
-    parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, &runningQuery](SystestParser::ResultTuples&& expectedResultLines)
+    NES_INFO(
+        "seenResultTupleSections: {}, runningQuery.query.queryIdInFile: {}", seenResultTupleSections, runningQuery.query.queryIdInFile);
+    /// 1. Get query result
+    const auto opt = loadQueryResult(runningQuery.query);
+    if (!opt)
+    {
+        errorMessages << "Failed to load query result for query: " << runningQuery.query.queryDefinition << "\n";
+        return std::nullopt;
+    }
+    auto [schemaResult, queryResultLines] = opt.value();
+
+    /// Check if the expected result is empty and if this is the case, the query result should be empty as well
+    const auto currentQuery = queryResultMap.find(runningQuery.query.resultFile());
+    if (currentQuery == queryResultMap.end())
+    {
+        if (not queryResultLines.empty())
         {
-            NES_INFO(
-                "seenResultTupleSections: {}, runningQuery.query.queryIdInFile: {}",
-                seenResultTupleSections,
-                runningQuery.query.queryIdInFile);
-            /// Result section matches with query --> we found the expected result to check for
-            if (seenResultTupleSections++ == runningQuery.query.queryIdInFile)
+            errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+            errorMessages << "Expected result is empty, but query result is not\n";
+            return std::nullopt;
+        }
+        return std::nullopt;
+    }
+
+    /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
+    /// Additionally, we remove double spaces, as we expect a single space between the fields
+    std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
+    std::ranges::for_each(currentQuery->second, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
+    std::ranges::for_each(queryResultLines, Util::removeDoubleSpaces);
+    std::ranges::for_each(currentQuery->second, Util::removeDoubleSpaces);
+
+
+    /// 3. Parse the expected result into a hashmap as the order of the fields can be different
+    auto [queryResultExpected, queryResultActual]
+        = parseResultTuples(runningQuery.query.expectedSinkSchema, schemaResult, currentQuery->second, queryResultLines);
+
+
+    /// 4. Check if there exist the same amount of lines
+    if (queryResultExpected.size() != queryResultActual.size())
+    {
+        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+        errorMessages << "Result size does not match: expected " << std::to_string(queryResultExpected.size());
+        errorMessages << ", got " << std::to_string(queryResultActual.size()) << "\n";
+    }
+
+    /// 5. Check if for all fields of the result expected, we can find one equal field in the actual result
+    /// Stores if we have found a result for the expected result idx
+    std::unordered_set<uint64_t> idxExpectedToFound;
+    uint64_t idxExpected = 0;
+    for (const auto& expected : queryResultExpected)
+    {
+        if (idxExpected >= queryResultActual.size())
+        {
+            errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+            errorMessages << "Expected result has more lines than the actual result\n";
+            break;
+        }
+
+        /// If we have found an idx for the expected result, we can skip it
+        if (idxExpectedToFound.contains(idxExpected))
+        {
+            continue;
+        }
+
+        for (const auto& actual : queryResultActual)
+        {
+            if (expected == actual)
             {
-                /// 1. Get query result
-                const auto opt = loadQueryResult(runningQuery.query);
-                if (!opt)
-                {
-                    errorMessages << "Failed to load query result for query: " << runningQuery.query.queryDefinition << "\n";
-                    return;
-                }
-                auto [schemaResult, queryResultLines] = opt.value();
-
-                /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-                if (expectedResultLines.empty())
-                {
-                    if (not queryResultLines.empty())
-                    {
-                        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
-                        errorMessages << "Expected result is empty, but query result is not\n";
-                        return;
-                    }
-                    return;
-                }
-
-                /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
-                /// Additionally, we remove double spaces, as we expect a single space between the fields
-                std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-                std::ranges::for_each(expectedResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-                std::ranges::for_each(queryResultLines, Util::removeDoubleSpaces);
-                std::ranges::for_each(expectedResultLines, Util::removeDoubleSpaces);
-
-
-                /// 3. Parse the expected result into a hashmap as the order of the fields can be different
-                auto [queryResultExpected, queryResultActual]
-                    = parseResultTuples(runningQuery.query.expectedSinkSchema, schemaResult, expectedResultLines, queryResultLines);
-
-
-                /// 4. Check if there exist the same amount of lines
-                if (queryResultExpected.size() != queryResultActual.size())
-                {
-                    errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
-                    errorMessages << "Result size does not match: expected " << std::to_string(queryResultExpected.size());
-                    errorMessages << ", got " << std::to_string(queryResultActual.size()) << "\n";
-                }
-
-                /// 5. Check if for all fields of the result expected, we can find one equal field in the actual result
-                /// Stores if we have found a result for the expected result idx
-                std::unordered_set<uint64_t> idxExpectedToFound;
-                uint64_t idxExpected = 0;
-                for (const auto& expected : queryResultExpected)
-                {
-                    if (idxExpected >= queryResultActual.size())
-                    {
-                        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
-                        errorMessages << "Expected result has more lines than the actual result\n";
-                        break;
-                    }
-
-                    /// If we have found an idx for the expected result, we can skip it
-                    if (idxExpectedToFound.contains(idxExpected))
-                    {
-                        continue;
-                    }
-
-                    for (const auto& actual : queryResultActual)
-                    {
-                        if (expected == actual)
-                        {
-                            idxExpectedToFound.emplace(idxExpected);
-                            break;
-                        }
-                    }
-
-                    ++idxExpected;
-                }
-
-                /// 6. Build error message if we have not found a result for every expected result
-                if (idxExpectedToFound.size() != queryResultExpected.size())
-                {
-                    populateErrorStream(
-                        errorMessages,
-                        runningQuery.query.expectedSinkSchema,
-                        queryResultExpected,
-                        queryResultActual,
-                        seenResultTupleSections);
-                }
+                idxExpectedToFound.emplace(idxExpected);
+                break;
             }
-        });
+        }
 
-    try
-    {
-        parser.parse();
+        ++idxExpected;
     }
-    catch (const Exception& e)
+
+    /// 6. Build error message if we have not found a result for every expected result
+    if (idxExpectedToFound.size() != queryResultExpected.size())
     {
-        tryLogCurrentException();
-        return "Exception occurred: " + std::string(e.what());
+        populateErrorStream(
+            errorMessages, runningQuery.query.expectedSinkSchema, queryResultExpected, queryResultActual, seenResultTupleSections);
     }
+
 
     if (errorMessages.str().empty())
     {
