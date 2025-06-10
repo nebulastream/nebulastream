@@ -13,6 +13,7 @@
 */
 
 #include <csignal>
+#include <semaphore>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,11 +27,37 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
+namespace
+{
+/// This logic is related to handling shutdown of the system when a signal is received.
+/// GRPC does not like it if it is accessed via the signal handler. Effectively, this creates a thread which waits for
+/// the shutdownBarrier to be released by the signal handler and then shuts the grpc server down, which unblocks the `Wait` call
+/// in the main function.
+std::binary_semaphore shutdownBarrier{0};
+void signalHandler(int signal)
+{
+    NES_INFO("Received signal {}. Shutting down.", signal);
+    shutdownBarrier.release();
+}
+std::jthread shutdownHook(grpc::Server& server)
+{
+    return std::jthread(
+        [&]()
+        {
+            shutdownBarrier.acquire();
+            server.Shutdown();
+        });
+}
+}
+
 extern void init_receiver_service(std::string bindAddr, std::string connectionAddr);
 extern void init_sender_service(std::string connectionAddr);
 
 int main(const int argc, const char* argv[])
 {
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+
     CPPTRACE_TRY
     {
         signal(SIGPIPE, SIG_IGN);
@@ -45,16 +72,21 @@ int main(const int argc, const char* argv[])
             init_receiver_service(configuration->bind.getValue(), configuration->connection.getValue());
             init_sender_service(configuration->connection.getValue());
         }
+        {
+            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
+            grpc::EnableDefaultHealthCheckService(true);
+            grpc::ServerBuilder builder;
+            builder.SetMaxMessageSize(-1);
+            builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
+            builder.RegisterService(&workerService);
 
-        NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
-        grpc::EnableDefaultHealthCheckService(true);
-        grpc::ServerBuilder builder;
-        builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
-        builder.RegisterService(&workerService);
-
-        const auto server = builder.BuildAndStart();
-        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
-        server->Wait();
+            const auto server = builder.BuildAndStart();
+            const auto hook = shutdownHook(*server);
+            NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
+            server->Wait();
+            NES_INFO("GRPC Server was shutdown. Terminating the SingleNodeWorker");
+        }
+        NES::Logger::getInstance()->forceFlush();
         return 0;
     }
     CPPTRACE_CATCH(...)
