@@ -137,6 +137,24 @@ nautilus::val<bool> VariableSizedData::ownsBuffer() const
 {
     return ownsBuffer_;
 }
+nautilus::val<uint32_t> VariableSizedData::shrink(nautilus::val<uint32_t> bytesToShrink)
+{
+#ifndef NDEBUG
+    nautilus::invoke(
+        +[](USED_IN_DEBUG const uint32_t currentSize, USED_IN_DEBUG int8_t* data, USED_IN_DEBUG const uint32_t bytesToShrink)
+        {
+            PRECONDITION(currentSize >= bytesToShrink, "Cannot shrink VariableSizedData by more than the current size.");
+            INVARIANT(*std::bit_cast<uint32_t*>(data) == currentSize, "Underlying Memory does not match the current size");
+        },
+        size,
+        ptrToVarSized,
+        bytesToShrink);
+#endif
+
+    size = size - bytesToShrink;
+    *static_cast<nautilus::val<uint32_t*>>(ptrToVarSized) = size;
+    return size;
+}
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)
 {

@@ -67,6 +67,8 @@ public:
     /// Was the buffer allocated in a owned TupleBuffer
     [[nodiscard]] nautilus::val<bool> ownsBuffer() const;
 
+    nautilus::val<uint32_t> shrink(nautilus::val<uint32_t> bytesToShrink);
+
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
     friend nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
