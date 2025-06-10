@@ -28,10 +28,12 @@
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include "Operators/Sinks/SinkLogicalOperator.hpp"
-#include "Util/Common.hpp"
 
-#include "SinkPhysicalOperator.hpp"
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+
 
 namespace NES::LowerToPhysicalOperators
 {
@@ -89,22 +91,63 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     return root;
 }
 
+LogicalOperator getNewChild(LogicalOperator op, Schema newSchema)
+{
+    if (op.getChildren().empty())
+    {
+        return op;
+    }
+    auto child = getNewChild(op.getChildren()[0], newSchema);
+    op = op.withChildren({child});
+    return op.withInferredSchema({newSchema});
+}
+
 PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.rootOperators.size());
-    if (queryPlan.rootOperators[0].tryGet<SinkLogicalOperator>())
+    auto allFieldNames= queryPlan.rootOperators[0].getOutputSchema().getFieldNames();
+    auto fieldNames = std::vector<std::string>();
+    auto fieldNamesSet = std::unordered_set<std::string>();
+    auto op = queryPlan.rootOperators[0];
+    while (not op.getChildren().empty())
     {
-        auto sink = queryPlan.rootOperators[0].get<SinkLogicalOperator>();
-        auto inputSchema = queryPlan.rootOperators[0].getChildren()[0].getOutputSchema();
-        sink.setOutputSchema(inputSchema);
-        //auto sinkOperator = std::make_shared<SinkLogicalOperator>()
-        //auto sinkWrapper = std::make_shared<PhysicalOperatorWrapper>(newRootOperators[0].get()->getPhysicalOperator(), inputSchema, inputSchema,
-                                            //                        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-        //newRootOperators[0] = std::move(sinkWrapper);
+        op= op.getChildren()[0]; //skip sink
+        if (op.tryGet<SourceDescriptorLogicalOperator>() || op.tryGet<SourceNameLogicalOperator>())
+        {
+            break; /// skip source
+        }
+        if (op.tryGet<SelectionLogicalOperator>())
+        {
+            auto selection = op.get<SelectionLogicalOperator>();
+            auto selectionFunc = selection.getPredicate().tryGet<NES::GreaterEqualsLogicalFunction>();
+            auto res = selectionFunc.value().explain(ExplainVerbosity::Short);
+            for (const std::string& fieldName : allFieldNames)
+            {
+                if (res.find(fieldName) != std::string::npos) { //if the fieldname is part of the selection function
+                    fieldNamesSet.insert(fieldName);
+                }
+            }
+        }
+        /// TODO: do also for agg and map
+        fieldNames = std::vector<std::string>(fieldNamesSet.begin(), fieldNamesSet.end());
     }
-    for (const auto& logicalRoot : queryPlan.rootOperators)
+
+    /// set in and outputschema of all operators except source to used fieldnames
+    auto newSchema = Schema(conf.memoryLayout.getDefaultValue());
+    auto sink = queryPlan.rootOperators[0];
+    for (const auto& fieldName : fieldNames)
+    {
+        newSchema.addField(fieldName, queryPlan.rootOperators[0].getOutputSchema().getFieldByName(fieldName)->dataType);
+    }
+
+    sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
+
+    //auto newPlan = LogicalPlan(sink);
+
+
+    for (const auto& logicalRoot : {sink})
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }

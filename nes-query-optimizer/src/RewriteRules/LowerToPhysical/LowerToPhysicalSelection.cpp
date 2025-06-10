@@ -23,14 +23,17 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
-#include "Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp"
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 
-#include <EmitPhysicalOperator.hpp>
-#include <EmitOperatorHandler.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 
 namespace NES
@@ -49,88 +52,87 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
 
 
 
-    auto fieldNames = std::vector<std::string>(); ///get used filedNames in selection
-
-    auto schemaIn = Schema(conf.memoryLayout.getValue());
-    auto schemaOut = Schema(conf.memoryLayout.getValue());
-
-    auto selectionFunc = function.tryGet<NES::GreaterEqualsLogicalFunction>();
-    auto res = selectionFunc.value().explain(ExplainVerbosity::Short);
-    for (const std::string& fieldName : inputSchema.getFieldNames())
-    {
-        schemaIn.addField(fieldName, inputSchema.getFieldByName(fieldName)->dataType);
-
-        if (res.find(fieldName) != std::string::npos) { //if the fieldname is part of the selection function
-            schemaOut.addField(fieldName, inputSchema.getFieldByName(fieldName)->dataType);
-            fieldNames.push_back(fieldName);
-        }
-    }
-
-
-
-    auto scanSelection = ScanPhysicalOperator(
-        std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
-            std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), inputSchema)),
-        fieldNames);
-    auto emitSelection = EmitPhysicalOperator(getNextOperatorHandlerId(), std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
-       std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), outputSchema)));
-
-    auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scanSelection, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-    auto emitSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        emitSelection, schemaOut, schemaOut, getNextOperatorHandlerId(), std::make_shared<EmitOperatorHandler>(),
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
     /// if function left, right is field access, then use fieldname for outputschemas and swap after selection
-    if (conf.useSingleMemoryLayout.getValue() &&conf.memoryLayout.getValue() != conf.memoryLayout.getDefaultValue())
+    if (conf.useSingleMemoryLayout.getValue())
     {
 
 
+        auto fieldNames = std::vector<std::string>(); ///get used filedNames in selection
+
+        auto schemaIn = inputSchema;
+        schemaIn.memoryLayoutType = conf.memoryLayout.getDefaultValue();
+        auto schemaOut = outputSchema;
+        schemaOut.memoryLayoutType = conf.memoryLayout.getDefaultValue();
+
+        if (logicalOperator.getChildren()[0].tryGet<SourceDescriptorLogicalOperator>() || logicalOperator.getChildren()[0].tryGet<SourceNameLogicalOperator>())
+        {
+            /// input schemas until scanSelectionWrapper with full fields
+            schemaIn = logicalOperator.getChildren()[0].getOutputSchema(); ///source still has all fields
+            schemaIn.memoryLayoutType = conf.memoryLayout.getDefaultValue();
+        }
+        else
+        {
+            /// all schemas remain with truncated fields
+        }
+
+        auto memoryProviderInRow = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), schemaIn));
+
+        auto schemaInCol= *std::make_shared<Schema>(schemaIn); //hopefully deep copy
+        schemaInCol.memoryLayoutType = conf.memoryLayout.getValue();
+        auto memoryProviderInCol = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.pageSize.getValue(), schemaInCol));
 
 
-        auto colSchemaIn = *std::make_shared<Schema>(schemaIn); //hopefully deep copy
-        auto colSchemaOut = *std::make_shared<Schema>(schemaOut);
-        colSchemaIn.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
-        colSchemaOut.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
+        auto memoryProviderOutRow = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), schemaOut));
+
+        auto schemaOutCol = *std::make_shared<Schema>(schemaOut); //hopefully deep copy
+        schemaOutCol.memoryLayoutType = conf.memoryLayout.getValue();
+        auto memoryProviderOutCol = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.pageSize.getValue(), schemaOutCol));
 
 
-
-        auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(
-            conf.pageSize.getValue(), inputSchema);
-        auto rowMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(rowLayout);
+        auto scanSelection = ScanPhysicalOperator(
+            memoryProviderInCol,
+            schemaOutCol.getFieldNames()); ///have all fields in memProvider but only used ones in projections
         auto handlerId = getNextOperatorHandlerId();
-        auto scanRow = ScanPhysicalOperator(rowMemoryProvider, inputSchema.getFieldNames());
-        auto emitRow = EmitPhysicalOperator(handlerId, rowMemoryProvider);
+        auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
+
+        auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            scanSelection, schemaInCol, schemaInCol, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE); ///TODO: outputSchema schemaOutCol?
+
+        auto emitSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            emitSelection, schemaOutCol, schemaOutCol, handlerId, std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+
+
+        handlerId = getNextOperatorHandlerId();
+        auto scanRow = ScanPhysicalOperator(memoryProviderInRow, schemaIn.getFieldNames());
+        auto emitRow = EmitPhysicalOperator(handlerId, memoryProviderOutRow);
 
         auto scanWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            scanRow, inputSchema, inputSchema, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            scanRow, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
         auto emitWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            emitRow, outputSchema, outputSchema, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitRow, schemaOut, schemaOut, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
-        auto columnLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                   conf.pageSize.getValue(), inputSchema);
-        auto columnMemoryProvider = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnLayout);
-        auto newHandlerId = getNextOperatorHandlerId();
-        auto scanCol = ScanPhysicalOperator(columnMemoryProvider, colSchemaIn.getFieldNames());
-        auto emitCol = EmitPhysicalOperator(newHandlerId, columnMemoryProvider);
-        auto newOperatorHandler = std::make_shared<EmitOperatorHandler>();
 
+
+        handlerId = getNextOperatorHandlerId();
+        auto scanCol = ScanPhysicalOperator(memoryProviderOutCol, schemaOutCol.getFieldNames());
+        auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderInCol);
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            scanCol, colSchemaOut, colSchemaOut, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            scanCol, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
         auto emitWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            emitCol, colSchemaIn, colSchemaIn, newHandlerId, newOperatorHandler,  PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitCol, schemaInCol, schemaInCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
-
-        inputSchema=scanSelectionWrapper->getOutputSchema().value();//.memoryLayoutType = conf.memoryLayout.getValue();///TODO: do for all operators besides sink and source
-        outputSchema=emitSelectionWrapper->getInputSchema().value();//.memoryLayoutType = conf.memoryLayout.getValue();
 
         auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        inputSchema,
-        outputSchema,
+        schemaOutCol,
+        schemaOutCol,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
 
@@ -150,17 +152,14 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     }
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        scanSelectionWrapper->getOutputSchema().value(),
-        emitSelectionWrapper->getInputSchema().value(),
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-
-    emitSelectionWrapper->addChild(wrapper);
-    wrapper->addChild(scanSelectionWrapper);
+       physicalOperator,
+       logicalOperator.getInputSchemas()[0],
+       logicalOperator.getOutputSchema(),
+       PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-    std::vector leafes(logicalOperator.getChildren().size(), scanSelectionWrapper);
-    return {.root = emitSelectionWrapper, .leafs = {leafes}};
+    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
+    return {.root = wrapper, .leafs = {leafes}};
 };
 
 std::unique_ptr<AbstractRewriteRule>
