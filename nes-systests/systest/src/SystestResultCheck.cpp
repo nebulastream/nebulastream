@@ -44,10 +44,10 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32, window$val_i8_i8_plus_1:INT16
     NES::Schema schema;
-    for (auto field : std::ranges::split_view(fieldNamesRawLine, ',')
-             | std::views::transform([](auto splittedNameAndType)
-                                     { return std::string_view(splittedNameAndType.begin(), splittedNameAndType.end()); })
-             | std::views::filter([](const auto& stringViewSplitted) { return !stringViewSplitted.empty(); }))
+    for (const auto& field : std::ranges::split_view(fieldNamesRawLine, ',')
+             | std::views::transform([](auto splitNameAndType)
+                                     { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
+             | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); }))
     {
         /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
         /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
@@ -58,7 +58,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             std::vector<std::string_view> fieldAndTypeVector;
             for (const auto subrange : std::ranges::split_view(field, ':'))
             {
-                fieldAndTypeVector.emplace_back(Util::trimWhiteSpaces(std::string_view(subrange)));
+                fieldAndTypeVector.emplace_back(NES::Util::trimWhiteSpaces(std::string_view(subrange)));
             }
             INVARIANT(fieldAndTypeVector.size() == 2, "Field and type pairs should always be pairs of a key and a value");
             return std::make_pair(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1));
@@ -68,7 +68,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             dataType = NES::DataTypeProvider::provideDataType(type.value());
         }
-        else if (Util::toLowerCase(typeTrimmed) == "varsized")
+        else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
         }
@@ -81,15 +81,14 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
     return schema;
 }
 }
+
 namespace NES::Systest
 {
-
-
 std::pair<std::vector<MapFieldNameToValue>, std::vector<MapFieldNameToValue>> parseResultTuples(
     const Schema& schemaExpected,
     const Schema& queryResultFields,
-    const SystestParser::ResultTuples& expectedResultLines,
-    const SystestParser::ResultTuples& queryResultLines)
+    const std::vector<std::string>& expectedResultLines,
+    const std::vector<std::string>& queryResultLines)
 {
     /// Store lines and the corresponding field values. We need a hashmap, as the order of the fields can be different
     std::vector<MapFieldNameToValue> queryResultExpected;
@@ -223,10 +222,10 @@ std::optional<QueryResult> loadQueryResult(const SystestQuery& query)
     return result;
 }
 
-std::optional<std::string> checkResult(const RunningQuery& runningQuery, QueryResultMap& queryResultMap)
+std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap)
 {
     PRECONDITION(
-        runningQuery.query.queryIdInFile < queryResultMap.size(),
+        runningQuery.query.queryIdInFile <= queryResultMap.size(),
         "No results for query with id {}. Only {} results available.",
         runningQuery.query.queryIdInFile,
         queryResultMap.size());
@@ -259,15 +258,16 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery, QueryRe
 
     /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
     /// Additionally, we remove double spaces, as we expect a single space between the fields
+    auto resultsForCurrentQuery = currentQuery->second; /// Copy results to allow modification
     std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-    std::ranges::for_each(currentQuery->second, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
+    std::ranges::for_each(resultsForCurrentQuery, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
     std::ranges::for_each(queryResultLines, Util::removeDoubleSpaces);
-    std::ranges::for_each(currentQuery->second, Util::removeDoubleSpaces);
+    std::ranges::for_each(resultsForCurrentQuery, Util::removeDoubleSpaces);
 
 
     /// 3. Parse the expected result into a hashmap as the order of the fields can be different
     auto [queryResultExpected, queryResultActual]
-        = parseResultTuples(runningQuery.query.expectedSinkSchema, schemaResult, currentQuery->second, queryResultLines);
+        = parseResultTuples(runningQuery.query.expectedSinkSchema, schemaResult, resultsForCurrentQuery, queryResultLines);
 
 
     /// 4. Check if there exist the same amount of lines

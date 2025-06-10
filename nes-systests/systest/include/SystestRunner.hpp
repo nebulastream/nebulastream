@@ -58,32 +58,13 @@ static constexpr auto padSizeQueryNumber = 2;
 /// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
 static constexpr auto padSizeQueryCounter = 3;
 
-class SystestBinder
-{
-public:
-    SystestBinder() = default;
-    /// Load query plan objects by parsing an SLT file for queries and lowering it
-    /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-    [[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
-        const std::filesystem::path& testFilePath,
-        const std::filesystem::path& workingDir,
-        std::string_view testFileName,
-        const std::filesystem::path& testDataDir,
-        QueryResultMap& queryResultMap);
-
-private:
-    uint64_t sourceIndex = 0;
-    uint64_t currentQueryNumber = 0;
-    std::string currentTestFileName;
-};
-
 /// Runs queries
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
-    QueryResultMap& queryResultMap);
+    const QueryResultMap& queryResultMap);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
@@ -91,12 +72,15 @@ private:
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
-    QueryResultMap& queryResultMap);
+    const QueryResultMap& queryResultMap);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI, QueryResultMap& queryResultMap);
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const std::string& serverURI,
+    const QueryResultMap& queryResultMap);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
@@ -104,7 +88,7 @@ private:
     const std::vector<SystestQuery>& queries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
-    QueryResultMap& queryResultMap);
+    const QueryResultMap& queryResultMap);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed

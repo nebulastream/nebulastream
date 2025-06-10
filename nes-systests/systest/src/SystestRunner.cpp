@@ -71,249 +71,6 @@
 namespace NES::Systest
 {
 
-/// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
-    const std::filesystem::path& testFilePath,
-    const std::filesystem::path& workingDir,
-    std::string_view testFileName,
-    const std::filesystem::path& testDataDir,
-    QueryResultMap& queryResultMap)
-{
-    auto sourceCatalog = std::make_shared<SourceCatalog>();
-    std::vector<LoadedQueryPlan> plans{};
-    std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
-    SystestParser parser{};
-    std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
-
-    std::unordered_map<std::string, Schema> sinkNamesToSchema{};
-    auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-    checksumSinkPair->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    checksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-
-    parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
-    if (!parser.loadFile(testFilePath))
-    {
-        throw TestException("Could not successfully load test file://{}", testFilePath.string());
-    }
-
-    /// We create a map from sink names to their schema
-    parser.registerOnSinkCallBack(
-        [&](const SystestParser::Sink& sinkParsed)
-        {
-            auto [sinkPair, success] = sinkNamesToSchema.emplace(sinkParsed.name, Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-            if (not success)
-            {
-                throw SourceAlreadyExists("{}", sinkParsed.name);
-            }
-            for (const auto& [type, name] : sinkParsed.fields)
-            {
-                sinkPair->second.addField(name, type);
-            }
-        });
-
-    /// We add new found sources to our config
-    parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& source)
-        {
-            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-            for (const auto& [type, name] : source.fields)
-            {
-                schema.addField(name, type);
-            }
-            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
-            if (not logicalSource.has_value())
-            {
-                throw SourceAlreadyExists("{}", source.name);
-            }
-
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}});
-            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
-            if (not physicalSource.has_value())
-            {
-                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
-                throw UnknownSource("{}", source.name);
-            }
-            sourcesToFilePaths[physicalSource.value()] = source.csvFilePath;
-        });
-
-    parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& source)
-        {
-            const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
-            {
-                std::ofstream testFile(sourceFile);
-                if (!testFile.is_open())
-                {
-                    throw TestException("Could not open source file \"{}\"", sourceFile);
-                }
-
-                for (const auto& tuple : source.tuples)
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-                NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
-            }
-
-            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-            for (const auto& [type, name] : source.fields)
-            {
-                schema.addField(name, type);
-            }
-            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
-            if (not logicalSource.has_value())
-            {
-                throw SourceAlreadyExists("{}", source.name);
-            }
-
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", sourceFile}});
-            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
-            if (not physicalSource.has_value())
-            {
-                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
-                throw UnknownSource("{}", source.name);
-            }
-            sourcesToFilePaths[physicalSource.value()] = sourceFile;
-        });
-
-    /// We create a new query plan from our config when finding a query
-    parser.registerOnQueryCallback(
-        [&](std::string&& query, const size_t currentQueryNumberInTest)
-        {
-            /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
-            /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
-            static std::string currentTestFileName;
-
-            /// We reset the current query number once we see a new test file
-            if (currentTestFileName != testFileName)
-            {
-                currentTestFileName = testFileName;
-            }
-
-            /// We expect at least one sink to be defined in the test file
-            if (sinkNamesToSchema.empty())
-            {
-                throw TestException("No sinks defined in test file: {}", testFileName);
-            }
-
-            /// We have to get all sink names from the query and then create custom paths for each sink.
-            /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
-            /// We assume:
-            /// - the INTO keyword is the last keyword in the query
-            /// - the sink name is the last word in the INTO clause
-            const auto sinkName = [&query]() -> std::string
-            {
-                const auto intoClause = query.find("INTO");
-                if (intoClause == std::string::npos)
-                {
-                    NES_ERROR("INTO clause not found in query: {}", query);
-                    return "";
-                }
-                const auto intoLength = std::string("INTO").length();
-                auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
-
-                /// As the sink name might have a semicolon at the end, we remove it
-                if (trimmedSinkName.back() == ';')
-                {
-                    trimmedSinkName.pop_back();
-                }
-                return trimmedSinkName;
-            }();
-
-            if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
-            {
-                throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
-            }
-
-
-            /// Replacing the sinkName with the created unique sink name
-            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest);
-            query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
-
-            /// Adding the sink to the sink config, such that we can create a fully specified query plan
-            const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
-            std::shared_ptr<Sinks::SinkDescriptor> sink;
-            if (sinkName == "CHECKSUM")
-            {
-                auto validatedSinkConfig
-                    = Sinks::SinkDescriptor::validateAndFormatConfig("Checksum", {std::make_pair("filePath", resultFile)});
-                sink = std::make_shared<Sinks::SinkDescriptor>("Checksum", std::move(validatedSinkConfig), false);
-            }
-            else
-            {
-                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
-                    "File",
-                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")});
-                sink = std::make_shared<Sinks::SinkDescriptor>("File", std::move(validatedSinkConfig), false);
-            }
-            sinks.emplace(sinkForQuery, sink);
-
-            try
-            {
-                auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                auto sinkOperators = plan.rootOperators;
-                auto sinkOperator = [](const LogicalPlan& queryPlan)
-                {
-                    const auto rootOperators = queryPlan.rootOperators;
-                    if (rootOperators.size() != 1)
-                    {
-                        throw QueryInvalid(
-                            "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-                            rootOperators.size());
-                    }
-                    const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-                    INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
-                    return sinkOp.value();
-                }(plan);
-
-
-                if (const auto sinkIter = sinks.find(sinkOperator.sinkName); sinkIter == sinks.end())
-                {
-                    throw UnknownSinkType(
-                        "Sinkname {} not specified in the configuration {}",
-                        sinkOperator.sinkName,
-                        fmt::join(std::views::keys(sinks), ","));
-                }
-                sinkOperator.sinkDescriptor = sink;
-                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
-                plan.rootOperators.at(0) = sinkOperator;
-                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
-            }
-            catch (Exception& e)
-            {
-                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName]);
-            }
-        });
-
-    parser.registerOnErrorExpectationCallback(
-        [&](SystestParser::ErrorExpectation&& errorExpectation)
-        {
-            /// Error always belongs to the last parsed plan
-            auto& lastPlan = plans.back();
-            lastPlan.expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
-        });
-    try
-    {
-        parser.parse(queryResultMap, workingDir, testFileName);
-    }
-    catch (Exception& exception)
-    {
-        tryLogCurrentException();
-        exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
-        throw;
-    }
-    return plans;
-}
-/// NOLINTEND(readability-function-cognitive-complexity)
-
 namespace
 {
 template <typename ErrorCallable>
@@ -340,8 +97,8 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 
 }
 
-std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, size_t maxConcurrency, QuerySubmitter& submitter, QueryResultMap& queryResultMap)
+std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries, uint64_t maxConcurrency, QuerySubmitter& submitter, const QueryResultMap& queryResultMap)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -482,7 +239,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
-            {"query name", queryRan.query.resultFile().stem()},
+            {"query name", queryRan.query.testName},
             {"time", executionTimeInSeconds},
             {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
             {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
@@ -496,7 +253,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
-    QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -569,7 +326,7 @@ void printQueryResultToStdOut(
     const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.query.testName.size();
-    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
+    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile);
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
 
@@ -598,7 +355,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
-    NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
@@ -607,7 +364,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
     return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
