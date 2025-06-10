@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <string>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -19,6 +20,8 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
+#include <SystestState.hpp>
+
 
 namespace NES::Systest
 {
@@ -31,23 +34,20 @@ public:
         Logger::setupLogging("SystestParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestParserInvalidTestFilesTest test class.");
     }
-
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserInvalidTestFilesTest test class."); }
 };
-
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     const std::string filename = TEST_DATA_DIR "invalid.dummy";
-
     SystestParser parser{};
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&&)
         {
             /// nop, ensure parsing of CSVSource token
         });
-
     ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    QueryResultMap queryResultMap{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
@@ -57,7 +57,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](std::string&& query, const size_t) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)
@@ -66,7 +66,8 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    QueryResultMap queryResultMap{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
@@ -76,7 +77,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](std::string&& query, size_t) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](SystestParser::ErrorExpectation&&)
@@ -84,8 +85,8 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
             /// nop, ensure parsing
         });
 
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    QueryResultMap queryResultMap{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 }

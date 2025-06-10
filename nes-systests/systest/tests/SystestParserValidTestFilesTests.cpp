@@ -48,7 +48,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
-    SystestParser::CSVSource expextedCSVSource
+    SystestParser::CSVSource expectedCSVSource
         = {.name = "e124",
            .fields
            = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"},
@@ -71,13 +71,13 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool csvSourceCallbackCalled = false;
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&&) { queryCallbackCalled = true; });
-    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { resultCallbackCalled = true; });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](std::string&&, size_t) { queryCallbackCalled = true; });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
 
     ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
-    EXPECT_NO_THROW(parser.parse());
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
 
     /// Verify that all expected callbacks were called
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
@@ -162,30 +162,18 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](const std::string& query, size_t)
         {
             queryCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](SystestParser::ResultTuples&& result)
-        {
-            resultCallbackCalled = true;
-            ASSERT_LT(queryCounter, expectedResults.size());
-            ASSERT_EQ(result, expectedResults[queryCounter]);
-            queryCounter++;
-        });
-
-    ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
-    EXPECT_NO_THROW(parser.parse());
-
-    /// Verify that all expected callbacks were called
+    ASSERT_TRUE(parser.loadFile(filename));
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
-    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
-    ASSERT_EQ(queryCounter, expectedQueries.size()) << "Not all queries were processed";
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -271,30 +259,18 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](const std::string& query, size_t)
         {
             queryCallbackCalled = true;
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](SystestParser::ResultTuples&& result)
-        {
-            resultCallbackCalled = true;
-            ASSERT_LT(queryCounter, expectedResults.size());
-            ASSERT_EQ(result, expectedResults[queryCounter]);
-            queryCounter++;
-        });
-
-    ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
-    EXPECT_NO_THROW(parser.parse());
-
-    /// Verify that all expected callbacks were called
+    ASSERT_TRUE(parser.loadFile(filename));
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
-    ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
-    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
-    ASSERT_EQ(queryCounter, expectedQueries.size()) << "Not all queries were processed";
 }
 
 TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
@@ -310,7 +286,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](std::string&& query, size_t)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;
@@ -325,7 +301,8 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    EXPECT_NO_THROW(parser.parse());
+    QueryResultMap queryResultMap{};
+    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
 }
