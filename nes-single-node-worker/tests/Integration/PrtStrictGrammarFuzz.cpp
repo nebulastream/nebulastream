@@ -159,5 +159,6 @@ DEFINE_PROTO_FUZZER(const NES::FQueryPlan& sqp)
     }
     CPPTRACE_CATCH(...)
     {
+        return;
     }
 }
