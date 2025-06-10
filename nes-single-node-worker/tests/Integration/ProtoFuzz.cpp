@@ -52,5 +52,6 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
     }
     CPPTRACE_CATCH(...)
     {
+        return;
     }
 }
