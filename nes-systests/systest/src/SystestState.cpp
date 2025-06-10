@@ -505,6 +505,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             }
         });
 
+
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
@@ -684,7 +685,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName]);
+                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest);
             }
         });
 
