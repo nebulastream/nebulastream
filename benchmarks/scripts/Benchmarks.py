@@ -55,20 +55,27 @@ def filter_by_config(data, config):
     return data[mask]
 
 
-def normalize_time_per_group(data, param, group_col, time_col):
-    group_min = data.groupby(group_col)[time_col].transform('min')
-    group_max = data.groupby(group_col)[time_col].transform('max')
+def normalize_time_per_groups(data, param, group_cols, time_col):
+    group_min = data.groupby(group_cols)[time_col].transform('min')
+    group_max = data.groupby(group_cols)[time_col].transform('max')
     data_normalized = data.copy()
     data_normalized[param] = (data_normalized[time_col] - group_min) / (group_max - group_min)
     return data_normalized
+
+
+def shift_time_per_groups(data, param, group_cols, time_col):
+    group_min = data.groupby(group_cols)[time_col].transform('min')
+    data_shifted = data.copy()
+    data_shifted[param] = data_shifted[time_col] - group_min
+    return data_shifted
 
 
 def convert_metric_units(data, param, metric):
     units = ['B', 'KB', 'MB', 'GB', 'TB']
     factor = 1000.0
 
-    # Get max value for the current param and metric
-    max_val = data.groupby(param)[metric].mean().max()
+    # Get max value for metric
+    max_val = data[metric].max()
 
     unit_idx = 0
     while max_val >= factor and unit_idx < len(units) - 1:
@@ -166,24 +173,22 @@ def plot_time_comparison(data, config, metric, label, plot):
 
     if not filtered_data.empty:
         if plot == 1:
-            normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', 'window_start')
-            #data, unit = convert_metric_units(normalized_data, param, metric)
-            data, unit = [normalized_data, 'B']
+            normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
+            data, unit = convert_metric_units(normalized_data, param, metric)
+            #data, unit = [normalized_data, 'B']
         if plot == 2:
             param = 'window_start'
-            #data, unit = convert_metric_units(filtered_data, param, metric)
-            data, unit = [filtered_data, 'B']
-            min_ts = data[param].min()
-            data[param] = data[param] - min_ts
+            #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
+            data, unit = convert_metric_units(filtered_data, param, metric)
+            #data, unit = [shifted_data, 'B']
         if plot == 3:
-            normalized_data = normalize_time_per_group(filtered_data, param, 'slice_store_type', param)
-            #data, unit = convert_metric_units(normalized_data, param, metric)
-            data, unit = [normalized_data, 'B']
+            normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
+            data, unit = convert_metric_units(normalized_data, param, metric)
+            #data, unit = [normalized_data, 'B']
         if plot == 4:
-            #data, unit = convert_metric_units(filtered_data, param, metric)
-            data, unit = [filtered_data, 'B']
-            min_ts = data[param].min()
-            data[param] = data[param] - min_ts
+            #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
+            data, unit = convert_metric_units(filtered_data, param, metric)
+            #data, unit = [shifted_data, 'B']
 
         plt.figure(figsize=(14, 6))
         ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None)
@@ -228,6 +233,8 @@ specific_config = {
 specific_rows = df[df['dir_name'] == '.cache/benchmarks/2025-06-05_10-15-06/SpillingBenchmarks_1749125641']
 specific_values = specific_rows[all_config_params].drop_duplicates()
 configs = specific_values.to_dict('records')
+
+filtered_data = filter_by_config(df, configs[0]).sort_values(by="window_start")
 
 #configs = [specific_config]
 #configs = [d for d in common_config_dicts if d["query"] == specific_query]
