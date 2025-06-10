@@ -15,12 +15,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
@@ -95,10 +94,8 @@ public:
         bool operator==(const ErrorExpectation& other) const = default;
     };
 
-    using ResultTuples = std::vector<std::string>;
-
     using QueryCallback = std::function<void(std::string, size_t)>;
-    using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
+    using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, size_t correspondingQueryId)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
@@ -106,12 +103,13 @@ public:
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
+    void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
-    void parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, std::string_view fileName);
+    void parse();
 
 private:
     /// Substitution rules ///
@@ -121,7 +119,7 @@ private:
     /// Parsing utils ///
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(std::string potentialToken);
     /// Parse the next token and return its type.
-    [[nodiscard]] std::optional<TokenType> nextToken();
+    [[nodiscard]] std::optional<TokenType> getNextToken();
     /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
     /// Look ahead at the next token without consuming it
@@ -130,7 +128,7 @@ private:
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
-    [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
+    [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst = false);
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
 

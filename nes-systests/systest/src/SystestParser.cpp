@@ -37,60 +37,39 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
-namespace NES::Systest
+namespace
 {
-static constexpr auto CSVSourceToken = "SourceCSV"s;
-static constexpr auto SLTSourceToken = "Source"s;
-static constexpr auto QueryToken = "SELECT"s;
-static constexpr auto SinkToken = "SINK"s;
-static constexpr auto ResultDelimiter = "----"s;
-static constexpr auto ErrorToken = "ERROR"s;
-
-static const std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
-    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
-        {SLTSourceToken, TokenType::SLT_SOURCE},
-        {QueryToken, TokenType::QUERY},
-        {SinkToken, TokenType::SINK},
-        {ResultDelimiter, TokenType::RESULT_DELIMITER},
-        {ErrorToken, TokenType::ERROR_EXPECTATION}}};
-
-static bool emptyOrComment(const std::string& line)
-{
-    return line.empty() /// completely empty
-        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
-        || line.starts_with('#'); /// slt comment
-}
 
 /// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
-SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
+NES::Systest::SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
 {
-    SystestParser::SystestSchema schema;
+    NES::Systest::SystestParser::SystestSchema schema;
     if (arguments.size() % 2 != 0)
     {
         if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
         {
-            throw SLTUnexpectedToken(
+            throw NES::SLTUnexpectedToken(
                 "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
                 fmt::join(arguments, ","),
                 lastArg);
         }
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+        throw NES::SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
     }
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        DataType dataType;
-        if (auto type = magic_enum::enum_cast<DataType::Type>(arguments[i]); type.has_value())
+        NES::DataType dataType;
+        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(arguments[i]); type.has_value())
         {
-            dataType = DataTypeProvider::provideDataType(type.value());
+            dataType = NES::DataTypeProvider::provideDataType(type.value());
         }
         else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+            throw NES::SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
         schema.emplace_back(dataType, arguments[i + 1]);
     }
@@ -98,6 +77,32 @@ SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& a
     return schema;
 }
 
+
+bool emptyOrComment(const std::string& line)
+{
+    return line.empty() /// completely empty
+        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
+        || line.starts_with('#'); /// slt comment
+}
+}
+
+namespace NES::Systest
+{
+
+static constexpr auto CSVSourceToken = "SourceCSV"s;
+static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto QueryToken = "SELECT"s;
+static constexpr auto SinkToken = "SINK"s;
+static constexpr auto ResultDelimiter = "----"s;
+static constexpr auto ErrorToken = "ERROR"s;
+
+static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
+    {{CSVSourceToken, TokenType::CSV_SOURCE},
+     {SLTSourceToken, TokenType::SLT_SOURCE},
+     {QueryToken, TokenType::QUERY},
+     {SinkToken, TokenType::SINK},
+     {ResultDelimiter, TokenType::RESULT_DELIMITER},
+     {ErrorToken, TokenType::ERROR_EXPECTATION}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -153,6 +158,11 @@ void SystestParser::registerOnQueryCallback(QueryCallback callback)
     this->onQueryCallback = std::move(callback);
 }
 
+void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
+{
+    this->onResultTuplesCallback = std::move(callback);
+}
+
 void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
     this->onSLTSourceCallback = std::move(callback);
@@ -174,11 +184,10 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
 }
 
 /// Here we model the structure of the test file by what we `expect` to see.
-/// If we encounter something unexpected, we return false.
-void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, const std::string_view testFileName)
+void SystestParser::parse()
 {
     SystestQueryNumberAssigner queryNumberAssigner{};
-    while (auto token = nextToken())
+    while (auto token = getNextToken())
     {
         switch (token.value())
         {
@@ -215,9 +224,10 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
             }
             case TokenType::RESULT_DELIMITER: {
                 /// Look ahead for error expectation
-                if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
+                if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
                 {
-                    token = nextToken(); /// we move savely to the next token (which is ERROR)
+                    ++currentLine;
+                    queryNumberAssigner.skipQueryResultOfQueryWithExpectedError();
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
@@ -226,12 +236,12 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
                 }
                 else
                 {
-                    auto tuples = expectTuples();
-                    /// place the results in the query result map using the unique 'result file path' as key
-                    /// place the results in the query result map using the unique 'result file path' as key
-                    queryResultMap.emplace(
-                        SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
+                    if (onResultTuplesCallback)
+                    {
+                        onResultTuplesCallback(expectTuples(), queryNumberAssigner.getNextQueryResultNumber());
+                    }
                 }
+                break;
             }
             case TokenType::INVALID:
                 throw TestException(
@@ -303,7 +313,7 @@ bool SystestParser::moveToNextToken()
 }
 
 
-std::optional<TokenType> SystestParser::nextToken()
+std::optional<TokenType> SystestParser::getNextToken()
 {
     if (!moveToNextToken())
     {
@@ -456,9 +466,9 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     return source;
 }
 
-SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
+std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
 {
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
     std::vector<std::string> tuples;
     /// skip the result line `----`
     if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))

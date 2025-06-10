@@ -26,19 +26,27 @@
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SystestParser.hpp>
@@ -111,44 +119,35 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         return lowerStr;
     };
 
-    std::string desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
+    const auto desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
              | std::views::filter([](auto entry) { return entry.is_regular_file(); }))
     {
-        std::string entryExt = toLowerCopy(entry.path().extension().string());
-
+        const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            TestFile testfile(entry.path());
-            testFiles.insert({entry.path().string(), testfile});
+            const TestFile testfile(entry.path());
+            testFiles.insert({testfile.file, testfile});
         }
     }
     return testFiles;
 }
 
-void loadQueriesFromTestFile(
-    TestFile& testfile,
-    const std::filesystem::path& workingDir,
-    const std::filesystem::path& testDataDir,
-    QueryResultMap& queryResultMap,
-    Systest::SystestBinder& systestBinder)
+std::pair<std::expected<LogicalPlan, Exception>, std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>>
+optimizeQueryPlanIfErrorFree(const LoadedQueryPlan& loadedQueryPlan)
 {
-    auto loadedPlans = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, queryResultMap);
-    std::unordered_set<uint64_t> foundQueries;
-
-    for (const auto& [boundPlan, sourceCatalog, queryDefinition, sinkSchema, queryIdInFile, sourcesToFilePaths, expectedError] :
-         loadedPlans)
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+    if (loadedQueryPlan.queryPlan.has_value())
     {
-        if (boundPlan.has_value())
-        {
-            const CLI::LegacyOptimizer optimizer{sourceCatalog};
-            auto optimizedPlan = optimizer.optimize(boundPlan.value());
-            std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
-            for (const auto& logicalSourceOperator : NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan))
+        const CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
+        auto optimizedPlan = optimizer.optimize(loadedQueryPlan.queryPlan.value());
+        std::ranges::for_each(
+            NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan),
+            [&loadedQueryPlan, &sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path = sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
-                    path != sourcesToFilePaths.end())
+                if (const auto path = loadedQueryPlan.sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
+                    path != loadedQueryPlan.sourcesToFilePaths.end())
                 {
                     auto& entry = sourceNamesToFilepathAndCountForQuery
                         [logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName()];
@@ -158,47 +157,52 @@ void loadQueriesFromTestFile(
                 {
                     throw CannotLoadConfig("SourceName \"{}\" does not have an associated file path");
                 }
-            }
-            INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-            if (testfile.onlyEnableQueriesWithTestQueryNumber.contains(queryIdInFile))
-            {
-                foundQueries.insert(queryIdInFile + 1);
-                testfile.queries.emplace_back(
-                    testfile.name(),
-                    queryDefinition,
-                    testfile.file,
-                    optimizedPlan,
-                    queryIdInFile,
-                    workingDir,
-                    sinkSchema,
-                    sourceNamesToFilepathAndCountForQuery,
-                    expectedError);
-            }
-        }
-        else
-        {
-            testfile.queries.emplace_back(
-                testfile.name(),
-                queryDefinition,
-                testfile.file,
-                boundPlan,
-                queryIdInFile,
-                workingDir,
-                sinkSchema,
-                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
-                expectedError);
-        }
+            });
+        return {optimizedPlan, sourceNamesToFilepathAndCountForQuery};
     }
+    return {loadedQueryPlan.queryPlan, sourceNamesToFilepathAndCountForQuery};
+}
 
-    /// After processing all queries, warn if any specified query number was not found
-    for (auto testNumber : testfile.onlyEnableQueriesWithTestQueryNumber)
-    {
-        if (not foundQueries.contains(testNumber))
+void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
+{
+    auto loadedPlans = systestStarterGlobals.binder.loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
+    std::unordered_set<uint64_t> foundQueries;
+
+    std::ranges::for_each(
+        loadedPlans
+            | std::views::filter(
+                [&testfile](const auto& loadedQueryPlan)
+                {
+                    return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryNumberInTest);
+                }),
+        [&systestStarterGlobals, &testfile, &foundQueries](const auto& filteredLoadedQueryPlan)
         {
-            std::cerr << "Warning: Query number " << testNumber << " specified via command line argument but not found in file://"
-                      << testfile.file.string() << "\n";
-        }
-    }
+            foundQueries.insert(filteredLoadedQueryPlan.queryNumberInTest + 1);
+            const auto [queryPlanOpt, sourceNamesToFilepathAndCountForQuery] = optimizeQueryPlanIfErrorFree(filteredLoadedQueryPlan);
+            systestStarterGlobals.addQuery(
+                testfile.name(),
+                filteredLoadedQueryPlan.queryName,
+                testfile.file,
+                queryPlanOpt,
+                filteredLoadedQueryPlan.queryNumberInTest,
+                systestStarterGlobals.getWorkingDir(),
+                filteredLoadedQueryPlan.sinkSchema,
+                sourceNamesToFilepathAndCountForQuery,
+                filteredLoadedQueryPlan.expectedError);
+        });
+
+    /// Warn about queries specified via the command line that were not found in the test file
+    std::ranges::for_each(
+        testfile.onlyEnableQueriesWithTestQueryNumber
+            | std::views::filter([&foundQueries](auto testNumber) { return not foundQueries.contains(testNumber); }),
+        [&testfile](const auto badTestNumber)
+        {
+            std::cerr << fmt::format(
+                "Warning: Query number {} specified via command line argument but not found in file://{}",
+                badTestNumber,
+                testfile.file.string());
+        });
 }
 
 std::vector<TestGroup> readGroups(const TestFile& testfile)
@@ -236,21 +240,16 @@ TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<SystestQuery> loadQueries(
-    TestFileMap& testmap,
-    const std::filesystem::path& workingDir,
-    const std::filesystem::path& testDataDir,
-    QueryResultMap& queryResultMap,
-    Systest::SystestBinder& systestBinder)
+std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals)
 {
     std::vector<SystestQuery> queries;
     uint64_t loadedFiles = 0;
-    for (auto& [testname, testfile] : testmap)
+    for (const auto& testfile : systestStarterGlobals.getTestFileMap() | std::views::values)
     {
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir, queryResultMap, systestBinder);
+            loadQueriesFromTestFile(testfile, systestStarterGlobals);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));
@@ -263,8 +262,8 @@ std::vector<SystestQuery> loadQueries(
             std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.getLogFilePath(), exception.what());
         }
     }
-    std::cout << "Loaded test files: " << loadedFiles << "/" << testmap.size() << '\n' << std::flush;
-    if (loadedFiles != testmap.size())
+    std::cout << "Loaded test files: " << loadedFiles << "/" << systestStarterGlobals.getTestFileMap().size() << '\n' << std::flush;
+    if (loadedFiles != systestStarterGlobals.getTestFileMap().size())
     {
         std::cerr << "Could not load all test files. Terminating.\n" << std::flush;
         std::exit(1);
@@ -308,22 +307,16 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            TestFile testfile = TestFile(directlySpecifiedTestFiles);
-            return TestFileMap{{testfile.name(), testfile}};
+            const auto testfile = TestFile(directlySpecifiedTestFiles);
+            return TestFileMap{{testfile.file, testfile}};
         }
-        else
-        { /// case: load a concrete set of tests
-            auto scalarTestNumbers = config.testQueryNumbers.getValues();
-            std::unordered_set<uint64_t> testNumbers;
-            testNumbers.reserve(scalarTestNumbers.size());
-            for (const auto& scalarOption : scalarTestNumbers)
-            {
-                testNumbers.emplace(scalarOption.getValue());
-            }
+        /// case: load a concrete set of tests
+        auto scalarTestNumbers = config.testQueryNumbers.getValues();
+        const auto testNumbers = std::ranges::to<std::unordered_set<uint64_t>>(
+            scalarTestNumbers | std::views::transform([](const auto& option) { return option.getValue(); }));
 
-            TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
-            return TestFileMap{{testfile.name(), testfile}};
-        }
+        const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
+        return TestFileMap{{testfile.file, testfile}};
     }
 
     auto testsDiscoverDir = config.testsDiscoverDir.getValue();
@@ -470,5 +463,250 @@ std::string TestFile::getLogFilePath() const
     /// Set the correct logging path without docker
     return std::filesystem::path(file);
 }
+
+
+/// NOLINTBEGIN(readability-function-cognitive-complexity)
+std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFile(
+    SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName)
+{
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    std::vector<LoadedQueryPlan> plans{};
+    std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
+    SystestParser parser{};
+    std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
+
+    std::unordered_map<std::string, Schema> sinkNamesToSchema{};
+    auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
+    checksumSinkPair->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    checksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+
+    parser.registerOnResultTuplesCallback(
+        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        { systestStarterGlobals.addQueryResult(testFileName, correspondingQueryId, std::move(resultTuples)); });
+    parser.registerSubstitutionRule(
+        {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = systestStarterGlobals.getTestDataDir(); }});
+    if (!parser.loadFile(testFilePath))
+    {
+        throw TestException("Could not successfully load test file://{}", testFilePath.string());
+    }
+
+    /// We create a map from sink names to their schema
+    parser.registerOnSinkCallBack(
+        [&](const SystestParser::Sink& sinkParsed)
+        {
+            auto [sinkPair, success] = sinkNamesToSchema.emplace(sinkParsed.name, Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
+            if (not success)
+            {
+                throw SourceAlreadyExists("{}", sinkParsed.name);
+            }
+            for (const auto& [type, name] : sinkParsed.fields)
+            {
+                sinkPair->second.addField(name, type);
+            }
+        });
+
+    /// We add new found sources to our config
+    parser.registerOnCSVSourceCallback(
+        [&](SystestParser::CSVSource&& source)
+        {
+            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+            for (const auto& [type, name] : source.fields)
+            {
+                schema.addField(name, type);
+            }
+            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
+            if (not logicalSource.has_value())
+            {
+                throw SourceAlreadyExists("{}", source.name);
+            }
+
+            auto sourceConfig = Sources::SourceValidationProvider::provide(
+                "File", std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}});
+            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+
+            const auto physicalSource = sourceCatalog->addPhysicalSource(
+                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            if (not physicalSource.has_value())
+            {
+                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
+                throw UnknownSource("{}", source.name);
+            }
+            sourcesToFilePaths[physicalSource.value()] = source.csvFilePath;
+        });
+
+    parser.registerOnSLTSourceCallback(
+        [&](SystestParser::SLTSource&& source)
+        {
+            const auto sourceFile = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, ++sourceIndex);
+            {
+                std::ofstream testFile(sourceFile);
+                if (!testFile.is_open())
+                {
+                    throw TestException("Could not open source file \"{}\"", sourceFile);
+                }
+
+                for (const auto& tuple : source.tuples)
+                {
+                    testFile << tuple << "\n";
+                }
+                testFile.flush();
+            }
+
+            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+            for (const auto& [type, name] : source.fields)
+            {
+                schema.addField(name, type);
+            }
+            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
+            if (not logicalSource.has_value())
+            {
+                throw SourceAlreadyExists("{}", source.name);
+            }
+
+            auto sourceConfig = Sources::SourceValidationProvider::provide(
+                "File", std::unordered_map<std::string, std::string>{{"filePath", sourceFile}});
+            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+
+            const auto physicalSource = sourceCatalog->addPhysicalSource(
+                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            if (not physicalSource.has_value())
+            {
+                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
+                throw UnknownSource("{}", source.name);
+            }
+            sourcesToFilePaths[physicalSource.value()] = sourceFile;
+
+            NES_DEBUG("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
+        });
+
+    /// We create a new query plan from our config when finding a query
+    parser.registerOnQueryCallback(
+        [&](std::string query, const size_t currentQueryNumberInTest)
+        {
+            /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
+            /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
+            static std::string currentTestFileName;
+
+            /// We reset the current query number once we see a new test file
+            if (currentTestFileName != testFileName)
+            {
+                currentTestFileName = testFileName;
+            }
+
+            /// We expect at least one sink to be defined in the test file
+            if (sinkNamesToSchema.empty())
+            {
+                throw TestException("No sinks defined in test file: {}", testFileName);
+            }
+
+            /// We have to get all sink names from the query and then create custom paths for each sink.
+            /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
+            /// We assume:
+            /// - the INTO keyword is the last keyword in the query
+            /// - the sink name is the last word in the INTO clause
+            const auto sinkName = [&query]() -> std::string
+            {
+                const auto intoClause = query.find("INTO");
+                if (intoClause == std::string::npos)
+                {
+                    NES_ERROR("INTO clause not found in query: {}", query);
+                    return "";
+                }
+                const auto intoLength = std::string("INTO").length();
+                auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+
+                /// As the sink name might have a semicolon at the end, we remove it
+                if (trimmedSinkName.back() == ';')
+                {
+                    trimmedSinkName.pop_back();
+                }
+                return trimmedSinkName;
+            }();
+
+            if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
+            {
+                throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
+            }
+
+
+            /// Replacing the sinkName with the created unique sink name
+            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest);
+            query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
+
+            /// Adding the sink to the sink config, such that we can create a fully specified query plan
+            const auto resultFile = SystestQuery::resultFile(systestStarterGlobals.getWorkingDir(), testFileName, currentQueryNumberInTest);
+            std::shared_ptr<Sinks::SinkDescriptor> sink;
+            if (sinkName == "CHECKSUM")
+            {
+                auto validatedSinkConfig
+                    = Sinks::SinkDescriptor::validateAndFormatConfig("Checksum", {std::make_pair("filePath", resultFile)});
+                sink = std::make_shared<Sinks::SinkDescriptor>("Checksum", std::move(validatedSinkConfig), false);
+            }
+            else
+            {
+                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
+                    "File",
+                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")});
+                sink = std::make_shared<Sinks::SinkDescriptor>("File", std::move(validatedSinkConfig), false);
+            }
+            sinks.emplace(sinkForQuery, sink);
+
+            try
+            {
+                auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+                auto sinkOperators = plan.rootOperators;
+                auto sinkOperator = [](const LogicalPlan& queryPlan)
+                {
+                    const auto rootOperators = queryPlan.rootOperators;
+                    if (rootOperators.size() != 1)
+                    {
+                        throw QueryInvalid(
+                            "NebulaStream currently only supports a single sink per query, but the query contains: {}",
+                            rootOperators.size());
+                    }
+                    const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+                    INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
+                    return sinkOp.value();
+                }(plan);
+
+
+                if (const auto sinkIter = sinks.find(sinkOperator.sinkName); sinkIter == sinks.end())
+                {
+                    throw UnknownSinkType(
+                        "Sinkname {} not specified in the configuration {}",
+                        sinkOperator.sinkName,
+                        fmt::join(std::views::keys(sinks), ","));
+                }
+                sinkOperator.sinkDescriptor = sink;
+                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
+                plan.rootOperators.at(0) = sinkOperator;
+                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+            }
+            catch (Exception& e)
+            {
+                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName]);
+            }
+        });
+
+    parser.registerOnErrorExpectationCallback(
+        [&](SystestParser::ErrorExpectation&& errorExpectation)
+        {
+            /// Error always belongs to the last parsed plan
+            auto& lastPlan = plans.back();
+            lastPlan.expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
+        });
+    try
+    {
+        parser.parse();
+    }
+    catch (Exception& exception)
+    {
+        tryLogCurrentException();
+        exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
+        throw;
+    }
+    return plans;
+}
+/// NOLINTEND(readability-function-cognitive-complexity)
 
 }

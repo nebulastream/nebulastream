@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <string>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -45,8 +46,7 @@ TEST_F(SystestParserTest, testEmptyFile)
     const std::string str;
 
     ASSERT_EQ(true, parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    parser.parse(queryResultMap, {}, {});
+    EXPECT_NO_THROW(parser.parse());
 }
 
 TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
@@ -56,8 +56,7 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
     const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    EXPECT_NO_THROW(parser.parse());
 }
 
 TEST_F(SystestParserTest, testCallbackSourceCSV)
@@ -86,14 +85,15 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
         });
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
 
 TEST_F(SystestParserTest, testCallbackQuery)
 {
     SystestParser parser{};
+    QueryResultMap queryResultMap;
+
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
@@ -111,16 +111,18 @@ TEST_F(SystestParserTest, testCallbackQuery)
         });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnResultTuplesCallback(
+        [&](std::vector<std::string>&& resultTuples, const size_t correspondingQueryId)
+        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     /// Check that the queryResult map contains the expected two results for the query defined above
-    ASSERT_TRUE(queryResultMap.contains("results/_0.csv"));
-    ASSERT_EQ(queryResultMap.at("results/_0.csv").size(), 2);
-    ASSERT_EQ(queryResultMap.at("results/_0.csv").at(0), tpl1);
-    ASSERT_EQ(queryResultMap.at("results/_0.csv").at(1), tpl2);
+    ASSERT_TRUE(queryResultMap.contains("results/_1.csv"));
+    ASSERT_EQ(queryResultMap.at("results/_1.csv").size(), 2);
+    ASSERT_EQ(queryResultMap.at("results/_1.csv").at(0), tpl1);
+    ASSERT_EQ(queryResultMap.at("results/_1.csv").at(1), tpl2);
 }
 
 TEST_F(SystestParserTest, testCallbackSLTSource)
@@ -152,8 +154,7 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
     parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
 
@@ -167,12 +168,17 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
     const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
+    parser.registerOnResultTuplesCallback(
+        [&](std::vector<std::string>&&, const size_t)
+        {
+            /// nop
+        });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
+    SystestStarterGlobals systestStarterGlobals{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserTest, testSubstitutionRule)
@@ -199,8 +205,7 @@ TEST_F(SystestParserTest, testSubstitutionRule)
     parser.registerOnQueryCallback(callback);
 
     ASSERT_TRUE(parser.loadString(str));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
 
