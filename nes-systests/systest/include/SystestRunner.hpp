@@ -30,19 +30,15 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestParser.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
 /// Forward declarations
-struct Query;
+struct SystestQuery;
 struct RunningQuery;
 class QuerySubmitter;
-
-struct ExpectedError
-{
-    ErrorCode code;
-    std::optional<std::string> message;
-};
 
 struct LoadedQueryPlan
 {
@@ -50,6 +46,7 @@ struct LoadedQueryPlan
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::string queryName;
     Schema sinkSchema;
+    size_t queryNumberInTest;
     std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
     std::optional<ExpectedError> expectedError;
 };
@@ -71,7 +68,8 @@ public:
         const std::filesystem::path& testFilePath,
         const std::filesystem::path& workingDir,
         std::string_view testFileName,
-        const std::filesystem::path& testDataDir);
+        const std::filesystem::path& testDataDir,
+        QueryResultMap& queryResultMap);
 
 private:
     uint64_t sourceIndex = 0;
@@ -81,23 +79,32 @@ private:
 
 /// Runs queries
 /// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueries(const std::vector<Query>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+[[nodiscard]] std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    QueryResultMap& queryResultMap);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<Query>& queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration);
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    QueryResultMap& queryResultMap);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+[[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI, QueryResultMap& queryResultMap);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<Query>& queries, const Configuration::SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
+    const std::vector<SystestQuery>& queries,
+    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    QueryResultMap& queryResultMap);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed

@@ -48,7 +48,7 @@ namespace NES::Systest
 {
 
 std::filesystem::path
-Query::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
+SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t queryIdInTestFile)
 {
     auto resultDir = workingDir / "results";
     if (not is_directory(resultDir))
@@ -60,7 +60,7 @@ Query::resultFile(const std::filesystem::path& workingDir, std::string_view test
     return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
 }
 
-std::filesystem::path Query::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
+std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
 {
     auto sourceDir = workingDir / "sources";
     if (not is_directory(sourceDir))
@@ -72,31 +72,31 @@ std::filesystem::path Query::sourceFile(const std::filesystem::path& workingDir,
     return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
 }
 
-Query::Query(
-    TestName name,
+SystestQuery::SystestQuery(
+    TestName testName,
     std::string queryDefinition,
     std::filesystem::path sqlLogicTestFile,
     std::expected<LogicalPlan, Exception> queryPlan,
     const uint64_t queryIdInFile,
     std::filesystem::path workingDir,
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
     const Schema& sinkSchema,
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
     std::optional<ExpectedError> expectedError)
-    : name(std::move(name))
+    : testName(std::move(testName))
     , queryDefinition(std::move(queryDefinition))
     , sqlLogicTestFile(std::move(sqlLogicTestFile))
     , queryPlan(std::move(queryPlan))
     , queryIdInFile(queryIdInFile)
     , workingDir(std::move(workingDir))
-    , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
     , expectedSinkSchema(std::move(sinkSchema))
+    , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
     , expectedError(expectedError)
 {
 }
 
-std::filesystem::path Query::resultFile() const
+std::filesystem::path SystestQuery::resultFile() const
 {
-    return resultFile(workingDir, name, queryIdInFile);
+    return resultFile(workingDir, testName, queryIdInFile);
 }
 
 
@@ -127,17 +127,18 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-static void loadQueriesFromTestFile(
+void loadQueriesFromTestFile(
     TestFile& testfile,
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
+    QueryResultMap& queryResultMap,
     Systest::SystestBinder& systestBinder)
 {
-    auto loadedPlans = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
-    uint64_t queryIdInFile = 0;
+    auto loadedPlans = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, queryResultMap);
     std::unordered_set<uint64_t> foundQueries;
 
-    for (auto& [boundPlan, sourceCatalog, queryDefinition, sinkSchema, sourcesToFilePaths, expectedError] : loadedPlans)
+    for (const auto& [boundPlan, sourceCatalog, queryDefinition, sinkSchema, queryIdInFile, sourcesToFilePaths, expectedError] :
+         loadedPlans)
     {
         if (boundPlan.has_value())
         {
@@ -159,26 +160,9 @@ static void loadQueriesFromTestFile(
                 }
             }
             INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-            if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
+            if (testfile.onlyEnableQueriesWithTestQueryNumber.contains(queryIdInFile))
             {
-                for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
-                         | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
-                {
-                    foundQueries.insert(queryIdInFile + 1);
-                    testfile.queries.emplace_back(
-                        testfile.name(),
-                        queryDefinition,
-                        testfile.file,
-                        optimizedPlan,
-                        queryIdInFile,
-                        workingDir,
-                        sourceNamesToFilepathAndCountForQuery,
-                        sinkSchema,
-                        expectedError);
-                }
-            }
-            else
-            {
+                foundQueries.insert(queryIdInFile + 1);
                 testfile.queries.emplace_back(
                     testfile.name(),
                     queryDefinition,
@@ -186,8 +170,8 @@ static void loadQueriesFromTestFile(
                     optimizedPlan,
                     queryIdInFile,
                     workingDir,
-                    sourceNamesToFilepathAndCountForQuery,
                     sinkSchema,
+                    sourceNamesToFilepathAndCountForQuery,
                     expectedError);
             }
         }
@@ -200,11 +184,10 @@ static void loadQueriesFromTestFile(
                 boundPlan,
                 queryIdInFile,
                 workingDir,
-                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
                 sinkSchema,
+                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
                 expectedError);
         }
-        ++queryIdInFile;
     }
 
     /// After processing all queries, warn if any specified query number was not found
@@ -246,27 +229,28 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
-TestFile::TestFile(std::filesystem::path file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
+TestFile::TestFile(const std::filesystem::path& file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
 
-TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<Query> loadQueries(
+std::vector<SystestQuery> loadQueries(
     TestFileMap& testmap,
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
+    QueryResultMap& queryResultMap,
     Systest::SystestBinder& systestBinder)
 {
-    std::vector<Query> queries;
+    std::vector<SystestQuery> queries;
     uint64_t loadedFiles = 0;
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir, systestBinder);
+            loadQueriesFromTestFile(testfile, workingDir, testDataDir, queryResultMap, systestBinder);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));
@@ -330,11 +314,11 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         else
         { /// case: load a concrete set of tests
             auto scalarTestNumbers = config.testQueryNumbers.getValues();
-            std::vector<uint64_t> testNumbers;
+            std::unordered_set<uint64_t> testNumbers;
             testNumbers.reserve(scalarTestNumbers.size());
             for (const auto& scalarOption : scalarTestNumbers)
             {
-                testNumbers.push_back(scalarOption.getValue());
+                testNumbers.emplace(scalarOption.getValue());
             }
 
             TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
