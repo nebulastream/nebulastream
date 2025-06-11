@@ -31,7 +31,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Strings.hpp>
-#include <bits/basic_string.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -196,7 +195,7 @@ void SystestParser::parse()
                 auto source = expectCSVSource();
                 if (onCSVSourceCallback)
                 {
-                    onCSVSourceCallback(std::move(source));
+                    onCSVSourceCallback(source);
                 }
                 break;
             }
@@ -204,7 +203,7 @@ void SystestParser::parse()
                 auto source = expectSLTSource();
                 if (onSLTSourceCallback)
                 {
-                    onSLTSourceCallback(std::move(source));
+                    onSLTSourceCallback(source);
                 }
                 break;
             }
