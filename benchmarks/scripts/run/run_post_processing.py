@@ -27,6 +27,10 @@ BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 
+# Configuration for benchmark run
+MEASURE_INTERVAL = 8
+WAIT_BETWEEN_COMMANDS = 2
+
 
 def create_results_dir():
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -44,9 +48,11 @@ if __name__ == "__main__":
     print(f"Found {len(output_folders)} directories")
 
     # Calling the postprocessing main
+    measurement_time = MEASURE_INTERVAL * 1000
+    startup_time = WAIT_BETWEEN_COMMANDS * 1000
     engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
-                                                    BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
-                                                    COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
-                                                    benchmark_stats_csv_path)
+    post_processing = PostProcessing.PostProcessing(output_folders, measurement_time, startup_time,
+                                                    BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE, BENCHMARK_STATS_FILE,
+                                                    COMBINED_ENGINE_STATISTICS_FILE, COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                    engine_stats_csv_path, benchmark_stats_csv_path)
     post_processing.main()

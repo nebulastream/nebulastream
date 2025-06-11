@@ -48,7 +48,7 @@ MEASURE_INTERVAL = 8
 WAIT_BETWEEN_COMMANDS = 2
 
 # Compilation for misc.
-SERVER_NAME = "armSC"
+SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
 DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 RESULTS_DIR = f"benchmarks/data/{DATETIME_NOW}"
@@ -412,11 +412,13 @@ if __name__ == "__main__":
                   f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
     # Calling the postprocessing main
+    measurement_time = MEASURE_INTERVAL * 1000
+    startup_time = WAIT_BETWEEN_COMMANDS * 1000
     engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE,
-                                                    BENCHMARK_STATS_FILE, COMBINED_ENGINE_STATISTICS_FILE,
-                                                    COMBINED_BENCHMARK_STATISTICS_FILE, engine_stats_csv_path,
-                                                    benchmark_stats_csv_path)
+    post_processing = PostProcessing.PostProcessing(output_folders, measurement_time, startup_time,
+                                                    BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE, BENCHMARK_STATS_FILE,
+                                                    COMBINED_ENGINE_STATISTICS_FILE, COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                    engine_stats_csv_path, benchmark_stats_csv_path)
     post_processing.main()
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
