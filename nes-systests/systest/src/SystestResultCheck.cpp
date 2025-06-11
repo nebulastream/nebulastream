@@ -180,7 +180,8 @@ FMT_OSTREAM(::ExpectedResultField);
 FMT_OSTREAM(::SchemaErrorString);
 FMT_OSTREAM(::ResultErrorString);
 
-namespace  {
+namespace
+{
 bool compareStringAsTypeWithError(const NES::DataType::Type type, const ExpectedResultField& left, const ActualResultField& right)
 {
     switch (type)
@@ -198,9 +199,9 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
         case NES::DataType::Type::VARSIZED:
             return left.getRawValue() == right.getRawValue();
         case NES::DataType::Type::FLOAT32:
-            return NES::Systest::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue(), NES::Systest::EPSILON);
+            return NES::Systest::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FLOAT64:
-            return NES::Systest::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue(), NES::Systest::EPSILON);
+            return NES::Systest::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::UNDEFINED:
             throw NES::UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }

@@ -15,35 +15,30 @@
 #pragma once
 
 #include <algorithm>
-#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
 #include <optional>
-#include <ostream>
-#include <ranges>
-#include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-static constexpr auto EPSILON = 1e-5;
+
+/// Returns an error message or an empty optional if the query result is correct
+std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap);
 
 template <typename T>
-bool compareStringAsTypeWithError(const std::string& left, const std::string& right, const double epsilonAllowed)
+bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
 {
+    static constexpr auto EPSILON = 1e-5;
     /// We need to compare the strings as the correct type
     /// It is not possible to compare the strings directly, because the string representation of a float can be different
     /// Therefore, we need to convert the strings to the correct type and compare the values for float values
@@ -66,19 +61,19 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
         /// IMPORTANT: std::numeric_limits<double>::min() returns the minimum finite value representable by a double and not the smallest value
         if (doubleLeft == 0.0 || doubleRight == 0.0 || (absDoubleLeft + absDoubleRight < std::numeric_limits<double>::min()))
         {
-            return absDiff < (epsilonAllowed * std::numeric_limits<double>::min());
+            return absDiff < (EPSILON * std::numeric_limits<double>::min());
         }
 
         /// If neither values is zero, close to the smallest value, we calculate the relative error
         /// IMPORTANT: std::numeric_limits<double>::max() returns the maximum finite value representable by a double and not the largest value
         const auto relativeErrorCalculated = absDiff / (std::min(absDoubleLeft + absDoubleRight, std::numeric_limits<double>::max()));
-        const auto allowedError = relativeErrorCalculated < epsilonAllowed;
+        const auto allowedError = relativeErrorCalculated < EPSILON;
         if (not allowedError)
         {
             NES_TRACE(
                 "Relative error {} is greater than allowed error {} for values {} and {}",
                 relativeErrorCalculated,
-                epsilonAllowed,
+                EPSILON,
                 doubleLeft,
                 doubleRight);
         }
@@ -94,7 +89,4 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
         throw InvalidDynamicCast("Unknown type {}", typeid(T).name());
     }
 }
-
-/// Returns an error message or an empty optional if the query result is correct
-std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap);
 }
