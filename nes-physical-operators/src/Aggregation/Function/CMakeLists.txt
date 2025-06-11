@@ -19,4 +19,5 @@ add_plugin(Sum AggregationPhysicalFunction nes-physical-operators SumAggregation
 
 add_source_files(nes-physical-operators
         AggregationPhysicalFunction.cpp
+        TemporalSequenceAggregationFunction.cpp
 )

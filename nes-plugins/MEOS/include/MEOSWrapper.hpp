@@ -26,15 +26,39 @@ class Meos {
   public:
     /**
      * @brief Initialize MEOS library
-     * @param[in] timezone Timezone of reference
-     * @note The second parameter refers to the error handler, always set to NULL
      */
-    Meos(std::string);
+    Meos();
 
     /**
      * @brief Finalize MEOS library, free the timezone cache
      */
     ~Meos();
+
+    class TemporalInstant {
+    public:
+        explicit TemporalInstant(const std::string& mf_string);
+        ~TemporalInstant();
+
+        bool intersects(const TemporalInstant& point) const;
+
+    private:
+        Temporal* instant;
+    };
+    class TemporalSequence {
+    public:
+        explicit TemporalSequence(double lon, double lat, int t_out);
+        ~TemporalSequence();
+
+        // bool intersects(const TemporalInstant& point) const;
+        // double distance(const TemporalInstant& point) const;
+        double length(const TemporalInstant& instant) const;
+
+    private:
+        Temporal* sequence;
+    };
+
+    std::string convertSecondsToTimestamp(long long seconds);
+
 };
 
 }
