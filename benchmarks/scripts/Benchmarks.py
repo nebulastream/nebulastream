@@ -168,32 +168,35 @@ for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size))
 
 # %% Compare slice store types for different configs over time
 
-def interpolate_and_align_runs(data, param, metric, group_cols, output_points=100, extrapolate_to=(0, 8000)):
+def interpolate_and_align_runs(data, param, metric, group_cols, num_points=100, extrapolate_to=(0, 8000)):
     interpolated_dfs = []
 
     # Determine global range across all runs
-    all_min = extrapolate_to[0]
+    all_min = extrapolate_to[0] or data[param].min()
     all_max = extrapolate_to[1] or data[param].max()
-    x_new = np.linspace(all_min, all_max, output_points)
+    x_common = np.linspace(all_min, all_max, num_points)
 
     for _, group in data.groupby(group_cols):
-        group_sorted = group.sort_values(by=param)
-        x = group_sorted[param].values
-        y = group_sorted[metric].values
+        x = group[param].values
+        y = group[metric].values
 
         # Skip groups that can't be interpolated
-        if len(x) < 2 or np.any(np.isnan(y)):
+        if len(x) < 2 or np.ptp(x) == 0:
             continue
 
         try:
             f_interp = interp1d(x, y, kind='linear', bounds_error=False, fill_value='extrapolate')
-            y_interp = f_interp(x_new)
-            df_interp = pd.DataFrame({param: x_new, metric: y_interp})
-            df_interp['slice_store_type'] = group['slice_store_type'].iloc[0]
-            interpolated_dfs.append(df_interp)
+            y_interp = f_interp(x_common)
+
+            interpolated_df = pd.DataFrame({
+                param: x_common,
+                metric: y_interp,
+                'slice_store_type': group['slice_store_type'].iloc[0]
+            })
+
+            interpolated_dfs.append(interpolated_df)
         except Exception as e:
             print(f"Interpolation failed for a run: {e}")
-            continue
 
     return pd.concat(interpolated_dfs, ignore_index=True) if interpolated_dfs else pd.DataFrame()
 
