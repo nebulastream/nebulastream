@@ -168,39 +168,34 @@ for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size))
 
 # %% Compare slice store types for different configs over time
 
-def interpolate_and_average_runs(data, param, metric, group_cols, time_col, n_points=100):
-    # Normalize time per run
-    normalized_data = normalize_time_per_groups(data, param, group_cols, time_col)
+def interpolate_and_align_runs(data, param, metric, group_cols, output_points=100, extrapolate_to=(0, 8000)):
+    interpolated_dfs = []
 
-    # Create a common time grid
-    common_time_grid = np.linspace(0, 1, n_points)
+    # Determine global range across all runs
+    all_min = extrapolate_to[0]
+    all_max = extrapolate_to[1] or data[param].max()
+    x_new = np.linspace(all_min, all_max, output_points)
 
-    results = []
+    for _, group in data.groupby(group_cols):
+        group_sorted = group.sort_values(by=param)
+        x = group_sorted[param].values
+        y = group_sorted[metric].values
 
-    for store_type, group_df in normalized_data.groupby('slice_store_type'):
-        interpolated_runs = []
+        # Skip groups that can't be interpolated
+        if len(x) < 2 or np.any(np.isnan(y)):
+            continue
 
-        for _, run_df in group_df.groupby('dir_name'):
-            if run_df[param].nunique() < 2:
-                continue  # Need at least two points to interpolate
+        try:
+            f_interp = interp1d(x, y, kind='linear', bounds_error=False, fill_value='extrapolate')
+            y_interp = f_interp(x_new)
+            df_interp = pd.DataFrame({param: x_new, metric: y_interp})
+            df_interp['slice_store_type'] = group['slice_store_type'].iloc[0]
+            interpolated_dfs.append(df_interp)
+        except Exception as e:
+            print(f"Interpolation failed for a run: {e}")
+            continue
 
-            try:
-                interp_func = interp1d(run_df[param], run_df[metric], kind='linear', bounds_error=False, fill_value='extrapolate')
-                interpolated = interp_func(common_time_grid)
-                interpolated_runs.append(interpolated)
-            except Exception as e:
-                print(f"Interpolation failed for a run: {e}")
-
-        if interpolated_runs:
-            avg_metric = np.mean(interpolated_runs, axis=0)
-            temp_df = pd.DataFrame({
-                param: common_time_grid,
-                metric: avg_metric,
-                'slice_store_type': store_type
-            })
-            results.append(temp_df)
-
-    return pd.concat(results, ignore_index=True) if results else pd.DataFrame()
+    return pd.concat(interpolated_dfs, ignore_index=True) if interpolated_dfs else pd.DataFrame()
 
 
 def plot_time_comparison(data, config, metric, label, plot):
@@ -209,15 +204,9 @@ def plot_time_comparison(data, config, metric, label, plot):
     filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
 
     if not filtered_data.empty:
-        averaged_data = interpolate_and_average_runs(
-            filtered_data,
-            param,
-            metric,
-            group_cols=['slice_store_type', 'dir_name'],
-            time_col='window_start'
-        )
+        filtered_data = interpolate_and_align_runs(filtered_data, param, metric, group_cols=['slice_store_type', 'dir_name'])
 
-        if averaged_data.empty:
+        if filtered_data.empty:
             print(f"No valid interpolated data for config: {config}")
             return
 
