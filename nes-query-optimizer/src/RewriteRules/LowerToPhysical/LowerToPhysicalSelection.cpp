@@ -84,20 +84,20 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
             std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.pageSize.getValue(), schemaInCol));
 
 
-        //auto memoryProviderOutRow = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
-           // std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), schemaOut));
+        auto memoryProviderOutRow = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.pageSize.getValue(), schemaOut));
 
         auto schemaOutCol = *std::make_shared<Schema>(schemaOut); //hopefully deep copy
         schemaOutCol.memoryLayoutType = conf.memoryLayout.getValue();
-       // auto memoryProviderOutCol = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(
-         //   std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.pageSize.getValue(), schemaOutCol));
+        auto memoryProviderOutCol = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(
+            std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.pageSize.getValue(), schemaOutCol));
 
 
         auto scanSelection = ScanPhysicalOperator(
             memoryProviderInCol,
             schemaOutCol.getFieldNames()); ///have all fields in memProvider but only used ones in projections
         auto handlerId = getNextOperatorHandlerId();
-        auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderInCol);
+        auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
 
         auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
             scanSelection, schemaInCol, schemaInCol, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE); ///TODO: outputSchema schemaOutCol?
@@ -109,7 +109,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
 
         handlerId = getNextOperatorHandlerId();
         auto scanRow = ScanPhysicalOperator(memoryProviderInRow, schemaIn.getFieldNames());
-        auto emitRow = EmitPhysicalOperator(handlerId, memoryProviderInRow);
+        auto emitRow = EmitPhysicalOperator(handlerId, memoryProviderOutRow);
 
         auto scanWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
             scanRow, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -120,7 +120,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
 
 
         handlerId = getNextOperatorHandlerId();
-        auto scanCol = ScanPhysicalOperator(memoryProviderInCol, schemaOutCol.getFieldNames());
+        auto scanCol = ScanPhysicalOperator(memoryProviderOutCol, schemaOutCol.getFieldNames());
         auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderInCol);
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
