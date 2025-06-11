@@ -28,10 +28,12 @@ unit_multipliers = {'': 1, 'k': 10 ** 3, 'M': 10 ** 6, 'G': 10 ** 9, 'T': 10 ** 
 # This class stores some methods that we need to call after all benchmarks have been run
 class PostProcessing:
 
-    def __init__(self, input_folders, benchmark_config_file, engine_statistics_file, benchmark_statistics_file,
-                 combined_engine_file, combined_benchmark_file, engine_statistics_csv_path,
+    def __init__(self, input_folders, measure_interval, startup_time, benchmark_config_file, engine_statistics_file,
+                 benchmark_statistics_file, combined_engine_file, combined_benchmark_file, engine_statistics_csv_path,
                  benchmark_statistics_csv_path):
         self.input_folders = input_folders
+        self.measure_interval = measure_interval
+        self.startup_time = startup_time
         self.benchmark_config_file = benchmark_config_file
         self.engine_statistics_file = engine_statistics_file
         self.benchmark_statistics_file = benchmark_statistics_file
@@ -44,15 +46,15 @@ class PostProcessing:
         print("Starting post processing...")
 
         number_of_cores = multiprocessing.cpu_count()
-        with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
-            futures = {executor.submit(self.convert_engine_statistics_to_csv, f): f for f in self.input_folders}
-            results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+        # with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+        #     futures = {executor.submit(self.convert_engine_statistics_to_csv, f): f for f in self.input_folders}
+        #     results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
         with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
             futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
         # Now, we can combine the engine and benchmark statistics into two separate csv files
-        self.combine_engine_statistics()
+        # self.combine_engine_statistics()
         self.combine_benchmark_statistics()
 
     # Converting query engine statistics to a csv file
@@ -102,11 +104,6 @@ class PostProcessing:
 
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
-
-        # Shift all timestamps by the minimal start timestamp of any record
-        min_start_time = combined_df['window_start'].min()
-        combined_df['window_start_normalized'] = combined_df['window_start'] - min_start_time
-        # combined_df['window_end_normalized'] = combined_df['window_end'] - min_start_time
 
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.benchmark_statistics_csv_path, index=False)
@@ -251,8 +248,12 @@ class PostProcessing:
             df['window_start_normalized'] = df['window_start'] - min_start_time
             # df['window_end_normalized'] = df['window_end'] - min_start_time
 
+            # Keep only relevant data within the measurement interval
+            df = df[(df['window_start_normalized'] >= self.startup_time) & (
+                        df['window_start_normalized'] <= self.measure_interval)]
+
             # Sort the DataFrame
-            #df = df.sort_values(by=["query_id", "window_start"]).reset_index(drop=True)
+            # df = df.sort_values(by=["query_id", "window_start"]).reset_index(drop=True)
 
             # Write the created DataFrame to the csv file
             df.to_csv(stat_file + ".csv", index=False)
