@@ -29,17 +29,6 @@ RUN apt update -y && apt install \
     pkg-config \
     -y
 
-# Install MEOS dependencies
-RUN apt update -y && apt install \
-    postgresql-server-dev-all \
-    libproj-dev \
-    libgeos-dev \
-    libjson-c-dev \
-    libgsl-dev \
-    libgsl-dev \
-    libxml2-dev \
-    -y
-
 # install llvm based toolchain
 RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
     && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
@@ -64,15 +53,12 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
     && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
     && cmake --version
 
-# Build MobilityDB with MEOS
-RUN git clone https://github.com/MobilityDB/MobilityDB.git -b stable-1.1 /usr/local/src/MobilityDB \
-    && mkdir -p /usr/local/src/MobilityDB/build \
-    && cd /usr/local/src/MobilityDB/build \
-    && cmake -DMEOS=ON -DCMAKE_BUILD_TYPE=Release .. \
-    && make -j$(nproc) \
-    && make install \
-    && ldconfig \
-    && rm -rf /usr/local/src/MobilityDB
+RUN git clone https://github.com/MobilityDB/MobilityDB.git -b stable-1.1 /usr/local/src/MobilityDB
+RUN mkdir -p /usr/local/src/MobilityDB/build 
+RUN cd /usr/local/src/MobilityDB/build && \
+    cmake -DMEOS=ON .. && \
+    make -j$(nproc) && \
+    make install
 
 # default cmake generator is ninja
 ENV CMAKE_GENERATOR=Ninja
