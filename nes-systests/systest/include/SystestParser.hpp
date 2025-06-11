@@ -95,10 +95,10 @@ public:
 
     using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
-    using SLTSourceCallback = std::function<void(SLTSource&&)>;
-    using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using SLTSourceCallback = std::function<void(const SLTSource&)>;
+    using CSVSourceCallback = std::function<void(const CSVSource&)>;
     using SinkCallback = std::function<void(Sink&&)>;
-    using ErrorExpectationCallback = std::function<void(ErrorExpectation&&)>;
+    using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);

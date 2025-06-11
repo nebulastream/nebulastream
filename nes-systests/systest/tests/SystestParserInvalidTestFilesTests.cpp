@@ -42,7 +42,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
     const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
     parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&&)
+        [&](const SystestParser::CSVSource&)
         {
             /// nop, ensure parsing of CSVSource token
         });
@@ -60,7 +60,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
     parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
-        [&](SystestParser::ErrorExpectation&&)
+        [&](const SystestParser::ErrorExpectation&)
         {
             /// nop, ensure parsing
         });
@@ -80,7 +80,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
-        [&](SystestParser::ErrorExpectation&&)
+        [&](const SystestParser::ErrorExpectation&)
         {
             /// nop, ensure parsing
         });

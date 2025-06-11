@@ -14,7 +14,9 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -75,8 +77,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     SystestParser parser{};
     QueryResultMap queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
-    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { sltSourceCallbackCalled = true; });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { csvSourceCallbackCalled = true; });
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
@@ -157,7 +159,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     SystestParser parser{};
     QueryResultMap queryResultMap;
     parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& source)
+        [&](const SystestParser::SLTSource& source)
         {
             sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
@@ -262,7 +264,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     SystestParser parser{};
     QueryResultMap queryResultMap;
     parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& source)
+        [&](const SystestParser::SLTSource& source)
         {
             sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
@@ -314,7 +316,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     parser.registerOnErrorExpectationCallback(
-        [&](SystestParser::ErrorExpectation&& expectation)
+        [&](const SystestParser::ErrorExpectation& expectation)
         {
             ASSERT_EQ(expectation.code, expectErrorCode);
             ASSERT_EQ(expectation.message, expectErrorMessage);
@@ -322,7 +324,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    SystestStarterGlobals systestStarterGlobals{};
+    const SystestStarterGlobals systestStarterGlobals{};
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
