@@ -76,14 +76,13 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
     && cmake --version
 
 # Build MobilityDB with MEOS
-RUN git clone https://github.com/MobilityDB/MobilityDB.git -b stable-1.1 /usr/local/src/MobilityDB \
+RUN git clone https://github.com/MobilityDB/MobilityDB.git -b stable-1.2 /usr/local/src/MobilityDB \
     && mkdir -p /usr/local/src/MobilityDB/build \
     && cd /usr/local/src/MobilityDB/build \
     && cmake -DMEOS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ .. \
     && make -j$(nproc) \
     && make install \
-    && ldconfig \
-    && rm -rf /usr/local/src/MobilityDB
+    && ldconfig
 
 # default cmake generator is ninja
 ENV CMAKE_GENERATOR=Ninja

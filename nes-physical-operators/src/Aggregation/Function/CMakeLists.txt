@@ -18,4 +18,5 @@ add_source_files(nes-physical-operators
         MinAggregationFunction.cpp
         MedianAggregationFunction.cpp
         SumAggregationFunction.cpp
+        TemporalSequenceAggregationFunction.cpp
 )
