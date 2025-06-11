@@ -208,10 +208,7 @@ std::optional<QueryResult> loadQueryResult(const Query& query)
         return result;
     }
 
-    if (firstLine.find('$') != std::string::npos)
-    {
-        result.fields = parseFieldNames(firstLine);
-    }
+    result.fields = parseFieldNames(firstLine);
 
     while (std::getline(resultFile, firstLine))
     {

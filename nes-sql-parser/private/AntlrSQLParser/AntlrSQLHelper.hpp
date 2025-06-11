@@ -15,24 +15,25 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Parsers
 {
 
 class AntlrSQLHelper
 {
-    std::vector<LogicalFunction> projectionFields; ///vector needed for logicalProjectionOperator constructor
+    using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::string source;
@@ -57,18 +58,17 @@ public:
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
     bool hasUnnamedAggregation = false;
-
-    bool isInFunctionCall() const { return not functionBuilder.empty(); }
-    bool isInAggFunction() const { return not windowAggs.empty(); }
+    bool asterisk = false;
+    [[nodiscard]] bool isInFunctionCall() const { return not functionBuilder.empty(); }
+    [[nodiscard]] bool isInAggFunction() const { return not windowAggs.empty(); }
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs;
-    std::vector<LogicalFunction> projections;
     std::vector<Sinks::SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
-    std::vector<FieldAssignmentLogicalFunction> mapBuilder;
+    std::vector<Projection> projectionBuilder;
     std::vector<FieldAccessLogicalFunction> groupByFields;
     std::vector<std::string> joinSources;
     std::optional<LogicalFunction> joinFunction;
@@ -77,31 +77,29 @@ public:
     JoinLogicalOperator::JoinType joinType;
 
     /// Utility variables to keep state between enter/exit parser function calls.
-    size_t opBoolean; ///anonymous token enum in AntlrSQLLexer.h
+    size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h
     std::string opValue;
     std::string newSourceName;
     std::string timestamp;
 
     /// Utility variables used to keep track of the parsing state.
-    int size;
-    int advanceBy;
-    size_t timeUnit; ///anonymous token enum in AntlrSQLLexer.h
-    size_t timeUnitAdvanceBy;
+    int size{};
+    int advanceBy{};
+    size_t timeUnit{}; ///anonymous token enum in AntlrSQLLexer.h
+    size_t timeUnitAdvanceBy{};
     std::optional<int> minimumCount;
     int implicitMapCountHelper = 0;
 
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
-    [[nodiscard]] std::vector<LogicalFunction>& getProjectionFields();
-    [[nodiscard]] std::vector<FieldAssignmentLogicalFunction>& getMapExpressions();
+    [[nodiscard]] std::vector<Projection>& getProjections();
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
-    void addProjectionField(const FieldAccessLogicalFunction& expressionNode);
     [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
-    const std::string getSource() const;
-    void addMapExpression(const FieldAssignmentLogicalFunction& expressionNode);
-    void setMapExpressions(std::vector<FieldAssignmentLogicalFunction> expressions);
+    [[nodiscard]] const std::string getSource() const;
+    void addProjection(Projection expressionNode);
+    void setProjections(std::vector<Projection> expressions);
 };
 }

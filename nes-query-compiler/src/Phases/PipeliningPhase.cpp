@@ -113,6 +113,10 @@ void buildPipelineRecursively(
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        {
+            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+        }
         currentPipeline->addSuccessor(it->second, currentPipeline);
         return;
     }

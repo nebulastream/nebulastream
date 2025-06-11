@@ -190,6 +190,33 @@ size_t Schema::getSizeOfSchemaInBytes() const
     return sizeOfSchemaInBytes;
 }
 
+Schema withoutSourceQualifier(const Schema& input)
+{
+    Schema withoutPrefix{};
+    withoutPrefix.memoryLayoutType = input.memoryLayoutType;
+    auto stripPrefix = [](const std::string& name)
+    {
+        if (const auto pos = name.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR); pos != std::string::npos)
+        {
+            return name.substr(pos + 1);
+        }
+        return name;
+    };
+
+    for (const auto& field : input.getFields())
+    {
+        auto nameWithoutPrefix = stripPrefix(field.name);
+        if (withoutPrefix.contains(nameWithoutPrefix))
+        {
+            throw FieldAlreadyExists("Removing source prefixes would cause duplicated fields. Field `{}` is not unique.", field.name);
+        }
+        withoutPrefix.addField(std::move(nameWithoutPrefix), field.dataType);
+    }
+
+
+    return withoutPrefix;
+}
+
 bool Schema::hasFields() const
 {
     return not fields.empty();

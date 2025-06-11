@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
@@ -35,9 +36,18 @@ namespace NES
 class ProjectionLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    explicit ProjectionLogicalOperator(std::vector<LogicalFunction> functions);
+    class Asterisk
+    {
+        bool value;
 
-    [[nodiscard]] const std::vector<LogicalFunction>& getFunctions() const;
+    public:
+        explicit Asterisk(bool value) : value(value) { }
+        friend ProjectionLogicalOperator;
+    };
+    using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
+    ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
+
+    [[nodiscard]] const std::vector<Projection>& getProjections() const;
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -58,6 +68,8 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
+    [[nodiscard]] std::vector<std::string> getAccessedFields() const;
+
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
     struct ConfigParameters
@@ -68,14 +80,21 @@ public:
             [](const std::unordered_map<std::string, std::string>& config)
             { return NES::Configurations::DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config); }};
 
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> ASTERISK{
+            "asterisk",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return NES::Configurations::DescriptorConfig::tryGet(ASTERISK, config); }};
+
         static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME);
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME, ASTERISK);
     };
 
 private:
     static constexpr std::string_view NAME = "Projection";
-    std::vector<LogicalFunction> functions;
+    std::vector<Projection> projections;
 
+    bool asterisk = false;
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
     std::vector<OriginId> inputOriginIds;

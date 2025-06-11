@@ -22,6 +22,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -182,3 +183,29 @@ struct hash<NES::LogicalFunction>
 }
 
 FMT_OSTREAM(NES::LogicalFunction);
+
+namespace NES
+{
+class FieldIdentifier
+{
+    std::string fieldName;
+
+public:
+    explicit FieldIdentifier(std::string fieldName) : fieldName(std::move(fieldName)) { }
+    [[nodiscard]] const std::string& getFieldName() const { return fieldName; }
+    auto operator<=>(const FieldIdentifier&) const = default;
+};
+}
+
+
+namespace std
+{
+template <>
+struct hash<NES::FieldIdentifier>
+{
+    std::size_t operator()(const NES::FieldIdentifier& identifier) const noexcept
+    {
+        return std::hash<std::string>{}(identifier.getFieldName());
+    }
+};
+}

@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 
+#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -37,10 +38,6 @@ std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 {
     return havingClauses;
 }
-std::vector<LogicalFunction>& AntlrSQLHelper::getProjectionFields()
-{
-    return projectionFields;
-}
 
 /// methods to update the clauses maps/lists
 void AntlrSQLHelper::setSource(std::string sourceName)
@@ -55,29 +52,25 @@ void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
 {
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addProjectionField(const FieldAccessLogicalFunction& expressionNode)
-{
-    this->projectionFields.emplace_back(expressionNode);
-}
 
 std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
 {
     return {};
 }
 
-void AntlrSQLHelper::addMapExpression(const FieldAssignmentLogicalFunction& expressionNode)
+void AntlrSQLHelper::addProjection(Projection expressionNode)
 {
-    auto pos = this->mapBuilder.begin();
-    this->mapBuilder.insert(pos, expressionNode);
+    auto pos = this->projectionBuilder.begin();
+    this->projectionBuilder.emplace(pos, std::move(expressionNode));
 }
-std::vector<FieldAssignmentLogicalFunction>& AntlrSQLHelper::getMapExpressions()
+std::vector<AntlrSQLHelper::Projection>& AntlrSQLHelper::getProjections()
 {
-    return mapBuilder;
+    return projectionBuilder;
 }
 
-void AntlrSQLHelper::setMapExpressions(std::vector<FieldAssignmentLogicalFunction> expressions)
+void AntlrSQLHelper::setProjections(std::vector<Projection> expressions)
 {
-    this->mapBuilder = std::move(expressions);
+    this->projectionBuilder = std::move(expressions);
 }
 
 }

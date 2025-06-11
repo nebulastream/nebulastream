@@ -14,8 +14,13 @@ Source stream2 UINT64 id UINT64 value UINT64 timestamp
 2,2,2002
 2,2,2003
 
-SINK sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+Source stream3 UINT64 id UINT64 id2 UINT64 value UINT64 timestamp
+1,2,2,3000
+1,2,2,3001
+1,2,2,3002
+1,2,2,3003
 
+SINK sink UINT64 id UINT64 value UINT64 timestamp
 # Simple Union
 SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
 ----
@@ -27,3 +32,107 @@ SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
 2,2,2001
 2,2,2002
 2,2,2003
+
+# Union with projection to fixup the schema
+SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink
+----
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+2,2,3000
+2,2,3001
+2,2,3002
+2,2,3003
+
+SINK sink2 UINT64 timestamp UINT8 origin
+# Union with selection to fixup the schema and projection of constant into the schema
+SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2
+----
+1000,1
+1001,1
+1002,1
+1003,1
+1000,2
+1001,2
+
+# nested union with projection to fixup the schema
+SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink
+----
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
+2,2,3000
+2,2,3001
+2,2,3002
+2,2,3003
+
+SINK sink3 UINT64 timestamp
+
+# nested union with projection to fixup the schema
+SELECT timestamp
+FROM (
+    SELECT * FROM stream UNION SELECT * FROM stream
+)
+INTO sink3
+----
+1000
+1001
+1002
+1003
+1000
+1001
+1002
+1003
+
+# CURRENTLY WindowAggregation and Unions are broken in the sense that an EoS will not flush the window state!
+
+Source stream4 UINT64 value UINT64 timestamp
+1,1000
+12,1001
+32,1002
+1,2001
+
+Source stream5 UINT64 value UINT64 timestamp
+65,1000
+21,1001
+3,1002
+2,2001
+
+SINK sink4 UINT64 max_value
+SELECT MAX(value) as max_value
+FROM (
+    SELECT * FROM stream4 UNION SELECT * FROM stream5
+)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sink4
+----
+65
+
+# This demonstrates that an aggregation only progresses the water mark if all origins watermark progresses
+# Stream6 does not send a timestamp > 2000 so the window never triggers and no tuple is produced
+Source stream6 UINT64 value UINT64 timestamp
+1,1000
+12,1001
+32,1002
+1,1003
+
+Source stream7 UINT64 value UINT64 timestamp
+65,1000
+21,1001
+3,1002
+2,2003
+
+SINK sink5 UINT64 max_value
+SELECT MAX(value) as max_value
+FROM (
+    SELECT * FROM stream6 UNION SELECT * FROM stream7
+)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sink4
+----

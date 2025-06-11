@@ -12,8 +12,8 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 7,21,21000
 
 SINK sinkId UINT64 stream$id
-SINK sinkRenamedId UINT64 stream$new_id
-SINK sinkRenamedIdValue UINT64 stream$new_id UINT64 stream$value
+SINK sinkRenamedId UINT64 new_id
+SINK sinkRenamedIdValue UINT64 new_id UINT64 stream$value
 SINK sinkValue UINT64 stream$value
 SINK sinkTimestamp UINT64 stream$timestamp
 SINK sinkIdValue UINT64 stream$id UINT64 stream$value

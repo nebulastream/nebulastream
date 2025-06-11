@@ -349,11 +349,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             /// The user specified named expression (field access or function) with 'AS THE_NAME'
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
-            const auto attribute = helpers.top().functionBuilder.back();
+            const auto attribute = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            auto renamedAttribute = FieldAssignmentLogicalFunction(FieldAccessLogicalFunction(context->getText()), attribute);
-            helpers.top().addProjectionField(renamedAttribute.getField());
-            helpers.top().mapBuilder.push_back(renamedAttribute);
+            helpers.top().projectionBuilder.emplace_back(FieldIdentifier(context->getText()), attribute);
         }
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
@@ -366,8 +364,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
             "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
         helpers.top().functionBuilder.pop_back();
+        helpers.top().projectionBuilder.emplace_back(std::nullopt, aggFunc->asField);
         helpers.top().hasUnnamedAggregation = false;
-        helpers.top().addProjectionField(aggFunc->asField);
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
@@ -432,17 +430,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
     }
-    for (const auto& mapExpr : helpers.top().mapBuilder)
-    {
-        queryPlan = LogicalPlanBuilder::addMap(mapExpr, queryPlan);
-    }
-    /// We handle projections AFTER map functions, because:
-    /// SELECT (id * 3) as new_id FROM ...
-    ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
-    if (not helpers.top().getProjectionFields().empty())
-    {
-        queryPlan = LogicalPlanBuilder::addProjection(std::move(helpers.top().getProjectionFields()), queryPlan);
-    }
+
+    queryPlan = LogicalPlanBuilder::addProjection(helpers.top().projectionBuilder, helpers.top().asterisk, queryPlan);
+
     if (helpers.top().windowType != nullptr)
     {
         for (auto havingExpr = helpers.top().getHavingClauses().rbegin(); havingExpr != helpers.top().getHavingClauses().rend();
@@ -559,35 +549,17 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
 
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
-    /// If the current functions consist of a single field access, the user simply specified a field/attribute to access
-    if (helpers.top().functionBuilder.size() == 1 and helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>()
-        and not helpers.top().hasUnnamedAggregation)
+    AntlrSQLHelper& helper = helpers.top();
+    if (context->name == nullptr and helper.functionBuilder.size() == 1
+        and helper.functionBuilder.back().tryGet<FieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
         /// Project onto the specified field and remove the field access from the active functions.
-        helpers.top().addProjectionField(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>());
+        helpers.top().projectionBuilder.emplace_back(std::nullopt, std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
     }
-    /// The user either specified a '*', in which case the functionBuilder should be empty, or a function on the attribute
-    /// (e.g., SELECT id + 2 ...). If the user did not specify a name (... AS THE_NAME), we need to generate a name.
-    else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and not helpers.top().hasUnnamedAggregation)
+    else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())
     {
-        const auto mapFunction = helpers.top().functionBuilder.back();
-        const auto fieldAccessFunctions = mapFunction.getChildren()
-            | std::views::transform([](auto& child) { return child.template tryGet<FieldAccessLogicalFunction>(); })
-            | std::ranges::to<std::vector>();
-
-        if (!(fieldAccessFunctions.size() == 1 and fieldAccessFunctions.front().has_value()))
-        {
-            throw InvalidQuerySyntax("A named function must have exactly one valid FieldAccessLogicalFunction child.");
-        }
-        const auto implicitFieldName
-            = fmt::format("{}_{}", fieldAccessFunctions.front().value().getFieldName(), helpers.top().implicitMapCountHelper++);
-        const auto mapFunctionWithFieldAssignment
-            = FieldAssignmentLogicalFunction(FieldAccessLogicalFunction(implicitFieldName), mapFunction);
-        helpers.top().mapBuilder.push_back(mapFunctionWithFieldAssignment);
-        /// Projections always follow map functions. Thus, we need to project on the field assigned by the map function.
-        helpers.top().addProjectionField(mapFunctionWithFieldAssignment.getField());
-        helpers.top().functionBuilder.pop_back();
+        helper.asterisk = true;
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function and we need to generate one.
     else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation)
@@ -601,8 +573,8 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         lastAggregation->asField = asField;
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.push_back(lastAggregation);
+        helpers.top().projectionBuilder.emplace_back(std::nullopt, asField);
         helpers.top().hasUnnamedAggregation = false;
-        helpers.top().addProjectionField(asField);
     }
     AntlrSQLBaseListener::exitNamedExpression(context);
 }

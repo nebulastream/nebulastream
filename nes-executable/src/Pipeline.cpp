@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Pipeline.hpp>
+
 #include <atomic>
 #include <cstdint>
 #include <iterator>
@@ -31,7 +33,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
-#include <Pipeline.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 
@@ -109,24 +110,19 @@ bool Pipeline::isSinkPipeline() const
     return getRootOperator().tryGet<SinkPhysicalOperator>().has_value();
 }
 
-void Pipeline::prependOperator(PhysicalOperator newOp)
+void Pipeline::prependOperator(const PhysicalOperator& newOp)
 {
     PRECONDITION(not(isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
-    newOp.setChild(getRootOperator());
-    setRootOperator(newOp);
+    setRootOperator(newOp.withChild(getRootOperator()));
 }
 
-static PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperator& newOp)
+static PhysicalOperator appendOperatorHelper(const PhysicalOperator& op, const PhysicalOperator& newOp)
 {
     if (not op.getChild())
     {
-        op.setChild(newOp);
-        return op;
+        return op.withChild(newOp);
     }
-    PhysicalOperator child = op.getChild().value();
-    child = appendOperatorHelper(child, newOp);
-    op.setChild(child);
-    return op;
+    return op.withChild(appendOperatorHelper(op.getChild().value(), newOp));
 }
 
 void Pipeline::appendOperator(const PhysicalOperator& newOp)

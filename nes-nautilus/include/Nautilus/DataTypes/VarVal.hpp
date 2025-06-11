@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <memory>
+#include <cstdint>
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -25,6 +25,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <val_concepts.hpp>
 
 namespace NES::Nautilus
 {
@@ -90,7 +91,7 @@ namespace detail
 {
 template <typename... T>
 using var_val_helper = std::variant<VariableSizedData, nautilus::val<T>...>;
-using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double>;
+using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
 /// Lookup if a T is in a Variant

@@ -1,0 +1,32 @@
+# name: bug/UnionInSubquery.test
+# description: Currently the sql parser does not properly parse the nested union query if it is a subquery
+               This issue is tracked under TODO #912
+# groups: [Union]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+
+SINK sink UINT64 timestamp
+
+# triple union query as a subquery as a nested query.
+SELECT timestamp
+FROM (
+    SELECT * FROM stream UNION SELECT * FROM stream UNION SELECT * FROM stream
+)
+INTO sink
+----
+1000
+1001
+1002
+1003
+1000
+1001
+1002
+1003
+1000
+1001
+1002
+1003
