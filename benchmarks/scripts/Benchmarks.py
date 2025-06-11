@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 
 
 # Load the CSV file
@@ -167,17 +168,66 @@ for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size))
 
 # %% Compare slice store types for different configs over time
 
+def interpolate_and_average_runs(data, param, metric, group_cols, time_col, n_points=100):
+    # Normalize time per run
+    normalized_data = normalize_time_per_groups(data, param, group_cols, time_col)
+
+    # Create a common time grid
+    common_time_grid = np.linspace(0, 1, n_points)
+
+    results = []
+
+    for store_type, group_df in normalized_data.groupby('slice_store_type'):
+        interpolated_runs = []
+
+        for _, run_df in group_df.groupby('dir_name'):
+            if run_df[param].nunique() < 2:
+                continue  # Need at least two points to interpolate
+
+            try:
+                interp_func = interp1d(run_df[param], run_df[metric], kind='linear', bounds_error=False, fill_value='extrapolate')
+                interpolated = interp_func(common_time_grid)
+                interpolated_runs.append(interpolated)
+            except Exception as e:
+                print(f"Interpolation failed for a run: {e}")
+
+        if interpolated_runs:
+            avg_metric = np.mean(interpolated_runs, axis=0)
+            temp_df = pd.DataFrame({
+                param: common_time_grid,
+                metric: avg_metric,
+                'slice_store_type': store_type
+            })
+            results.append(temp_df)
+
+    return pd.concat(results, ignore_index=True) if results else pd.DataFrame()
+
+
 def plot_time_comparison(data, config, metric, label, plot):
     param = 'window_start_normalized'
     filtered_data = filter_by_config(data, config)
+    filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
 
     if not filtered_data.empty:
+        averaged_data = interpolate_and_average_runs(
+            filtered_data,
+            param,
+            metric,
+            group_cols=['slice_store_type', 'dir_name'],
+            time_col='window_start'
+        )
+
+        if averaged_data.empty:
+            print(f"No valid interpolated data for config: {config}")
+            return
+
         if plot == 1:
             normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
             data, unit = convert_metric_units(normalized_data, param, metric)
             #data, unit = [normalized_data, 'B']
         if plot == 2:
             param = 'window_start'
+            filtered_data[param] = filtered_data[param] / 1000
             #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
             data, unit = convert_metric_units(filtered_data, param, metric)
             #data, unit = [shifted_data, 'B']
@@ -186,6 +236,7 @@ def plot_time_comparison(data, config, metric, label, plot):
             data, unit = convert_metric_units(normalized_data, param, metric)
             #data, unit = [normalized_data, 'B']
         if plot == 4:
+            #filtered_data[param] = filtered_data[param] / 1000
             #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
             data, unit = convert_metric_units(filtered_data, param, metric)
             #data, unit = [shifted_data, 'B']
@@ -203,7 +254,7 @@ def plot_time_comparison(data, config, metric, label, plot):
         plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
 
         plt.title(f'Effect of {param} on {label}')
-        plt.xlabel(param)
+        plt.xlabel(f'{param} (sec)')
         plt.ylabel(f'{label} ({unit})')
         plt.legend(title='Slice Store Type')
         plt.show()
@@ -242,7 +293,7 @@ filtered_data = filter_by_config(df, configs[0]).sort_values(by="window_start")
 plots = [1, 2, 3, 4]
 print(f'number of common configs: {len(configs)}')
 for config in configs:
-    for plot in plots:
+    for plot in [4]:
         plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec', plot)
         #plot_time_comparison(df, config, 'memory', 'Memory', plot)
 
