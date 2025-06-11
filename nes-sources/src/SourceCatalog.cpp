@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <Sources/SourceCatalog.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -25,11 +28,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
-
-#include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -65,10 +66,8 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 
 std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
-    WorkerId workerId,
-    const std::string& sourceType,
-    const int buffersInLocalPool,
-    Configurations::DescriptorConfig::Config&& descriptorConfig,
+    const std::string_view sourceType,
+    std::unordered_map<std::string, std::string> descriptorConfig,
     const ParserConfig& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
@@ -79,12 +78,16 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist", logicalSource.getLogicalSourceName());
         return std::nullopt;
     }
-
     auto id = nextPhysicalSourceId.fetch_add(1);
-    SourceDescriptor descriptor{logicalSource, id, workerId, sourceType, buffersInLocalPool, (std::move(descriptorConfig)), parserConfig};
+    auto descriptorConfigOpt = Sources::SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
+    if (not descriptorConfigOpt.has_value())
+    {
+        return std::nullopt;
+    }
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfig};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
-    NES_DEBUG("Successfully registered new physical source of type {} on worker {} with id {}", descriptor.getSourceType(), workerId, id);
+    NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
     return descriptor;
 }
 

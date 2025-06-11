@@ -18,11 +18,12 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
-#include <expected>
+#include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
@@ -36,6 +37,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
@@ -120,7 +123,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
         if (!fileExtension || entryExt == desiredExtension)
         {
-            TestFile testfile(entry.path());
+            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
             testFiles.insert({entry.path().string(), testfile});
         }
     }
@@ -133,15 +136,30 @@ static void loadQueriesFromTestFile(
     const std::filesystem::path& testDataDir,
     Systest::SystestBinder& systestBinder)
 {
-    auto loadedPlans = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
+    SLTSinkProvider sltSinkProvider{testfile.sinkCatalog};
+    auto loadedPlans
+        = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, testfile.sourceCatalog, sltSinkProvider);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (auto& [boundPlan, sourceCatalog, queryDefinition, sinkSchema, sourcesToFilePaths, expectedError] : loadedPlans)
+    for (auto& [boundPlan, queryDefinition, sourcesToFilePaths, outputSinkExpected, expectedError] : loadedPlans)
     {
+        if (not outputSinkExpected.has_value())
+        {
+            testfile.queries.emplace_back(
+                testfile.name(),
+                queryDefinition,
+                testfile.file,
+                std::unexpected{outputSinkExpected.error()},
+                queryIdInFile,
+                workingDir,
+                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
+                Schema{},
+                expectedError);
+        }
         if (boundPlan.has_value())
         {
-            const CLI::LegacyOptimizer optimizer{sourceCatalog};
+            const CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
             auto optimizedPlan = optimizer.optimize(boundPlan.value());
             std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
             for (const auto& logicalSourceOperator : NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan))
@@ -173,7 +191,7 @@ static void loadQueriesFromTestFile(
                         queryIdInFile,
                         workingDir,
                         sourceNamesToFilepathAndCountForQuery,
-                        sinkSchema,
+                        *outputSinkExpected.value().getSchema(),
                         expectedError);
                 }
             }
@@ -187,7 +205,7 @@ static void loadQueriesFromTestFile(
                     queryIdInFile,
                     workingDir,
                     sourceNamesToFilepathAndCountForQuery,
-                    sinkSchema,
+                    *outputSinkExpected.value().getSchema(),
                     expectedError);
             }
         }
@@ -201,7 +219,7 @@ static void loadQueriesFromTestFile(
                 queryIdInFile,
                 workingDir,
                 std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
-                sinkSchema,
+                outputSinkExpected.value().getSchema() != nullptr ? *outputSinkExpected.value().getSchema() : Schema{},
                 expectedError);
         }
         ++queryIdInFile;
@@ -246,12 +264,23 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
-TestFile::TestFile(std::filesystem::path file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
+TestFile::TestFile(
+    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+    : file(weakly_canonical(file))
+    , groups(readGroups(*this))
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog)) { };
 
-TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+TestFile::TestFile(
+    const std::filesystem::path& file,
+    std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber,
+    std::shared_ptr<SourceCatalog> sourceCatalog,
+    std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
-    , groups(readGroups(*this)) { };
+    , groups(readGroups(*this))
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog)) { };
 
 std::vector<Query> loadQueries(
     TestFileMap& testmap,
@@ -324,7 +353,7 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            TestFile testfile = TestFile(directlySpecifiedTestFiles);
+            auto testfile = TestFile{directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>()};
             return TestFileMap{{testfile.name(), testfile}};
         }
         else
@@ -337,7 +366,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
                 testNumbers.push_back(scalarOption.getValue());
             }
 
-            TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
+            auto testfile
+                = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
             return TestFileMap{{testfile.name(), testfile}};
         }
     }

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <InputFormatterTestUtil.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -48,7 +50,6 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace NES::InputFormatterTestUtil
@@ -161,17 +162,12 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     const int numberOfLocalBuffersInSource)
 {
-    std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
-    auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
+    std::unordered_map<std::string, std::string> fileSourceConfiguration{
+        {"filePath", filePath}, {"numberOfBuffersInLocalPool", std::to_string(numberOfLocalBuffersInSource)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(),
-        INITIAL<WorkerId>,
-        "File",
-        numberOfLocalBuffersInSource,
-        std::move(validatedSourceConfiguration),
-        ParserConfig{});
+    const auto sourceDescriptor
+        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }

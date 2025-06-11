@@ -33,6 +33,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -94,8 +96,13 @@ struct RunningQuery
 
 struct TestFile
 {
-    explicit TestFile(std::filesystem::path file);
-    explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
+    explicit TestFile(
+        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
+    explicit TestFile(
+        const std::filesystem::path& file,
+        std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber,
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog);
     [[nodiscard]] std::string getLogFilePath() const;
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
@@ -103,6 +110,8 @@ struct TestFile
     std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
     std::vector<Query> queries;
+    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<SinkCatalog> sinkCatalog;
 };
 
 /// intermediate representation storing all considered test files

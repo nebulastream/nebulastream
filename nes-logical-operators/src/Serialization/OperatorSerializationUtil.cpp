@@ -63,6 +63,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         sinkOperator.id = OperatorId(serializedOperator.operator_id());
         sinkOperator.sinkName = std::get<std::string>(sinkName);
         sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+
         return sinkOperator;
     }
 
@@ -146,22 +147,14 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
         sourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    return SourceDescriptor{
-        logicalSource,
-        physicalSourceId,
-        workerId,
-        sourceType,
-        buffersInLocalPool,
-        (std::move(sourceDescriptorConfig)),
-        deserializedParserConfig};
+    return SourceDescriptor{physicalSourceId, logicalSource, sourceType, (std::move(sourceDescriptorConfig)), deserializedParserConfig};
 }
 
-std::unique_ptr<Sinks::SinkDescriptor>
-OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
+Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
-    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
+    auto sinkName = serializableSinkDescriptor.sinkname();
+    auto schema = std::make_shared<Schema>(SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema()));
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
@@ -171,10 +164,7 @@ OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescr
         sinkDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(desciptor);
     }
 
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
-    sinkDescriptor->schema = schema;
-    return sinkDescriptor;
+    return Sinks::SinkDescriptor{std::move(sinkName), std::move(schema), std::move(sinkType), std::move(sinkDescriptorConfig)};
 }
 
 

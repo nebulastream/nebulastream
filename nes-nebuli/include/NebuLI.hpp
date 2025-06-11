@@ -17,9 +17,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <experimental/propagate_const>
@@ -37,11 +39,15 @@ namespace NES::CLI
 class LegacyOptimizer
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 
 public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
-    explicit LegacyOptimizer(const std::shared_ptr<const SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
+    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    {
+    }
 };
 class Nebuli
 {
