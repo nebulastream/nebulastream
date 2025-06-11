@@ -203,55 +203,55 @@ def interpolate_and_align_runs(data, param, metric, group_cols, num_points=100, 
 
 def plot_time_comparison(data, config, metric, label, plot):
     param = 'window_start_normalized'
+
     filtered_data = filter_by_config(data, config)
     filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
+    if filtered_data.empty:
+        print(f'No data available for config: {config}.')
+        return
 
-    if not filtered_data.empty:
-        filtered_data = interpolate_and_align_runs(filtered_data, param, metric, group_cols=['slice_store_type', 'dir_name'])
+    interpolated_data = interpolate_and_align_runs(filtered_data, param, metric, ['slice_store_type', 'dir_name'])
+    if interpolated_data.empty:
+        print(f"No valid interpolated data for config: {config}")
+        return
 
-        if filtered_data.empty:
-            print(f"No valid interpolated data for config: {config}")
-            return
+    if plot == 1:
+        normalized_data = normalize_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], 'window_start')
+        data, unit = convert_metric_units(normalized_data, param, metric)
+        #data, unit = [normalized_data, 'B']
+    if plot == 2:
+        param = 'window_start'
+        interpolated_data[param] = interpolated_data[param] / 1000
+        #shifted_data = shift_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], 'window_start')
+        data, unit = convert_metric_units(interpolated_data, param, metric)
+        #data, unit = [shifted_data, 'B']
+    if plot == 3:
+        normalized_data = normalize_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], param)
+        data, unit = convert_metric_units(normalized_data, param, metric)
+        #data, unit = [normalized_data, 'B']
+    if plot == 4:
+        #interpolated_data[param] = interpolated_data[param] / 1000
+        #shifted_data = shift_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], param)
+        data, unit = convert_metric_units(interpolated_data, param, metric)
+        #data, unit = [shifted_data, 'B']
 
-        if plot == 1:
-            normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
-            data, unit = convert_metric_units(normalized_data, param, metric)
-            #data, unit = [normalized_data, 'B']
-        if plot == 2:
-            param = 'window_start'
-            filtered_data[param] = filtered_data[param] / 1000
-            #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
-            data, unit = convert_metric_units(filtered_data, param, metric)
-            #data, unit = [shifted_data, 'B']
-        if plot == 3:
-            normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
-            data, unit = convert_metric_units(normalized_data, param, metric)
-            #data, unit = [normalized_data, 'B']
-        if plot == 4:
-            #filtered_data[param] = filtered_data[param] / 1000
-            #shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
-            data, unit = convert_metric_units(filtered_data, param, metric)
-            #data, unit = [shifted_data, 'B']
+    plt.figure(figsize=(14, 6))
+    ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None)  # TODO errorbar='sd'
 
-        plt.figure(figsize=(14, 6))
-        ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None)
+    # Add labels for min and max values of metric for each slice store type
+    add_min_max_labels_per_slice_store(data, metric, ax, param)
 
-        # Add labels for min and max values of metric for each slice store type
-        add_min_max_labels_per_slice_store(data, metric, ax, param)
+    # Add config below
+    mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)
+    plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
 
-        # Add config below
-        mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
-        plt.tight_layout()
-        plt.subplots_adjust(bottom=0.15)
-        plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
-
-        plt.title(f'Effect of {param} on {label}')
-        plt.xlabel(f'{param} (sec)')
-        plt.ylabel(f'{label} ({unit})')
-        plt.legend(title='Slice Store Type')
-        plt.show()
-    else:
-        print(f'No data available for the common configuration for {metric}.')
+    plt.title(f'Effect of {param} on {label}')
+    plt.xlabel(f'{param} (sec)')
+    plt.ylabel(f'{label} ({unit})')
+    plt.legend(title='Slice Store Type')
+    plt.show()
 
 
 specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
