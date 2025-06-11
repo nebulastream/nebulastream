@@ -19,9 +19,9 @@
 namespace NES::Nautilus::Interface
 {
 
-void FileBackedPagedVector::appendAllPages(PagedVector& other)
+void FileBackedPagedVector::moveAllPages(PagedVector& other)
 {
-    PagedVector::appendAllPages(other);
+    PagedVector::moveAllPages(other);
     if (Util::instanceOfConst<FileBackedPagedVector>(other))
     {
         Util::asConst<FileBackedPagedVector>(other).keyPages.clear();
@@ -123,7 +123,7 @@ void FileBackedPagedVector::readFromFile(
             // TODO just append new page disregarding the number of tuples on the last page?
             const auto tupleSize = memoryLayout->getTupleSize();
             appendPageIfFull(bufferProvider, memoryLayout);
-            auto lastPage = pages.back().buffer;
+            auto lastPage = pages.getLastPage();
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
 
@@ -149,7 +149,7 @@ void FileBackedPagedVector::readFromFile(
                 }
 
                 appendPageIfFull(bufferProvider, memoryLayout);
-                lastPage = pages.back().buffer;
+                lastPage = pages.getLastPage();
                 lastPagePtr = lastPage.getBuffer();
                 tuplesToRead = memoryLayout->getCapacity();
                 numTuplesOnDisk -= tuplesRead;
@@ -182,7 +182,7 @@ void FileBackedPagedVector::truncate(const FileLayout fileLayout)
             break;
         }
     }
-    pages.clear();
+    pages.clearPages();
 }
 
 uint64_t FileBackedPagedVector::getTotalNumberOfEntries() const
@@ -197,7 +197,7 @@ uint64_t FileBackedPagedVector::getTotalNumberOfEntries() const
 
 uint64_t FileBackedPagedVector::getNumberOfPages() const
 {
-    return pages.size() + keyPages.size();
+    return pages.getNumberOfPages() + keyPages.size();
 }
 
 uint64_t FileBackedPagedVector::getNumberOfTuplesOnDisk() const
@@ -342,9 +342,9 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        auto& lastPage = pages.back().buffer;
+        auto& lastPage = pages.getLastPage();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
-        auto* lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
+        auto* lastPagePtr = const_cast<int8_t*>(lastPage.getBuffer()) + numTuplesLastPage * memoryLayout->getTupleSize();
 
         // TODO get new key page only when all tuples were read and do not check for each tuple
         if (keyPagePtr != nullptr)

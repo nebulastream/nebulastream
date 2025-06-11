@@ -39,9 +39,8 @@ public:
     /// Returns the pointer to the PagedVector on either side.
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
-
-    Nautilus::Interface::FileBackedPagedVector* getPagedVectorRef(JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+    [[nodiscard]] Nautilus::Interface::FileBackedPagedVector*
+    getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a write lock for combinePagedVectorsMutex.
     void combinePagedVectors();
@@ -56,12 +55,12 @@ public:
     /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
     /// Returns zero if paged vectors were already combined.
     size_t getStateSizeInMemoryForThreadId(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
     /// Returns zero if paged vectors were already combined.
     size_t getStateSizeOnDiskForThreadId(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;

@@ -59,6 +59,7 @@ struct MemoryControllerInfo
 struct UpdateSlicesMetaData
 {
     WorkerThreadId threadId;
+    JoinBuildSideType joinBuildSide;
     BufferMetaData bufferMetaData;
 };
 
@@ -102,12 +103,11 @@ public:
         boost::asio::io_context& ioCtx,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        JoinBuildSideType joinBuildSide,
         const UpdateSlicesMetaData& metaData);
 
 private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    getSlicesToUpdate(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, JoinBuildSideType joinBuildSide, WorkerThreadId threadId);
+    getSlicesToUpdate(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,

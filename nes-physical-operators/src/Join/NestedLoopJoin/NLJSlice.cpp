@@ -63,45 +63,30 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
-    return getPagedVectorRef(JoinBuildSideType::Left, workerThreadId);
+    return getPagedVectorRef(workerThreadId, JoinBuildSideType::Left);
 }
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
-    return getPagedVectorRef(JoinBuildSideType::Right, workerThreadId);
+    return getPagedVectorRef(workerThreadId, JoinBuildSideType::Right);
 }
 
 Nautilus::Interface::FileBackedPagedVector*
-NLJSlice::getPagedVectorRef(const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
-{
-    switch (joinBuildSide)
-    {
-        case JoinBuildSideType::Left: {
-            const auto pos = threadId % leftPagedVectors.size();
-            return leftPagedVectors[pos].get();
-        }
-        case JoinBuildSideType::Right: {
-            const auto pos = threadId % rightPagedVectors.size();
-            return rightPagedVectors[pos].get();
-        }
-        default:
-            throw UnknownJoinBuildSide();
-    }
-}
-
-Nautilus::Interface::PagedVector*
 NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {
-        case JoinBuildSideType::Right:
-            return getPagedVectorRefRight(workerThreadId);
-        case JoinBuildSideType::Left:
-            return getPagedVectorRefLeft(workerThreadId);
+        case JoinBuildSideType::Left: {
+            const auto pos = workerThreadId % leftPagedVectors.size();
+            return leftPagedVectors[pos].get();
+        }
+        case JoinBuildSideType::Right: {
+            const auto pos = workerThreadId % rightPagedVectors.size();
+            return rightPagedVectors[pos].get();
+        }
     }
     std::unreachable();
 }
-
 
 void NLJSlice::combinePagedVectors()
 {
@@ -149,28 +134,28 @@ bool NLJSlice::pagedVectorsCombined() const
 }
 
 size_t NLJSlice::getStateSizeInMemoryForThreadId(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId)
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     const std::scoped_lock lock(combinePagedVectorsMutex);
     if (combinedPagedVectors)
     {
         return 0;
     }
-    const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
+    const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
     return pageSize * numPages;
 }
 
 size_t NLJSlice::getStateSizeOnDiskForThreadId(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId)
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     const std::scoped_lock lock(combinePagedVectorsMutex);
     if (combinedPagedVectors)
     {
         return 0;
     }
-    const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
+    const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
     const auto entrySize = memoryLayout->getTupleSize();
     const auto numTuples = pagedVector->getNumberOfTuplesOnDisk();
     return entrySize * numTuples;

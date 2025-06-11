@@ -71,6 +71,9 @@ protected:
         const TupleBufferWithCumulativeSum& operator[](size_t index) const;
         [[nodiscard]] uint64_t getNumberOfTuplesLastPage() const;
 
+        [[nodiscard]] std::vector<TupleBufferWithCumulativeSum>::iterator begin();
+        [[nodiscard]] std::vector<TupleBufferWithCumulativeSum>::iterator end();
+
         /// Finds the index in the vector<TupleBufferWithCumulativeSum> for an entry position
         [[nodiscard]] std::optional<size_t> findIdx(uint64_t entryPos) const;
         void addPage(const Memory::TupleBuffer& newPage);

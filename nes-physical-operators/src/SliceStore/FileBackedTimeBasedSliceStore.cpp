@@ -292,7 +292,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     boost::asio::io_context& ioCtx,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const JoinBuildSideType joinBuildSide,
     const UpdateSlicesMetaData& metaData)
 {
     const auto& [watermark, seqNumber, originId] = metaData.bufferMetaData;
@@ -303,8 +302,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     }
 
     /// Write and read all selected slices to and from disk
+    const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (const auto& [slice, operation] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
+    for (const auto& [slice, operation] : getSlicesToUpdate(memoryLayout, threadId, joinBuildSide))
     {
         if (slice == nullptr)
         {
@@ -319,7 +319,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         if (!nljSlice->pagedVectorsCombined())
         {
             const auto sliceEnd = slice->getSliceEnd();
-            auto* const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
+            auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
             switch (operation)
             {
                 case FileOperation::READ: {
@@ -362,7 +362,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const JoinBuildSideType joinBuildSide, const WorkerThreadId threadId)
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     /// Reserve space for every altered slice as we might update al of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate(alteredSlicesPerThread.size());
@@ -371,8 +371,8 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, joinBuildSide, threadId);
-        const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
+        const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, threadId, joinBuildSide);
+        const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, threadId, joinBuildSide);
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
@@ -432,7 +432,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
             auto* const pagedVector
-                = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
+                = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
         }
 
