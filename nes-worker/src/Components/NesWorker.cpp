@@ -797,7 +797,7 @@ bool NesWorker::notifyQueryStatusChange(SharedQueryId sharedQueryId,
     return false;
 }
 
-void NesWorker::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) {
+void NesWorker::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char>& binaryStorage) {
     coordinatorRpcClient->sendCheckpointRpc(nesPartitionId, binaryStorage);
 }
 

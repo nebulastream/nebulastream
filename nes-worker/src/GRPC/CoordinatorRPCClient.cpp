@@ -585,7 +585,7 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     return false;
 }
 
-bool CoordinatorRPCClient::sendCheckpointRpc(uint64_t nesPartitionId, std::vector<char> binaryData) {
+bool CoordinatorRPCClient::sendCheckpointRpc(uint64_t nesPartitionId, std::vector<char>& binaryData) {
     CheckpointMessage request;
     request.set_partition(nesPartitionId);
     request.set_storage(binaryData.data(), binaryData.size());

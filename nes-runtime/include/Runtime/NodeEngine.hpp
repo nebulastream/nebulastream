@@ -379,7 +379,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param nesPartitionId the id of the corresponding partition
      * @param binaryStorage storage in binary
      */
-    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage);
+    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char>& binaryStorage);
 
     /**
      * @brief This method trims the checkpoints saved at coordinator

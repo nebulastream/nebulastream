@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <HDFS/HDFSClient.hpp>
+#include <CheckpointStorage/HDFSClient.hpp>
 #include "hdfs/hdfs.h"
 
 namespace NES {

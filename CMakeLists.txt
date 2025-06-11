@@ -588,6 +588,15 @@ endif ()
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
+# Snappy for RocksDB
+find_package(Snappy REQUIRED)
+
+# RocksDB
+set(ROCKSDB_INCLUDE_DIR "~/git/rocksdb/include")
+set(ROCKSDB_LIB_DIR "~/git/rocksdb/build")
+include_directories(${ROCKSDB_INCLUDE_DIR})
+link_directories(${ROCKSDB_LIB_DIR})
+
 ###########################################################################################
 
 # Cross compilation

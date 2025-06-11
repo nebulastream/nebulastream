@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(Exceptions)
-add_subdirectory(HDFS)
+add_subdirectory(CheckpointStorage)
 add_subdirectory(Runtime)
 add_subdirectory(Network)
 add_subdirectory(Monitoring)

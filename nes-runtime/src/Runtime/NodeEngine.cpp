@@ -970,7 +970,7 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
-void NodeEngine::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) {
+void NodeEngine::offloadCheckpoint(uint64_t nesPartitionId, std::vector<char>& binaryStorage) {
     nesWorker->offloadCheckpoint(nesPartitionId, binaryStorage);
 }
 

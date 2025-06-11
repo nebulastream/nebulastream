@@ -76,7 +76,7 @@ class DummyQueryListener : public AbstractQueryStatusListener {
     bool propagateNeighbourInformation(std::vector<std::pair<WorkerId, std::string>>) override {
         return true;
     }
-    void offloadCheckpoint(uint64_t, std::vector<char>) override {
+    void offloadCheckpoint(uint64_t, std::vector<char>&) override {
         return;
     }
     void rpcTrimCheckpoint(uint64_t, uint64_t) override {

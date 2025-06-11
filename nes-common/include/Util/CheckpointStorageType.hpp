@@ -20,11 +20,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES {
     enum class CheckpointStorageType : int8_t {
         NONE = 0, /// No Storage Option
-        HDFS = 1, /// HDFS
-        SFS = 2,  /// SeaweedFS
-        LDB = 3,  /// LevelDB
-        CRD = 4,  /// local storage (with rpc to coordinator)
-        INVALID = 5
+        CRD = 1,  /// local storage (with rpc to coordinator)
+        HDFS = 2, /// HDFS
+        RDB = 3,  /// RocksDB
+        INVALID = 4
     };
 
     std::string toString(const CheckpointStorageType checkpointStorageMode);

@@ -19,14 +19,12 @@ namespace NES {
     CheckpointStorageType stringToCheckpointStorageTypeMap(const std::string checkpointStorageMode) {
         if (checkpointStorageMode == "NONE") {
             return CheckpointStorageType::NONE;
+        } else if (checkpointStorageMode == "CRD") {
+            return CheckpointStorageType::CRD;
         } else if (checkpointStorageMode == "HDFS") {
             return CheckpointStorageType::HDFS;
-        } else if (checkpointStorageMode == "SFS") {
-            return CheckpointStorageType::SFS;
-        } else if (checkpointStorageMode == "LDB") {
-            return CheckpointStorageType::LDB;
-        } else if (checkpointStorageMode == "HDFS") {
-            return CheckpointStorageType::HDFS;
+        } else if (checkpointStorageMode == "RDB") {
+            return CheckpointStorageType::RDB;
         } else {
             return CheckpointStorageType::INVALID;
         }
@@ -35,10 +33,9 @@ namespace NES {
     std::string toString(const CheckpointStorageType checkpointStorageMode) {
         switch (checkpointStorageMode) {
             case CheckpointStorageType::NONE: return "NONE";
-            case CheckpointStorageType::HDFS: return "HDFS";
-            case CheckpointStorageType::SFS: return "SFS";
-            case CheckpointStorageType::LDB: return "LDB";
             case CheckpointStorageType::CRD: return "CRD";
+            case CheckpointStorageType::HDFS: return "HDFS";
+            case CheckpointStorageType::RDB: return "RDB";
             case CheckpointStorageType::INVALID: return "INVALID";
         }
     }

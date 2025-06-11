@@ -370,6 +370,45 @@ bool WorkerContext::hdfsTrimCheckpoint(Network::NesPartition nesPartition, uint6
     return isTrimmed;
 }
 
+void WorkerContext::rdbCreateCheckpoint(Network::NesPartition nesPartition, Runtime::TupleBuffer& inputBuffer) {
+    if (!rdbClient) {
+        std::string path = "/tmp/testdb";
+        rdbClient = new RDBClient(path, "localhost", 9000);
+    }
+    SchemaPtr& schema = schemas[nesPartition];
+
+    std::string keyName = std::to_string(nesPartition.getPartitionId().getRawValue()) + "checkpoint_"
+        + std::to_string(inputBuffer.getOriginId().getRawValue()) + "_" + std::to_string(inputBuffer.getSequenceNumber())
+        + "_" + std::to_string(inputBuffer.getWatermark());
+
+    // Serialize the buffer into a binary format
+    std::vector<char> binaryData = serializeBuffer(inputBuffer, schema);
+    std::string value(binaryData.begin(), binaryData.end());
+
+    rdbClient->writeEntry(keyName, value, nesPartition.getPartitionId().getRawValue());
+}
+
+bool WorkerContext::rdbTrimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp) {
+    bool isTrimmed = false;
+    std::string path = std::to_string(nesPartition.getPartitionId().getRawValue()) + "checkpoint_";
+    int numEntries = 0;
+    auto fileList = rdbClient->listFiles(path, numEntries);
+
+    for (int i = 0; i < numEntries; i++) {
+        std::string key = fileList[i].mName;;
+
+        size_t lastUnderscore = key.find_last_of("_");
+        std::string watermarkSegment = key.substr(lastUnderscore + 1);
+        uint64_t watermark = std::stoull(watermarkSegment);
+
+        if(watermark < timestamp) {
+            rdbClient->deleteEntry(key);
+            isTrimmed = true;
+        }
+    }
+    return isTrimmed;
+}
+
 bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           DecomposedQueryPlanVersion,
                                           Runtime::QueryTerminationType terminationType,

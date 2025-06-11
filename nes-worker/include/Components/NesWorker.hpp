@@ -206,7 +206,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param nesPartitionId the id of the corresponding partition
      * @param binaryStorage storage in binary
      */
-    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryStorage) override;
+    void offloadCheckpoint(uint64_t nesPartitionId, std::vector<char>& binaryStorage) override;
 
     /**
         * @brief This method trims the checkpoints saved at coordinator

@@ -12,4 +12,5 @@
 
 add_source_files(nes-runtime
         HDFSClient.cpp
+        RDBClient.cpp
 )

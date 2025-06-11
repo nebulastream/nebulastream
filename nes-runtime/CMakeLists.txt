@@ -28,10 +28,10 @@ target_include_directories(nes-runtime PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 
-# hdfs
+# hdfs rocksDB
 find_package(libhdfs3 CONFIG REQUIRED)
 find_library(LIBHDFS3_LIBRARY hdfs3 REQUIRED)
-target_link_libraries(nes-runtime PRIVATE ${LIBHDFS3_LIBRARY})
+target_link_libraries(nes-runtime PRIVATE ${LIBHDFS3_LIBRARY} -lsnappy rocksdb)
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
@@ -66,7 +66,6 @@ endif ()
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 #target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
-
 
 # Add Private Dependencies
 if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
