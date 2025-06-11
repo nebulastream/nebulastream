@@ -130,7 +130,7 @@ class BenchmarkConfig:
         self.query = query
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
-        self.task_queue_size = 100000
+        self.task_queue_size = 1000000
         self.buffers_in_global_buffer_manager = 200000
         self.buffers_per_worker = 20000
         self.buffers_in_source_local_buffer_pool = 1000
@@ -139,7 +139,7 @@ class BenchmarkConfig:
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
         self.no_physical_sources_per_logical_source = 1
-        self.throughput_listener_time_interval = 500
+        self.throughput_listener_time_interval = 100  # output interval in ms
 
     # Return a dictionary representation of the configuration
     def to_dict(self):
