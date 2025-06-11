@@ -112,6 +112,16 @@ uint64_t PagedVector::PagesWrapper::getNumberOfTuplesLastPage() const
     return getLastPage().getNumberOfTuples();
 }
 
+std::vector<PagedVector::TupleBufferWithCumulativeSum>::iterator PagedVector::PagesWrapper::begin()
+{
+    return pages.begin();
+}
+
+std::vector<PagedVector::TupleBufferWithCumulativeSum>::iterator PagedVector::PagesWrapper::end()
+{
+    return pages.end();
+}
+
 const PagedVector::TupleBufferWithCumulativeSum& PagedVector::PagesWrapper::operator[](const size_t index) const
 {
     return pages.at(index);
