@@ -1,0 +1,42 @@
+services:
+
+  data-generator:
+    build:
+      context: .
+      dockerfile: DataGenerator.dockerfile
+    stdin_open: true  # This ensures stdin is open
+    tty: true        # Allocates a pseudo-TTY, which can help with interactive input
+    ports:
+      - "9000:9000"
+    volumes:
+      - /tmp:/tmp
+    command: bash -c "/app/send_keystrokes_to_nebulastream.sh"
+
+  worker:
+    image: nebulastream/worker:main
+    command: --configPath=/app/config/worker_config.yaml
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./worker_config.yaml:/app/config/worker_config.yaml
+      - /tmp:/tmp
+    depends_on:
+      - data-generator
+
+  nebuli:
+    image: nebulastream/nebuli:main
+    working_dir: /app
+    depends_on:
+      - worker
+    command: register -i /app/number_of_keystrokes_per_second_per_key.yaml -x -s worker:8080
+    volumes:
+      - ./queries/keystrokes/:/app
+
+  csv_listener:
+    image: ubuntu:latest
+    volumes:
+      - /tmp:/tmp
+    command: bash -c "sleep 5 && tail -f /tmp/<query_file_name>.csv"
+    depends_on:
+      nebuli:
+        condition: service_started

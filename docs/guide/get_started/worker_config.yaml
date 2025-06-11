@@ -1,0 +1,10 @@
+worker:
+  numberOfBuffersInGlobalBufferManager: 10000
+  numberOfBuffersPerWorker: 1000
+  bufferSizeInBytes: 4096
+  queryOptimizer:
+    executionMode: COMPILER
+    pageSize: 10240
+  queryEngine:
+    numberOfWorkerThreads: 4
+    taskQueueSize: 1000

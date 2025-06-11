@@ -1,0 +1,47 @@
+query: |
+  SELECT start, end, AVG(MemFree) 
+  FROM sys_resources_memory 
+  WINDOW SLIDING (timestamp, size 10 sec, advance by 1 sec)
+  INTO free_memory_per_10s;
+sink:
+  name: free_memory_per_10s
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/free_memory_per_10s.csv"
+    append: true
+
+logical:
+  - name: sys_resources_memory
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: MemTotal
+        type: FLOAT64
+      - name: MemFree
+        type: FLOAT64
+      - name: MemAvailable
+        type: FLOAT64
+      - name: Buffers
+        type: FLOAT64
+      - name: Cached
+        type: FLOAT64
+      - name: SwapTotal
+        type: FLOAT64
+      - name: SwapFree
+        type: FLOAT64
+
+
+physical:
+  - logical: sys_resources_memory
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketHost: data-generator
+      socketPort: 9001
+      socketBufferSize: 2
+      flushIntervalMS: 100
+      connectTimeoutSeconds: 1000

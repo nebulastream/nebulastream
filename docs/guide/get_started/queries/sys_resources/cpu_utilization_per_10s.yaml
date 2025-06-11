@@ -1,0 +1,57 @@
+query: |
+  SELECT start, end, AVG(utilization_ratio)
+  FROM (SELECT timestamp, (non_idle_time / total_cpu_time) AS utilization_ratio
+        FROM (SELECT timestamp, (user + nice + system + iowait + irq + softirq + steal + guest + guest_nice) AS non_idle_time, 
+                                (user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice) AS total_cpu_time 
+              FROM sys_resources_cpu)
+  )
+  WINDOW SLIDING (timestamp, size 10 sec, advance by 1 sec)
+  INTO cpu_utilization_per_10s;
+sink:
+  name: cpu_utilization_per_10s
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/cpu_utilization_per_10s.csv"
+    append: true
+
+logical:
+  - name: sys_resources_cpu
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: user
+        type: FLOAT64
+      - name: nice
+        type: FLOAT64
+      - name: system
+        type: FLOAT64
+      - name: idle
+        type: FLOAT64
+      - name: iowait
+        type: FLOAT64
+      - name: irq
+        type: FLOAT64
+      - name: softirq
+        type: FLOAT64
+      - name: steal
+        type: FLOAT64
+      - name: guest
+        type: FLOAT64
+      - name: guest_nice
+        type: FLOAT64
+
+
+physical:
+  - logical: sys_resources_cpu
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketHost: data-generator
+      socketPort: 9000
+      socketBufferSize: 2
+      flushIntervalMS: 100
+      connectTimeoutSeconds: 1000

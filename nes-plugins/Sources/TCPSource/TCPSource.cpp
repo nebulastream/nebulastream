@@ -229,6 +229,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
     const size_t rawTBSize = tupleBuffer.getBufferSize();
     while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
     {
+        NES_INFO("Waiting on data...");
         const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer() + numReceivedBytes, rawTBSize - numReceivedBytes);
         numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
