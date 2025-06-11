@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <cstddef>
 #include <string>
+#include <utility>
+#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -69,9 +70,9 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
     const std::string str = sourceIn + "\n";
 
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
     parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& sourceOut)
+        [&](const SystestParser::CSVSource& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
@@ -109,8 +110,8 @@ TEST_F(SystestParserTest, testCallbackQuery)
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
@@ -138,7 +139,7 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
 
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& sourceOut)
+        [&](const SystestParser::SLTSource& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
@@ -151,7 +152,7 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
             ASSERT_EQ(sourceOut.tuples[1], tpl2);
             callbackCalled = true;
         });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -169,15 +170,15 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&&, const SystestQueryId)
+        [&](const std::vector<std::string>&, const SystestQueryId)
         {
             /// nop
         });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
-    SystestStarterGlobals systestStarterGlobals{};
+    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 

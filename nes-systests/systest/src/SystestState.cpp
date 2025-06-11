@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
@@ -47,10 +48,47 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
+
+namespace
+{
+std::pair<std::expected<NES::LogicalPlan, NES::Exception>, std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>>
+optimizeQueryPlanIfErrorFree(const NES::Systest::LoadedQueryPlan& loadedQueryPlan)
+{
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+    if (loadedQueryPlan.queryPlan.has_value())
+    {
+        const NES::CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
+        auto optimizedPlan = optimizer.optimize(loadedQueryPlan.queryPlan.value());
+        std::ranges::for_each(
+            NES::getOperatorByType<NES::SourceDescriptorLogicalOperator>(optimizedPlan),
+            [&loadedQueryPlan, &sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
+            {
+                if (const auto path = loadedQueryPlan.sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
+                    path != loadedQueryPlan.sourcesToFilePaths.end())
+                {
+                    auto& entry = sourceNamesToFilepathAndCountForQuery
+                        [logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName()];
+                    entry = {path->second, entry.second + 1};
+                }
+                else
+                {
+                    throw NES::CannotLoadConfig("SourceName \"{}\" does not have an associated file path");
+                }
+            });
+        return {optimizedPlan, sourceNamesToFilepathAndCountForQuery};
+    }
+    return {loadedQueryPlan.queryPlan, sourceNamesToFilepathAndCountForQuery};
+}
+}
 
 namespace NES::Systest
 {
@@ -132,35 +170,6 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         }
     }
     return testFiles;
-}
-
-std::pair<std::expected<LogicalPlan, Exception>, std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>>
-optimizeQueryPlanIfErrorFree(const LoadedQueryPlan& loadedQueryPlan)
-{
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
-    if (loadedQueryPlan.queryPlan.has_value())
-    {
-        const CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
-        auto optimizedPlan = optimizer.optimize(loadedQueryPlan.queryPlan.value());
-        std::ranges::for_each(
-            NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan),
-            [&loadedQueryPlan, &sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
-            {
-                if (const auto path = loadedQueryPlan.sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
-                    path != loadedQueryPlan.sourcesToFilePaths.end())
-                {
-                    auto& entry = sourceNamesToFilepathAndCountForQuery
-                        [logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName()];
-                    entry = {path->second, entry.second + 1};
-                }
-                else
-                {
-                    throw CannotLoadConfig("SourceName \"{}\" does not have an associated file path");
-                }
-            });
-        return {optimizedPlan, sourceNamesToFilepathAndCountForQuery};
-    }
-    return {loadedQueryPlan.queryPlan, sourceNamesToFilepathAndCountForQuery};
 }
 
 void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
@@ -508,7 +517,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
 
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& source)
+        [&](const SystestParser::CSVSource& source)
         {
             Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
             for (const auto& [type, name] : source.fields)
@@ -536,7 +545,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
         });
 
     parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& source)
+        [&](const SystestParser::SLTSource& source)
         {
             const auto sourceFile = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, ++sourceIndex);
             {
@@ -690,7 +699,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
         });
 
     parser.registerOnErrorExpectationCallback(
-        [&](SystestParser::ErrorExpectation&& errorExpectation)
+        [&](const SystestParser::ErrorExpectation& errorExpectation)
         {
             /// Error always belongs to the last parsed plan
             auto& lastPlan = plans.back();
