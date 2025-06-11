@@ -24,7 +24,7 @@ class FileBackedPagedVector final : public PagedVector
 {
 public:
     /// Appends the pages of the given FileBackedPagedVector with the pages of this FileBackedPagedVector.
-    void appendAllPages(PagedVector& other) override;
+    void moveAllPages(PagedVector& other) override;
 
     /// Copies all pages from other FileBackedPagedVector to this FileBackedPagedVector.
     void copyFrom(const PagedVector& other) override;

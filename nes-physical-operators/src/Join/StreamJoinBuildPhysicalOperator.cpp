@@ -53,9 +53,10 @@ void updateSlicesProxy(
                 opHandler->getIoContext(),
                 bufferProvider,
                 memoryLayout,
-                joinBuildSide,
                 UpdateSlicesMetaData(
-                    workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
+                    workerThreadId,
+                    joinBuildSide,
+                    BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
     }
 }
 
@@ -81,7 +82,7 @@ void StreamJoinBuildPhysicalOperator::close(ExecutionContext& executionCtx, Reco
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(memoryProvider->getMemoryLayout().get()),
         nautilus::val<JoinBuildSideType>(joinBuildSide),
-        executionCtx.getWorkerThreadId(),
+        executionCtx.workerThreadId,
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,
         executionCtx.chunkNumber,
