@@ -23,9 +23,9 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES
@@ -109,7 +109,7 @@ public:
     EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
-           "Type of watermark predictor "
+           "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
     EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
