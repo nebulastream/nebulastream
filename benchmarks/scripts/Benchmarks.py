@@ -149,7 +149,7 @@ def plot_config_comparison(data, configs, metric, label, config_id):
          enumerate(configs, start=config_id + 1)])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.5)
-    plt.figtext(0.0, -0.8, config_text, wrap=True, ha='left', fontsize=9)
+    plt.figtext(0.0, -0.9, config_text, wrap=True, ha='left', fontsize=9)
 
     plt.title(f'Effect of Configs on {label}')
     plt.ylabel(f'{label} ({unit})')
