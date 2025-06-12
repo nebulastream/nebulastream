@@ -12,9 +12,9 @@ def compute_stats(stats_path):
     start_re       = re.compile(r'(?P<ts>[\d\-]+ [\d:\.]+) Task (?P<tid>\d+) for Pipeline (?P<p>\d+) of')
     complete_re    = re.compile(r'(?P<ts>[\d\-]+ [\d:\.]+) Task (?P<tid>\d+) for Pipeline (?P<p>\d+) of.*Completed')
     tuple_re       = re.compile(r'Number of Tuples: (?P<t>\d+)')
-    trans_re       = re.compile(
-        r'(?P<ts>[\d\-]+ [\d:\.]+) Task \d+ for Pipeline (?P<p1>\d+) to Pipeline (?P<p2>\d+) of.*Number of Tuples: (?P<t>\d+)'
-    )
+    #trans_re       = re.compile(
+    #    r'(?P<ts>[\d\-]+ [\d:\.]+) Task \d+ for Pipeline (?P<p1>\d+) to Pipeline (?P<p2>\d+) of.*Number of Tuples: (?P<t>\d+)'
+    #)
 
     def parse_ts(raw):
         # Create datetime object (for compatibility with existing code)
@@ -32,17 +32,17 @@ def compute_stats(stats_path):
     starts_dt, starts_sec = {}, {}
     ends_dt, ends_sec = {}, {}
     tuples = {}
-    transit = defaultdict(lambda: {'in': 0, 'out': 0})
+    #transit = defaultdict(lambda: {'in': 0, 'out': 0})
 
     with open(stats_path) as f:
         for line in f:
-            if 'to Pipeline' in line:
-                m = trans_re.search(line)
-                if m:
-                    p1, p2, cnt = int(m.group('p1')), int(m.group('p2')), int(m.group('t'))
-                    transit[p1]['out'] += cnt
-                    transit[p2]['in']  += cnt
-            elif 'Started' in line:
+            #if 'to Pipeline' in line:
+            #    m = trans_re.search(line)
+              #  if m:
+              #      p1, p2, cnt = int(m.group('p1')), int(m.group('p2')), int(m.group('t'))
+               #     transit[p1]['out'] += cnt
+              #      transit[p2]['in']  += cnt
+            if 'Started' in line:
                 m1, m2 = start_re.search(line), tuple_re.search(line)
                 if m1 and m2:
                     key = (int(m1.group('p')), int(m1.group('tid')))
@@ -120,12 +120,12 @@ def compute_stats(stats_path):
         wall_time = pipeline_wall_times.get(pid, 0)
         s['eff_tp'] = s['sum_tuples'] / wall_time if wall_time > 0 else 0
 
-        inc = transit[pid]['in']
-        out = transit[pid]['out']
-        if inc and out:
-            s['selectivity'] = out / inc * 100
-        else:
-            s['selectivity'] = 100.0
+        #inc = transit[pid]['in']
+       # out = transit[pid]['out']
+        #if inc and out:
+        #    s['selectivity'] = out / inc * 100
+        #else:
+          #  s['selectivity'] = 100.0
 
     total_skipped = sum(skipped_by_pipeline.values())
     return all_task_time, full_query_time, agg, total_skipped
