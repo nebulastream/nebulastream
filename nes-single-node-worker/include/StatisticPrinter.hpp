@@ -44,7 +44,7 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEve
 
 private:
     std::ofstream file;
-    folly::MPMCQueue<CombinedEventType> events{100};
+    folly::MPMCQueue<CombinedEventType> events{1000000};
     std::jthread printThread;
 };
 }
