@@ -560,6 +560,9 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                         return Sources::SourceDataProvider::provideFileDataSource(
                             initialPhysicalSourceConfig, attachSource, systestStarterGlobals.getTestDataDir());
                     }
+                    case TestDataIngestionType::GENERATOR: {
+                        return Sources::SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
+                    }
                 }
                 std::unreachable();
             }();

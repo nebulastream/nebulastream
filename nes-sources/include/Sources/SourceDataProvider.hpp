@@ -30,6 +30,8 @@ public:
         SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,
         SystestAttachSource attachSource,
         std::filesystem::path testFilePath);
+    static SystestSourceYAMLBinder::PhysicalSource
+    provideGeneratorDataSource(SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig, SystestAttachSource attachSource);
 };
 
 }

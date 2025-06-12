@@ -29,9 +29,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Generator.hpp>
+#include <GeneratorDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-
 
 namespace NES::Sources
 {
@@ -133,5 +133,12 @@ SourceValidationGeneratedRegistrar::RegisterGeneratorSourceValidation(SourceVali
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterGeneratorSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<GeneratorSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+///NOLINTNEXTLINE (performance-unnecessary-value-param)
+GeneratorDataRegistryReturnType
+GeneratorDataGeneratedRegistrar::RegisterGeneratorGeneratorData(GeneratorDataRegistryArguments systestAdaptorArguments)
+{
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 }

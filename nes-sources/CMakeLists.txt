@@ -25,6 +25,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Source SourceValidation FileData InlineData)
+create_registries_for_component(Source SourceValidation FileData InlineData GeneratorData)
 
 add_tests_if_enabled(tests)

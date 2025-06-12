@@ -34,7 +34,8 @@ static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "filePath";
 enum class TestDataIngestionType : uint8_t
 {
     INLINE,
-    FILE
+    FILE,
+    GENERATOR
 };
 
 struct SystestAttachSource
