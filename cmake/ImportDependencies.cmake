@@ -88,7 +88,7 @@ endif ()
 
 # By default we build MLIR via VCPKG. However the USE_LOCAL_MLIR options allows to supply a locally installed version
 # of MLIR.
-if (NOT ${USE_LOCAL_MLIR})
+if (NOT ${USE_LOCAL_MLIR} AND ${NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR})
     message(STATUS "Enabling MLIR feature for the VPCKG install")
     list(APPEND VCPKG_MANIFEST_FEATURES "mlir")
 else ()
