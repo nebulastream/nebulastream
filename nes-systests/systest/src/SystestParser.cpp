@@ -559,6 +559,19 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                         .fileDataPath = expectFilePath(),
                         .serverThreads = nullptr};
                 }
+                case TestDataIngestionType::GENERATOR: {
+                    return SystestAttachSource{
+                        .sourceType = "Generator",
+                        .sourceConfigurationPath = expectFilePath(),
+                        .inputFormatterType = "CSV",
+                        .inputFormatterConfigurationPath
+                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+                        .logicalSourceName = source.name,
+                        .testDataIngestionType = dataIngestionType.value(),
+                        .tuples = {},
+                        .fileDataPath = {},
+                        .serverThreads = nullptr};
+                }
             }
             std::unreachable();
         }();
@@ -587,6 +600,10 @@ SystestAttachSource SystestParser::expectAttachSource()
         }
         case TestDataIngestionType::FILE: {
             attachSource.fileDataPath = {expectFilePath()};
+            return attachSource;
+        }
+        case TestDataIngestionType::GENERATOR: {
+            attachSource.sourceConfigurationPath = {expectFilePath()};
             return attachSource;
         }
     }

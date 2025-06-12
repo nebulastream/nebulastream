@@ -1,0 +1,7 @@
+type: Generator
+stopGeneratorWhenSequenceFinishes: ONE
+maxRuntimeMS: 1000000
+seed: 1
+generatorSchema: |
+  SEQUENCE UINT64 0 100 1
+  SEQUENCE UINT64 0 200 1
