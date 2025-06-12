@@ -170,8 +170,7 @@ class BenchmarkConfig:
 def create_benchmark_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
-    default_params = {
-        "timestamp_increment": TIMESTAMP_INCREMENT[0],
+    default_params_template = {
         "ingestion_rate": INGESTION_RATE[0],
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS[0],
         "buffer_size_in_bytes": BUFFER_SIZES[0],
@@ -183,16 +182,13 @@ def create_benchmark_configs():
         "min_write_state_size": MIN_WRITE_STATE_SIZE[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTA[0],
         "file_layout": FILE_LAYOUT[0],
-        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE[0],
-        "query": get_queries()[0]
+        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE[0]
     }
     shared_params = {
-        "timestamp_increment": TIMESTAMP_INCREMENT,
         "ingestion_rate": INGESTION_RATE,
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS,
         "buffer_size_in_bytes": BUFFER_SIZES,
-        "page_size": PAGE_SIZES,
-        "query": get_queries()
+        "page_size": PAGE_SIZES
     }
     file_backed_params = {
         "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED,
@@ -205,23 +201,31 @@ def create_benchmark_configs():
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE
     }
 
-    # Generate configurations for each shared parameter
-    for param, values in shared_params.items():
-        for value in values:
-            for slice_store_type in SLICE_STORE_TYPE:
-                config_params = default_params.copy()
-                config_params[param] = value
-                config_params["slice_store_type"] = slice_store_type
-                config = BenchmarkConfig(**config_params)
-                configs.append(config)
-    # Generate configurations for each file backed parameter
-    for param, values in file_backed_params.items():
-        for value in values:
-            config_params = default_params.copy()
-            config_params[param] = value
-            config_params["slice_store_type"] = "FILE_BACKED"
-            config = BenchmarkConfig(**config_params)
-            configs.append(config)
+    # Generate default configurations for each combination of timestamp_increment and query
+    default_configs = []
+    for timestamp_increment in TIMESTAMP_INCREMENT:
+        for query in get_queries():
+            config_params = default_params_template.copy()
+            config_params["timestamp_increment"] = timestamp_increment
+            config_params["query"] = query
+            default_configs.append(config_params)
+    # Generate configurations for each shared parameter combined with default configs
+    for config_params in default_configs:
+        for param, values in shared_params.items():
+            for value in values:
+                for slice_store_type in SLICE_STORE_TYPE:
+                    config = config_params.copy()
+                    config[param] = value
+                    config["slice_store_type"] = slice_store_type
+                    configs.append(BenchmarkConfig(**config))
+    # Generate configurations for each file backed parameter combined with default configs
+    for config_params in default_configs:
+        for param, values in file_backed_params.items():
+            for value in values:
+                config = config_params.copy()
+                config[param] = value
+                config["slice_store_type"] = "FILE_BACKED"
+                configs.append(BenchmarkConfig(**config))
 
     return configs
 
