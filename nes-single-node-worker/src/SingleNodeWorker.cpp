@@ -31,9 +31,10 @@
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
-#include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
+#include <GoogleEventTraceListener.hpp>
+#include <CompositeStatisticListener.hpp>
 
 namespace NES
 {
@@ -43,13 +44,25 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
+    : compositeListener(std::make_shared<CompositeStatisticListener>())
+    , printingListener(std::make_shared<PrintingStatisticListener>(
           fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, compositeListener, compositeListener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
+    compositeListener->addListener(printingListener);
+    compositeListener->addSystemListener(printingListener);
+    
+    /// Add Google Event Trace listener if enabled
+    if (configuration.enableGoogleEventTrace.getValue()) {
+        googleTraceListener = std::make_shared<GoogleEventTraceListener>(
+            fmt::format("GoogleEventTrace_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", std::chrono::system_clock::now(), ::getpid()));
+        compositeListener->addListener(googleTraceListener);
+        compositeListener->addSystemListener(googleTraceListener);
+    }
+    
     if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
         < configuration.workerConfiguration.queryOptimizer.operatorBufferSize.getValue())
     {
@@ -70,7 +83,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     {
         plan.setQueryId(QueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        compositeListener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         auto result = compiler->compileQuery(std::move(request));
         return nodeEngine->registerCompiledQueryPlan(std::move(result));
