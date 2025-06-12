@@ -207,7 +207,7 @@ def create_benchmark_configs():
     }
 
     # Choose certain timestamp_increment values as default
-    default_timestamp_increments = TIMESTAMP_INCREMENT
+    default_timestamp_increments = [1, 1000]
 
     # Choose certain combinations of window size and slide from the first query as default
     default_queries = []
@@ -219,6 +219,8 @@ def create_benchmark_configs():
 
         if size != 10000:
             default_queries.append(query)
+
+    print(f"number of default configs: {len(default_queries) * len(default_timestamp_increments)}")
 
     # Generate configurations for each shared parameter
     for param, values in shared_params.items():
