@@ -20,6 +20,7 @@ add_library(nes-memory
         FixedSizeBufferPool.cpp
         TaggedPointer.cpp
         TestTupleBuffer.cpp
+        UnpooledChunksManager.cpp
         ${MEMORY_LAYOUT_SOURCES}
 )
 

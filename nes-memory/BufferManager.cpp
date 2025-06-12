@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Runtime/BufferManager.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -25,7 +27,6 @@
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
@@ -57,7 +58,7 @@ void BufferManager::destroy()
     bool expected = false;
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
-        const std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
+        const std::scoped_lock lock(availableBuffersMutex, localBufferPoolsMutex);
         auto success = true;
         NES_DEBUG("Shutting down Buffer Manager");
 
@@ -65,7 +66,7 @@ void BufferManager::destroy()
         for (auto& localPool : localBufferPools)
         {
             /// If the weak ptr is invalid the local buffer pool has already been destroyed
-            if (auto pool = localPool.lock())
+            if (const auto pool = localPool.lock())
             {
                 pool->destroy();
             }
@@ -98,18 +99,17 @@ void BufferManager::destroy()
         allBuffers.clear();
 
         availableBuffers = decltype(availableBuffers)();
-        unpooledBuffers.clear();
         NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
 }
 
+
 std::shared_ptr<BufferManager> BufferManager::create(
-    uint32_t bufferSize, uint32_t numOfBuffers, std::shared_ptr<std::pmr::memory_resource> memoryResource, uint32_t withAlignment)
+    uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
 {
     return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
 }
-
 BufferManager::~BufferManager()
 {
     BufferManager::destroy();
@@ -119,7 +119,7 @@ void BufferManager::initialize(uint32_t withAlignment)
 {
     std::unique_lock lock(availableBuffersMutex);
 
-    size_t pages = sysconf(_SC_PHYS_PAGES);
+    const size_t pages = sysconf(_SC_PHYS_PAGES);
     size_t page_size = sysconf(_SC_PAGE_SIZE);
     auto memorySizeInBytes = pages * page_size;
 
@@ -149,7 +149,7 @@ void BufferManager::initialize(uint32_t withAlignment)
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
     auto alignedBufferSize = alignBufferSize(bufferSize, withAlignment);
     allocatedAreaSize = alignBufferSize(controlBlockSize + alignedBufferSize, withAlignment);
-    size_t offsetBetweenBuffers = allocatedAreaSize;
+    const size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
     NES_TRACE(
@@ -220,33 +220,10 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
+
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
-    auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
-    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
-    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
-    INVARIANT(ptr, "Unpooled memory allocation failed");
-
-    auto memSegment = std::make_unique<detail::MemorySegment>(
-        ptr + controlBlockSize,
-        alignedBufferSize,
-        [this, ptr, alignedBufferSizePlusControlBlock](detail::MemorySegment* memorySegment, BufferRecycler*)
-        {
-            const std::unique_lock lock(unpooledBuffersMutex);
-            memoryResource->deallocate(ptr, alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT);
-            memorySegment->size = 0;
-            unpooledBuffers.erase(ptr);
-        });
-    auto* leakedMemSegment = memSegment.get();
-    const std::unique_lock lock(unpooledBuffersMutex);
-    unpooledBuffers[ptr] = std::move(memSegment);
-    if (leakedMemSegment->controlBlock->prepare(shared_from_this()))
-    {
-        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
-    }
-    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
+    return unpooledChunksManager.getUnpooledBuffer(bufferSize, *memoryResource, DEFAULT_ALIGNMENT, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
@@ -275,8 +252,7 @@ size_t BufferManager::getNumOfPooledBuffers() const
 
 size_t BufferManager::getNumOfUnpooledBuffers() const
 {
-    std::unique_lock lock(unpooledBuffersMutex);
-    return unpooledBuffers.size();
+    return unpooledChunksManager.getNumberOfUnpooledBuffers();
 }
 
 size_t BufferManager::getAvailableBuffers() const

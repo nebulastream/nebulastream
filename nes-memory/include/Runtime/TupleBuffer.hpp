@@ -27,6 +27,11 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Time/Timestamp.hpp>
 
+namespace NES
+{
+class UnpooledChunksManager;
+}
+
 namespace NES::Memory
 {
 namespace detail
@@ -61,6 +66,7 @@ class TupleBuffer
 {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
+    friend class NES::UnpooledChunksManager;
     friend class FixedSizeBufferPool;
     friend class LocalBufferPool;
     friend class detail::MemorySegment;
