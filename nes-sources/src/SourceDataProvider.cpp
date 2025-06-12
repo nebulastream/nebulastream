@@ -20,6 +20,7 @@
 #include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
+#include <GeneratorDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 
 namespace NES::Sources
@@ -29,11 +30,11 @@ SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideFileDataSourc
     SystestAttachSource attachSource,
     std::filesystem::path testDataDir)
 {
-    const auto theArgs = FileDataRegistryArguments{
+    const auto fileDataArgs = FileDataRegistryArguments{
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .attachSource = attachSource,
         .testDataDir = std::move(testDataDir)};
-    if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, theArgs))
+    if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, fileDataArgs))
     {
         return physicalSourceConfig.value();
     }
@@ -45,11 +46,23 @@ SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideInlineDataSou
     SystestAttachSource attachSource,
     std::filesystem::path testFilePath)
 {
-    const auto theArgs = InlineDataRegistryArguments{
+    const auto inlineDataArgs = InlineDataRegistryArguments{
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .attachSource = attachSource,
         .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, theArgs))
+    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, inlineDataArgs))
+    {
+        return physicalSourceConfig.value();
+    }
+    throw UnknownSourceType("Source type {} not found.", attachSource.sourceType);
+}
+
+SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideGeneratorDataSource(
+    SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig, SystestAttachSource attachSource)
+{
+    const auto generatorDataArgs
+        = GeneratorDataRegistryArguments{.physicalSourceConfig = std::move(initialPhysicalSourceConfig), .attachSource = attachSource};
+    if (auto physicalSourceConfig = GeneratorDataRegistry::instance().create(attachSource.sourceType, generatorDataArgs))
     {
         return physicalSourceConfig.value();
     }
