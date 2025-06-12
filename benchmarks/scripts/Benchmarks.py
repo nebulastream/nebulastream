@@ -329,6 +329,10 @@ for config in configs:
 def plot_shared_params(data, param, metric, label):
     data_scaled, unit = convert_metric_units(data, param, metric)
 
+    data_scaled = data_scaled[data_scaled['buffer_size_in_bytes'] <= 131072]
+    data_scaled = data_scaled[data_scaled['page_size'] <= 131072]
+    data_scaled = data_scaled[data_scaled['ingestion_rate'] <= 10000]
+
     if param == 'query':
         # Map long queries to short codes
         unique_queries = data_scaled[param].unique()
@@ -365,6 +369,11 @@ for param in shared_config_params:
 
 def plot_file_backed_params(data, param, metric, label, color):
     data_scaled, unit = convert_metric_units(data, param, metric)
+
+    data_scaled = data_scaled[data_scaled['file_descriptor_buffer_size'] <= 131072]
+    data_scaled = data_scaled[data_scaled['file_operation_time_delta'] <= 100]
+    data_scaled = data_scaled[data_scaled['num_watermark_gaps_allowed'] <= 100]
+
     plt.figure(figsize=(14, 6))
 
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
