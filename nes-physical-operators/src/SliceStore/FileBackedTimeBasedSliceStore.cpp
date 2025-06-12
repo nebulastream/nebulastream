@@ -304,7 +304,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (const auto& [slice, operation] : getSlicesToUpdate(memoryLayout, threadId, joinBuildSide))
+    for (const auto& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, threadId, joinBuildSide))
     {
         if (slice == nullptr)
         {
@@ -362,10 +362,48 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
+    const Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide)
+{
+    switch (sliceStoreInfo.memoryModel)
+    {
+        case MemoryModel::DEFAULT:
+            return updateSlicesDefault(threadId, joinBuildSide);
+        case MemoryModel::PREDICT_WATERMARKS:
+            return updateSlicesPredictWatermarks(memoryLayout, threadId, joinBuildSide);
+        case MemoryModel::WITHIN_BUDGET:
+            return updateSlicesWithinBudget(bufferProvider, threadId, joinBuildSide);
+        case MemoryModel::ADAPTIVE:
+            return updateSlicesAdaptive(bufferProvider, memoryLayout, threadId, joinBuildSide);
+    }
+    std::unreachable();
+}
+
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+FileBackedTimeBasedSliceStore::updateSlicesDefault(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+{
+    /// Reserve space for every altered slice as we might update all of them
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
+    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+
+    std::ranges::transform(
+        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        std::back_inserter(slicesToUpdate),
+        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
+
+    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    return slicesToUpdate;
+}
+
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesPredictWatermarks(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
-    /// Reserve space for every altered slice as we might update al of them
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate(alteredSlicesPerThread.size());
+    /// Reserve space for every altered slice as we might update all of them
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
+    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+
     for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
@@ -406,8 +444,50 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         }
         /// Slice should not be written out or read back in any other case
     }
+
     alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
+}
+
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesWithinBudget(
+    const Memory::AbstractBufferProvider* const bufferProvider, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+{
+    const auto totalSizeOfUsedBuffers
+        = (bufferProvider->getNumOfPooledBuffers() - bufferProvider->getAvailableBuffers()) * bufferProvider->getBufferSize()
+        + bufferProvider->getSizeOfUnpooledBufferChunks();
+
+    if (totalSizeOfUsedBuffers >= sliceStoreInfo.maxMemoryConsumption)
+    {
+        return updateSlicesDefault(threadId, joinBuildSide);
+    }
+    else
+    {
+        return std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>{};
+    }
+}
+
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesAdaptive(
+    const Memory::AbstractBufferProvider* const bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide)
+{
+    const auto totalSizeOfUsedBuffers
+        = (bufferProvider->getNumOfPooledBuffers() - bufferProvider->getAvailableBuffers()) * bufferProvider->getBufferSize()
+        + bufferProvider->getSizeOfUnpooledBufferChunks();
+
+    if (totalSizeOfUsedBuffers >= sliceStoreInfo.maxMemoryConsumption)
+    {
+        return updateSlicesDefault(threadId, joinBuildSide);
+    }
+    else if (totalSizeOfUsedBuffers >= sliceStoreInfo.maxMemoryConsumption * 0.5)
+    {
+        return updateSlicesPredictWatermarks(memoryLayout, threadId, joinBuildSide);
+    }
+    else
+    {
+        return std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>{};
+    }
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(

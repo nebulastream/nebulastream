@@ -13,6 +13,8 @@ worker:
     minReadStateSize: 0
     minWriteStateSize: 0
     fileOperationTimeDelta: 0
+    maxMemoryConsumption: 0
+    memoryModel: DEFAULT
     fileLayout: NO_SEPARATION
     watermarkPredictorType: KALMAN
     sliceStoreType: DEFAULT

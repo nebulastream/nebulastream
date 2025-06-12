@@ -155,4 +155,8 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t b
 {
     return bufferManager->getUnpooledBuffer(bufferSize);
 }
+size_t FixedSizeBufferPool::getSizeOfUnpooledBufferChunks() const
+{
+    return bufferManager->getSizeOfUnpooledBufferChunks();
+}
 }
