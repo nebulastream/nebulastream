@@ -100,11 +100,11 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
 
         auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            scanSelection, schemaInCol, schemaInCol, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE); ///TODO: outputSchema schemaOutCol?
+            scanSelection, schemaInCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN); ///TODO: outputSchema schemaOutCol?
 
         auto emitSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
             emitSelection, schemaOutCol, schemaOutCol, handlerId, std::make_shared<EmitOperatorHandler>(),
-            PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
 
         handlerId = getNextOperatorHandlerId();
@@ -112,10 +112,10 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         auto emitRow = EmitPhysicalOperator(handlerId, memoryProviderOutRow);
 
         auto scanWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            scanRow, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            scanRow, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
         auto emitWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            emitRow, schemaOut, schemaOut, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitRow, schemaOut, schemaOut, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
 
 
@@ -124,9 +124,9 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderInCol);
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            scanCol, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            scanCol, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN);
         auto emitWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            emitCol, schemaInCol, schemaInCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            emitCol, schemaInCol, schemaInCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
 
         auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
