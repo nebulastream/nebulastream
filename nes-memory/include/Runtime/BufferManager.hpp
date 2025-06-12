@@ -16,17 +16,16 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <cstdint>
 #include <deque>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
-#include <unordered_map>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/UnpooledChunksManager.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES::Memory
@@ -78,16 +77,15 @@ public:
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
         uint32_t withAlignment);
 
-    /**
-     * @brief Creates a new global buffer manager
-     * @param bufferSize the size of each buffer in bytes
-     * @param numOfBuffers the total number of buffers in the pool
-     * @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
-     */
+    /// Creates a new global buffer manager
+    /// @param bufferSize the size of each buffer in bytes
+    /// @param numOfBuffers the total number of buffers in the pool
+    /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
+    /// @param memoryResource resource for allocating and deallocating memory
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-        std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
+        const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
         uint32_t withAlignment = DEFAULT_ALIGNMENT);
 
     BufferManager(const BufferManager&) = delete;
@@ -119,12 +117,6 @@ public:
      */
     std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
-    /**
-     * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
-     * occurs.
-     * @param bufferSize
-     * @return a new buffer
-     */
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
 
@@ -163,12 +155,11 @@ private:
 
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
-    std::unordered_map<uint8_t*, std::unique_ptr<detail::MemorySegment>> unpooledBuffers;
+
+    NES::UnpooledChunksManager unpooledChunksManager;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;
-
-    mutable std::recursive_mutex unpooledBuffersMutex;
 
     size_t bufferSize;
     size_t numOfBuffers;

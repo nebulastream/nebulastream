@@ -30,6 +30,11 @@
     #include <cpptrace.hpp>
 #endif
 
+namespace NES
+{
+class UnpooledChunksManager;
+}
+
 namespace NES::Memory
 {
 class BufferManager;
@@ -44,7 +49,7 @@ static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
-constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
+constexpr uint32_t alignBufferSize(const uint32_t bufferSize, const uint32_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {
@@ -174,6 +179,7 @@ class MemorySegment
     friend class NES::Memory::LocalBufferPool;
     friend class NES::Memory::FixedSizeBufferPool;
     friend class NES::Memory::BufferManager;
+    friend class NES::UnpooledChunksManager;
     friend class NES::Memory::detail::BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t
