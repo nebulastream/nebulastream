@@ -44,6 +44,16 @@ def compute_stats(stats_path):
                     key = (int(m.group('p')), int(m.group('tid')))
                     ends[key] = parse_ts(m.group('ts'))
 
+    # Track skipped tasks
+    skipped_by_pipeline = defaultdict(int)
+    for key in list(starts.keys()):
+        if key not in ends:
+            skipped_by_pipeline[key[0]] += 1
+
+    for key in list(ends.keys()):
+        if key not in starts:
+            skipped_by_pipeline[key[0]] += 1
+
     # only keep tasks with both start & end
     durations = {}
     throughputs = {}
@@ -54,11 +64,19 @@ def compute_stats(stats_path):
                 durations[key] = dur
                 throughputs[key] = tuples[key] / dur
 
+    # Get wall clock times per pipeline
+    pipeline_wall_times = {}
+    for pid in set(p for p, _ in durations.keys()):
+        pipeline_tasks = [(p, t) for (p, t) in durations.keys() if p == pid]
+        pipeline_starts = [starts[k] for k in pipeline_tasks]
+        pipeline_ends = [ends[k] for k in pipeline_tasks]
+        pipeline_wall_times[pid] = (max(pipeline_ends) - min(pipeline_starts)).total_seconds()
+
     # safe full-query time from matched tasks
     if durations:
-        all_task_time  = sum(durations.values())
+        all_task_time = sum(durations.values())
         sts = [starts[k] for k in durations]
-        ets = [ends[k]   for k in durations]
+        ets = [ends[k] for k in durations]
         full_query_time = (max(ets) - min(sts)).total_seconds()
     else:
         all_task_time = full_query_time = 0.0
@@ -69,15 +87,24 @@ def compute_stats(stats_path):
         stats = agg.setdefault(pid, {
             'sum_tp': 0, 'count': 0, 'sum_tuples': 0, 'sum_time': 0
         })
-        stats['sum_tp']     += tp
-        stats['count']      += 1
+        stats['sum_tp'] += tp
+        stats['count'] += 1
         stats['sum_tuples'] += tuples[(pid, _)]
-        stats['sum_time']   += durations[(pid, _)]
+        stats['sum_time'] += durations[(pid, _)]
 
     # finalize metrics and selectivity
     for pid, s in agg.items():
-        s['avg_tp']  = s['sum_tp'] / s['count']
-        s['pct_time']= s['sum_time'] / all_task_time * 100 if all_task_time else 0
+        s['avg_tp'] = s['sum_tp'] / s['count']
+        s['pct_time'] = s['sum_time'] / all_task_time * 100 if all_task_time else 0
+        s['skipped'] = skipped_by_pipeline[pid]
+
+        # Computational throughput (per compute time)
+        s['comp_tp'] = s['sum_tuples'] / s['sum_time'] if s['sum_time'] > 0 else 0
+
+        # Effective throughput (per wall clock time)
+        wall_time = pipeline_wall_times.get(pid, 0)
+        s['eff_tp'] = s['sum_tuples'] / wall_time if wall_time > 0 else 0
+
         inc = transit[pid]['in']
         out = transit[pid]['out']
         if inc and out:
@@ -85,7 +112,8 @@ def compute_stats(stats_path):
         else:
             s['selectivity'] = 100.0
 
-    return all_task_time, full_query_time, agg
+    total_skipped = sum(skipped_by_pipeline.values())
+    return all_task_time, full_query_time, agg, total_skipped
 
 def main():
     if len(sys.argv) != 2:
@@ -98,25 +126,33 @@ def main():
         print(f"`{directory}` is not a directory")
         sys.exit(1)
 
-    for filename in os.listdir(directory):
-        path = os.path.join(directory, filename)
-        if not os.path.isfile(path):
-            continue
+    results_path = os.path.join(directory, "results.txt")
 
-        total_time, full_time, pipelines = compute_stats(path)
-        base, _ = os.path.splitext(filename)
-        out_path = os.path.join(directory, f"{base}.txt")
+    with open(results_path, 'w') as results_file:
+        for filename in os.listdir(directory):
+            path = os.path.join(directory, filename)
+            if not os.path.isfile(path) or not filename.endswith('.stats'):
+                continue
 
-        with open(out_path, 'w') as out:
-            out.write(f"Total tasks time: {total_time:.2f}s\n")
-            out.write(f"Full query duration: {full_time:.2f}s\n\n")
+            total_time, full_time, pipelines, total_skipped = compute_stats(path)
+
+            results_file.write(f"File: {filename}\n")
+            results_file.write(f"Total tasks time: {total_time:.2f}s\n")
+            results_file.write(f"Full query duration: {full_time:.2f}s\n")
+            results_file.write(f"Total skipped tasks: {total_skipped}\n\n")
+
             for pid in sorted(pipelines):
                 p = pipelines[pid]
-                out.write(
-                    f"Pipeline {pid}: avg_tp={p['avg_tp']:.2f} tuples/s, "
+                results_file.write(
+                    f"Pipeline {pid}: "
+                    f"comp_tp={p['comp_tp']:.2f} tuples/s, "
+                    f"eff_tp={p['eff_tp']:.2f} tuples/s, "
                     f"total_tuples={p['sum_tuples']}, "
-                    f"time_pct={p['pct_time']:.2f}%\n"
+                    f"time_pct={p['pct_time']:.2f}%, "
+                    f"skipped_tasks={p['skipped']}\n"
                 )
+
+            results_file.write("\n" + "-"*50 + "\n\n")
 
 if __name__ == "__main__":
     main()
