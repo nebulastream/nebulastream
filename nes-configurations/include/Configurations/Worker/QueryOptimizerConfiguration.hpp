@@ -23,9 +23,9 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES::Configurations
@@ -115,6 +115,16 @@ public:
            "0",
            "Time delta added to watermark predictions to account for execution time.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption maxMemoryConsumption
+        = {"maxMemoryConsumption",
+           std::to_string(UINT64_MAX),
+           "Maximum memory consumption in bytes.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::EnumOption<MemoryModel> memoryModel
+        = {"memoryModel",
+           MemoryModel::DEFAULT,
+           "Memory Model for file backed slice store "
+           "[DEFAULT|PREDICT_WATERMARKS|WITHIN_BUDGET|ADAPTIVE]."};
     NES::Configurations::EnumOption<FileLayout> fileLayout
         = {"fileLayout",
            FileLayout::NO_SEPARATION,
@@ -123,7 +133,7 @@ public:
     NES::Configurations::EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
-           "Type of watermark predictor "
+           "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
     NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
@@ -149,6 +159,8 @@ private:
             &minReadStateSize,
             &minWriteStateSize,
             &fileOperationTimeDelta,
+            &maxMemoryConsumption,
+            &memoryModel,
             &fileLayout,
             &watermarkPredictorType,
             &sliceStoreType,
