@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import re
 import numpy as np
 
 
@@ -26,18 +27,18 @@ NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1, 2]
 BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 PAGE_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 WINDOW_SIZE_SLIDE = [
-    # Representing a tumbling window of 10s, resulting in 1 concurrent window
-    (10 * 1000, 10 * 1000),
-    # Representing a tumbling window of 2.78h, resulting in 1 concurrent window
-    (10 * 1000 * 1000, 10 * 1000 * 1000),
     # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
     (1000 * 1000 * 1000, 1000 * 1000 * 1000),
-    # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
-    (10 * 1000, 100),
+    # Representing a tumbling window of 2.78h, resulting in 1 concurrent window
+    (10 * 1000 * 1000, 10 * 1000 * 1000),
+    # Representing a tumbling window of 10s, resulting in 1 concurrent window
+    (10 * 1000, 10 * 1000),
     # Representing a sliding window of 277.78h with slide of 16.67min, resulting in 100 concurrent windows
     (1000 * 1000 * 1000, 1000 * 1000),
     # Representing a sliding window of 277.78h with slide of 100s, resulting in 10000 concurrent windows
-    (1000 * 1000 * 1000, 100 * 1000)
+    (1000 * 1000 * 1000, 100 * 1000),
+    # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
+    (10 * 1000, 100)
 ]
 
 SLICE_STORE_TYPE = ["DEFAULT", "FILE_BACKED"]
@@ -170,7 +171,8 @@ class BenchmarkConfig:
 def create_benchmark_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
-    default_params_template = {
+    default_params = {
+        "timestamp_increment": TIMESTAMP_INCREMENT[0],
         "ingestion_rate": INGESTION_RATE[0],
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS[0],
         "buffer_size_in_bytes": BUFFER_SIZES[0],
@@ -182,13 +184,16 @@ def create_benchmark_configs():
         "min_write_state_size": MIN_WRITE_STATE_SIZE[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTA[0],
         "file_layout": FILE_LAYOUT[0],
-        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE[0]
+        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE[0],
+        "query": get_queries()[0]
     }
     shared_params = {
+        "timestamp_increment": TIMESTAMP_INCREMENT,
         "ingestion_rate": INGESTION_RATE,
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS,
         "buffer_size_in_bytes": BUFFER_SIZES,
-        "page_size": PAGE_SIZES
+        "page_size": PAGE_SIZES,
+        "query": get_queries()
     }
     file_backed_params = {
         "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED,
@@ -201,31 +206,60 @@ def create_benchmark_configs():
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE
     }
 
-    # Generate default configurations for each combination of timestamp_increment and query
-    default_configs = []
-    for timestamp_increment in TIMESTAMP_INCREMENT:
-        for query in get_queries():
-            config_params = default_params_template.copy()
-            config_params["timestamp_increment"] = timestamp_increment
-            config_params["query"] = query
-            default_configs.append(config_params)
-    # Generate configurations for each shared parameter combined with default configs
-    for config_params in default_configs:
-        for param, values in shared_params.items():
-            for value in values:
-                for slice_store_type in SLICE_STORE_TYPE:
-                    config = config_params.copy()
-                    config[param] = value
-                    config["slice_store_type"] = slice_store_type
-                    configs.append(BenchmarkConfig(**config))
-    # Generate configurations for each file backed parameter combined with default configs
-    for config_params in default_configs:
-        for param, values in file_backed_params.items():
-            for value in values:
-                config = config_params.copy()
-                config[param] = value
-                config["slice_store_type"] = "FILE_BACKED"
-                configs.append(BenchmarkConfig(**config))
+    # Choose certain timestamp_increment values as default
+    default_timestamp_increments = TIMESTAMP_INCREMENT
+
+    # Choose certain combinations of window size and slide from the first query as default
+    default_queries = []
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
+        size_and_slide = re.search(window_pattern, query)
+        size = int(size_and_slide.group(1))
+        # slide = int(size_and_slide.group(2))
+
+        if size != 10000:
+            default_queries.append(query)
+
+    # Generate configurations for each shared parameter
+    for param, values in shared_params.items():
+        for value in values:
+            for slice_store_type in SLICE_STORE_TYPE:
+                config_params = default_params.copy()
+                config_params[param] = value
+                config_params["slice_store_type"] = slice_store_type
+                configs.append(BenchmarkConfig(**config_params))
+    # Generate configurations for each file backed parameter
+    for param, values in file_backed_params.items():
+        for value in values:
+            config_params = default_params.copy()
+            config_params[param] = value
+            config_params["slice_store_type"] = "FILE_BACKED"
+            configs.append(BenchmarkConfig(**config_params))
+
+    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    for timestamp_increment in default_timestamp_increments:
+        if timestamp_increment == default_params['timestamp_increment']:
+            continue
+        for query in default_queries:
+            if query == default_params['query']:
+                continue
+            for param, values in shared_params.items():
+                for value in values:
+                    for slice_store_type in SLICE_STORE_TYPE:
+                        config_params = default_params.copy()
+                        config_params["timestamp_increment"] = timestamp_increment
+                        config_params["query"] = query
+                        config_params[param] = value
+                        config_params["slice_store_type"] = slice_store_type
+                        configs.append(BenchmarkConfig(**config_params))
+            for param, values in file_backed_params.items():
+                for value in values:
+                    config_params = default_params.copy()
+                    config_params["timestamp_increment"] = timestamp_increment
+                    config_params["query"] = query
+                    config_params[param] = value
+                    config_params["slice_store_type"] = "FILE_BACKED"
+                    configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
