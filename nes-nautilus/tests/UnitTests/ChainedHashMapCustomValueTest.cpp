@@ -206,7 +206,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     hashMap.clear();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ChainedHashMapCustomValue,
     ChainedHashMapCustomValueTest,
     ::testing::Combine(
