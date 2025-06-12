@@ -490,6 +490,16 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
 {
     setupLogging(config);
 
+#ifndef USE_MLIR
+    if (config.singleNodeWorkerConfig->workerConfiguration.defaultQueryExecution.executionMode == ExecutionMode::COMPILER)
+    {
+        return {
+            .returnType = SystestExecutorResult::ReturnType::SUCCESS,
+            .outputMessage = "Skipping tests since Compiler backend not available",
+        };
+    }
+#endif
+
     CPPTRACE_TRY
     {
         /// Read the configuration
