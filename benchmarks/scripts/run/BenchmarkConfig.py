@@ -48,6 +48,8 @@ FILE_DESCRIPTOR_BUFFER_SIZE = [4096, 8192, 32768, 131072, 524288, 1024]
 MIN_READ_STATE_SIZE = [0, 64, 128, 512, 1024, 4096, 16384]
 MIN_WRITE_STATE_SIZE = [0, 64, 128, 512, 1024, 4096, 16384]
 FILE_OPERATION_TIME_DELTA = [0, 1, 10, 100, 1000]
+MAX_MEMORY_CONSUMPTION = [np.iinfo(np.uint64).max, 1024 * 1024 * 1024, 128 * 1024 * 1024, 4 * 1024 * 1024]
+MEMORY_MODEL = ["PREDICT_WATERMARKS", "WITHIN_BUDGET", "ADAPTIVE", "DEFAULT"]
 FILE_LAYOUT = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WATERMARK_PREDICTOR_TYPE = ["KALMAN", "RLS", "REGRESSION"]
 
@@ -111,6 +113,8 @@ class BenchmarkConfig:
                  min_read_state_size,
                  min_write_state_size,
                  file_operation_time_delta,
+                 max_memory_consumption,
+                 memory_model,
                  file_layout,
                  watermark_predictor_type,
                  query):
@@ -126,6 +130,8 @@ class BenchmarkConfig:
         self.min_read_state_size = min_read_state_size
         self.min_write_state_size = min_write_state_size
         self.file_operation_time_delta = file_operation_time_delta
+        self.max_memory_consumption = max_memory_consumption
+        self.memory_model = memory_model
         self.file_layout = file_layout
         self.watermark_predictor_type = watermark_predictor_type
         self.query = query
@@ -157,6 +163,8 @@ class BenchmarkConfig:
             "min_read_state_size": self.min_read_state_size,
             "min_write_state_size": self.min_write_state_size,
             "file_operation_time_delta": self.file_operation_time_delta,
+            "max_memory_consumption": self.max_memory_consumption,
+            "memory_model": self.memory_model,
             "file_layout": self.file_layout,
             "watermark_predictor_type": self.watermark_predictor_type,
             "query": self.query,
@@ -183,6 +191,8 @@ def create_benchmark_configs():
         "min_read_state_size": MIN_READ_STATE_SIZE[0],
         "min_write_state_size": MIN_WRITE_STATE_SIZE[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTA[0],
+        "max_memory_consumption": MAX_MEMORY_CONSUMPTION[0],
+        "memory_model": MEMORY_MODEL[0],
         "file_layout": FILE_LAYOUT[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE[0],
         "query": get_queries()[0]
@@ -202,6 +212,8 @@ def create_benchmark_configs():
         "min_read_state_size": MIN_READ_STATE_SIZE,
         "min_write_state_size": MIN_WRITE_STATE_SIZE,
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTA,
+        "max_memory_consumption": MAX_MEMORY_CONSUMPTION,
+        "memory_model": MEMORY_MODEL,
         "file_layout": FILE_LAYOUT,
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPE
     }
@@ -282,6 +294,8 @@ def create_all_benchmark_configs():
             min_read_state_size,
             min_write_state_size,
             file_operation_time_delta,
+            max_memory_consumption,
+            memory_model,
             file_layout,
             watermark_predictor_type,
             query
@@ -298,6 +312,8 @@ def create_all_benchmark_configs():
         for min_read_state_size in (MIN_READ_STATE_SIZE if slice_store_type != "DEFAULT" else [0])
         for min_write_state_size in (MIN_WRITE_STATE_SIZE if slice_store_type != "DEFAULT" else [0])
         for file_operation_time_delta in (FILE_OPERATION_TIME_DELTA if slice_store_type != "DEFAULT" else [0])
+        for max_memory_consumption in (MAX_MEMORY_CONSUMPTION if slice_store_type != "DEFAULT" else [0])
+        for memory_model in (MEMORY_MODEL if slice_store_type != "DEFAULT" else ["DEFAULT"])
         for file_layout in (FILE_LAYOUT if slice_store_type != "DEFAULT" else ["NO_SEPARATION"])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPE if slice_store_type != "DEFAULT" else ["KALMAN"])
         for query in get_queries()
