@@ -17,11 +17,21 @@ def compute_stats(stats_path):
     )
 
     def parse_ts(raw):
+        # Create datetime object (for compatibility with existing code)
         date, _, frac = raw.partition('.')
-        frac = (frac + '000000')[:6]
-        return datetime.fromisoformat(f'{date}.{frac}')
+        frac_micro = (frac + '000000')[:6]  # Truncate to microseconds for datetime
+        dt = datetime.fromisoformat(f'{date}.{frac_micro}')
 
-    starts, ends, tuples = {}, {}, {}
+        # For high precision calculations, extract seconds with full nanosecond precision
+        time_str = raw.split()[1]  # Get time part: HH:MM:SS.NNNNNNNNN
+        h, m, s = time_str.split(':')
+        seconds = float(h) * 3600 + float(m) * 60 + float(s)
+
+        return dt, seconds
+
+    starts_dt, starts_sec = {}, {}
+    ends_dt, ends_sec = {}, {}
+    tuples = {}
     transit = defaultdict(lambda: {'in': 0, 'out': 0})
 
     with open(stats_path) as f:
@@ -36,30 +46,35 @@ def compute_stats(stats_path):
                 m1, m2 = start_re.search(line), tuple_re.search(line)
                 if m1 and m2:
                     key = (int(m1.group('p')), int(m1.group('tid')))
-                    starts[key] = parse_ts(m1.group('ts'))
+                    dt, sec = parse_ts(m1.group('ts'))
+                    starts_dt[key] = dt
+                    starts_sec[key] = sec
                     tuples[key] = int(m2.group('t'))
             elif 'Completed' in line:
                 m = complete_re.search(line)
                 if m:
                     key = (int(m.group('p')), int(m.group('tid')))
-                    ends[key] = parse_ts(m.group('ts'))
+                    dt, sec = parse_ts(m.group('ts'))
+                    ends_dt[key] = dt
+                    ends_sec[key] = sec
 
     # Track skipped tasks
     skipped_by_pipeline = defaultdict(int)
-    for key in list(starts.keys()):
-        if key not in ends:
+    for key in list(starts_dt.keys()):
+        if key not in ends_dt:
             skipped_by_pipeline[key[0]] += 1
 
-    for key in list(ends.keys()):
-        if key not in starts:
+    for key in list(ends_dt.keys()):
+        if key not in starts_dt:
             skipped_by_pipeline[key[0]] += 1
 
-    # only keep tasks with both start & end
+    # Calculate durations using high-precision seconds
     durations = {}
     throughputs = {}
-    for key, ts0 in starts.items():
-        if key in ends:
-            dur = (ends[key] - ts0).total_seconds()
+    for key in starts_dt.keys():
+        if key in ends_dt:
+            # Use full precision seconds for duration calculation
+            dur = ends_sec[key] - starts_sec[key]
             if dur > 0:
                 durations[key] = dur
                 throughputs[key] = tuples[key] / dur
@@ -68,16 +83,16 @@ def compute_stats(stats_path):
     pipeline_wall_times = {}
     for pid in set(p for p, _ in durations.keys()):
         pipeline_tasks = [(p, t) for (p, t) in durations.keys() if p == pid]
-        pipeline_starts = [starts[k] for k in pipeline_tasks]
-        pipeline_ends = [ends[k] for k in pipeline_tasks]
-        pipeline_wall_times[pid] = (max(pipeline_ends) - min(pipeline_starts)).total_seconds()
+        pipeline_starts = [starts_sec[k] for k in pipeline_tasks]
+        pipeline_ends = [ends_sec[k] for k in pipeline_tasks]
+        pipeline_wall_times[pid] = max(pipeline_ends) - min(pipeline_starts)
 
-    # safe full-query time from matched tasks
+    # Calculate full-query time from matched tasks
     if durations:
         all_task_time = sum(durations.values())
-        sts = [starts[k] for k in durations]
-        ets = [ends[k] for k in durations]
-        full_query_time = (max(ets) - min(sts)).total_seconds()
+        sts = [starts_sec[k] for k in durations]
+        ets = [ends_sec[k] for k in durations]
+        full_query_time = max(ets) - min(sts)
     else:
         all_task_time = full_query_time = 0.0
 
