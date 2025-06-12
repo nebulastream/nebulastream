@@ -150,10 +150,10 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     const auto bufferProvider = pec.getBufferManager();
     const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<true>(
         StagedBuffer{
-            rawBufferData.buffer,
-            rawBufferData.buffer.getNumberOfTuples(),
-            rawBufferData.offsetOfFirstTupleDelimiter,
-            rawBufferData.offsetOfLastTupleDelimiter},
+            .buffer=rawBufferData.buffer,
+            .sizeOfBufferInBytes=rawBufferData.buffer.getNumberOfTuples(),
+            .offsetOfFirstTupleDelimiter=rawBufferData.offsetOfFirstTupleDelimiter,
+            .offsetOfLastTupleDelimiter=rawBufferData.offsetOfLastTupleDelimiter},
         rawBufferData.buffer.getSequenceNumber().getRawValue());
 
     /// 1. process leading spanning tuple if required
@@ -205,10 +205,10 @@ void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
     const auto bufferProvider = pec.getBufferManager();
     const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<false>(
         StagedBuffer{
-            rawBufferData.buffer,
-            rawBufferData.buffer.getNumberOfTuples(),
-            rawBufferData.offsetOfFirstTupleDelimiter,
-            rawBufferData.offsetOfLastTupleDelimiter},
+            .buffer=rawBufferData.buffer,
+            .sizeOfBufferInBytes=rawBufferData.buffer.getNumberOfTuples(),
+            .offsetOfFirstTupleDelimiter=rawBufferData.offsetOfFirstTupleDelimiter,
+            .offsetOfLastTupleDelimiter=rawBufferData.offsetOfLastTupleDelimiter},
         rawBufferData.buffer.getSequenceNumber().getRawValue());
     if (stagedBuffers.size() < 3)
     {
