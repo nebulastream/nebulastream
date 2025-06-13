@@ -348,7 +348,7 @@ TEST_P(TestTupleBufferTest, DynamicTupleCompareVarSizeData)
     ASSERT_TRUE((*testBufferVarSize)[1] == (*testBufferVarSize)[3]);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TestInputs,
     TestTupleBufferTest,
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),

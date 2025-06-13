@@ -125,7 +125,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout)
     EXPECT_EQ(testBuffer->toString(schema), expectedOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TestInputs,
     DynamicMemoryLayoutTestParameterized,
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),

@@ -21,9 +21,11 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 
@@ -63,6 +65,11 @@ public:
 TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
     Configuration::SystestConfiguration config{};
+#ifndef USE_MLIR
+    auto snwConf = Configuration::SingleNodeWorkerConfiguration{};
+    snwConf.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::INTERPRETER;
+    config.singleNodeWorkerConfig = snwConf;
+#endif
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
@@ -89,6 +96,11 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     const auto& [directory, testFile] = GetParam();
     const auto testFileName = testFile + std::string(".dummy");
     Configuration::SystestConfiguration config{};
+#ifndef USE_MLIR
+    auto snwConf = Configuration::SingleNodeWorkerConfiguration{};
+    snwConf.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::INTERPRETER;
+    config.singleNodeWorkerConfig = snwConf;
+#endif
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));

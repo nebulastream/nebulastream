@@ -137,7 +137,11 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName, sourceCatalog);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
+#ifdef USE_MLIR
     configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::COMPILER;
+#else
+    configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::INTERPRETER;
+#endif
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -186,7 +190,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     IntegrationTestUtil::removeFile(testSpecificDataFileName);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(QueryTestParam{"qOneCSVSourceAndOneTCPSourceWithFilter", 1, 62, 960 /* 2*SUM(0, 1, ..., 15) */, 32}));

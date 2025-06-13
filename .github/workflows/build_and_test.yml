@@ -17,7 +17,7 @@ jobs:
   get-resources:
     runs-on: ubuntu-latest
     outputs:
-      number_of_jobs: ${{ steps.set-value.outputs.number_of_jobs }}
+      number_of_jobs: ${{ steps.number-of-jobs.outputs.number_of_jobs }}
     steps:
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
@@ -183,6 +183,51 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
           path: /junit.xml
+
+  build-and-test-without-mlir:
+    name: "without mlir"
+    needs: [ get-resources ]
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-none
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Release' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure NebulaStream
+        run: |
+          cmake -B build -DExternalData_OBJECT_STORES=/test-file-cache -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=OFF
+      - name: Build NebulaStream
+        shell: bash
+        run: |
+          cmake --build build -j ${{needs.get-resources.outputs.number_of_jobs}}  -- -k 0
+      - name: Run Tests
+        # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        shell: bash
+        run: |
+          ctest --test-dir build -j ${{needs.get-resources.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600 ${ADDTIONAL_CTEST_ARGS}
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-without-mlir-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
 
   build-without-tests:
     name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"

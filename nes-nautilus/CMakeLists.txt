@@ -105,16 +105,19 @@ target_include_directories(nes-nautilus PUBLIC
 
 # Link with the nautilus library
 find_package(spdlog REQUIRED CONFIG)
-find_package(MLIR REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
 
-# We have to set the nes-nautilus to public to use the nautilus library in other modules
-target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
-        MLIRExecutionEngine
-        MLIRFuncAllExtensions
+target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
+    find_package(MLIR REQUIRED CONFIG)
+    # We have to set the nes-nautilus to public to use the nautilus library in other modules
+    target_link_libraries(nes-nautilus PUBLIC
+            MLIRExecutionEngine
+            MLIRFuncAllExtensions
 
-        # Dialects
-        MLIRSCFDialect
-        MLIRFuncToLLVM
-        MLIRSCFToControlFlow
-)
+            # Dialects
+            MLIRSCFDialect
+            MLIRFuncToLLVM
+            MLIRSCFToControlFlow
+    )
+endif()

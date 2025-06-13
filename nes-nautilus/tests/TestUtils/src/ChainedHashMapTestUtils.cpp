@@ -74,6 +74,12 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     /// Setting the correct options for the engine, depending on the enum value from the backend
     nautilus::engine::Options options;
     const bool compilation = (backend == Nautilus::Configurations::ExecutionMode::COMPILER);
+#ifndef USE_MLIR
+    if (compilation)
+    {
+        GTEST_SKIP_("Compiler backend not enabled");
+    }
+#endif
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);

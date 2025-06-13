@@ -171,7 +171,7 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
     EXPECT_EQ(completed.load(), maxSequenceNumber + SequenceNumber::INITIAL);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ChunkCollectorTest,
     ConcurrentChunkCollectorTest,
     ::testing::Combine(::testing::Values(10, 1000, 50000), ::testing::Values(1, 5, 50), ::testing::Values(1, 4, 16)));
