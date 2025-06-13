@@ -18,6 +18,11 @@
 #include <string>
 #include <iostream>
 
+// Forward declare the MEOS C STBox type from the global scope
+extern "C" {
+    struct STBox;
+}
+
 namespace MEOS {
 
     // Constructor - no parameters according to header
@@ -49,20 +54,15 @@ namespace MEOS {
     }
 
     bool Meos::TemporalInstant::intersects(const TemporalInstant& point) const {  
-        // Simple temporal overlap check
         if (!instant || !point.instant) {
             return false;
         }
         
-        // Get time spans and check if they overlap - using correct function name
-        Span *span1 = temporal_to_tstzspan(instant);
-        Span *span2 = temporal_to_tstzspan(point.instant);
-        
-        bool result = overlaps_span_span(span1, span2);
-        
-        free(span1);
-        free(span2);
-        
+        // Use MEOS eintersects function for temporal points  
+        bool result = eintersects_tpoint_tpoint((const Temporal *)this->instant, (const Temporal *)point.instant);
+        if (result) {
+            std::cout << "TemporalInstant intersects" << std::endl;
+        }
         return result;
     }
  
@@ -84,6 +84,21 @@ namespace MEOS {
         // Using comment to avoid unused parameter warning
         return 0.0;
     }   
+
+    // SpatioTemporalBox implementation
+    Meos::SpatioTemporalBox::SpatioTemporalBox(const std::string& wkt_string) {
+        // Use MEOS stbox_in function to parse the WKT string
+        stbox_ptr = stbox_in(wkt_string.c_str());
+    }
+
+    Meos::SpatioTemporalBox::~SpatioTemporalBox() {
+        if (stbox_ptr) {
+            // Free the MEOS STBox using free (not pfree)
+            free(stbox_ptr);
+            stbox_ptr = nullptr;
+        }
+    }
+
 
 }// namespace MEOS
 
