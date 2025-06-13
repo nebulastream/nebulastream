@@ -18,10 +18,53 @@ option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a loc
 
 if (DEFINED ENV{VCPKG_STDLIB})
     set(USE_CPP_STDLIB $ENV{VCPKG_STDLIB})
+    set(USE_CPP_STDLIB_LIBCXX_PATH $ENV{USE_CPP_STDLIB_LIBCXX_PATH})
 else ()
     set(USE_CPP_STDLIB "libstdcxx" CACHE STRING "C++ stdlib to use. libstdcxx (distro default), libcxx")
     set_property(CACHE USE_CPP_STDLIB PROPERTY STRINGS "libstdcxx" "libcxx")
 endif ()
+
+
+if (USE_CPP_STDLIB STREQUAL "libcxx")
+    if (    DEFINED ENV{USE_CPP_STDLIB_LIBCXX_PATH}
+        AND DEFINED USE_CPP_STDLIB_LIBCXX_PATH
+        AND NOT $ENV{USE_CPP_STDLIB_LIBCXX_PATH} STREQUAL ${USE_CPP_STDLIB_LIBCXX_PATH})
+        message(FATAL_ERROR "CPP_STDLIB_CUSTOM_PATH in env and as cache var conflict: $ENV{USE_CPP_STDLIB_LIBCXX_PATH} in env, ${CPP_STDLIB_CUSTOM_PATH} in cache!")
+    elseif (DEFINED ENV{USE_CPP_STDLIB_LIBCXX_PATH})
+        set(USE_CPP_STDLIB_LIBCXX_PATH $ENV{USE_CPP_STDLIB_LIBCXX_PATH})
+    else()
+        set(USE_CPP_STDLIB_LIBCXX_PATH "" CACHE STRING "Path to dir containing custom libc++s")
+        set(ENV{USE_CPP_STDLIB_LIBCXX_PATH} "${USE_CPP_STDLIB_LIBCXX_PATH}")
+    endif()
+    list(APPEND VCPKG_ENV_PASSTHROUGH "USE_CPP_STDLIB_LIBCXX_PATH")
+
+    if (NOT EXISTS ${USE_CPP_STDLIB_LIBCXX_PATH})
+        message(FATAL_ERROR "Please set USE_CPP_STDLIB_LIBCXX_PATH to directory containing libc++ "
+        "(currently: ${USE_CPP_STDLIB_LIBCXX_PATH}). "
+        "\n"
+        "You can obtain libc++ from e.g. https://github.com/nebulastream/clang-binaries/releases, "
+        "https://apt.llvm.org, or built it yourself as described in https://libcxx.llvm.org/VendorDocumentation.html. "
+        "\n"
+        "Point USE_CPP_STDLIB_LIBCXX_PATH to e.g. /lib/llvm-${LLVM_TOOLCHAIN_VERSION} if libc++-${LLVM_TOOLCHAIN_VERSION}-dev was installed via apt."
+        )
+    endif()
+
+    if (NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++abi.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libunwind.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/include/c++/v1/")
+        message(FATAL_ERROR "Path to custom libc++ does not exist or is missing expected files.")
+    endif()
+
+    # this makes the hash of the libc++ a part of the VCPKG ABI,
+    # i.e. if the hash of e.g. libc++.so.1 changes, the dependencies are rebuilt
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++.so.1"    ENV{VCPKG_LIBCXX_HASH_LIB} )
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++abi.so.1" ENV{VCPKG_LIBCXX_HASH_ABI} )
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libunwind.so.1" ENV{VCPKG_LIBCXX_HASH_UNW} )
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_LIB")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_ABI")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_UNW")
+endif()
 
 
 if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
