@@ -101,7 +101,7 @@ struct CriticalSequenceNumberEntry
     }
 };
 
-void SequenceShredder::validateState() noexcept
+bool SequenceShredder::validateState() noexcept
 {
     try
     {
@@ -174,6 +174,7 @@ void SequenceShredder::validateState() noexcept
                 NES_ERROR("Validation failed: {}", stateStream.str());
             }
             NES_DEBUG("Validation successful.");
+            return true;
         }
     }
     catch (...)
