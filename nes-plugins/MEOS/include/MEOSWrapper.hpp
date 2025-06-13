@@ -34,6 +34,20 @@ class Meos {
      */
     ~Meos();
 
+    class SpatioTemporalBox {
+    public:
+        /**
+         * @brief Create SpatioTemporal from WKT string
+         * @param wkt_string String in format "SRID=4326;SpatioTemporal X((3.5, 50.5),(4.5, 51.5))"
+         */
+        explicit SpatioTemporalBox(const std::string& wkt_string);
+        ~SpatioTemporalBox();
+
+
+    private:
+        void* stbox_ptr; // Opaque pointer to MEOS STBox
+    };
+
     class TemporalInstant {
     public:
         explicit TemporalInstant(const std::string& mf_string);
@@ -44,6 +58,7 @@ class Meos {
     private:
         Temporal* instant;
     };
+    
     class TemporalSequence {
     public:
         explicit TemporalSequence(double lon, double lat, int t_out);
