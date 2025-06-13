@@ -85,6 +85,16 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
+        = {"sliceStoreType",
+           SliceStoreType::DEFAULT,
+           "Type of slice store "
+           "[DEFAULT|FILE_BACKED]."};
+    NES::Configurations::UIntOption fileDescriptorBufferSize
+        = {"fileDescriptorBufferSize",
+           "4096",
+           "Buffer size of file writers and readers for file backed data structures.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption numWatermarkGapsAllowed
         = {"numWatermarkGapsAllowed",
            "10",
@@ -94,11 +104,6 @@ public:
         = {"maxNumSequenceNumbers",
            std::to_string(UINT64_MAX),
            "Maximum number of watermark processor sequence numbers for watermark prediction.",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption fileDescriptorBufferSize
-        = {"fileDescriptorBufferSize",
-           "4096",
-           "Buffer size of file writers and readers for file backed data structures.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption minReadStateSize
         = {"minReadStateSize",
@@ -135,11 +140,6 @@ public:
            WatermarkPredictorType::KALMAN,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
-    NES::Configurations::EnumOption<SliceStoreType> sliceStoreType
-        = {"sliceStoreType",
-           SliceStoreType::DEFAULT,
-           "Type of slice store "
-           "[DEFAULT|FILE_BACKED]."};
     NES::Configurations::StringOption fileBackedWorkingDir
         = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
@@ -153,9 +153,10 @@ private:
             &joinStrategy,
             &pipelinesTxtFilePath,
             &operatorBufferSize,
+            &sliceStoreType,
+            &fileDescriptorBufferSize,
             &numWatermarkGapsAllowed,
             &maxNumSequenceNumbers,
-            &fileDescriptorBufferSize,
             &minReadStateSize,
             &minWriteStateSize,
             &fileOperationTimeDelta,
@@ -163,7 +164,6 @@ private:
             &memoryModel,
             &fileLayout,
             &watermarkPredictorType,
-            &sliceStoreType,
             &fileBackedWorkingDir};
     }
 };

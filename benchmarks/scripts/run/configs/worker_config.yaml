@@ -7,9 +7,10 @@ worker:
     executionMode: COMPILER
     pipelinesTxtFilePath: ""
     pageSize: 4096
+    sliceStoreType: DEFAULT
+    fileDescriptorBufferSize: 4096
     numWatermarkGapsAllowed: 1
     maxNumSequenceNumbers: 1
-    fileDescriptorBufferSize: 4096
     minReadStateSize: 0
     minWriteStateSize: 0
     fileOperationTimeDelta: 0
@@ -17,7 +18,6 @@ worker:
     memoryModel: DEFAULT
     fileLayout: NO_SEPARATION
     watermarkPredictorType: KALMAN
-    sliceStoreType: DEFAULT
     fileBackedWorkingDir: ""
 
   queryEngine:
