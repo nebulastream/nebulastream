@@ -230,7 +230,7 @@ public:
 
     /// Logs the sequence number range of the SequenceShredder. Additionally, iterates over all bitmaps and detects whether the
     /// SequenceShredder is in a valid state for sequence number (each bit represents a sequence number). Logs all invalid sequence numbers.
-    void validateState() noexcept;
+    bool validateState() noexcept;
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.

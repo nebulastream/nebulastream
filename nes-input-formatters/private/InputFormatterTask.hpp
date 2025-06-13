@@ -227,7 +227,10 @@ public:
         if (HasSpanningTuple)
         {
             INVARIANT(sequenceShredder != nullptr, "The SequenceShredder handles spanning tuples, thus it must not be null.");
-            sequenceShredder->validateState();
+            if (not sequenceShredder->validateState())
+            {
+                throw FormattingError("Failed to validate SequenceShredder.");
+            }
         }
     }
 
