@@ -283,6 +283,21 @@ def create_benchmark_configs():
     return configs
 
 
+def create_memory_model_benchmark_configs():
+    # Generate all possible configurations for memory model parameters
+    default_params = get_default_params()
+    del default_params["memory_model"]
+    del default_params["max_memory_consumption"]
+
+    return [
+        BenchmarkConfig(**default_params, slice_store_type=slice_store_type, memory_model=memory_model,
+                        max_memory_consumption=max_memory_consumption)
+        for slice_store_type in ["FILE_BACKED"]
+        for memory_model in MEMORY_MODELS
+        for max_memory_consumption in (MAX_MEMORY_CONSUMPTION if memory_model == "WITHIN_BUDGET" or memory_model == "ADAPTIVE" else [MAX_MEMORY_CONSUMPTION[0]])
+    ]
+
+
 def create_all_benchmark_configs():
     # Generate all possible configurations
     return [
