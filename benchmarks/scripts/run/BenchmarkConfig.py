@@ -42,9 +42,9 @@ WINDOW_SIZE_SLIDE = [
 ]
 
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
+FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 NUM_WATERMARK_GAPS_ALLOWED = [10, 30, 100, 500, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
-FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
@@ -105,9 +105,9 @@ def get_default_params():
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS[0],
         "buffer_size_in_bytes": BUFFER_SIZES[0],
         "page_size": PAGE_SIZES[0],
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
         "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED[0],
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS[0],
-        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
         "min_read_state_size": MIN_READ_STATE_SIZES[0],
         "min_write_state_size": MIN_WRITE_STATE_SIZES[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS[0],
@@ -128,9 +128,9 @@ class BenchmarkConfig:
                  buffer_size_in_bytes,
                  page_size,
                  slice_store_type,
+                 file_descriptor_buffer_size,
                  num_watermark_gaps_allowed,
                  max_num_sequence_numbers,
-                 file_descriptor_buffer_size,
                  min_read_state_size,
                  min_write_state_size,
                  file_operation_time_delta,
@@ -145,9 +145,9 @@ class BenchmarkConfig:
         self.buffer_size_in_bytes = buffer_size_in_bytes
         self.page_size = page_size
         self.slice_store_type = slice_store_type
+        self.file_descriptor_buffer_size = file_descriptor_buffer_size
         self.num_watermark_gaps_allowed = num_watermark_gaps_allowed
         self.max_num_sequence_numbers = max_num_sequence_numbers
-        self.file_descriptor_buffer_size = file_descriptor_buffer_size
         self.min_read_state_size = min_read_state_size
         self.min_write_state_size = min_write_state_size
         self.file_operation_time_delta = file_operation_time_delta
@@ -178,9 +178,9 @@ class BenchmarkConfig:
             "buffer_size_in_bytes": self.buffer_size_in_bytes,
             "page_size": self.page_size,
             "slice_store_type": self.slice_store_type,
+            "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
             "num_watermark_gaps_allowed": self.num_watermark_gaps_allowed,
             "max_num_sequence_numbers": self.max_num_sequence_numbers,
-            "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
             "min_read_state_size": self.min_read_state_size,
             "min_write_state_size": self.min_write_state_size,
             "file_operation_time_delta": self.file_operation_time_delta,
@@ -210,9 +210,9 @@ def create_benchmark_configs():
         "query": get_queries()
     }
     file_backed_params = {
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED,
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS,
-        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "min_read_state_size": MIN_READ_STATE_SIZES,
         "min_write_state_size": MIN_WRITE_STATE_SIZES,
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
@@ -337,9 +337,9 @@ def create_all_benchmark_configs():
             buffer_size_in_bytes,
             page_size,
             slice_store_type,
+            file_descriptor_buffer_size,
             num_watermark_gaps_allowed,
             max_num_sequence_numbers,
-            file_descriptor_buffer_size,
             min_read_state_size,
             min_write_state_size,
             file_operation_time_delta,
@@ -355,9 +355,9 @@ def create_all_benchmark_configs():
         for buffer_size_in_bytes in BUFFER_SIZES
         for page_size in PAGE_SIZES
         for slice_store_type in SLICE_STORE_TYPES
+        for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
         for num_watermark_gaps_allowed in (NUM_WATERMARK_GAPS_ALLOWED if slice_store_type == "FILE_BACKED" else [NUM_WATERMARK_GAPS_ALLOWED[0]])
         for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if slice_store_type == "FILE_BACKED" else [MAX_NUM_SEQUENCE_NUMBERS[0]])
-        for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
         for min_read_state_size in (MIN_READ_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_READ_STATE_SIZES[0]])
         for min_write_state_size in (MIN_WRITE_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_WRITE_STATE_SIZES[0]])
         for file_operation_time_delta in (FILE_OPERATION_TIME_DELTAS if slice_store_type == "FILE_BACKED" else [FILE_OPERATION_TIME_DELTAS[0]])
