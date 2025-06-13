@@ -37,14 +37,15 @@ namespace NES::InputFormatters
 using FieldOffsetsType = uint32_t;
 
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
-/// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a would TupleBuffer require)
-/// 2. It exposes only the function of the TupleBuffer that are required for formatting
+/// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
+/// 2. It exposes only those functions of the TupleBuffer that are required for formatting
 /// 3. It selectively exposes the reduced set of functions, to prohibit setting, e.g., the SequenceNumber in InputFormatIndexer
 /// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 class RawTupleBuffer
 {
     template <typename FormatterType, typename FieldIndexFunctionType, bool HasSpanningTuple>
+    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
     friend struct StagedBuffer;
 
@@ -82,11 +83,22 @@ private:
     std::string_view bufferView;
 };
 
+/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
+template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+class InputFormatterTask;
+template <typename T>
+concept InputFormatterTaskType = requires {
+    // This will only be satisfied if T is a specialization of InputFormatterTask
+    []<typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>(
+        InputFormatterTask<FormatterType, FieldAccessFunctionType, HasSpanningTuple>&) { }(std::declval<T&>());
+};
+
 /// Type-erased wrapper around InputFormatterTask
 class InputFormatterTaskPipeline final : public ExecutablePipelineStage
 {
 public:
-    template <typename T>
+    template <InputFormatterTaskType T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTaskPipeline>)
     explicit InputFormatterTaskPipeline(T&& inputFormatterTask)
         : inputFormatterTask(std::make_shared<InputFormatterTaskModel<T>>(std::forward<T>(inputFormatterTask)))
@@ -99,7 +111,7 @@ public:
     /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
     void stop(PipelineExecutionContext&) override { this->inputFormatterTask->stopTask(); }
     /// (concurrently) executes an InputFormatterTask.
-    /// First, uses the concrete input formatter implementation to determine the indexes of all fields of all full tuples.
+    /// First, uses the concrete InputFormatIndexer implementation to determine the indexes of all fields of all full tuples.
     /// Second, uses the SequenceShredder to find spanning tuples.
     /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
     /// process all complete tuples and trailing spanning tuple.
@@ -128,20 +140,20 @@ public:
     };
 
     /// Defines the concrete behavior of the InputFormatterTaskConcept, i.e., which specific functions from T to call.
-    template <typename T>
+    template <InputFormatterTaskType T>
     struct InputFormatterTaskModel final : InputFormatterTaskConcept
     {
-        explicit InputFormatterTaskModel(T&& inputFormatterTask) : InputFormatterTask(std::move(inputFormatterTask)) { }
-        void startTask() override { InputFormatterTask.startTask(); }
-        void stopTask() override { InputFormatterTask.stopTask(); }
+        explicit InputFormatterTaskModel(T&& inputFormatterTask) : inputFormatterTask(std::move(inputFormatterTask)) { }
+        void startTask() override { inputFormatterTask.startTask(); }
+        void stopTask() override { inputFormatterTask.stopTask(); }
         void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
         {
-            InputFormatterTask.executeTask(rawTupleBuffer, pec);
+            inputFormatterTask.executeTask(rawTupleBuffer, pec);
         }
-        std::ostream& toString(std::ostream& os) const override { return InputFormatterTask.taskToString(os); }
+        std::ostream& toString(std::ostream& os) const override { return inputFormatterTask.taskToString(os); }
 
     private:
-        T InputFormatterTask;
+        T inputFormatterTask;
     };
 
     std::shared_ptr<InputFormatterTaskConcept> inputFormatterTask;

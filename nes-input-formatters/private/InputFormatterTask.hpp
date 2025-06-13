@@ -168,6 +168,7 @@ void processSpanningTuple(
 /// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
 template <typename FormatterType, typename FieldIndexFunctionType, bool HasSpanningTuple>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
 class InputFormatterTask
 {
 public:
