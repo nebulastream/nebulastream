@@ -1,0 +1,37 @@
+query: |
+  SELECT * FROM sys_resources INTO csv_sink;
+
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/sys_resources_sink.csv"
+    append: false
+
+logical:
+  - name: sys_resources
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: category
+        type: VARSIZED
+      - name: target
+        type: VARSIZED
+      - name: field
+        type: VARSIZED
+      - name: value
+        type: VARSIZED
+
+physical:
+  - logical: sys_resources
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketHost: localhost
+      socketPort: 9000
+      socketBufferSize: 2
+      flushIntervalMS: 100
