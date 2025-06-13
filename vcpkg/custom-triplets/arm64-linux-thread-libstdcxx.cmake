@@ -11,5 +11,5 @@
 # limitations under the License.
 
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/asan.cmake)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/local.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/tsan.cmake)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libstdcxx.cmake)
