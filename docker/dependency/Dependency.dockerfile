@@ -15,16 +15,19 @@ ARG LLVM_VERSION=20
 RUN apk update && apk add zstd
 ADD https://github.com/nebulastream/clang-binaries/releases/download/vcustom-libcxx-mlir-${LLVM_VERSION}/nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd llvm.tar.zstd
 RUN zstd --decompress llvm.tar.zstd   --stdout | tar -x
+ADD https://github.com/nebulastream/clang-binaries/releases/download/vcustom-libcxx-mlir-${LLVM_VERSION}/nes-libcxx-${LLVM_VERSION}-${ARCH}-${SANITIZER}.tar.zstd libcxx.tar.zstd
+RUN zstd --decompress libcxx.tar.zstd --stdout | tar -x
+
 
 FROM nebulastream/nes-development-base:${TAG}
 ARG STDLIB=libcxx
 
 COPY --from=llvm-download /clang /clang
+COPY --from=llvm-download /libcxx /libcxx
 ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 
 ADD vcpkg /vcpkg_input
 ARG SANITIZER="none"
-ARG LLVM_VERSION=20
 ARG ARCH
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 
@@ -33,7 +36,7 @@ ARG VCPKG_DEPENDENCY_HASH
 ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
 ENV VCPKG_STDLIB=${STDLIB}
 ENV VCPKG_SANITIZER=${SANITIZER}
-ENV USE_CPP_STDLIB_LIBCXX_PATH=/lib/llvm-${LLVM_VERSION}
+ENV USE_CPP_STDLIB_LIBCXX_PATH=/libcxx
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
 
 RUN \
