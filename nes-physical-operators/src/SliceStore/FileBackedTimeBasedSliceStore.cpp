@@ -197,7 +197,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     {
         /// 1. We iterate over all windows and erase them if they can be deleted
         /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
-        for (auto windowsLockedIt = windowsWriteLocked->begin(); windowsLockedIt != windowsWriteLocked->end();)
+        for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
         {
             const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
             if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
@@ -304,7 +304,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (const auto& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, threadId, joinBuildSide))
+    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, threadId, joinBuildSide))
     {
         if (slice == nullptr)
         {
@@ -340,7 +340,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     {
                         auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
                         const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
-                        slicesInMemoryMap[{slice->getSliceEnd(), joinBuildSide}] = false;
+                        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
 
                         const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
@@ -404,7 +404,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
     slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
 
-    for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
+    for (auto&& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
