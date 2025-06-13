@@ -32,12 +32,12 @@ jobs:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         build_type: [ 'Debug', 'RelWithDebInfo' ]
-        sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
+        sanitizer: [ 'asan', 'ubsan', 'tsan', 'none' ]
         exclude:
           # Limit the endless mode tests to unsanitized x64 libc++ debug builds
-          - sanitizer: 'address'
-          - sanitizer: 'undefined'
-          - sanitizer: 'thread'
+          - sanitizer: 'asan'
+          - sanitizer: 'ubsan'
+          - sanitizer: 'tsan'
           - arch: arm64
           - build_type: 'RelWithDebInfo'
           - stdlib: 'libstdcxx'
