@@ -20,6 +20,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,9 +48,6 @@ bool TestPipelineExecutionContext::emitBuffer(const NES::Memory::TupleBuffer& re
             resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
             break;
         }
-        default:
-            throw NES::NotImplemented(
-                "Not supporting ContinuationPolicy {} in TestPipelineExecutionContext.", magic_enum::enum_name(continuationPolicy));
     }
     return true;
 }
@@ -62,14 +60,14 @@ NES::Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
     throw NES::BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestablePipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer, NES::PipelineExecutionContext& pec)
+void TestPipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer, NES::PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)
     {
         taskFunction(tupleBuffer, pec);
     }
 }
-std::ostream& TestablePipelineStage::toString(std::ostream& os) const
+std::ostream& TestPipelineStage::toString(std::ostream& os) const
 {
     if (taskSteps.empty())
     {
@@ -91,13 +89,13 @@ SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
 {
 }
 
-void SingleThreadedTestTaskQueue::processTasks(std::vector<TestablePipelineTask> pipelineTasks)
+void SingleThreadedTestTaskQueue::processTasks(std::vector<TestPipelineTask> pipelineTasks)
 {
     enqueueTasks(std::move(pipelineTasks));
     runTasks();
 }
 
-void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
+void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pipelineTasks)
 {
     PRECONDITION(not pipelineTasks.empty(), "Test tasks must not be empty.");
     this->eps = pipelineTasks.front().eps;
@@ -138,7 +136,7 @@ void SingleThreadedTestTaskQueue::runTasks()
 
 MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
-    const std::vector<TestablePipelineTask>& testTasks,
+    const std::vector<TestPipelineTask>& testTasks,
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider,
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
     : threadTasks(testTasks.size())

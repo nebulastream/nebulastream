@@ -79,7 +79,8 @@ template <typename TupleSchemaTemplate>
 struct TestConfig
 {
     size_t numRequiredBuffers{};
-    uint64_t bufferSize{};
+    uint64_t sizeOfRawBuffers{};
+    uint64_t sizeOfFormattedBuffers{};
     ParserConfig parserConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
@@ -161,7 +162,7 @@ void waitForSource(const std::vector<Memory::TupleBuffer>& resultBuffers, size_t
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
-TestablePipelineTask createInputFormatterTask(
+TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
@@ -172,6 +173,7 @@ struct TestHandle
 {
     TestConfig<TupleSchemaTemplate> testConfig;
     std::shared_ptr<Memory::BufferManager> testBufferManager;
+    std::shared_ptr<Memory::BufferManager> formattedBufferManager;
     std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
     Schema schema;
     std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
@@ -330,7 +332,7 @@ std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHa
         for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
             expectedTupleBuffers.at(0).emplace_back(createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
-                testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
+                testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
         }
     }
     return expectedTupleBuffers;
@@ -340,30 +342,31 @@ template <typename TupleSchemaTemplate>
 TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
     std::shared_ptr<Memory::BufferManager> testBufferManager
-        = Memory::BufferManager::create(testConfig.bufferSize, 2 * testConfig.numRequiredBuffers);
+        = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 2 * testConfig.numRequiredBuffers);
+    std::shared_ptr<Memory::BufferManager> formattedBufferManager
+        = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
+
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
         testBufferManager,
+        formattedBufferManager,
         resultBuffers,
         std::move(schema),
-        std::make_unique<SingleThreadedTestTaskQueue>(testBufferManager, resultBuffers),
+        std::make_unique<SingleThreadedTestTaskQueue>(formattedBufferManager, resultBuffers),
         {},
         {}};
 }
 
 template <typename TupleSchemaTemplate>
-std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
+std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        testHandle.testConfig.parserConfig.parserType,
-        testHandle.schema,
-        testHandle.testConfig.parserConfig.tupleDelimiter,
-        testHandle.testConfig.parserConfig.fieldDelimiter);
-    const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
-    std::vector<TestablePipelineTask> tasks;
+    const std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask
+        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+            OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+    std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
