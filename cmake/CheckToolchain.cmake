@@ -39,7 +39,7 @@ if (USE_CPP_STDLIB STREQUAL "libcxx")
     add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
     add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
     add_link_options(-lc++)
-elseif (USE_CPP_STDLIB STREQUAL "local")
+elseif (USE_CPP_STDLIB STREQUAL "libstdcxx")
     # Check if Libstdc++ version is 14 or above
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
