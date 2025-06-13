@@ -190,6 +190,8 @@ code compiles and runs successfully with libstdc++ and libc++ to maintain this d
 
 NebulaStream can use the locally available C++ standard library (on linux usually GNU `libstdc++`) or LLVM's `libc++` (if available)
 by setting the CMake cache variable `USE_CPP_STDLIB`.
+It is also possible to supply a self-built libcxx by setting `USE_CPP_STDLIB` to `custom` and pointing
+`USE_CPP_STDLIB_LIBCXX_PATH` to the directory containing the libcxx.
 In Docker, NebulaStream defaults to `libc++` which is pre-installed in the image.
 
 If you intend to use the docker image with the GNU `libstdc++` you can get the development image by pulling
