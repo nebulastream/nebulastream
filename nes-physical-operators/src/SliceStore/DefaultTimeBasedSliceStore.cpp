@@ -87,35 +87,6 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBas
     return *this;
 }
 
-std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(const Slice& slice) const
-{
-    // @Ariane: We are creating all windows for the created slice here
-    std::vector<WindowInfo> allWindows;
-
-    const auto sliceStart = slice.getSliceStart().getRawValue();
-    const auto sliceEnd = slice.getSliceEnd().getRawValue();
-    const auto windowSize = sliceAssigner.getWindowSize();
-    const auto windowSlide = sliceAssigner.getWindowSlide();
-
-    /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
-    /// In our window model, a window is always the size of the window size.
-    auto firstWindowEnd = std::max((sliceEnd), windowSize);
-    auto lastWindowEnd = sliceStart + windowSize;
-
-    if ((firstWindowEnd - windowSize) % windowSlide != 0){ // firstWindowEnd is no valid windowEnd for the window parameters size and slide
-        // essentially means, it is the firstWindowStart in which the slice is not contained and we can use that to derive the required parameters
-          lastWindowEnd = firstWindowEnd + windowSize - windowSlide;
-          firstWindowEnd = sliceStart + windowSlide;
-        }
-
-    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
-    {
-        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
-    }
-
-    return allWindows;
-}
-
 DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 {
     deleteState();
