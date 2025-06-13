@@ -169,6 +169,7 @@ void processSpanningTuple(
 /// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
 template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
 class InputFormatterTask
 {
 public:
@@ -385,7 +386,12 @@ private:
         {
             const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
             processSpanningTuple<FieldAccessFunctionType>(
-                spanningTupleBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatIndexer, this->parseFunctions);
+                spanningTupleBuffers,
+                *bufferProvider,
+                formattedBuffer,
+                this->tupleMetaData,
+                *this->inputFormatIndexer,
+                this->parseFunctions);
         }
 
         /// 2. process tuples in buffer
@@ -411,7 +417,12 @@ private:
                 = std::span(stagedBuffers)
                       .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
             processSpanningTuple<FieldAccessFunctionType>(
-                spanningTupleBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatIndexer, this->parseFunctions);
+                spanningTupleBuffers,
+                *bufferProvider,
+                formattedBuffer,
+                this->tupleMetaData,
+                *this->inputFormatIndexer,
+                this->parseFunctions);
         }
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
         if (formattedBuffer.getNumberOfTuples() != 0)
