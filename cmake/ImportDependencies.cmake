@@ -19,8 +19,8 @@ option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a loc
 if (DEFINED ENV{VCPKG_STDLIB})
     set(USE_CPP_STDLIB $ENV{VCPKG_STDLIB})
 else ()
-    set(USE_CPP_STDLIB "local" CACHE STRING "C++ stdlib to use. local (distro default), libcxx")
-    set_property(CACHE USE_CPP_STDLIB PROPERTY STRINGS "local" "libcxx")
+    set(USE_CPP_STDLIB "libstdcxx" CACHE STRING "C++ stdlib to use. libstdcxx (distro default), libcxx")
+    set_property(CACHE USE_CPP_STDLIB PROPERTY STRINGS "libstdcxx" "libcxx")
 endif ()
 
 

@@ -47,7 +47,7 @@ the container. Additional cmake flags can be appended to the command.
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake -B build-docker
 ```
 
@@ -57,7 +57,7 @@ The command to execute the build also requires, the current directory to be moun
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake --build build-docker -j
 ```
 
@@ -68,7 +68,7 @@ refer to the [ctest guide](https://cmake.org/cmake/help/latest/manual/ctest.1.ht
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-     nebulastream/nes-development:local \
+     nebulastream/nes-development:libstdcxx \
      ctest --test-dir build-docker -j
 ```
 
@@ -104,7 +104,7 @@ docker run \
     -v $(pwd):$(pwd) \
     -v $(ccache -k cache_dir):$(ccache -k cache_dir) \
     -e CCACHE_DIR=$(ccache -k cache_dir) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake -B build-docker
 ```
 
