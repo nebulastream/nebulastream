@@ -95,7 +95,6 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
-    // TODO delete from layout map as well
     for (auto i = 0UL; i < fileWriters.size(); ++i)
     {
         auto& writerMap = fileWriters[i];
