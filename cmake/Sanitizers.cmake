@@ -11,20 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(USE_SANITIZER "none" CACHE STRING "Enables sanitizer. Thread, Address, Undefined, None (default)")
+set(USE_SANITIZER "none" CACHE STRING "Enables sanitizer. asan, tsan, ubsan, none (default)")
 
 if (DEFINED ENV{VCPKG_SANITIZER})
     SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
 else ()
-    set_property(CACHE USE_SANITIZER PROPERTY STRINGS "none" "thread" "address" "undefined")
+    set_property(CACHE USE_SANITIZER PROPERTY STRINGS "none" "asan" "tsan" "ubsan")
     string(TOLOWER "${USE_SANITIZER}" SANITIZER_OPTION)
 endif ()
 
-if (SANITIZER_OPTION STREQUAL "thread")
+if (SANITIZER_OPTION STREQUAL "tsan")
     MESSAGE(STATUS "Enabling Thread Sanitizer")
     add_compile_options(-fsanitize=thread)
     add_link_options(-fsanitize=thread)
-elseif (SANITIZER_OPTION STREQUAL "undefined")
+elseif (SANITIZER_OPTION STREQUAL "ubsan")
     MESSAGE(STATUS "Enabling UB Sanitizer")
     add_compile_options(-fsanitize=undefined)
     add_link_options(-fsanitize=undefined)
@@ -33,7 +33,7 @@ elseif (SANITIZER_OPTION STREQUAL "undefined")
     add_compile_options(-fno-sanitize=alignment)
     add_link_options(-fno-sanitize=alignment)
 
-elseif (SANITIZER_OPTION STREQUAL "address")
+elseif (SANITIZER_OPTION STREQUAL "asan")
     MESSAGE(STATUS "Enabling Address Sanitizer")
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)

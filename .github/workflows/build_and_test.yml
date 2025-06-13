@@ -93,20 +93,20 @@ jobs:
         # To reduce the load on our CI, we do not run all our tests with Benchmark.
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
-        sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
+        sanitizer: [ 'asan', 'ubsan', 'tsan', 'none' ]
         exclude:
           # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
           - arch: arm64
             stdlib: 'libstdcxx'
           - arch: arm64
-            sanitizer: 'address'
+            sanitizer: 'asan'
           - arch: arm64
-            sanitizer: 'undefined'
+            sanitizer: 'ubsan'
           - arch: arm64
-            sanitizer: 'thread'
+            sanitizer: 'tsan'
           # TODO #808 Enable TSAN with libc++
           - stdlib: 'libcxx'
-            sanitizer: 'thread'
+            sanitizer: 'tsan'
     steps:
       - uses: actions/checkout@v4
         with:
