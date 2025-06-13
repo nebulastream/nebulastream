@@ -70,7 +70,17 @@ public:
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
            "joinStrategy"
-           "[NESTED_LOOP_JOIN]. "};
+        "[NESTED_LOOP_JOIN]. "};
+    EnumOption<SliceStoreType> sliceStoreType
+        = {"sliceStoreType",
+           SliceStoreType::DEFAULT,
+           "Type of slice store "
+        "[DEFAULT|FILE_BACKED]."};
+    UIntOption fileDescriptorBufferSize
+        = {"fileDescriptorBufferSize",
+           "4096",
+           "Buffer size of file writers and readers for file backed data structures.",
+           {std::make_shared<NumberValidation>()}};
     UIntOption numWatermarkGapsAllowed
         = {"numWatermarkGapsAllowed",
            "10",
@@ -80,11 +90,6 @@ public:
         = {"maxNumSequenceNumbers",
            std::to_string(UINT64_MAX),
            "Maximum number of watermark processor sequence numbers for watermark prediction.",
-           {std::make_shared<NumberValidation>()}};
-    UIntOption fileDescriptorBufferSize
-        = {"fileDescriptorBufferSize",
-           "4096",
-           "Buffer size of file writers and readers for file backed data structures.",
            {std::make_shared<NumberValidation>()}};
     UIntOption minReadStateSize
         = {"minReadStateSize",
@@ -111,11 +116,6 @@ public:
            WatermarkPredictorType::KALMAN,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
-    EnumOption<SliceStoreType> sliceStoreType
-        = {"sliceStoreType",
-           SliceStoreType::DEFAULT,
-           "Type of slice store "
-           "[DEFAULT|FILE_BACKED]."};
     StringOption fileBackedWorkingDir
         = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
@@ -128,15 +128,15 @@ private:
             &numberOfPartitions,
             &joinStrategy,
             &operatorBufferSize,
+            &sliceStoreType,
+            &fileDescriptorBufferSize,
             &numWatermarkGapsAllowed,
             &maxNumSequenceNumbers,
-            &fileDescriptorBufferSize,
             &minReadStateSize,
             &minWriteStateSize,
             &fileOperationTimeDelta,
             &fileLayout,
             &watermarkPredictorType,
-            &sliceStoreType,
             &fileBackedWorkingDir};
     }
 };

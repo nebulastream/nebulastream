@@ -195,9 +195,9 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
             windowType->getSize().getTime(),
             windowType->getSlide().getTime(),
             SliceStoreInfo(
+                conf.fileDescriptorBufferSize.getValue(),
                 conf.numWatermarkGapsAllowed.getValue(),
                 conf.maxNumSequenceNumbers.getValue(),
-                conf.fileDescriptorBufferSize.getValue(),
                 conf.minReadStateSize.getValue(),
                 conf.minWriteStateSize.getValue(),
                 conf.fileOperationTimeDelta.getValue(),

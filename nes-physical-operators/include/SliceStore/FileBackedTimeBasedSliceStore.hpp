@@ -48,9 +48,9 @@ enum class MemoryModel : uint8_t
 
 struct SliceStoreInfo
 {
+    uint64_t fileDescriptorBufferSize;
     uint64_t numWatermarkGapsAllowed;
     uint64_t maxNumSequenceNumbers;
-    uint64_t fileDescriptorBufferSize;
     uint64_t minReadStateSize;
     uint64_t minWriteStateSize;
     uint64_t fileOperationTimeDelta;
