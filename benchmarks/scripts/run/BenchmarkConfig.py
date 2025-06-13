@@ -283,6 +283,35 @@ def create_benchmark_configs():
     return configs
 
 
+def create_watermark_predictor_benchmark_configs():
+    # Generate all possible configurations for watermark predictor parameters
+    default_params = get_default_params()
+    del default_params["watermark_predictor_type"]
+    del default_params["num_watermark_gaps_allowed"]
+    del default_params["max_num_sequence_numbers"]
+    del default_params["min_read_state_size"]
+    del default_params["min_write_state_size"]
+    del default_params["file_operation_time_delta"]
+
+    return [
+        BenchmarkConfig(**default_params,
+                        slice_store_type=slice_store_type,
+                        watermark_predictor_type=watermark_predictor_type,
+                        num_watermark_gaps_allowed=num_watermark_gaps_allowed,
+                        max_num_sequence_numbers=max_num_sequence_numbers,
+                        min_read_state_size=min_read_state_size,
+                        min_write_state_size=min_write_state_size,
+                        file_operation_time_delta=file_operation_time_delta)
+        for slice_store_type in ["FILE_BACKED"]
+        for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES
+        for num_watermark_gaps_allowed in NUM_WATERMARK_GAPS_ALLOWED
+        for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS
+        for min_read_state_size in MIN_READ_STATE_SIZES
+        for min_write_state_size in MIN_WRITE_STATE_SIZES
+        for file_operation_time_delta in FILE_OPERATION_TIME_DELTAS
+    ]
+
+
 def create_memory_model_benchmark_configs():
     # Generate all possible configurations for memory model parameters
     default_params = get_default_params()
