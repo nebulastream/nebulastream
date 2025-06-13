@@ -45,6 +45,7 @@ using FieldOffsetsType = uint32_t;
 class RawTupleBuffer
 {
     template <typename FormatterType, typename FieldIndexFunctionType, bool HasSpanningTuple>
+    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
     friend struct StagedBuffer;
 
@@ -82,11 +83,22 @@ private:
     std::string_view bufferView;
 };
 
+/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
+template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+class InputFormatterTask;
+template <typename T>
+concept InputFormatterTaskType = requires {
+    // This will only be satisfied if T is a specialization of InputFormatterTask
+    []<typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>(
+        InputFormatterTask<FormatterType, FieldAccessFunctionType, HasSpanningTuple>&) { }(std::declval<T&>());
+};
+
 /// Type-erased wrapper around InputFormatterTask
 class InputFormatterTaskPipeline final : public ExecutablePipelineStage
 {
 public:
-    template <typename T>
+    template <InputFormatterTaskType T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTaskPipeline>)
     explicit InputFormatterTaskPipeline(T&& inputFormatterTask)
         : inputFormatterTask(std::make_shared<InputFormatterTaskModel<T>>(std::forward<T>(inputFormatterTask)))
@@ -128,7 +140,7 @@ public:
     };
 
     /// Defines the concrete behavior of the InputFormatterTaskConcept, i.e., which specific functions from T to call.
-    template <typename T>
+    template <InputFormatterTaskType T>
     struct InputFormatterTaskModel final : InputFormatterTaskConcept
     {
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : InputFormatterTask(std::move(inputFormatterTask)) { }

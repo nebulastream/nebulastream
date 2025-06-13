@@ -36,6 +36,7 @@ class FieldIndexFunction
 {
     /// Expose the FieldIndexFunction interface functions only to the InputFormatterTask
     template <typename FormatterType, typename FieldIndexFunctionType, bool HasSpanningTuple>
+    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
 
     /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
