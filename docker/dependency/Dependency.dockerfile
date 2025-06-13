@@ -28,11 +28,6 @@ ARG ARCH
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 
 RUN \
-    if [ "$STDLIB" = "libcxx" ]; then \
-      export VCPKG_STDLIB="libcxx"; \
-    else \
-      export VCPKG_STDLIB="local"; \
-    fi; \
     cd /vcpkg_input \
     && git clone https://github.com/microsoft/vcpkg.git vcpkg_repository \
     && vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics \
