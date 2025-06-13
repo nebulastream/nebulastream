@@ -98,7 +98,7 @@ struct CriticalSequenceNumberEntry
     }
 };
 
-void SequenceShredder::validateState() noexcept
+bool SequenceShredder::validateState() noexcept
 {
     /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
     {
@@ -171,10 +171,12 @@ void SequenceShredder::validateState() noexcept
                 NES_ERROR("Validation failed: {}", stateStream.str());
             }
             NES_DEBUG("Validation successful.");
+            return true;
         }
         catch (...)
         {
             NES_ERROR("Validation failed unexpectedly.");
+            return false;
         }
     }
 }
