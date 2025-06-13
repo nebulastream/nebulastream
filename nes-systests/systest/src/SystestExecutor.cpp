@@ -62,9 +62,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
-        .help(
-            "directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
-            "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
+              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -85,8 +84,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     /// result dir
     program.add_argument("--workingDir")
-        .help(
-            "change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR "/nes-systests/");
+        .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
+              "/nes-systests/");
 
     /// server/remote mode
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
