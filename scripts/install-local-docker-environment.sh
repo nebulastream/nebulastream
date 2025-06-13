@@ -58,17 +58,17 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --address)
             echo "Enabling Address Sanitizer"
-            SANITIZER="address"
+            SANITIZER="asan"
             shift
             ;;
         --thread)
             echo "Enabling Thread Sanitizer"
-            SANITIZER="thread"
+            SANITIZER="tsan"
             shift
             ;;
         --undefined)
             echo "Enabling Undefined Behavior Sanitizer"
-            SANITIZER="undefined"
+            SANITIZER="ubsan"
             shift
             ;;
         -h|--help)

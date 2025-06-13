@@ -46,7 +46,7 @@ jobs:
               nebulastream/nes-$image_tag:${{ github.head_ref }}-libcxx-none
           
             for stdlib in libcxx libstdcxx; do
-              for sanitizer in none address thread undefined; do
+              for sanitizer in none asan tsan ubsan; do
                 docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-$stdlib-$sanitizer \
                   nebulastream/nes-$image_tag:${{ github.head_ref }}-$stdlib-$sanitizer
           
@@ -70,7 +70,7 @@ jobs:
                 if [[ "$arch" == "arm64" && "$stdlib" == "libstdcxx" ]]; then
                   continue
                 fi
-                for sanitizer in none address thread undefined; do
+                for sanitizer in none asan tsan ubsan; do
                   docker buildx imagetools create -t nebulastream/nes-$image_tag-cache:latest-$arch-$stdlib-$sanitizer \
                     nebulastream/nes-$image_tag-cache:${{ github.head_ref }}-$arch-$stdlib-$sanitizer
                 done
