@@ -17,7 +17,8 @@ include(CheckCXXSourceCompiles)
 
 if (USE_CPP_STDLIB STREQUAL "libcxx")
     # check if libc++ available and at least version 19
-    set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
+    set(CMAKE_REQUIRED_FLAGS "-std=c++23 -nostdinc++ -isystem ${USE_CPP_STDLIB_LIBCXX_PATH}/include/c++/v1")
+    set(CMAKE_REQUIRED_LINK_OPTIONS "-L${USE_CPP_STDLIB_LIBCXX_PATH}/lib -lc++ -rpath ${USE_CPP_STDLIB_LIBCXX_PATH}/lib")
     check_cxx_source_compiles("
         #include <cstddef>
         #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
@@ -30,15 +31,13 @@ if (USE_CPP_STDLIB STREQUAL "libcxx")
     if (NOT LIBCXX_VERSION_CHECK)
         message(FATAL_EROR "libc++ not found or version below 19")
     endif ()
-
-    message(STATUS "Using Libc++")
-    # Currently C++20 threading features are hidden behind the feature flag
-    add_compile_options(-stdlib=libc++)
+    add_compile_options(-nostdinc++ -isystem ${USE_CPP_STDLIB_LIBCXX_PATH}/include/c++/v1)
     add_compile_options(-fexperimental-library)
     # Enable Libc++ hardening mode
     add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
     add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
-    add_link_options(-lc++)
+
+    add_link_options(-L${USE_CPP_STDLIB_LIBCXX_PATH}/lib -lc++ -rpath ${USE_CPP_STDLIB_LIBCXX_PATH}/lib)
 elseif (USE_CPP_STDLIB STREQUAL "libstdcxx")
     # Check if Libstdc++ version is 14 or above
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
