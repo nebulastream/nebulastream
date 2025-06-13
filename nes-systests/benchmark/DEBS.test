@@ -58,3 +58,26 @@ WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
 INTO CHECKSUM;
 ----
 11484119, 23389063574
+
+# Query 9 - Join with tumbling window
+SELECT groupId, producedPower - consumedPower AS DifferenceProducedConsumedPower
+FROM ( SELECT groupId, SUM(producedPower) AS producedPower
+        FROM (SELECT groupId, producedPower
+        FROM solarPanels
+        UNION
+        SELECT groupId, producedPower
+        FROM windTurbines)
+        GROUP BY groupId
+        WINDOW TUMBLING(timestamp, SIZE 1 HOUR)))
+        INNER JOIN (
+              SELECT sectorId, SUM(consumedPower) AS consumedPower
+              FROM consumers
+              GROUP BY sectorId
+              WINDOW TUMBLING(timestamp, SIZE 1 HOUR))
+        ON groupId = sectorId
+        WINDOW TUMBLING(start, SIZE 1 HOUR)
+INTO CHECKSUM;
+----
+#TODO number of results, checksum
+# add map of artificial key = 1 ?
+#Query is in JNB of Nils, maybe use old data generator here to complete the tutorial
