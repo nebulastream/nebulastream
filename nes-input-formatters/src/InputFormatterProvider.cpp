@@ -19,18 +19,18 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterRegistry.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
 std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const ParserConfig& config)
 {
-    if (auto inputFormatter = InputFormatterRegistry::instance().create(
+    if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
             config.parserType,
-            InputFormatterRegistryArguments{.inputFormatterConfig = config, .numberOfFieldsInSchema = schema.getNumberOfFields()}))
+            InputFormatIndexerRegistryArguments{.inputFormatIndexerConfig = config, .numberOfFieldsInSchema = schema.getNumberOfFields()}))
     {
         return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
     }

@@ -22,26 +22,26 @@
 namespace NES::InputFormatters
 {
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
-/// The InputFormatterTask uses the InputFormatter to determine byte offsets of all fields of a given tuple and all tuples of a given buffer.
-/// The offsets allow the InputFormatterTask to parse only the fields that it needs to for the particular query.
-/// @Note All InputFormatter implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatterTasks.
-///       Thus, the InputFormatterTask calls the interface functions of the InputFormatter concurrently.
-class InputFormatter
+/// The InputFormatIndexerTask uses the InputFormatIndexer to determine byte offsets of all fields of a given tuple and all tuples of a given buffer.
+/// The offsets allow the InputFormatIndexerTask to parse only the fields that it needs to for the particular query.
+/// @Note All InputFormatIndexer implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatIndexerTasks.
+///       Thus, the InputFormatIndexerTask calls the interface functions of the InputFormatIndexer concurrently.
+class InputFormatIndexer
 {
 public:
     struct FirstAndLastTupleDelimiterOffsets
     {
-        /// If the offsetOfFirstTupleDelimiter is >= size of the raw buffer, the InputFormatterTask assumes there is no tuple delimiter in the buffer
+        /// If the offsetOfFirstTupleDelimiter is >= size of the raw buffer, the InputFormatIndexerTask assumes there is no tuple delimiter in the buffer
         FieldOffsetsType offsetOfFirstTupleDelimiter;
         FieldOffsetsType offsetOfLastTupleDelimiter;
     };
-    InputFormatter() = default;
-    virtual ~InputFormatter() = default;
+    InputFormatIndexer() = default;
+    virtual ~InputFormatIndexer() = default;
 
-    InputFormatter(const InputFormatter&) = default;
-    InputFormatter& operator=(const InputFormatter&) = delete;
-    InputFormatter(InputFormatter&&) = delete;
-    InputFormatter& operator=(InputFormatter&&) = delete;
+    InputFormatIndexer(const InputFormatIndexer&) = default;
+    InputFormatIndexer& operator=(const InputFormatIndexer&) = delete;
+    InputFormatIndexer(InputFormatIndexer&&) = delete;
+    InputFormatIndexer& operator=(InputFormatIndexer&&) = delete;
 
     /// Determines the byte-offsets to all fields in one tuple, including the offset to the first byte that is not part of the tuple.
     /// Must write all offsets to the correct position to the fieldOffsets pointer.
@@ -54,7 +54,7 @@ public:
     /// @Note Must be thread-safe (see description of class)
     virtual FirstAndLastTupleDelimiterOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const = 0;
 
-    friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }
+    friend std::ostream& operator<<(std::ostream& os, const InputFormatIndexer& inputFormatIndexer) { return inputFormatIndexer.toString(os); }
 
 protected:
     virtual std::ostream& toString(std::ostream& os) const = 0;
