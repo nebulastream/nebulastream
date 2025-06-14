@@ -14,6 +14,8 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
+add_subdirectory(fuzz)
+
 # Add nes-worker library
 get_source(nes-single-node-worker NES_WORKER_SOURCE_FILES)
 add_library(nes-single-node-worker-lib ${NES_WORKER_SOURCE_FILES})
