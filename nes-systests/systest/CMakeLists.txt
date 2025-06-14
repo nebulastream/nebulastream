@@ -156,6 +156,11 @@ if (NOT CODE_COVERAGE)
             endforeach ()
         endforeach ()
     endforeach ()
+
+#    set(varsizedStorageMethods INDVIDUAL_BUFFER SEPARATE_PAGE)
+#    foreach (varsizedStorageMethod IN LISTS varsizedStorageMethods)
+#
+#    endforeach ()
 endif (NOT CODE_COVERAGE)
 
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run

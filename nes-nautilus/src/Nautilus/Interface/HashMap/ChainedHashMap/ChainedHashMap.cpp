@@ -206,14 +206,39 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
 void ChainedHashMap::storeCopyOfVarSizedData(
     Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size)
 {
-    auto entryBuffer = bufferProvider->getUnpooledBuffer(size, workerThreadId);
-    ;
-    if (not entryBuffer)
+    int8_t* dataPtr;
+    switch (varSizedStorageMethod)
     {
-        throw CannotAllocateBuffer("Could not allocate memory in ChainedHashMap for variable sized data of size {}", std::to_string(size));
+        case SINGLE_BUFFER: {
+            auto entryBuffer = bufferProvider->getUnpooledBuffer(size, workerThreadId);
+            ;
+            if (not entryBuffer)
+            {
+                throw CannotAllocateBuffer("Could not allocate memory in ChainedHashMap for variable sized data of size {}", std::to_string(size));
+            }
+            varSizedStorage.emplace_back(entryBuffer.value());
+            dataPtr = entryBuffer.value().getBuffer();
+        }
+        case PAGES: {
+            /// Check if we need to allocate a new page
+            if (varSizedStorage.empty() || sizeOfDataOnVarsizedPage + size > varSizedPageSize)
+            {
+                auto newPage = bufferProvider->getUnpooledBuffer(varSizedPageSize, workerThreadId);
+                if (not newPage)
+                {
+                    throw CannotAllocateBuffer("Could not allocate memory for new varsized data page in ChainedHashMap of size {}", std::to_string(sizeOfDataOnVarsizedPage));
+                }
+
+                varSizedStorage.emplace_back(newPage.value());
+                sizeOfDataOnVarsizedPage = 0;
+            }
+            dataPtr = &(varSizedStorage.back().getBuffer()[sizeOfDataOnVarsizedPage]);
+            sizeOfDataOnVarsizedPage += size;
+
+        }
     }
-    varSizedStorage.emplace_back(entryBuffer.value());
-    auto dataPtr = entryBuffer.value().getBuffer();
+
+
     std::memcpy(dataPtr, pointerToVarSized, size);
     *pointerToWritePositionOnPage = dataPtr;
 }

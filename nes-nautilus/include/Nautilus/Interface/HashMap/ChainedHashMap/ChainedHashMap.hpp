@@ -93,11 +93,20 @@ public:
 private:
     friend class ChainedHashMapRef;
 
+    enum VarsizedStorageMethod
+    {
+        SINGLE_BUFFER,
+        PAGES
+    };
+
     Memory::TupleBuffer entrySpace;
     std::vector<Memory::TupleBuffer> storageSpace;
     std::vector<Memory::TupleBuffer> varSizedStorage;
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
+    VarsizedStorageMethod varSizedStorageMethod = PAGES; /// Number of entries in the hash map
+    uint64_t sizeOfDataOnVarsizedPage = 0; /// Number of entries in the hash map
+    uint64_t varSizedPageSize = 8196; /// Size of one storage page in bytes TODO: do not hardcode these
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
     uint64_t entriesPerPage; /// Number of entries per page
     uint64_t numberOfChains; /// Number of buckets in the hash map
