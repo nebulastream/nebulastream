@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -28,7 +29,6 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -122,26 +122,6 @@ public:
         size_t sizeOfRawBuffers;
         size_t sizeOfFormattedBuffers;
     };
-    static bool writeBinaryToFile(std::span<const char> data, const std::filesystem::path& filepath, bool append)
-    {
-        if (const auto parentPath = filepath.parent_path(); !parentPath.empty())
-        {
-            create_directories(parentPath);
-        }
-
-        std::ios_base::openmode openMode = std::ios::binary;
-        openMode |= append ? std::ios::app : std::ios::trunc;
-
-        std::ofstream file(filepath, openMode);
-        if (not file)
-        {
-            throw InvalidConfigParameter("Could not open file: {}", filepath.string());
-        }
-
-        file.write(data.data(), static_cast<std::streamsize>(data.size_bytes()));
-
-        return true;
-    }
 
     struct SetupResult
     {
@@ -196,16 +176,16 @@ public:
         const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * 2);
 
         return SetupResult{
-            .schema = std::move(schema),
+            .schema = schema,
             .numberOfRequiredFormattedBuffers = numberOfRequiredFormattedBuffers,
             .currentTestFileName = currentTestFile.fileName,
             .currentTestFilePath = testFilePath};
     }
 
-    bool compareResults(
+    static bool compareResults(
         const std::vector<std::vector<NES::Memory::TupleBuffer>>& resultBuffers,
         const TestConfig& testConfig,
-        const SetupResult& setupResult) const
+        const SetupResult& setupResult)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);

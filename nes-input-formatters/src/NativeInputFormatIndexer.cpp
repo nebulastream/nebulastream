@@ -26,7 +26,11 @@ InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, false>(std::move(inputFormatter));
+    constexpr bool isFormattingRequired = false;
+    constexpr bool hasSpanningTuple = false;
+    return arguments
+        .createInputFormatterTaskPipeline<NativeInputFormatIndexer<isFormattingRequired>, NoopFormatter, NativeMetaData, hasSpanningTuple>(
+            std::move(inputFormatter));
 }
 
 }

@@ -26,13 +26,23 @@
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, /* IsFormattingRequired */ true>
+struct CSVMetaData
+{
+    explicit CSVMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
+
+    std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+
+private:
+    std::string tupleDelimiter;
+};
+
+class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, CSVMetaData, /* IsFormattingRequired */ true>
 {
 public:
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
     ~CSVInputFormatIndexer() override = default;
 
-    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const override;
+    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
