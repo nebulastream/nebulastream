@@ -1,1 +1,2 @@
-python3 check_query.py nes-systests/testdata/small/events1k.csv --stdout | docker run -i    --workdir $(pwd)     -v $(pwd):$(pwd)      nebulastream/nes-development:local  build-docker/nes-systests/systest/checksum/checksum
+#python3 check_query.py nes-systests/testdata/small/events1k.csv --stdout | docker run -i    --workdir $(pwd)     -v $(pwd):$(pwd)      nebulastream/nes-development:local  build-docker/nes-systests/systest/checksum/checksum
+python3 check_query.py cmake-build-debug-docker/nes-systests/testdata/small/events1k.csv --stdout | docker run -i    --workdir $(pwd)     -v $(pwd):$(pwd)      nebulastream/nes-development:local  build-docker/nes-systests/systest/checksum/checksum

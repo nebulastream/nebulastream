@@ -21,7 +21,7 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO CHECKSUM;
 ----
-34000, 135700272
+34000, 138012272
 # Checksum for 1000000 events with 1 event per millisecond
 
 # For debugging replace `INTO CHECKSUM` with the following line. The output file path can be found in the log
@@ -39,5 +39,5 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO CHECKSUM;
 ----
-100034, 395001294
+100034, 401803606
 # Checksum for 1000000 events with 1 event per millisecond

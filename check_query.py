@@ -2,6 +2,7 @@ import duckdb
 import pandas as pd
 import argparse
 import sys
+import csv
 from pathlib import Path
 
 # Create an argument parser
@@ -82,7 +83,7 @@ else:
     dst = 'check_output.csv'
 
 # Output the results to a CSV file (acting as printSink1k)
-result_df.to_csv(dst, index=False, header=False)
+result_df.to_csv(dst, index=False, header=False, quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
 
 # Close the connection
 conn.close()
