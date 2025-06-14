@@ -238,8 +238,6 @@ def create_benchmark_configs():
     # Generate configurations for each shared parameter (one per value)
     for param, values in shared_params.items():
         for value in values:
-            if value == default_params[param]:
-                continue
             for slice_store_type in SLICE_STORE_TYPES:
                 config_params = default_params.copy()
                 config_params[param] = value
@@ -248,8 +246,6 @@ def create_benchmark_configs():
     # Generate configurations for each file backed parameter (one per value)
     for param, values in file_backed_params.items():
         for value in values:
-            if value == default_params[param]:
-                continue
             config_params = default_params.copy()
             config_params[param] = value
             config_params["slice_store_type"] = "FILE_BACKED"
@@ -257,10 +253,8 @@ def create_benchmark_configs():
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
     for timestamp_increment in default_timestamp_increments:
-        if timestamp_increment == default_params['timestamp_increment']:
-            continue
         for query in default_queries:
-            if query == default_params['query']:
+            if timestamp_increment == default_params['timestamp_increment'] and query == default_params['query']:
                 continue
             for param, values in shared_params.items():
                 for value in values:
