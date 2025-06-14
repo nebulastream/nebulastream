@@ -25,7 +25,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -69,9 +69,9 @@ struct RawBufferData
 };
 
 InputFormatterTask::InputFormatterTask(
-    const OriginId originId, std::unique_ptr<InputFormatter> inputFormatter, const Schema& schema, const ParserConfig& parserConfig)
+    const OriginId originId, std::unique_ptr<InputFormatIndexer> inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
     : originId(originId)
-    , inputFormatter(std::move(inputFormatter))
+    , inputFormatIndexer(std::move(inputFormatIndexer))
     , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
     , tupleDelimiter(parserConfig.tupleDelimiter)
     , fieldDelimiter(parserConfig.fieldDelimiter)
@@ -116,9 +116,9 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, PipelineE
     /// Construct new FieldOffsets object
     auto fieldOffsets = FieldOffsets(numberOfFieldsInSchema, pec.getBufferManager()->getBufferSize(), pec.getBufferManager());
 
-    /// Get indexes field delimiters in the raw buffer using the InputFormatter implementation
+    /// Get indexes field delimiters in the raw buffer using the InputFormatIndexer implementation
     const auto bufferView = std::string_view(rawBufferData.buffer.getBuffer<char>(), rawBufferData.buffer.getNumberOfTuples());
-    const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter] = inputFormatter->indexBuffer(bufferView, fieldOffsets);
+    const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter] = inputFormatIndexer->indexBuffer(bufferView, fieldOffsets);
     rawBufferData.offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter;
     rawBufferData.offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter;
 
@@ -126,7 +126,7 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, PipelineE
     /// Determine whether raw input buffer delimits at least two tuples.
     rawBufferData.numberOfTuplesInBuffer = fieldOffsets.finishWrite();
 
-    /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatter did not find any tuple delimiter
+    /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
     if (/* hasTupleDelimiter */ rawBufferData.offsetOfFirstTupleDelimiter < rawBuffer.getBufferSize())
     {
         /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
@@ -312,7 +312,7 @@ void InputFormatterTask::processSpanningTuple(
     if (not spanningTupleString.empty())
     {
         std::vector<FieldOffsetsType> spanningTupleOffsets(numberOfFieldsInSchema + 1);
-        inputFormatter->indexTuple(spanningTupleString, spanningTupleOffsets.data(), 0);
+        inputFormatIndexer->indexTuple(spanningTupleString, spanningTupleOffsets.data(), 0);
         spanningTupleOffsets.at(numberOfFieldsInSchema) = spanningTupleString.size();
 
         processTuple(spanningTupleString, spanningTupleOffsets.data(), bufferProvider, formattedBuffer);
@@ -383,7 +383,7 @@ std::ostream& InputFormatterTask::toString(std::ostream& os) const
 {
     os << "InputFormatterTask: {\n";
     os << "  originId: " << originId << ",\n";
-    os << *inputFormatter;
+    os << *inputFormatIndexer;
     os << *sequenceShredder;
     os << "}\n";
     return os;
