@@ -50,7 +50,7 @@ Interface::HashMap* getHashJoinHashMapProxy(
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuild");
     hjSlice->setCleanupFunction(buildOperator->getSliceCleanupFunction(operatorHandler->getNautilusCleanupExec(buildSide)), buildSide);
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets, buildOperator->varSizedPageSize, buildOperator->varSizedStorageMethod};
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide, hashMapSliceArgs);
 }
 

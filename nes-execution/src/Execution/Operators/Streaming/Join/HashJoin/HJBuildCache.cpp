@@ -210,7 +210,7 @@ int8_t* createNewHJSliceProxy(
     /// Updating the slice cache entry with the new slice
     newHJSlice->setCleanupFunction(buildOperator->getSliceCleanupFunction(opHandler->getNautilusCleanupExec(buildSide)), buildSide);
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets, buildOperator->varSizedPageSize, buildOperator->varSizedStorageMethod};
     sliceCacheEntry->sliceStart = newHJSlice->getSliceStart();
     sliceCacheEntry->sliceEnd = newHJSlice->getSliceEnd();
     sliceCacheEntry->dataStructure

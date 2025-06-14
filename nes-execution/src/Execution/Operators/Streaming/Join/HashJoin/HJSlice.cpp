@@ -71,7 +71,9 @@ Nautilus::Interface::HashMap* HJSlice::getHashMapPtrOrCreate(
                     hashMapArgs.keySize.value(),
                     hashMapArgs.valueSize.value(),
                     hashMapArgs.numberOfBuckets.value(),
-                    hashMapArgs.pageSize.value());
+                    hashMapArgs.pageSize.value(),
+                    hashMapArgs.varSizedStorageMethod.value(),
+                    hashMapArgs.varSizedPageSize.value());
             }
             return rightHashMaps.at(pos).get();
         }
@@ -90,7 +92,9 @@ Nautilus::Interface::HashMap* HJSlice::getHashMapPtrOrCreate(
                     hashMapArgs.keySize.value(),
                     hashMapArgs.valueSize.value(),
                     hashMapArgs.numberOfBuckets.value(),
-                    hashMapArgs.pageSize.value());
+                    hashMapArgs.pageSize.value(),
+                    hashMapArgs.varSizedStorageMethod.value(),
+                    hashMapArgs.varSizedPageSize.value());
             }
             return leftHashMaps.at(pos).get();
         }
