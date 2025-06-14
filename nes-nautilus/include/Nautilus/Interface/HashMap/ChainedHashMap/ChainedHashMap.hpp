@@ -74,7 +74,7 @@ public:
         const WorkerThreadId workerThreadId) override;
 
     void storeCopyOfVarSizedData(
-        Memory::AbstractBufferProvider* bufferProvider, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size);
+        Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size);
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const ChainedHashMapEntry* getPage(uint64_t pageIndex) const;
     [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;

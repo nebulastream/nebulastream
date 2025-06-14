@@ -103,7 +103,12 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
     return record;
 }
 
-void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record& record) const
+void ChainedEntryMemoryProvider::writeRecord(
+    const nautilus::val<ChainedHashMapEntry*>& entryRef,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
+    const Record& record) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
@@ -114,6 +119,7 @@ void ChainedEntryMemoryProvider::writeRecord(const nautilus::val<ChainedHashMapE
         if (PhysicalTypes::isVariableSizedData(type))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
+            // storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
             storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
         }
         else

@@ -119,17 +119,17 @@ std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguratio
     return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize);
 }
 
-int8_t* ChainedHashMap::allocateSpaceForVarSized(
-    Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize, const WorkerThreadId workerThreadId)
-{
-    auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
-    if (not varSizedBuffer)
-    {
-        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
-    }
-    varSizedSpace.emplace_back(varSizedBuffer.value());
-    return varSizedBuffer.value().getBuffer<int8_t>();
-}
+// int8_t* ChainedHashMap::allocateSpaceForVarSized(
+//     Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize, const WorkerThreadId workerThreadId)
+// {
+//     auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
+//     if (not varSizedBuffer)
+//     {
+//         throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
+//     }
+//     varSizedSpace.emplace_back(varSizedBuffer.value());
+//     return varSizedBuffer.value().getBuffer<int8_t>();
+// }
 
 ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const
 {
@@ -204,9 +204,9 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
 }
 
 void ChainedHashMap::storeCopyOfVarSizedData(
-    Memory::AbstractBufferProvider* bufferProvider, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size)
+    Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size)
 {
-    auto entryBuffer = bufferProvider->getUnpooledBuffer(size);
+    auto entryBuffer = bufferProvider->getUnpooledBuffer(size, workerThreadId);
     ;
     if (not entryBuffer)
     {
