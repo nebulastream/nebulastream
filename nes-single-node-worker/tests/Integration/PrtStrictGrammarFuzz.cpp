@@ -13,36 +13,37 @@
 */
 
 #include <chrono>
-#include <iostream>
 #include <thread>
+
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
 #include <from_current.hpp>
-#include "DataTypes/DataType.hpp"
-#include "DataTypes/Schema.hpp"
-#include "ErrorHandling.hpp"
-#include "Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp"
-#include "Functions/ComparisonFunctions/GreaterLogicalFunction.hpp"
-#include "Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp"
-#include "Functions/ComparisonFunctions/LessLogicalFunction.hpp"
-#include "Functions/ConstantValueLogicalFunction.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "Fuzz.pb.h"
-#include "Identifiers/Identifiers.hpp"
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/SelectionLogicalOperator.hpp"
-#include "Operators/Sinks/SinkLogicalOperator.hpp"
-#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
-#include "Operators/Sources/SourceNameLogicalOperator.hpp"
-#include "Plans/LogicalPlan.hpp"
-#include "Runtime/QueryTerminationType.hpp"
-#include "SerializableDataType.pb.h"
-#include "SerializableSchema.pb.h"
-#include "Serialization/DataTypeSerializationUtil.hpp"
-#include "Serialization/OperatorSerializationUtil.hpp"
-#include "Serialization/SchemaSerializationUtil.hpp"
-#include "SingleNodeWorker.hpp"
-#include "SingleNodeWorkerConfiguration.hpp"
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
+#include <ErrorHandling.hpp>
+#include <Fuzz.pb.h>
+#include <SerializableDataType.pb.h>
+#include <SerializableSchema.pb.h>
+#include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 NES::Schema toSm(const NES::SerializableSchema& schema)
 {
@@ -137,11 +138,15 @@ DEFINE_PROTO_FUZZER(const NES::FQueryPlan& sqp)
         auto dqp = toPlan(sqp);
         NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
         auto qid = snw.registerQuery(dqp);
-        snw.startQuery(qid);
-        snw.stopQuery(qid, NES::QueryTerminationType::Graceful);
+        if (!qid)
+        {
+            throw qid.error();
+        }
+        snw.startQuery(*qid);
+        snw.stopQuery(*qid, NES::QueryTerminationType::Graceful);
         while (true)
         {
-            if (snw.getQuerySummary(qid)->currentStatus <= NES::QueryStatus::Running)
+            if (snw.getQuerySummary(*qid)->currentStatus <= NES::QueryStatus::Running)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
