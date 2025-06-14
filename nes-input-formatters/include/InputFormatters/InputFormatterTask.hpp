@@ -32,9 +32,9 @@ namespace NES::InputFormatters
 /// The type that all formatters use to represent indexes to fields.
 using FieldOffsetsType = uint32_t;
 
-/// Forward referencing SequenceShredder/InputFormatter/FieldOffsets to keep it as a private implementation detail of nes-input-formatters
+/// Forward referencing SequenceShredder/InputFormatIndexer/FieldOffsets to keep it as a private implementation detail of nes-input-formatters
 class SequenceShredder;
-class InputFormatter;
+class InputFormatIndexer;
 class FieldOffsets;
 /// Data structures of private classes (or containing types of private classes)
 struct RawBufferData;
@@ -50,7 +50,7 @@ struct FieldConfig;
 /// -> figure out how to best call SequenceShredder and handle return values of SequenceShredder
 /// -> figure out how to best process spanning tuples (currently we use a string to allocate memory)
 /// -> convert FieldOffsetIterator to Nautilus data structure
-/// -> implement CSVInputFormatter as Nautilus operator/function
+/// -> implement CSVInputFormatIndexer as Nautilus operator/function
 /// (potentially make heavy use of proxy functions first)
 
 /// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
@@ -65,7 +65,7 @@ class InputFormatterTask final : public ExecutablePipelineStage
 {
 public:
     explicit InputFormatterTask(
-        OriginId originId, std::unique_ptr<InputFormatter> inputFormatter, const Schema& schema, const ParserConfig& parserConfig);
+        OriginId originId, std::unique_ptr<InputFormatIndexer> inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;
@@ -89,7 +89,7 @@ public:
 
 private:
     OriginId originId;
-    std::unique_ptr<InputFormatter> inputFormatter;
+    std::unique_ptr<InputFormatIndexer> inputFormatIndexer;
     std::unique_ptr<SequenceShredder> sequenceShredder;
     std::vector<RawInputDataParser::FieldConfig> fieldConfigs;
     std::string tupleDelimiter;
