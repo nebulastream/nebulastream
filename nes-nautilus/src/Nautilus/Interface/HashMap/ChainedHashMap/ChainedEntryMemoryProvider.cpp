@@ -120,7 +120,14 @@ void ChainedEntryMemoryProvider::writeRecord(
         {
             auto varSizedValue = value.cast<VariableSizedData>();
             // storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
-            storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            // storeCopyOfVarSizedData(
+            //     varSizedValue,
+            //     bufferProvider,
+            //     hashMapRef,
+            //     memoryAddress,
+            //     const nautilus::val<uint32_t> size);
+            auto size = varSizedValue.getTotalSize();
+            storeCopyOfVarSizedData(varSizedValue.getReference(), bufferProvider, hashMapRef, workerThreadId, memoryAddress, size);
         }
         else
         {
@@ -133,6 +140,7 @@ void ChainedEntryMemoryProvider::storeCopyOfVarSizedData(
     const nautilus::val<int8_t*>& pointerToVarsized,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<HashMap*>& hashMapRef,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<int8_t**>& pointerWritePositionOnPage,
     const nautilus::val<uint32_t> size)
 {
@@ -141,16 +149,19 @@ void ChainedEntryMemoryProvider::storeCopyOfVarSizedData(
             int32_t size,
             Memory::AbstractBufferProvider* bufferProviderVal,
             int8_t* pointerToVarSized,
-            int8_t** pointerToWritePositionOnPage)
+            int8_t** pointerToWritePositionOnPage,
+            WorkerThreadId workerThreadId
+            )
         {
             return dynamic_cast<ChainedHashMap*>(hashMap)->storeCopyOfVarSizedData(
-                bufferProviderVal, pointerToVarSized, pointerToWritePositionOnPage, size);
+                bufferProviderVal, workerThreadId, pointerToVarSized, pointerToWritePositionOnPage, size);
         },
         hashMapRef,
         size,
         bufferProvider,
         pointerToVarsized,
-        pointerWritePositionOnPage);
+        pointerWritePositionOnPage,
+        workerThreadId);
 }
 
 void ChainedEntryMemoryProvider::writeEntryRef(
@@ -167,7 +178,9 @@ void ChainedEntryMemoryProvider::writeEntryRef(
         if (PhysicalTypes::isVariableSizedData(type))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
-            storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            //storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            auto size = varSizedValue.getTotalSize();
+            storeCopyOfVarSizedData(varSizedValue.getReference(), bufferProvider, hashMapRef, workerThreadId, memoryAddress, size);
         }
         else
         {
