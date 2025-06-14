@@ -18,28 +18,28 @@
 #include <memory>
 #include <string>
 
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::InputFormatters
 {
 
-using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatter>;
-/// A InputFormatter requires a schema, a tuple separator and a field delimiter.
-struct InputFormatterRegistryArguments
+using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatIndexer>;
+/// A InputFormatIndexer requires a schema, a tuple separator and a field delimiter.
+struct InputFormatIndexerRegistryArguments
 {
-    ParserConfig inputFormatterConfig;
+    ParserConfig inputFormatIndexerConfig;
     size_t numberOfFieldsInSchema;
 };
 
-class InputFormatterRegistry
-    : public BaseRegistry<InputFormatterRegistry, std::string, InputFormatterRegistryReturnType, InputFormatterRegistryArguments>
+class InputFormatIndexerRegistry
+    : public BaseRegistry<InputFormatIndexerRegistry, std::string, InputFormatIndexerRegistryReturnType, InputFormatIndexerRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#include <InputFormatterGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
+#define INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
+#include <InputFormatIndexerGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY

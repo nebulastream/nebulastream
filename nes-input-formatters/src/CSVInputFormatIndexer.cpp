@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <CSVInputFormatter.hpp>
+#include <CSVInputFormatIndexer.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -23,24 +23,24 @@
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
-#include <InputFormatterRegistry.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters
 {
 
-CSVInputFormatter::CSVInputFormatter(InputFormatterRegistryArguments args)
-    : config(std::move(args.inputFormatterConfig)), numberOfFieldsInSchema(args.numberOfFieldsInSchema)
+CSVInputFormatIndexer::CSVInputFormatIndexer(InputFormatIndexerRegistryArguments args)
+    : config(std::move(args.inputFormatIndexerConfig)), numberOfFieldsInSchema(args.numberOfFieldsInSchema)
 {
 }
 
-void CSVInputFormatter::indexTuple(
+void CSVInputFormatIndexer::indexTuple(
     const std::string_view tuple, FieldOffsetsType* fieldOffsets, const FieldOffsetsType startIdxOfTuple) const
 {
     PRECONDITION(fieldOffsets != nullptr, "FieldOffsets cannot be null.");
@@ -64,14 +64,14 @@ void CSVInputFormatter::indexTuple(
     }
 }
 
-InputFormatter::FirstAndLastTupleDelimiterOffsets
-CSVInputFormatter::indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const
+InputFormatIndexer::FirstAndLastTupleDelimiterOffsets
+CSVInputFormatIndexer::indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const
 {
     const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(bufferView.find(this->config.tupleDelimiter));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
-    /// the InputFormatterTask that there was no tuple delimiter in the buffer and return
+    /// the InputFormatIndexerTask that there was no tuple delimiter in the buffer and return
     if (offsetOfFirstTupleDelimiter == static_cast<FieldOffsetsType>(std::string::npos))
     {
         return {
@@ -101,16 +101,16 @@ CSVInputFormatter::indexBuffer(std::string_view bufferView, FieldOffsets& fieldO
     return {.offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter, .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter};
 }
 
-std::ostream& CSVInputFormatter::toString(std::ostream& os) const
+std::ostream& CSVInputFormatIndexer::toString(std::ostream& os) const
 {
     return os << fmt::format(
-               "CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
+               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
 }
 
-InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(
-    InputFormatterRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::RegisterCSVInputFormatIndexer(
+    InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
-    return std::make_unique<CSVInputFormatter>(arguments);
+    return std::make_unique<CSVInputFormatIndexer>(arguments);
 }
 
 }
