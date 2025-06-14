@@ -14,24 +14,27 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstddef>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::InputFormatters
 {
 
-struct TupleMetaData
-{
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-    size_t sizeOfTupleInBytes{};
-    std::vector<size_t> fieldSizesInBytes;
-    std::vector<size_t> fieldOffsetsInBytes;
+/// Restricts the MetaData that an InputFormatIndexer receives from the InputFormatterTask
+template <typename T>
+concept IndexerMetaData = requires(ParserConfig config, Schema schema, T metaData, std::ostream& spanningTuple) {
+    T(config, schema);
+    /// Assumes a fixed set of symbols that separate tuples
+    /// InputFormatIndexers without tuple delimiters should return an empty string
+    { metaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
 };
 
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
@@ -39,7 +42,7 @@ struct TupleMetaData
 /// The offsets allow the InputFormatIndexerTask to parse only the fields that it needs to for the particular query.
 /// @Note All InputFormatIndexer implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatIndexerTasks.
 ///       Thus, the InputFormatIndexerTask calls the interface functions of the InputFormatIndexer concurrently.
-template <typename FieldAccessFunctionType, bool RequiresFormatting>
+template <typename FieldAccessFunctionType, IndexerMetaData MetaData, bool RequiresFormatting>
 class InputFormatIndexer
 {
 public:
@@ -57,10 +60,13 @@ public:
     /// @return the bytes-offset to the first and last tuple delimiter (we use these offsets to construct tuples that span buffers (see SequenceShredder))
     /// @Note Must be thread-safe (see description of class)
     virtual void setupFieldAccessFunctionForBuffer(
-        FieldAccessFunctionType& fieldAccessFunction, const RawTupleBuffer& rawBuffer, const TupleMetaData& tupleMetadata) const
+        FieldAccessFunctionType& fieldAccessFunction, const RawTupleBuffer& rawBuffer, const MetaData& tupleMetadata) const
         = 0;
 
-    friend std::ostream& operator<<(std::ostream& os, const InputFormatIndexer& inputFormatIndexer) { return inputFormatIndexer.toString(os); }
+    friend std::ostream& operator<<(std::ostream& os, const InputFormatIndexer& inputFormatIndexer)
+    {
+        return inputFormatIndexer.toString(os);
+    }
 
 protected:
     virtual std::ostream& toString(std::ostream& os) const = 0;

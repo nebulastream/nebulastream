@@ -27,6 +27,24 @@
 namespace NES::InputFormatters
 {
 
+class SchemaInfo
+{
+public:
+    explicit SchemaInfo(const Schema& schema)
+    {
+        this->sizeOfTupleInBytes = schema.getSizeOfSchemaInBytes();
+        this->fieldSizesInBytes = schema.getFields()
+            | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytes()); })
+            | std::ranges::to<std::vector>();
+    }
+    [[nodiscard]] size_t getSizeOfTupleInBytes() const { return sizeOfTupleInBytes; }
+    [[nodiscard]] const std::vector<size_t>& getFieldSizesInBytes() const { return fieldSizesInBytes; }
+
+private:
+    size_t sizeOfTupleInBytes;
+    std::vector<size_t> fieldSizesInBytes;
+};
+
 /// CRTP Interface that enables InputFormatters to define specialized functions to access fields that the InputFormatterTask can call directly
 /// (templated) without the overhead of a virtual function call (or a lambda function/std::function)
 /// Different possible kinds of FieldAccessFunctions(FieldOffsets(index raw data), Internal, ZStdCompressed, Arrow, ...)
@@ -35,18 +53,18 @@ template <typename Derived>
 class FieldAccessFunction
 {
     /// Expose the FieldAccessFunction interface functions only to the InputFormatterTask
-    template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldAccessFunctionType, typename MetaData, bool HasSpanningTuple>
     requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
 
     /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
     template <typename FieldAccessFunctionType>
     friend void processTuple(
-        std::string_view bufferView,
+        const std::string_view tupleView,
         const FieldAccessFunction<FieldAccessFunctionType>& fieldAccessFunction,
-        size_t numTuplesReadFromRawBuffer,
+        const size_t numTuplesReadFromRawBuffer,
         Memory::TupleBuffer& formattedBuffer,
-        const TupleMetaData& tupleMetaData,
+        const SchemaInfo& schemaInfo,
         const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 

@@ -73,9 +73,8 @@ inline size_t calculateNumberOfRequiredFormattedBuffers(
     /// Overflow-safe calculation of ceil taken from (https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c)
     /// 1 + ceil(leftOverTuplesInFirstBuffer / numberOfTuplesPerBuffer)
     const auto numberOfBuffersToFill = 1
-        + ((leftOverTuplesInFirstBuffer % numberOfTuplesPerBuffer != 0u)
-               ? (leftOverTuplesInFirstBuffer / numberOfTuplesPerBuffer) + 1
-               : leftOverTuplesInFirstBuffer / numberOfTuplesPerBuffer);
+        + ((leftOverTuplesInFirstBuffer % numberOfTuplesPerBuffer != 0u) ? (leftOverTuplesInFirstBuffer / numberOfTuplesPerBuffer) + 1
+                                                                         : leftOverTuplesInFirstBuffer / numberOfTuplesPerBuffer);
     return numberOfBuffersToFill;
 }
 
@@ -87,19 +86,19 @@ void processTuple(
     const FieldAccessFunction<FieldAccessFunctionType>& fieldAccessFunction,
     const size_t numTuplesReadFromRawBuffer,
     Memory::TupleBuffer& formattedBuffer,
-    const TupleMetaData& tupleMetaData,
+    const SchemaInfo& schemaInfo,
     const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions,
     Memory::AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
 )
 {
     const size_t currentTupleIdx = formattedBuffer.getNumberOfTuples();
-    const size_t offsetOfCurrentTupleInBytes = currentTupleIdx * tupleMetaData.sizeOfTupleInBytes;
+    const size_t offsetOfCurrentTupleInBytes = currentTupleIdx * schemaInfo.getSizeOfTupleInBytes();
     size_t offsetOfCurrentFieldInBytes = 0;
 
     /// Currently, we still allow only row-wise writing to the formatted buffer
     /// This will will change with #496, which implements the InputFormatterTask in Nautilus
     /// The InputFormatterTask then becomes part of a pipeline with a scan/emit phase and has access to the MemoryProvider
-    for (size_t fieldIndex = 0; fieldIndex < tupleMetaData.fieldSizesInBytes.size(); ++fieldIndex)
+    for (size_t fieldIndex = 0; fieldIndex < schemaInfo.getFieldSizesInBytes().size(); ++fieldIndex)
     {
         /// Get the current field, parse it, and write it to the correct position in the formatted buffer
         const auto currentFieldSV = fieldAccessFunction.readFieldAt(tupleView, numTuplesReadFromRawBuffer, fieldIndex);
@@ -107,7 +106,7 @@ void processTuple(
         parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
 
         /// Add the size of the current field to the running offset to get the offset of the next field
-        const auto sizeOfCurrentFieldInBytes = tupleMetaData.fieldSizesInBytes[fieldIndex];
+        const auto sizeOfCurrentFieldInBytes = schemaInfo.getFieldSizesInBytes().at(fieldIndex);
         offsetOfCurrentFieldInBytes += sizeOfCurrentFieldInBytes;
     }
 }
@@ -117,23 +116,24 @@ void processTuple(
 /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
 /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
 /// Lastly, formats the full spanning tuple.
-template <typename FieldAccessFunctionType, bool IsFormattingRequired>
+template <typename FieldAccessFunctionType, typename MetaData, bool IsFormattingRequired>
 void processSpanningTuple(
     const std::span<const StagedBuffer> stagedBuffersSpan,
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& formattedBuffer,
-    const TupleMetaData& tupleMetaData,
-    const InputFormatIndexer<FieldAccessFunctionType, IsFormattingRequired>& inputFormatIndexer,
+    const SchemaInfo& schemaInfo,
+    const MetaData& formatterMetaData,
+    const InputFormatIndexer<FieldAccessFunctionType, MetaData, IsFormattingRequired>& inputFormatIndexer,
     const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
     /// If the buffers are not empty, there are at least three buffers
     std::stringstream spanningTupleStringStream;
-    spanningTupleStringStream << tupleMetaData.tupleDelimiter;
+    spanningTupleStringStream << formatterMetaData.getTupleDelimitingBytes();
 
     auto firstBuffer = stagedBuffersSpan.front();
     const auto firstSpanningTuple
-        = (firstBuffer.isValidRawBuffer()) ? firstBuffer.getTrailingBytes(tupleMetaData.tupleDelimiter.size()) : "";
+        = (firstBuffer.isValidRawBuffer()) ? firstBuffer.getTrailingBytes(formatterMetaData.getTupleDelimitingBytes().size()) : "";
     spanningTupleStringStream << firstSpanningTuple;
 
     /// Process all buffers in-between the first and the last
@@ -145,17 +145,17 @@ void processSpanningTuple(
 
     auto lastBuffer = stagedBuffersSpan.back();
     spanningTupleStringStream << lastBuffer.getLeadingBytes();
-    spanningTupleStringStream << tupleMetaData.tupleDelimiter;
+    spanningTupleStringStream << formatterMetaData.getTupleDelimitingBytes();
 
     const std::string completeSpanningTuple(spanningTupleStringStream.str());
-    const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * tupleMetaData.tupleDelimiter.size();
+    const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * formatterMetaData.getTupleDelimitingBytes().size();
     if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
     {
         auto fieldAccessFunction = FieldAccessFunctionType(bufferProvider);
         lastBuffer.setSpanningTuple(completeSpanningTuple);
-        inputFormatIndexer.setupFieldAccessFunctionForBuffer(fieldAccessFunction, lastBuffer.getRawTupleBuffer(), tupleMetaData);
+        inputFormatIndexer.setupFieldAccessFunctionForBuffer(fieldAccessFunction, lastBuffer.getRawTupleBuffer(), formatterMetaData);
         processTuple<FieldAccessFunctionType>(
-            completeSpanningTuple, fieldAccessFunction, 0, formattedBuffer, tupleMetaData, parseFunctions, bufferProvider);
+            completeSpanningTuple, fieldAccessFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
     }
 }
@@ -168,7 +168,7 @@ void processSpanningTuple(
 /// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+template <typename FormatterType, typename FieldAccessFunctionType, typename MetaData, bool HasSpanningTuple>
 requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
 class InputFormatterTask
 {
@@ -176,39 +176,29 @@ public:
     static constexpr bool hasSpanningTuple() { return HasSpanningTuple; }
     explicit InputFormatterTask(
         const OriginId originId,
-        std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, FormatterType::IsFormattingRequired>> inputFormatIndexer,
+        std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, MetaData, FormatterType::IsFormattingRequired>> inputFormatIndexer,
         const Schema& schema,
         const ParserConfig& parserConfig)
-        : originId(originId), inputFormatIndexer(std::move(inputFormatIndexer))
-    {
+        : originId(originId)
+        , inputFormatIndexer(std::move(inputFormatIndexer))
+        , schemaInfo(schema)
+        , formatterMetaData(MetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        this->sequenceShredder = (HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr;
-        this->tupleMetaData.sizeOfTupleInBytes = schema.getSizeOfSchemaInBytes();
-        this->tupleMetaData.fieldSizesInBytes.reserve(schema.getNumberOfFields());
-        this->tupleMetaData.tupleDelimiter = parserConfig.tupleDelimiter;
-        this->tupleMetaData.fieldDelimiter = parserConfig.fieldDelimiter;
-        this->parseFunctions.reserve(this->tupleMetaData.fieldSizesInBytes.size());
-
+        , sequenceShredder((HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
-        size_t priorFieldOffset = 0;
-        for (const auto& field : schema.getFields())
-        {
-            /// Store the size of the field in bytes (for offset calculations).
-            /// Store the parsing function in a vector.
-            if (field.dataType.isType(DataType::Type::VARSIZED))
-            {
-                this->parseFunctions.emplace_back(RawInputDataParser::getBasicStringParseFunction());
-            }
-            else
-            {
-                this->parseFunctions.emplace_back(RawInputDataParser::getBasicTypeParseFunction(field.dataType.type));
-            }
-            this->tupleMetaData.fieldSizesInBytes.emplace_back(field.dataType.getSizeInBytes());
-            this->tupleMetaData.fieldOffsetsInBytes.emplace_back() = priorFieldOffset + field.dataType.getSizeInBytes();
-            priorFieldOffset = this->tupleMetaData.fieldOffsetsInBytes.back();
-        }
+        , parseFunctions(
+              schema.getFields()
+              | std::views::transform(
+                  [](const auto& field)
+                  {
+                      return (field.dataType.isType(DataType::Type::VARSIZED))
+                          ? RawInputDataParser::getBasicStringParseFunction()
+                          : RawInputDataParser::getBasicTypeParseFunction(field.dataType.type);
+                  })
+              | std::ranges::to<std::vector>())
+    {
     }
     ~InputFormatterTask() = default;
 
@@ -247,14 +237,14 @@ public:
         /// the InputFormatterTask does not need to do anything.
         /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
         /// leading to generated code that immediately operates on the data.
-        const auto [div, mod] = std::lldiv(static_cast<long long>(rawBuffer.getNumberOfTuples()), this->tupleMetaData.sizeOfTupleInBytes);
+        const auto [div, mod] = std::lldiv(static_cast<long long>(rawBuffer.getNumberOfTuples()), this->schemaInfo.getSizeOfTupleInBytes());
         PRECONDITION(
             mod == 0,
             "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
             rawBuffer.getNumberOfBytes(),
-            this->tupleMetaData.sizeOfTupleInBytes);
+            this->schemaInfo.getSizeOfTupleInBytes());
         /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
-        const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->tupleMetaData.sizeOfTupleInBytes;
+        const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->schemaInfo.getSizeOfTupleInBytes();
         rawBuffer.setNumberOfTuples(numberOfTuplesInFormattedBuffer);
         /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
         rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
@@ -274,7 +264,7 @@ public:
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
         auto fieldAccessFunction = FieldAccessFunctionType(*pec.getBufferManager());
-        inputFormatIndexer->setupFieldAccessFunctionForBuffer(fieldAccessFunction, rawBuffer, tupleMetaData);
+        inputFormatIndexer->setupFieldAccessFunctionForBuffer(fieldAccessFunction, rawBuffer, formatterMetaData);
 
         /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
         ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
@@ -302,11 +292,12 @@ public:
 
 private:
     OriginId originId;
-    std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, FormatterType::IsFormattingRequired>>
+    std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, MetaData, FormatterType::IsFormattingRequired>>
         inputFormatIndexer; /// unique_ptr, because InputFormatIndexer is abstract class
+    SchemaInfo schemaInfo;
+    MetaData formatterMetaData;
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
     std::vector<RawInputDataParser::ParseFunctionSignature> parseFunctions;
-    TupleMetaData tupleMetaData;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples, using the indexes in FieldOffsets and parses the tuples into formatted data.
@@ -319,7 +310,7 @@ private:
     {
         const auto bufferProvider = pec.getBufferManager();
         const auto numberOfTuplesInFirstFormattedBuffer = formattedBuffer.getNumberOfTuples();
-        const size_t numberOfTuplesPerBuffer = bufferProvider->getBufferSize() / this->tupleMetaData.sizeOfTupleInBytes;
+        const size_t numberOfTuplesPerBuffer = bufferProvider->getBufferSize() / this->schemaInfo.getSizeOfTupleInBytes();
         PRECONDITION(numberOfTuplesPerBuffer != 0, "The capacity of a buffer must suffice to hold at least one tuple.");
         const auto numberOfBuffersToFill = calculateNumberOfRequiredFormattedBuffers(
             fieldAccessFunction.getTotalNumberOfTuples(), numberOfTuplesInFirstFormattedBuffer, numberOfTuplesPerBuffer);
@@ -354,7 +345,7 @@ private:
                     fieldAccessFunction,
                     numTuplesReadFromRawBuffer,
                     formattedBuffer,
-                    this->tupleMetaData,
+                    this->schemaInfo,
                     this->parseFunctions,
                     *bufferProvider);
                 formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
@@ -388,11 +379,12 @@ private:
         if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
         {
             const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
-            processSpanningTuple<FieldAccessFunctionType>(
+            processSpanningTuple<FieldAccessFunctionType, MetaData>(
                 spanningTupleBuffers,
                 *bufferProvider,
                 formattedBuffer,
-                this->tupleMetaData,
+                this->schemaInfo,
+                this->formatterMetaData,
                 *this->inputFormatIndexer,
                 this->parseFunctions);
         }
@@ -406,8 +398,8 @@ private:
         /// 3. process trailing spanning tuple if required
         if (/* hasTrailingSpanningTuple */ indexOfSequenceNumberInStagedBuffers < (stagedBuffers.size() - 1))
         {
-            const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * this->tupleMetaData.sizeOfTupleInBytes;
-            if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->tupleMetaData.sizeOfTupleInBytes)
+            const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes();
+            if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->schemaInfo.getSizeOfTupleInBytes())
             {
                 formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
                 formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
@@ -419,11 +411,12 @@ private:
             const auto spanningTupleBuffers
                 = std::span(stagedBuffers)
                       .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
-            processSpanningTuple<FieldAccessFunctionType>(
+            processSpanningTuple<FieldAccessFunctionType, MetaData>(
                 spanningTupleBuffers,
                 *bufferProvider,
                 formattedBuffer,
-                this->tupleMetaData,
+                this->schemaInfo,
+                this->formatterMetaData,
                 *this->inputFormatIndexer,
                 this->parseFunctions);
         }
@@ -459,8 +452,14 @@ private:
         }
         /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
         auto formattedBuffer = bufferProvider->getBufferBlocking();
-        processSpanningTuple<FieldAccessFunctionType>(
-            stagedBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatIndexer, this->parseFunctions);
+        processSpanningTuple<FieldAccessFunctionType, MetaData>(
+            stagedBuffers,
+            *bufferProvider,
+            formattedBuffer,
+            this->schemaInfo,
+            this->formatterMetaData,
+            *this->inputFormatIndexer,
+            this->parseFunctions);
 
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));

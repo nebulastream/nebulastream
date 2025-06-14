@@ -44,7 +44,7 @@ using FieldOffsetsType = uint32_t;
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 class RawTupleBuffer
 {
-    template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldAccessFunctionType, typename MetaData, bool HasSpanningTuple>
     requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
     friend struct StagedBuffer;
@@ -84,14 +84,13 @@ private:
 };
 
 /// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
-template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+template <typename FormatterType, typename FieldAccessFunctionType, typename MetaData, bool HasSpanningTuple>
 requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
 class InputFormatterTask;
-template<typename T>
+template <typename T>
 concept InputFormatterTaskType = requires {
-    // This will only be satisfied if T is a specialization of InputFormatterTask
-    []<typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
-    (InputFormatterTask<FormatterType, FieldAccessFunctionType, HasSpanningTuple>&){}(std::declval<T&>());
+    []<typename FormatterType, typename FieldAccessFunctionType, typename MetaData, bool HasSpanningTuple>(
+        InputFormatterTask<FormatterType, FieldAccessFunctionType, MetaData, HasSpanningTuple>&) { }(std::declval<T&>());
 };
 
 /// Type-erased wrapper around InputFormatterTask

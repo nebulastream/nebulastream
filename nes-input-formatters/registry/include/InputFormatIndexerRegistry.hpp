@@ -36,19 +36,17 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskP
 struct InputFormatIndexerRegistryArguments
 {
     InputFormatIndexerRegistryArguments(ParserConfig config, const OriginId originId, Schema schema)
-        : inputFormatIndexerConfig(std::move(config))
-        , originId(originId)
-        , schema(std::move(schema))
+        : inputFormatIndexerConfig(std::move(config)), originId(originId), schema(std::move(schema))
     {
     }
 
     /// @tparam: FormatterType: the concrete formatter implementation, e.g., CSVInputFormatter
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
-    template <typename FormatterType, typename FieldAccessType, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldAccessType, typename MetaData, bool HasSpanningTuple>
     InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter)
     {
-        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, HasSpanningTuple>(
+        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, MetaData, HasSpanningTuple>(
             originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
@@ -61,8 +59,11 @@ private:
     Schema schema;
 };
 
-class InputFormatIndexerRegistry
-    : public BaseRegistry<InputFormatIndexerRegistry, std::string, InputFormatIndexerRegistryReturnType, InputFormatIndexerRegistryArguments>
+class InputFormatIndexerRegistry : public BaseRegistry<
+                                       InputFormatIndexerRegistry,
+                                       std::string,
+                                       InputFormatIndexerRegistryReturnType,
+                                       InputFormatIndexerRegistryArguments>
 {
 };
 

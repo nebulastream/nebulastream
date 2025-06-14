@@ -22,10 +22,12 @@
 namespace NES::InputFormatters
 {
 
-InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
+InputFormatIndexerRegistryReturnType
+InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, false>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false>(
+        std::move(inputFormatter));
 }
 
 }

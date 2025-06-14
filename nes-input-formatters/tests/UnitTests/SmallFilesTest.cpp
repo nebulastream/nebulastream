@@ -295,41 +295,38 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "TwoIntegerColumns",
-            .formatterType = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .sizeOfFormattedBuffers = 4096});
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Bimbo_1_1000",
-            .formatterType = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 10,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .sizeOfFormattedBuffers = 4096});
+    runTest(TestConfig{
+        .testFileName = "Bimbo_1_1000",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Food_1",
-            .formatterType = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .sizeOfFormattedBuffers = 4096});
+    runTest(TestConfig{
+        .testFileName = "Food_1",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
@@ -348,17 +345,16 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
 /// Simple test that confirms that we forward already formatted buffers without spanning tuples correctly
 TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "TwoIntegerColumns_binary",
-            .formatterType = "Native",
-            .hasSpanningTuples = false,
-            /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
-            /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 4096,
-            .sizeOfFormattedBuffers = 4096});
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns_binary",
+        .formatterType = "Native",
+        .hasSpanningTuples = false,
+        /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
+        /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096,
+        .sizeOfFormattedBuffers = 4096});
 }
 
 }
