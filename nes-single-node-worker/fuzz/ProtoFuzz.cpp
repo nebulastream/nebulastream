@@ -14,13 +14,15 @@
 
 #include <chrono>
 #include <thread>
+
+#include <cpptrace/from_current.hpp>
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
-#include <from_current.hpp>
-#include "Runtime/QueryTerminationType.hpp"
-#include "SerializableQueryPlan.pb.h"
-#include "Serialization/QueryPlanSerializationUtil.hpp"
-#include "SingleNodeWorker.hpp"
-#include "SingleNodeWorkerConfiguration.hpp"
+
+#include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <SerializableQueryPlan.pb.h>
+#include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
 {
