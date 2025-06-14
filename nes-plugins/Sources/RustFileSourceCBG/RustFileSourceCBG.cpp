@@ -30,10 +30,8 @@ namespace NES::Sources
     static rust::RustFileSourceImpl* createRustImpl(const SourceDescriptor& sourceDescriptor)
     {
         std::string path = static_cast<std::string>(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH));
-        std::cout << "Casting string \"" << path << " to byte pointer." << std::endl;
-        auto data = reinterpret_cast<const unsigned char*>(path.data());
-        std::cout << "After Karsten" << std::endl;
-        return rust::new_rust_file_source(data, path.size());
+
+        return rust::new_rust_file_source(path.data());
     }
 
     RustFileSourceCBG::RustFileSourceCBG(const SourceDescriptor& sourceDescriptor)
@@ -41,29 +39,30 @@ namespace NES::Sources
     {
     }
 
+    RustFileSourceCBG::~RustFileSourceCBG()
+    {
+        rust::free_rust_file_source(this->impl);
+    }
+
     void RustFileSourceCBG::open()
     {
-        std::cout << "HUGELBUGEL\topen" << std::endl;
-        rust::open(this->impl);
+        rust::openn(this->impl);
     }
 
     void RustFileSourceCBG::close()
     {
-        std::cout << "HUGELBUGEL\tclose" << std::endl;
-        rust::close(this->impl);
+        rust::closee(this->impl);
     }
 
     std::size_t RustFileSourceCBG::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
     {
-        std::cout << "HUGELBUGEL\tfillTupleBuffer" << std::endl;
-        return rust::fill_tuple_buffer(this->impl, tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
+        return rust::fill_tuple_bufferr(this->impl, tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
     }
 
     NES::Configurations::DescriptorConfig::Config RustFileSourceCBG::validateAndFormat(
         std::unordered_map<std::string, std::string> config
     )
     {
-        std::cout << "HUGELBUGEL\tvalidateAndFormat" << std::endl;
         return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
     }
 
@@ -76,19 +75,16 @@ namespace NES::Sources
     SourceValidationRegistryReturnType
     SourceValidationGeneratedRegistrar::RegisterRustFileCBGSourceValidation(SourceValidationRegistryArguments sourceConfig)
     {
-        std::cout << "HUGELBUGEL\tRegisterRustFileCBGSourceValidation" << std::endl;
         return RustFileSourceCBG::validateAndFormat(std::move(sourceConfig.config));
     }
 
     SourceRegistryReturnType SourceGeneratedRegistrar::RegisterRustFileCBGSource(SourceRegistryArguments sourceRegistryArguments)
     {
-        std::cout << "HUGELBUGEL\tRegisterRustFileCBGSource" << std::endl;
         return std::make_unique<RustFileSourceCBG>(sourceRegistryArguments.sourceDescriptor);
     }
 
     InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterRustFileCBGInlineData(InlineDataRegistryArguments systestAdaptorArguments)
     {
-        std::cout << "HUGELBUGEL\tRegisterRustFileCBGInlineData" << std::endl;
         if (systestAdaptorArguments.attachSource.tuples)
         {
             if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
@@ -114,7 +110,6 @@ namespace NES::Sources
 
     FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterRustFileCBGFileData(FileDataRegistryArguments systestAdaptorArguments)
     {
-        std::cout << "HUGELBUGEL\tRegisterRustFileCBGFileData" << std::endl;
         /// Check that the test data dir is defined and that the 'filePath' parameter is set
         /// Replace the 'TESTDATA' placeholder in the filepath
         if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)

@@ -30,7 +30,7 @@ public:
     static constexpr std::string_view NAME = "RustFileCBG";
 
     explicit RustFileSourceCBG(const SourceDescriptor& sourceDescriptor);
-    ~RustFileSourceCBG() override = default;
+    ~RustFileSourceCBG();
 
     RustFileSourceCBG(const RustFileSourceCBG&) = delete;
     RustFileSourceCBG& operator=(const RustFileSourceCBG&) = delete;

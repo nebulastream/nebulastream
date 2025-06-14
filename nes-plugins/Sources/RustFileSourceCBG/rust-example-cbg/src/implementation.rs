@@ -7,7 +7,7 @@ use crate::implementation::Error::IoError;
 pub struct RustFileSourceImpl {
     path: String,
     file: Option<File>,
-    num_bytes_read: usize
+    // num_bytes_read: usize
 }
 
 impl RustFileSourceImpl {
@@ -15,7 +15,7 @@ impl RustFileSourceImpl {
         Self {
             path,
             file: None,
-            num_bytes_read: 0,
+            // num_bytes_read: 0,
         }
     }
 
@@ -46,9 +46,9 @@ impl RustFileSourceImpl {
         Ok(read_bytes as u64)
     }
 
-    pub fn to_string(&self) -> String {
-        format!("RustFileSourceImpl(filepath: {}, totalNumBytesRead: {})", self.path, self.num_bytes_read)
-    }
+    // pub fn to_string(&self) -> String {
+    //     format!("RustFileSourceImpl(filepath: {}, totalNumBytesRead: {})", self.path, self.num_bytes_read)
+    // }
 }
 
 pub enum Error {

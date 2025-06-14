@@ -1,4 +1,5 @@
 #include <cstdarg>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <ostream>
@@ -24,19 +25,15 @@ constexpr static const ErrCode FILE_NOT_FOUND = -14;
 
 extern "C" {
 
-ErrCode open(RustFileSourceImpl *rfs);
+RustFileSourceImpl *new_rust_file_source(const char *path);
 
-void close(RustFileSourceImpl *rfs);
+ErrCode openn(RustFileSourceImpl *rfs);
 
-int64_t fill_tuple_buffer(RustFileSourceImpl *rfs, uint8_t *tuple_buffer, uint64_t buf_len);
+void closee(RustFileSourceImpl *rfs);
 
-RustFileSourceImpl *new_rust_file_source(const uint8_t *path_buf, uintptr_t path_len);
+int64_t fill_tuple_bufferr(RustFileSourceImpl *rfs, uint8_t *tuple_buffer, uint64_t buf_len);
 
 void free_rust_file_source(RustFileSourceImpl *rfs);
-
-const uint8_t *to_string(const RustFileSourceImpl *rfs, uintptr_t *len);
-
-void free_string(uint8_t *ptr, uintptr_t len);
 
 }  // extern "C"
 

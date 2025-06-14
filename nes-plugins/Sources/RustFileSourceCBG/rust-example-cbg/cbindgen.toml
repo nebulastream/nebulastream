@@ -1,2 +1,3 @@
 language = "C++"
 namespace = "rust"
+usize_is_size_t = true
