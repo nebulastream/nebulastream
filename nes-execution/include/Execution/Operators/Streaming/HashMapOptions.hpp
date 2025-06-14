@@ -19,11 +19,13 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
+#include "QueryCompiler/Configurations/Enums/HashMapVarSizedStorageMethod.hpp"
 
 
 namespace NES::Runtime::Execution::Operators
@@ -44,6 +46,8 @@ public:
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
+        const uint64_t varSizedPageSize,
+        const QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod,
         const uint64_t numberOfBuckets)
         : hashFunction(std::move(hashFunction))
         , keyFunctions(std::move(keyFunctions))
@@ -54,6 +58,8 @@ public:
         , keySize(keySize)
         , valueSize(valueSize)
         , pageSize(pageSize)
+        , varSizedPageSize(varSizedPageSize)
+        , varSizedStorageMethod(varSizedStorageMethod)
         , numberOfBuckets(numberOfBuckets)
     {
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
@@ -79,7 +85,9 @@ public:
         , keySize(std::move(other.keySize))
         , valueSize(std::move(other.valueSize))
         , pageSize(std::move(other.pageSize))
-        , numberOfBuckets(std::move(other.numberOfBuckets))
+        , varSizedPageSize(std::move(other.varSizedPageSize))
+        , varSizedStorageMethod(std::move(other.varSizedStorageMethod))
+    , numberOfBuckets(std::move(other.numberOfBuckets))
     {
     }
 
@@ -112,6 +120,8 @@ protected:
     uint64_t keySize;
     uint64_t valueSize;
     uint64_t pageSize;
+    uint64_t varSizedPageSize;
+    QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod;
     uint64_t numberOfBuckets;
 };
 

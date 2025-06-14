@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
@@ -26,6 +27,7 @@
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/Enums/WindowManagement.hpp>
+#include "Enums/HashMapVarSizedStorageMethod.hpp"
 
 namespace NES::QueryCompilation::Configurations
 {
@@ -63,6 +65,16 @@ public:
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption varSizedPageSize
+        = {"varSizedPageSize",
+           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
+           "Size of the pages to the chained hashmap to store data on",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::EnumOption<HashMapVarSizedStorageMethod> varSizedStorageMethod
+        = {"varSizedStorageMethod",
+           HashMapVarSizedStorageMethod::SINGLE_BUFFER,
+           "How to store variable sized data in a chained hashmap"
+           "[SINGLE_BUFFER|PAGES]. "};
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
