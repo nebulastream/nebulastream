@@ -23,8 +23,10 @@
 #include <type_traits>
 #include <utility>
 
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -36,6 +38,25 @@ namespace NES::InputFormatters
 
 using FieldOffsetsType = uint32_t;
 
+/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
+template <typename T>
+concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
+    T(config, schema);
+    /// Assumes a fixed set of symbols that separate tuples
+    /// InputFormatIndexers without tuple delimiters should return an empty string
+    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+};
+
+/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
+template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType MetaData, bool HasSpanningTuple>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+class InputFormatterTask;
+template <typename T>
+concept InputFormatterTaskType = requires {
+    []<typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>(
+        InputFormatterTask<FormatterType, FieldIndexFunctionType, IndexerMetaData, HasSpanningTuple>&) { }(std::declval<T&>());
+};
+
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a would TupleBuffer require)
 /// 2. It exposes only the function of the TupleBuffer that are required for formatting
@@ -44,7 +65,7 @@ using FieldOffsetsType = uint32_t;
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 class RawTupleBuffer
 {
-    template <typename FormatterType, typename FieldIndexFunctionType, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
     requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
     friend struct StagedBuffer;
@@ -81,17 +102,6 @@ private:
 
     Memory::TupleBuffer rawBuffer;
     std::string_view bufferView;
-};
-
-/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
-template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
-requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
-class InputFormatterTask;
-template <typename T>
-concept InputFormatterTaskType = requires {
-    // This will only be satisfied if T is a specialization of InputFormatterTask
-    []<typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>(
-        InputFormatterTask<FormatterType, FieldAccessFunctionType, HasSpanningTuple>&) { }(std::declval<T&>());
 };
 
 /// Type-erased wrapper around InputFormatterTask

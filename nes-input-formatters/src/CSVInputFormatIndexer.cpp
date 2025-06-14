@@ -72,7 +72,7 @@ CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t n
 {
 }
 
-void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const
+void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
@@ -122,7 +122,7 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
 {
     auto inputFormatter
         = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, true>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true>(std::move(inputFormatter));
 }
 
 }
