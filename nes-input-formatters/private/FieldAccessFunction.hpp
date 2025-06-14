@@ -68,7 +68,6 @@ class FieldAccessFunction
         const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 
-protected:
     FieldAccessFunction()
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
