@@ -14,32 +14,26 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstddef>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::InputFormatters
 {
-
-struct TupleMetaData
-{
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-    size_t sizeOfTupleInBytes{};
-    std::vector<size_t> fieldSizesInBytes;
-    std::vector<size_t> fieldOffsetsInBytes;
-};
 
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
 /// The InputFormatIndexerTask uses the InputFormatIndexer to determine byte offsets of all fields of a given tuple and all tuples of a given buffer.
 /// The offsets allow the InputFormatIndexerTask to parse only the fields that it needs to for the particular query.
 /// @Note All InputFormatIndexer implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatIndexerTasks.
 ///       Thus, the InputFormatIndexerTask calls the interface functions of the InputFormatIndexer concurrently.
-template <typename FieldIndexFunctionType, bool RequiresFormatting>
+template <typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool RequiresFormatting>
 class InputFormatIndexer
 {
 public:
@@ -56,8 +50,8 @@ public:
     /// Must write all offsets to the correct position to the fieldOffsets pointer.
     /// @return the bytes-offset to the first and last tuple delimiter (we use these offsets to construct tuples that span buffers (see SequenceShredder))
     /// @Note Must be thread-safe (see description of class)
-    virtual void
-    indexRawBuffer(FieldIndexFunctionType& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const TupleMetaData& tupleMetadata) const
+    virtual void indexRawBuffer(
+        FieldIndexFunctionType& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const IndexerMetaData& indexerMetaData) const
         = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatIndexer& inputFormatIndexer)

@@ -122,26 +122,6 @@ public:
         size_t sizeOfRawBuffers;
         size_t sizeOfFormattedBuffers;
     };
-    static bool writeBinaryToFile(std::span<const char> data, const std::filesystem::path& filepath, bool append)
-    {
-        if (const auto parentPath = filepath.parent_path(); !parentPath.empty())
-        {
-            create_directories(parentPath);
-        }
-
-        std::ios_base::openmode openMode = std::ios::binary;
-        openMode |= append ? std::ios::app : std::ios::trunc;
-
-        std::ofstream file(filepath, openMode);
-        if (not file)
-        {
-            throw InvalidConfigParameter("Could not open file: {}", filepath.string());
-        }
-
-        file.write(data.data(), static_cast<std::streamsize>(data.size_bytes()));
-
-        return true;
-    }
 
     struct SetupResult
     {
