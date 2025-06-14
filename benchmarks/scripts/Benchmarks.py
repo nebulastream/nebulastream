@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 
 
 # Load the CSV file
-df = pd.read_csv("data/2025-06-13_07-12-52/combined_benchmark_statistics.csv")
+df = pd.read_csv("data/amd/2025-06-13_13-54-08/combined_benchmark_statistics.csv")
 
 # Define configuration parameters
 shared_config_params = [
@@ -35,6 +35,9 @@ file_backed_config_params = [
     'num_watermark_gaps_allowed', 'watermark_predictor_type', 'memory_model',
     'max_memory_consumption'
 ]
+
+default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
+                 'WINDOW SLIDING (timestamp, size 1000000000 ms, advance by 1000000000 ms) INTO csv_sink'
 
 # Find unique configs that both slice store types have in common
 all_config_params = shared_config_params + file_backed_config_params
@@ -363,23 +366,30 @@ for config in configs:
 # %% Shared parameter plots
 
 def plot_shared_params(data, param, metric, label):
-    data_scaled, unit = convert_units(data, metric)
+    data_scaled = data.copy()
     param_unit = ''
 
     data_scaled = data_scaled[data_scaled['buffer_size_in_bytes'] <= 131072]
     data_scaled = data_scaled[data_scaled['page_size'] <= 131072]
     data_scaled = data_scaled[data_scaled['ingestion_rate'] <= 10000]
+    data_scaled = data_scaled[data_scaled['timestamp_increment'] <= 10000]
 
     if param == 'query':
         # Map long queries to short codes
         unique_queries = data_scaled[param].unique()
         query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
         data_scaled[param] = data_scaled[param].map(query_mapping)
+    else:
+        data_scaled = data_scaled[data_scaled['query'] == default_query]
+    if param != 'timestamp_increment':
+        data_scaled = data_scaled[data_scaled['timestamp_increment'] == 1]
+    
+    data_scaled, unit = convert_units(data_scaled, metric)
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
-    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar=None, marker='o')
+    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd', marker='o')
 
     # Add labels for min and max values of metric for this param for each slice store type
     add_min_max_labels_per_group(data_scaled, 'slice_store_type', metric, ax, param)
@@ -399,6 +409,8 @@ def plot_shared_params(data, param, metric, label):
 
 
 print(f"number of queries: {len(df['query'].unique())}")
+print(f"number of timestamp increments: {len(df['timestamp_increment'].unique())}")
+df['hue'] = df['query'].astype(str) + ' | ' + df['max_memory_consumption'].astype(str)
 for param in shared_config_params:
     plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
     plot_shared_params(df, param, 'memory', 'Memory')
@@ -407,13 +419,17 @@ for param in shared_config_params:
 # %% File-Backed-Only parameter plots
 
 def plot_file_backed_params(data, param, metric, hue, label, color):
-    data_scaled, metric_unit = convert_units(data, metric)
+    data_scaled = data.copy()
     param_unit = ''
 
+    data_scaled = data_scaled[data_scaled['query'] == default_query]
     data_scaled = data_scaled[data_scaled['file_descriptor_buffer_size'] <= 131072]
     data_scaled = data_scaled[data_scaled['file_operation_time_delta'] <= 100]
     data_scaled = data_scaled[data_scaled['num_watermark_gaps_allowed'] <= 100]
-    data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
+    if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
+        data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
+
+    data_scaled, metric_unit = convert_units(data, metric)
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
