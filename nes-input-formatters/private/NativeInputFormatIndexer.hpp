@@ -24,16 +24,23 @@
 namespace NES::InputFormatters
 {
 
+class NativeMetaData
+{
+public:
+    NativeMetaData(ParserConfig, Schema) { /* noop */ }
+    static std::string_view getTupleDelimitingBytes() { return ""; }
+};
+
 /// The NativeInputFormatter formats buffers that contain data which all other 'Operators' can operate on.
 /// There is thus no need to parse the fields of the input data.
 template <bool HasSpanningTuple>
-class NativeInputFormatIndexer final : public InputFormatIndexer<struct NoopFormatter, /* IsFormattingRequired */ false>
+class NativeInputFormatIndexer final : public InputFormatIndexer<struct NoopFormatter, NativeMetaData, /* IsFormattingRequired */ false>
 {
 public:
     NativeInputFormatIndexer() = default;
     ~NativeInputFormatIndexer() override = default;
 
-    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const TupleMetaData&) const override
+    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const NativeMetaData&) const override
     {
         INVARIANT(not HasSpanningTuple, "The Native input formatter currently does not support spanning tuples.");
     }
