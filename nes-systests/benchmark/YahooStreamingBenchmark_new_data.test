@@ -3,22 +3,14 @@
 # groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
-<<<<<<<< HEAD:nes-systests/benchmark/YahooStreamingBenchmark_more_data.test
-SourceCSV ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/large/ysb/ysb1k.csv
-SourceCSV ysb10k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/large/ysb/ysb10k.csv
-========
 SourceCSV ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events1k.csv
 SourceCSV ysb10k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events10k.csv
->>>>>>>> 9d59c9fa5f (implement varsized keys for chained hashmap, add benchmarks, add verification scripts for benchmark input):nes-systests/benchmark/YahooStreamingBenchmark_new_data.test
 
 SINK printSink1k UINT64 ysb1k$start UINT64 ysb1k$end
 #SINK printSink10k UINT64 ysb10k$start UINT64 ysb10k$end
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
-<<<<<<<< HEAD:nes-systests/benchmark/YahooStreamingBenchmark_more_data.test
-========
 # TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
->>>>>>>> 9d59c9fa5f (implement varsized keys for chained hashmap, add benchmarks, add verification scripts for benchmark input):nes-systests/benchmark/YahooStreamingBenchmark_new_data.test
 # YSB Query
 SELECT start, end,
     campaign_id,
@@ -29,11 +21,6 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO CHECKSUM;
 ----
-<<<<<<<< HEAD:nes-systests/benchmark/YahooStreamingBenchmark_more_data.test
-68000 278998939
-
-# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
-========
 34000, 135700272
 # Checksum for 1000000 events with 1 event per millisecond
 
@@ -42,7 +29,6 @@ INTO CHECKSUM;
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
->>>>>>>> 9d59c9fa5f (implement varsized keys for chained hashmap, add benchmarks, add verification scripts for benchmark input):nes-systests/benchmark/YahooStreamingBenchmark_new_data.test
 # YSB Query
 SELECT
     campaign_id,
@@ -53,9 +39,5 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO CHECKSUM;
 ----
-<<<<<<<< HEAD:nes-systests/benchmark/YahooStreamingBenchmark_more_data.test
-670000 2725304985
-========
 100034, 395001294
 # Checksum for 1000000 events with 1 event per millisecond
->>>>>>>> 9d59c9fa5f (implement varsized keys for chained hashmap, add benchmarks, add verification scripts for benchmark input):nes-systests/benchmark/YahooStreamingBenchmark_new_data.test
