@@ -18,24 +18,24 @@
 #include <ostream>
 #include <string_view>
 
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterRegistry.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatter final : public InputFormatter
+class CSVInputFormatIndexer final : public InputFormatIndexer
 {
 public:
-    explicit CSVInputFormatter(InputFormatterRegistryArguments args);
-    ~CSVInputFormatter() override = default;
+    explicit CSVInputFormatIndexer(InputFormatIndexerRegistryArguments args);
+    ~CSVInputFormatIndexer() override = default;
 
-    CSVInputFormatter(const CSVInputFormatter&) = delete;
-    CSVInputFormatter& operator=(const CSVInputFormatter&) = delete;
-    CSVInputFormatter(CSVInputFormatter&&) = delete;
-    CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
+    CSVInputFormatIndexer(const CSVInputFormatIndexer&) = delete;
+    CSVInputFormatIndexer& operator=(const CSVInputFormatIndexer&) = delete;
+    CSVInputFormatIndexer(CSVInputFormatIndexer&&) = delete;
+    CSVInputFormatIndexer& operator=(CSVInputFormatIndexer&&) = delete;
 
     void indexTuple(std::string_view tuple, FieldOffsetsType* fieldOffsets, FieldOffsetsType startIdxOfTuple) const override;
 
