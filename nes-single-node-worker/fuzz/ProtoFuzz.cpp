@@ -29,7 +29,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
     CPPTRACE_TRY
     {
         auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
-        NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
+        NES::SingleNodeWorker snw{NES::SingleNodeWorkerConfiguration{}};
         auto res = snw.registerQuery(dqp);
         if (!res)
         {
