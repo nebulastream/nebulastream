@@ -103,6 +103,8 @@ private:
             &pageSize,
             &numberOfPartitions,
             &numberOfRecordsPerKey,
+            &varSizedPageSize,
+            &varSizedStorageMethod,
             &joinStrategy,
             &pipelinesTxtFilePath,
             &sliceCacheType,

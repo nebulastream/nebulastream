@@ -66,6 +66,8 @@ public:
     static constexpr auto DEFAULT_PAGE_SIZE = 8024;
 
     ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize);
+    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize);
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize);
     ~ChainedHashMap() override;
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;

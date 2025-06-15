@@ -22,6 +22,7 @@ namespace NES::QueryCompilation::Configurations
 enum class HashMapVarSizedStorageMethod : uint8_t
 {
     SINGLE_BUFFER,
-    PAGES
+    SEPARATE_PAGES,
+    JOINT_PAGES,
 };
 }
