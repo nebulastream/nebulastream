@@ -32,12 +32,17 @@ shared_config_params = [
 file_backed_config_params = [
     'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta',
     'max_num_sequence_numbers', 'min_read_state_size', 'min_write_state_size',
-    'max_num_watermark_gaps', 'watermark_predictor_type' #, 'lower_memory_bound',
+    'num_watermark_gaps_allowed', 'watermark_predictor_type' #, 'lower_memory_bound',
     #'upper_memory_bound'
 ]
 
 default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
                  'WINDOW SLIDING (timestamp, size 1000000000 ms, advance by 1000000000 ms) INTO csv_sink'
+
+# Map long queries to short codes
+unique_queries = df['query'].unique()
+query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
+df['query_id'] = df['query'].map(query_mapping)
 
 # Find unique configs that both slice store types have in common
 all_config_params = shared_config_params + file_backed_config_params
@@ -367,48 +372,39 @@ for config in configs:
 
 # %% Shared parameter plots
 
-def plot_shared_params(data, param, metric, label):
-    data_scaled = data.copy()
-    param_unit = ''
+def plot_shared_params(data, param, metric, hue, label):
+    data = data[data['buffer_size_in_bytes'] <= 131072]
+    data = data[data['page_size'] <= 131072]
+    data = data[data['ingestion_rate'] <= 10000]
+    data = data[data['timestamp_increment'] <= 10000]
 
-    data_scaled = data_scaled[data_scaled['buffer_size_in_bytes'] <= 131072]
-    data_scaled = data_scaled[data_scaled['page_size'] <= 131072]
-    data_scaled = data_scaled[data_scaled['ingestion_rate'] <= 10000]
-    data_scaled = data_scaled[data_scaled['timestamp_increment'] <= 10000]
+    data_scaled, unit = convert_units(data, metric)
 
     if param == 'query':
         # Sort data by whether or not the query contained variable sized data
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
         data_scaled = data_scaled.sort_values(by='var_sized_data', ascending=False)
-
-        # Map long queries to short codes
-        unique_queries = data_scaled[param].unique()
-        query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
-        data_scaled[param] = data_scaled[param].map(query_mapping)
-    else:
-        data_scaled = data_scaled[data_scaled['query'] == default_query]
-    if param != 'timestamp_increment':
-        data_scaled = data_scaled[data_scaled['timestamp_increment'] == 1]
-    
-    data_scaled, unit = convert_units(data_scaled, metric)
+        hue = 'timestamp_increment'
+        param = 'query_id'
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
-    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd', marker='o')
+    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
     # Add labels for min and max values of metric for this param for each slice store type
-    add_min_max_labels_per_group(data_scaled, 'slice_store_type', metric, ax, param)
+    add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
 
-    if param == 'query':
+    if param == 'query_id':
         # Add legend below
         mapping_text = "\n".join([f"{v}: {k}" for k, v in query_mapping.items()])
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.35)
         plt.figtext(0.0, -0.65, mapping_text, wrap=True, ha='left', fontsize=9)
+        param = 'query'
 
     plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} ({param_unit})' if param_unit != '' else param)
+    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() else param)
     plt.ylabel(f'{label} ({unit})')
     plt.legend(title='Slice Store Type')
     plt.show()
@@ -416,10 +412,10 @@ def plot_shared_params(data, param, metric, label):
 
 print(f"number of queries: {len(df['query'].unique())}")
 print(f"number of timestamp increments: {len(df['timestamp_increment'].unique())}")
-df['hue'] = df['query'].astype(str) + ' | ' + df['max_memory_consumption'].astype(str)
+df['hue'] = df['slice_store_type'].astype(str) + ' | ' + df['query_id'].astype(str) + ' | ' + df['timestamp_increment'].astype(str)
 for param in shared_config_params:
-    plot_shared_params(df, param, 'throughput_data', 'Throughput / sec')
-    plot_shared_params(df, param, 'memory', 'Memory')
+    plot_shared_params(df, param, 'throughput_data', 'hue', 'Throughput / sec')
+    plot_shared_params(df, param, 'memory', 'hue', 'Memory')
 
 
 # %% File-Backed-Only parameter plots
