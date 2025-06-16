@@ -1,0 +1,28 @@
+query: |
+  SELECT * FROM keystrokes WHERE key = 'a' INTO csv_sink;
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/csv_filtered_a.csv"
+    append: false
+logical:
+  - name: keystrokes
+    schema:
+      - name: key
+        type: VARSIZED
+      - name: timestamp
+        type: UINT64
+physical:
+  - logical: keystrokes
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 9000
+      socketHost: localhost
+      socketBufferSize: 2
+      flushIntervalMS: 100
