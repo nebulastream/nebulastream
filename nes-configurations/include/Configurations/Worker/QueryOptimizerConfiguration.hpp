@@ -23,9 +23,9 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
-#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES::Configurations
@@ -90,14 +90,24 @@ public:
            SliceStoreType::DEFAULT,
            "Type of slice store "
            "[DEFAULT|FILE_BACKED]."};
+    NES::Configurations::UIntOption lowerMemoryBound
+        = {"lowerMemoryBound",
+           "0",
+           "Lower memory bound in bytes for file backed slice store.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption upperMemoryBound
+        = {"upperMemoryBound",
+           "0",
+           "Upper memory bound in bytes for file backed slice store.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption fileDescriptorBufferSize
         = {"fileDescriptorBufferSize",
-           "4096",
+           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of file writers and readers for file backed data structures.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption numWatermarkGapsAllowed
-        = {"numWatermarkGapsAllowed",
-           "10",
+    NES::Configurations::UIntOption maxNumWatermarkGaps
+        = {"maxNumWatermarkGaps",
+           "0",
            "Maximum number of gaps in watermark processor sequence numbers for watermark prediction.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxNumSequenceNumbers
@@ -120,16 +130,6 @@ public:
            "0",
            "Time delta added to watermark predictions to account for execution time.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption maxMemoryConsumption
-        = {"maxMemoryConsumption",
-           std::to_string(UINT64_MAX),
-           "Maximum memory consumption in bytes.",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::EnumOption<MemoryModel> memoryModel
-        = {"memoryModel",
-           MemoryModel::DEFAULT,
-           "Memory Model for file backed slice store "
-           "[DEFAULT|PREDICT_WATERMARKS|WITHIN_BUDGET|ADAPTIVE]."};
     NES::Configurations::EnumOption<FileLayout> fileLayout
         = {"fileLayout",
            FileLayout::NO_SEPARATION,
@@ -154,14 +154,14 @@ private:
             &pipelinesTxtFilePath,
             &operatorBufferSize,
             &sliceStoreType,
+            &lowerMemoryBound,
+            &upperMemoryBound,
             &fileDescriptorBufferSize,
-            &numWatermarkGapsAllowed,
+            &maxNumWatermarkGaps,
             &maxNumSequenceNumbers,
             &minReadStateSize,
             &minWriteStateSize,
             &fileOperationTimeDelta,
-            &maxMemoryConsumption,
-            &memoryModel,
             &fileLayout,
             &watermarkPredictorType,
             &fileBackedWorkingDir};

@@ -133,10 +133,12 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         os.path.join(output_folder, PIPELINE_TXT))
     worker_config_yaml["worker"]["queryOptimizer"]["pageSize"] = current_benchmark_config.page_size
     worker_config_yaml["worker"]["queryOptimizer"]["sliceStoreType"] = current_benchmark_config.slice_store_type
+    worker_config_yaml["worker"]["queryOptimizer"]["lowerMemoryBound"] = current_benchmark_config.lower_memory_bound
+    worker_config_yaml["worker"]["queryOptimizer"]["upperMemoryBound"] = current_benchmark_config.upper_memory_bound
     worker_config_yaml["worker"]["queryOptimizer"][
         "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
     worker_config_yaml["worker"]["queryOptimizer"][
-        "numWatermarkGapsAllowed"] = current_benchmark_config.num_watermark_gaps_allowed
+        "maxNumWatermarkGaps"] = current_benchmark_config.max_num_watermark_gaps
     worker_config_yaml["worker"]["queryOptimizer"][
         "maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
     worker_config_yaml["worker"]["queryOptimizer"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
@@ -144,9 +146,6 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         "minWriteStateSize"] = current_benchmark_config.min_write_state_size
     worker_config_yaml["worker"]["queryOptimizer"][
         "fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "maxMemoryConsumption"] = current_benchmark_config.max_memory_consumption
-    worker_config_yaml["worker"]["queryOptimizer"]["memoryModel"] = current_benchmark_config.memory_model
     worker_config_yaml["worker"]["queryOptimizer"]["fileLayout"] = current_benchmark_config.file_layout
     worker_config_yaml["worker"]["queryOptimizer"][
         "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
