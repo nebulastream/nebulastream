@@ -86,6 +86,7 @@ bool IntersectLogicalFunction::operator==(const LogicalFunctionConcept& rhs) con
 bool IntersectLogicalFunction::spatialIntersects(double lon2, double lat2, double ts2) const
 {
     // Test MEOS functionality - create temporal instants
+    std::cout << "IntersectLogicalFunction::spatialIntersects" << std::endl;
     std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat,ts);
     MEOS::Meos::TemporalInstant temporal1(str_pointbuffer);    
 
@@ -142,5 +143,6 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterInt
     PRECONDITION(arguments.children.size() == 3, "IntersectLogicalFunction requires exactly three children, but got {}", arguments.children.size());
     return IntersectLogicalFunction(arguments.children[0], arguments.children[1], arguments.children[2]);
 }
+
 
 }

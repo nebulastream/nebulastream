@@ -46,6 +46,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/TemporalIntersectsFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -912,6 +913,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
+            }
+            else if (funcName == "TEMPORAL_INTERSECTS")
+            {
+                INVARIANT(helper.functionBuilder.size() == 3, "TEMPORAL_INTERSECTS requires three arguments (lon, lat, timestamp), but got {}", helper.functionBuilder.size());
+                const auto ts = helper.functionBuilder.back();
+                helper.functionBuilder.pop_back();
+                const auto lat = helper.functionBuilder.back();
+                helper.functionBuilder.pop_back();
+                const auto lon = helper.functionBuilder.back();
+                helper.functionBuilder.pop_back();
+                parentHelper.functionBuilder.emplace_back(TemporalIntersectsFunction(lon, lat, ts));
             }
             else
             {

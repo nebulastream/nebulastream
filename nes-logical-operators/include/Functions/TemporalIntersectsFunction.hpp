@@ -1,17 +1,19 @@
 #pragma once
 
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <memory>
+#include <unordered_map>
 #include <vector>
-#include <Functions/LogicalFunction.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Serialization/SerializableFunction.pb.h>
-#include <Runtime/Record.hpp>
-#include <Runtime/Arena.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+
 #include <MEOSWrapper.hpp>
 
 namespace NES {
@@ -35,7 +37,6 @@ public:
     [[nodiscard]] std::string_view getType() const override;
     [[nodiscard]] SerializableFunction serialize() const override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
-    [[nodiscard]] bool execute(Record& record, Arena& arena) const;
     
     // Spatial-temporal intersection method  
     [[nodiscard]] bool spatialIntersects(const double lon, const double lat, const double ts) const;
@@ -45,5 +46,7 @@ private:
     LogicalFunction lon;
     LogicalFunction lat;
     LogicalFunction ts;
-    MEOS::Meos meosWrapper;
-}; 
+    // MEOS::Meos meosWrapper; // Temporarily disabled to avoid initialization issues
+};
+
+}
