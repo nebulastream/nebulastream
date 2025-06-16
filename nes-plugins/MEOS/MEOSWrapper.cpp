@@ -28,7 +28,7 @@ namespace MEOS {
     // Constructor - no parameters according to header
     Meos::Meos() { 
         // MEOS initialize takes no parameters
-        meos_initialize(); 
+        meos_initialize("UTC",nullptr); 
     }
 
     Meos::~Meos() { 
@@ -42,9 +42,18 @@ namespace MEOS {
 
     // TemporalInstant constructor - matches header signature
     Meos::TemporalInstant::TemporalInstant(const std::string& mf_string) {
-        // For now, try to parse as tfloat MF-JSON - would need to determine type dynamically
-        Temporal *temp = tfloat_from_mfjson(mf_string.c_str());
-        instant = temp;
+        std::cout << "Creating MEOS TemporalInstant from: " << mf_string << std::endl;
+        // Use correct MEOS function for parsing temporal point from WKT string
+        Temporal *temp = tgeompoint_in(mf_string.c_str());
+
+        if (temp == nullptr) {
+            std::cout << "Failed to parse temporal point with tgeompoint_in, trying alternative format" << std::endl;
+            // Try alternative format or set to null
+            instant = nullptr;
+        } else {
+            instant = temp;
+            std::cout << "Successfully created temporal point" << std::endl;
+        }
     }
 
     Meos::TemporalInstant::~TemporalInstant() { 
