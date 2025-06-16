@@ -32,8 +32,8 @@ shared_config_params = [
 file_backed_config_params = [
     'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta',
     'max_num_sequence_numbers', 'min_read_state_size', 'min_write_state_size',
-    'num_watermark_gaps_allowed', 'watermark_predictor_type', 'memory_model',
-    'max_memory_consumption'
+    'max_num_watermark_gaps', 'watermark_predictor_type' #, 'lower_memory_bound',
+    #'upper_memory_bound'
 ]
 
 default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
@@ -435,8 +435,8 @@ def plot_file_backed_params(data, param, metric, hue, label, color):
     data_scaled = data_scaled[data_scaled['file_descriptor_buffer_size'] <= 131072]
     data_scaled = data_scaled[data_scaled['file_operation_time_delta'] <= 100]
     data_scaled = data_scaled[data_scaled['num_watermark_gaps_allowed'] <= 100]
-    if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
-        data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
+    #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
+    #    data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
     if param == 'max_num_sequence_numbers':
         data_scaled = data_scaled[data_scaled['max_num_sequence_numbers'] <= 1000]
 
@@ -474,16 +474,16 @@ def plot_file_backed_params(data, param, metric, hue, label, color):
 
 
 file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
-file_backed_data = expand_constant_params_for_groups(file_backed_data, 'max_memory_consumption', 'memory_model')
+#file_backed_data = expand_constant_params_for_groups(file_backed_data, 'max_memory_consumption', 'memory_model')
 #file_backed_data = add_categorical_param(file_backed_data, 'max_memory_consumption', 'max_memory_consumption_cat')
 for param in file_backed_config_params:
-    if param == 'max_memory_consumption':
-        hue = 'memory_model'
-    elif param == 'memory_model':
-        hue = 'max_memory_consumption'
+    #if param == 'max_memory_consumption':
+    #    hue = 'memory_model'
+    #elif param == 'memory_model':
+    #    hue = 'max_memory_consumption'
         #hue = 'max_memory_consumption_cat'
-    else:
-        hue = None
+    #else:
+    hue = None
     plot_file_backed_params(file_backed_data, param, 'throughput_data', hue, 'Throughput / sec', 'blue')
     plot_file_backed_params(file_backed_data, param, 'memory', hue, 'Memory', 'orange')
 
