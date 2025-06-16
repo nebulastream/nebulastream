@@ -91,7 +91,7 @@ then
     #   remove filenames indicating non-text content
     #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
     git ls-files \
-      | grep --invert-match -e "\.png$" -e "\.zip$" \
+      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" \
       | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
 else
