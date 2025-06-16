@@ -73,7 +73,7 @@ public:
     [[nodiscard]] ParserConfig getParserConfig() const;
 
     [[nodiscard]] WorkerId getWorkerId() const;
-    [[nodiscard]] uint64_t getPhysicalSourceId() const;
+    [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     [[nodiscard]] int32_t getBuffersInLocalPool() const;
 
     [[nodiscard]] SerializableSourceDescriptor serialize() const;
@@ -82,7 +82,7 @@ public:
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
-    uint64_t physicalSourceId;
+    PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     WorkerId workerId;
     std::string sourceType;
@@ -92,7 +92,7 @@ private:
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         LogicalSource logicalSource,
-        uint64_t physicalSourceId,
+        PhysicalSourceId physicalSourceId,
         WorkerId workerId,
         std::string sourceType,
         int32_t numberOfBuffersInLocalPool,
