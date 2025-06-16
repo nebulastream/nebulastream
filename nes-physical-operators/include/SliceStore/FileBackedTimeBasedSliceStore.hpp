@@ -38,24 +38,16 @@ enum class FileOperation : uint8_t
     WRITE
 };
 
-enum class MemoryModel : uint8_t
-{
-    DEFAULT,
-    PREDICT_WATERMARKS,
-    WITHIN_BUDGET,
-    ADAPTIVE
-};
-
 struct SliceStoreInfo
 {
+    uint64_t lowerMemoryBound;
+    uint64_t upperMemoryBound;
     uint64_t fileDescriptorBufferSize;
-    uint64_t numWatermarkGapsAllowed;
+    uint64_t maxNumWatermarkGaps;
     uint64_t maxNumSequenceNumbers;
     uint64_t minReadStateSize;
     uint64_t minWriteStateSize;
     uint64_t fileOperationTimeDelta;
-    uint64_t maxMemoryConsumption;
-    MemoryModel memoryModel;
     FileLayout fileLayout;
 };
 
@@ -119,23 +111,15 @@ private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
         const Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        Timestamp watermark,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide);
 
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesDefault(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    updateSlicesDefault(Timestamp watermark, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesPredictWatermarks(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesWithinBudget(
-        const Memory::AbstractBufferProvider* bufferProvider, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesAdaptive(
-        const Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide);
 
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,

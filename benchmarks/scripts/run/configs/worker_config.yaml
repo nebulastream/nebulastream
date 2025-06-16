@@ -8,14 +8,14 @@ worker:
     pipelinesTxtFilePath: ""
     pageSize: 4096
     sliceStoreType: DEFAULT
+    lowerMemoryBound: 0
+    upperMemoryBound: 0
     fileDescriptorBufferSize: 4096
-    numWatermarkGapsAllowed: 1
-    maxNumSequenceNumbers: 1
+    maxNumWatermarkGaps: 0
+    maxNumSequenceNumbers: 0
     minReadStateSize: 0
     minWriteStateSize: 0
     fileOperationTimeDelta: 0
-    maxMemoryConsumption: 0
-    memoryModel: DEFAULT
     fileLayout: NO_SEPARATION
     watermarkPredictorType: KALMAN
     fileBackedWorkingDir: ""
