@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 
 
 # Load the CSV file
-df = pd.read_csv("data/amd/2025-06-13_13-54-08/combined_benchmark_statistics.csv")
+df = pd.read_csv("data/amd/2025-06-14_16-43-59/combined_benchmark_statistics.csv")
 
 # Define configuration parameters
 shared_config_params = [
@@ -99,13 +99,15 @@ def add_categorical_param(data, param, new_param):
     return data
 
 
-def expand_constant_params_for_groups(data, param, group):
+def expand_constant_params_for_groups(data, param, group, exclude_group_val=[]):
     rows_to_add = []
 
     # Get all unique values of param in the dataset
     all_max_mem_values = data[param].unique()
 
     for group_value in data[group].unique():
+        if group_value in exclude_group_val:
+            continue
         group_data = data[data[group] == group_value]
         unique_mem_values = group_data[param].unique()
 
@@ -375,6 +377,10 @@ def plot_shared_params(data, param, metric, label):
     data_scaled = data_scaled[data_scaled['timestamp_increment'] <= 10000]
 
     if param == 'query':
+        # Sort data by whether or not the query contained variable sized data
+        data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
+        data_scaled = data_scaled.sort_values(by='var_sized_data', ascending=False)
+
         # Map long queries to short codes
         unique_queries = data_scaled[param].unique()
         query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
@@ -422,39 +428,44 @@ def plot_file_backed_params(data, param, metric, hue, label, color):
     data_scaled = data.copy()
     param_unit = ''
 
+    # Select one specific default config
     data_scaled = data_scaled[data_scaled['query'] == default_query]
+    data_scaled = data_scaled[data_scaled['timestamp_increment'] == 1]
+
     data_scaled = data_scaled[data_scaled['file_descriptor_buffer_size'] <= 131072]
     data_scaled = data_scaled[data_scaled['file_operation_time_delta'] <= 100]
     data_scaled = data_scaled[data_scaled['num_watermark_gaps_allowed'] <= 100]
     if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
         data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
+    if param == 'max_num_sequence_numbers':
+        data_scaled = data_scaled[data_scaled['max_num_sequence_numbers'] <= 1000]
 
-    data_scaled, metric_unit = convert_units(data, metric)
+    data_scaled, metric_unit = convert_units(data_scaled, metric)
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
         if hue is not None:
-            ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker='o', palette=('dark:' + color))
+            ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', palette=('dark:' + color))
 
             # Add labels for min and max values of metric for this param for each value of hue
             add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
         else:
-            ax = sns.lineplot(data=data_scaled, x=param, y=metric, errorbar=None, marker='o', color=color)
+            ax = sns.lineplot(data=data_scaled, x=param, y=metric, errorbar='sd', marker='o', color=color)
 
             # Add labels for min and max values of metric for this param
             grouped = data_scaled.groupby(param)[metric].mean().reset_index()
             add_min_max_labels(grouped, metric, ax, param, 0, color)
     else:
         if hue is not None:
-            #sns.barplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
-            ax = sns.barplot(data=data_scaled, x=param, y=metric, hue=data_scaled[hue].astype(str), palette=('dark:' + color))
+            #sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
+            ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=data_scaled[hue].astype(str), palette=('dark:' + color))
 
             handles, labels = ax.get_legend_handles_labels()
             custom_labels = [f"{scaled_df[hue].iloc[0]:.1f} {label_unit}" for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
             ax.legend(handles, custom_labels, title='Max Memory')
         else:
-            sns.barplot(data=data_scaled, x=param, y=metric, color=color)
+            sns.boxplot(data=data_scaled, x=param, y=metric, color=color)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
     plt.xlabel(f'{param} ({param_unit})' if param_unit != '' else param)
