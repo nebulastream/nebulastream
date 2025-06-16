@@ -23,9 +23,9 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
-#include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES
@@ -76,14 +76,24 @@ public:
            SliceStoreType::DEFAULT,
            "Type of slice store "
         "[DEFAULT|FILE_BACKED]."};
+    UIntOption lowerMemoryBound
+        = {"lowerMemoryBound",
+           "0",
+           "Lower memory bound in bytes for file backed slice store.",
+           {std::make_shared<NumberValidation>()}};
+    UIntOption upperMemoryBound
+        = {"upperMemoryBound",
+           "0",
+           "Upper memory bound in bytes for file backed slice store.",
+           {std::make_shared<NumberValidation>()}};
     UIntOption fileDescriptorBufferSize
         = {"fileDescriptorBufferSize",
-           "4096",
+           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of file writers and readers for file backed data structures.",
            {std::make_shared<NumberValidation>()}};
-    UIntOption numWatermarkGapsAllowed
-        = {"numWatermarkGapsAllowed",
-           "10",
+    UIntOption maxNumWatermarkGaps
+        = {"maxNumWatermarkGaps",
+           "0",
            "Maximum number of gaps in watermark processor sequence numbers for watermark prediction.",
            {std::make_shared<NumberValidation>()}};
     UIntOption maxNumSequenceNumbers
@@ -129,8 +139,10 @@ private:
             &joinStrategy,
             &operatorBufferSize,
             &sliceStoreType,
+            &lowerMemoryBound,
+            &upperMemoryBound,
             &fileDescriptorBufferSize,
-            &numWatermarkGapsAllowed,
+            &maxNumWatermarkGaps,
             &maxNumSequenceNumbers,
             &minReadStateSize,
             &minWriteStateSize,
