@@ -9,188 +9,107 @@ name: NES Nightly
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        required: false
+      fuzzer:
+        required: true
         default: 'main'
+        type: choice
+        options:
+          - snw-proto-fuzz
+          - snw-strict-fuzz
+          - snw-text-fuzz
+          - sql-parser-simple-fuzz
         description: "which branch/ref to use for running the nightly job"
+      duration_in_min:
+        default: 10
+        type: number
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 4:30 AM CEST
 
 jobs:
-  fetch-current-main-commit:
-    runs-on: [ self-hosted ]
-    outputs:
-      sha: ${{ steps.fetch-sha.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref || 'main' }}
-      - name: Fetch SHA
-        id: fetch-sha
-        run: |
-          git rev-parse --verify HEAD
-          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
-
   get-dev-images:
-    needs: fetch-current-main-commit
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      ref: ${{ github.sha }}
+      branch-name: ${{ github.ref_name }}
 
-  full-clang-tidy:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/clang_tidy_full.yml
-    secrets: inherit
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-
-  compile-time-regression:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/compile_time_regression.yml
-    secrets: inherit
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-
-  check-format:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    name: "Check format"
-    uses: ./.github/workflows/format.yml
-    with:
-      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      # since there is no merge base to compare against, just check last 10 commits
-      number_of_commits: 10
-
-  build-and-test:
-    name: "Run build and test"
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/build_and_test.yml
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-
-  run_large_scale_tests_random_config:
-    name: Large Scale Tests Random Worker Config
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/large_tests_random_worker_config.yml
-    secrets: inherit
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-
-  test-other-configs:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    runs-on: [ self-hosted, linux, X64, Build ]
-    name: "Build and tests: ${{matrix.cmake_args.name}}"
+  run-fuzzer:
+    name: "Fuzz: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
+    needs: [ get-dev-images ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       volumes:
         - ccache:/ccache
+        - test-file-cache:/test-file-cache
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
-    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
       fail-fast: false
       matrix:
-        cmake_args:
-          - name: tupleBuffer_debugging
-            arg: -DCMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS=ON
-        stdlib: [ libcxx, libstdcxx ]
+        arch: [ x64 ]
+        stdlib: [ 'libstdcxx', 'libcxx' ]
+        # To reduce the load on our CI, we do not run all our tests with Benchmark.
+        # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
+        build_type: [ 'RelWithDebInfo' ]
         sanitizer: [ none, address, undefined, thread ]
-        build_type: [ RelWithDebInfo, Debug ]
         exclude:
-          # TODO #808 libc++ has to be compiled with TSAN
-          - stdlib: libcxx
-            sanitizer: thread
+          # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
+          - arch: arm64
+            stdlib: 'libstdcxx'
+          - arch: arm64
+            sanitizer: 'address'
+          - arch: arm64
+            sanitizer: 'undefined'
+          - arch: arm64
+            sanitizer: 'thread'
+          # TODO #808 Enable TSAN with libc++
+          - stdlib: 'libcxx'
+            sanitizer: 'thread'
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      - name: Configure NebulaStream
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }}
-      - name: Build NebulaStream
+      - name: configure
+        run: |
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=WARN
+      - name: build
         shell: bash
         run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j -- -k 0
-      - name: Run Tests
-        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        shell: bash
+          cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
+      - name: setup
         run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
-      - name: Upload Test Logs on Failure
+          cd build
+          echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
+          mkdir /corpus_wip
+          mkdir -p /res/corpus_fin
+          mkdir -p /res/fails
+      - name: fuzz ${{ inputs.duration_in_min }} min
+        shell: bash
+        timeout-minutes: ${{ fromJson(inputs.duration_in_min) }}
+        continue-on-error: true
+        run: |
+          cd /res/fails
+          $fuzzer -jobs=100000000000 /corpus_wip > /dev/null 2> /dev/null
+      - name: stop fuzzers
+        run: |
+          pkill ${{ inputs.fuzzer }}
+      - name: minimize corpus
+        run: |
+          $fuzzer -merge=1 /res/corpus_fin /corpus_wip
+          find /res/fails -name "*.log" -delete
+          find /res/fails -name "Engine*" -delete
+      # necessary to prevent upload-artifact breakage
+      - name: cull garbage files
+        run: |
+          find /res/fails -name "*.log" -delete
+          find /res/fails -name "Engine*" -delete
+      - name: Upload Corpus
         uses: actions/upload-artifact@v4
-        # Upload all log and stats files if any of the tests has failed.
-        if: ${{ failure() && !github.event.act }}
         with:
-          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{matrix.cmake_args.name}}
+          name: corpus-${{ inputs.fuzzer }}-${{ inputs.duration_in_min }}-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.sanitizer }}
           path: |
-            build/**/*.log
-            build/**/*.stats
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && !cancelled() && !github.event.act }}
-        with:
-          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
-          path: /junit.xml
-
-  # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
-  long-running-tests:
-    needs: [ build-and-test ]
-    runs-on: [ self-hosted, linux, X64, Build ]
-    steps:
-      - name: Print Placeholder Message
-        run: echo "Long running tests will be added in the future."
-
-  build-and-benchmark:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/build-and-benchmark.yml
-    secrets: inherit
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      run_reason: "Nightly Benchmark"
-
-  benchmark-compile-time:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    uses: ./.github/workflows/benchmark-compile-time.yml
-    secrets: inherit
-    with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      run_reason: "Nightly Benchmark"
-
-  create-nightly-image:
-    needs: [ build-and-test ]
-    if: ${{ !github.event.act && inputs.ref == 'main' }}
-    uses: ./.github/workflows/create_release_image.yml
-    secrets: inherit
-    with:
-      ref: "main"
-      dockerhub-tag: "nightly"
-
-  send-zulip-msg-on-failure:
-    needs: [ compile-time-regression, create-nightly-image, long-running-tests, full-clang-tidy ]
-    runs-on: [ self-hosted ]
-    if: ${{ failure() && !github.event.act }}
-    steps:
-    - name: Notify Zulip
-      uses: zulip/github-actions-zulip/send-message@v1
-      with:
-        api-key: ${{ secrets.PRBOT_API_KEY }}
-        email: "pr-reminder-bot@nebulastream.zulipchat.com"
-        organization-url: "https://nebulastream.zulipchat.com"
-        to: "ci"
-        topic: "nightly ci status"
-        type: "stream"
-        content: |
-          @**ls-1801** @**Nils** [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
-          If there are novel faults, please open corresponding issues/topics and notify potential owners/investigators.
-          If applicable, please communicate workarounds and/or expected time-to-fix.
+            /res/*
+            !/res/fails/*.log
+            !/res/fails/Engine*
