@@ -42,14 +42,14 @@ WINDOW_SIZE_SLIDE = [
 ]
 
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
+LOWER_MEMORY_BOUNDS = [0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
+UPPER_MEMORY_BOUNDS = [0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
-NUM_WATERMARK_GAPS_ALLOWED = [10, 30, 100, 500, 1000, 1]
+MAX_NUM_WATERMARK_GAPS = [10, 30, 100, 500, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
-MAX_MEMORY_CONSUMPTION = [np.iinfo(np.uint64).max, 128 * 1024 * 1024, 4 * 1024 * 1024, 1024 * 1024, 512 * 1024, 64 * 1024]
-MEMORY_MODELS = ["PREDICT_WATERMARKS", "WITHIN_BUDGET", "ADAPTIVE", "DEFAULT"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
 
@@ -105,14 +105,14 @@ def get_default_params():
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS[0],
         "buffer_size_in_bytes": BUFFER_SIZES[0],
         "page_size": PAGE_SIZES[0],
+        "lower_memory_bound": LOWER_MEMORY_BOUNDS[0],
+        "upper_memory_bound": UPPER_MEMORY_BOUNDS[0],
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
-        "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED[0],
+        "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS[0],
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS[0],
         "min_read_state_size": MIN_READ_STATE_SIZES[0],
         "min_write_state_size": MIN_WRITE_STATE_SIZES[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS[0],
-        "max_memory_consumption": MAX_MEMORY_CONSUMPTION[0],
-        "memory_model": MEMORY_MODELS[0],
         "file_layout": FILE_LAYOUTS[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES[0],
         "query": get_queries()[0]
@@ -128,14 +128,14 @@ class BenchmarkConfig:
                  buffer_size_in_bytes,
                  page_size,
                  slice_store_type,
+                 lower_memory_bound,
+                 upper_memory_bound,
                  file_descriptor_buffer_size,
-                 num_watermark_gaps_allowed,
+                 max_num_watermark_gaps,
                  max_num_sequence_numbers,
                  min_read_state_size,
                  min_write_state_size,
                  file_operation_time_delta,
-                 max_memory_consumption,
-                 memory_model,
                  file_layout,
                  watermark_predictor_type,
                  query):
@@ -145,14 +145,14 @@ class BenchmarkConfig:
         self.buffer_size_in_bytes = buffer_size_in_bytes
         self.page_size = page_size
         self.slice_store_type = slice_store_type
+        self.lower_memory_bound = lower_memory_bound
+        self.upper_memory_bound = upper_memory_bound
         self.file_descriptor_buffer_size = file_descriptor_buffer_size
-        self.num_watermark_gaps_allowed = num_watermark_gaps_allowed
+        self.max_num_watermark_gaps = max_num_watermark_gaps
         self.max_num_sequence_numbers = max_num_sequence_numbers
         self.min_read_state_size = min_read_state_size
         self.min_write_state_size = min_write_state_size
         self.file_operation_time_delta = file_operation_time_delta
-        self.max_memory_consumption = max_memory_consumption
-        self.memory_model = memory_model
         self.file_layout = file_layout
         self.watermark_predictor_type = watermark_predictor_type
         self.query = query
@@ -178,14 +178,14 @@ class BenchmarkConfig:
             "buffer_size_in_bytes": self.buffer_size_in_bytes,
             "page_size": self.page_size,
             "slice_store_type": self.slice_store_type,
+            "lower_memory_bound": self.lower_memory_bound,
+            "upper_memory_bound": self.upper_memory_bound,
             "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
-            "num_watermark_gaps_allowed": self.num_watermark_gaps_allowed,
+            "max_num_watermark_gaps": self.max_num_watermark_gaps,
             "max_num_sequence_numbers": self.max_num_sequence_numbers,
             "min_read_state_size": self.min_read_state_size,
             "min_write_state_size": self.min_write_state_size,
             "file_operation_time_delta": self.file_operation_time_delta,
-            "max_memory_consumption": self.max_memory_consumption,
-            "memory_model": self.memory_model,
             "file_layout": self.file_layout,
             "watermark_predictor_type": self.watermark_predictor_type,
             "query": self.query,
@@ -211,16 +211,40 @@ def create_benchmark_configs():
     }
     file_backed_params = {
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
-        "num_watermark_gaps_allowed": NUM_WATERMARK_GAPS_ALLOWED,
+        "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS,
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS,
         "min_read_state_size": MIN_READ_STATE_SIZES,
         "min_write_state_size": MIN_WRITE_STATE_SIZES,
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
-        "max_memory_consumption": MAX_MEMORY_CONSUMPTION,
-        "memory_model": MEMORY_MODELS,
         "file_layout": FILE_LAYOUTS,
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES
     }
+
+    # Generate configurations for each shared parameter (one per value)
+    for param, values in shared_params.items():
+        for value in values:
+            for slice_store_type in SLICE_STORE_TYPES:
+                config_params = default_params.copy()
+                config_params["slice_store_type"] = slice_store_type
+                config_params[param] = value
+                configs.append(BenchmarkConfig(**config_params))
+    # Generate configurations for each file backed parameter (one per value)
+    for param, values in file_backed_params.items():
+        for value in values:
+            config_params = default_params.copy()
+            config_params["slice_store_type"] = "FILE_BACKED"
+            config_params[param] = value
+            configs.append(BenchmarkConfig(**config_params))
+
+    # Add all combinations of memory bounds where lower is smaller than or equal to upper
+    for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+        for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+            if lower_memory_bound <= upper_memory_bound:
+                config_params = default_params.copy()
+                config_params["slice_store_type"] = "FILE_BACKED"
+                config_params["lower_memory_bound"] = lower_memory_bound
+                config_params["upper_memory_bound"] = upper_memory_bound
+                configs.append(BenchmarkConfig(**config_params))
 
     # Set some timestamp_increment values as default
     default_timestamp_increments = [1, 1000]
@@ -235,44 +259,38 @@ def create_benchmark_configs():
         if size != 10000:
             default_queries.append(query)
 
-    # Generate configurations for each shared parameter (one per value)
-    for param, values in shared_params.items():
-        for value in values:
-            for slice_store_type in SLICE_STORE_TYPES:
-                config_params = default_params.copy()
-                config_params[param] = value
-                config_params["slice_store_type"] = slice_store_type
-                configs.append(BenchmarkConfig(**config_params))
-    # Generate configurations for each file backed parameter (one per value)
-    for param, values in file_backed_params.items():
-        for value in values:
-            config_params = default_params.copy()
-            config_params[param] = value
-            config_params["slice_store_type"] = "FILE_BACKED"
-            configs.append(BenchmarkConfig(**config_params))
-
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
     for timestamp_increment in default_timestamp_increments:
         for query in default_queries:
-            if timestamp_increment == default_params['timestamp_increment'] and query == default_params['query']:
+            if (timestamp_increment, query) == (default_params['timestamp_increment'], default_params['query']):
                 continue
             for param, values in shared_params.items():
                 for value in values:
                     for slice_store_type in SLICE_STORE_TYPES:
                         config_params = default_params.copy()
+                        config_params["slice_store_type"] = slice_store_type
                         config_params["timestamp_increment"] = timestamp_increment
                         config_params["query"] = query
                         config_params[param] = value
-                        config_params["slice_store_type"] = slice_store_type
                         configs.append(BenchmarkConfig(**config_params))
             for param, values in file_backed_params.items():
                 for value in values:
                     config_params = default_params.copy()
+                    config_params["slice_store_type"] = "FILE_BACKED"
                     config_params["timestamp_increment"] = timestamp_increment
                     config_params["query"] = query
                     config_params[param] = value
-                    config_params["slice_store_type"] = "FILE_BACKED"
                     configs.append(BenchmarkConfig(**config_params))
+            for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+                for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+                    if lower_memory_bound <= upper_memory_bound:
+                        config_params = default_params.copy()
+                        config_params["slice_store_type"] = "FILE_BACKED"
+                        config_params["timestamp_increment"] = timestamp_increment
+                        config_params["query"] = query
+                        config_params["lower_memory_bound"] = lower_memory_bound
+                        config_params["upper_memory_bound"] = upper_memory_bound
+                        configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
@@ -281,7 +299,7 @@ def create_watermark_predictor_benchmark_configs():
     # Generate all possible configurations for watermark predictor parameters
     default_params = get_default_params()
     del default_params["watermark_predictor_type"]
-    del default_params["num_watermark_gaps_allowed"]
+    del default_params["max_num_watermark_gaps"]
     del default_params["max_num_sequence_numbers"]
     del default_params["min_read_state_size"]
     del default_params["min_write_state_size"]
@@ -291,14 +309,14 @@ def create_watermark_predictor_benchmark_configs():
         BenchmarkConfig(**default_params,
                         slice_store_type=slice_store_type,
                         watermark_predictor_type=watermark_predictor_type,
-                        num_watermark_gaps_allowed=num_watermark_gaps_allowed,
+                        max_num_watermark_gaps=max_num_watermark_gaps,
                         max_num_sequence_numbers=max_num_sequence_numbers,
                         min_read_state_size=min_read_state_size,
                         min_write_state_size=min_write_state_size,
                         file_operation_time_delta=file_operation_time_delta)
         for slice_store_type in ["FILE_BACKED"]
         for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES
-        for num_watermark_gaps_allowed in NUM_WATERMARK_GAPS_ALLOWED
+        for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS
         for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS
         for min_read_state_size in MIN_READ_STATE_SIZES
         for min_write_state_size in MIN_WRITE_STATE_SIZES
@@ -306,19 +324,72 @@ def create_watermark_predictor_benchmark_configs():
     ]
 
 
-def create_memory_model_benchmark_configs():
-    # Generate all possible configurations for memory model parameters
+def create_memory_bounds_benchmark_configs():
+    # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
     default_params = get_default_params()
-    del default_params["memory_model"]
-    del default_params["max_memory_consumption"]
+    del default_params["lower_memory_bound"]
+    del default_params["upper_memory_bound"]
+    del default_params["timestamp_increment"]
+    del default_params["query"]
+
+    # Set some timestamp_increment values as default
+    timestamp_increments = [1, 1000]
+
+    # Set some combinations of window size and slide from the first query as default
+    queries = []
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
+        size_and_slide = re.search(window_pattern, query)
+        size = int(size_and_slide.group(1))
+        # slide = int(size_and_slide.group(2))
+        if size != 10000:
+            queries.append(query)
 
     return [
-        BenchmarkConfig(**default_params, slice_store_type=slice_store_type, memory_model=memory_model,
-                        max_memory_consumption=max_memory_consumption)
+        BenchmarkConfig(**default_params, timestamp_increment=timestamp_increment, slice_store_type=slice_store_type,
+                        lower_memory_bound=lower_memory_bound, upper_memory_bound=upper_memory_bound, query=query)
+        for timestamp_increment in timestamp_increments
+        for query in queries
         for slice_store_type in ["FILE_BACKED"]
-        for memory_model in MEMORY_MODELS
-        for max_memory_consumption in (MAX_MEMORY_CONSUMPTION if memory_model == "WITHIN_BUDGET" or memory_model == "ADAPTIVE" else [MAX_MEMORY_CONSUMPTION[0]])
+        for lower_memory_bound in LOWER_MEMORY_BOUNDS
+        for upper_memory_bound in UPPER_MEMORY_BOUNDS
+        if lower_memory_bound <= upper_memory_bound
     ]
+
+
+def create_all_memory_bounds_benchmark_configs():
+    # Generate all possible configurations for memory bounds with multiple default configs where lower is smaller than or equal to upper
+    configs = []
+    default_params = get_default_params()
+
+    # Set some timestamp_increment values as default
+    default_timestamp_increments = [1, 1000]
+
+    # Set some combinations of window size and slide from the first query as default
+    default_queries = []
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
+        size_and_slide = re.search(window_pattern, query)
+        size = int(size_and_slide.group(1))
+        # slide = int(size_and_slide.group(2))
+        if size != 10000:
+            default_queries.append(query)
+
+    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    for timestamp_increment in default_timestamp_increments:
+        for query in default_queries:
+            for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+                for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+                    if lower_memory_bound <= upper_memory_bound:
+                        config_params = default_params.copy()
+                        config_params["slice_store_type"] = "FILE_BACKED"
+                        config_params["timestamp_increment"] = timestamp_increment
+                        config_params["query"] = query
+                        config_params["lower_memory_bound"] = lower_memory_bound
+                        config_params["upper_memory_bound"] = upper_memory_bound
+                        configs.append(BenchmarkConfig(**config_params))
+
+    return configs
 
 
 def create_all_benchmark_configs():
@@ -331,14 +402,14 @@ def create_all_benchmark_configs():
             buffer_size_in_bytes,
             page_size,
             slice_store_type,
+            lower_memory_bound,
+            upper_memory_bound,
             file_descriptor_buffer_size,
-            num_watermark_gaps_allowed,
+            max_num_watermark_gaps,
             max_num_sequence_numbers,
             min_read_state_size,
             min_write_state_size,
             file_operation_time_delta,
-            max_memory_consumption,
-            memory_model,
             file_layout,
             watermark_predictor_type,
             query
@@ -349,15 +420,16 @@ def create_all_benchmark_configs():
         for buffer_size_in_bytes in BUFFER_SIZES
         for page_size in PAGE_SIZES
         for slice_store_type in SLICE_STORE_TYPES
+        for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
+        for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
-        for num_watermark_gaps_allowed in (NUM_WATERMARK_GAPS_ALLOWED if slice_store_type == "FILE_BACKED" else [NUM_WATERMARK_GAPS_ALLOWED[0]])
+        for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if slice_store_type == "FILE_BACKED" else [MAX_NUM_WATERMARK_GAPS[0]])
         for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if slice_store_type == "FILE_BACKED" else [MAX_NUM_SEQUENCE_NUMBERS[0]])
         for min_read_state_size in (MIN_READ_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_READ_STATE_SIZES[0]])
         for min_write_state_size in (MIN_WRITE_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_WRITE_STATE_SIZES[0]])
         for file_operation_time_delta in (FILE_OPERATION_TIME_DELTAS if slice_store_type == "FILE_BACKED" else [FILE_OPERATION_TIME_DELTAS[0]])
-        for max_memory_consumption in (MAX_MEMORY_CONSUMPTION if slice_store_type == "FILE_BACKED" else [MAX_MEMORY_CONSUMPTION[0]])
-        for memory_model in (MEMORY_MODELS if slice_store_type == "FILE_BACKED" else [MEMORY_MODELS[0]])
         for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if slice_store_type == "FILE_BACKED" else [WATERMARK_PREDICTOR_TYPES[0]])
         for query in get_queries()
+        if lower_memory_bound <= upper_memory_bound
     ]
