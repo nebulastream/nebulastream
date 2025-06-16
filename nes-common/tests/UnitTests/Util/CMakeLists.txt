@@ -18,6 +18,7 @@ add_nes_common_test(nes-common-tests
         "RangesTest.cpp"
         "LogLevelTest.cpp"
         "BFSIteratorTest.cpp"
+        "ExpectedTest.cpp"
 )
 
 add_nes_test(chunk-collector-test
