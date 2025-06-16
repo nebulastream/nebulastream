@@ -24,20 +24,14 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
 
-namespace NES::InputFormatters::RawInputDataParser
+namespace NES::InputFormatters::RawValueParser
 {
 
 using ParseFunctionSignature = std::function<void(
     std::string_view inputString,
-    int8_t* fieldPointer,
+    size_t writeOffsetInBytes,
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& tupleBufferFormatted)>;
-
-struct FieldConfig
-{
-    size_t fieldSize;
-    ParseFunctionSignature parseFunction;
-};
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -45,10 +39,15 @@ struct FieldConfig
 template <typename T>
 auto parseFieldString()
 {
-    return [](const std::string_view fieldValueString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+    return [](const std::string_view fieldValueString,
+              const size_t writeOffsetInBytes,
+              Memory::AbstractBufferProvider&,
+              Memory::TupleBuffer& tupleBufferFormatted)
     {
-        auto* value = reinterpret_cast<T*>(fieldPointer); ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        *value = Util::from_chars_with_exception<T>(fieldValueString);
+        const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
+        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *valuePtr = parsedValue;
     };
 }
 

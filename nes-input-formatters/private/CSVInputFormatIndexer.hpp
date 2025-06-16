@@ -16,30 +16,33 @@
 
 #include <cstddef>
 #include <ostream>
-#include <string_view>
 
-#include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterRegistry.hpp>
+#include <FieldOffsets.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatter final : public InputFormatter
+struct CSVMetaData
+{
+    explicit CSVMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
+
+    std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+
+private:
+    std::string tupleDelimiter;
+};
+
+class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, CSVMetaData, /* IsFormattingRequired */ true>
 {
 public:
-    explicit CSVInputFormatter(InputFormatterRegistryArguments args);
-    ~CSVInputFormatter() override = default;
+    explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
+    ~CSVInputFormatIndexer() override = default;
 
-    CSVInputFormatter(const CSVInputFormatter&) = delete;
-    CSVInputFormatter& operator=(const CSVInputFormatter&) = delete;
-    CSVInputFormatter(CSVInputFormatter&&) = delete;
-    CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
-
-    void indexTuple(std::string_view tuple, FieldOffsetsType* fieldOffsets, FieldOffsetsType startIdxOfTuple) const override;
-
-    FirstAndLastTupleDelimiterOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const override;
+    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
