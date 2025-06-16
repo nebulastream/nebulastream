@@ -17,7 +17,7 @@ add_subdirectory(checksum)
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES
-        "https://github.com/nebulastream/nes-datasets/releases/download/v1/%(algo)_%(hash)"
+        "https://bench.nebula.stream/data/md5sums/%(algo)_%(hash)"
 )
 set(ExternalData_TIMEOUT_ABSOLUTE 600)
 
