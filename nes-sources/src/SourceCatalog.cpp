@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Sources/SourceCatalog.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -25,7 +26,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -80,7 +80,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         return std::nullopt;
     }
 
-    auto id = nextPhysicalSourceId.fetch_add(1);
+    auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
     SourceDescriptor descriptor{logicalSource, id, workerId, sourceType, buffersInLocalPool, (std::move(descriptorConfig)), parserConfig};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
@@ -119,7 +119,7 @@ bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) 
     return namesToLogicalSourceMapping.contains(logicalSourceName);
 }
 
-std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const uint64_t physicalSourceID) const
+std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalSourceId physicalSourceID) const
 {
     const std::unique_lock lock{catalogMutex};
     if (const auto physicalSourceIter = idsToPhysicalSources.find(physicalSourceID); physicalSourceIter != idsToPhysicalSources.end())
