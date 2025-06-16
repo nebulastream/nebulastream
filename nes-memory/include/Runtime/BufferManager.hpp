@@ -14,20 +14,21 @@
 
 #pragma once
 
-#include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <span>
+#include <stop_token>
 #include <unordered_map>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <folly/MPMCQueue.h>
+#include <folly/Synchronized.h>
 
 namespace NES::Memory
 {
@@ -71,12 +72,13 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
 public:
-    explicit BufferManager(
+    BufferManager(
         Private,
+        std::span<std::byte> memoryAllocation,
+        std::vector<detail::MemorySegment> allBuffers,
         uint32_t bufferSize,
-        uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
-        uint32_t withAlignment);
+        std::vector<detail::MemorySegment*> availableBuffers);
 
     /**
      * @brief Creates a new global buffer manager
@@ -96,15 +98,6 @@ public:
 
     BufferManagerType getBufferManagerType() const override;
 
-private:
-    /**
-     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
-     * This is a one shot call. A second invocation of this call will fail
-     * @param withAlignment
-     */
-    void initialize(uint32_t withAlignment);
-
-public:
     /// This blocks until a buffer is available.
     TupleBuffer getBufferBlocking() override;
 
@@ -129,17 +122,16 @@ public:
 
 
     size_t getBufferSize() const override;
+
+    [[nodiscard]] std::optional<std::shared_ptr<AbstractBufferProvider>>
+    createFixedSizeBufferPool(size_t numberOfReservedBuffers, std::chrono::seconds timeout) override;
+    [[nodiscard]] std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
+    [[nodiscard]] std::optional<std::shared_ptr<AbstractBufferProvider>>
+    createFixedSizeBufferPool(size_t numberOfReservedBuffers, const std::stop_token& stopToken) override;
+
+    size_t getAvailableBuffers() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
-    size_t getAvailableBuffers() const override;
-    size_t getAvailableBuffersInFixedSizePools() const;
-
-    /**
-      * @brief Create a local buffer manager that is assigned to one pipeline or thread
-      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
-      * @return a fixed buffer manager with numberOfReservedBuffers exclusive buffer
-      */
-    std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
      * @brief Recycle a pooled buffer by making it available to others
@@ -159,22 +151,24 @@ public:
     void destroy() override;
 
 private:
-    std::vector<detail::MemorySegment> allBuffers;
+    std::shared_ptr<std::pmr::memory_resource> memoryResource;
 
-    folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
-    std::atomic<size_t> numOfAvailableBuffers;
-    std::unordered_map<uint8_t*, std::unique_ptr<detail::MemorySegment>> unpooledBuffers;
-
-    mutable std::recursive_mutex availableBuffersMutex;
-    std::condition_variable_any availableBuffersCvar;
-
-    mutable std::recursive_mutex unpooledBuffersMutex;
-
+    /// View of the allocated memory area.
+    std::span<std::byte> memoryAllocation;
     size_t bufferSize;
-    size_t numOfBuffers;
 
-    uint8_t* basePointer{nullptr};
-    size_t allocatedAreaSize;
+    /// Stores a reference to all allocated buffers. This vector is constructed once and never modified during its lifetime.
+    folly::Synchronized<std::vector<detail::MemorySegment>> allBuffers;
+
+    /// Stack (implemented as vector) of available buffers. This vector is not ordered by the MemorySegment address.
+    /// Allocations grab the last element, and deallocations append to the end of the vector
+    /// The difference between `availableBuffers.size()` and `allBuffers.size()` is the number of currently allocated buffers.
+    folly::Synchronized<std::vector<detail::MemorySegment*>, std::mutex> availableBuffers;
+    std::condition_variable_any bufferAvailableCondition;
+
+    /// Map of allocated Unpooled Buffers. Unpooled buffers are buffers which are not allocated via the large memoryAllocation and usually
+    /// have a different size than the MemorySegments.
+    folly::Synchronized<std::unordered_map<std::byte*, std::unique_ptr<detail::MemorySegment>>> unpooledBuffers;
 
 
     /// A BufferManager may create smaller localBufferPools.
@@ -182,11 +176,10 @@ private:
     /// the localBufferPool. The BufferManager does require a reference to the localBufferPools to destroy them once the
     /// BufferManager is destroyed. Destroying the BufferManager potentially creates destroyed local buffer pools which are
     /// safe to access, but will no longer be able to allocate buffers.
-    std::vector<std::weak_ptr<AbstractBufferProvider>> localBufferPools;
-    mutable std::recursive_mutex localBufferPoolsMutex;
+    folly::Synchronized<std::vector<std::weak_ptr<AbstractBufferProvider>>> localBufferPools;
 
-    std::shared_ptr<std::pmr::memory_resource> memoryResource;
-    std::atomic<bool> isDestroyed{false};
+
+    folly::Synchronized<bool> isDestroyed{false};
 };
 
 

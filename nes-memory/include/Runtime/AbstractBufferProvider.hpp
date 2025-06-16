@@ -14,9 +14,9 @@
 #pragma once
 
 #include <chrono>
-#include <cstddef>
+#include <memory>
 #include <optional>
-#include <vector>
+#include <stop_token>
 #include <Runtime/TupleBuffer.hpp>
 
 /// This enum reflects the different types of buffer managers in the system
@@ -64,8 +64,14 @@ class AbstractPoolProvider
 public:
     /// @brief Create a fixed buffer manager that is assigned to one pipeline or thread
     /// @param numberOfReservedBuffers number of exclusive buffers to give to the pool
+    /// @param timeout or stop_token. allocating buffers may block the current thread waiting until enough buffers are available.
+    ///       a timeout or stop_token can be used to cancel the request
     /// @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+    virtual std::optional<std::shared_ptr<AbstractBufferProvider>>
+    createFixedSizeBufferPool(size_t numberOfReservedBuffers, std::chrono::seconds timeout) = 0;
     virtual std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
+    virtual std::optional<std::shared_ptr<AbstractBufferProvider>>
+    createFixedSizeBufferPool(size_t numberOfReservedBuffers, const std::stop_token& stopToken) = 0;
 };
 
 }
