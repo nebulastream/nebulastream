@@ -80,6 +80,21 @@ struct SystestField
     bool operator!=(const SystestField& other) const = default;
 };
 
+class SourceInputFile
+{
+public:
+    using Underlying = std::filesystem::path;
+
+    explicit constexpr SourceInputFile(Underlying value) : value(std::move(value)) { }
+
+    friend std::ostream& operator<<(std::ostream& os, const SourceInputFile& timestamp) { return os << timestamp.value; }
+    [[nodiscard]] Underlying getRawValue() const { return value; }
+    friend std::strong_ordering operator<=>(const SourceInputFile& lhs, const SourceInputFile& rhs) = default;
+
+private:
+    Underlying value;
+};
+
 struct SystestQuery
 {
     static std::filesystem::path
@@ -95,7 +110,7 @@ struct SystestQuery
         SystestQueryId queryIdInFile,
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
-        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
+        std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
         std::optional<ExpectedError> expectedError);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
@@ -107,7 +122,7 @@ struct SystestQuery
     SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::filesystem::path workingDir;
     Schema expectedSinkSchema;
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
+    std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount;
     std::optional<ExpectedError> expectedError;
 };
 
@@ -248,7 +263,7 @@ private:
         const SystestQueryId queryIdInFile,
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
-        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
+        std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
         std::optional<ExpectedError> expectedError)
     {
         if (const auto it = testFileMap.find(sqlLogicTestFile); it != testFileMap.end())
