@@ -13,10 +13,12 @@
 # limitations under the License.
 
 
+import re
 import os
 import shutil
 import subprocess
 import time
+import math
 import random
 import datetime
 import yaml
@@ -112,6 +114,23 @@ def create_output_folder():
     return folder_name
 
 
+def calculate_id_upper_bound_for_match_rate(current_benchmark_config):
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    size_and_slide = re.search(window_pattern, current_benchmark_config.query)
+    window_size = int(size_and_slide.group(1))
+    timestamp_increment = current_benchmark_config.timestamp_increment
+    match_rate = current_benchmark_config.match_rate
+
+    if match_rate <= 0:
+        return int(np.iinfo(np.int64).max)  # Practically infinite, no matches expected
+    elif match_rate >= 100:
+        return 1  # Smallest useful range which ensures very high collisions
+
+    num_tuples = window_size / timestamp_increment
+    upper_bound = (num_tuples / (match_rate / 100)) - 1
+    return max(1, math.ceil(upper_bound))  # Prevent upper_bound < 1
+
+
 def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports):
     # Creating a dest path for the worker and query config yaml file
     dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
@@ -200,16 +219,22 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     processes = []
     ports = []
     max_retries = 10
+    generator_seed = 42
     for j, port in enumerate(starting_ports):
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 remainingServers = len(starting_ports) - j
                 cmd = f"{TCP_SERVER} -p {port} " \
-                      f"-k {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS + 2 * WAIT_BETWEEN_COMMANDS} " \
+                      f"-t {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS + 2 * WAIT_BETWEEN_COMMANDS} " \
                       f"-n {current_benchmark_config.num_tuples_to_generate} " \
-                      f"-t {current_benchmark_config.timestamp_increment} " \
-                      f"-i {current_benchmark_config.ingestion_rate}"
-                # Add variable sized data flag to last tcp server
+                      f"-s {current_benchmark_config.timestamp_increment} " \
+                      f"-i {current_benchmark_config.ingestion_rate} " \
+                      f"-b {calculate_id_upper_bound_for_match_rate(current_benchmark_config)} " \
+                      f"-g {generator_seed + j}"
+                # Disregard uniform int distribution and achieve true 100% match rate
+                if current_benchmark_config.match_rate >= 100:
+                    cmd += " -d"
+                # Add variable sized data flag to last two tcp servers
                 if port == starting_ports[-1] or port == starting_ports[-2]:
                     cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")

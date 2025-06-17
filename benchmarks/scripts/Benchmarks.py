@@ -26,14 +26,13 @@ df = pd.read_csv("data/amd/2025-06-14_16-43-59/combined_benchmark_statistics.csv
 # Define configuration parameters
 shared_config_params = [
     'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads',
-    'page_size', 'query', 'timestamp_increment'
+    'page_size', 'query', 'timestamp_increment' #, 'match_rate'
 ]
 
 file_backed_config_params = [
-    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta',
-    'max_num_sequence_numbers', 'min_read_state_size', 'min_write_state_size',
-    'num_watermark_gaps_allowed', 'watermark_predictor_type' #, 'lower_memory_bound',
-    #'upper_memory_bound'
+    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
+    'min_read_state_size', 'min_write_state_size', 'num_watermark_gaps_allowed', 'watermark_predictor_type',
+    #'lower_memory_bound', 'upper_memory_bound'
 ]
 
 default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
