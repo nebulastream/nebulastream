@@ -45,7 +45,7 @@ class Meos {
 
 
     private:
-        void* stbox_ptr; // Opaque pointer to MEOS STBox
+        void* stbox_ptr; 
     };
 
     class TemporalInstant {

@@ -73,9 +73,7 @@ namespace MEOS {
     }
 
     bool Meos::TemporalInstant::intersects(const TemporalInstant& point) const {  
-        if (!instant || !point.instant) {
-            return false;
-        }
+        std::cout << "TemporalInstant::intersects called" << std::endl;
         
         // Use MEOS eintersects function for temporal points  
         bool result = eintersects_tpoint_tpoint((const Temporal *)this->instant, (const Temporal *)point.instant);
@@ -99,7 +97,7 @@ namespace MEOS {
     }
 
     double Meos::TemporalSequence::length(const TemporalInstant& /* instant */) const {
-        // Placeholder implementation - would need proper MEOS spatial functions
+        // Placeholder implementation
         // Using comment to avoid unused parameter warning
         return 0.0;
     }   
