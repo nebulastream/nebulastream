@@ -162,3 +162,24 @@ INTO sink6
 ----
 65
 2
+
+SINK subquery_sink UINT64 stream$timestamp
+# triple union query as a subquery as a nested query.
+SELECT timestamp
+FROM (
+    SELECT * FROM stream UNION SELECT * FROM stream UNION SELECT * FROM stream
+)
+INTO subquery_sink
+----
+1000
+1001
+1002
+1003
+1000
+1001
+1002
+1003
+1000
+1001
+1002
+1003
