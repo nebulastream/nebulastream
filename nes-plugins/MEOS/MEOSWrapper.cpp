@@ -16,35 +16,45 @@
 
 // Required includes for the implementation
 #include <string>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <iostream>
 
-// Forward declare the MEOS C STBox type from the global scope
-extern "C" {
-    struct STBox;
-}
+
 
 namespace MEOS {
 
-    // Constructor - no parameters according to header
     Meos::Meos() { 
-        // MEOS initialize takes no parameters
         meos_initialize("UTC",nullptr); 
     }
 
     Meos::~Meos() { 
-        meos_finalize(); 
+
     }
 
     std::string Meos::convertSecondsToTimestamp(long long seconds) {
-        // Simple timestamp conversion for now
-        return std::to_string(seconds);
+        std::chrono::seconds sec(seconds);
+        std::chrono::time_point<std::chrono::system_clock> tp(sec);
+
+        // Convert to time_t for formatting
+        std::time_t time = std::chrono::system_clock::to_time_t(tp);
+
+        // Convert to local time
+        std::tm local_tm = *std::localtime(&time);
+
+        // Format the time as a string
+        std::ostringstream oss;
+        oss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
+        return oss.str();
     }
 
     // TemporalInstant constructor - matches header signature
-    Meos::TemporalInstant::TemporalInstant(const std::string& mf_string) {
-        std::cout << "Creating MEOS TemporalInstant from: " << mf_string << std::endl;
+    Meos::TemporalInstant::TemporalInstant(const std::string& pos_string) {
+        std::cout << "Creating MEOS TemporalInstant from: " << pos_string << std::endl;
         // Use correct MEOS function for parsing temporal point from WKT string
-        Temporal *temp = tgeompoint_in(mf_string.c_str());
+        Temporal *temp = tgeompoint_in(pos_string.c_str());
 
         if (temp == nullptr) {
             std::cout << "Failed to parse temporal point with tgeompoint_in, trying alternative format" << std::endl;
@@ -102,7 +112,6 @@ namespace MEOS {
 
     Meos::SpatioTemporalBox::~SpatioTemporalBox() {
         if (stbox_ptr) {
-            // Free the MEOS STBox using free (not pfree)
             free(stbox_ptr);
             stbox_ptr = nullptr;
         }
