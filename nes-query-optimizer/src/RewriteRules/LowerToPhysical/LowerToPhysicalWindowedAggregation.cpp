@@ -27,6 +27,7 @@
 #include <Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Aggregation/Function/MinAggregationFunction.hpp>
 #include <Aggregation/Function/SumAggregationFunction.hpp>
+#include <Aggregation/Function/VarAggregationFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -173,6 +174,17 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                 std::move(aggregationInputExpression),
                 aggregationResultFieldIdentifier,
                 std::move(memoryProvider)));
+        }
+        else if (name == "Var")
+        {
+            /// We assume that the count is a u64
+            auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+            aggregationFunctions.emplace_back(std::make_shared<VarAggregationFunction>(
+                std::move(physicalInputType),
+                std::move(physicalFinalType),
+                std::move(aggregationInputExpression),
+                aggregationResultFieldIdentifier,
+                std::move(countType)));
         }
         else
         {
