@@ -255,6 +255,11 @@ size_t BufferManager::getNumOfUnpooledBuffers() const
     return unpooledChunksManager.getNumberOfUnpooledBuffers();
 }
 
+size_t BufferManager::getTotalSizeOfUnpooledBufferChunks() const
+{
+    return unpooledChunksManager.getTotalSizeOfUnpooledBufferChunks();
+}
+
 size_t BufferManager::getAvailableBuffers() const
 {
     return numOfAvailableBuffers.load();
@@ -265,11 +270,6 @@ size_t BufferManager::getAvailableBuffersInFixedSizePools() const
     const std::unique_lock lock(localBufferPoolsMutex);
     const auto numberOfAvailableBuffers = std::ranges::count_if(localBufferPools, [](auto& weak) { return !weak.expired(); });
     return numberOfAvailableBuffers;
-}
-
-size_t BufferManager::getTotalSizeOfUnpooledBufferChunks() const
-{
-    return unpooledChunksManager.getTotalSizeOfUnpooledBufferChunks();
 }
 
 BufferManagerType BufferManager::getBufferManagerType() const

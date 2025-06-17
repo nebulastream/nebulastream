@@ -147,6 +147,10 @@ size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
     throw UnknownOperation("This function is not supported here");
 }
+size_t FixedSizeBufferPool::getTotalSizeOfUnpooledBufferChunks() const
+{
+    return bufferManager->getTotalSizeOfUnpooledBufferChunks();
+}
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     throw UnknownOperation("This function is not supported here");
@@ -154,9 +158,5 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize)
 {
     return bufferManager->getUnpooledBuffer(bufferSize);
-}
-size_t FixedSizeBufferPool::getSizeOfUnpooledBufferChunks() const
-{
-    return bufferManager->getSizeOfUnpooledBufferChunks();
 }
 }

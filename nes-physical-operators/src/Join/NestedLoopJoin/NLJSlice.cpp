@@ -20,11 +20,9 @@
 #include <numeric>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
 #include <SliceStore/Slice.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
