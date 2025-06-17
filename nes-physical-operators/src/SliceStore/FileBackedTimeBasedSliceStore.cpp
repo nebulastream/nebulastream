@@ -300,7 +300,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const UpdateSlicesMetaData& metaData)
 {
     const auto& [timestamp, seqNumber, originId] = metaData.bufferMetaData;
-    const auto watermark = watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
+    watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
     if (isExponential(++watermarkPredictorUpdateCnt[originId]))
     {
         updateWatermarkPredictor(originId);
@@ -309,7 +309,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
+    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, threadId, joinBuildSide))
     {
         if (slice == nullptr)
         {
@@ -369,13 +369,12 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const Timestamp watermark,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
     if (sliceStoreInfo.upperMemoryBound == 0)
     {
-        return updateSlicesDefault(watermark, threadId, joinBuildSide);
+        return updateSlicesReactive(threadId, joinBuildSide);
     }
 
     const auto totalSizeOfUsedBuffers
@@ -383,17 +382,33 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         + bufferProvider->getTotalSizeOfUnpooledBufferChunks();
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.upperMemoryBound)
     {
-        return updateSlicesDefault(watermark, threadId, joinBuildSide);
+        return updateSlicesReactive(threadId, joinBuildSide);
     }
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.lowerMemoryBound)
     {
-        return updateSlicesPredictWatermarks(memoryLayout, threadId, joinBuildSide);
+        return updateSlicesProactiveWithPrediction(memoryLayout, threadId, joinBuildSide);
     }
 
     return std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>{};
 }
 
-std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesDefault(
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+{
+    /// Reserve space for every altered slice as we update all of them
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
+    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+
+    std::ranges::transform(
+        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        std::back_inserter(slicesToUpdate),
+        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
+
+    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    return slicesToUpdate;
+}
+
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesProactiveWithoutPrediction(
     const Timestamp watermark, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     /// Reserve space for every altered slice as we update all of them
@@ -416,7 +431,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     return slicesToUpdate;
 }
 
-std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesPredictWatermarks(
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     /// Reserve space for every altered slice as we might update all of them
