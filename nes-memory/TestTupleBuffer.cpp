@@ -304,13 +304,13 @@ std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode prin
     }
 
     auto tupleIterator = this->begin();
-    str << (*tupleIterator).toString(*schema);
+    str << (*tupleIterator).toString(schema);
     ++tupleIterator;
     while (tupleIterator != this->end())
     {
         str << std::endl;
         const DynamicTuple dynamicTuple = (*tupleIterator);
-        str << dynamicTuple.toString(*schema);
+        str << dynamicTuple.toString(schema);
         ++tupleIterator;
     }
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::NO_HEADER_END_IN_NEWLINE)

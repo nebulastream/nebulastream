@@ -191,6 +191,76 @@ struct TestHandle
     }
 };
 
+// Todo: introduce buffer utils?
+inline void sortTupleBuffers(std::vector<Memory::TupleBuffer>& buffers)
+{
+    std::ranges::sort(
+        buffers.begin(),
+        buffers.end(),
+        [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        {
+            if (left.getSequenceNumber() == right.getSequenceNumber())
+            {
+                return left.getChunkNumber() < right.getChunkNumber();
+            }
+            return left.getSequenceNumber() < right.getSequenceNumber();
+        });
+}
+
+/// Takes a vector of tuple buffers and allows to iterate over all tuples in the buffers in order
+class TupleIterator
+{
+public:
+    TupleIterator(std::vector<Memory::TupleBuffer> buffers, Schema schema)
+        : schema(std::move(schema))
+        , buffers(std::move(buffers))
+        , currentBuffer(Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(this->buffers.front(), this->schema))
+    {
+    }
+
+    Memory::MemoryLayouts::DynamicTuple getNextTuple()
+    {
+        if (currentTupleIdx >= currentBuffer.getNumberOfTuples())
+        {
+            ++currentBufferIdx;
+            currentBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffers.at(currentBufferIdx), schema);
+            currentTupleIdx = 0;
+        }
+        return currentBuffer[currentTupleIdx++];
+    }
+
+private:
+    size_t currentBufferIdx = 0;
+    size_t currentTupleIdx = 0;
+    Schema schema;
+    std::vector<Memory::TupleBuffer> buffers;
+    Memory::MemoryLayouts::TestTupleBuffer currentBuffer;
+};
+
+/// Expects tuples in the buffers to be in the same order
+inline bool compareTestTupleBuffersOrderSensitive(
+    std::vector<Memory::TupleBuffer>& lhs, std::vector<Memory::TupleBuffer>& rhs, Schema schema)
+{
+    sortTupleBuffers(lhs);
+    sortTupleBuffers(rhs);
+
+    TupleIterator rhsTupleIterator(std::move(rhs), schema);
+    for (const auto& lhsTupleBuffer : lhs)
+    {
+        for (auto lhsTestTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(lhsTupleBuffer, schema);
+             const auto& lhsTuple : lhsTestTupleBuffer)
+        {
+            const auto rhsTuple = rhsTupleIterator.getNextTuple();
+            if (lhsTuple != rhsTuple)
+            {
+                NES_ERROR("Tuples don't match: {} != {}", lhsTuple.toString(schema), rhsTuple.toString(schema));
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 inline bool
 checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
 {

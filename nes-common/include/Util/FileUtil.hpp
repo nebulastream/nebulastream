@@ -24,12 +24,11 @@
 #include <utility>
 #include <vector>
 
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
-#include <Util/TestUtil.hpp>
 
 namespace NES::Util
 {
@@ -53,6 +52,28 @@ enum class FileOpenMode : uint8_t
     APPEND,
     TRUNCATE,
 };
+
+inline std::optional<std::filesystem::path>
+findFileByName(const std::string& fileNameWithoutExtension, const std::filesystem::path& directory)
+{
+    if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
+    {
+        return std::nullopt;
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+        if (entry.is_regular_file())
+        {
+            if (std::string stem = entry.path().stem().string(); stem == fileNameWithoutExtension)
+            {
+                return entry.path();
+            }
+        }
+    }
+
+    return std::nullopt;
+}
 
 static std::ofstream createFile(const std::filesystem::path& filepath, const FileOpenMode fileOpenMode)
 {
@@ -151,14 +172,29 @@ struct TupleBufferChunk
     size_t numTuplesInChunk = 0;
 };
 
+inline void sortTupleBuffers(std::vector<Memory::TupleBuffer>& buffers)
+{
+    std::ranges::sort(
+        buffers.begin(),
+        buffers.end(),
+        [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        {
+            if (left.getSequenceNumber() == right.getSequenceNumber())
+            {
+                return left.getChunkNumber() < right.getChunkNumber();
+            }
+            return left.getSequenceNumber() < right.getSequenceNumber();
+        });
+}
+
 inline void writeTupleBuffersToFile(
     std::vector<Memory::TupleBuffer>& resultBufferVec,
     const Schema& schema,
     const std::filesystem::path& actualResultFilePath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
-    TestUtil::sortTupleBuffers(resultBufferVec);
-    const auto sizeOfSchemaInBytes = schema.getSchemaSizeInBytes();
+    sortTupleBuffers(resultBufferVec);
+    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
 
     const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
         = [](const std::vector<Memory::TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
@@ -221,7 +257,7 @@ static std::vector<Memory::TupleBuffer> loadTupleBuffersFromFile(
     const std::filesystem::path& filepath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
-    const auto sizeOfSchemaInBytes = schema.getSchemaSizeInBytes();
+    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
     if (std::ifstream file(filepath, std::ifstream::binary); file.is_open())
     {
         const auto fileHeader = [](std::ifstream& file, const std::filesystem::path& filepath)

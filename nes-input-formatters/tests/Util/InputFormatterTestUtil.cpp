@@ -197,21 +197,6 @@ void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, c
     }
 }
 
-bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
-{
-    if (file_size(file1) != file_size(file2))
-    {
-        std::cout << fmt::format(
-            "File sizes do not match: {} vs. {}.", std::filesystem::file_size(file1), std::filesystem::file_size(file2));
-        return false;
-    }
-
-    std::ifstream f1(file1, std::ifstream::binary);
-    std::ifstream f2(file2, std::ifstream::binary);
-
-    return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
-}
-
 TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
