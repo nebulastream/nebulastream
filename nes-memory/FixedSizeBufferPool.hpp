@@ -70,9 +70,9 @@ public:
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
+    size_t getTotalSizeOfUnpooledBufferChunks() const override;
     std::optional<TupleBuffer> getBufferNoBlocking() override;
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
-    size_t getSizeOfUnpooledBufferChunks() const override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers
