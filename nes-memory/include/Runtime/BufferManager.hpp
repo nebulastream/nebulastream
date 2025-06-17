@@ -123,9 +123,9 @@ public:
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
+    size_t getTotalSizeOfUnpooledBufferChunks() const override;
     size_t getAvailableBuffers() const override;
     size_t getAvailableBuffersInFixedSizePools() const;
-    size_t getTotalSizeOfUnpooledBufferChunks() const;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
