@@ -389,21 +389,6 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
     }
 
     AntlrSQLHelper helper;
-
-    /// Get Index of  Parent Rule to check type of parent rule in conditions
-    const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
-    std::optional<size_t> parentRuleIndex;
-    if (parentContext != nullptr)
-    {
-        parentRuleIndex = parentContext->getRuleIndex();
-    }
-
-    /// PrimaryQuery is a queryterm too, but if it's a child of a queryterm we are in a union!
-    if (parentRuleIndex == AntlrSQLParser::RuleQueryTerm)
-    {
-        helper.isSetOperation = true;
-    }
-
     helpers.push(helper);
     AntlrSQLBaseListener::enterPrimaryQuery(context);
 }
@@ -441,9 +426,8 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan = LogicalPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
     }
-    auto isSetOperation = helpers.top().isSetOperation;
     helpers.pop();
-    if (helpers.empty() or isSetOperation)
+    if (helpers.empty())
     {
         queryPlans.push(queryPlan);
     }
@@ -805,26 +789,38 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
     helpers.top().minimumCount = std::stoi(context->getText());
 }
 
+void AntlrSQLQueryPlanCreator::enterSetOperation(AntlrSQLParser::SetOperationContext* context)
+{
+    AntlrSQLHelper helper;
+    helper.isSetOperation = true;
+    helpers.push(helper);
+}
+
 void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationContext* context)
 {
-    if (queryPlans.size() < 2)
+    INVARIANT(!helpers.empty(), "the set operation helper should not disappear before this function call");
+
+    auto &helperPlans = helpers.top().queryPlans;
+    if (helperPlans.size() < 2)
     {
         throw InvalidQuerySyntax("Union does not have sufficient amount of QueryPlans for unifying.");
     }
 
-    const auto rightQuery = queryPlans.top();
-    queryPlans.pop();
-    const auto leftQuery = queryPlans.top();
-    queryPlans.pop();
-    const auto queryPlan = LogicalPlanBuilder::addUnion(leftQuery, rightQuery);
+    auto rightQuery = std::move(helperPlans.back());
+    helperPlans.pop_back();
+    auto leftQuery = std::move(helperPlans.back());
+    helperPlans.pop_back();
+    helpers.pop();
+
+    auto queryPlan = LogicalPlanBuilder::addUnion(std::move(leftQuery), std::move(rightQuery));
     if (!helpers.empty())
     {
         /// we are in a subquery
-        helpers.top().queryPlans.push_back(queryPlan);
+        helpers.top().queryPlans.push_back(std::move(queryPlan));
     }
     else
     {
-        queryPlans.push(queryPlan);
+        queryPlans.push(std::move(queryPlan));
     }
     AntlrSQLBaseListener::exitSetOperation(context);
 }
