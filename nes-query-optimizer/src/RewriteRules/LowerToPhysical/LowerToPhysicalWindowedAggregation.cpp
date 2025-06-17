@@ -22,7 +22,17 @@
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
-#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AvgAggregationFunction.hpp>
+#include <Aggregation/Function/CountAggregationFunction.hpp>
+#include <Aggregation/Function/MaxAggregationFunction.hpp>
+#include <Aggregation/Function/MedianAggregationFunction.hpp>
+#include <Aggregation/Function/MinAggregationFunction.hpp>
+#include <Aggregation/Function/SumAggregationFunction.hpp>
+#include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
+#include <Aggregation/Function/VarAggregationFunction.hpp>
+#include <Aggregation/WindowAggregation.hpp>
+#include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -103,10 +113,10 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
 
 namespace
 {
-std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
+std::vector<std::shared_ptr<AggregationFunction>> getAggregationPhysicalFunctions(
     const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
 {
-    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
+    std::vector<std::shared_ptr<AggregationFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -130,6 +140,41 @@ std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysical
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {
             aggregationPhysicalFunctions.push_back(aggregationPhysicalFunction.value());
+        }
+        else if (name == "TemporalSequence")
+        {
+            // For MEOS trajectory aggregation, we need the longitude, latitude, and timestamp functions
+            const auto* temporalSequenceDescriptor = dynamic_cast<const TemporalSequenceAggregationLogicalFunction*>(descriptor.get());
+            INVARIANT(temporalSequenceDescriptor != nullptr, "TemporalSequence descriptor cast failed");
+
+            // Get physical functions for longitude, latitude, and timestamp
+            auto lonPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSequenceDescriptor->getLongitudeFunction());
+            auto latPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSequenceDescriptor->getLatitudeFunction());
+            auto timestampPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSequenceDescriptor->getTimestampFunction());
+
+            // VARSIZED type for trajectory output
+            auto varsizedType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+
+            aggregationPhysicalFunctions.emplace_back(std::make_shared<TemporalSequenceAggregationFunction>(
+                std::move(varsizedType),
+                std::move(physicalFinalType),
+                std::move(aggregationInputFunction),
+                resultFieldIdentifier,
+                std::move(lonPhysicalFunction),
+                std::move(latPhysicalFunction),
+                std::move(timestampPhysicalFunction),
+                std::move(memoryProvider)));
+        }
+        else if (name == "Var")
+        {
+            /// We assume that the count is a u64
+            auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+            aggregationPhysicalFunctions.emplace_back(std::make_shared<VarAggregationFunction>(
+                std::move(physicalInputType),
+                std::move(physicalFinalType),
+                std::move(aggregationInputFunction),
+                resultFieldIdentifier,
+                std::move(countType)));
         }
         else
         {

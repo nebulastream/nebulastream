@@ -18,6 +18,13 @@ add_plugin(Median AggregationPhysicalFunction nes-physical-operators MedianAggre
 add_plugin(Sum AggregationPhysicalFunction nes-physical-operators SumAggregationPhysicalFunction.cpp)
 
 add_source_files(nes-physical-operators
-        AggregationPhysicalFunction.cpp
+        AvgAggregationFunction.cpp
+        AggregationFunction.cpp
+        CountAggregationFunction.cpp
+        MaxAggregationFunction.cpp
+        MinAggregationFunction.cpp
+        MedianAggregationFunction.cpp
+        SumAggregationFunction.cpp
         TemporalSequenceAggregationFunction.cpp
+        VarAggregationFunction.cpp
 )
