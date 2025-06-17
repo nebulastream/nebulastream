@@ -50,7 +50,7 @@ class Meos {
 
     class TemporalInstant {
     public:
-        explicit TemporalInstant(const std::string& mf_string);
+        explicit TemporalInstant(double lon, double lat, long long ts, int srid=4326);
         ~TemporalInstant();
 
         bool intersects(const TemporalInstant& point) const;

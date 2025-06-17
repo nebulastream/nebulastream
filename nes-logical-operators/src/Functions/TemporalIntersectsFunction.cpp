@@ -90,29 +90,6 @@ bool TemporalIntersectsFunction::operator==(const LogicalFunctionConcept& rhs) c
 }
 
 
-bool TemporalIntersectsFunction::spatialIntersects(const double lon_val, const double lat_val, const double ts_val) const {
-    std::cout << "SpatialIntersectsFunction::spatialIntersects" << std::endl;
-    try {
-        auto meos = MEOS::Meos();
-        std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon_val, lat_val, ts_val);
-        MEOS::Meos::TemporalInstant temporal1(str_pointbuffer);    
-
-        // Create a second point slightly offset for intersection testing
-        std::string str_pointbuffer2 = fmt::format("SRID=4326;POINT({} {})@{}", lon_val + 0.001, lat_val + 0.001, ts_val + 1);
-        MEOS::Meos::TemporalInstant temporal2(str_pointbuffer2);    
-        
-        if(temporal1.intersects(temporal2)) {
-            std::cout << "TemporalInstant intersects" << std::endl;
-            return true;
-        }
-
-        return false;
-    } catch (...) {
-        std::cout << "MEOS error in spatial intersection" << std::endl;
-        return false;
-    }
-}
-
 NES::LogicalFunctionRegistryReturnType NES::LogicalFunctionGeneratedRegistrar::RegisterTemporalIntersectsLogicalFunction(NES::LogicalFunctionRegistryArguments arguments)
 {
     PRECONDITION(arguments.children.size() == 3, "TemporalIntersectsFunction requires exactly three children, but got {}", arguments.children.size());
