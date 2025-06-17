@@ -21,6 +21,7 @@ vcpkg_from_github(
 		0003-disable-ubsan-function-call-check.patch
 		0004-disable-mlir-multithreading.patch
 		0005-clang-tidy-memory-leak.patch
+		0006-fix-wrong-default-constructor.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
