@@ -19,12 +19,12 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000, 1000000]
-INGESTION_RATES = [0, 1000, 10000, 100000, 1000000, 10000000]  # 0 means the source will ingest tuples as fast as possible
-MATCH_RATES = [90, 60, 40, 10, 100]  # match rate in percent
+TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
+INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
+MATCH_RATES = [60, 40, 10, 100, 90]  # match rate in percent
 
 # Worker configuration parameters
-NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1, 2]
+NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1]
 BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 PAGE_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 WINDOW_SIZE_SLIDE = [
@@ -338,6 +338,7 @@ def create_memory_bounds_benchmark_configs():
     del default_params["lower_memory_bound"]
     del default_params["upper_memory_bound"]
     del default_params["timestamp_increment"]
+    del default_params["match_rate"]
     del default_params["query"]
 
     # Set some values as default
