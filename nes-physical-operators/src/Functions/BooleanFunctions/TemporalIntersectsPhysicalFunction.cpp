@@ -58,8 +58,12 @@ VarVal TemporalIntersectsPhysicalFunction::execute(const Record& record, ArenaRe
 
                 // Check if point is within Manhattan, NYC area (approximate bounding box)
                 // Manhattan bounds: roughly -74.02 to -73.93 longitude, 40.70 to 40.80 latitude
-                bool intersection_result = (lon >= -74.02 && lon <= -73.93 && lat >= 40.70 && lat <= 40.80);
+                std::string str_pointbuffer2 = "SRID=4326;POINT(-73.9857 40.7484)@" + ts_string;    
+                MEOS::Meos::TemporalInstant temporal2(str_pointbuffer);
+
+                bool intersection_result = temporal1.intersects(temporal2);
                 std::cout << "MEOS intersection result: " << intersection_result << std::endl;
+
                 return intersection_result;
             } catch (...) {
                 std::cout << "MEOS error in spatial intersection" << std::endl;
