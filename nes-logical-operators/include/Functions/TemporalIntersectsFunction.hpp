@@ -38,15 +38,12 @@ public:
     [[nodiscard]] SerializableFunction serialize() const override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
     
-    // Spatial-temporal intersection method  
-    [[nodiscard]] bool spatialIntersects(const double lon, const double lat, const double ts) const;
-
 private:
     DataType dataType;
     LogicalFunction lon;
     LogicalFunction lat;
     LogicalFunction ts;
-    // MEOS::Meos meosWrapper; // Temporarily disabled to avoid initialization issues
+
 };
 
 }

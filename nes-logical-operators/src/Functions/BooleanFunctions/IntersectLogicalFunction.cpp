@@ -83,23 +83,6 @@ bool IntersectLogicalFunction::operator==(const LogicalFunctionConcept& rhs) con
     return false;
 }
 
-bool IntersectLogicalFunction::spatialIntersects(double lon2, double lat2, double ts2) const
-{
-    // Test MEOS functionality - create temporal instants
-    std::cout << "IntersectLogicalFunction::spatialIntersects" << std::endl;
-    std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat,ts);
-    MEOS::Meos::TemporalInstant temporal1(str_pointbuffer);    
-
-    std::string str_pointbuffer2 = fmt::format("SRID=4326;POINT({} {})@{}", lon2, lat2, ts2);
-    MEOS::Meos::TemporalInstant temporal2(str_pointbuffer2);    
-    
-    if(temporal1.intersects(temporal2)) {
-        std::cout << "TemporalInstant intersects" << std::endl;
-        return true;
-    }
-
-    return false;
-}
 
 std::string IntersectLogicalFunction::explain(ExplainVerbosity verbosity) const
 {

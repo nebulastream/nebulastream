@@ -50,14 +50,19 @@ namespace MEOS {
         return oss.str();
     }
 
-    // TemporalInstant constructor - matches header signature
-    Meos::TemporalInstant::TemporalInstant(const std::string& pos_string) {
-        std::cout << "Creating MEOS TemporalInstant from: " << pos_string << std::endl;
-        // Use correct MEOS function for parsing temporal point from WKT string
-        Temporal *temp = tgeompoint_in(pos_string.c_str());
+    // TemporalInstant constructore
+    Meos::TemporalInstant::TemporalInstant(double lon, double lat, long long ts, int srid) {
+
+        Meos meos_instance;
+        std::string ts_string = meos_instance.convertSecondsToTimestamp(ts);
+        std::string str_pointbuffer = "SRID=" + std::to_string(srid) + ";POINT(" + std::to_string(lon) + " " + std::to_string(lat) + ")@" + ts_string;
+
+        std::cout << "Creating MEOS TemporalInstant from: " << str_pointbuffer << std::endl;
+
+        Temporal *temp = tgeompoint_in(str_pointbuffer.c_str());
 
         if (temp == nullptr) {
-            std::cout << "Failed to parse temporal point with tgeompoint_in, trying alternative format" << std::endl;
+            std::cout << "Failed to parse temporal point with tgeompoint_in" << std::endl;
             // Try alternative format or set to null
             instant = nullptr;
         } else {
@@ -74,12 +79,12 @@ namespace MEOS {
 
     bool Meos::TemporalInstant::intersects(const TemporalInstant& point) const {  
         std::cout << "TemporalInstant::intersects called" << std::endl;
-        
         // Use MEOS eintersects function for temporal points  
         bool result = eintersects_tpoint_tpoint((const Temporal *)this->instant, (const Temporal *)point.instant);
         if (result) {
             std::cout << "TemporalInstant intersects" << std::endl;
         }
+
         return result;
     }
  
