@@ -111,14 +111,14 @@ private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
         const Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        Timestamp watermark,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide);
 
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesDefault(Timestamp watermark, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesPredictWatermarks(
+    updateSlicesReactive(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+    updateSlicesProactiveWithoutPrediction(Timestamp watermark, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesProactiveWithPrediction(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void readSliceFromFiles(
