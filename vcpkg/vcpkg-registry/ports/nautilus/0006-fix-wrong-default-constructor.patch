@@ -1,0 +1,75 @@
+From 44509c1713876c85b1a16297e617a8118a706bc1 Mon Sep 17 00:00:00 2001
+From: "Nils L. Schubert" <nilslpschubert@gmail.com>
+Date: Tue, 17 Jun 2025 14:24:24 +0200
+Subject: [PATCH] Fixed wrong data type for initialization
+
+Signed-off-by: Nils L. Schubert <nilslpschubert@gmail.com>
+---
+ nautilus/include/nautilus/val.hpp               | 2 +-
+ nautilus/test/common/ExpressionFunctions.hpp    | 7 +++++++
+ nautilus/test/execution-tests/ExecutionTest.cpp | 8 ++++++++
+ nautilus/test/execution-tests/TracingTest.cpp   | 1 +
+ 4 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+index f6a2542f..4a621c2b 100644
+--- a/nautilus/include/nautilus/val.hpp
++++ b/nautilus/include/nautilus/val.hpp
+@@ -47,7 +47,7 @@ class val<ValueType> {
+ 	using basic_type = ValueType;
+
+ #ifdef ENABLE_TRACING
+-	val() : state(tracing::traceConstant(0)) {
++	val() : state(tracing::traceConstant<raw_type>(0)) {
+ 	}
+ 	val(ValueType value) : state(tracing::traceConstant(value)), value(value) {
+ 	}
+diff --git a/nautilus/test/common/ExpressionFunctions.hpp b/nautilus/test/common/ExpressionFunctions.hpp
+index 8265e88c..da0235ed 100644
+--- a/nautilus/test/common/ExpressionFunctions.hpp
++++ b/nautilus/test/common/ExpressionFunctions.hpp
+@@ -68,6 +68,13 @@ auto subInt8AndInt8(val<int8_t> x, val<int8_t> y) {
+ 	return result;
+ }
+
++auto mulInt64AndNotDefinedI64(val<int64_t> x) {
++	// We want to test, if the default initialization is correct
++	val<int64_t> y;
++	const auto result = x * y;
++	return result;
++}
++
+ auto addInt8AndInt32(val<int8_t> x, val<int32_t> y) {
+ 	const auto result = x + y;
+ 	return result;
+diff --git a/nautilus/test/execution-tests/ExecutionTest.cpp b/nautilus/test/execution-tests/ExecutionTest.cpp
+index 5d29d4bf..5f5b5734 100644
+--- a/nautilus/test/execution-tests/ExecutionTest.cpp
++++ b/nautilus/test/execution-tests/ExecutionTest.cpp
+@@ -252,6 +252,14 @@ void expressionTests(engine::NautilusEngine& engine) {
+ 		REQUIRE(f((double) -14) == -7);
+ 	}
+
++	SECTION("mulInt64AndNotDefinedI64") {
++		auto f = engine.registerFunction(mulInt64AndNotDefinedI64);
++		REQUIRE(f((int64_t) 1) == 0);
++		REQUIRE(f((int64_t) -1) == 0);
++		REQUIRE(f((int64_t) 0) == 0);
++		REQUIRE(f((int64_t) 0) == 0);
++	}
++
+ 	SECTION("subInt8AndInt8") {
+ 		auto f = engine.registerFunction(subInt8AndInt8);
+ 		REQUIRE(f((int8_t) 1, (int8_t) 2) == -1);
+diff --git a/nautilus/test/execution-tests/TracingTest.cpp b/nautilus/test/execution-tests/TracingTest.cpp
+index ea7be08d..777ed48e 100644
+--- a/nautilus/test/execution-tests/TracingTest.cpp
++++ b/nautilus/test/execution-tests/TracingTest.cpp
+@@ -196,6 +196,7 @@ TEST_CASE("Expression Trace Test") {
+ 	    {"shiftRight_i8", details::createFunctionWrapper(shiftRight<int8_t>)},
+ 	    {"negate_i8", details::createFunctionWrapper(negate<int8_t>)},
+ 	    {"logicalNot_bool", details::createFunctionWrapper(logicalNot<bool>)},
++	    {"mulInt64AndNotDefinedI64", details::createFunctionWrapper(mulInt64AndNotDefinedI64)},
+ 	    {"subInt8AndInt8", details::createFunctionWrapper(subInt8AndInt8)},
+ 	    {"addInt8AndInt32", details::createFunctionWrapper(addInt8AndInt32)},
+ 	};
