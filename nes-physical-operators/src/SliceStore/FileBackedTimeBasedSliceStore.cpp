@@ -380,7 +380,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 
     const auto totalSizeOfUsedBuffers
         = (bufferProvider->getNumOfPooledBuffers() - bufferProvider->getAvailableBuffers()) * bufferProvider->getBufferSize()
-        + bufferProvider->getSizeOfUnpooledBufferChunks();
+        + bufferProvider->getTotalSizeOfUnpooledBufferChunks();
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.upperMemoryBound)
     {
         return updateSlicesDefault(watermark, threadId, joinBuildSide);
