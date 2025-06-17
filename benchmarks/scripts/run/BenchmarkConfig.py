@@ -357,41 +357,6 @@ def create_memory_bounds_benchmark_configs():
     ]
 
 
-def create_all_memory_bounds_benchmark_configs():
-    # Generate all possible configurations for memory bounds with multiple default configs where lower is smaller than or equal to upper
-    configs = []
-    default_params = get_default_params()
-
-    # Set some timestamp_increment values as default
-    default_timestamp_increments = [1, 1000]
-
-    # Set some combinations of window size and slide from the first query as default
-    default_queries = []
-    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
-    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
-        size_and_slide = re.search(window_pattern, query)
-        size = int(size_and_slide.group(1))
-        # slide = int(size_and_slide.group(2))
-        if size != 10000:
-            default_queries.append(query)
-
-    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    for timestamp_increment in default_timestamp_increments:
-        for query in default_queries:
-            for lower_memory_bound in LOWER_MEMORY_BOUNDS:
-                for upper_memory_bound in UPPER_MEMORY_BOUNDS:
-                    if lower_memory_bound <= upper_memory_bound:
-                        config_params = default_params.copy()
-                        config_params["slice_store_type"] = "FILE_BACKED"
-                        config_params["timestamp_increment"] = timestamp_increment
-                        config_params["query"] = query
-                        config_params["lower_memory_bound"] = lower_memory_bound
-                        config_params["upper_memory_bound"] = upper_memory_bound
-                        configs.append(BenchmarkConfig(**config_params))
-
-    return configs
-
-
 def create_all_benchmark_configs():
     # Generate all possible configurations
     return [
