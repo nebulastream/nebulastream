@@ -64,10 +64,13 @@
 
 namespace
 {
-std::pair<std::expected<NES::LogicalPlan, NES::Exception>, std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>>
+std::pair<
+    std::expected<NES::LogicalPlan, NES::Exception>,
+    std::unordered_map<std::string, std::pair<std::optional<NES::Systest::SourceInputFile>, uint64_t>>>
 optimizeQueryPlanIfErrorFree(const NES::Systest::LoadedQueryPlan& loadedQueryPlan)
 {
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+    std::unordered_map<std::string, std::pair<std::optional<NES::Systest::SourceInputFile>, uint64_t>>
+        sourceNamesToFilepathAndCountForQuery;
     if (loadedQueryPlan.queryPlan.has_value())
     {
         const NES::CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
@@ -130,7 +133,7 @@ SystestQuery::SystestQuery(
     const SystestQueryId queryIdInFile,
     std::filesystem::path workingDir,
     const Schema& sinkSchema,
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
+    std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
     std::optional<ExpectedError> expectedError)
     : testName(std::move(testName))
     , queryDefinition(std::move(queryDefinition))
@@ -426,10 +429,15 @@ std::string RunningQuery::getThroughput() const
         return "";
     }
 
-    /// Calculating the throughput in bytes per second and tuples per second
-    const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
-    const auto bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
-    const auto tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
+    double bytesPerSecond = NAN;
+    double tuplesPerSecond = NAN;
+    if (bytesProcessed.value() > 0 and tuplesProcessed.value() > 0)
+    {
+        /// Calculating the throughput in bytes per second and tuples per second
+        const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
+        bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
+        tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
+    }
 
     auto formatUnits = [](double throughput)
     {
@@ -486,7 +494,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
     std::vector<LoadedQueryPlan> plans{};
     std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
-    std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
+    std::unordered_map<SourceDescriptor, std::optional<SourceInputFile>> sourcesToFilePaths;
 
     std::unordered_map<std::string, Schema> sinkNamesToSchema{};
     auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
@@ -576,7 +584,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                         Sources::SourceValidationProvider::provide(attachSource.sourceType, sourceConfig),
                         ParserConfig::create(parserConfig)))
                 {
-                    sourcesToFilePaths[sourceDescriptor.value()] = testFilePath;
+                    sourcesToFilePaths[sourceDescriptor.value()]
+                        = attachSource.fileDataPath.transform([](const auto& path) { return SourceInputFile(path); });
                     return;
                 }
                 throw UnknownSource(
