@@ -31,17 +31,8 @@ QueryCompiler::QueryCompiler() = default;
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    try
-    {
-        auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
-
-        auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
-        return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
-    }
-    catch (...)
-    {
-        tryLogCurrentException();
-        return {};
-    }
+    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
+    auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
+    return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
 }
