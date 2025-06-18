@@ -2,13 +2,13 @@
 # description: Simple union tests
 # groups: [Union]
 
-Source stream UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
 1,1,1001
 1,1,1002
 1,1,1003
 
-Source stream2 UINT64 id UINT64 value UINT64 timestamp
+Source stream2 UINT64 id UINT64 value UINT64 timestamp INLINE
 2,2,2000
 2,2,2001
 2,2,2002
