@@ -1,0 +1,27 @@
+# name: map/Map_Add.test
+# description: Simple map tests with an add function
+# groups: [Map]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
+1,1,1000
+
+SINK streamSink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+
+# Map with add function touches one field
+SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink
+----
+2,1,1000
+
+
+# The second source is invalid and should therefore
+Source streamBad UINT64 id UINT64 value UINT64 timestamp
+THISISANINVALIDTOKEN
+1,1,1000
+
+SINK streamSink UINT64 streamBad$id UINT64 streamBad$value UINT64 streamBad$timestamp
+
+
+# Query that is never parsed
+SELECT id + UINT64(1) AS id, value, timestamp FROM streamBad INTO streamSink
+----
+2,1,1000

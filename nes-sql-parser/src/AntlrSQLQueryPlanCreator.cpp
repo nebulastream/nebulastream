@@ -21,6 +21,7 @@
 #include <ranges>
 #include <string>
 #include <utility>
+
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -46,6 +47,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/LogicalFunctionProvider.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -887,18 +889,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             /// Check if the function is a constructor for a datatype
-            if (funcName == "CONCAT")
+            if (LogicalFunctionProvider::contains(funcName))
             {
-                if (helpers.top().functionBuilder.size() != 2)
-                {
-                    throw InvalidQuerySyntax(
-                        "Concat requires two arguments, but got {} at {}", helpers.top().functionBuilder.size(), context->getText());
-                }
-                const auto rightFunction = helpers.top().functionBuilder.back();
-                helpers.top().functionBuilder.pop_back();
-                const auto leftFunction = helpers.top().functionBuilder.back();
-                helpers.top().functionBuilder.pop_back();
-                helpers.top().functionBuilder.emplace_back(ConcatLogicalFunction(leftFunction, rightFunction));
+                const auto childFunctions = std::move(helpers.top().functionBuilder);
+                const auto concatFunction = LogicalFunctionProvider::provide(funcName, childFunctions, DataType{DataType::Type::UNDEFINED});
+                helpers.top().functionBuilder.emplace_back(concatFunction);
                 break;
             }
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
