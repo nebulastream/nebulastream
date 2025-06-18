@@ -71,45 +71,81 @@ jobs:
             sanitizer: 'thread'
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: nes
+      - name: clone corpus
+        run: |
+          rm -rf nes-corpora
+          git clone https://fwc:${{ secrets.FWC_NES_CORPORA }}@github.com/fwc/nes-corpora.git
       - name: configure
         run: |
+          cd nes
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=WARN
       - name: build
         shell: bash
         run: |
+          cd nes
           cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
       - name: setup
         run: |
-          cd build
+          cd nes/build
           echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
+      - name: mkdir
+        run: |
+          cd nes-corpora
+          mkdir -p ${{ inputs.fuzzer }}/broken
+          mkdir -p ${{ inputs.fuzzer }}/corpus
           mkdir /corpus_wip
-          mkdir -p /res/corpus_fin
-          mkdir -p /res/fails
       - name: fuzz ${{ inputs.duration_in_min }} min
         shell: bash
         timeout-minutes: ${{ fromJson(inputs.duration_in_min) }}
         continue-on-error: true
         run: |
-          cd /res/fails
+          cd nes-corpora/${{ inputs.fuzzer }}/broken
           $fuzzer -jobs=100000000000 /corpus_wip > /dev/null 2> /dev/null
       - name: stop fuzzers
         run: |
-          pkill ${{ inputs.fuzzer }}
-      - name: minimize corpus
-        run: |
-          $fuzzer -merge=1 /res/corpus_fin /corpus_wip
-          find /res/fails -name "*.log" -delete
-          find /res/fails -name "Engine*" -delete
+          pkill -f ${{ inputs.fuzzer }}
       # necessary to prevent upload-artifact breakage
       - name: cull garbage files
         run: |
-          find /res/fails -name "*.log" -delete
-          find /res/fails -name "Engine*" -delete
-      - name: Upload Corpus
-        uses: actions/upload-artifact@v4
-        with:
-          name: corpus-${{ inputs.fuzzer }}-${{ inputs.duration_in_min }}-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.sanitizer }}
-          path: |
-            /res/*
-            !/res/fails/*.log
-            !/res/fails/Engine*
+          find nes-corpora/${{ inputs.fuzzer }}/broken -name "*.log"   -delete
+          find nes-corpora/${{ inputs.fuzzer }}/broken -name "Engine*" -delete
+      - name: minimize corpus
+        run: |
+          $fuzzer -merge=1 nes-corpora/${{ inputs.fuzzer }}/corpus /corpus_wip
+      - name: push corpus
+        run: |
+          cd nes-corpora
+
+          cat << EOF > msg.txt
+          ci run ${{ inputs.fuzzer }} ${{ inputs.duration_in_min }}min
+
+          fuzzer: ${{ inputs.fuzzer}}
+          duration: ${{ inputs.duration_in_min }}
+          arch: ${{ matrix.arch }}
+          stdlib: ${{ matrix.stdlib }}
+          build_type: ${{ matrix.build_type }}
+          sanitizer: ${{ matrix.sanitizer }}
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ${{ inputs.fuzzer }}
+          git commit -F msg.txt
+
+          exp_backoff=1
+          for try in $(seq 5)
+          do
+            git pull --rebase
+            if git push
+            then
+              exit
+            fi
+            sleep $exp_backoff
+            exp_backoff=$(( exp_backoff * 2 ))
+          done
+
+          git checkout -b branch-$RANDOM
+          git push --set-upstream origin
