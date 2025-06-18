@@ -135,19 +135,19 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::Quer
     }
 
     /// set in and outputschema of all operators except source to used fieldnames
-    auto newSchema = Schema(conf.memoryLayout.getDefaultValue());
-    auto sink = queryPlan.rootOperators[0];
-    for (const auto& fieldName : fieldNames)
-    {
-        newSchema.addField(fieldName, queryPlan.rootOperators[0].getOutputSchema().getFieldByName(fieldName)->dataType);
-    }
-
-    sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
+    //auto newSchema = Schema(conf.memoryLayout.getDefaultValue());
+    //auto sink = queryPlan.rootOperators[0];
+    //for (const auto& fieldName : fieldNames)
+    // {
+    //     newSchema.addField(fieldName, queryPlan.rootOperators[0].getOutputSchema().getFieldByName(fieldName)->dataType);
+    // }
+    //
+    // sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
 
     //auto newPlan = LogicalPlan(sink);
 
 
-    for (const auto& logicalRoot : {sink})
+    for (const auto& logicalRoot : queryPlan.rootOperators)
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
