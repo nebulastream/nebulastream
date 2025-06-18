@@ -19,31 +19,40 @@ ADD https://github.com/nebulastream/clang-binaries/releases/download/vcustom-lib
 RUN zstd --decompress libcxx.tar.zstd --stdout | tar -x
 
 
-FROM nebulastream/nes-development-base:${TAG}
-ARG STDLIB=libcxx
 
+FROM nebulastream/nes-development-base:${TAG} as vcpkg-build
 COPY --from=llvm-download /clang /clang
 COPY --from=llvm-download /libcxx /libcxx
-ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
-
 ADD vcpkg /vcpkg_input
-ARG SANITIZER="none"
+WORKDIR /vcpkg_input
 ARG ARCH
-ENV VCPKG_FORCE_SYSTEM_BINARIES=1
-
-# This hash is used to determine if a development/dependency image is compatible with the current checked out branch
+ARG SANITIZER="none"
+ARG STDLIB=libcxx
 ARG VCPKG_DEPENDENCY_HASH
+ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
+ENV USE_CPP_STDLIB_LIBCXX_PATH=/libcxx
+ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+ENV VCPKG_SANITIZER=${SANITIZER}
+ENV VCPKG_STDLIB=${STDLIB}
+RUN git clone https://github.com/microsoft/vcpkg.git vcpkg_repository
+RUN vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics
+RUN vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-host"
+RUN vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-host" --raw --output-dir / --output vcpkg
+RUN chmod -R g=u,o=u /vcpkg
+
+
+FROM nebulastream/nes-development-base:${TAG}
+COPY --from=llvm-download /clang /clang
+COPY --from=llvm-download /libcxx /libcxx
+COPY --from=vcpkg-build /vcpkg /vcpkg
+ARG ARCH
+ARG SANITIZER="none"
+ARG STDLIB=libcxx
+ARG VCPKG_DEPENDENCY_HASH
+ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
 ENV VCPKG_STDLIB=${STDLIB}
 ENV VCPKG_SANITIZER=${SANITIZER}
 ENV USE_CPP_STDLIB_LIBCXX_PATH=/libcxx
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
-
-RUN \
-    cd /vcpkg_input \
-    && git clone https://github.com/microsoft/vcpkg.git vcpkg_repository \
-    && vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics \
-    && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-host" \
-    && vcpkg_repository/vcpkg export  --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-host" --raw --output-dir / --output vcpkg \
-    && rm -rf /vcpkg_input \
-    && chmod -R g=u,o=u /vcpkg
