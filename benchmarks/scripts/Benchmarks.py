@@ -25,8 +25,8 @@ df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv
 
 # Define configuration parameters
 shared_config_params = [
-    'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads',
-    'page_size', 'query', 'timestamp_increment', 'match_rate'
+    'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads', 'page_size', 'query', 'timestamp_increment',
+    'match_rate'
 ]
 
 file_backed_config_params = [
@@ -47,18 +47,18 @@ common_config_dicts = common_configs.to_dict(orient='records')
 
 # Map long queries to short codes and sort by default params
 unique_queries = df['query'].unique()
-query_mapping = {q: i for i, q in enumerate(unique_queries, start=1)}
+query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
 df['query_id'] = df['query'].map(query_mapping)
 df = df.sort_values(by=['timestamp_increment', 'query_id'], ascending=[True, True])
 
 # Add a hue column with default params for all slice stores
-df['hue'] = df['slice_store_type'].astype(str) + ' | Q' + df['query_id'].astype(str) + ' | ' + df['timestamp_increment'].astype(str)
+df['hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 
 
 # Define helper functions
-def chunk_configs(configs, chunk_size):
-    for i in range(0, len(configs), chunk_size):
-        yield configs[i:i + chunk_size]
+def chunk_list(list, chunk_size):
+    for i in range(0, len(list), chunk_size):
+        yield list[i:i + chunk_size]
 
 
 def filter_by_config(data, config):
@@ -137,14 +137,12 @@ def expand_constant_params_for_groups(data, param, group, exclude_group_val=[]):
     return data
 
 
-def add_query_fig_text(ax):
-    _, labels = ax.get_legend_handles_labels()
-    query_ids = [lbl.split(' | ')[1][1:] for lbl in labels]
-
-    mapping_text = "\n".join([f"Q{v}: {k}" for k, v in query_mapping.items() if str(v) in query_ids])
+def add_query_fig_text(labels, adjust_bottom, text_y):
+    query_ids = [lbl.split(' | ')[1] for lbl in labels]
+    mapping_text = "\n".join([f"{v}: {k}" for k, v in query_mapping.items() if v in query_ids])
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.2)
-    plt.figtext(0.0, 0.0, mapping_text, wrap=True, ha='left', fontsize=9)
+    plt.subplots_adjust(bottom=adjust_bottom)
+    plt.figtext(0.0, text_y, mapping_text, wrap=True, ha='left', fontsize=9)
 
 
 def add_min_max_labels(data, metric, ax, param, y_offset, color):
@@ -218,7 +216,7 @@ def plot_config_comparison(data, configs, metric, label, config_id):
 
 
 chunk_size = 25
-for i, config_chunk in enumerate(chunk_configs(common_config_dicts, chunk_size)):
+for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
     print(f"Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of "
           f"{len(common_config_dicts)})")
     plot_config_comparison(df, config_chunk, 'throughput_data', 'Throughput / sec', i * chunk_size)
@@ -400,12 +398,11 @@ def plot_shared_params(data, param, metric, hue, label, legend):
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
         data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
 
-        data_scaled['hue'] = data_scaled['slice_store_type'].astype(str) + ' | ' + data_scaled['timestamp_increment'].astype(str)
-        data_scaled['query_id'] = data_scaled['query_id'].astype(str)
+        data_scaled['hue'] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
         legend = 'Slice Store | Time Increment'
         param = 'query_id'
     if param == 'timestamp_increment':
-        data_scaled['hue'] = data_scaled['slice_store_type'].astype(str) + ' | Q' + data_scaled['query_id'].astype(str)
+        data_scaled['hue'] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
         legend = 'Slice Store | Query'
 
     plt.figure(figsize=(14, 6))
@@ -420,12 +417,9 @@ def plot_shared_params(data, param, metric, hue, label, legend):
 
     # Add legend below
     if param == 'query_id':
-        mapping_text = "\n".join([f"{v}: {k}" for k, v in query_mapping.items()])
-        plt.tight_layout()
-        plt.subplots_adjust(bottom=0.35)
-        plt.figtext(0.0, -0.65, mapping_text, wrap=True, ha='left', fontsize=9)
+        add_query_fig_text(' | ' + data_scaled['query_id'].unique(), 0.35, -0.65)
     else:
-        add_query_fig_text(ax)
+        add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label}')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
@@ -473,7 +467,7 @@ def plot_file_backed_params(data, param, metric, hue, label, color):
         custom_labels = [f"{scaled_df[hue].iloc[0]:.1f} {label_unit}" for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
         ax.legend(handles, custom_labels, title='Max Memory')
 
-    add_query_fig_text(ax)
+    add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
