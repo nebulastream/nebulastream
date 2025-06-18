@@ -134,7 +134,7 @@ jobs:
             build/**/*.stats
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !github.event.act }}
+        if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
@@ -177,7 +177,7 @@ jobs:
           done
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !github.event.act }}
+        if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
           path: /junit.xml

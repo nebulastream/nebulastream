@@ -56,8 +56,7 @@ jobs:
           path: /tmp/cov-cache/
           key: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}
       - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        uses:
-          AutoModality/action-clean@v1
+        uses: AutoModality/action-clean@v1
       - name: Checkout Base Branch
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v4
@@ -72,11 +71,6 @@ jobs:
           cmake --build build --target ccov-all-export
           mkdir -p /tmp/cov-cache/
           cp build/ccov/coverage.lcov /tmp/cov-cache/ref-coverage.lcov
-      - name: Upload code coverage for ref branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}.info
-          path: /tmp/cov-cache/ref-coverage.lcov
 
   build-code-coverage-pr-branch:
     container:
@@ -172,12 +166,6 @@ jobs:
         with:
           name: code-coverage-${{ matrix.platform }}
           path: /tmp/cov-cache/code-coverage/
-      - name: Upload code coverage for PR branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
-          path: /tmp/cov-cache/pr-coverage.lcov
-  
 
   # For now, we build the code coverage for x64 only
   build-code-coverage:
