@@ -20,24 +20,6 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
-# Load the CSV file
-df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv")
-
-# Define configuration parameters
-shared_config_params = [
-    'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads', 'page_size', 'query', 'timestamp_increment',
-    'match_rate'
-]
-
-file_backed_config_params = [
-    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
-    'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'watermark_predictor_type',
-    'lower_memory_bound', 'upper_memory_bound'
-]
-
-all_config_params = shared_config_params + file_backed_config_params
-
-
 # Define helper functions
 def chunk_list(list, chunk_size):
     for i in range(0, len(list), chunk_size):
@@ -48,6 +30,14 @@ def filter_by_config(data, config):
     mask = pd.Series([True] * len(data))
     for k, v in config.items():
         mask &= data[k] == v
+    return data[mask]
+
+
+def filter_by_default_values_except_param(data, param):
+    other_params = [p for p in all_config_params if p != param]
+    mask = pd.Series(True, index=data.index)
+    for p in other_params:
+        mask &= data[p].isin(default_param_values[p])
     return data[mask]
 
 
@@ -165,7 +155,7 @@ def add_min_max_labels_per_group(data, group, metric, ax, param):
         add_min_max_labels(sub, metric, ax, param, y_offset, color)
 
 
-def find_default_values_for_params(df, all_config_params, min_support_ratio=0.99):
+def find_default_values_for_params(min_support_ratio=0.99):
     likely_defaults = {}
 
     for param in all_config_params:
@@ -176,16 +166,87 @@ def find_default_values_for_params(df, all_config_params, min_support_ratio=0.99
 
         # Get most widely used value and all other values that occur with a similar frequency
         max_usage = grouped.max()
-        threshold = max_usage * min_support_ratio
-        defaults = grouped[grouped >= threshold].index.tolist()
+        defaults = grouped[grouped >= max_usage * min_support_ratio].index.tolist()
 
         likely_defaults[param] = defaults
 
     return likely_defaults
 
+dtypes = {
+    "timestamp_increment": "UInt64",
+    "ingestion_rate": "UInt64",
+    "match_rate": "UInt64",
+    "number_of_worker_threads": "UInt64",
+    "buffer_size_in_bytes": "UInt64",
+    "page_size": "UInt64",
+    "lower_memory_bound": "UInt64",
+    "upper_memory_bound": "UInt64",
+    "file_descriptor_buffer_size": "UInt64",
+    "max_num_watermark_gaps": "UInt64",
+    "max_num_sequence_numbers": "UInt64",
+    "min_read_state_size": "UInt64",
+    "min_write_state_size": "UInt64",
+    "file_operation_time_delta": "UInt64",
+    "file_layout": "str",
+    "watermark_predictor_type": "str",
+    "query": "str"
+}
 
-# Find all deault values for each config parameter
-default_param_values = find_default_values_for_params(df, all_config_params)
+# Load the CSV file
+df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv")
+# df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv", dtype=dtypes)
+for col in df.select_dtypes(include='float'):
+    if not (df[col] % 1 == 0).all():
+        print(f"⚠️ Column '{col}' contains non-integer float values!")
+#print(df.select_dtypes(include='float').dtypes)
+#print(df.select_dtypes(include='float').isna().sum())
+
+print(df[['lower_memory_bound', 'upper_memory_bound']].describe())
+print(df[['lower_memory_bound', 'upper_memory_bound']].max())
+
+for col in ['lower_memory_bound', 'upper_memory_bound']:
+    non_ints = df[col][df[col] % 1 != 0]
+    if not non_ints.empty:
+        print(f"⚠️ Column '{col}' has non-integer values:")
+        print(non_ints)
+    else:
+        print(f"✅ Column '{col}' has only whole numbers.")
+print(df[['lower_memory_bound', 'upper_memory_bound']].isna().sum())
+max_uint64 = np.iinfo(np.uint64).max
+for col in ['lower_memory_bound', 'upper_memory_bound']:
+    too_large = df[col][df[col] > max_uint64]
+    if not too_large.empty:
+        print(f"⚠️ Column '{col}' has values exceeding UInt64 max:")
+        print(too_large)
+
+for col in ['lower_memory_bound', 'upper_memory_bound', 'max_num_sequence_numbers']:
+    # First, assert all values are really whole numbers
+    if not (df[col] % 1 == 0).all():
+        raise ValueError(f"Column {col} contains non-integer float values!")
+
+    # Convert safely: float → int → UInt64
+    df[col] = df[col].astype(np.uint64)
+#df['lower_memory_bound'] = df['lower_memory_bound'].fillna(0)
+#df['upper_memory_bound'] = df['upper_memory_bound'].fillna(0)
+#df = df[df['lower_memory_bound'].notna()]
+#df = df[df['upper_memory_bound'].notna()]
+#df['lower_memory_bound'] = df['lower_memory_bound'].astype('UInt64')
+#df['upper_memory_bound'] = df['upper_memory_bound'].astype('UInt64')
+
+# Define configuration parameters
+shared_config_params = [
+    'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads', 'page_size', 'query', 'timestamp_increment',
+    'match_rate'
+]
+file_backed_config_params = [
+    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
+    'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'watermark_predictor_type',
+    'lower_memory_bound', 'upper_memory_bound'
+]
+all_config_params = shared_config_params + file_backed_config_params
+
+# Find all default values for each config parameter
+default_param_values = find_default_values_for_params()
 
 # Find unique configs that both slice store types have in common
 default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
@@ -193,7 +254,7 @@ file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_par
 common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
 common_config_dicts = common_configs.to_dict(orient='records')
 
-# Map long queries to short codes and sort by hue colmun values
+# Map long queries to short codes and sort by hue column values
 unique_queries = df['query'].unique()
 query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
 df['query_id'] = df['query'].map(query_mapping)
@@ -412,6 +473,7 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     if param != 'match_rate':
         data = data[data['match_rate'] == 90]
 
+    data = filter_by_default_values_except_param(data, param)
     data_scaled, metric_unit = convert_units(data, metric)
 
     if param == 'query':
