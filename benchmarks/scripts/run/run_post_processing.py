@@ -55,4 +55,9 @@ if __name__ == "__main__":
                                                     BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE, BENCHMARK_STATS_FILE,
                                                     COMBINED_ENGINE_STATISTICS_FILE, COMBINED_BENCHMARK_STATISTICS_FILE,
                                                     engine_stats_csv_path, benchmark_stats_csv_path)
-    post_processing.main()
+    failed_run_folders = post_processing.main()
+
+    if not failed_run_folders:
+        print("Post processing completed successfully.")
+    else:
+        print(f"{len(failed_run_folders)} runs failed:\n{failed_run_folders}")

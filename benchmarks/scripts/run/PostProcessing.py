@@ -53,9 +53,11 @@ class PostProcessing:
             futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
-        # Now, we can combine the engine and benchmark statistics into two separate csv files
-        # self.combine_engine_statistics()
-        self.combine_benchmark_statistics()
+        # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
+        # failed_engines = self.combine_engine_statistics()
+        failed_benchmarks = self.combine_benchmark_statistics()
+        failed_experiments = failed_benchmarks  # + failed_engines
+        return failed_experiments
 
     # Converting query engine statistics to a csv file
     def combine_engine_statistics(self):
@@ -87,6 +89,10 @@ class PostProcessing:
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.engine_statistics_csv_path, index=False)
 
+        # Return all folders that did not contain a result file
+        return [input_folder_name for input_folder_name in self.input_folders if
+                self.combined_engine_file not in os.listdir(input_folder_name)]
+
     # Converting benchmark statistics to a csv file
     def combine_benchmark_statistics(self):
         print("Combining all benchmark statistics...")
@@ -107,6 +113,10 @@ class PostProcessing:
 
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.benchmark_statistics_csv_path, index=False)
+
+        # Return all folders that did not contain a result file
+        return [input_folder_name for input_folder_name in self.input_folders if
+                self.combined_benchmark_file not in os.listdir(input_folder_name)]
 
     def convert_engine_statistics_to_csv(self, input_folder):
         pattern_engine_statistics_file = rf"^{re.escape(self.engine_statistics_file)}[\w\.\-]+\.stats$"
