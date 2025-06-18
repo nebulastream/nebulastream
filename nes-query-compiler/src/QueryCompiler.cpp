@@ -34,7 +34,6 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     }
     catch (...)
     {
-        tryLogCurrentException();
         return {};
     }
 }
