@@ -13,33 +13,25 @@
 */
 
 #pragma once
-
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <utility>
 
-#include <DataTypes/DataType.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Pointers.hpp>
-#include <experimental/propagate_const>
-#include <GRPCClient.hpp>
+#include <Plans/LogicalPlan.hpp>
 
+namespace NES
+{
+class SourceCatalog;
+}
 namespace NES::CLI
 {
-
-class Nebuli
+class LegacyOptimizer
 {
-    SharedPtr<GRPCClient> grpcClient;
-
 public:
-    explicit Nebuli(const std::shared_ptr<GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
+    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    LegacyOptimizer() = default;
+    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    QueryId registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId queryId);
-    void stopQuery(QueryId queryId);
-    void unregisterQuery(QueryId queryId);
+private:
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 }

@@ -15,4 +15,5 @@ add_source_files(nes-legacy-optimizer
         LogicalSourceExpansionRule.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhase.cpp
+        LegacyOptimizer.cpp
 )
