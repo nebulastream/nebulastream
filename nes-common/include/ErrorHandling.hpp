@@ -81,12 +81,12 @@ private:
     } \
     inline Exception name(std::string msg) \
     { \
-        return Exception(std::string(message) + "; " + msg, code); \
+        return Exception(fmt::format("{}; {}\n", message, msg), code); \
     } \
     template <typename... Args> \
     inline Exception name(fmt::format_string<Args...> fmt_msg, Args&&... args) \
     { \
-        return Exception(fmt::format("{}; {}", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
+        return Exception(fmt::format("{}; {}\n", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
     }
 
 #include <ExceptionDefinitions.inc>
