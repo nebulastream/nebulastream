@@ -337,11 +337,10 @@ void SystestParser::parse()
                 if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
-                    queryIdAssigner.skipQueryResultOfQueryWithExpectedError();
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
-                        onErrorExpectationCallback(std::move(expectation));
+                        onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
                     }
                 }
                 else
@@ -485,7 +484,26 @@ SystestParser::SystestSink SystestParser::expectSink() const
         throw SLTUnexpectedToken("failed to read sink name in {}", line);
     }
 
+    std::string sinkTypeTokenOrFieldType;
     std::vector<std::string> arguments;
+    if (!(lineAsStream >> sinkTypeTokenOrFieldType))
+    {
+        throw SLTUnexpectedToken("failed to read sink name or type token in {}", line);
+    }
+    if (sinkTypeTokenOrFieldType == "TYPE")
+    {
+        /// Read the sink type and check if successful
+        if (!(lineAsStream >> sink.type))
+        {
+            throw SLTUnexpectedToken("failed to read sink type in {}", line);
+        }
+    }
+    else
+    {
+        sink.type = "File";
+        arguments.push_back(sinkTypeTokenOrFieldType);
+    }
+
     std::string argument;
     while (lineAsStream >> argument)
     {
