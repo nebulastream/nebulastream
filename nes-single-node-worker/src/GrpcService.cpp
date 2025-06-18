@@ -83,7 +83,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
@@ -101,7 +101,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
@@ -120,7 +120,7 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const QuerySummaryRequest* request, QuerySummaryReply* reply)
@@ -168,7 +168,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
@@ -210,7 +210,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 }
