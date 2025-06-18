@@ -66,19 +66,33 @@ namespace NES
             std::make_shared<Memory::MemoryLayouts::ColumnLayout>(conf.operatorBufferSize.getValue(), schemaOutCol));
 
 
+
+
         auto scanSelection = ScanPhysicalOperator(
             memoryProviderInCol,
             schemaOutCol.getFieldNames()); ///have all fields in memProvider but only used ones in projections
         auto handlerId = getNextOperatorHandlerId();
         auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
 
+
+        auto memoryProviderInRowNew = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+        std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.operatorBufferSize.getValue(), schemaIn));
+        auto memoryProviderOutRowNew = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+        std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.operatorBufferSize.getValue(), schemaOut));
+        auto scanSelectionRow = ScanPhysicalOperator(memoryProviderInRowNew, schemaIn.getFieldNames());
+        auto emitSelectionRow = EmitPhysicalOperator(handlerId, memoryProviderInRowNew);
+
         auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
             scanSelection, schemaInCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN); ///TODO: outputSchema schemaOutCol?
+        auto scanSelectionNew = std::make_shared<PhysicalOperatorWrapper>(
+            scanSelectionRow, schemaIn, schemaOut, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
         auto emitSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
             emitSelection, schemaOutCol, schemaOutCol, handlerId, std::make_shared<EmitOperatorHandler>(),
             PhysicalOperatorWrapper::PipelineLocation::EMIT);
-
+        auto emitSelectionNew = std::make_shared<PhysicalOperatorWrapper>(
+            emitSelectionRow, schemaOut, schemaOut, handlerId, std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
         handlerId = getNextOperatorHandlerId();
         auto scanRow = ScanPhysicalOperator(memoryProviderInRow, schemaIn.getFieldNames());
@@ -95,12 +109,18 @@ namespace NES
         handlerId = getNextOperatorHandlerId();
         auto scanCol = ScanPhysicalOperator(memoryProviderOutCol, schemaOutCol.getFieldNames());
         auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderInCol);
+        auto scanRowNew = ScanPhysicalOperator(memoryProviderOutRowNew, schemaOut.getFieldNames());
+        auto emitRowNew = EmitPhysicalOperator(handlerId, memoryProviderInRowNew);
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
             scanCol, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+        auto scanWrapperRowNew = std::make_shared<PhysicalOperatorWrapper>(
+            scanRowNew, schemaOut, schemaOut, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+
         auto emitWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
             emitCol, schemaInCol, schemaInCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::EMIT);
-
+        auto emitWrapperRowNew = std::make_shared<PhysicalOperatorWrapper>(
+            emitRowNew, schemaIn, schemaIn, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
         auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
@@ -108,13 +128,26 @@ namespace NES
         schemaOutCol,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
+        if (conf.memoryLayout.getValue() == conf.memoryLayout.getDefaultValue())// == Schema::MemoryLayoutType::ROW_LAYOUT)
+        {
+            ///use new row layout memoryProvider
+            emitWrapperRow->addChild(scanWrapperRowNew);
+            scanWrapperRowNew->addChild(emitSelectionNew);
+            emitSelectionNew->addChild(wrapper);
+            wrapper->addChild(scanSelectionNew);
+            scanSelectionNew->addChild(emitWrapperRowNew);
+            emitWrapperRowNew->addChild(scanWrapperRow);
 
-        emitWrapperRow->addChild(scanWrapperCol);
-        scanWrapperCol->addChild(emitSelectionWrapper);
-        emitSelectionWrapper->addChild(wrapper);
-        wrapper->addChild(scanSelectionWrapper);
-        scanSelectionWrapper->addChild(emitWrapperCol);
-        emitWrapperCol->addChild(scanWrapperRow);
+        }else ///use column layout memoryProvider
+        {
+            emitWrapperRow->addChild(scanWrapperCol);
+            scanWrapperCol->addChild(emitSelectionWrapper);
+            emitSelectionWrapper->addChild(wrapper);
+            wrapper->addChild(scanSelectionWrapper);
+            scanSelectionWrapper->addChild(emitWrapperCol);
+            emitWrapperCol->addChild(scanWrapperRow);
+        }
+
 
         // scanWrapperRow->addChild(emitWrapperCol);
         // emitWrapperCol->addChild(wrapper);
