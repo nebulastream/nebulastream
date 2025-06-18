@@ -40,7 +40,7 @@ jobs:
       ref: ${{ github.event.pull_request.head.ref }}
 
   large-tests:
-    needs: [ get-dev-images, smoke-tests ]
+    needs: [ get-dev-images, build-and-test ]
     name: "Run large scale tests"
     uses: ./.github/workflows/large_test.yml
     with:
