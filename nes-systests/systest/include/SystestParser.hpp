@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -25,8 +26,12 @@
 
 #include <DataTypes/DataType.hpp>
 #include <SystestSources/SourceTypes.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
+
 
 namespace NES::Systest
 {
@@ -44,6 +49,53 @@ enum class TokenType : uint8_t
     ERROR_EXPECTATION,
 };
 
+/// Assures that the number of parsed queries matches the number of parsed results
+class SystestQueryIdAssigner
+{
+    static constexpr SystestQueryId::Underlying INITIAL_QUERY_NUMBER = SystestQueryId::INITIAL;
+
+public:
+    explicit SystestQueryIdAssigner() = default;
+
+    [[nodiscard]] SystestQueryId getNextQueryNumber()
+    {
+        if (currentQueryNumber != currentQueryResultNumber)
+        {
+            throw SLTUnexpectedToken(
+                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+        }
+
+        return SystestQueryId(currentQueryNumber++);
+    }
+
+    [[nodiscard]] SystestQueryId getNextQueryResultNumber()
+    {
+        if (currentQueryNumber != (currentQueryResultNumber + 1))
+        {
+            throw SLTUnexpectedToken(
+                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+        }
+
+        return SystestQueryId(currentQueryResultNumber++);
+    }
+
+private:
+    SystestQueryId::Underlying currentQueryNumber = SystestQueryId::INITIAL;
+    SystestQueryId::Underlying currentQueryResultNumber = SystestQueryId::INITIAL;
+};
+
+struct SystestField
+{
+    DataType type;
+    std::string name;
+    friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
+    {
+        os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
+        return os;
+    }
+    bool operator==(const SystestField& other) const = default;
+    bool operator!=(const SystestField& other) const = default;
+};
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
 ///
@@ -77,6 +129,7 @@ public:
     struct SystestSink
     {
         std::string name;
+        std::string type;
         SystestSchema fields;
         bool operator==(const SystestSink& other) const = default;
     };
@@ -93,7 +146,7 @@ public:
     using SystestLogicalSourceCallback = std::function<void(const SystestLogicalSource&)>;
     using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
-    using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
+    using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -141,3 +194,5 @@ private:
     std::unordered_set<std::string> seenLogicalSourceNames;
 };
 }
+
+FMT_OSTREAM(NES::Systest::SystestField);
