@@ -86,15 +86,26 @@ jobs:
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
         sanitizer: [ 'asan', 'ubsan', 'tsan', 'none' ]
         exclude:
-          # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
+          # Due to limited capacity, we disable libstdc++ tests on arm machines
           - arch: arm64
             stdlib: 'libstdcxx'
           - arch: arm64
             sanitizer: 'asan'
-          - arch: arm64
-            sanitizer: 'ubsan'
+          # Due to limited capacity, we disable sanitized tests on arm machines
           - arch: arm64
             sanitizer: 'tsan'
+          - arch: arm64
+            sanitizer: 'ubsan'
+          # we only run sanitizers with self-built, sanitized libcxx
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: asan
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: tsan
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: ubsan
           # TODO #808 Enable TSAN with libc++
           - stdlib: 'libcxx'
             sanitizer: 'tsan'
