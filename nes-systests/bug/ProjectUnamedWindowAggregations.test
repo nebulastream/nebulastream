@@ -3,7 +3,7 @@
 # groups: [Aggregation, WindowOperators, Projection]
 
 # Source definitions
-Source stream UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
 1,2,1001
 12,12,1001
