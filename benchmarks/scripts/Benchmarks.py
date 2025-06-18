@@ -35,24 +35,7 @@ file_backed_config_params = [
     'lower_memory_bound', 'upper_memory_bound'
 ]
 
-default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
-                 'WINDOW SLIDING (timestamp, size 1000000000 ms, advance by 1000000000 ms) INTO csv_sink'
-
-# Find unique configs that both slice store types have in common
 all_config_params = shared_config_params + file_backed_config_params
-default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
-file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
-common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
-common_config_dicts = common_configs.to_dict(orient='records')
-
-# Map long queries to short codes and sort by default params
-unique_queries = df['query'].unique()
-query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
-df['query_id'] = df['query'].map(query_mapping)
-df = df.sort_values(by=['timestamp_increment', 'query_id'], ascending=[True, True])
-
-# Add a hue column with default params for all slice stores
-df['hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 
 
 # Define helper functions
@@ -180,6 +163,44 @@ def add_min_max_labels_per_group(data, group, metric, ax, param):
 
         sub = grouped[grouped[group] == group_type]
         add_min_max_labels(sub, metric, ax, param, y_offset, color)
+
+
+def find_default_values_for_params(df, all_config_params, min_support_ratio=0.99):
+    likely_defaults = {}
+
+    for param in all_config_params:
+        other_params = [p for p in all_config_params if p != param]
+
+        # Sum up the numbers of unique values across all other parameters for each value of this parameter
+        grouped = df.groupby(param)[other_params].nunique().sum(axis=1)
+
+        # Get most widely used value and all other values that occur with a similar frequency
+        max_usage = grouped.max()
+        threshold = max_usage * min_support_ratio
+        defaults = grouped[grouped >= threshold].index.tolist()
+
+        likely_defaults[param] = defaults
+
+    return likely_defaults
+
+
+# Find all deault values for each config parameter
+default_param_values = find_default_values_for_params(df, all_config_params)
+
+# Find unique configs that both slice store types have in common
+default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
+file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
+common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
+common_config_dicts = common_configs.to_dict(orient='records')
+
+# Map long queries to short codes and sort by hue colmun values
+unique_queries = df['query'].unique()
+query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
+df['query_id'] = df['query'].map(query_mapping)
+df = df.sort_values(by=['timestamp_increment', 'query_id'], ascending=[True, True])
+
+# Add a hue column with default params
+df['hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 
 
 # %% Compare slice store types for different configs
@@ -439,7 +460,7 @@ for param in shared_config_params:
 
 def plot_file_backed_params(data, param, metric, hue, label, color):
     # Select one specific default config
-    data = data[data['query'] == default_query]
+    # data = data[data['query'] == default_query]
     data = data[data['timestamp_increment'] == 1]
     data = data[data['match_rate'] == 90]
 
