@@ -21,27 +21,22 @@ from scipy.interpolate import interp1d
 
 
 # Load the CSV file
-df = pd.read_csv("data/amd/2025-06-14_16-43-59/combined_benchmark_statistics.csv")
+df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv")
 
 # Define configuration parameters
 shared_config_params = [
     'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads',
-    'page_size', 'query', 'timestamp_increment' #, 'match_rate'
+    'page_size', 'query', 'timestamp_increment', 'match_rate'
 ]
 
 file_backed_config_params = [
     'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
-    'min_read_state_size', 'min_write_state_size', 'num_watermark_gaps_allowed', 'watermark_predictor_type',
-    #'lower_memory_bound', 'upper_memory_bound'
+    'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'watermark_predictor_type',
+    'lower_memory_bound', 'upper_memory_bound'
 ]
 
 default_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
                  'WINDOW SLIDING (timestamp, size 1000000000 ms, advance by 1000000000 ms) INTO csv_sink'
-
-# Map long queries to short codes
-unique_queries = df['query'].unique()
-query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
-df['query_id'] = df['query'].map(query_mapping)
 
 # Find unique configs that both slice store types have in common
 all_config_params = shared_config_params + file_backed_config_params
@@ -49,6 +44,15 @@ default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].dro
 file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_params].drop_duplicates()
 common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
 common_config_dicts = common_configs.to_dict(orient='records')
+
+# Map long queries to short codes and sort by default params
+unique_queries = df['query'].unique()
+query_mapping = {q: i for i, q in enumerate(unique_queries, start=1)}
+df['query_id'] = df['query'].map(query_mapping)
+df = df.sort_values(by=['timestamp_increment', 'query_id'], ascending=[True, True])
+
+# Add a hue column with default params for all slice stores
+df['hue'] = df['slice_store_type'].astype(str) + ' | Q' + df['query_id'].astype(str) + ' | ' + df['timestamp_increment'].astype(str)
 
 
 # Define helper functions
@@ -131,6 +135,16 @@ def expand_constant_params_for_groups(data, param, group, exclude_group_val=[]):
         data = pd.concat([data] + rows_to_add, ignore_index=True)
 
     return data
+
+
+def add_query_fig_text(ax):
+    _, labels = ax.get_legend_handles_labels()
+    query_ids = [lbl.split(' | ')[1][1:] for lbl in labels]
+
+    mapping_text = "\n".join([f"Q{v}: {k}" for k, v in query_mapping.items() if str(v) in query_ids])
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.2)
+    plt.figtext(0.0, 0.0, mapping_text, wrap=True, ha='left', fontsize=9)
 
 
 def add_min_max_labels(data, metric, ax, param, y_offset, color):
@@ -371,100 +385,100 @@ for config in configs:
 
 # %% Shared parameter plots
 
-def plot_shared_params(data, param, metric, hue, label):
+def plot_shared_params(data, param, metric, hue, label, legend):
     data = data[data['buffer_size_in_bytes'] <= 131072]
     data = data[data['page_size'] <= 131072]
     data = data[data['ingestion_rate'] <= 10000]
     data = data[data['timestamp_increment'] <= 10000]
+    if param != 'match_rate':
+        data = data[data['match_rate'] == 90]
 
-    data_scaled, unit = convert_units(data, metric)
+    data_scaled, metric_unit = convert_units(data, metric)
 
     if param == 'query':
         # Sort data by whether or not the query contained variable sized data
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-        data_scaled = data_scaled.sort_values(by='var_sized_data', ascending=False)
-        hue = 'timestamp_increment'
+        data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
+
+        data_scaled['hue'] = data_scaled['slice_store_type'].astype(str) + ' | ' + data_scaled['timestamp_increment'].astype(str)
+        data_scaled['query_id'] = data_scaled['query_id'].astype(str)
+        legend = 'Slice Store | Time Increment'
         param = 'query_id'
+    if param == 'timestamp_increment':
+        data_scaled['hue'] = data_scaled['slice_store_type'].astype(str) + ' | Q' + data_scaled['query_id'].astype(str)
+        legend = 'Slice Store | Query'
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
-    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
+        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
-    # Add labels for min and max values of metric for this param for each slice store type
-    add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+        # Add labels for min and max values of metric for this param for each value of hue
+        add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+    else:
+        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
 
+    # Add legend below
     if param == 'query_id':
-        # Add legend below
         mapping_text = "\n".join([f"{v}: {k}" for k, v in query_mapping.items()])
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.35)
         plt.figtext(0.0, -0.65, mapping_text, wrap=True, ha='left', fontsize=9)
-        param = 'query'
+    else:
+        add_query_fig_text(ax)
 
     plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() else param)
-    plt.ylabel(f'{label} ({unit})')
-    plt.legend(title='Slice Store Type')
+    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
+    plt.ylabel(f'{label} ({metric_unit})')
+    plt.legend(title=legend)
     plt.show()
 
 
 print(f"number of queries: {len(df['query'].unique())}")
 print(f"number of timestamp increments: {len(df['timestamp_increment'].unique())}")
-df['hue'] = df['slice_store_type'].astype(str) + ' | ' + df['query_id'].astype(str) + ' | ' + df['timestamp_increment'].astype(str)
 for param in shared_config_params:
-    plot_shared_params(df, param, 'throughput_data', 'hue', 'Throughput / sec')
-    plot_shared_params(df, param, 'memory', 'hue', 'Memory')
+    plot_shared_params(df, param, 'throughput_data', 'hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
+    plot_shared_params(df, param, 'memory', 'hue', 'Memory', 'Slice Store | Query | Time Increment')
 
 
 # %% File-Backed-Only parameter plots
 
 def plot_file_backed_params(data, param, metric, hue, label, color):
-    data_scaled = data.copy()
-    param_unit = ''
-
     # Select one specific default config
-    data_scaled = data_scaled[data_scaled['query'] == default_query]
-    data_scaled = data_scaled[data_scaled['timestamp_increment'] == 1]
+    data = data[data['query'] == default_query]
+    data = data[data['timestamp_increment'] == 1]
+    data = data[data['match_rate'] == 90]
 
-    data_scaled = data_scaled[data_scaled['file_descriptor_buffer_size'] <= 131072]
-    data_scaled = data_scaled[data_scaled['file_operation_time_delta'] <= 100]
-    data_scaled = data_scaled[data_scaled['num_watermark_gaps_allowed'] <= 100]
+    data = data[data['file_descriptor_buffer_size'] <= 131072]
+    data = data[data['file_operation_time_delta'] <= 100]
+    data = data[data['num_watermark_gaps_allowed'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
-    #    data_scaled = data_scaled[data_scaled['max_memory_consumption'] <= 4294967296]
+    #    data = data[data['max_memory_consumption'] <= 4294967296]
     if param == 'max_num_sequence_numbers':
-        data_scaled = data_scaled[data_scaled['max_num_sequence_numbers'] <= 1000]
+        data = data[data['max_num_sequence_numbers'] <= 1000]
 
-    data_scaled, metric_unit = convert_units(data_scaled, metric)
+    data_scaled, metric_unit = convert_units(data, metric)
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
-        if hue is not None:
-            ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', palette=('dark:' + color))
+        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', palette=('dark:' + color))
 
-            # Add labels for min and max values of metric for this param for each value of hue
-            add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
-        else:
-            ax = sns.lineplot(data=data_scaled, x=param, y=metric, errorbar='sd', marker='o', color=color)
-
-            # Add labels for min and max values of metric for this param
-            grouped = data_scaled.groupby(param)[metric].mean().reset_index()
-            add_min_max_labels(grouped, metric, ax, param, 0, color)
+        # Add labels for min and max values of metric for this param for each value of hue
+        add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
     else:
-        if hue is not None:
-            #sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
-            ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=data_scaled[hue].astype(str), palette=('dark:' + color))
+        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
 
-            handles, labels = ax.get_legend_handles_labels()
-            custom_labels = [f"{scaled_df[hue].iloc[0]:.1f} {label_unit}" for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
-            ax.legend(handles, custom_labels, title='Max Memory')
-        else:
-            sns.boxplot(data=data_scaled, x=param, y=metric, color=color)
+        handles, labels = ax.get_legend_handles_labels()
+        custom_labels = [f"{scaled_df[hue].iloc[0]:.1f} {label_unit}" for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
+        ax.legend(handles, custom_labels, title='Max Memory')
+
+    add_query_fig_text(ax)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
-    plt.xlabel(f'{param} ({param_unit})' if param_unit != '' else param)
+    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} ({metric_unit})')
+    plt.legend(title='Slice Store | Query | Time Increment')
     plt.show()
 
 
@@ -477,10 +491,8 @@ for param in file_backed_config_params:
     #elif param == 'memory_model':
     #    hue = 'max_memory_consumption'
         #hue = 'max_memory_consumption_cat'
-    #else:
-    hue = None
-    plot_file_backed_params(file_backed_data, param, 'throughput_data', hue, 'Throughput / sec', 'blue')
-    plot_file_backed_params(file_backed_data, param, 'memory', hue, 'Memory', 'orange')
+    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'hue', 'Throughput / sec', 'blue')
+    plot_file_backed_params(file_backed_data, param, 'memory', 'hue', 'Memory', 'orange')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time
