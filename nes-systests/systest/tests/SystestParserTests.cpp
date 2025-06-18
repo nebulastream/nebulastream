@@ -132,7 +132,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
 TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
 {
     SystestParser parser{};
-    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp";
+    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp INLINE";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
 
@@ -153,7 +153,6 @@ TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
             callbackCalled = true;
         });
-    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -205,6 +204,11 @@ TEST_F(SystestParserTest, testSubstitutionRule)
         callbackCalled = true;
     };
     parser.registerOnQueryCallback(callback);
+    parser.registerOnResultTuplesCallback(
+        [&](const std::vector<std::string>&, const SystestQueryId)
+        {
+            /// nop
+        });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
