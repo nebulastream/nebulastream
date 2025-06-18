@@ -67,13 +67,13 @@ namespace NES
 
 
         auto scanSelection = ScanPhysicalOperator(
-            memoryProviderOutCol,
+            memoryProviderInCol,
             schemaOutCol.getFieldNames()); ///have all fields in memProvider but only used ones in projections
         auto handlerId = getNextOperatorHandlerId();
         auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
 
         auto scanSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            scanSelection, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN); ///TODO: outputSchema schemaOutCol?
+            scanSelection, schemaInCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN); ///TODO: outputSchema schemaOutCol?
 
         auto emitSelectionWrapper = std::make_shared<PhysicalOperatorWrapper>(
             emitSelection, schemaOutCol, schemaOutCol, handlerId, std::make_shared<EmitOperatorHandler>(),
@@ -81,11 +81,11 @@ namespace NES
 
 
         handlerId = getNextOperatorHandlerId();
-        auto scanRow = ScanPhysicalOperator(memoryProviderInRow, schemaOut.getFieldNames());
+        auto scanRow = ScanPhysicalOperator(memoryProviderInRow, schemaIn.getFieldNames());
         auto emitRow = EmitPhysicalOperator(handlerId, memoryProviderOutRow);
 
         auto scanWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
-            scanRow, schemaIn, schemaOut, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+            scanRow, schemaIn, schemaIn, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
         auto emitWrapperRow = std::make_shared<PhysicalOperatorWrapper>(
             emitRow, schemaOut, schemaOut, handlerId, std::make_shared<EmitOperatorHandler>(), PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -94,12 +94,12 @@ namespace NES
 
         handlerId = getNextOperatorHandlerId();
         auto scanCol = ScanPhysicalOperator(memoryProviderOutCol, schemaOutCol.getFieldNames());
-        auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
+        auto emitCol = EmitPhysicalOperator(handlerId, memoryProviderInCol);
 
         auto scanWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
             scanCol, schemaOutCol, schemaOutCol, PhysicalOperatorWrapper::PipelineLocation::SCAN);
         auto emitWrapperCol = std::make_shared<PhysicalOperatorWrapper>(
-            emitCol, schemaOutCol, schemaOutCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            emitCol, schemaInCol, schemaInCol, handlerId, std::make_shared<EmitOperatorHandler>(),  PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
 
         auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -123,4 +123,3 @@ namespace NES
         return {emitWrapperRow, scanWrapperRow};
     }
 }
-
