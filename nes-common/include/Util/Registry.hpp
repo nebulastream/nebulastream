@@ -14,19 +14,21 @@
 
 #pragma once
 #include <algorithm>
+#include <concepts>
 #include <functional>
-#include <memory>
 #include <optional>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
 
 /// The registry singleton allows registration of factory methods to produce a certain type.
 /// There exists multiple distinct registries for different types.
-template <typename Registrar>
+template <typename Registrar, bool CaseSensitive = false>
 class Registry
 {
 public:
@@ -42,7 +44,18 @@ public:
     template <typename Arguments>
     [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Arguments&& args) const
     {
-        if (const auto entry = registryImpl.find(key); entry != registryImpl.end())
+        auto transformedKey = [&]()
+        {
+            if constexpr (
+                !CaseSensitive && std::convertible_to<typename Registrar::KeyType, std::string_view>
+                && std::constructible_from<typename Registrar::KeyType, std::string_view>)
+            {
+                return typename Registrar::KeyType(NES::Util::toUpperCase(static_cast<std::string_view>(key)));
+            }
+            return key;
+        }();
+
+        if (const auto entry = registryImpl.find(transformedKey); entry != registryImpl.end())
         {
             /// Call the creator function of the entry.
             return entry->second(std::forward<Arguments>(args));
@@ -87,14 +100,14 @@ class Registrar
     using ReturnType = ReturnTypeT;
     using CreatorFn = std::function<ReturnType(Arguments)>;
     static void registerAll(Registry<Registrar>& registry);
-    template <typename Registrar>
+    template <typename Registrar, bool>
     friend class Registry;
 };
 
 /// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
 /// if custom member functions are added to the concrete registry class.
-template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments>
-class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments, bool CaseSensitive = false>
+class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>, CaseSensitive>
 {
     BaseRegistry() = default;
 
