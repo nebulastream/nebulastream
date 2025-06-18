@@ -44,6 +44,7 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
 NUM_RUNS_PER_CONFIG = 3
+NUM_RETRIES_PER_RUN = 3
 WAIT_BEFORE_SIGKILL = 5
 WAIT_BEFORE_QUERY_STOP = 5
 MEASURE_INTERVAL = 8
@@ -402,56 +403,81 @@ if __name__ == "__main__":
         clear_build_dir()
         compile_project()
 
-    # Running all benchmarks
-    output_folders = []
-    iteration_times = []
-
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
-    num_configs = len(ALL_BENCHMARK_CONFIGS)
-    total_iterations = num_configs * NUM_RUNS_PER_CONFIG
-    print(f"Running each of the {num_configs} experiments {NUM_RUNS_PER_CONFIG} times, "
-          f"totaling {total_iterations} runs...\n")
 
-    for j in range(NUM_RUNS_PER_CONFIG):
-        for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=(j * num_configs + 1)):
-            start_time = time.time()
+    for attempt in range(NUM_RETRIES_PER_RUN):
+        num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
 
-            output_folders.append(run_benchmark(benchmark_config))
-            time.sleep(1)  # Sleep for a second to allow the system to clean up
+        # Running all benchmarks
+        output_folders = []
+        iteration_times = []
+        num_configs = len(ALL_BENCHMARK_CONFIGS)
+        total_iterations = num_configs * num_runs_per_config
+        print(f"Attempt {attempt + 1} of {NUM_RETRIES_PER_RUN} of running each of the {num_configs} experiments "
+              f"{num_runs_per_config} times, totaling {total_iterations} runs...\n")
 
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            iteration_times.append(elapsed_time)
+        for j in range(num_runs_per_config):
+            for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=(j * num_configs + 1)):
+                start_time = time.time()
 
-            # Calculate average time per iteration
-            avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
+                output_folders.append(run_benchmark(benchmark_config))
+                time.sleep(1)  # Sleep for a second to allow the system to clean up
 
-            # Estimate remaining time
-            remaining_iterations = total_iterations - i
-            remaining_time = remaining_iterations * avg_time_per_iteration
-            eta = datetime.timedelta(seconds=int(remaining_time))
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                iteration_times.append(elapsed_time)
 
-            # Calculate estimated finish time
-            finish_time = datetime.datetime.now() + eta
+                # Calculate average time per iteration
+                avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
 
-            # Print ETA and finish time in cyan
-            print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, "
-                  f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+                # Estimate remaining time
+                remaining_iterations = total_iterations - i
+                remaining_time = remaining_iterations * avg_time_per_iteration
+                eta = datetime.timedelta(seconds=int(remaining_time))
 
-    # Calling the postprocessing main
-    measurement_time = MEASURE_INTERVAL * 1000
-    startup_time = WAIT_BETWEEN_COMMANDS * 1000
-    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
-    post_processing = PostProcessing.PostProcessing(output_folders, measurement_time, startup_time,
-                                                    BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE, BENCHMARK_STATS_FILE,
-                                                    COMBINED_ENGINE_STATISTICS_FILE, COMBINED_BENCHMARK_STATISTICS_FILE,
-                                                    engine_stats_csv_path, benchmark_stats_csv_path)
-    post_processing.main()
+                # Calculate estimated finish time
+                finish_time = datetime.datetime.now() + eta
+
+                # Print ETA and finish time in cyan
+                print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, "
+                      f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+
+        # Calling the postprocessing main
+        measurement_time = MEASURE_INTERVAL * 1000
+        startup_time = WAIT_BETWEEN_COMMANDS * 1000
+        engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
+        post_processing = PostProcessing.PostProcessing(output_folders,
+                                                        measurement_time,
+                                                        startup_time,
+                                                        BENCHMARK_CONFIG_FILE,
+                                                        ENGINE_STATS_FILE,
+                                                        BENCHMARK_STATS_FILE,
+                                                        COMBINED_ENGINE_STATISTICS_FILE,
+                                                        COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                        engine_stats_csv_path,
+                                                        benchmark_stats_csv_path)
+        failed_run_folders = post_processing.main()
+
+        # Re-running all runs that failed
+        if not failed_run_folders:
+            print("All benchmarks completed successfully.")
+            break
+        else:
+            print(f"{len(failed_run_folders)} runs failed. Retrying...")
+            ALL_BENCHMARK_CONFIGS = [
+                BenchmarkConfig.BenchmarkConfig(**{k: v for k, v in yaml.safe_load(
+                    open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')).items() if
+                        k not in {"task_queue_size", "buffers_in_global_buffer_manager", "buffers_per_worker",
+                                  "buffers_in_source_local_buffer_pool", "execution_mode"}})
+                for failed_run in failed_run_folders
+            ]
+    else:
+        print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
     copy_command = f"scp -r {SERVER_NAME}:{results_path} {DESTINATION_PATH}"
-    print(f"Done processing. Size of results is {format_data_size(get_directory_size(results_path))}. "
-          f"Copy with:\n{copy_command}")
+    print(f"\n\033[96mSize of results is {format_data_size(get_directory_size(results_path))}. "
+          f"Copy with:\n{copy_command}\033[0m")
 
     # print("\nStarting post processing...\n")
     # # Compare the results of default slice store and file backed variant
