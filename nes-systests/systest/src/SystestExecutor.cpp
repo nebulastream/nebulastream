@@ -433,7 +433,10 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
         {
             std::stringstream outputMessage;
             outputMessage << "No queries were run.";
-            return {.returnType = SystestExecutorResult::ReturnType::FAILED, .outputMessage = outputMessage.str()};
+            return {
+                .returnType = SystestExecutorResult::ReturnType::FAILED,
+                .outputMessage = outputMessage.str(),
+                .errorCode = ErrorCode::TestException};
         }
 
         if (config.endlessMode)
@@ -442,7 +445,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = "Endless mode should not stop.",
-                .errorCode = UnknownException().code()};
+                .errorCode = ErrorCode::TestException};
         }
 
         if (config.randomQueryOrder)
@@ -491,7 +494,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = outputMessage.str(),
-                .errorCode = QueryStatusFailed().code()};
+                .errorCode = ErrorCode::QueryStatusFailed};
         }
         std::stringstream outputMessage;
         outputMessage << '\n' << "All queries passed.";
@@ -506,6 +509,9 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             .outputMessage = fmt::format("Failed with exception code: {}", currentErrorCode),
             .errorCode = currentErrorCode};
     }
-    return {.returnType = SystestExecutorResult::ReturnType::FAILED, .outputMessage = "Fatal error, should never reach this point."};
+    return {
+        .returnType = SystestExecutorResult::ReturnType::FAILED,
+        .outputMessage = "Fatal error, should never reach this point.",
+        .errorCode = ErrorCode::UnknownException};
 }
 }
