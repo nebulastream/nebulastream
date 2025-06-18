@@ -52,7 +52,7 @@ jobs:
           python3 scripts/clang-tidy-summary.py .clang-tidy clang-tidy.log --summary-json clang-tidy-summary.json >> $GITHUB_STEP_SUMMARY
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ failure() && !cancelled() }}
         with:
           name: clang-tidy-logs
           path: clang-tidy*
