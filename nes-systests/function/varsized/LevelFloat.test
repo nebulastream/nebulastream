@@ -1,0 +1,16 @@
+Source floatStream FLOAT64 value INLINE
+1.0
+2.0
+
+SINK floatSink FLOAT64 floatStream$value
+SINK leveledFloatSink FLOAT64 floatStream$leveledFloat
+
+SELECT value FROM floatStream INTO floatSink
+----
+1.0
+2.0
+
+SELECT LevelFloat(value) AS leveledFloat FROM floatStream INTO leveledFloatSink
+----
+1.0
+1.0
