@@ -225,3 +225,4 @@ CheckOptions:
   readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
   readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h'

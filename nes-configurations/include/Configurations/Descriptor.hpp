@@ -206,6 +206,14 @@ private:
         {
             return std::stoul(stringParameter);
         }
+        else if constexpr (std::is_same_v<T, int64_t>)
+        {
+            return std::stoll(stringParameter);
+        }
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            return std::stoull(stringParameter);
+        }
         else if constexpr (std::is_same_v<T, bool>)
         {
             using namespace std::literals::string_view_literals;
@@ -341,6 +349,18 @@ struct Descriptor
             return std::get<typename ConfigParameter::Type>(value);
         }
         NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        return std::nullopt;
+    }
+
+    template <typename ConfigParameterType>
+    std::optional<ConfigParameterType> tryGetFromConfig(const std::string& configParameter) const
+    {
+        if (config.contains(configParameter) && std::holds_alternative<ConfigParameterType>(config.at(configParameter)))
+        {
+            const auto& value = config.at(configParameter);
+            return std::get<ConfigParameterType>(value);
+        }
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameterType).name());
         return std::nullopt;
     }
 

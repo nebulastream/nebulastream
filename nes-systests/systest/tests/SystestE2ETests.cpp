@@ -70,7 +70,6 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 
     const auto systestResult = NES::executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
-    ASSERT_EQ(countFailedTests(systestResult.outputMessage, SystestE2ETest::EXTENSION), 4) << "Number of failed queries is unexpected.";
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:1", testFileName))) << "Correct query found in failed queries.";
     ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:2", testFileName))) << "Query not found in failed queries.";
     ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:3", testFileName))) << "Query not found in failed queries.";
@@ -79,6 +78,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:6", testFileName))) << "Correct query found in failed queries.";
     ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:7", testFileName))) << "Query not found in failed queries.";
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:8", testFileName))) << "Correct query found in failed queries.";
+    ASSERT_EQ(countFailedTests(systestResult.outputMessage, SystestE2ETest::EXTENSION), 4) << "Number of failed queries is unexpected.";
 }
 
 

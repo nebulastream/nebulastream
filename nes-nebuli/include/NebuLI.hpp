@@ -26,24 +26,9 @@
 #include <experimental/propagate_const>
 #include <GRPCClient.hpp>
 
-namespace NES
-{
-class LogicalPlan;
-}
-
-
 namespace NES::CLI
 {
 
-class LegacyOptimizer
-{
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-
-public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    LegacyOptimizer() = default;
-    explicit LegacyOptimizer(const std::shared_ptr<const SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
-};
 class Nebuli
 {
     std::experimental::propagate_const<std::shared_ptr<GRPCClient>> grpcClient;

@@ -39,6 +39,7 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
+#include <LegacyOptimizer.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 

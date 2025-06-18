@@ -41,8 +41,7 @@ struct SystestExecutorResult
 namespace NES
 {
 
-void runEndlessMode(
-    std::vector<Systest::SystestQuery> queries, Configuration::SystestConfiguration& config, const Systest::QueryResultMap& queryResultMap);
+void runEndlessMode(std::vector<Systest::SystestQuery> queries, Configuration::SystestConfiguration& config);
 void loadConfig(const argparse::ArgumentParser& program, Configuration::SystestConfiguration& config);
 Configuration::SystestConfiguration readConfiguration(int argc, const char** argv);
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath);
