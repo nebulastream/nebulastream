@@ -179,7 +179,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-last.xml
           path: /junit.xml
 
   build-without-tests:
