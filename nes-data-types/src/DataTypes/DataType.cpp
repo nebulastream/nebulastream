@@ -13,6 +13,8 @@
 */
 #include <DataTypes/DataType.hpp>
 
+#include <DataTypes/DataType.hpp>
+
 #include <cstdint>
 #include <optional>
 #include <ostream>
@@ -300,9 +302,15 @@ bool DataType::isNumeric() const
 
 std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
-    if (this->type == Type::UNDEFINED or this->type == Type::VARSIZED)
+    /// the join result of joining with undefined is undefined
+    if (this->type == Type::UNDEFINED)
     {
         return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
+    }
+    /// both data types need to be varsized to join them
+    if (this->type == Type::VARSIZED)
+    {
+        return {DataTypeProvider::provideDataType((otherDataType.isType(Type::VARSIZED)) ? Type::VARSIZED : Type::UNDEFINED)};
     }
 
     if (this->isNumeric())
