@@ -22,6 +22,7 @@
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -34,6 +35,16 @@ RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOpera
     auto fieldName = map.getMapFunction().getField().getFieldName();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+
+    if (conf.useSingleMemoryLayout.getValue())
+    {
+        auto res = addSwapOperators(logicalOperator, physicalOperator, conf);
+        auto root = res.first;
+        auto leaf = res.second;
+        return {.root = root, .leafs = {leaf}};
+        
+    }
+    
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         logicalOperator.getInputSchemas()[0],

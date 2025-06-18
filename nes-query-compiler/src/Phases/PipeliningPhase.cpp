@@ -73,6 +73,7 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
+
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
     return newPipeline;
 }
