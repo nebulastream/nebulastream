@@ -354,7 +354,7 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::INVALID:
-                throw TestException(
+                throw SLTUnexpectedToken(
                     "Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
             case TokenType::ERROR_EXPECTATION:
                 throw TestException(
@@ -397,7 +397,7 @@ std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialTok
     {
         return it->second;
     }
-    return std::nullopt;
+    return TokenType::INVALID;
 }
 
 bool SystestParser::moveToNextToken()
