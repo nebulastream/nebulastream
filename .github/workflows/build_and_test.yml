@@ -77,7 +77,7 @@ jobs:
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
@@ -85,18 +85,32 @@ jobs:
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
         sanitizer: [ 'asan', 'ubsan', 'tsan', 'none' ]
+        # due to limited capacity:
         exclude:
-          # Due to limited capacity, we disable libstdc++ tests on arm machines
+          # no libstdcxx tests on arm
           - arch: arm64
             stdlib: 'libstdcxx'
+          # no sanitized tests on arm
           - arch: arm64
             sanitizer: 'asan'
-          # Due to limited capacity, we disable sanitized tests on arm machines
           - arch: arm64
             sanitizer: 'tsan'
           - arch: arm64
             sanitizer: 'ubsan'
-          # we only run sanitizers with self-built, sanitized libcxx
+          # no Release tests on arm
+          - arch: arm64
+            build_type: Release
+          # no sanitized Release tests on x64
+          - arch: x64
+            build_type: Release
+            sanitizer: asan
+          - arch: x64
+            build_type: Release
+            sanitizer: tsan
+          - arch: x64
+            build_type: Release
+            sanitizer: ubsan
+          # also only only run sanitizers with self-built, sanitized libcxx
           - arch: x64
             stdlib: libstdcxx
             sanitizer: asan
