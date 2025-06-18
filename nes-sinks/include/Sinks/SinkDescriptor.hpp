@@ -41,6 +41,13 @@ class SinkCatalog;
 namespace NES
 {
 
+enum class OutOfOrderPolicy : uint8_t
+{
+    ALLOW,
+    ENFORCE,
+    DROP
+};
+
 enum class InputFormat : uint8_t
 {
     CSV,

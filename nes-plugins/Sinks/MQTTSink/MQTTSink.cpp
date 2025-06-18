@@ -24,6 +24,7 @@
 #include <mqtt/async_client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
+#include "Sequencing/Sequencer.hpp"
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -37,6 +38,54 @@
 
 namespace NES
 {
+
+struct OOPolicy
+{
+    virtual ~OOPolicy() = default;
+    virtual bool isNext(TupleBuffer buffer) = 0;
+    virtual std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer& buffer) = 0;
+};
+
+struct Allow final : OOPolicy
+{
+    bool isNext(TupleBuffer) override { return true; }
+
+    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer&) override { return {}; }
+};
+
+struct Enforce final : OOPolicy
+{
+    Sequencer<TupleBuffer> sequencer;
+
+    bool isNext(TupleBuffer buffer) override
+    {
+        return sequencer.isNext(SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()), std::move(buffer))
+            .has_value();
+    }
+
+    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer& buffer) override
+    {
+        return sequencer.advanceAndGetNext(SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()));
+    }
+};
+
+struct Drop final : OOPolicy
+{
+    folly::Synchronized<SequenceData> lastMutex{SequenceData(INVALID_SEQ_NUMBER, INVALID_CHUNK_NUMBER, true)};
+
+    bool isNext(TupleBuffer buffer) override
+    {
+        auto last = lastMutex.wlock();
+        if (*last < SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()))
+        {
+            *last = SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk());
+            return true;
+        }
+        return false;
+    }
+
+    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer&) override { return {}; }
+};
 
 MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
@@ -56,7 +105,23 @@ MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
+    switch (auto oopolicy = sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::OUT_OF_ORDER_POLICY))
+    {
+        case OutOfOrderPolicy::ALLOW:
+            this->policy = std::make_unique<Allow>();
+            break;
+        case OutOfOrderPolicy::ENFORCE:
+            this->policy = std::make_unique<Enforce>();
+            break;
+        case OutOfOrderPolicy::DROP:
+            this->policy = std::make_unique<Drop>();
+            break;
+        default:
+            throw UnknownSinkFormat(fmt::format("Out of Order policy: {} not supported.", magic_enum::enum_name(oopolicy)));
+    }
 }
+
+MQTTSink::~MQTTSink() = default;
 
 std::ostream& MQTTSink::toString(std::ostream& str) const
 {
@@ -94,22 +159,28 @@ void MQTTSink::stop(PipelineExecutionContext&)
 
 void MQTTSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
-    if (inputBuffer.getNumberOfTuples() == 0)
+    if (policy->isNext(inputBuffer))
     {
-        return;
-    }
+        auto nextBuffer = std::make_optional(inputBuffer);
+        while (nextBuffer)
+        {
+            if (inputBuffer.getNumberOfTuples() != 0)
+            {
+                const std::string fBuf = formatter->getFormattedBuffer(*nextBuffer);
+                const mqtt::message_ptr message = mqtt::make_message(topic, fBuf);
+                message->set_qos(qos);
+                try
+                {
+                    client->publish(message)->wait();
+                }
+                catch (...)
+                {
+                    throw wrapExternalException();
+                }
+            }
 
-    const std::string fBuf = formatter->getFormattedBuffer(inputBuffer);
-    const mqtt::message_ptr message = mqtt::make_message(topic, fBuf);
-    message->set_qos(qos);
-
-    try
-    {
-        client->publish(message)->wait();
-    }
-    catch (...)
-    {
-        throw wrapExternalException();
+            nextBuffer = policy->advanceAndDoNext(*nextBuffer);
+        }
     }
 }
 

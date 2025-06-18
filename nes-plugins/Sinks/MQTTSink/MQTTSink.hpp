@@ -36,16 +36,17 @@
 namespace NES
 {
 
+struct OOPolicy;
 class MQTTSink : public Sink
 {
 public:
     static inline std::string NAME = "MQTT";
     explicit MQTTSink(const SinkDescriptor& sinkDescriptor);
-    ~MQTTSink() override = default;
+    ~MQTTSink() override;
 
     MQTTSink(const MQTTSink&) = delete;
-    MQTTSink& operator=(const MQTTSink&) = delete;
     MQTTSink(MQTTSink&&) = delete;
+    MQTTSink& operator=(const MQTTSink&) = delete;
     MQTTSink& operator=(MQTTSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -63,6 +64,7 @@ private:
     std::string topic;
     int32_t qos;
 
+    std::unique_ptr<OOPolicy> policy;
     std::unique_ptr<mqtt::async_client> client;
 
     std::unique_ptr<Format> formatter;
@@ -151,8 +153,16 @@ struct ConfigParametersMQTTSink
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 
+    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::OutOfOrderPolicy>
+        OUT_OF_ORDER_POLICY{
+            "outOfOrderPolicy",
+            Configurations::EnumWrapper(Configurations::OutOfOrderPolicy::ALLOW),
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return Configurations::DescriptorConfig::tryGet(OUT_OF_ORDER_POLICY, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, INPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SERVER_URI, CLIENT_ID, QOS, TOPIC, INPUT_FORMAT, OUT_OF_ORDER_POLICY);
 };
 
 }
