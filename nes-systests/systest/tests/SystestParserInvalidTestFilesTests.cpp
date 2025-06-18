@@ -91,4 +91,22 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
+TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
+
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+
+
+    const SystestStarterGlobals systestStarterGlobals{};
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }
