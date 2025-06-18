@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -146,7 +147,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
 
     if (copy.fieldAccess.getDataType().isType(DataType::Type::UNDEFINED))
     {
-        copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
+        copy.fieldAccess = copy.fieldAccess.withDataType(copy.logicalFunction.getDataType()).get<FieldAccessLogicalFunction>();
     }
     else
     {
@@ -159,7 +160,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
             copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
         }
     }
-    copy.dataType = copy.getAssignment().getDataType();
+    copy.dataType = copy.fieldAccess.getDataType();
     return copy;
 }
 

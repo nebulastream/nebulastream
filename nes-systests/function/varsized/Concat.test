@@ -1,0 +1,21 @@
+# name: selection/Selection_NotEquals.test
+# description: Simple selection tests
+# groups: [Selection]
+
+Source streamWithText VARSIZED text1 VARSIZED text2 VARSIZED text3 INLINE
+test1.1,test2.1,+
+test1.2,test2.2,+
+
+SINK sinkStreamWithConcatedText VARSIZED streamWithText$concatedText
+
+# Concat two varsized fields and project onto the result
+SELECT CONCAT(text1, text2) AS concatedText FROM streamWithText INTO sinkStreamWithConcatedText
+----
+test1.1test2.1
+test1.2test2.2
+
+# Concat two varsized fields and project onto the result
+SELECT CONCAT(CONCAT(text1, text3), text2) AS concatedText FROM streamWithText INTO sinkStreamWithConcatedText
+----
+test1.1+test2.1
+test1.2+test2.2
