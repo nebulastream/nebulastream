@@ -23,17 +23,15 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterDescriptor.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
-#include <InputFormatterRegistry.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterTask.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <JSONInputFormatter.hpp>
 
 namespace
