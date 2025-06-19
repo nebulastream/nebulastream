@@ -23,7 +23,7 @@ TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
 INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 50, 30, 10, 0, 101, 99, 90]  # match rate in percent, values > 100 simply use a counter for every server
 
-# Worker configuration parameters
+# Shared worker configuration parameters
 NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1]
 BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 PAGE_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
@@ -41,8 +41,9 @@ WINDOW_SIZE_SLIDE = [
     # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
     (10 * 1000, 100)
 ]
-
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
+
+# File-backed worker configuration parameters
 LOWER_MEMORY_BOUNDS = [0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
 UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024]
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
@@ -159,7 +160,12 @@ class BenchmarkConfig:
                  file_layout,
                  with_prediction,
                  watermark_predictor_type,
-                 query):
+                 query,
+                 task_queue_size=1000000,
+                 buffers_in_global_buffer_manager=200000,
+                 buffers_per_worker=20000,
+                 buffers_in_source_local_buffer_pool=1000,
+                 execution_mode="COMPILER"):
         self.timestamp_increment = timestamp_increment
         self.ingestion_rate = ingestion_rate
         self.match_rate = match_rate
@@ -181,11 +187,11 @@ class BenchmarkConfig:
         self.query = query
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
-        self.task_queue_size = 1000000
-        self.buffers_in_global_buffer_manager = 200000
-        self.buffers_per_worker = 20000
-        self.buffers_in_source_local_buffer_pool = 1000
-        self.execution_mode = "COMPILER"  # COMPILER or INTERPRETER
+        self.task_queue_size = task_queue_size
+        self.buffers_in_global_buffer_manager = buffers_in_global_buffer_manager
+        self.buffers_per_worker = buffers_per_worker
+        self.buffers_in_source_local_buffer_pool = buffers_in_source_local_buffer_pool
+        self.execution_mode = execution_mode  # COMPILER or INTERPRETER
 
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
