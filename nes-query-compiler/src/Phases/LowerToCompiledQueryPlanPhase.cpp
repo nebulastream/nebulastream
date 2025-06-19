@@ -148,6 +148,7 @@ getStage(const std::shared_ptr<Pipeline>& pipeline, Nautilus::Configurations::Ex
             INVARIANT(false, "Invalid backend");
         }
     }
+    options.setOption("mlir.enableMultithreading", false);
 
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }

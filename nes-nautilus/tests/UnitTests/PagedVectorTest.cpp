@@ -69,6 +69,7 @@ public:
         const bool compilation = (backend == Configurations::ExecutionMode::COMPILER);
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
+        options.setOption("mlir.enableMultithreading", false);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
         /// Getting a new random seed and then generating a random number for the no. items
