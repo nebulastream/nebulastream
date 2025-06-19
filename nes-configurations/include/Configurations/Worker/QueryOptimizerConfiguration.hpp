@@ -135,6 +135,7 @@ public:
            FileLayout::NO_SEPARATION,
            "File layout for file backed data structures "
            "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
+    NES::Configurations::BoolOption withPrediction = {"withPrediction", "false", "Predict watermarks for file backed slice store."};
     NES::Configurations::EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
@@ -163,6 +164,7 @@ private:
             &minWriteStateSize,
             &fileOperationTimeDelta,
             &fileLayout,
+            &withPrediction,
             &watermarkPredictorType,
             &fileBackedWorkingDir};
     }
