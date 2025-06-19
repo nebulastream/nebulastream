@@ -234,7 +234,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
                       f"-b {calculate_id_upper_bound_for_match_rate(current_benchmark_config)} " \
                       f"-g {generator_seed + j}"
                 # Disregard uniform int distribution and achieve true 100% match rate
-                if current_benchmark_config.match_rate >= 100:
+                if current_benchmark_config.match_rate > 100:
                     cmd += " -d"
                 # Add variable sized data flag to last two tcp servers
                 if port == starting_ports[-1] or port == starting_ports[-2]:
