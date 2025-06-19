@@ -204,7 +204,8 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
                 conf.minReadStateSize.getValue(),
                 conf.minWriteStateSize.getValue(),
                 conf.fileOperationTimeDelta.getValue(),
-                conf.fileLayout.getValue()),
+                conf.fileLayout.getValue(),
+                conf.withPrediction.getValue()),
             MemoryControllerInfo(conf.fileBackedWorkingDir.getValue(), queryId, logicalOperator.getOutputOriginIds()[0]),
             conf.watermarkPredictorType,
             inputOriginIds);
