@@ -27,6 +27,7 @@
 #include <val.hpp>
 #include <function.hpp>
 
+
 namespace NES {
 
 VarVal TemporalIntersectsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
