@@ -27,6 +27,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <ThroughputListener.hpp>
 
 namespace NES
 {
@@ -38,7 +39,7 @@ struct PrintingStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    std::shared_ptr<PrintingStatisticListener> listener;
+    std::shared_ptr<ThroughputListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
     std::unique_ptr<QueryOptimizer> optimizer;

@@ -13,38 +13,49 @@
 */
 
 #pragma once
-
-#include <filesystem>
 #include <fstream>
 #include <thread>
-#include <type_traits>
-#include <variant>
-#include <Listeners/SystemEventListener.hpp>
+#include <Time/Timestamp.hpp>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
+#include "Listeners/SystemEventListener.hpp"
 
 template <typename Var1, typename Var2>
-struct FlattenVariantFoo;
+struct FlattenVariant;
 template <typename... Ts1, typename... Ts2>
-struct FlattenVariantFoo<std::variant<Ts1...>, std::variant<Ts2...>>
+struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
 {
     using type = std::variant<Ts1..., Ts2...>;
 };
 
 namespace NES
 {
-struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener
+
+struct ThroughputListener : public QueryEngineStatisticListener, SystemEventListener
 {
-    using CombinedEventType = FlattenVariantFoo<SystemEvent, Event>::type;
+public:
+    struct CallBackParams
+    {
+        const QueryId queryId;
+        const Timestamp windowStart;
+        const Timestamp windowEnd;
+        const double throughputInBytesPerSec;
+        const double throughputInTuplesPerSec;
+    };
+
+    using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
     void onEvent(Event event) override;
     void onEvent(SystemEvent event) override;
-
-    explicit PrintingStatisticListener(const std::filesystem::path& path);
+    explicit ThroughputListener(const std::filesystem::path& path);
     static_assert(std::is_default_constructible_v<CombinedEventType>);
 
 private:
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{100};
-    std::jthread printThread;
+    const Timestamp::Underlying timeIntervalInMilliSeconds;
+
+    /// We need to store the callback, as it might go out of scope
+    std::jthread calculateThread;
 };
+
 }
