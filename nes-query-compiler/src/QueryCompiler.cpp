@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler.hpp>
 
 #include <memory>
