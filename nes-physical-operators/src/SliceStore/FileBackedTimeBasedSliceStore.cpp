@@ -494,6 +494,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
 {
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     const auto sliceEnd = slice->getSliceEnd();
+    const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
     // TODO create threadId map, then try to acquire lock and if unsuccessful try other threadId until map is empty
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
@@ -508,9 +509,10 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         /// Only read from file if the slice was written out earlier for this build side
         if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
-            auto* const pagedVector
-                = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
+            auto* const pagedVector = nljSlice->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
+            nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            nljSlice->releaseCombinePagedVectorsLock();
         }
 
         slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
