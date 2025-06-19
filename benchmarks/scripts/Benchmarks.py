@@ -13,11 +13,17 @@
 # limitations under the License.
 
 
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+
+
+SERVER = 'amd'
+DIRECTORY = '2025-06-19_11-56-48'
+FILE = 'combined_benchmark_statistics.csv'
 
 
 # Define helper functions
@@ -112,7 +118,7 @@ def expand_constant_params_for_groups(data, param, group, exclude_group_val=[]):
 
 def add_query_fig_text(labels, adjust_bottom, text_y):
     query_ids = [lbl.split(' | ')[1] for lbl in labels]
-    mapping_text = "\n".join([f"{v}: {k}" for k, v in query_mapping.items() if v in query_ids])
+    mapping_text = '\n'.join([f'{v}: {k}' for k, v in query_mapping.items() if v in query_ids])
     plt.tight_layout()
     plt.subplots_adjust(bottom=adjust_bottom)
     plt.figtext(0.0, text_y, mapping_text, wrap=True, ha='left', fontsize=9)
@@ -172,67 +178,15 @@ def find_default_values_for_params(min_support_ratio=0.99):
 
     return likely_defaults
 
-dtypes = {
-    "timestamp_increment": "UInt64",
-    "ingestion_rate": "UInt64",
-    "match_rate": "UInt64",
-    "number_of_worker_threads": "UInt64",
-    "buffer_size_in_bytes": "UInt64",
-    "page_size": "UInt64",
-    "lower_memory_bound": "UInt64",
-    "upper_memory_bound": "UInt64",
-    "file_descriptor_buffer_size": "UInt64",
-    "max_num_watermark_gaps": "UInt64",
-    "max_num_sequence_numbers": "UInt64",
-    "min_read_state_size": "UInt64",
-    "min_write_state_size": "UInt64",
-    "file_operation_time_delta": "UInt64",
-    "file_layout": "str",
-    "with_prediction": "str",
-    "watermark_predictor_type": "str",
-    "query": "str"
-}
 
 # Load the CSV file
-df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv")
-# df = pd.read_csv("data/amd/2025-06-17_18-31-03/combined_benchmark_statistics.csv", dtype=dtypes)
-for col in df.select_dtypes(include='float'):
-    if not (df[col] % 1 == 0).all():
-        print(f"⚠️ Column '{col}' contains non-integer float values!")
-#print(df.select_dtypes(include='float').dtypes)
-#print(df.select_dtypes(include='float').isna().sum())
-
-print(df[['lower_memory_bound', 'upper_memory_bound']].describe())
-print(df[['lower_memory_bound', 'upper_memory_bound']].max())
-
-for col in ['lower_memory_bound', 'upper_memory_bound']:
-    non_ints = df[col][df[col] % 1 != 0]
-    if not non_ints.empty:
-        print(f"⚠️ Column '{col}' has non-integer values:")
-        print(non_ints)
-    else:
-        print(f"✅ Column '{col}' has only whole numbers.")
-print(df[['lower_memory_bound', 'upper_memory_bound']].isna().sum())
-max_uint64 = np.iinfo(np.uint64).max
-for col in ['lower_memory_bound', 'upper_memory_bound']:
-    too_large = df[col][df[col] > max_uint64]
-    if not too_large.empty:
-        print(f"⚠️ Column '{col}' has values exceeding UInt64 max:")
-        print(too_large)
-
-for col in ['lower_memory_bound', 'upper_memory_bound', 'max_num_sequence_numbers']:
-    # First, assert all values are really whole numbers
-    if not (df[col] % 1 == 0).all():
-        raise ValueError(f"Column {col} contains non-integer float values!")
-
-    # Convert safely: float → int → UInt64
-    df[col] = df[col].astype(np.uint64)
-#df['lower_memory_bound'] = df['lower_memory_bound'].fillna(0)
-#df['upper_memory_bound'] = df['upper_memory_bound'].fillna(0)
-#df = df[df['lower_memory_bound'].notna()]
-#df = df[df['upper_memory_bound'].notna()]
-#df['lower_memory_bound'] = df['lower_memory_bound'].astype('UInt64')
-#df['upper_memory_bound'] = df['upper_memory_bound'].astype('UInt64')
+dtypes = {
+    'lower_memory_bound': 'UInt64',
+    'upper_memory_bound': 'UInt64',
+    'max_num_sequence_numbers': 'UInt64',
+    'with_prediction': 'str'
+}
+df = pd.read_csv(os.path.join('data', SERVER, DIRECTORY, FILE), dtype=dtypes)
 
 # Define configuration parameters
 shared_config_params = [
@@ -257,12 +211,13 @@ common_config_dicts = common_configs.to_dict(orient='records')
 
 # Map long queries to short codes and sort by hue column values
 unique_queries = df['query'].unique()
-query_mapping = {q: f"Q{i}" for i, q in enumerate(unique_queries, start=1)}
+query_mapping = {q: f'Q{i}' for i, q in enumerate(unique_queries, start=1)}
 df['query_id'] = df['query'].map(query_mapping)
-df = df.sort_values(by=['timestamp_increment', 'query_id'], ascending=[True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id'], ascending=[True, True, True])
 
 # Add a hue column with default params
-df['hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
+df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
+df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 
 
 # %% Compare slice store types for different configs
@@ -284,8 +239,8 @@ def plot_config_comparison(data, configs, metric, label, config_id):
     sns.barplot(data=data_scaled, x=param, y=metric, hue='slice_store_type', errorbar='sd')
 
     # Add configs below
-    config_text = "\n".join(
-        [f"C{i}: " + ", ".join(f"{k}={v}" for k, v in config.items() if k in shared_config_params) for i, config in
+    config_text = '\n'.join(
+        [f'C{i}: ' + ', '.join(f'{k}={v}' for k, v in config.items() if k in shared_config_params) for i, config in
          enumerate(configs, start=config_id + 1)])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.5)
@@ -300,8 +255,8 @@ def plot_config_comparison(data, configs, metric, label, config_id):
 
 chunk_size = 25
 for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
-    print(f"Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of "
-          f"{len(common_config_dicts)})")
+    print(f'Plotting config chunk {i + 1} (configs {(i * 25) + 1}-{min((i + 1) * 25, len(common_config_dicts))} of '
+          f'{len(common_config_dicts)})')
     plot_config_comparison(df, config_chunk, 'throughput_data', 'Throughput / sec', i * chunk_size)
     plot_config_comparison(df, config_chunk, 'memory', 'Memory', i * chunk_size)
 
@@ -332,7 +287,7 @@ def interpolate_and_align_runs(data, param, metric, group_cols, output_points=10
             df_interp['slice_store_type'] = group['slice_store_type'].iloc[0]
             interpolated_dfs.append(df_interp)
         except Exception as e:
-            print(f"Interpolation failed for a run: {e}")
+            print(f'Interpolation failed for a run: {e}')
             continue
 
     return pd.concat(interpolated_dfs, ignore_index=True) if interpolated_dfs else pd.DataFrame()
@@ -349,7 +304,7 @@ def plot_time_comparison(data, config, metric, label, plot):
         return
 
     #if interpolated_data.empty:
-    #    print(f"No valid interpolated data for config: {config}")
+    #    print(f'No valid interpolated data for config: {config}')
     #    return
 
     if plot == 1:
@@ -384,7 +339,7 @@ def plot_time_comparison(data, config, metric, label, plot):
     add_min_max_labels_per_group(data, 'slice_store_type', metric, ax, param)
 
     # Add config below
-    mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
+    mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.15)
     plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
@@ -415,7 +370,7 @@ def plot_test(data, config, metric, label):
         add_min_max_labels_per_group(data, 'slice_store_type', metric, ax, param)
     
         # Add config below
-        mapping_text = "\n".join([f"{k}: {v}" for k, v in config.items() if k in shared_config_params])
+        mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.15)
         plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
@@ -450,10 +405,10 @@ specific_rows = df[df['dir_name'] == '.cache/benchmarks/2025-06-05_10-15-06/Spil
 specific_values = specific_rows[all_config_params].drop_duplicates()
 configs = specific_values.to_dict('records')
 
-filtered_data = filter_by_config(df, configs[0]).sort_values(by="window_start")
+filtered_data = filter_by_config(df, configs[0]).sort_values(by='window_start')
 
 #configs = [specific_config]
-#configs = [d for d in common_config_dicts if d["query"] == specific_query]
+#configs = [d for d in common_config_dicts if d['query'] == specific_query]
 
 plots = [1, 2, 3, 4]
 print(f'number of common configs: {len(configs)}')
@@ -471,8 +426,8 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     data = data[data['page_size'] <= 131072]
     data = data[data['ingestion_rate'] <= 10000]
     data = data[data['timestamp_increment'] <= 10000]
-    if param != 'match_rate':
-        data = data[data['match_rate'] == 90]
+    #if param != 'match_rate':
+     #   data = data[data['match_rate'] == 70]
 
     data = filter_by_default_values_except_param(data, param)
     data_scaled, metric_unit = convert_units(data, metric)
@@ -482,11 +437,11 @@ def plot_shared_params(data, param, metric, hue, label, legend):
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
         data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
 
-        data_scaled['hue'] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
+        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
         legend = 'Slice Store | Time Increment'
         param = 'query_id'
     if param == 'timestamp_increment':
-        data_scaled['hue'] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
+        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
         legend = 'Slice Store | Query'
 
     plt.figure(figsize=(14, 6))
@@ -512,30 +467,37 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     plt.show()
 
 
-print(f"number of queries: {len(df['query'].unique())}")
-print(f"number of timestamp increments: {len(df['timestamp_increment'].unique())}")
 for param in shared_config_params:
-    plot_shared_params(df, param, 'throughput_data', 'hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
-    plot_shared_params(df, param, 'memory', 'hue', 'Memory', 'Slice Store | Query | Time Increment')
+    plot_shared_params(df, param, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
+    plot_shared_params(df, param, 'memory', 'shared_hue', 'Memory', 'Slice Store | Query | Time Increment')
 
 
 # %% File-Backed-Only parameter plots
 
 def plot_file_backed_params(data, param, metric, hue, label, color):
-    # Select one specific default config
-    # data = data[data['query'] == default_query]
-    data = data[data['timestamp_increment'] == 1]
     data = data[data['match_rate'] == 90]
-
     data = data[data['file_descriptor_buffer_size'] <= 131072]
     data = data[data['file_operation_time_delta'] <= 100]
-    data = data[data['num_watermark_gaps_allowed'] <= 100]
+    data = data[data['max_num_watermark_gaps'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
     #    data = data[data['max_memory_consumption'] <= 4294967296]
-    if param == 'max_num_sequence_numbers':
-        data = data[data['max_num_sequence_numbers'] <= 1000]
+    #if param == 'max_num_sequence_numbers':
+    #    data = data[data['max_num_sequence_numbers'] <= 1000]
 
+    data = filter_by_default_values_except_param(data, param)
     data_scaled, metric_unit = convert_units(data, metric)
+
+    if param == 'lower_memory_bound':
+        # Sort data by whether or not the query contained variable sized data
+        data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
+        data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
+
+        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
+        legend = 'Slice Store | Time Increment'
+        param = 'query_id'
+    if param == 'upper_memory_bound':
+        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
+        legend = 'Slice Store | Query'
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
@@ -547,16 +509,21 @@ def plot_file_backed_params(data, param, metric, hue, label, color):
     else:
         ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
 
-        handles, labels = ax.get_legend_handles_labels()
-        custom_labels = [f"{scaled_df[hue].iloc[0]:.1f} {label_unit}" for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
-        ax.legend(handles, custom_labels, title='Max Memory')
+        #handles, labels = ax.get_legend_handles_labels()
+        #custom_labels = [f'{scaled_df[hue].iloc[0]:.1f} {label_unit}' for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
+        #ax.legend(handles, custom_labels, title='Max Memory')
 
-    add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
+    # Add legend below
+    if param in ['lower_memory_bound', 'upper_memory_bound']:
+        labels = ax.get_legend_handles_labels()[1]
+        add_query_fig_text(labels, 0.2, 0.0)
+    else:
+        add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} ({metric_unit})')
-    plt.legend(title='Slice Store | Query | Time Increment')
+    plt.legend(title='Query | Time Increment')
     plt.show()
 
 
@@ -569,8 +536,8 @@ for param in file_backed_config_params:
     #elif param == 'memory_model':
     #    hue = 'max_memory_consumption'
         #hue = 'max_memory_consumption_cat'
-    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'hue', 'Throughput / sec', 'blue')
-    plot_file_backed_params(file_backed_data, param, 'memory', 'hue', 'Memory', 'orange')
+    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'file_backed_hue', 'Throughput / sec', 'blue')
+    plot_file_backed_params(file_backed_data, param, 'memory', 'file_backed_hue', 'Memory', 'orange')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time
