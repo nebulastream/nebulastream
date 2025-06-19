@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <QueryCompiler.hpp>
+
 #include <memory>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryCompiler.hpp>
 
 namespace NES::QueryCompilation
 {
