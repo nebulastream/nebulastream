@@ -74,6 +74,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const bool compilation = (backend == ExecutionMode::COMPILER);
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
+    options.setOption("mlir.enableMultithreading", false);
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
     /// Creating a combined schema with the keys and value types.
