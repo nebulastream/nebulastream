@@ -41,8 +41,9 @@ NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const u
     }
 }
 
-uint64_t NLJSlice::getNumberOfTuplesLeft() const
+uint64_t NLJSlice::getNumberOfTuplesLeft()
 {
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     return std::accumulate(
         leftPagedVectors.begin(),
         leftPagedVectors.end(),
@@ -50,8 +51,9 @@ uint64_t NLJSlice::getNumberOfTuplesLeft() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-uint64_t NLJSlice::getNumberOfTuplesRight() const
+uint64_t NLJSlice::getNumberOfTuplesRight()
 {
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     return std::accumulate(
         rightPagedVectors.begin(),
         rightPagedVectors.end(),

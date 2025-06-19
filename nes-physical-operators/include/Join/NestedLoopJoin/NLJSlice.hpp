@@ -33,8 +33,8 @@ public:
     NLJSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfWorkerThreads);
 
     /// Returns the number of tuples in this slice on either side.
-    [[nodiscard]] uint64_t getNumberOfTuplesLeft() const;
-    [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
+    [[nodiscard]] uint64_t getNumberOfTuplesLeft();
+    [[nodiscard]] uint64_t getNumberOfTuplesRight();
 
     /// Returns the pointer to the PagedVector on either side.
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
