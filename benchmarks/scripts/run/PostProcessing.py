@@ -104,9 +104,15 @@ class PostProcessing:
         print(f"Found {len(statistic_files)} benchmark statistic files in {os.path.dirname(self.input_folders[0])}")
         combined_df = pd.DataFrame()
 
+        dtype_map = {
+            'max_num_sequence_numbers': 'UInt64',
+            'lower_memory_bound': 'UInt64',
+            'upper_memory_bound': 'UInt64'
+        }
+
         for idx, [input_folder, stat_file] in enumerate(statistic_files):
             # print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
-            df = pd.read_csv(stat_file)
+            df = pd.read_csv(stat_file, dtype=dtype_map)
 
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
