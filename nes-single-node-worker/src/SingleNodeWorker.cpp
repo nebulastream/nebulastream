@@ -85,6 +85,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     }
     catch (Exception& e)
     {
+        tryLogCurrentException();
         return std::unexpected(e);
     }
 }
