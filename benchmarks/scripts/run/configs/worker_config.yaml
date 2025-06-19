@@ -17,6 +17,7 @@ worker:
     minWriteStateSize: 0
     fileOperationTimeDelta: 0
     fileLayout: NO_SEPARATION
+    withPrediction: true
     watermarkPredictorType: KALMAN
     fileBackedWorkingDir: ""
 

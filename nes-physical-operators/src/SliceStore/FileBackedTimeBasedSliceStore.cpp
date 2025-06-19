@@ -300,8 +300,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const UpdateSlicesMetaData& metaData)
 {
     const auto& [timestamp, seqNumber, originId] = metaData.bufferMetaData;
-    watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
-    if (isExponential(++watermarkPredictorUpdateCnt[originId]))
+    const auto watermark
+        = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
+    if (sliceStoreInfo.withPrediction and isExponential(++watermarkPredictorUpdateCnt[originId]))
     {
         updateWatermarkPredictor(originId);
     }
@@ -309,7 +310,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, threadId, joinBuildSide))
+    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
         if (slice == nullptr)
         {
@@ -369,6 +370,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const Timestamp watermark,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
@@ -386,7 +388,8 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     }
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.lowerMemoryBound)
     {
-        return updateSlicesProactiveWithPrediction(memoryLayout, threadId, joinBuildSide);
+        return sliceStoreInfo.withPrediction ? updateSlicesProactiveWithPrediction(memoryLayout, threadId, joinBuildSide)
+                                             : updateSlicesProactiveWithoutPrediction(watermark, threadId, joinBuildSide);
     }
 
     return std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>{};

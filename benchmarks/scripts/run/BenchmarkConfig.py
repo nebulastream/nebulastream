@@ -52,6 +52,7 @@ MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
+WITH_PREDICTIONS = ["true", "false"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
 
 
@@ -99,7 +100,7 @@ def get_queries():
     return queries
 
 
-def get_default_params():
+def get_default_params_dict():
     return {
         "timestamp_increment": TIMESTAMP_INCREMENTS[0],
         "ingestion_rate": INGESTION_RATES[0],
@@ -116,9 +117,25 @@ def get_default_params():
         "min_write_state_size": MIN_WRITE_STATE_SIZES[0],
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS[0],
         "file_layout": FILE_LAYOUTS[0],
+        "with_prediction": WITH_PREDICTIONS[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES[0],
         "query": get_queries()[0]
     }
+
+
+def get_additional_default_values():
+    # Set some values as default
+    default_timestamp_increments = [1, 1000]
+    default_match_rates = [90, 50, 10]
+    default_queries = []
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
+        size_and_slide = re.search(window_pattern, query)
+        size = int(size_and_slide.group(1))
+        # slide = int(size_and_slide.group(2))
+        if size != 10000:
+            default_queries.append(query)
+    return default_timestamp_increments, default_match_rates, default_queries
 
 
 # This class stores all information needed to run a single benchmark
@@ -140,6 +157,7 @@ class BenchmarkConfig:
                  min_write_state_size,
                  file_operation_time_delta,
                  file_layout,
+                 with_prediction,
                  watermark_predictor_type,
                  query):
         self.timestamp_increment = timestamp_increment
@@ -158,6 +176,7 @@ class BenchmarkConfig:
         self.min_write_state_size = min_write_state_size
         self.file_operation_time_delta = file_operation_time_delta
         self.file_layout = file_layout
+        self.with_prediction = with_prediction
         self.watermark_predictor_type = watermark_predictor_type
         self.query = query
 
@@ -192,6 +211,7 @@ class BenchmarkConfig:
             "min_write_state_size": self.min_write_state_size,
             "file_operation_time_delta": self.file_operation_time_delta,
             "file_layout": self.file_layout,
+            "with_prediction": self.with_prediction,
             "watermark_predictor_type": self.watermark_predictor_type,
             "query": self.query,
             "task_queue_size": self.task_queue_size,
@@ -205,7 +225,7 @@ class BenchmarkConfig:
 def create_benchmark_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
-    default_params = get_default_params()
+    default_params = get_default_params_dict()
     shared_params = {
         "timestamp_increment": TIMESTAMP_INCREMENTS,
         "ingestion_rate": INGESTION_RATES,
@@ -223,6 +243,7 @@ def create_benchmark_configs():
         "min_write_state_size": MIN_WRITE_STATE_SIZES,
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
         "file_layout": FILE_LAYOUTS,
+        "with_prediction": WITH_PREDICTIONS,
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES
     }
 
@@ -252,19 +273,8 @@ def create_benchmark_configs():
                 config_params["upper_memory_bound"] = upper_memory_bound
                 configs.append(BenchmarkConfig(**config_params))
 
-    # Set some values as default
-    default_timestamp_increments = [1, 1000]
-    default_match_rates = [90, 10]
-    default_queries = []
-    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
-    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
-        size_and_slide = re.search(window_pattern, query)
-        size = int(size_and_slide.group(1))
-        # slide = int(size_and_slide.group(2))
-        if size != 10000:
-            default_queries.append(query)
-
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    default_timestamp_increments, default_match_rates, default_queries = get_additional_default_values()
     for timestamp_increment in default_timestamp_increments:
         for match_rate in default_match_rates:
             for query in default_queries:
@@ -305,7 +315,7 @@ def create_benchmark_configs():
 
 def create_watermark_predictor_benchmark_configs():
     # Generate all possible configurations for watermark predictor parameters
-    default_params = get_default_params()
+    default_params = get_default_params_dict()
     del default_params["watermark_predictor_type"]
     del default_params["max_num_watermark_gaps"]
     del default_params["max_num_sequence_numbers"]
@@ -334,25 +344,15 @@ def create_watermark_predictor_benchmark_configs():
 
 def create_memory_bounds_benchmark_configs():
     # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
-    default_params = get_default_params()
-    del default_params["lower_memory_bound"]
-    del default_params["upper_memory_bound"]
+    default_params = get_default_params_dict()
     del default_params["timestamp_increment"]
     del default_params["match_rate"]
+    del default_params["lower_memory_bound"]
+    del default_params["upper_memory_bound"]
+    del default_params["with_prediction"]
     del default_params["query"]
 
-    # Set some values as default
-    default_timestamp_increments = [1, 1000]
-    default_match_rates = [90, 10]
-    default_queries = []
-    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
-    for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
-        size_and_slide = re.search(window_pattern, query)
-        size = int(size_and_slide.group(1))
-        # slide = int(size_and_slide.group(2))
-        if size != 10000:
-            default_queries.append(query)
-
+    default_timestamp_increments, default_match_rates, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
@@ -360,14 +360,37 @@ def create_memory_bounds_benchmark_configs():
                         slice_store_type=slice_store_type,
                         lower_memory_bound=lower_memory_bound,
                         upper_memory_bound=upper_memory_bound,
+                        with_prediction=with_prediction,
                         query=query)
         for timestamp_increment in default_timestamp_increments
         for match_rate in default_match_rates
         for slice_store_type in ["FILE_BACKED"]
         for lower_memory_bound in LOWER_MEMORY_BOUNDS
         for upper_memory_bound in UPPER_MEMORY_BOUNDS
+        for with_prediction in WITH_PREDICTIONS
         for query in default_queries
         if lower_memory_bound <= upper_memory_bound
+    ]
+
+
+def create_match_rate_benchmark_configs():
+    # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
+    default_params = get_default_params_dict()
+    del default_params["timestamp_increment"]
+    del default_params["match_rate"]
+    del default_params["query"]
+
+    default_timestamp_increments, _, default_queries = get_additional_default_values()
+    return [
+        BenchmarkConfig(**default_params,
+                        timestamp_increment=timestamp_increment,
+                        match_rate=match_rate,
+                        slice_store_type=slice_store_type,
+                        query=query)
+        for timestamp_increment in default_timestamp_increments
+        for match_rate in MATCH_RATES
+        for slice_store_type in SLICE_STORE_TYPES
+        for query in default_queries
     ]
 
 
@@ -391,6 +414,7 @@ def create_all_benchmark_configs():
             min_write_state_size,
             file_operation_time_delta,
             file_layout,
+            with_prediction,
             watermark_predictor_type,
             query
         )
@@ -410,6 +434,7 @@ def create_all_benchmark_configs():
         for min_write_state_size in (MIN_WRITE_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_WRITE_STATE_SIZES[0]])
         for file_operation_time_delta in (FILE_OPERATION_TIME_DELTAS if slice_store_type == "FILE_BACKED" else [FILE_OPERATION_TIME_DELTAS[0]])
         for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
+        for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" else [WITH_PREDICTIONS[0]])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if slice_store_type == "FILE_BACKED" else [WATERMARK_PREDICTOR_TYPES[0]])
         for query in get_queries()
         if lower_memory_bound <= upper_memory_bound

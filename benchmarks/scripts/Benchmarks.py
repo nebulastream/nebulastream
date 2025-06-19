@@ -188,6 +188,7 @@ dtypes = {
     "min_write_state_size": "UInt64",
     "file_operation_time_delta": "UInt64",
     "file_layout": "str",
+    "with_prediction": "str",
     "watermark_predictor_type": "str",
     "query": "str"
 }
@@ -241,7 +242,7 @@ shared_config_params = [
 file_backed_config_params = [
     'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
     'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'watermark_predictor_type',
-    'lower_memory_bound', 'upper_memory_bound'
+    'lower_memory_bound', 'upper_memory_bound', 'with_prediction'
 ]
 all_config_params = shared_config_params + file_backed_config_params
 

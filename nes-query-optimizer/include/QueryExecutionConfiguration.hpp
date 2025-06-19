@@ -121,6 +121,7 @@ public:
            FileLayout::NO_SEPARATION,
            "File layout for file backed data structures "
            "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
+    BoolOption withPrediction = {"withPrediction", "false", "Predict watermarks for file backed slice store."};
     EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
@@ -148,6 +149,7 @@ private:
             &minWriteStateSize,
             &fileOperationTimeDelta,
             &fileLayout,
+            &withPrediction,
             &watermarkPredictorType,
             &fileBackedWorkingDir};
     }

@@ -167,6 +167,7 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"]["queryOptimizer"][
         "fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
     worker_config_yaml["worker"]["queryOptimizer"]["fileLayout"] = current_benchmark_config.file_layout
+    worker_config_yaml["worker"]["queryOptimizer"]["withPrediction"] = current_benchmark_config.with_prediction
     worker_config_yaml["worker"]["queryOptimizer"][
         "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
     worker_config_yaml["worker"]["queryOptimizer"]["fileBackedWorkingDir"] = working_dir
@@ -212,10 +213,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
 
     # Write the current benchmark config to the output folder in a way that it can be easily read
     # We use a dictionary representation of the configuration
-    # Convert all values in the dictionary to strings to retain precision
-    config_values_as_string = {key: str(value) for key, value in current_benchmark_config.to_dict().items()}
     with open(os.path.join(output_folder, BENCHMARK_CONFIG_FILE), 'w') as output_file:
-        yaml.dump(config_values_as_string, output_file)
+        yaml.dump(current_benchmark_config.to_dict(), output_file)
 
 
 def start_tcp_servers(starting_ports, current_benchmark_config):

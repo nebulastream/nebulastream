@@ -49,6 +49,7 @@ struct SliceStoreInfo
     uint64_t minWriteStateSize;
     uint64_t fileOperationTimeDelta;
     FileLayout fileLayout;
+    bool withPrediction;
 };
 
 struct MemoryControllerInfo
@@ -111,6 +112,7 @@ private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
         const Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        Timestamp watermark,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide);
 
