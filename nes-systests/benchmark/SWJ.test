@@ -10,41 +10,41 @@ SourceCSV windTurbine INT32 windTurbine_Id INT32 windTurbine_groupId FLOAT64 win
 SINK testQ1 INT32 solarPanel_power INT32 windTurbine_power INT32 solarPanel_groupId UINT64 TS UINT64 TS
 
 # Q1 resource consuming 2-way SWJ (because slide is small)
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId AND TS < TS
+SELECT solarPanel_Id, solarPanel_groupId, solarPanel_power, TS, windTurbine_Id, windTurbine_groupId, windTurbine_power, WTS
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT windTurbine_Id, windTurbine_groupId, windTurbine_power, TS, TS AS WTS FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId AND TS < WTS
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 2 MINUTES)
 INTO CHECKSUM;
 ----
-3378998,12850685294
+3378998 8171491797
 
 # Q2 = Q1 + extra condition (night query, true all night solarPanel = 0 , tests watermark)
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+SELECT solarPanel_Id, solarPanel_groupId, solarPanel_power, TS, windTurbine_Id, windTurbine_groupId, windTurbine_power, WTS
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT windTurbine_Id, windTurbine_groupId, windTurbine_power, TS, TS AS WTS FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId AND TS < WTS AND solarPanel_power < windTurbine_power
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 5 MINUTES)
 INTO CHECKSUM;
 ----
-1002925,3789103442
+1002925 2408063290
 
 # Q3 = Q2 but with slicing not divider of window size 3
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+SELECT solarPanel_Id, solarPanel_groupId, solarPanel_power, TS, windTurbine_Id, windTurbine_groupId, windTurbine_power, WTS
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT windTurbine_Id, windTurbine_groupId, windTurbine_power, TS, TS AS WTS FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < WTS AND solarPanel_power < windTurbine_power
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 3 MINUTES)
 INTO CHECKSUM;
 ----
-1671122 6326803955
+1671122 4012289760
 
 # Q4 = Q2 but with slicing not divider of window size 4
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+SELECT solarPanel_power, TS, windTurbine_power, WTS
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT windTurbine_Id, windTurbine_groupId, windTurbine_power, TS, TS AS WTS FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < WTS AND solarPanel_power < windTurbine_power
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 4 MINUTES)
 INTO CHECKSUM;
 ----
-# 1253422 count flink
+1253422 2458053761
 
 # Q5 = Q2 but with slicing not divider of window size 7
-SELECT *
-FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < TS AND solarPanel_power < windTurbine_power
+SELECT solarPanel_power, TS, windTurbine_power, WTS
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT windTurbine_Id, windTurbine_groupId, windTurbine_power, TS, TS AS WTS FROM windTurbine) ON solarPanel_groupId =  windTurbine_groupId AND TS < WTS AND solarPanel_power < windTurbine_power
 WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 7 MINUTES)
 INTO CHECKSUM;
 ----
-# 716368 count flink
+716368 1404857407
