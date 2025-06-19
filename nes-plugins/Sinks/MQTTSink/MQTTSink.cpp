@@ -19,18 +19,16 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/Sequencer.hpp>
+#include <Sinks/Sink.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/JSONFormat.hpp>
 #include <fmt/format.h>
 #include <mqtt/async_client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
-#include "Sequencing/Sequencer.hpp"
-
-#include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Sink.hpp>
-#include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/JSONFormat.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -42,57 +40,77 @@ namespace NES
 struct OOPolicy
 {
     virtual ~OOPolicy() = default;
-    virtual bool isNext(TupleBuffer buffer) = 0;
-    virtual std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer& buffer) = 0;
+    virtual bool isNext(SequenceData sequence, std::string& message) = 0;
+    virtual std::optional<std::string> advanceAndDoNext(SequenceData) = 0;
 };
 
 struct Allow final : OOPolicy
 {
-    bool isNext(TupleBuffer) override { return true; }
-
-    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer&) override { return {}; }
+    bool isNext(SequenceData, std::string&) override { return true; }
+    std::optional<std::string> advanceAndDoNext(SequenceData) override { return {}; }
 };
 
 struct Enforce final : OOPolicy
 {
-    Sequencer<TupleBuffer> sequencer;
+    Sequencer<std::string> sequencer;
 
-    bool isNext(TupleBuffer buffer) override
+    bool isNext(SequenceData sequence, std::string& message) override
     {
-        return sequencer.isNext(SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()), std::move(buffer))
-            .has_value();
+        if (auto isNextMessage = sequencer.isNext(sequence, std::move(message)); isNextMessage.has_value())
+        {
+            message = std::move(isNextMessage.value());
+            return true;
+        }
+        return false;
     }
 
-    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer& buffer) override
-    {
-        return sequencer.advanceAndGetNext(SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()));
-    }
+    std::optional<std::string> advanceAndDoNext(SequenceData sequence) override { return sequencer.advanceAndGetNext(sequence); }
 };
 
 struct Drop final : OOPolicy
 {
     folly::Synchronized<SequenceData> lastMutex{SequenceData(INVALID_SEQ_NUMBER, INVALID_CHUNK_NUMBER, true)};
 
-    bool isNext(TupleBuffer buffer) override
+    bool isNext(SequenceData sequence, std::string&) override
     {
         auto last = lastMutex.wlock();
-        if (*last < SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()))
+        if (*last < sequence)
         {
-            *last = SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk());
+            *last = sequence;
             return true;
         }
         return false;
     }
 
-    std::optional<TupleBuffer> advanceAndDoNext(const TupleBuffer&) override { return {}; }
+    std::optional<std::string> advanceAndDoNext(SequenceData) override { return {}; }
 };
+
+Writer::Writer(std::unique_ptr<OOPolicy> policy, std::string server_uri, std::string client_id, std::string topic, int32_t qos)
+    : policy(std::move(policy)), serverUri(std::move(server_uri)), clientId(std::move(client_id)), topic(std::move(topic)), qos(qos)
+{
+}
+Writer::~Writer() = default;
 
 MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
-    , serverUri(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::SERVER_URI))
-    , clientId(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::CLIENT_ID))
-    , topic(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::TOPIC))
-    , qos(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::QOS))
+    , writer(
+          [&]() -> std::unique_ptr<OOPolicy>
+          {
+              switch (sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::OUT_OF_ORDER_POLICY))
+              {
+                  case OutOfOrderPolicy::ALLOW:
+                      return std::make_unique<Allow>();
+                  case OutOfOrderPolicy::ENFORCE:
+                      return std::make_unique<Enforce>();
+                  case OutOfOrderPolicy::DROP:
+                      return std::make_unique<Drop>();
+              }
+              std::unreachable();
+          }(),
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::SERVER_URI),
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::CLIENT_ID),
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::TOPIC),
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::QOS))
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::INPUT_FORMAT))
     {
@@ -105,81 +123,90 @@ MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
-    switch (auto oopolicy = sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::OUT_OF_ORDER_POLICY))
-    {
-        case OutOfOrderPolicy::ALLOW:
-            this->policy = std::make_unique<Allow>();
-            break;
-        case OutOfOrderPolicy::ENFORCE:
-            this->policy = std::make_unique<Enforce>();
-            break;
-        case OutOfOrderPolicy::DROP:
-            this->policy = std::make_unique<Drop>();
-            break;
-        default:
-            throw UnknownSinkFormat(fmt::format("Out of Order policy: {} not supported.", magic_enum::enum_name(oopolicy)));
-    }
+    terminationFuture = writer.terminationPromise.get_future().share();
 }
 
 MQTTSink::~MQTTSink() = default;
 
 std::ostream& MQTTSink::toString(std::ostream& str) const
 {
-    str << fmt::format("MQTTSink(serverURI: {}, clientId: {}, topic: {}, qos: {})", serverUri, clientId, topic, qos);
+    str << fmt::format(
+        "MQTTSink(serverURI: {}, clientId: {}, topic: {}, qos: {})", writer.serverUri, writer.clientId, writer.topic, writer.qos);
     return str;
 }
 
 void MQTTSink::start(PipelineExecutionContext&)
 {
-    client = std::make_unique<mqtt::async_client>(serverUri, clientId);
+    dispatcher = std::jthread(
+        [](std::stop_token token, std::reference_wrapper<Writer> writerRef) mutable
+        {
+            auto& writer = writerRef.get();
+            try
+            {
+                auto client = std::make_unique<mqtt::async_client>(writer.serverUri, writer.clientId);
+                client->connect()->wait();
+                std::pair<SequenceData, std::string> data;
+                while (!token.stop_requested())
+                {
+                    if (!writer.dataQueue.tryReadUntil(std::chrono::system_clock::now() + std::chrono::milliseconds(10), data))
+                    {
+                        continue;
+                    }
+                    auto& [sequence, messageBody] = data;
 
-    try
-    {
-        const auto connectOptions = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(true).finalize();
+                    if (writer.policy->isNext(sequence, messageBody))
+                    {
+                        auto nextBuffer = std::make_optional(std::move(messageBody));
+                        while (nextBuffer)
+                        {
+                            if (!nextBuffer.value().empty())
+                            {
+                                const mqtt::message_ptr message = mqtt::make_message(writer.topic, std::move(nextBuffer.value()));
+                                message->set_qos(writer.qos);
+                                client->publish(message);
+                            }
 
-        client->connect(connectOptions)->wait();
-    }
-    catch (const mqtt::exception& e)
-    {
-        throw CannotOpenSink(e.what());
-    }
+                            nextBuffer = writer.policy->advanceAndDoNext(sequence);
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                writer.terminationPromise.set_exception(std::current_exception());
+                return;
+            }
+            writer.terminationPromise.set_value();
+        },
+        std::reference_wrapper(writer));
 }
 
 void MQTTSink::stop(PipelineExecutionContext&)
 {
-    try
-    {
-        client->disconnect()->wait();
-    }
-    catch (const mqtt::exception& e)
-    {
-        throw CannotOpenSink("When closing mqtt sink: {}", e.what());
-    }
+    dispatcher.request_stop();
 }
 
 void MQTTSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
-    if (policy->isNext(inputBuffer))
+    auto sequence = SequenceData(inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber(), inputBuffer.isLastChunk());
+    if (inputBuffer.getNumberOfTuples() == 0)
     {
-        auto nextBuffer = std::make_optional(inputBuffer);
-        while (nextBuffer)
-        {
-            if (inputBuffer.getNumberOfTuples() != 0)
-            {
-                const std::string fBuf = formatter->getFormattedBuffer(*nextBuffer);
-                const mqtt::message_ptr message = mqtt::make_message(topic, fBuf);
-                message->set_qos(qos);
-                try
-                {
-                    client->publish(message)->wait();
-                }
-                catch (...)
-                {
-                    throw wrapExternalException();
-                }
-            }
+        writer.dataQueue.write(sequence, std::string());
+    }
+    else
+    {
+        writer.dataQueue.write(sequence, formatter->getFormattedBuffer(inputBuffer));
+    }
 
-            nextBuffer = policy->advanceAndDoNext(*nextBuffer);
+    if (terminationFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+    {
+        try
+        {
+            terminationFuture.get();
+        }
+        catch (...)
+        {
+           throw wrapExternalException();
         }
     }
 }
@@ -198,5 +225,4 @@ SinkRegistryReturnType RegisterMQTTSink(SinkRegistryArguments sinkRegistryArgume
 {
     return std::make_unique<MQTTSink>(sinkRegistryArguments.sinkDescriptor);
 }
-
 }

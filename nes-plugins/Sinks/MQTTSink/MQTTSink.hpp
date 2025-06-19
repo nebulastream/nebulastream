@@ -15,28 +15,45 @@
 #pragma once
 
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <random>
 #include <string>
 #include <unordered_map>
-
-#include <mqtt/async_client.h>
-
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/MPMCQueue.h>
+#include <mqtt/async_client.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
 
+
 struct OOPolicy;
+struct Writer
+{
+    Writer(std::unique_ptr<OOPolicy> policy, std::string server_uri, std::string client_id, std::string topic, int32_t qos);
+    ~Writer();
+    folly::MPMCQueue<std::pair<SequenceData, std::string>> dataQueue{10};
+    std::unique_ptr<OOPolicy> policy;
+
+    std::string serverUri;
+    std::string clientId;
+    std::string topic;
+    int32_t qos;
+
+    std::promise<void> terminationPromise;
+};
+
 class MQTTSink : public Sink
 {
 public:
@@ -59,15 +76,12 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::string serverUri;
-    std::string clientId;
-    std::string topic;
-    int32_t qos;
-
-    std::unique_ptr<OOPolicy> policy;
-    std::unique_ptr<mqtt::async_client> client;
+    /// Order Matters: writer needs to outlive the dispatcher
+    Writer writer;
+    std::jthread dispatcher;
 
     std::unique_ptr<Format> formatter;
+    std::shared_future<void> terminationFuture;
 };
 
 namespace
@@ -153,12 +167,12 @@ struct ConfigParametersMQTTSink
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::OutOfOrderPolicy>
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, OutOfOrderPolicy>
         OUT_OF_ORDER_POLICY{
             "outOfOrderPolicy",
-            Configurations::EnumWrapper(Configurations::OutOfOrderPolicy::ALLOW),
+            EnumWrapper(OutOfOrderPolicy::ALLOW),
             [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(OUT_OF_ORDER_POLICY, config); }};
+            { return DescriptorConfig::tryGet(OUT_OF_ORDER_POLICY, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
