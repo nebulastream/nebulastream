@@ -49,8 +49,8 @@ public:
     void acquireCombinePagedVectorsLock();
     void releaseCombinePagedVectorsLock();
 
-    /// Returns true if combinePagedVectors() method has already been called. This does not acquire a lock for combinePagedVectorsMutex.
-    bool pagedVectorsCombined() const;
+    /// Returns true if combinePagedVectors() method has already been called. Acquires a write lock for combinePagedVectorsMutex.
+    bool pagedVectorsCombined();
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
     /// Returns zero if paged vectors were already combined.

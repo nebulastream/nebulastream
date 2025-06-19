@@ -312,56 +312,59 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
     for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
-        if (slice == nullptr)
+        //if (slice == nullptr)
         {
-            continue;
+            //continue;
         }
+        const auto sliceEnd = slice->getSliceEnd();
+        const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
+        auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
-        const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        nljSlice->acquireCombinePagedVectorsLock();
 
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
         if (!nljSlice->pagedVectorsCombined())
         {
-            const auto sliceEnd = slice->getSliceEnd();
-            auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
             switch (operation)
             {
                 case FileOperation::READ: {
+                    const auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
+                    nljSlice->acquireCombinePagedVectorsLock();
                     // TODO investigate why numTuples and numPages can be zero
                     if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
                         // TODO why would fileReader be zero
-                        if (auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide))
+                        if (fileReader)
                         {
                             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
                         }
                     }
                     // TODO handle wrong predictions
+                    nljSlice->releaseCombinePagedVectorsLock();
                     break;
                 }
                 case FileOperation::WRITE: {
-                    if (pagedVector->getNumberOfPages() > 0)
+                    const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
                     {
                         auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
                         const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
                         slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
-
-                        const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
+                    }
+                    nljSlice->acquireCombinePagedVectorsLock();
+                    if (pagedVector->getNumberOfPages() > 0)
+                    {
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
                         /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
                         co_await fileWriter->flush();
-                        fileWriter->deallocateBuffers();
                         pagedVector->truncate(sliceStoreInfo.fileLayout);
                     }
                     // TODO handle wrong predictions
+                    nljSlice->releaseCombinePagedVectorsLock();
+                    fileWriter->deallocateBuffers();
                     break;
                 }
             }
         }
-
-        nljSlice->releaseCombinePagedVectorsLock();
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
     co_return;
