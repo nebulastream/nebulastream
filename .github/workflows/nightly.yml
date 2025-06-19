@@ -121,6 +121,7 @@ jobs:
           cat << EOF > msg.txt
           ci run ${{ inputs.fuzzer }} ${{ inputs.duration_in_min }}min
 
+          sut_sha: ${{ github.sha }}
           fuzzer: ${{ inputs.fuzzer}}
           duration: ${{ inputs.duration_in_min }}
           arch: ${{ matrix.arch }}
