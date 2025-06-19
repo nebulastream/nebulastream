@@ -21,7 +21,7 @@ import numpy as np
 # Source configuration parameters
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
 INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
-MATCH_RATES = [60, 40, 10, 100, 90]  # match rate in percent
+MATCH_RATES = [70, 50, 30, 10, 0, 101, 99, 90]  # match rate in percent, values > 100 simply use a counter for every server
 
 # Worker configuration parameters
 NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1]
@@ -316,22 +316,28 @@ def create_benchmark_configs():
 def create_watermark_predictor_benchmark_configs():
     # Generate all possible configurations for watermark predictor parameters
     default_params = get_default_params_dict()
+    del default_params["timestamp_increment"]
     del default_params["watermark_predictor_type"]
     del default_params["max_num_watermark_gaps"]
     del default_params["max_num_sequence_numbers"]
     del default_params["min_read_state_size"]
     del default_params["min_write_state_size"]
     del default_params["file_operation_time_delta"]
+    del default_params["query"]
 
+    default_timestamp_increments, _, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
+                        timestamp_increment=timestamp_increment,
                         slice_store_type=slice_store_type,
                         watermark_predictor_type=watermark_predictor_type,
                         max_num_watermark_gaps=max_num_watermark_gaps,
                         max_num_sequence_numbers=max_num_sequence_numbers,
                         min_read_state_size=min_read_state_size,
                         min_write_state_size=min_write_state_size,
-                        file_operation_time_delta=file_operation_time_delta)
+                        file_operation_time_delta=file_operation_time_delta,
+                        query=query)
+        for timestamp_increment in default_timestamp_increments
         for slice_store_type in ["FILE_BACKED"]
         for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES
         for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS
@@ -339,6 +345,7 @@ def create_watermark_predictor_benchmark_configs():
         for min_read_state_size in MIN_READ_STATE_SIZES
         for min_write_state_size in MIN_WRITE_STATE_SIZES
         for file_operation_time_delta in FILE_OPERATION_TIME_DELTAS
+        for query in default_queries
     ]
 
 
