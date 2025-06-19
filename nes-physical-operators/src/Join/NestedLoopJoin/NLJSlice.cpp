@@ -128,8 +128,9 @@ void NLJSlice::releaseCombinePagedVectorsLock()
     combinePagedVectorsMutex.unlock();
 }
 
-bool NLJSlice::pagedVectorsCombined() const
+bool NLJSlice::pagedVectorsCombined()
 {
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     return combinedPagedVectors;
 }
 
