@@ -24,6 +24,7 @@ import datetime
 import yaml
 import pathlib
 import copy
+import numpy as np
 import pandas as pd
 import BenchmarkConfig
 import PostProcessing
@@ -466,10 +467,8 @@ if __name__ == "__main__":
         else:
             print(f"{len(failed_run_folders)} runs failed. Retrying...")
             ALL_BENCHMARK_CONFIGS = [
-                BenchmarkConfig.BenchmarkConfig(**{k: v for k, v in yaml.safe_load(
-                    open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')).items() if
-                        k not in {"task_queue_size", "buffers_in_global_buffer_manager", "buffers_per_worker",
-                                  "buffers_in_source_local_buffer_pool", "execution_mode"}})
+                BenchmarkConfig.BenchmarkConfig(
+                    **yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')))
                 for failed_run in failed_run_folders
             ]
     else:
