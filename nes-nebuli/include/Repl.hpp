@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,39 +23,35 @@
 #include <Sources/SourceCatalog.hpp>
 #include <replxx.hxx>
 
+#include <SQLQueryParser/StatementBinder.hpp>
+#include <StatementHandler.hpp>
+
 namespace NES
 {
 
+enum class ErrorBehaviour : uint8_t
+{
+    FAIL_FAST,
+    RECOVER,
+    CONTINUE_AND_FAIL
+};
+
 class Repl
 {
-    SharedPtr<QueryManager> grpcClient;
-    SharedPtr<SourceCatalog> sourceCatalog;
-    SharedPtr<SinkCatalog> sinkCatalog;
-
-    std::unique_ptr<replxx::Replxx> rx;
-    std::vector<std::string> history;
-    bool interactiveMode = true;
-
-    /// Commands
-    static constexpr const char* HELP_CMD = "help";
-    static constexpr const char* QUIT_CMD = "quit";
-    static constexpr const char* EXIT_CMD = "exit";
-    static constexpr const char* CLEAR_CMD = "clear";
-
-    void setupReplxx();
-    static void printWelcome();
-    static void printHelp();
-    void clearScreen();
-
-    [[nodiscard]] static std::string getPrompt();
-    [[nodiscard]] static bool isCommand(const std::string& input);
-    [[nodiscard]] bool handleCommand(const std::string& input);
-    [[nodiscard]] bool executeQuery(const std::string& query);
-    [[nodiscard]] std::string readMultiLineQuery() const;
+    struct Impl;
+    std::unique_ptr<Impl> impl;
 
 public:
-    explicit Repl(std::shared_ptr<QueryManager> client);
+    explicit Repl(
+        SourceStatementHandler sourceStatementHandler,
+        SinkStatementHandler sinkStatementHandler,
+        std::shared_ptr<QueryStatementHandler> queryStatementHandler,
+        StatementBinder binder,
+        ErrorBehaviour errorBehaviour,
+        StatementOutputFormat defaultOutputFormat,
+        bool interactiveMode);
     void run();
+    ~Repl();
 };
 
 }

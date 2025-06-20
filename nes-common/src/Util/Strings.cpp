@@ -215,30 +215,75 @@ void toLowerCaseInplace(std::string& modified)
 
 std::string escapeSpecialCharacters(const std::string_view input)
 {
-    const std::unordered_map<char, std::string> specialCharacters = {
-        {'\a', "\\a"},
-        {'\b', "\\b"},
-        {'\f', "\\f"},
-        {'\n', "\\n"},
-        {'\r', "\\r"},
-        {'\t', "\\t"},
-        {'\v', "\\v"},
-    };
-    std::string escapedString;
-    escapedString.reserve(input.size());
-    for (const auto value : input)
+    std::string result;
+    result.reserve(input.length());
+    for (const char character : input)
     {
-        if (auto it = specialCharacters.find(value); it != specialCharacters.end())
+        switch (character)
         {
-            escapedString += it->second;
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            default:
+                result += character;
+                break;
+        }
+    }
+    return result;
+}
+
+std::string snakeToCamelCase(const std::string_view snakeCase)
+{
+    PRECONDITION(isAsciiString(snakeCase), "Support for non-ascii character not implemented");
+    if (snakeCase.empty())
+    {
+        return std::string{snakeCase};
+    }
+
+    std::string camelCase;
+    camelCase.reserve(snakeCase.length());
+
+    bool capitalizeNext = false;
+
+    for (const char character : snakeCase)
+    {
+        if (character == '_')
+        {
+            capitalizeNext = true;
         }
         else
         {
-            escapedString += value;
+            if (capitalizeNext)
+            {
+                camelCase.push_back(static_cast<char>(std::toupper(character)));
+                capitalizeNext = false;
+            }
+            else
+            {
+                camelCase.push_back(static_cast<char>(std::tolower(character)));
+            }
         }
     }
 
-    return escapedString;
+    return camelCase;
 }
 
 std::string toUpperCase(std::string_view input)

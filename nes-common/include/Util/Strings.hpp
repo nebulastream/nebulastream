@@ -147,4 +147,8 @@ std::vector<T> splitWithStringDelimiter(std::string_view inputString, std::strin
         | std::views::transform([](auto optional) { return *optional; }) | std::ranges::to<std::vector>();
 }
 
+/// Converts a snake_case string to camelCase.
+/// Only supports ASCII strings.
+[[nodiscard]] std::string snakeToCamelCase(std::string_view snakeCase);
+
 }

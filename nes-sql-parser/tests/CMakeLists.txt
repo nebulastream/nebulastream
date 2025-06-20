@@ -10,9 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-sql-parser
-        AntlrSQLQueryPlanCreator.cpp
-        AntlrSQLHelper.cpp
-        AntlrSQLQueryParser.cpp
-        StatementBinder.cpp
-)
+add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
+target_link_libraries(statement-binder-test nes-sql-parser nes-nebuli)

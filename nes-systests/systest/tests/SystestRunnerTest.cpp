@@ -50,6 +50,8 @@
 namespace
 {
 
+/// NOLINTBEGIN(bugprone-unchecked-optional-access)
+
 NES::QuerySummary makeSummary(const NES::QueryId id, const NES::QueryStatus status, const std::shared_ptr<NES::Exception>& err)
 {
     NES::QuerySummary querySummary;
@@ -179,4 +181,6 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
 }
+
+/// NOLINTEND(bugprone-unchecked-optional-access)
 }

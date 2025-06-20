@@ -123,7 +123,7 @@ struct ConfigParametersTCP
         '\n',
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flushIntervalMS",
+        "flushIntervalMs",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
