@@ -196,7 +196,7 @@ class BenchmarkConfig:
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
         self.no_physical_sources_per_logical_source = 1
-        self.throughput_listener_time_interval = 100  # output interval in ms
+        self.throughput_listener_time_interval = 500  # output interval in ms
 
     # Return a dictionary representation of the configuration
     def to_dict(self):
@@ -403,6 +403,24 @@ def create_match_rate_benchmark_configs():
         for timestamp_increment in default_timestamp_increments
         for match_rate in MATCH_RATES
         for slice_store_type in SLICE_STORE_TYPES
+        for query in default_queries
+    ]
+
+
+def create_query_benchmark_configs():
+    # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
+    default_params = get_default_params_dict()
+    del default_params["timestamp_increment"]
+    del default_params["query"]
+
+    default_timestamp_increments, _, default_queries = get_additional_default_values()
+    return [
+        BenchmarkConfig(**default_params,
+                        timestamp_increment=timestamp_increment,
+                        slice_store_type=slice_store_type,
+                        query=query)
+        for timestamp_increment in default_timestamp_increments
+        for slice_store_type in ["FILE_BACKED"]
         for query in default_queries
     ]
 
