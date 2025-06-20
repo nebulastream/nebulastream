@@ -160,6 +160,7 @@ void processSpanningTuple(
     }
 }
 
+
 /// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
 /// individual InputFormatterTasks see during execution.
 /// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatterTask
@@ -179,6 +180,7 @@ public:
         std::unique_ptr<InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, FormatterType::IsFormattingRequired>>
             inputFormatIndexer,
         const Schema& schema,
+        const RawValueParser::QuotationType quotationType,
         const ParserConfig& parserConfig)
         : originId(originId)
         , inputFormatIndexer(std::move(inputFormatIndexer))
@@ -191,13 +193,8 @@ public:
         /// field number, load the correct function for parsing from the vector.
         , parseFunctions(
               schema.getFields()
-              | std::views::transform(
-                  [](const auto& field)
-                  {
-                      return (field.dataType.isType(DataType::Type::VARSIZED))
-                          ? RawValueParser::getBasicStringParseFunction()
-                          : RawValueParser::getBasicTypeParseFunction(field.dataType.type);
-                  })
+              | std::views::transform([quotationType](const auto& field)
+                                      { return RawValueParser::getParseFunction(field.dataType.type, quotationType); })
               | std::ranges::to<std::vector>())
     {
     }

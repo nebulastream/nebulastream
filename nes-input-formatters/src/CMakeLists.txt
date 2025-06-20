@@ -14,9 +14,9 @@ add_source_files(nes-input-formatters
         InputFormatterProvider.cpp
         SequenceShredder.cpp
         RawValueParser.cpp
-        FieldOffsets.cpp
 )
 
 # Register plugins
 add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+add_plugin(JSON InputFormatIndexer nes-input-formatters JSONInputFormatIndexer.cpp)
 add_plugin(Native InputFormatIndexer nes-input-formatters NativeInputFormatIndexer.cpp)
