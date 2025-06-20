@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/std.h>
 #include <magic_enum/magic_enum.hpp>
@@ -51,6 +52,6 @@ public:
 private:
     std::string value;
 };
-
 }
+
 FMT_OSTREAM(NES::EnumWrapper);

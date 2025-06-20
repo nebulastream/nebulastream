@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -29,6 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -361,4 +363,24 @@ FMT_OSTREAM(NES::Descriptor);
 template <typename T>
 struct fmt::formatter<NES::DescriptorConfig::ConfigParameter<T>> : ostream_formatter
 {
+};
+
+template <typename T>
+requires std::derived_from<T, google::protobuf::MessageLite>
+struct fmt::formatter<T> : fmt::formatter<std::string_view>
+{
+    auto format(const google::protobuf::MessageLite& message, format_context& ctx) const
+    {
+        return formatter<std::string_view>::format(message.SerializeAsString(), ctx);
+    }
+};
+
+template <>
+struct fmt::formatter<NES::DescriptorConfig::ConfigType> : fmt::formatter<std::string_view>
+{
+    auto format(const NES::DescriptorConfig::ConfigType& configValue, format_context& ctx) const
+    {
+        return std::visit(
+            [&ctx, this](auto&& arg) { return formatter<std::string_view>::format(fmt::format("{}", arg), ctx); }, configValue);
+    }
 };
