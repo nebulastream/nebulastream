@@ -40,7 +40,6 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
     : seed(sourceDescriptor.getFromConfig(ConfigParametersGenerator::SEED))
     , maxRuntime(sourceDescriptor.getFromConfig(ConfigParametersGenerator::MAX_RUNTIME_MS))
     , generatorSchemaRaw(sourceDescriptor.getFromConfig(ConfigParametersGenerator::GENERATOR_SCHEMA))
-    , generatorStartTime(std::chrono::system_clock::now())
     , generator(
           seed,
           sourceDescriptor.getFromConfig(ConfigParametersGenerator::SEQUENCE_STOPS_GENERATOR),
@@ -52,6 +51,7 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
 
 void GeneratorSource::open()
 {
+    this->generatorStartTime = std::chrono::system_clock::now();
     NES_TRACE("Opening GeneratorSource.");
 }
 
