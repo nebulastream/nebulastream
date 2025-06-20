@@ -1,0 +1,23 @@
+# name: sources/GeneratorTest.test
+# description: Tests the generator source with inline declarations
+# groups: [Sources, Generator]
+
+
+Source generatorDefault UINT64 id UINT64 double GENERATOR seed 1, maxRuntimeMS 1000, stopGeneratorWhenSequenceFinishes ALL
+id SEQUENCE UINT64 0 10 1
+double SEQUENCE UINT64 0 5 1
+
+SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$double
+
+SELECT * FROM generatorDefault INTO generator_sink
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5
