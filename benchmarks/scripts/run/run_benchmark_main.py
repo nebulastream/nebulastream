@@ -284,7 +284,7 @@ def submitting_query(query_file):
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
     # print(f"Starting the single node worker with {cmd}")
-    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd.split(" "))
     pid = process.pid
     print(f"Started single node worker with pid {pid}")
     return process
@@ -293,7 +293,7 @@ def start_single_node_worker(worker_config_file):
 def stop_query(query_id):
     cmd = f"{NEBULI_PATH} stop {query_id} -s localhost:8080"
     # print(f"Stopping the query via {cmd}...")
-    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd.split(" "))
     return process
 
 
@@ -405,7 +405,7 @@ if __name__ == "__main__":
         clear_build_dir()
         compile_project()
 
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_query_benchmark_configs()
 
     for attempt in range(NUM_RETRIES_PER_RUN):
         num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
