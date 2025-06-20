@@ -78,17 +78,21 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
         const auto bytesPerSecondMessage = formatValue(callBackParams.throughputInBytesPerSec, "B/s");
         const auto tuplesPerSecondMessage = formatValue(callBackParams.throughputInTuplesPerSec, "Tup/s");
         const auto memoryConsumptionMessage = formatValue(callBackParams.memoryConsumption, "B");
-        file << fmt::format(
-            "Throughput for queryId {} in window {}-{} is {} / {} and memory consumption is {}\n",
-            callBackParams.queryId,
-            callBackParams.windowStart,
-            callBackParams.windowEnd,
-            bytesPerSecondMessage,
-            tuplesPerSecondMessage,
-            memoryConsumptionMessage);
+        if (callBackParams.queryId.getRawValue() == 1)
+        {
+            std::cout << fmt::format(
+                "Throughput for queryId {} in window {}-{} is {} / {} and memory consumption is {}\n",
+                callBackParams.queryId,
+                callBackParams.windowStart,
+                callBackParams.windowEnd,
+                bytesPerSecondMessage,
+                tuplesPerSecondMessage,
+                memoryConsumptionMessage);
 
-        /// We need to flush the file now as the worker might be killed abruptly
-        file.flush();
+            /// We need to flush the file now as the worker might be killed abruptly
+            //file.flush();
+            (void)file;
+        }
     };
     const auto timeIntervalInMilliSeconds = configuration.workerConfiguration.throughputListenerTimeInterval.getValue();
     auto throughputListener = std::make_shared<ThroughputListener>(
