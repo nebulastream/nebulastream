@@ -80,3 +80,9 @@ function(add_nes_test_nebuli)
     target_include_directories(${TARGET_NAME}
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
+
+add_test(
+        NAME "repl-test"
+#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/test_repl.sh ${CMAKE_CURRENT_SOURCE_DIR}/test/test_large.sql ${CMAKE_CURRENT_BINARY_DIR}/nes-nebuli-embedded ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir ${CMAKE_CURRENT_SOURCE_DIR}/test/expected_output.json ${CMAKE_CURRENT_BINARY_DIR}/test
+)

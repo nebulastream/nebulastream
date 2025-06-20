@@ -14,23 +14,31 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <chrono>
+#include <climits>
 #include <cstddef>
 #include <cstring>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <thread>
 #include <utility>
 #include <vector>
+#include <unistd.h>
 
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/GRPCQueryManager.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -39,6 +47,7 @@
 #include <YAML/YAMLBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
@@ -48,6 +57,8 @@
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <StatementHandler.hpp>
+#include <utils.hpp>
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>
@@ -60,11 +71,22 @@ int main(int argc, char** argv)
 {
     CPPTRACE_TRY
     {
-        NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_ERROR);
+        bool interactiveMode
+            = static_cast<int>(cpptrace::isatty(STDIN_FILENO)) != 0 and static_cast<int>(cpptrace::isatty(STDOUT_FILENO)) != 0;
+
+        NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_ERROR, !interactiveMode);
+
         using argparse::ArgumentParser;
         ArgumentParser program("nebuli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
         program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string{"localhost:8080"});
+        program.add_argument("-w", "--wait").help("Wait for the query to finish").flag();
+
+        program.add_argument("-e", "--error-behaviour")
+            .choices("FAIL_FAST", "RECOVER", "CONTINUE_AND_FAIL")
+            .help(
+                "Fail and return non-zero exit code on first error, ignore error and continue, or continue and return non-zero exit code");
+        program.add_argument("-f").default_value("TEXT").choices("TEXT", "JSON").help("Output format");
         /// single node worker config
         program.add_argument("--")
             .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
@@ -75,7 +97,6 @@ int main(int argc, char** argv)
             .default_value("-")
             .help("Read the query description. Use - for stdin which is the default");
         registerQuery.add_argument("-x").help("Immediately start the query as well").flag();
-        registerQuery.add_argument("-w", "--wait").help("Wait for the query to finish").flag();
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queryId").scan<'i', size_t>();
@@ -104,7 +125,46 @@ int main(int argc, char** argv)
         {
             NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
         }
+
+        const auto defaultOutputFormatOpt = magic_enum::enum_cast<NES::StatementOutputFormat>(program.get<std::string>("-f"));
+        if (not defaultOutputFormatOpt.has_value())
+        {
+            NES_ERROR("Invalid output format: {}", program.get<std::string>("-f"));
+            return 1;
+        }
+        const auto defaultOutputFormat = defaultOutputFormatOpt.value();
+
+
+        const NES::ErrorBehaviour errorBehaviour = [&]
+        {
+            if (program.is_used("-e"))
+            {
+                auto errorBehaviourOpt = magic_enum::enum_cast<NES::ErrorBehaviour>(program.get<std::string>("-e"));
+                if (not errorBehaviourOpt.has_value())
+                {
+                    throw NES::InvalidConfigParameter(
+                        "Error behaviour must be set to FAIL_FAST, RECOVER or CONTINUE_AND_FAIL, but was set to {}",
+                        program.get<std::string>("-e"));
+                }
+                return errorBehaviourOpt.value();
+            }
+            if (interactiveMode)
+            {
+                return NES::ErrorBehaviour::RECOVER;
+            }
+            return NES::ErrorBehaviour::FAIL_FAST;
+        }();
+
+
+        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
+        auto optimizer = std::make_shared<NES::CLI::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
+        auto binder = NES::StatementBinder{
+            sourceCatalog,
+            sinkCatalog,
+            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         if (program.is_used("-s"))
         {
@@ -139,11 +199,22 @@ int main(int argc, char** argv)
 #endif
         }
 
+        std::vector<NES::QueryId> startedQueries{};
         const bool anySubcommandUsed
             = std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); });
         if (!anySubcommandUsed)
         {
-            NES::Repl replClient(queryManager);
+            NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
+            NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+            auto queryStatementHandler = std::make_unique<NES::QueryStatementHandler>(queryManager, optimizer);
+            NES::Repl replClient(
+                std::move(sourceStatementHandler),
+                std::move(sinkStatementHandler),
+                std::move(queryStatementHandler),
+                std::move(binder),
+                errorBehaviour,
+                defaultOutputFormat,
+                interactiveMode);
             replClient.run();
             return 0;
         }
@@ -169,10 +240,6 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-        auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
-        auto optimizer = NES::CLI::LegacyOptimizer{sourceCatalog, sinkCatalog};
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
@@ -191,7 +258,7 @@ int main(int argc, char** argv)
             boundPlan = yamlBinder.parseAndBind(file);
         }
 
-        const NES::LogicalPlan optimizedQueryPlan = optimizer.optimize(boundPlan);
+        const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
 
         std::string output;
         auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(optimizedQueryPlan);
@@ -237,24 +304,27 @@ int main(int argc, char** argv)
                         return 1;
                     }
                     std::cout << queryId.value().getRawValue();
-                    if (registerArgs.is_used("-w"))
-                    {
-                        auto status = queryManager->status(queryId.value());
-                        while (status.has_value()
-                               && !(
-                                   status.value().currentStatus == NES::QueryStatus::Stopped
-                                   || status.value().currentStatus == NES::QueryStatus::Failed))
-                        {
-                            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                            status = queryManager->status(queryId.value());
-                        }
-                    }
+                    startedQueries.push_back(queryId.value());
                 }
             }
             else
             {
                 std::cerr << std::format("Could not register query: {}\n", queryId.error().what());
                 return 1;
+            }
+        }
+
+        if (program.is_used("-w"))
+        {
+            for (const auto& queryId : startedQueries)
+            {
+                auto status = queryManager->status(queryId);
+                while (status.has_value() && status.value().currentStatus != NES::QueryStatus::Stopped
+                       && status.value().currentStatus != NES::QueryStatus::Failed)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    status = queryManager->status(queryId);
+                }
             }
         }
 
