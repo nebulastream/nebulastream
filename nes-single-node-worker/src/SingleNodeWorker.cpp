@@ -26,6 +26,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/Common.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -43,9 +44,10 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+    : listener(
+          std::make_shared<PrintingStatisticListener>(
+              fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
+    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener), Util::copyPtr(listener)).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
@@ -64,7 +66,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) const
+std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     try
     {
@@ -82,19 +84,46 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     }
 }
 
-void SingleNodeWorker::startQuery(QueryId queryId)
+std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
 {
-    nodeEngine->startQuery(queryId);
+    try
+    {
+        nodeEngine->startQuery(queryId);
+    }
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected(e);
+    }
+    return {};
 }
 
-void SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type)
+std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
 {
-    nodeEngine->stopQuery(queryId, type);
+    try
+    {
+        nodeEngine->stopQuery(queryId, type);
+    }
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected{e};
+    }
+    return {};
 }
 
-void SingleNodeWorker::unregisterQuery(QueryId queryId)
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
 {
-    nodeEngine->unregisterQuery(queryId);
+    try
+    {
+        nodeEngine->unregisterQuery(queryId);
+    } catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected(e);
+    }
+
+    return {};
 }
 
 std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const

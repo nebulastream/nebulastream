@@ -52,7 +52,6 @@
 #include <Util/Strings.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <NebuLI.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -116,7 +115,7 @@ void processQueryWithError(
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
 std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter)
+runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, std::unique_ptr<QuerySubmitter> querySubmitter)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -139,10 +138,10 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
             if (nextQuery.planInfoOrException.has_value())
             {
                 /// Registration
-                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan))
+                if (auto reg = querySubmitter->registerQuery(nextQuery.planInfoOrException.value().queryPlan))
                 {
                     hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
+                    querySubmitter->startQuery(*reg);
                     active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
                 }
                 else
@@ -162,7 +161,7 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
 
     while (startMoreQueries() or not(active.empty() and pending.empty()))
     {
-        for (const auto& summary : querySubmitter.finishedQueries())
+        for (const auto& summary : querySubmitter->finishedQueries())
         {
             auto it = active.find(summary.queryId);
             if (it == active.end())
@@ -346,14 +345,14 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const uint64_t numConcurrentQueries,
     const Configuration::SingleNodeWorkerConfiguration& configuration)
 {
-    LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    auto submitter = std::make_unique<LocalWorkerQuerySubmitter>(configuration);
+    return runQueries(queries, numConcurrentQueries, std::move(submitter));
 }
 std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
-    RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    auto submitter = std::make_unique<RemoteWorkerQuerySubmitter>(serverURI);
+    return runQueries(queries, numConcurrentQueries, std::move(submitter));
 }
 
 }

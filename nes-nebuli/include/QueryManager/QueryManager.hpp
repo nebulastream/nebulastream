@@ -23,22 +23,28 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <experimental/propagate_const>
-#include <GRPCClient.hpp>
+#include "Listeners/QueryLog.hpp"
 
-namespace NES::CLI
+namespace NES
+{
+class LogicalPlan;
+}
+
+namespace NES
 {
 
-class Nebuli
+class QueryManager
 {
-    std::experimental::propagate_const<std::shared_ptr<GRPCClient>> grpcClient;
+    // std::shared_ptr<const GRPCClient> grpcClient;
 
 public:
-    explicit Nebuli(const std::shared_ptr<GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
+    virtual ~QueryManager() = default;
+    // explicit QueryManager(const std::shared_ptr<const GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
 
-    QueryId registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId queryId);
-    void stopQuery(QueryId queryId);
-    void unregisterQuery(QueryId queryId);
+    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept = 0;
+    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
+    [[nodiscard]] virtual std::optional<QuerySummary> status(QueryId queryId) const = 0;
 };
 }

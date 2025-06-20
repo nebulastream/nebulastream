@@ -86,4 +86,10 @@ bool NES::SinkCatalog::containsSinkDescriptor(const Sinks::SinkDescriptor& sinkD
     const std::unique_lock lock(catalogMutex);
     return sinks.contains(sinkDescriptor.sinkName);
 }
+
+std::vector<Sinks::SinkDescriptor> SinkCatalog::getAllSinkDescriptors() const
+{
+    return sinks | std::ranges::views::transform([](const auto& sinkDescriptor) { return sinkDescriptor.second; })
+        | std::ranges::to<std::vector>();
+}
 }

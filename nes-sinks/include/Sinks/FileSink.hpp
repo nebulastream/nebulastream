@@ -82,7 +82,7 @@ struct ConfigParametersFile
         { return Configurations::DescriptorConfig::tryGet(APPEND, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, SinkDescriptor::FILE_PATH, APPEND);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, SinkDescriptor::FILE_PATH, INPUT_FORMAT, APPEND);
 };
 
 }

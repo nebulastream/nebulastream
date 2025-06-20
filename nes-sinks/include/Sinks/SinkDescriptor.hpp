@@ -86,9 +86,14 @@ public:
         INVALID<WorkerId>.getRawValue(),
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            if (config.contains(LOCATION.name) && config.at(LOCATION.name) == "local")
+            if (config.contains(LOCATION.name))
             {
-                return std::optional{INITIAL<WorkerId>.getRawValue()};
+                std::string location = config.at(LOCATION.name);
+                std::ranges::transform(location, location.begin(), ::toupper);
+                if (config.at(LOCATION.name) == "LOCAL")
+                {
+                    return std::optional{INITIAL<WorkerId>.getRawValue()};
+                }
             }
             return NES::Configurations::DescriptorConfig::tryGet(LOCATION, config);
         }};

@@ -21,20 +21,20 @@
 #include <Plans/LogicalPlan.hpp>
 #include <grpcpp/client_context.h>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-
+#include <QueryManager/QueryManager.hpp>
+#include <experimental/propagate_const>
 namespace NES
 {
-class GRPCClient
+class GRPCClient final : public QueryManager
 {
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
 public:
     explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const NES::LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
-
-    [[nodiscard]] NES::QuerySummary status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
+    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
+    std::expected<void, Exception> stop(QueryId queryId) noexcept override;
+    std::expected<void, Exception> start(QueryId queryId) noexcept override;
+    std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
+    std::optional<NES::QuerySummary> status(QueryId queryId) const override;
 };
 }

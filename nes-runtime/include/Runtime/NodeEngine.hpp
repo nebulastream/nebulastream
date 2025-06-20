@@ -55,6 +55,7 @@ public:
 
     [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
+    [[nodiscard]] std::shared_ptr<const QueryLog> getQueryLog() const { return queryLog; }
 
 private:
     std::shared_ptr<Memory::BufferManager> bufferManager;

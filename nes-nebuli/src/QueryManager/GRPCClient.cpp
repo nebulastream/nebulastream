@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <GRPCClient.hpp>
-
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/GRPCClient.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -35,7 +35,7 @@ namespace NES
 GRPCClient::GRPCClient(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
 {
 }
-QueryId GRPCClient::registerQuery(const NES::LogicalPlan& plan) const
+std::expected<QueryId, Exception> GRPCClient::registerQuery(const NES::LogicalPlan& plan) noexcept
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
@@ -48,16 +48,16 @@ QueryId GRPCClient::registerQuery(const NES::LogicalPlan& plan) const
     }
     else
     {
-        throw NES::QueryRegistrationFailed(
+        return std::unexpected{NES::QueryRegistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details());
+            status.error_details())};
     }
     return QueryId{reply.queryid()};
 }
 
-void GRPCClient::start(const QueryId queryId) const
+std::expected<void, Exception> GRPCClient::start(const QueryId queryId) noexcept
 {
     grpc::ClientContext context;
     StartQueryRequest request;
@@ -69,16 +69,17 @@ void GRPCClient::start(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryStartFailed(
+        return std::unexpected{NES::QueryStartFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details());
+            status.error_details())};
     }
+    return {};
 }
 
 
-NES::QuerySummary GRPCClient::status(const QueryId queryId) const
+std::optional<NES::QuerySummary> GRPCClient::status(const QueryId queryId) const
 {
     grpc::ClientContext context;
     QuerySummaryRequest request;
@@ -90,11 +91,13 @@ NES::QuerySummary GRPCClient::status(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryStatusFailed(
-            "Status: {}\nMessage: {}\nDetail: {}",
+        NES_INFO(
+            "Could not request status for query {}.\nStatus: {}\nMessage: {}\nDetail: {}",
+            queryId,
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
             status.error_details());
+        return std::nullopt;
     }
 
     /// Convert the gRPC object to a C++ one
@@ -123,7 +126,7 @@ NES::QuerySummary GRPCClient::status(const QueryId queryId) const
     return querySummary;
 }
 
-void GRPCClient::unregister(const QueryId queryId) const
+std::expected<void, Exception> GRPCClient::unregister(const QueryId queryId) noexcept
 {
     grpc::ClientContext context;
     UnregisterQueryRequest request;
@@ -135,15 +138,16 @@ void GRPCClient::unregister(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryUnregistrationFailed(
+        return std::unexpected{NES::QueryUnregistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details());
+            status.error_details())};
     }
+    return {};
 }
 
-void GRPCClient::stop(const QueryId queryId) const
+std::expected<void, Exception> GRPCClient::stop(const QueryId queryId) noexcept
 {
     grpc::ClientContext context;
     StopQueryRequest request;
@@ -156,11 +160,12 @@ void GRPCClient::stop(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryStopFailed(
+        return std::unexpected{NES::QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
-            status.error_details());
+            status.error_details())};
     }
+    return {};
 }
 }

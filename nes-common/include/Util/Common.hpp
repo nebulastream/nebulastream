@@ -18,6 +18,9 @@
 #include <ostream>
 #include <string>
 #include <vector>
+
+#include <experimental/propagate_const>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -105,4 +108,17 @@ std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
     }
     return nullptr;
 }
+
+template <typename T>
+std::shared_ptr<const T> copyPtr(const std::experimental::propagate_const<std::shared_ptr<T>>& ptr)
+{
+    return std::shared_ptr<const T>{std::experimental::get_underlying(ptr)};
+}
+
+template <typename T>
+std::shared_ptr<T> copyPtr(std::experimental::propagate_const<std::shared_ptr<T>>& ptr)
+{
+    return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
+}
+
 }

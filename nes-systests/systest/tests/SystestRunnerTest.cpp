@@ -103,28 +103,28 @@ public:
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
+    auto submitter = std::make_unique<MockSubmitter>();
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
-    const auto result = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter);
+    const auto result = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, std::move(submitter));
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
+    auto submitter = std::make_unique<MockSubmitter>();
     constexpr QueryId id{7};
 
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(submitter, startQuery(id));
+    EXPECT_CALL(*submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*submitter, startQuery(id));
 
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
 
-    EXPECT_CALL(submitter, finishedQueries())
+    EXPECT_CALL(*submitter, finishedQueries())
         .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Failed, runtimeErr)}))
         .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
@@ -133,7 +133,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
-        submitter);
+        std::move(submitter));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -143,13 +143,13 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
+    auto submitter = std::make_unique<MockSubmitter>();
     constexpr QueryId id{11};
 
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(submitter, startQuery(id));
+    EXPECT_CALL(*submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*submitter, startQuery(id));
 
-    EXPECT_CALL(submitter, finishedQueries())
+    EXPECT_CALL(*submitter, finishedQueries())
         .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Stopped, nullptr)}))
         .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
@@ -160,7 +160,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
             SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
-        submitter);
+        std::move(submitter));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);

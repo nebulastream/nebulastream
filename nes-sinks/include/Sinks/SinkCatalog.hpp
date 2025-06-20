@@ -37,6 +37,8 @@ public:
     bool containsSinkDescriptor(const std::string& sinkName) const;
     bool containsSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor) const;
 
+    std::vector<Sinks::SinkDescriptor> getAllSinkDescriptors() const;
+
 private:
     mutable std::recursive_mutex catalogMutex;
     std::unordered_map<std::string, Sinks::SinkDescriptor> sinks;

@@ -50,7 +50,7 @@ static constexpr auto padSizeQueryCounter = 3;
 /// Runs queries
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+runQueries(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, std::unique_ptr<QuerySubmitter> querySubmitter);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries

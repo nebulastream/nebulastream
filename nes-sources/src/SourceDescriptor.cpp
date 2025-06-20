@@ -67,6 +67,10 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     }
     return created;
 }
+std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
+{
+    return os << fmt::format("ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {})", obj.parserType, obj.tupleDelimiter, obj.fieldDelimiter);
+}
 
 SourceDescriptor::SourceDescriptor(
     const uint64_t physicalSourceId,

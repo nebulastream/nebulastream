@@ -51,6 +51,7 @@ struct ParserConfig
     std::string tupleDelimiter;
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
+    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
 
@@ -113,9 +114,14 @@ public:
         INVALID<WorkerId>.getRawValue(),
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            if (config.contains(LOCATION.name) && config.at(LOCATION.name) == "local")
+            if (config.contains(LOCATION.name))
             {
-                return std::optional{INITIAL<WorkerId>.getRawValue()};
+                std::string location = config.at(LOCATION.name);
+                std::ranges::transform(location, location.begin(), ::toupper);
+                if (config.at(LOCATION.name) == "LOCAL")
+                {
+                    return std::optional{INITIAL<WorkerId>.getRawValue()};
+                }
             }
             return NES::Configurations::DescriptorConfig::tryGet(LOCATION, config);
         }};
@@ -138,3 +144,4 @@ struct std::hash<NES::SourceDescriptor>
 };
 
 FMT_OSTREAM(NES::SourceDescriptor);
+FMT_OSTREAM(NES::ParserConfig);

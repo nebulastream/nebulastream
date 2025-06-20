@@ -77,7 +77,7 @@ bool QueryLog::logQueryStatusChange(QueryId queryId, QueryStatus status, std::ch
     return true;
 }
 
-std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId)
+std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();
     if (const auto it = log->find(queryId); it != log->end())
@@ -87,7 +87,7 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId)
     return std::nullopt;
 }
 
-std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
+std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();
     if (const auto queryLog = log->find(queryId); queryLog != log->end())

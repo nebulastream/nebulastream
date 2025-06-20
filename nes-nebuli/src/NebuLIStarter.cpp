@@ -21,8 +21,10 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include "QueryManager/GRPCClient.hpp"
 
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -39,9 +41,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <GRPCClient.hpp>
 #include <LegacyOptimizer.hpp>
-#include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 
@@ -91,19 +91,17 @@ int main(int argc, char** argv)
         }
 
         bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (NES::CLI::Nebuli::*)(NES::QueryId)>>{
-                 {"start", &NES::CLI::Nebuli::startQuery},
-                 {"unregister", &NES::CLI::Nebuli::unregisterQuery},
-                 {"stop", &NES::CLI::Nebuli::stopQuery}})
+        for (const auto& [name, fn] :
+             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
+                 {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
                 auto serverUri = parser.get<std::string>("-s");
                 auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-                NES::CLI::Nebuli nebuli{client};
                 auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
-                (nebuli.*fn)(queryId);
+                ((*client).*fn)(queryId);
                 handled = true;
                 break;
             }
@@ -174,13 +172,24 @@ int main(int argc, char** argv)
             auto& registerArgs = program.at<ArgumentParser>("register");
             auto client = std::make_shared<NES::GRPCClient>(
                 grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-            NES::CLI::Nebuli nebuli{client};
-            const auto queryId = nebuli.registerQuery(optimizedQueryPlan);
-            if (registerArgs.is_used("-x"))
+            const auto queryId = client->registerQuery(optimizedQueryPlan);
+            if (queryId.has_value())
             {
-                nebuli.startQuery(queryId);
+                if (registerArgs.is_used("-x"))
+                {
+                    if (not client->start(queryId.value()).has_value())
+                    {
+                        std::cerr << "Could not start query" << std::endl;
+                        return 1;
+                    }
+                    std::cout << queryId.value().getRawValue();
+                }
             }
-            std::cout << queryId.getRawValue();
+            else
+            {
+                std::cerr << "Could not register query" << std::endl;
+                return 1;
+            }
         }
 
         return 0;

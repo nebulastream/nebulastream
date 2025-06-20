@@ -103,7 +103,7 @@ LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configuration::Single
 }
 std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
-    return QueryId(client.registerQuery(plan));
+    return client.registerQuery(plan);
 }
 void RemoteWorkerQuerySubmitter::startQuery(const QueryId query)
 {
@@ -123,9 +123,9 @@ QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(const QueryId q
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         const auto summary = client.status(query);
-        if (summary.currentStatus == QueryStatus::Stopped)
+        if (summary.has_value() && summary.value().currentStatus == QueryStatus::Stopped)
         {
-            return summary;
+            return summary.value();
         }
     }
 }
@@ -137,9 +137,9 @@ std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
         for (auto id : ids)
         {
             auto summary = client.status(id);
-            if (summary.currentStatus == QueryStatus::Failed || summary.currentStatus == QueryStatus::Stopped)
+            if (summary.has_value() && (summary.value().currentStatus == QueryStatus::Failed || summary.value().currentStatus == QueryStatus::Stopped))
             {
-                results.emplace_back(summary);
+                results.emplace_back(summary.value());
             }
         }
         if (results.empty())
