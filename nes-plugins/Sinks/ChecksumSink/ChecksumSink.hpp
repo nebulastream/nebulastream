@@ -22,7 +22,11 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -50,6 +54,14 @@ public:
     void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
+    static inline const Schema checksumSchema = []
+    {
+        auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        return checksumSinkSchema;
+    }();
+
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
 
@@ -63,14 +75,8 @@ private:
 
 struct ConfigParametersChecksum
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
-
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH);
 };
 
 }

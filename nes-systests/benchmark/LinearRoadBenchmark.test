@@ -6,6 +6,8 @@
 Source lrb UINT64 creationTS INT16 vehicle FLOAT32 speed INT16 highway INT16 lane INT16 direction INT32 position FILE
 TESTDATA/large/lrb/linear_road_benchmark_560K.csv
 
+SINK q1Checksum TYPE Checksum UINT64 lrb$start UINT64 lrb$end INT16 lrb$highway INT16 lrb$direction INT32 lrb$positionDiv5280 FLOAT64 lrb$avgSpeed
+SINK q2Checksum TYPE Checksum UINT64 lrb$start UINT64 lrb$end INT16 lrb$vehicle INT16 lrb$highway INT16 lrb$direction INT32 lrb$positionDiv5280 UINT64 lrb$cntSpeed
 
 # Query 1
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -13,7 +15,7 @@ FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionD
 GROUP BY (highway, direction, positionDiv5280)
 WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
 HAVING avgSpeed < FLOAT32(40)
-INTO CHECKSUM;
+INTO q1Checksum;
 ----
 70916, 151995926
 
@@ -22,6 +24,6 @@ SELECT start, end, vehicle, highway, direction, positionDiv5280, COUNT(speed) AS
 FROM (SELECT creationTS, vehicle, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM lrb)
 GROUP BY (vehicle, highway, direction, positionDiv5280)
 WINDOW SLIDING(creationTS, SIZE 30 SEC, ADVANCE BY 1 SEC)
-INTO CHECKSUM;
+INTO q2Checksum;
 ----
 491460, 991265094

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Sources/LogicalSource.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -19,15 +21,14 @@
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
-#include <Sources/LogicalSource.hpp>
 #include <fmt/format.h>
 
 namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(schema)
+LogicalSource::LogicalSource(std::string logicalSourceName, std::shared_ptr<const Schema>&& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 

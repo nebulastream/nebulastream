@@ -38,8 +38,8 @@ namespace NES::Sinks
 
 ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
     : isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH))
-    , formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema, true))
+    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
+    , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema()))
 {
 }
 

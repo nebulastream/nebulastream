@@ -39,10 +39,11 @@ namespace NES::Sinks
 
 PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
 {
+    PRECONDITION(sinkDescriptor.getSchema(), "Schema must be set for PrintSink");
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
         case Configurations::InputFormat::CSV:
-            outputParser = std::make_unique<CSVFormat>(sinkDescriptor.schema);
+            outputParser = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));

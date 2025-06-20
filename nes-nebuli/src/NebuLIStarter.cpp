@@ -25,6 +25,7 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -114,15 +115,16 @@ int main(int argc, char** argv)
         }
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog};
-        auto optimizer = NES::CLI::LegacyOptimizer{sourceCatalog};
+        auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
+        auto optimizer = NES::CLI::LegacyOptimizer{sourceCatalog, sinkCatalog};
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
-        NES::CLI::BoundQueryConfig boundConfig;
+        NES::LogicalPlan boundPlan;
         if (input == "-")
         {
-            boundConfig = yamlBinder.parseAndBind(std::cin);
+            boundPlan = yamlBinder.parseAndBind(std::cin);
         }
         else
         {
@@ -131,10 +133,10 @@ int main(int argc, char** argv)
             {
                 throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
             }
-            boundConfig = yamlBinder.parseAndBind(file);
+            boundPlan = yamlBinder.parseAndBind(file);
         }
 
-        const NES::LogicalPlan optimizedQueryPlan = optimizer.optimize(boundConfig.plan);
+        const NES::LogicalPlan optimizedQueryPlan = optimizer.optimize(boundPlan);
 
         std::string output;
         auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(optimizedQueryPlan);

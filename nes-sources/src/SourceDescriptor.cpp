@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
@@ -68,20 +69,16 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
 }
 
 SourceDescriptor::SourceDescriptor(
-    LogicalSource logicalSource,
     const uint64_t physicalSourceId,
-    const WorkerId workerId,
-    std::string sourceType,
-    const int numberOfBuffersInLocalPool,
+    LogicalSource logicalSource,
+    std::string_view sourceType,
     Configurations::DescriptorConfig::Config&& config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
-    , workerId(workerId)
     , sourceType(std::move(sourceType))
     , parserConfig(std::move(parserConfig))
-    , numberOfBuffersInLocalPool(numberOfBuffersInLocalPool)
 {
 }
 
@@ -100,20 +97,12 @@ ParserConfig SourceDescriptor::getParserConfig() const
     return parserConfig;
 }
 
-WorkerId SourceDescriptor::getWorkerId() const
-{
-    return workerId;
-}
 
 uint64_t SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
 }
 
-int32_t SourceDescriptor::getBuffersInLocalPool() const
-{
-    return numberOfBuffersInLocalPool;
-}
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
@@ -150,7 +139,6 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
     serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
     serializableSourceDescriptor.set_sourcetype(sourceType);
-    serializableSourceDescriptor.set_numberofbuffersinlocalpool(numberOfBuffersInLocalPool);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = NES::SerializableParserConfig().New();

@@ -14,35 +14,100 @@
 
 #pragma once
 
+
+#include <cstdint>
+#include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
+
+namespace NES
+{
+class SerializableQueryPlan;
+class OperatorSerializationUtil;
+class SinkCatalog;
+namespace IntegrationTestUtil
+{
+};
+
+}
 
 namespace NES::Sinks
 {
 
-struct SinkDescriptor final : NES::Configurations::Descriptor
+class SinkDescriptor final : public NES::Configurations::Descriptor
 {
-    explicit SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
+    friend SinkCatalog;
+    friend OperatorSerializationUtil;
+
+public:
     ~SinkDescriptor() = default;
 
-    /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.
-    static NES::Configurations::DescriptorConfig::Config
-    validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
-
-    [[nodiscard]] NES::SerializableSinkDescriptor serialize() const;
-
-    const std::string sinkType;
-    Schema schema;
-    bool addTimestamp;
-
+    [[nodiscard]] SerializableSinkDescriptor serialize() const;
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
+
+    [[nodiscard]] std::string getSinkType() const;
+    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::string getSinkName() const;
+
+private:
+    explicit SinkDescriptor(
+        std::string sinkName,
+        std::shared_ptr<const Schema>&& schema,
+        std::string_view sinkType,
+        NES::Configurations::DescriptorConfig::Config&& config);
+
+
+    std::string sinkName;
+    std::shared_ptr<const Schema> schema;
+    std::string sinkType;
+
+public:
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
+        "addTimestamp",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return NES::Configurations::DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint64_t> LOCATION{
+        "location",
+        INVALID<WorkerId>.getRawValue(),
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            if (config.contains(LOCATION.name) && config.at(LOCATION.name) == "local")
+            {
+                return std::optional{INITIAL<WorkerId>.getRawValue()};
+            }
+            return NES::Configurations::DescriptorConfig::tryGet(LOCATION, config);
+        }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(ADD_TIMESTAMP, LOCATION);
+
+    /// Well-known property for any sink that sends its data to a file
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+        "filePath",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return NES::Configurations::DescriptorConfig::tryGet(FILE_PATH, config); }};
+
+    static std::optional<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
 };
 }
+
 FMT_OSTREAM(NES::Sinks::SinkDescriptor);

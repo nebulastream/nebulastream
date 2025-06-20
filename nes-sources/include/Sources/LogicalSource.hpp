@@ -32,7 +32,7 @@ class LogicalSource
 {
     friend SourceCatalog;
     friend OperatorSerializationUtil;
-    explicit LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema);
+    explicit LogicalSource(std::string logicalSourceName, std::shared_ptr<const Schema>&& schema);
 
 public:
     [[nodiscard]] std::string getLogicalSourceName() const;

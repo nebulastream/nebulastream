@@ -72,7 +72,7 @@ struct ConfigParametersCSV
         { return NES::Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
 
     static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
 
 }

@@ -18,7 +18,6 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
-#include <exception>
 #include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
@@ -37,12 +36,14 @@
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDataProvider.hpp>
@@ -117,7 +118,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>());
+            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
             testFiles.insert({testfile.file, testfile});
         }
     }
@@ -153,17 +154,23 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
-TestFile::TestFile(const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog)
-    : file(weakly_canonical(file)), groups(readGroups(*this)), sourceCatalog(std::move(sourceCatalog)) { };
+TestFile::TestFile(
+    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+    : file(weakly_canonical(file))
+    , groups(readGroups(*this))
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog)) { };
 
 TestFile::TestFile(
     const std::filesystem::path& file,
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-    std::shared_ptr<SourceCatalog> sourceCatalog)
+    std::shared_ptr<SourceCatalog> sourceCatalog,
+    std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this))
-    , sourceCatalog(std::move(sourceCatalog)) { };
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog)) { };
 
 
 struct TestGroupFiles
@@ -202,7 +209,7 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>());
+            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
             return TestFileMap{{testfile.file, testfile}};
         }
         /// case: load a concrete set of tests
@@ -210,7 +217,8 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
-        const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>());
+        const auto testfile
+            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
         return TestFileMap{{testfile.file, testfile}};
     }
 

@@ -32,7 +32,6 @@
 #include <regex>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -42,23 +41,13 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -67,7 +56,6 @@
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
@@ -115,7 +103,8 @@ void processQueryWithError(
         [&]
         {
             if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError)
-                and std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code == runningQuery->exception->code())
+                and std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code
+                    == runningQuery->exception->code())
             {
                 return std::string{};
             }
@@ -125,7 +114,7 @@ void processQueryWithError(
 
 }
 
-
+/// NOLINTBEGIN(readability-function-cognitive-complexity)
 std::vector<RunningQuery>
 runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter)
 {
@@ -218,6 +207,7 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
     auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
     return {failedViews.begin(), failedViews.end()};
 }
+/// NOLINTEND(readability-function-cognitive-complexity)
 
 namespace
 {
@@ -333,7 +323,8 @@ void printQueryResultToStdOut(
     /// And as this is only for test runs we use stdout here.
     std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
+    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0')
+              << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (runningQuery.passed)
     {

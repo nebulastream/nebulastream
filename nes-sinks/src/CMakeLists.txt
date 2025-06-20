@@ -16,6 +16,7 @@ add_source_files(nes-sinks
         SinkDescriptor.cpp
         Sink.cpp
         SinkProvider.cpp
+        SinkCatalog.cpp
 )
 
 # Register plugins
