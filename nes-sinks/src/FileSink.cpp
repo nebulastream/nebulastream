@@ -42,14 +42,15 @@ namespace NES::Sinks
 
 FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
+    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
+    PRECONDITION(sinkDescriptor.getSchema(), "Schema must be set for FileSink");
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersFile::INPUT_FORMAT))
     {
         case Configurations::InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
+            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));

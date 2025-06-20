@@ -8,18 +8,23 @@ TESTDATA/large/nexmark/bid_653M.csv
 Source auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category FILE
 TESTDATA/large/nexmark/auction_modified_74M.csv
 
+SINK bidChecksum TYPE Checksum UINT64 bid$timestamp INT32 bid$auctionId INT32 bid$bidder INT64 bid$datetime FLOAT64 bid$price
+SINK bidPriceChecksum TYPE Checksum FLOAT64 bid$price
+SINK q5Checksum TYPE Checksum UINT64 bidbid$start UINT64 bidbid$end INT32 bid$auctionId UINT64 bid$num UINT64 bid$max_tmp
+SINK q8Checksum TYPE Checksum UINT64 bidauction$start UINT64 bidauction$end INT32 bid$auctionId INT32 bid$bidder INT64 bid$datetime FLOAT64 bid$price INT32 auction$id INT32 auction$initialbid INT32 auction$reserve INT64 auction$expires INT32 auction$seller INT32 auction$category
+
 # Query 0
-SELECT * FROM bid INTO CHECKSUM;
+SELECT * FROM bid INTO bidChecksum;
 ----
 18106394 33146443404
 
 # Query 1
-SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO CHECKSUM;
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO bidPriceChecksum;
 ----
 18106394 5431093917
 
 # Query 2
-SELECT * FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO CHECKSUM;
+SELECT * FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO bidChecksum;
 ----
 146516 268224796
 
@@ -38,7 +43,7 @@ INNER JOIN (SELECT MAX(num_ids) AS max_tmp, start, end
               WINDOW TUMBLING(start, SIZE 2 SEC))
 ON num >= max_tmp
 WINDOW TUMBLING(start, SIZE 2 SEC)
-INTO CHECKSUM;
+INTO q5Checksum;
 ----
 243784, 390918029
 
@@ -50,6 +55,6 @@ SELECT start, end, auctionId, bidder, datetime, price, id, initialbid, reserve, 
     FROM (SELECT * FROM bid)
 INNER JOIN
     (SELECT * FROM auction)
-ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
+ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8Checksum;
 ----
 9149189 35887394308

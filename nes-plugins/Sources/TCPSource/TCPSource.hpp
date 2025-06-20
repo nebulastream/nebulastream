@@ -147,7 +147,16 @@ struct ConfigParametersTCP
 
     static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
+            SourceDescriptor::parameterMap,
+            HOST,
+            PORT,
+            DOMAIN,
+            TYPE,
+            SEPARATOR,
+            FLUSH_INTERVAL_MS,
+            SOCKET_BUFFER_SIZE,
+            SOCKET_BUFFER_TRANSFER_SIZE,
+            CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
