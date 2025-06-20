@@ -17,5 +17,6 @@ add_source_files(nes-legacy-optimizer
         RedundantProjectionRemovalRule.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhase.cpp
+        SinkBindingRule.cpp
         LegacyOptimizer.cpp
 )

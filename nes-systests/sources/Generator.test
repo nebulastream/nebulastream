@@ -21,6 +21,10 @@ SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$field2
 
 SINK generator_sink_inline UINT64 generatorInline$id
 
+SINK 10K_checksum TYPE Checksum UINT64 generator10K$id UINT64 generator10K$field2
+SINK stop_all_checksum TYPE Checksum UINT64 generatorStopAll$id UINT64 generatorStopAll$field2
+SINK stop_one_checksum TYPE Checksum UINT64 generatorStopOne$id UINT64 generatorStopOne$field2
+
 SELECT * FROM generatorDefault INTO generator_sink
 ----
 0 0
@@ -34,15 +38,15 @@ SELECT * FROM generatorDefault INTO generator_sink
 8 5
 9 5
 
-SELECT * FROM generator10K INTO CHECKSUM
+SELECT * FROM generator10K INTO 10K_checksum
 ----
 10000 4032240
 
-SELECT * FROM generatorStopAll INTO CHECKSUM
+SELECT * FROM generatorStopAll INTO stop_all_checksum
 ----
 200 60740
 
-SELECT * FROM generatorStopOne INTO CHECKSUM
+SELECT * FROM generatorStopOne INTO stop_one_checksum
 ----
 100 25440
 

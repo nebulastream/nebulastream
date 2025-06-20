@@ -13,6 +13,9 @@ TESTDATA/large/cluster_monitoring/google-cluster-data-lightsaber_1M.csv
 Source monitoringClusterData UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT64 cpu FLOAT64 ram FLOAT64 disk BOOLEAN constraints FILE
 TESTDATA/large/cluster_monitoring/google-cluster-data-original_1G.csv
 
+
+SINK q1Checksum TYPE Checksum UINT64 monitoringClusterData$start UINT64 monitoringClusterData$end FLOAT64 monitoringClusterData$totalCpu UINT64 monitoringClusterData$jobId
+SINK q2Checksum TYPE Checksum UINT64 monitoringLightsaber$start UINT64 monitoringLightsaber$end FLOAT32 monitoringLightsaber$totalCpu UINT64 monitoringLightsaber$jobId
 SINK q2Sink UINT64 monitoringLightsaber$start UINT64 monitoringLightsaber$end FLOAT32 monitoringLightsaber$totalCpu UINT64 monitoringLightsaber$jobId
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
@@ -38,7 +41,7 @@ FROM monitoringClusterData
 WHERE eventType == INT16(3)
 GROUP BY jobId
 WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
-INTO CHECKSUM;
+INTO q1Checksum;
 ----
 3094778,7192484640
 
@@ -48,6 +51,6 @@ FROM monitoringLightsaber
 WHERE eventType == INT16(3)
 GROUP BY jobId
 WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
-INTO CHECKSUM;
+INTO q2Checksum;
 ----
 3403, 7612888

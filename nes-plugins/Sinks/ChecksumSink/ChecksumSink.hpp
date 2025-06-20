@@ -63,13 +63,8 @@ private:
 
 struct ConfigParametersChecksum
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
-
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH);
 };
 
 }

@@ -82,6 +82,7 @@ struct LogicalSource
 struct PhysicalSource
 {
     std::string logical;
+    std::string type;
     std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
 };

@@ -631,7 +631,7 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
     const auto queryResult = loadQueryResult(runningQuery.systestQuery);
     if (not queryResult.has_value())
     {
-        return QueryCheckResult{fmt::format("Failed to load query result for query: ", runningQuery.systestQuery.queryDefinition)};
+        return QueryCheckResult{fmt::format("Failed to load query result for query: {}", runningQuery.systestQuery.queryDefinition)};
     }
 
     const QuerySchemasAndResults querySchemasAndResults = [&]()

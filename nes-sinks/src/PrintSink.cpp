@@ -42,7 +42,7 @@ PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
         case InputFormat::CSV:
-            outputParser = std::make_unique<CSVFormat>(sinkDescriptor.schema);
+            outputParser = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
