@@ -142,6 +142,12 @@ PhysicalSource loadSystestPhysicalSourceFromYAML(
         PhysicalSource systestPhysicalSource{};
         systestPhysicalSource.logical = std::move(logicalSourceName);
         systestPhysicalSource.sourceConfig = YAML::Load(sourceConfigFile).as<std::unordered_map<std::string, std::string>>();
+        auto typeNode = systestPhysicalSource.sourceConfig.extract("type");
+        if (typeNode.empty())
+        {
+            throw InvalidConfigParameter("No source type specified in source config: {}");
+        }
+        systestPhysicalSource.type = typeNode.mapped();
         systestPhysicalSource.parserConfig = YAML::Load(inputFormatterConfigFile).as<std::unordered_map<std::string, std::string>>();
         return systestPhysicalSource;
     }

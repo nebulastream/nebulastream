@@ -15,6 +15,8 @@
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <optional>

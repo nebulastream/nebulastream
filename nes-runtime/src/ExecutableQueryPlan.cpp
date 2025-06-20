@@ -72,7 +72,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 
     for (auto& [pipelineId, descriptor, predecessors] : compiledQueryPlan.sinks)
     {
-        auto sink = ExecutablePipeline::create(pipelineId, Sinks::SinkProvider::lower(*descriptor), {});
+        auto sink = ExecutablePipeline::create(pipelineId, Sinks::SinkProvider::lower(descriptor), {});
         compiledQueryPlan.pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {

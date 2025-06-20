@@ -11,28 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-
 #include <memory>
-#include <optional>
-#include <Nautilus/Interface/Record.hpp>
-#include <Sinks/SinkDescriptor.hpp>
-#include <PhysicalOperator.hpp>
+#include <utility>
+#include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
 
-namespace NES
+namespace NES::LegacyOptimizer
 {
-class SinkPhysicalOperator final : public PhysicalOperatorConcept
+class SinkBindingRule
 {
 public:
-    explicit SinkPhysicalOperator(const Sinks::SinkDescriptor& descriptor);
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator) override;
-
-    [[nodiscard]] Sinks::SinkDescriptor getDescriptor() const;
-
-    bool operator==(const SinkPhysicalOperator& other) const;
+    explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    void apply(LogicalPlan& queryPlan) const;
 
 private:
-    Sinks::SinkDescriptor descriptor;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 }

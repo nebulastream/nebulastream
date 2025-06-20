@@ -18,6 +18,7 @@
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
+#include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 
@@ -26,6 +27,7 @@ namespace NES::CLI
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
+    const auto sinkBindingRule = NES::LegacyOptimizer::SinkBindingRule{sinkCatalog};
     const auto sourceInference = NES::LegacyOptimizer::SourceInferencePhase{sourceCatalog};
     const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule{sourceCatalog};
     constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
@@ -33,6 +35,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantUnionRemovalRule = NES::LegacyOptimizer::RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = NES::LegacyOptimizer::RedundantProjectionRemovalRule{};
 
+    sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     NES_INFO("After Source Expansion:\n{}", newPlan);

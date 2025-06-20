@@ -16,6 +16,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
@@ -25,13 +26,10 @@
 namespace NES::Sources::SourceValidationProvider
 {
 
-DescriptorConfig::Config provide(const std::string& sourceType, std::unordered_map<std::string, std::string> stringConfig)
+std::optional<DescriptorConfig::Config>
+provide(const std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig)
 {
     auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(std::move(stringConfig));
-    if (const auto validConfig = SourceValidationRegistry::instance().create(sourceType, std::move(sourceValidationRegistryArguments)))
-    {
-        return std::move(validConfig.value());
-    }
-    throw UnknownSourceType("We don't support the source type: {}", sourceType);
+    return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 }

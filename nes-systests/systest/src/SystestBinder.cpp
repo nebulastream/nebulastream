@@ -43,14 +43,15 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <SystestSources/SystestSourceYAMLBinder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <experimental/propagate_const>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
@@ -65,45 +66,26 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory()
-    {
-        auto [_, success] = sinkProviders.emplace(
-            "CHECKSUM",
-            [this](
-                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<Sinks::SinkDescriptor, Exception>
-            {
-                if (auto [iter, success] = sinkSchemas.try_emplace(std::string{assignedSinkName}, checksumSchema); !success)
-                {
-                    return std::unexpected{SinkAlreadyExists("{}", assignedSinkName)};
-                }
-                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
-                    "Checksum", std::unordered_map<std::string, std::string>{{"filePath", filePath}});
-                return Sinks::SinkDescriptor{std::string{"Checksum"}, std::move(validatedSinkConfig), false};
-            });
-        INVARIANT(success, "Failed to register checksum sink");
-    }
+    explicit SLTSinkFactory(std::shared_ptr<NES::SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
     {
-        auto [done, success] = sinkProviders.emplace(
+        auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<Sinks::SinkDescriptor, Exception>
             {
-                if (auto [iter, success] = sinkSchemas.try_emplace(std::string{assignedSinkName}, schema); not success)
-                {
-                    return std::unexpected{SinkAlreadyExists("{}", assignedSinkName)};
-                }
-
                 std::unordered_map<std::string, std::string> config{{"filePath", std::move(filePath)}};
                 if (sinkType == "File")
                 {
                     config["inputFormat"] = "CSV";
-                    config["append"] = "false";
                 }
-
-                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
-                return Sinks::SinkDescriptor{sinkType, std::move(validatedSinkConfig), false};
+                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                if (not sink.has_value())
+                {
+                    return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
+                }
+                return sink.value();
             });
         return success;
     }
@@ -119,16 +101,6 @@ public:
         return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
     }
 
-    [[nodiscard]] std::optional<Schema> getSinkSchema(const std::string& sinkNameInFile) const
-    {
-        const auto sinkSchemaIter = sinkSchemas.find(sinkNameInFile);
-        if (sinkSchemaIter == sinkSchemas.end())
-        {
-            return std::nullopt;
-        }
-        return sinkSchemaIter->second;
-    }
-
     static inline const Schema checksumSchema = []
     {
         auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
@@ -138,8 +110,7 @@ public:
     }();
 
 private:
-    /// TODO #951 Remove this map in the sink catalog PR
-    std::unordered_map<std::string, Schema> sinkSchemas;
+    std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
     std::unordered_map<std::string, std::function<std::expected<Sinks::SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
@@ -186,7 +157,7 @@ public:
         return std::unexpected{TestException("No bound plan set")};
     }
 
-    void setOptimizedPlan(LogicalPlan optimizedPlan, const SLTSinkFactory& sinkProvider)
+    void setOptimizedPlan(LogicalPlan optimizedPlan)
     {
         this->optimizedPlan = std::move(optimizedPlan);
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
@@ -220,18 +191,14 @@ public:
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
         const auto sinkOperatorOpt = this->optimizedPlan->rootOperators.at(0).tryGet<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
-        INVARIANT(sinkOperatorOpt.value().sinkDescriptor != nullptr, "The root sink should have a sink descriptor");
-        if (sinkOperatorOpt.value().sinkDescriptor->sinkType == "Checksum")
+        INVARIANT(sinkOperatorOpt.value().getSinkDescriptor().has_value(), "The root sink should have a sink descriptor");
+        if (sinkOperatorOpt.value().getSinkDescriptor().value().getSinkType() == "Checksum") /// NOLINT(bugprone-unchecked-optional-access)
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
         }
         else
         {
             sinkOutputSchema = this->optimizedPlan->rootOperators.at(0).getOutputSchema();
-            if (sinkOutputSchema != sinkProvider.getSinkSchema(sinkOperatorOpt.value().sinkName))
-            {
-                this->exception = CannotInferSchema("The inferred sink schema does not match the schema declared in the systest");
-            }
         }
     }
 
@@ -271,7 +238,6 @@ public:
             .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
             .additionalSourceThreads = std::move(additionalSourceThreads.value())};
     }
-    /// NOLINTEND(bugprone-unchecked-optional-access)
 
 private:
     /// We could make all the fields just public and set them, but since some setters contain more complex logic, I wanted to keep access uniform.
@@ -325,7 +291,7 @@ struct SystestBinder::Impl
 
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
-        SLTSinkFactory sinkProvider;
+        SLTSinkFactory sinkProvider{testfile.sinkCatalog};
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
@@ -337,16 +303,16 @@ struct SystestBinder::Impl
                                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
                                  })
             | std::ranges::views::transform(
-                                 [&testfile, &foundQueries, &sinkProvider](auto& systest)
+                                 [&testfile, &foundQueries](auto& systest)
                                  {
                                      foundQueries.insert(systest.getSystemTestQueryId());
 
                                      if (systest.getBoundPlan().has_value())
                                      {
-                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog};
+                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
                                          try
                                          {
-                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()), sinkProvider);
+                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
                                          }
                                          catch (const Exception& exception)
                                          {
@@ -449,7 +415,7 @@ struct SystestBinder::Impl
                     }
                 }(attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
 
-                const auto [logical, parserConfig, sourceConfig] = [&]()
+                const auto [logical, sourceType, parserConfig, sourceConfig] = [&]()
                 {
                     switch (attachSource.testDataIngestionType)
                     {
@@ -472,24 +438,25 @@ struct SystestBinder::Impl
                     }
                     std::unreachable();
                 }();
-                if (const auto logicalSource = sourceCatalog.getLogicalSource(attachSource.logicalSourceName))
+                const auto logicalSource = sourceCatalog.getLogicalSource(attachSource.logicalSourceName);
+                if (not logicalSource.has_value())
                 {
-                    if (const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-                            logicalSource.value(),
-                            INITIAL<WorkerId>,
-                            attachSource.sourceType,
-                            -1,
-                            Sources::SourceValidationProvider::provide(attachSource.sourceType, sourceConfig),
-                            ParserConfig::create(parserConfig)))
-                    {
-                        return;
-                    }
+                    throw UnknownSourceName("{}", attachSource.logicalSourceName);
+                }
+
+
+                const auto physicalSource
+                    = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+                if (not physicalSource.has_value())
+                {
+                    NES_ERROR(
+                        "Concurrent deletion of just created logical source \"{}\" by another thread",
+                        logicalSource.value().getLogicalSourceName());
                     throw UnknownSourceName(
                         "Failed to attach physical source with type {} to logical source {}",
                         attachSource.sourceType,
                         attachSource.logicalSourceName);
                 }
-                throw UnknownSourceName("Failed to attach physical source to logical source: {}", attachSource.logicalSourceName);
             });
 
         /// We create a new query plan from our config when finding a query
@@ -538,23 +505,6 @@ struct SystestBinder::Impl
                     try
                     {
                         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                        auto sinkOperators = plan.rootOperators;
-                        auto sinkOperator = [](const LogicalPlan& queryPlan)
-                        {
-                            const auto rootOperators = queryPlan.rootOperators;
-                            if (rootOperators.size() != 1)
-                            {
-                                throw QueryInvalid(
-                                    "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-                                    rootOperators.size());
-                            }
-                            const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-                            INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
-                            return sinkOp.value();
-                        }(plan);
-
-                        sinkOperator.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sinkExpected.value());
-                        plan.rootOperators.at(0) = sinkOperator;
                         currentTest.setBoundPlan(std::move(plan));
                     }
                     catch (Exception& e)
