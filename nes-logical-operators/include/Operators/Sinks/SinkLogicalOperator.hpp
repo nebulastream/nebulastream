@@ -38,12 +38,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
     explicit SinkLogicalOperator(std::string sinkName);
-
-    std::string sinkName;
-    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
-
-    /// currently only use for testing purposes in IntegrationTestUtil
-    void setOutputSchema(Schema schema);
+    explicit SinkLogicalOperator(Sinks::SinkDescriptor sinkDescriptor);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -66,6 +61,11 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    [[nodiscard]] std::string getSinkName() const noexcept;
+    [[nodiscard]] std::optional<Sinks::SinkDescriptor> getSinkDescriptor() const noexcept;
+
+    [[nodiscard]] SinkLogicalOperator withSinkDescriptor(Sinks::SinkDescriptor sinkDescriptor) const noexcept;
+
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> SINK_NAME{
@@ -84,5 +84,10 @@ private:
     std::vector<LogicalOperator> children;
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
+
+    std::string sinkName;
+    std::optional<Sinks::SinkDescriptor> sinkDescriptor;
+
+    friend class OperatorSerializationUtil;
 };
 }
