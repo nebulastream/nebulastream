@@ -5,5 +5,5 @@ socketType: SOCK_STREAM
 socketPort: PLACEHOLDER
 socketHost: PLACEHOLDER
 socketBufferSize: 2
-flushIntervalMS: 100
+flushIntervalMs: 100
 connectTimeoutSeconds: 60
