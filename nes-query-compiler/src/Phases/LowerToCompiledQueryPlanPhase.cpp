@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
+
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -22,7 +24,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -126,8 +127,9 @@ void processSource(
 
 void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
 {
-    const auto sinkOperator = pipeline->getRootOperator().get<SinkPhysicalOperator>().getDescriptor();
-    loweringContext.sinks[sinkOperator].emplace_back(predecessor);
+    const auto sinkDescriptor
+        = std::make_shared<Sinks::SinkDescriptor>(pipeline->getRootOperator().get<SinkPhysicalOperator>().getDescriptor());
+    loweringContext.sinks[sinkDescriptor].emplace_back(predecessor);
 }
 
 std::unique_ptr<ExecutablePipelineStage>

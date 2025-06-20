@@ -43,6 +43,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -115,11 +116,13 @@ struct RunningQuery
 
 struct TestFile
 {
-    explicit TestFile(const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog);
+    explicit TestFile(
+        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
     explicit TestFile(
         const std::filesystem::path& file,
         std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-        std::shared_ptr<SourceCatalog> sourceCatalog);
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog);
     [[nodiscard]] std::string getLogFilePath() const;
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
@@ -128,6 +131,7 @@ struct TestFile
     std::vector<TestGroup> groups;
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<SinkCatalog> sinkCatalog;
 };
 
 /// intermediate representation storing all considered test files

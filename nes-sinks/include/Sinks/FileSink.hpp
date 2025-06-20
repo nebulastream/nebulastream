@@ -75,11 +75,6 @@ struct ConfigParametersFile
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
             { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<bool> APPEND{
         "append",
         false,
@@ -87,7 +82,7 @@ struct ConfigParametersFile
         { return Configurations::DescriptorConfig::tryGet(APPEND, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, FILEPATH, APPEND);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, SinkDescriptor::FILE_PATH, APPEND);
 };
 
 }

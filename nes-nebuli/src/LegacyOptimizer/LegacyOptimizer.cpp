@@ -16,6 +16,7 @@
 
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 
@@ -24,11 +25,13 @@ namespace NES::CLI
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
+    const auto sinkBindingRule = NES::LegacyOptimizer::SinkBindingRule{sinkCatalog};
     const auto sourceInference = NES::LegacyOptimizer::SourceInferencePhase{sourceCatalog};
     const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule(sourceCatalog);
     constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
     constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
 
+    sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     typeInference.apply(newPlan);

@@ -38,12 +38,11 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
     explicit SinkLogicalOperator(std::string sinkName);
+    explicit SinkLogicalOperator(Sinks::SinkDescriptor sinkDescriptor);
 
     std::string sinkName;
-    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+    std::optional<Sinks::SinkDescriptor> sinkDescriptor;
 
-    /// currently only use for testing purposes in IntegrationTestUtil
-    void setOutputSchema(Schema schema);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
