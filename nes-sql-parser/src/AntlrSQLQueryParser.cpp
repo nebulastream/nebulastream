@@ -15,8 +15,11 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
 #include <memory>
+#include <ranges>
 #include <string>
 #include <string_view>
+#include <vector>
+
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -31,6 +34,23 @@
 
 namespace NES::AntlrSQLQueryParser
 {
+
+
+LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+{
+    try
+    {
+        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryAst);
+        auto queryPlan = queryPlanCreator.getQueryPlan();
+        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
+        return queryPlan;
+    }
+    catch (antlr4::RuntimeException& antlrException)
+    {
+        throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryAst->getText());
+    }
+}
 
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
@@ -50,10 +70,50 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
         return queryPlan;
     }
-    catch (antlr4::RuntimeException antlrException)
+    catch (antlr4::RuntimeException& antlrException)
     {
         throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
     }
 }
 
+std::shared_ptr<ManagedAntlrParser> ManagedAntlrParser::create(std::string_view input)
+{
+    return std::make_shared<ManagedAntlrParser>(Private{}, input);
+}
+
+ManagedAntlrParser::ManagedAntlrParser(Private, const std::string_view input)
+    : inputStream{input.data(), input.length()}, lexer{&inputStream}, tokens{&lexer}, parser(&tokens), originalQuery(input)
+{
+    /// Enable that antlr throws exceptions on parsing errors
+    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+}
+
+std::expected<ManagedAntlrParser::ManagedContext<AntlrSQLParser::StatementContext>, Exception> ManagedAntlrParser::parseSingle()
+{
+    try
+    {
+        AntlrSQLParser::TerminatedStatementContext* tree = parser.terminatedStatement();
+        return ManagedContext{tree->statement(), shared_from_this()};
+    }
+    catch (antlr4::RuntimeException& antlrException)
+    {
+        return std::unexpected{InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), originalQuery)};
+    }
+}
+
+std::expected<std::vector<ManagedAntlrParser::ManagedContext<AntlrSQLParser::StatementContext>>, Exception>
+ManagedAntlrParser::parseMultiple()
+{
+    try
+    {
+        AntlrSQLParser::MultipleStatementsContext* tree = parser.multipleStatements();
+        return tree->statement()
+            | std::views::transform([this](auto statement) { return ManagedContext{statement, this->shared_from_this()}; })
+            | std::ranges::to<std::vector>();
+    }
+    catch (antlr4::RuntimeException& antlrException)
+    {
+        return std::unexpected{InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), originalQuery)};
+    }
+}
 }
