@@ -60,7 +60,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
            .testDataIngestionType = TestDataIngestionType::FILE,
            .tuples = std::nullopt,
            .fileDataPath = "dummy_path.txt",
-           .serverThreads = nullptr};
+           .serverThreads = nullptr,
+           .inlineGeneratorConfiguration = std::nullopt};
     const SystestParser::SystestLogicalSource expectedLogicalSource
         = {.name = "e124", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"}}};
 
@@ -114,7 +115,8 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
                                        "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
                                        "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}},
            .fileDataPath = "null",
-           .serverThreads = nullptr};
+           .serverThreads = nullptr,
+           .inlineGeneratorConfiguration = std::nullopt};
 
     /// Expected queries and results
     const auto expectedQueries = std::to_array<std::string>(
@@ -233,7 +235,8 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
                                        "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
                                        "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}},
            .fileDataPath = "null",
-           .serverThreads = nullptr};
+           .serverThreads = nullptr,
+           .inlineGeneratorConfiguration = std::nullopt};
 
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
