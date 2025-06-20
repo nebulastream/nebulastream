@@ -68,6 +68,8 @@ EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSink, 2127, "Unknown sink")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
+EXCEPTION(InvalidIdentifier, 2129, "invalid identifier")
+EXCEPTION(InvalidLiteral, 2130, "invalid literal")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -77,6 +79,7 @@ EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+EXCEPTION(InvalidStatement, 2207, "invalid statement")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

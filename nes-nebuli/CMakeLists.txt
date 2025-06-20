@@ -72,6 +72,27 @@ target_include_directories(nes-nebuli-embedded
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
+
+add_executable(nes-nesqli src/NESQLi.cpp)
+set_property(TARGET nes-nesqli PROPERTY ENABLE_EXPORTS ON)
+target_link_libraries(nes-nesqli PUBLIC nes-nebuli-lib argparse::argparse nes-sql-parser)
+
+target_include_directories(nes-nesqli
+        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
+)
+
+add_executable(nes-nesqli-embedded src/NESQLi.cpp)
+# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
+set_property(TARGET nes-nesqli-embedded PROPERTY ENABLE_EXPORTS ON)
+target_link_libraries(nes-nesqli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib nes-sql-parser)
+target_include_directories(nes-nesqli-embedded
+        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
+)
+
+target_include_directories(nes-nesqli-embedded
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
