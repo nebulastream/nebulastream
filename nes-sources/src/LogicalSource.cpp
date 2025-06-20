@@ -27,8 +27,8 @@ namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(schema)
+LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema>(schema))
 {
 }
 
