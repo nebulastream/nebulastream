@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -23,8 +24,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -124,6 +127,12 @@ private:
 Schema withoutSourceQualifier(const Schema& input);
 
 }
+
+template <>
+struct std::hash<NES::Schema::Field>
+{
+    size_t operator()(const NES::Schema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.dataType); }
+};
 
 FMT_OSTREAM(NES::Schema);
 FMT_OSTREAM(NES::Schema::Field);

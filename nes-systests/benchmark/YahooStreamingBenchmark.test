@@ -8,6 +8,9 @@ TESTDATA/large/ysb/ysb_1k_data_474M.csv
 Source ysb10k UINT64 user_id UINT64 page_id UINT64 campaign_id UINT64 ad_type UINT64 event_type UINT64 current_ms UINT64 ip UINT64 d1 UINT64 d2 UINT32 d3 UINT16 d4 FILE
 TESTDATA/large/ysb/ysb_10k_data_479M.csv
 
+SINK ysb1kChecksum TYPE Checksum UINT64 ysb1k$start UINT64 ysb1k$end UINT64 ysb1k$campaign_id UINT64 ysb1k$sum_user_id
+SINK ysb10kChecksum TYPE Checksum UINT64 ysb10k$start UINT64 ysb10k$end UINT64 ysb10k$campaign_id UINT64 ysb10k$sum_user_id
+
 # Query 1 YSB with 1k campaign_ids
 SELECT
     start,
@@ -18,7 +21,7 @@ FROM ysb1k
 WHERE event_type < UINT64(1)
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO CHECKSUM;
+INTO ysb1kChecksum
 ----
 167167, 232106578
 
@@ -33,6 +36,6 @@ FROM ysb10k
 WHERE event_type < UINT64(1)
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO CHECKSUM;
+INTO ysb10kChecksum
 ----
 1517953,2109797738

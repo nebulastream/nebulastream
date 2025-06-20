@@ -84,6 +84,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         sinkOperator = sinkOperator.withOutputOriginIds(outputIds).get<SinkLogicalOperator>();
 
         sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+
         return sinkOperator;
     }
 
@@ -144,13 +145,11 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
 {
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), std::make_shared<Schema>(schema)};
+    const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), schema};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
     const auto& sourceType = sourceDescriptor.sourcetype();
-    const auto workerId = WorkerId{sourceDescriptor.workerid()};
-    const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -166,22 +165,14 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
         sourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
-    return SourceDescriptor{
-        logicalSource,
-        physicalSourceId,
-        workerId,
-        sourceType,
-        buffersInLocalPool,
-        (std::move(sourceDescriptorConfig)),
-        deserializedParserConfig};
+    return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(sourceDescriptorConfig), deserializedParserConfig};
 }
 
-std::unique_ptr<Sinks::SinkDescriptor>
-OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
+Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
-    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
+    auto sinkName = serializableSinkDescriptor.sinkname();
+    const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
@@ -191,10 +182,7 @@ OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescr
         sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
-    sinkDescriptor->schema = schema;
-    return sinkDescriptor;
+    return Sinks::SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), std::move(sinkDescriptorConfig)};
 }
 
 

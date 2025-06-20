@@ -7,13 +7,14 @@ Source manufacturing UINT64 creationTS UINT64 messageIndex INT16 mf01 INT16 mf02
 TESTDATA/large/manufacturing/manufacturing_1G.csv
 
 SINK manufacturingSink UINT64 manufacturing$start UINT64 manufacturing$end INT16 manufacturing$avg_mf01 INT16 manufacturing$sum_mf02 INT16 manufacturing$min_mf03 UINT64 manufacturing$count INT16 manufacturing$sum_mf01
+SINK manufacturingChecksum TYPE Checksum UINT64 manufacturing$start UINT64 manufacturing$end FLOAT64 manufacturing$avg_mf01 INT16 manufacturing$sum_mf02 INT16 manufacturing$min_mf03 UINT64 manufacturing$count_mf01 INT16 manufacturing$sum_mf01
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions
 SELECT start, end, AVG(mf01) AS avg_mf01, SUM(mf02) AS sum_mf02, MIN(mf03) AS min_mf03, COUNT(mf01) AS count_mf01, SUM(mf01) AS sum_mf01
 FROM manufacturing
 WINDOW SLIDING(creationTS, SIZE 1 MINUTE, ADVANCE BY 1 SEC)
-INTO CHECKSUM;
+INTO manufacturingChecksum;
 ----
 221338, 698355948
 

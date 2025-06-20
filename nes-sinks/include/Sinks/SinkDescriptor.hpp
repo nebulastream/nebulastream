@@ -14,8 +14,15 @@
 
 #pragma once
 
+
+#include <cctype>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -23,26 +30,71 @@
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
 
+namespace NES
+{
+class OperatorSerializationUtil;
+class SinkCatalog;
+}
+
 namespace NES::Sinks
 {
 
-struct SinkDescriptor final : Descriptor
+class SinkDescriptor final : public Descriptor
 {
-    explicit SinkDescriptor(std::string sinkType, DescriptorConfig::Config&& config, bool addTimestamp);
+    friend SinkCatalog;
+    friend OperatorSerializationUtil;
+
+public:
     ~SinkDescriptor() = default;
 
-    /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.
-    static DescriptorConfig::Config
-    validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
-    [[nodiscard]] NES::SerializableSinkDescriptor serialize() const;
-
-    const std::string sinkType;
-    Schema schema;
-    bool addTimestamp;
-
+    [[nodiscard]] SerializableSinkDescriptor serialize() const;
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
+
+    [[nodiscard]] std::string getSinkType() const;
+    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::string getSinkName() const;
+
+private:
+    explicit SinkDescriptor(std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+
+
+    std::string sinkName;
+    std::shared_ptr<const Schema> schema;
+    std::string sinkType;
+
+public:
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
+        "addTimestamp",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(ADD_TIMESTAMP);
+
+    /// Well-known property for any sink that sends its data to a file
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+        "filePath",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+
+    static std::optional<DescriptorConfig::Config>
+    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
 };
 }
+
+template <>
+struct std::hash<NES::Sinks::SinkDescriptor>
+{
+    size_t operator()(const NES::Sinks::SinkDescriptor& sinkDescriptor) const noexcept
+    {
+        return std::hash<std::string>{}(sinkDescriptor.getSinkName());
+    }
+};
+
 FMT_OSTREAM(NES::Sinks::SinkDescriptor);

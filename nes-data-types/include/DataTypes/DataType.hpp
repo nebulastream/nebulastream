@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -127,4 +129,9 @@ struct DataType final
 
 }
 
+template <>
+struct std::hash<NES::DataType>
+{
+    size_t operator()(const NES::DataType& dataType) const noexcept { return static_cast<uint8_t>(dataType.type); }
+};
 FMT_OSTREAM(NES::DataType);

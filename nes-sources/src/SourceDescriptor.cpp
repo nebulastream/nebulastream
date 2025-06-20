@@ -14,8 +14,10 @@
 
 #include <Sources/SourceDescriptor.hpp>
 
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
@@ -67,21 +69,23 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     return created;
 }
 
+std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
+{
+    return os << fmt::format(
+               "ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {})", obj.parserType, obj.tupleDelimiter, obj.fieldDelimiter);
+}
+
 SourceDescriptor::SourceDescriptor(
-    LogicalSource logicalSource,
     const PhysicalSourceId physicalSourceId,
-    const WorkerId workerId,
-    std::string sourceType,
-    const int numberOfBuffersInLocalPool,
-    DescriptorConfig::Config&& config,
+    LogicalSource logicalSource,
+    std::string_view sourceType,
+    DescriptorConfig::Config config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
-    , workerId(workerId)
     , sourceType(std::move(sourceType))
     , parserConfig(std::move(parserConfig))
-    , numberOfBuffersInLocalPool(numberOfBuffersInLocalPool)
 {
 }
 
@@ -100,20 +104,12 @@ ParserConfig SourceDescriptor::getParserConfig() const
     return parserConfig;
 }
 
-WorkerId SourceDescriptor::getWorkerId() const
-{
-    return workerId;
-}
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
 }
 
-int32_t SourceDescriptor::getBuffersInLocalPool() const
-{
-    return numberOfBuffersInLocalPool;
-}
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
@@ -136,7 +132,9 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, stringDelimiter: {} }})",
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, "
+               "stringDelimiter: {} }})",
+               descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
                descriptor.getParserConfig().parserType,
@@ -150,10 +148,8 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
     serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
     serializableSourceDescriptor.set_sourcetype(sourceType);
-    serializableSourceDescriptor.set_numberofbuffersinlocalpool(numberOfBuffersInLocalPool);
 
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
-    serializableSourceDescriptor.set_workerid(workerId.getRawValue());
 
     /// Serialize parser config.
     auto* const serializedParserConfig = NES::SerializableParserConfig().New();

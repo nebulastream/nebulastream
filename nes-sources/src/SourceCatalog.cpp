@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Sources/SourceCatalog.hpp>
 
 #include <cstdint>
@@ -19,6 +20,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -27,9 +29,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
-
-#include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -37,10 +38,10 @@ namespace NES
 
 std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
 {
-    const auto sharedSchema = std::make_shared<Schema>();
+    Schema newSchema;
     for (const auto& field : schema.getFields())
     {
-        sharedSchema->addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
+        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
         if (field.name.find(logicalSourceName) != std::string::npos)
         {
             NES_DEBUG(
@@ -53,7 +54,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
     const std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName))
     {
-        LogicalSource logicalSource{logicalSourceName, sharedSchema};
+        LogicalSource logicalSource{logicalSourceName, newSchema};
         namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);
@@ -65,10 +66,8 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 
 std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
-    WorkerId workerId,
-    const std::string& sourceType,
-    const int buffersInLocalPool,
-    DescriptorConfig::Config&& descriptorConfig,
+    const std::string_view sourceType,
+    std::unordered_map<std::string, std::string> descriptorConfig,
     const ParserConfig& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
@@ -79,12 +78,16 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist", logicalSource.getLogicalSourceName());
         return std::nullopt;
     }
-
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    SourceDescriptor descriptor{logicalSource, id, workerId, sourceType, buffersInLocalPool, (std::move(descriptorConfig)), parserConfig};
+    auto descriptorConfigOpt = Sources::SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
+    if (not descriptorConfigOpt.has_value())
+    {
+        return std::nullopt;
+    }
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfig};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
-    NES_DEBUG("Successfully registered new physical source of type {} on worker {} with id {}", descriptor.getSourceType(), workerId, id);
+    NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
     return descriptor;
 }
 
