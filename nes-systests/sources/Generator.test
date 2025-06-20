@@ -1,6 +1,6 @@
 # name: sources/Generator.test
 # description: Tests the generator source
-# groups: [Sources]
+# groups: [Sources, Generator]
 
 Source generatorDefault UINT64 id UINT64 double GENERATOR
 CONFIG/sources/generator_10_tuples.yaml
@@ -40,3 +40,22 @@ SELECT * FROM generatorStopAll INTO CHECKSUM
 SELECT * FROM generatorStopOne INTO CHECKSUM
 ----
 100 25440
+
+Source generatorInline UINT64 id UINT64 field1 GENERATOR seed 1, maxRuntimeMS 1000, stopGeneratorWhenSequenceFinishes ALL
+id SEQUENCE UINT64 0 10 1
+field1 SEQUENCE UINT64 0 5 1
+
+SINK generator_sink_inline UINT64 generatorInline$id UINT64 generatorInline$field1
+
+SELECT * FROM generatorInline INTO generator_sink_inline
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5

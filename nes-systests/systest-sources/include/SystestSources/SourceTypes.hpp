@@ -31,6 +31,12 @@ namespace NES
 
 static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "filePath";
 
+struct InlineGeneratorConfiguration
+{
+    std::vector<std::string> fieldSchema;
+    std::unordered_map<std::string, std::string> options;
+};
+
 enum class TestDataIngestionType : uint8_t
 {
     INLINE,
@@ -49,6 +55,7 @@ struct SystestAttachSource
     std::optional<std::vector<std::string>> tuples;
     std::optional<std::filesystem::path> fileDataPath;
     std::shared_ptr<std::vector<std::jthread>> serverThreads;
+    std::optional<InlineGeneratorConfiguration> inlineGeneratorConfiguration;
 };
 
 }

@@ -50,6 +50,7 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+#include <magic_enum/magic_enum.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -58,6 +59,7 @@
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <GeneratorFields.hpp>
 #include <NebuLI.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
@@ -535,7 +537,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             systestStarterGlobals.setDataServerThreadsInAttachSource(attachSource);
 
             /// Load physical source from file and overwrite logical source name with value from attach source
-            const auto initialPhysicalSourceConfig
+            const auto initialPhysicalSourceConfigFromFile
                 = [](const std::string& logicalSourceName, const std::string& sourceConfigPath, const std::string& inputFormatterConfigPath)
             {
                 try
@@ -548,7 +550,90 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                 {
                     throw CannotLoadConfig("Failed to parse source: {}", e.what());
                 }
-            }(attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
+            };
+            const auto initialPhysicalSourceConfigFromInline
+                = [&](const std::string& logicalSourceName, const InlineGeneratorConfiguration& inlineGeneratorConfiguration)
+            {
+                SystestSourceYAMLBinder::PhysicalSource physicalSource;
+                physicalSource.logical = logicalSourceName;
+                physicalSource.parserConfig["type"] = "CSV";
+                physicalSource.parserConfig["fieldDelimiter"] = ",";
+
+
+                auto logicalSourceMapping = sourceCatalog->getLogicalSource(logicalSourceName);
+                if (!logicalSourceMapping.has_value())
+                {
+                    throw InvalidConfigParameter("{} does not exist in the source catalog!", logicalSourceName);
+                }
+                auto definedLogicalSchema = logicalSourceMapping.value().getSchema();
+                if (definedLogicalSchema.get()->getFields().size() != inlineGeneratorConfiguration.fieldSchema.size())
+                {
+                    throw InvalidConfigParameter(
+                        "Number of defined generator field schemas ({}) does not match the number of fields defined in the source ({})",
+                        definedLogicalSchema->getFields().size(),
+                        inlineGeneratorConfiguration.fieldSchema.size());
+                }
+                std::string generatorSchema;
+                for (const auto& fieldSchema : inlineGeneratorConfiguration.fieldSchema)
+                {
+                    auto fieldSchemaTokens = fieldSchema | std::views::split(' ') | std::views::filter([](auto v) { return !v.empty(); })
+                        | std::views::transform([](auto v) { return std::string_view(&*v.begin(), std::ranges::distance(v)); })
+                        | std::ranges::to<std::vector<std::string>>();
+                    auto fieldName = fieldSchemaTokens[0];
+                    auto schemaFieldType = fieldSchemaTokens[2];
+                    auto definedLogicalField = definedLogicalSchema.get()->getFieldByName(fieldName);
+                    if (!definedLogicalField.has_value())
+                    {
+                        throw InvalidConfigParameter(
+                            "Field {} is defined in the generatorSchema, but does not exist in the sources logical schema!", fieldName);
+                    }
+                    if (magic_enum::enum_cast<DataType::Type>(schemaFieldType) != definedLogicalField.value().dataType.type)
+                    {
+                        throw InvalidConfigParameter(
+                            "Field \"{}\" type in generator Schema does not match declared type ({}) in Source Schema ({})",
+                            fieldName,
+                            schemaFieldType,
+                            magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
+                    }
+                    auto generatorFieldIdentifier = fieldSchemaTokens[1];
+                    auto [acceptedTypesBegin, acceptedTypesEnd]
+                        = Sources::GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
+                    bool isAcceptedType = false;
+                    for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
+                    {
+                        if (definedLogicalField->dataType.type == it->second)
+                        {
+                            isAcceptedType = true;
+                            break;
+                        }
+                    }
+                    if (!isAcceptedType)
+                    {
+                        throw InvalidConfigParameter(
+                            "Field {} is of {} type, which does not allow {}!",
+                            fieldName,
+                            generatorFieldIdentifier,
+                            magic_enum::enum_name(definedLogicalField.value().dataType.type));
+                    }
+                    generatorSchema += std::accumulate(
+                                           fieldSchemaTokens.begin() + 1,
+                                           fieldSchemaTokens.end(),
+                                           std::string(),
+                                           [](const std::string& a, const std::string& b) { return a.empty() ? b : a + " " + b; })
+                        + '\n';
+                }
+
+                physicalSource.sourceConfig = inlineGeneratorConfiguration.options;
+                physicalSource.sourceConfig["type"] = "Generator";
+                physicalSource.sourceConfig["generatorSchema"] = generatorSchema;
+                return physicalSource;
+            };
+
+            const auto initialPhysicalSourceConfig = attachSource.inlineGeneratorConfiguration.has_value()
+                ? initialPhysicalSourceConfigFromInline(attachSource.logicalSourceName, attachSource.inlineGeneratorConfiguration.value())
+                : initialPhysicalSourceConfigFromFile(
+                      attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
+            ;
 
             const auto [logical, parserConfig, sourceConfig] = [&]()
             {
