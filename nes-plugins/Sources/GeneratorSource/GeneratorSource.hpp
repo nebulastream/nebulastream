@@ -147,7 +147,7 @@ struct ConfigParametersGenerator
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
-        "maxRuntimeMS",
+        "maxRuntimeMs",
         -1,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
 
