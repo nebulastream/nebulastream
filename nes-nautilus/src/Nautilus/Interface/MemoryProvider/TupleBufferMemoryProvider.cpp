@@ -53,16 +53,16 @@ uint32_t storeAssociatedTextValueProxy(
     Memory::AbstractBufferProvider* bufferProvider,
     int8_t* textValue,
     const uint32_t size,
-    const bool ownsBuffer)
+    const bool)
 {
     PRECONDITION(*std::bit_cast<uint32_t*>(textValue) == size, "VarSized size does not match the expected size.");
     auto varSizeBuffer = [&]
     {
-        if (ownsBuffer)
-        {
-            /// If the VariableSizedData has already been allocated in an exclusive buffer we can reuse the allocation.
-            return Memory::TupleBuffer::reinterpretAsTupleBuffer(textValue);
-        }
+        /// if (ownsBuffer)
+        /// {
+        ///     /// If the VariableSizedData has already been allocated in an exclusive buffer we can reuse the allocation.
+        ///     return Memory::TupleBuffer::reinterpretAsTupleBuffer(textValue);
+        /// }
         /// If the VariableSizedData does not own its buffer we cannot reuse the owning tuple buffer and thus have
         /// to create a new alloction where the VariableSizedData owns the buffer again.
         auto newBuffer = bufferProvider->getUnpooledBuffer(size + sizeof(uint32_t));
