@@ -51,6 +51,30 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
+struct ConfigurationOverride
+{
+    std::unordered_map<std::string, std::string> overrideParameters;
+    bool operator==(const ConfigurationOverride& other) const = default;
+    bool operator!=(const ConfigurationOverride& other) const = default;
+};
+
+namespace std
+{
+template <>
+struct hash<ConfigurationOverride>
+{
+    std::size_t operator()(const ConfigurationOverride& co) const noexcept
+    {
+        std::string repr;
+        for (const auto& [key, value] : co.overrideParameters)
+        {
+            repr += key + ":" + value + ";";
+        }
+        return std::hash<std::string>{}(repr);
+    }
+};
+}
+
 namespace NES::Systest
 {
 
@@ -114,6 +138,7 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    ConfigurationOverride configurationOverride;
     std::optional<LogicalPlan> differentialQueryPlan;
 };
 
@@ -148,7 +173,7 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
+    std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queriesWithConfig;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
