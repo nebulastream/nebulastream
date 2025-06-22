@@ -117,6 +117,7 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
     endforeach ()
 
+    ## TODO not to me: use this for different configs
     ## We run all join and aggregation tests with different no. worker threads
     ## Also we test for the different slice caches
     set(sliceCaches NONE LRU FIFO SECOND_CHANCE)
@@ -155,6 +156,11 @@ if (NOT CODE_COVERAGE)
             endforeach ()
         endforeach ()
     endforeach ()
+
+#    set(varsizedStorageMethods INDVIDUAL_BUFFER SEPARATE_PAGE)
+#    foreach (varsizedStorageMethod IN LISTS varsizedStorageMethods)
+#
+#    endforeach ()
 endif (NOT CODE_COVERAGE)
 
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run

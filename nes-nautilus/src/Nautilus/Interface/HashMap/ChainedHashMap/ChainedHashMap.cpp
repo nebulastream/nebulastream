@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -51,9 +52,14 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize)
+ChainedHashMap::ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize) : ChainedHashMap(entrySize, numberOfBuckets, pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod::SINGLE_BUFFER, 8196) {}
+
+
+ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize)
     : numberOfTuples(0)
     , pageSize(pageSize)
+    , varSizedStorageMethod(varSizedStorageMethod)
+    , varSizedPageSize(varSizedPageSize)
     , entrySize(entrySize)
     , entriesPerPage(pageSize / entrySize)
     , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
@@ -77,9 +83,13 @@ ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBucket
         numberOfChains);
 }
 
-ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize) : ChainedHashMap(keySize, valueSize, numberOfBuckets,pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod::SINGLE_BUFFER , 8196) {}
+
+ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize)
     : numberOfTuples(0)
     , pageSize(pageSize)
+    , varSizedStorageMethod(varSizedStorageMethod)
+    , varSizedPageSize(varSizedPageSize)
     , entrySize(sizeof(ChainedHashMapEntry) + keySize + valueSize)
     , entriesPerPage(pageSize / entrySize)
     , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
@@ -115,19 +125,7 @@ void ChainedHashMap::setDestructorCallback(const std::function<void(ChainedHashM
 
 std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(const ChainedHashMap& other)
 {
-    return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize);
-}
-
-int8_t* ChainedHashMap::allocateSpaceForVarSized(
-    Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize, const WorkerThreadId workerThreadId)
-{
-    auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
-    if (not varSizedBuffer)
-    {
-        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
-    }
-    varSizedSpace.emplace_back(varSizedBuffer.value());
-    return varSizedBuffer.value().getBuffer<int8_t>();
+    return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize, other.varSizedStorageMethod, other.varSizedPageSize);
 }
 
 ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const
@@ -200,6 +198,65 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
     entries[entryPos] = newEntry;
     this->numberOfTuples++;
     return newEntry;
+}
+
+void ChainedHashMap::storeCopyOfVarSizedData(
+    Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size)
+{
+    int8_t* dataPtr;
+    switch (varSizedStorageMethod)
+    {
+        case QueryCompilation::Configurations::HashMapVarSizedStorageMethod::SINGLE_BUFFER: {
+            auto entryBuffer = bufferProvider->getUnpooledBuffer(size, workerThreadId);
+            ;
+            if (not entryBuffer)
+            {
+                throw CannotAllocateBuffer("Could not allocate memory in ChainedHashMap for variable sized data of size {}", std::to_string(size));
+            }
+            varSizedStorage.emplace_back(entryBuffer.value());
+            dataPtr = entryBuffer.value().getBuffer();
+            break;
+        }
+        case QueryCompilation::Configurations::HashMapVarSizedStorageMethod::SEPARATE_PAGES: {
+            /// Check if we need to allocate a new page
+            if (varSizedStorage.empty() || sizeOfDataOnVarsizedPage + size > varSizedPageSize)
+            {
+                auto newPage = bufferProvider->getUnpooledBuffer(varSizedPageSize, workerThreadId);
+                if (not newPage)
+                {
+                    throw CannotAllocateBuffer("Could not allocate memory for new varsized data page in ChainedHashMap of size {}", std::to_string(sizeOfDataOnVarsizedPage));
+                }
+
+                varSizedStorage.emplace_back(newPage.value());
+                sizeOfDataOnVarsizedPage = 0;
+            }
+            dataPtr = &(varSizedStorage.back().getBuffer()[sizeOfDataOnVarsizedPage]);
+            sizeOfDataOnVarsizedPage += size;
+            break;
+        }
+        case QueryCompilation::Configurations::HashMapVarSizedStorageMethod::JOINT_PAGES: {
+            /// Check if we need to allocate a new page
+            NotImplemented();
+            // if (varSizedStorage.empty() || sizeOfDataOnVarsizedPage + size > varSizedPageSize)
+            // {
+            //     auto newPage = bufferProvider->getUnpooledBuffer(varSizedPageSize, workerThreadId);
+            //     if (not newPage)
+            //     {
+            //         throw CannotAllocateBuffer("Could not allocate memory for new varsized data page in ChainedHashMap of size {}", std::to_string(sizeOfDataOnVarsizedPage));
+            //     }
+            //
+            //     varSizedStorage.emplace_back(newPage.value());
+            //     sizeOfDataOnVarsizedPage = 0;
+            // }
+            dataPtr = &(varSizedStorage.back().getBuffer()[sizeOfDataOnVarsizedPage]);
+            // sizeOfDataOnVarsizedPage += size;
+            break;
+        }
+    }
+
+
+    std::memcpy(dataPtr, pointerToVarSized, size);
+    *pointerToWritePositionOnPage = dataPtr;
 }
 
 const ChainedHashMapEntry* ChainedHashMap::getPage(const uint64_t pageIndex) const

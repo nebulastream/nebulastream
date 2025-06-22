@@ -247,11 +247,6 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize, const WorkerThreadId workerThreadId)
 {
-    if (bufferSize <= this->bufferSize)
-    {
-        return getBufferBlocking();
-    }
-
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     const auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     const auto newRollingAverage = rollingAverage[workerThreadId]->add(alignedBufferSizePlusControlBlock);

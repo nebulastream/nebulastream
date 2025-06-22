@@ -80,7 +80,7 @@ HashMapSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, const O
             "Keysize, valueSize, numberOfBuckets, and pageSize MUST BE set before creating a new HashMapSlice!");
 
         hashMaps.at(pos) = std::make_unique<Nautilus::Interface::ChainedHashMap>(
-            hashMapArgs.keySize.value(), hashMapArgs.valueSize.value(), hashMapArgs.numberOfBuckets.value(), hashMapArgs.pageSize.value());
+            hashMapArgs.keySize.value(), hashMapArgs.valueSize.value(), hashMapArgs.numberOfBuckets.value(), hashMapArgs.pageSize.value(), hashMapArgs.varSizedStorageMethod.value(), hashMapArgs.varSizedPageSize.value());
     }
     return hashMaps[pos].get();
 }

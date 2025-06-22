@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <QueryCompiler/Configurations/Enums/HashMapVarSizedStorageMethod.hpp>
 
 
 namespace NES::Nautilus::Interface
@@ -64,16 +65,19 @@ class ChainedHashMap final : public HashMap
 public:
     static constexpr auto DEFAULT_PAGE_SIZE = 8024;
 
+    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize);
     ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize);
+    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod, uint64_t varSizedPageSize);
     ~ChainedHashMap() override;
-    int8_t*
-    allocateSpaceForVarSized(Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize, const WorkerThreadId workerThreadId);
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
     AbstractHashMapEntry* insertEntry(
         HashFunction::HashValue::raw_type hash,
         Memory::AbstractBufferProvider* bufferProvider,
         const WorkerThreadId workerThreadId) override;
+
+    void storeCopyOfVarSizedData(
+        Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size);
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const ChainedHashMapEntry* getPage(uint64_t pageIndex) const;
     [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
@@ -94,9 +98,12 @@ private:
 
     Memory::TupleBuffer entrySpace;
     std::vector<Memory::TupleBuffer> storageSpace;
-    std::vector<Memory::TupleBuffer> varSizedSpace;
+    std::vector<Memory::TupleBuffer> varSizedStorage;
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
+    QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod; /// Number of entries in the hash map
+    uint64_t sizeOfDataOnVarsizedPage = 0; /// Number of entries in the hash map
+    uint64_t varSizedPageSize; /// Size of one storage page in bytes TODO: do not hardcode these
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
     uint64_t entriesPerPage; /// Number of entries per page
     uint64_t numberOfChains; /// Number of buckets in the hash map

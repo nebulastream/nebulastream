@@ -228,7 +228,7 @@ int8_t* createNewAggregationSliceProxy(
     /// Updating the slice cache entry with the new slice
     const auto newAggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets, buildOperator->varSizedPageSize, buildOperator->varSizedStorageMethod};
     sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
     sliceCacheEntry->sliceEnd = newAggregationSlice->getSliceEnd();
     sliceCacheEntry->dataStructure
