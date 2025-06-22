@@ -240,7 +240,7 @@ public:
     }
 
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
-    SystestQuery build() &&
+    std::vector<SystestQuery> build() &&
     {
         PRECONDITION(not built, "Cannot build a SystestQuery twice");
         built = true;
@@ -270,20 +270,28 @@ public:
             }
             return std::unexpected{exception.value()};
         };
-        auto expectedResultsValue = expectedResultsOrError.has_value()
-            ? std::move(expectedResultsOrError.value())
+        const auto expectedResultsValue = expectedResultsOrError.has_value()
+            ? expectedResultsOrError.value()
             : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}};
 
-        return SystestQuery{
-            .testName = std::move(testName.value()),
-            .queryIdInFile = queryIdInFile,
-            .testFilePath = std::move(testFilePath.value()),
-            .workingDir = std::move(workingDir.value()),
-            .queryDefinition = std::move(queryDefinition.value()),
-            .planInfoOrException = createPlanInfoOrException(),
-            .expectedResultsOrExpectedError = std::move(expectedResultsValue),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value()),
-            .differentialQueryPlan = std::move(differentialQueryPlan)};
+        auto planInfoTemplate = createPlanInfoOrException();
+
+        std::vector<SystestQuery> queries;
+        for (auto configurationOverride : configurationOverrides)
+        {
+            queries.push_back(
+                {.testName = testName.value(),
+                 .queryIdInFile = queryIdInFile,
+                 .testFilePath = testFilePath.value(),
+                 .workingDir = workingDir.value(),
+                 .queryDefinition = queryDefinition.value(),
+                 .planInfoOrException = planInfoTemplate,
+                 .expectedResultsOrExpectedError = expectedResultsValue,
+                 .additionalSourceThreads = additionalSourceThreads.value(),
+                 .configurationOverride = std::move(configurationOverride),
+                 .differentialQueryPlan = differentialQueryPlan});
+        }
+        return queries;
     }
 
     /// NOLINTEND(bugprone-unchecked-optional-access)
@@ -302,6 +310,7 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
     bool built = false;
 };
@@ -323,7 +332,7 @@ struct SystestBinder::Impl
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
             {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : testsForFile)
+                for (auto queriesForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : queriesForFile)
                 {
                     queries.emplace_back(std::move(query));
                 }
@@ -363,7 +372,7 @@ struct SystestBinder::Impl
                                      systest.optimizeQueries(optimizer);
                                      return std::move(systest).build();
                                  })
-            | std::ranges::to<std::vector>();
+            | std::views::join | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file
         std::ranges::for_each(
@@ -566,7 +575,8 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
         std::string query,
-        const SystestQueryId& currentQueryNumberInTest)
+        const SystestQueryId& currentQueryNumberInTest,
+        const std::vector<ConfigurationOverride>& configOverrides)
     {
         /// We have to get all sink names from the query and then create custom paths for each sink.
         /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
@@ -601,6 +611,7 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
+        currentBuilder.setConfigurationOverrides(configOverrides);
         if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -650,6 +661,7 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
+        std::vector configOverrides{ConfigurationOverride{}};
         SystestParser parser{};
 
         parser.registerSubstitutionRule(
@@ -679,12 +691,15 @@ struct SystestBinder::Impl
             [&](std::string query, const SystestQueryId currentQueryNumberInTest)
             {
                 lastParsedQueryId = currentQueryNumberInTest;
-                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest);
+                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest, configOverrides);
             });
 
         parser.registerOnErrorExpectationCallback(
             [&](const SystestParser::ErrorExpectation& errorExpectation, const SystestQueryId correspondingQueryId)
             { errorExpectationCallback(plans, errorExpectation, correspondingQueryId); });
+
+        parser.registerOnConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides) { configOverrides = overrides; });
 
         parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                               { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
@@ -731,6 +746,7 @@ struct SystestBinder::Impl
                 const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+                currentTest.setConfigurationOverrides(configOverrides);
 
                 if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
                     not leftSinkExpected.has_value())
