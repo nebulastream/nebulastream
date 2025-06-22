@@ -184,29 +184,33 @@ void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& sy
     auto loadedPlans = SystestStarterGlobals::SystestBinder::loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
     std::unordered_set<SystestQueryId> foundQueries;
 
-    std::ranges::for_each(
-        loadedPlans
-            | std::views::filter(
-                [&testfile](const auto& loadedQueryPlan)
-                {
-                    return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryIdInTest);
-                }),
-        [&systestStarterGlobals, &testfile, &foundQueries](const auto& filteredLoadedQueryPlan)
-        {
-            foundQueries.insert(filteredLoadedQueryPlan.queryIdInTest);
-            const auto [queryPlanOpt, sourceNamesToFilepathAndCountForQuery] = optimizeQueryPlanIfErrorFree(filteredLoadedQueryPlan);
-            systestStarterGlobals.addQuery(
-                testfile.name(),
-                filteredLoadedQueryPlan.queryName,
-                testfile.file,
-                queryPlanOpt,
-                filteredLoadedQueryPlan.queryIdInTest,
-                systestStarterGlobals.getWorkingDir(),
-                filteredLoadedQueryPlan.sinkSchema,
-                sourceNamesToFilepathAndCountForQuery,
-                filteredLoadedQueryPlan.expectedError);
-        });
+    for (const auto& [config, plans] : loadedPlans)
+    {
+        std::ranges::for_each(
+            plans
+                | std::views::filter(
+                    [&testfile](const auto& loadedQueryPlan)
+                    {
+                        return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                            || testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryIdInTest);
+                    }),
+            [&systestStarterGlobals, &testfile, &foundQueries, &config](const auto& filteredLoadedQueryPlan)
+            {
+                foundQueries.insert(filteredLoadedQueryPlan.queryIdInTest);
+                const auto [queryPlanOpt, sourceNamesToFilepathAndCountForQuery] = optimizeQueryPlanIfErrorFree(filteredLoadedQueryPlan);
+                systestStarterGlobals.addQuery(
+                    testfile.name(),
+                    filteredLoadedQueryPlan.queryName,
+                    testfile.file,
+                    queryPlanOpt,
+                    filteredLoadedQueryPlan.queryIdInTest,
+                    systestStarterGlobals.getWorkingDir(),
+                    filteredLoadedQueryPlan.sinkSchema,
+                    sourceNamesToFilepathAndCountForQuery,
+                    config,
+                    filteredLoadedQueryPlan.expectedError);
+            });
+    }
 
     /// Warn about queries specified via the command line that were not found in the test file
     std::ranges::for_each(
@@ -256,9 +260,9 @@ TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<Systest
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals)
+std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> loadQueries(SystestStarterGlobals& systestStarterGlobals)
 {
-    std::vector<SystestQuery> queries;
+    std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queries;
     uint64_t loadedFiles = 0;
     for (const auto& testfile : systestStarterGlobals.getTestFileMap() | std::views::values)
     {
@@ -266,10 +270,8 @@ std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGloba
         try
         {
             loadQueriesFromTestFile(testfile, systestStarterGlobals);
-            for (auto& query : testfile.queries)
-            {
-                queries.emplace_back(std::move(query));
-            }
+            queries = testfile.queriesWithConfig;
+
             ++loadedFiles;
         }
         catch (const Exception& exception)
@@ -487,14 +489,15 @@ std::string TestFile::getLogFilePath() const
 
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFile(
+std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestStarterGlobals::SystestBinder::loadFromSLTFile(
     SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName)
 {
     auto sourceCatalog = std::make_shared<SourceCatalog>();
-    std::vector<LoadedQueryPlan> plans{};
+    std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> plansWithOverrides{};
     std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
     std::unordered_map<SourceDescriptor, std::optional<SourceInputFile>> sourcesToFilePaths;
+    std::vector<ConfigurationOverride> configOverrides{ConfigurationOverride{}};
 
     std::unordered_map<std::string, Schema> sinkNamesToSchema{};
     auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
@@ -711,19 +714,47 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                 sinkOperator.sinkDescriptor = sink;
                 INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
                 plan.rootOperators.at(0) = sinkOperator;
-                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+
+                auto loadedQueryPlan = LoadedQueryPlan(
+                    plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+
+                if (configOverrides.empty())
+                {
+                    ConfigurationOverride defaultOverride{};
+                    plansWithOverrides[defaultOverride].emplace_back(loadedQueryPlan);
+                }
+                else
+                {
+                    for (const auto& override : configOverrides)
+                    {
+                        plansWithOverrides[override].emplace_back(loadedQueryPlan);
+                    }
+                }
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest);
+                auto loadedQueryPlan = LoadedQueryPlan(
+                    std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+                if (configOverrides.empty())
+                {
+                    ConfigurationOverride defaultOverride{};
+                    plansWithOverrides[defaultOverride].emplace_back(loadedQueryPlan);
+                }
+                else
+                {
+                    for (const auto& override : configOverrides)
+                    {
+                        plansWithOverrides[override].emplace_back(loadedQueryPlan);
+                    }
+                }
             }
         });
+    parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { configOverrides = overrides; });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation& errorExpectation)
         {
-            /// Error always belongs to the last parsed plan
-            auto& lastPlan = plans.back();
+            auto& lastPlan = plansWithOverrides[configOverrides.back()].back();
             lastPlan.expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
         });
     try
@@ -736,7 +767,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
         exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
         throw;
     }
-    return plans;
+    return plansWithOverrides;
 }
 /// NOLINTEND(readability-function-cognitive-complexity)
 
