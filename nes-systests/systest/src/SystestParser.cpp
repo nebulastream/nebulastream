@@ -203,6 +203,7 @@ static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 static constexpr auto ErrorToken = "ERROR"s;
+static constexpr auto ConfigurationToken = "Configuration"s;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
@@ -210,7 +211,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {QueryToken, TokenType::QUERY},
      {SinkToken, TokenType::SINK},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
-     {ErrorToken, TokenType::ERROR_EXPECTATION}});
+     {ErrorToken, TokenType::ERROR_EXPECTATION},
+     {ConfigurationToken, TokenType::CONFIGURATION}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -290,6 +292,11 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnConfigurationCallback(ConfigurationCallback callback)
+{
+    this->onConfigurationCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -350,6 +357,14 @@ void SystestParser::parse()
                     {
                         onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
                     }
+                }
+                break;
+            }
+            case TokenType::CONFIGURATION: {
+                auto config = expectConfiguration();
+                if (onConfigurationCallback)
+                {
+                    onConfigurationCallback(std::move(config));
                 }
                 break;
             }
@@ -666,6 +681,45 @@ std::string SystestParser::expectQuery()
     }
     INVARIANT(!queryString.empty(), "when expecting a query keyword the queryString should not be empty");
     return queryString;
+}
+
+std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
+{
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    const auto& line = lines[currentLine];
+    std::istringstream stream(line);
+    std::string key, valueList;
+
+    /// Skip the Configuration token
+    std::string token;
+    stream >> token;
+    stream >> key;
+
+    if (!key.ends_with(":"))
+    {
+        throw SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
+    }
+    key.pop_back();
+
+    std::getline(stream >> std::ws, valueList);
+    if (valueList.empty() || valueList.front() != '[' || valueList.back() != ']')
+    {
+        throw SLTUnexpectedToken("Expected list in square brackets: '{}'", valueList);
+    }
+
+    valueList = valueList.substr(1, valueList.size() - 2);
+    auto values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+
+    INVARIANT(!values.empty(), "when expecting a configuration keyword the configuration should not be empty");
+    std::vector<ConfigurationOverride> result;
+    for (auto& value : values)
+    {
+        value = NES::Util::trimWhiteSpaces(value);
+        ConfigurationOverride override;
+        override.overrideParameters[key] = value;
+        result.emplace_back(std::move(override));
+    }
+    return result;
 }
 
 SystestParser::ErrorExpectation SystestParser::expectError() const
