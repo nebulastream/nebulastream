@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
+        FormatScanPhysicalOperator.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp
         RawValueParser.cpp

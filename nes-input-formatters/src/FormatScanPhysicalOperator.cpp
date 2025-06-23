@@ -13,7 +13,7 @@
 */
 
 
-#include <ScanPhysicalOperator.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -30,14 +30,14 @@
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
+FormatScanPhysicalOperator::FormatScanPhysicalOperator(
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -57,12 +57,12 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     }
 }
 
-std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
+std::optional<PhysicalOperator> FormatScanPhysicalOperator::getChild() const
 {
     return child;
 }
 
-void ScanPhysicalOperator::setChild(PhysicalOperator child)
+void FormatScanPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
 }

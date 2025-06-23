@@ -30,7 +30,7 @@
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
@@ -54,7 +54,7 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
-    pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    pipeline->prependOperator(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -70,7 +70,7 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
-    const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
