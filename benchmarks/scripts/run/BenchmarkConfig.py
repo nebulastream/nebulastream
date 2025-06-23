@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [1000, 100000, 1]
+BATCH_SIZES = [1000, 100000, 1, 100]
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
 INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 50, 30, 10, 0, 101, 99, 90]  # match rate in percent, values > 100 simply use a counter for every server
@@ -200,7 +200,7 @@ class BenchmarkConfig:
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
         self.no_physical_sources_per_logical_source = 1
-        self.throughput_listener_time_interval = 100  # output interval in ms
+        self.throughput_listener_time_interval = 500  # output interval in ms
 
     # Return a dictionary representation of the configuration
     def to_dict(self):
