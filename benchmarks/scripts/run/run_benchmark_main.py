@@ -239,10 +239,10 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
                 if current_benchmark_config.match_rate > 100:
                     cmd += " -d"
                 # Add variable sized data flag to last two tcp servers
-                #if port == starting_ports[-1] or port == starting_ports[-2]:
-                    #cmd += " -v"
+                if port == starting_ports[-1] or port == starting_ports[-2]:
+                    cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")
-                process = subprocess.Popen(cmd.split(" "))
+                process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
                 if process.poll() is not None and process.poll() != 0:
                     # print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
@@ -275,10 +275,9 @@ def submitting_query(query_file):
         text=True
     )
 
+    # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
     stdout, stderr = process.communicate()
-    output = stdout.strip()
-    print(f"Submitted the query with the following output: {output} and error: {stderr.strip()}")
-    query_id = output
+    query_id = stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
 
@@ -286,7 +285,7 @@ def submitting_query(query_file):
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
     # print(f"Starting the single node worker with {cmd}")
-    process = subprocess.Popen(cmd.split(" "))
+    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started single node worker with pid {pid}")
     return process
@@ -295,7 +294,7 @@ def start_single_node_worker(worker_config_file):
 def stop_query(query_id):
     cmd = f"{NEBULI_PATH} stop {query_id} -s localhost:8080"
     # print(f"Stopping the query via {cmd}...")
-    process = subprocess.Popen(cmd.split(" "))
+    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
     return process
 
 
@@ -355,12 +354,10 @@ def run_benchmark(current_benchmark_config):
         # Submitting the query and waiting couple of seconds before stopping the query
         query_id = submitting_query(os.path.abspath(os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)))
 
-        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        print(f"Waiting now {now} for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
+        print(f"Waiting for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
         time.sleep(MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP)  # Allow query engine stats to be printed
-        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         stop_process = stop_query(query_id)
-        print(f"Query {query_id} was stopped at {now}")
+        print(f"Query {query_id} was stopped")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = source_processes + [single_node_process] + [stop_process]
@@ -409,7 +406,7 @@ if __name__ == "__main__":
         clear_build_dir()
         compile_project()
 
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_query_benchmark_configs()
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
 
     for attempt in range(NUM_RETRIES_PER_RUN):
         num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
