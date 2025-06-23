@@ -17,6 +17,8 @@
 #include <memory>
 #include <optional>
 #include <vector>
+
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -42,6 +44,7 @@ public:
     void setChild(PhysicalOperator child) override;
 
 private:
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> taskPipeline;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;

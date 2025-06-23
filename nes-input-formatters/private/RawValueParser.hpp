@@ -50,7 +50,7 @@ auto parseFieldString()
               Memory::AbstractBufferProvider&,
               Memory::TupleBuffer& tupleBufferFormatted)
     {
-        const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
+        const T parsedValue = NES::Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
@@ -67,7 +67,7 @@ auto parseQuotedFieldString()
     {
         INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
-        const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
+        const T parsedValue = NES::Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;

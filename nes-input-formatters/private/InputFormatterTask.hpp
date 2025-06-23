@@ -42,6 +42,11 @@
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
 
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/StdInt.hpp>
+
 
 namespace NES::InputFormatters
 {
@@ -219,6 +224,39 @@ public:
             {
                 throw FormattingError("Failed to validate SequenceShredder.");
             }
+        }
+    }
+
+    void scanTask(ExecutionContext&, Nautilus::RecordBuffer&, const PhysicalOperator&, const Interface::MemoryProvider::TupleBufferMemoryProvider&, const std::vector<Record::RecordFieldIdentifier>&)
+    requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
+    {
+        NES_ERROR("We should never call this function")
+        PRECONDITION(false, "We should never call this function");
+    }
+    void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections)
+    requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
+    {
+        // Todo:
+
+        /// initialize global state variables to keep track of the watermark ts and the origin id
+        executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+        executionCtx.originId = recordBuffer.getOriginId();
+        executionCtx.currentTs = recordBuffer.getCreatingTs();
+        executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+        executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+        executionCtx.lastChunk = recordBuffer.isLastChunk();
+        /// call open on all child operators
+        // openChild(executionCtx, recordBuffer);
+        child.open(executionCtx, recordBuffer);
+        /// iterate over records in buffer
+        auto numberOfRecords = recordBuffer.getNumRecords();
+
+        // Todo: instead of this for loop,
+        for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
+        {
+            auto record = memoryProvider.readRecord(projections, recordBuffer, i);
+            // executeChild(executionCtx, record);
+            child.execute(executionCtx, record);
         }
     }
 

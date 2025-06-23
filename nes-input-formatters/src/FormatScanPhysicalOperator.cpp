@@ -20,6 +20,8 @@
 #include <optional>
 #include <utility>
 #include <vector>
+
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -27,34 +29,57 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
+#include "InputFormatterTask.hpp"
+#include "NativeInputFormatIndexer.hpp"
+#include "RawValueParser.hpp"
+
 namespace NES
 {
+
 
 FormatScanPhysicalOperator::FormatScanPhysicalOperator(
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
+    auto inputFormatterTask = InputFormatters::InputFormatterTask<InputFormatters::NativeInputFormatIndexer<false>, struct NoopFormatter,
+        InputFormatters::NativeMetaData, false>(
+            OriginId(0), nullptr, Schema{}, InputFormatters::RawValueParser::QuotationType::NONE, ParserConfig{});
+    this->taskPipeline = std::make_shared<InputFormatters::InputFormatterTaskPipeline>(std::move(inputFormatterTask));
 }
 
 void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// initialize global state variables to keep track of the watermark ts and the origin id
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.originId = recordBuffer.getOriginId();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    /// call open on all child operators
-    openChild(executionCtx, recordBuffer);
-    /// iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
-    for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
-    {
-        auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-        executeChild(executionCtx, record);
-    }
+    // Todo: the goal is to call the input formatter task pipeline here (essentially its execute function, which we could rename to scan/index
+    // First step:
+    //  - support below scan functionality via 'IsFormattingRequired' and 'not(HasSpanningTuples)' case
+    //  - Requirements:
+    //      - NativeFieldIndexFunction with below nautilus function
+    //          - readRecord(projections) should be a call on the FieldIndexFunction
+    //          - checkout the RowTupleBufferMemoryProvider for the concrete implementation of 'readRecord'
+    //              - essentially move the 'RowTupleBufferMemoryProvider' to the RowNativeFieldIndexFunction (or have one and template it)
+
+    // Todo: remove both getter functions again and change interface of InputFormatterTask
+    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), *memoryProvider, projections);
+
+    // /// initialize global state variables to keep track of the watermark ts and the origin id
+    // executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    // executionCtx.originId = recordBuffer.getOriginId();
+    // executionCtx.currentTs = recordBuffer.getCreatingTs();
+    // executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    // executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+    // executionCtx.lastChunk = recordBuffer.isLastChunk();
+    // /// call open on all child operators
+    // openChild(executionCtx, recordBuffer);
+    // /// iterate over records in buffer
+    // auto numberOfRecords = recordBuffer.getNumRecords();
+    //
+    // // Todo: instead of this for loop,
+    // for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
+    // {
+    //     auto record = memoryProvider->readRecord(projections, recordBuffer, i);
+    //     executeChild(executionCtx, record);
+    // }
 }
 
 std::optional<PhysicalOperator> FormatScanPhysicalOperator::getChild() const

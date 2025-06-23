@@ -178,6 +178,8 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
+    PipelineExecutionContext& getPipelineContext() const { return *pipelineContext.value; };
+
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;

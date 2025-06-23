@@ -31,6 +31,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp"
+#include "Nautilus/Interface/RecordBuffer.hpp"
+
+#include "ExecutionContext.hpp"
+#include "PhysicalOperator.hpp"
 
 
 namespace NES::InputFormatters
@@ -137,6 +142,18 @@ public:
         this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
     }
 
+    void scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) const
+    {
+        /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
+        if (recordBuffer.getNumRecords() == 0)
+        {
+            NES_WARNING("Received empty buffer in InputFormatterTask.");
+            return;
+        }
+
+        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, memoryProvider, projections);
+    }
+
     std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
 
     /// Describes what a InputFormatterTask that is in the InputFormatterTaskPipeline does (interface).
@@ -146,6 +163,7 @@ public:
         virtual void startTask() = 0;
         virtual void stopTask() = 0;
         virtual void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) = 0;
+        virtual void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -159,6 +177,10 @@ public:
         void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
         {
             InputFormatterTask.executeTask(rawTupleBuffer, pec);
+        }
+        void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) override
+        {
+            InputFormatterTask.scanTask(executionCtx, recordBuffer, child, memoryProvider, projections);
         }
         std::ostream& toString(std::ostream& os) const override { return InputFormatterTask.taskToString(os); }
 
