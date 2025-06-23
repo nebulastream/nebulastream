@@ -231,17 +231,18 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
                       f"-t {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS + 2 * WAIT_BETWEEN_COMMANDS} " \
                       f"-n {current_benchmark_config.num_tuples_to_generate} " \
                       f"-s {current_benchmark_config.timestamp_increment} " \
+                      f"-b {current_benchmark_config.batch_size} " \
                       f"-i {current_benchmark_config.ingestion_rate} " \
-                      f"-b {calculate_id_upper_bound_for_match_rate(current_benchmark_config)} " \
+                      f"-u {calculate_id_upper_bound_for_match_rate(current_benchmark_config)} " \
                       f"-g {generator_seed + j}"
                 # Disregard uniform int distribution and achieve true 100% match rate
                 if current_benchmark_config.match_rate > 100:
                     cmd += " -d"
                 # Add variable sized data flag to last two tcp servers
-                if port == starting_ports[-1] or port == starting_ports[-2]:
-                    cmd += " -v"
+                #if port == starting_ports[-1] or port == starting_ports[-2]:
+                    #cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")
-                process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+                process = subprocess.Popen(cmd.split(" "))
                 time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
                 if process.poll() is not None and process.poll() != 0:
                     # print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
@@ -274,9 +275,10 @@ def submitting_query(query_file):
         text=True
     )
 
-    # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
     stdout, stderr = process.communicate()
-    query_id = stdout.strip()
+    output = stdout.strip()
+    print(f"Submitted the query with the following output: {output} and error: {stderr.strip()}")
+    query_id = output
     print(f"Submitted the query with id {query_id}")
     return query_id
 
@@ -353,10 +355,12 @@ def run_benchmark(current_benchmark_config):
         # Submitting the query and waiting couple of seconds before stopping the query
         query_id = submitting_query(os.path.abspath(os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)))
 
-        print(f"Waiting for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
+        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        print(f"Waiting now {now} for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
         time.sleep(MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP)  # Allow query engine stats to be printed
+        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         stop_process = stop_query(query_id)
-        print(f"Query {query_id} was stopped")
+        print(f"Query {query_id} was stopped at {now}")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = source_processes + [single_node_process] + [stop_process]

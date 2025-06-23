@@ -19,6 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
+BATCH_SIZES = [1000, 100000]
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
 INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 50, 30, 10, 0, 101, 99, 90]  # match rate in percent, values > 100 simply use a counter for every server
@@ -53,7 +54,7 @@ MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
 FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
-WITH_PREDICTIONS = ["true", "false"]
+WITH_PREDICTIONS = ["false", "true"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
 
 
@@ -103,6 +104,7 @@ def get_queries():
 
 def get_default_params_dict():
     return {
+        "batch_size": BATCH_SIZES[0],
         "timestamp_increment": TIMESTAMP_INCREMENTS[0],
         "ingestion_rate": INGESTION_RATES[0],
         "match_rate": MATCH_RATES[0],
@@ -142,6 +144,7 @@ def get_additional_default_values():
 # This class stores all information needed to run a single benchmark
 class BenchmarkConfig:
     def __init__(self,
+                 batch_size,
                  timestamp_increment,
                  ingestion_rate,
                  match_rate,
@@ -161,11 +164,12 @@ class BenchmarkConfig:
                  with_prediction,
                  watermark_predictor_type,
                  query,
-                 task_queue_size=1000000,
+                 task_queue_size=10000000,
                  buffers_in_global_buffer_manager=200000,
                  buffers_per_worker=20000,
                  buffers_in_source_local_buffer_pool=1000,
                  execution_mode="COMPILER"):
+        self.batch_size = batch_size
         self.timestamp_increment = timestamp_increment
         self.ingestion_rate = ingestion_rate
         self.match_rate = match_rate
@@ -201,6 +205,7 @@ class BenchmarkConfig:
     # Return a dictionary representation of the configuration
     def to_dict(self):
         return {
+            "batch_size": self.batch_size,
             "timestamp_increment": self.timestamp_increment,
             "ingestion_rate": self.ingestion_rate,
             "match_rate": self.match_rate,
@@ -233,6 +238,7 @@ def create_benchmark_configs():
     configs = []
     default_params = get_default_params_dict()
     shared_params = {
+        "batch_size": BATCH_SIZES,
         "timestamp_increment": TIMESTAMP_INCREMENTS,
         "ingestion_rate": INGESTION_RATES,
         "match_rate": MATCH_RATES,
@@ -429,6 +435,7 @@ def create_all_benchmark_configs():
     # Generate all possible configurations
     return [
         BenchmarkConfig(
+            batch_size,
             timestamp_increment,
             ingestion_rate,
             match_rate,
@@ -449,6 +456,7 @@ def create_all_benchmark_configs():
             watermark_predictor_type,
             query
         )
+        for batch_size in BATCH_SIZES
         for timestamp_increment in TIMESTAMP_INCREMENTS
         for ingestion_rate in INGESTION_RATES
         for match_rate in MATCH_RATES

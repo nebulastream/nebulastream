@@ -173,6 +173,7 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
+        //std::cout << fmt::format("Source Meta Data {}, {}", originId, buffer.getSequenceDataAsString());
         emit(originId, SourceReturnType::Data{std::move(buffer)});
     };
 
