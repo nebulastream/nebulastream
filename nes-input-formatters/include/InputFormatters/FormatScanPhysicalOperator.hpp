@@ -17,6 +17,8 @@
 #include <memory>
 #include <optional>
 #include <vector>
+
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -27,24 +29,25 @@ namespace NES
 
 /// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
 /// Furthermore, it supports projection push down to eliminate unneeded reads
-class ScanPhysicalOperator final : public PhysicalOperatorConcept
+class FormatScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-    /// @param memoryLayout memory layout that describes the tuple buffer.
-    /// @param projections projection vector
-    ScanPhysicalOperator(
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-        std::vector<Record::RecordFieldIdentifier> projections);
+    FormatScanPhysicalOperator(
+        std::vector<Record::RecordFieldIdentifier> projections,
+        std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
+        size_t configuredBufferSize,
+        bool isFirstOperatorAfterSource);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> taskPipeline;
     std::optional<PhysicalOperator> child;
+    size_t configuredBufferSize;
+    bool isFirstOperatorAfterSource = false;
 };
 
 }

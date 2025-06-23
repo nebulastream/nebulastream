@@ -32,9 +32,11 @@ struct CSVMetaData
     explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+    const Schema& getSchema() const { return this->schema; }
 
 private:
     std::string tupleDelimiter;
+    Schema schema;
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>

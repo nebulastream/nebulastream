@@ -22,15 +22,12 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
+#include "Nautilus/Interface/Record.hpp"
 
 namespace NES::InputFormatters::RawValueParser
 {
 
-using ParseFunctionSignature = std::function<void(
-    std::string_view inputString,
-    size_t writeOffsetInBytes,
-    Memory::AbstractBufferProvider& bufferProvider,
-    Memory::TupleBuffer& tupleBufferFormatted)>;
+using ParseFunctionSignature = std::function<void(std::string_view inputString)>;
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -38,21 +35,61 @@ using ParseFunctionSignature = std::function<void(
 template <typename T>
 auto parseFieldString()
 {
-    return [](const std::string_view fieldValueString,
-              const size_t writeOffsetInBytes,
-              Memory::AbstractBufferProvider&,
-              Memory::TupleBuffer& tupleBufferFormatted)
+    return [](const std::string_view fieldValueString) { return NES::Util::from_chars_with_exception<T>(fieldValueString); };
+}
+
+template <typename T>
+auto parseQuotedFieldString()
+{
+    return [](const std::string_view quotedFieldValueString)
     {
-        const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
-        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *valuePtr = parsedValue;
+        INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
+        const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
+        return NES::Util::from_chars_with_exception<T>(fieldValueString);
     };
 }
 
-/// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-ParseFunctionSignature getBasicStringParseFunction();
+Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType);
 
-/// Takes a vector containing parse function for fields. Adds a parse function that parses a basic NebulaStream type to the vector.
-ParseFunctionSignature getBasicTypeParseFunction(DataType::Type physicalType);
+template <typename T>
+nautilus::val<T> parseIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
+{
+    switch (quotationType)
+    {
+        case QuotationType::NONE: {
+            return nautilus::invoke(
+                +[](const char* fieldAddress, const uint64_t fieldSize)
+                {
+                    const auto fieldView = std::string_view(fieldAddress, fieldSize);
+                    return NES::Util::from_chars_with_exception<T>(fieldView);
+                },
+                fieldAddress,
+                fieldSize);
+        }
+        case QuotationType::DOUBLE_QUOTE: {
+            return nautilus::invoke(
+                +[](const char* fieldAddress, const uint64_t fieldSize)
+                {
+                    INVARIANT(fieldSize >= 2, "Input string must be at least 2 characters long.");
+                    const auto fieldView = std::string_view(fieldAddress + 1, fieldSize - 1);
+                    return NES::Util::from_chars_with_exception<T>(fieldView);
+                },
+                fieldAddress,
+                fieldSize);
+        }
+    }
+}
+
+void parseRawValueIntoRecord(
+    DataType::Type physicalType,
+    Nautilus::Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    QuotationType quotationType);
+
+/// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
+ParseFunctionSignature getParseFunction(const DataType::Type physicalType);
 }

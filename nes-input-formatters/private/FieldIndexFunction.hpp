@@ -73,13 +73,7 @@ public:
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 
-    FieldIndexFunction()
-    {
-        /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
-        /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
-        static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
-    };
-
+    FieldIndexFunction() = default;
     ~FieldIndexFunction() = default;
 
     [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const
@@ -94,9 +88,26 @@ public:
 
     [[nodiscard]] size_t getTotalNumberOfTuples() const { return static_cast<const Derived*>(this)->applyGetTotalNumberOfTuples(); }
 
-    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const
+    template <typename IndexerMetaData>
+    [[nodiscard]] Record readNextRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const RecordBuffer& recordBuffer,
+        nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData) const
     {
-        return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
+        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData);
+    }
+
+    template <typename IndexerMetaData>
+    [[nodiscard]] Record readSpanningRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const nautilus::val<int8_t*>& recordBufferPtr,
+        nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData,
+        RawValueParser::QuotationType quotationType,
+        nautilus::val<Derived*> fieldIndexFunction) const
+    {
+        return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(projections, recordBufferPtr, recordIndex, metaData, quotationType, fieldIndexFunction);
     }
 };
 

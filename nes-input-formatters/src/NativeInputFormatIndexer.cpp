@@ -16,6 +16,7 @@
 
 
 #include <InputFormatIndexerRegistry.hpp>
+#include <NativeFieldIndexFunction.hpp>
 
 namespace NES::InputFormatters
 {

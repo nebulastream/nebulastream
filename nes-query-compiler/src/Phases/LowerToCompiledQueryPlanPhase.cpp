@@ -61,32 +61,34 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
-    const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatterTaskPipeline = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-        sourceOperator.getOriginId(),
-        *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
-        sourceOperator.getDescriptor().getParserConfig());
+    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
 
-    auto executableInputFormatterPipeline
-        = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTaskPipeline), executableSuccessorPipelines);
+    // ExecutablePipeline::create
+    // auto inputFormatterTaskPipeline = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    //     sourceOperator.getOriginId(),
+    //     *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
+    //     sourceOperator.getDescriptor().getParserConfig());
+
+    // auto executableInputFormatterPipeline
+    //     = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTaskPipeline), executableSuccessorPipelines);
 
     for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor))
+        if (auto executableSuccessor = processSuccessor(sourceOperator.getOriginId(), successor))
         {
-            executableInputFormatterPipeline->successors.emplace_back(*executableSuccessor);
+            executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
 
     /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
-    pipelineQueryPlan->removePipeline(*pipeline);
+    // pipelineQueryPlan->removePipeline(*pipeline);
 
-    std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
+    // std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
 
-    pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
-    inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
+    // pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
+    // inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
 
-    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
+    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), std::move(executableSuccessorPipelines));
 }
 
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)

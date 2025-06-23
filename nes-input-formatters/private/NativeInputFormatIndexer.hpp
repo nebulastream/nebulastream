@@ -23,6 +23,7 @@
 #include <fmt/format.h>
 #include <FieldIndexFunction.hpp>
 #include <InputFormatIndexer.hpp>
+#include "Util/Ranges.hpp"
 
 namespace NES::InputFormatters
 {
@@ -33,7 +34,16 @@ public:
     NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
 
     static std::string_view getTupleDelimitingBytes() { return ""; }
+    [[nodiscard]] const Schema& getSchema() const { return schema; }
+    [[nodiscard]] const std::vector<size_t>& getFieldOffsets() const { return fieldOffsets; }
+
+private:
+    Schema schema;
+    std::vector<size_t> fieldOffsets;
 };
+
+template <NES::Schema::MemoryLayoutType MemoryLayoutType>
+class NativeFieldIndexFunction;
 
 /// The NativeInputFormatter formats buffers that contain data which all other 'Operators' can operate on.
 /// There is thus no need to parse the fields of the input data.
