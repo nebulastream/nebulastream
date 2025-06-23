@@ -38,6 +38,15 @@ FileWriter::FileWriter(
     , allocate(allocate)
     , deallocate(deallocate)
 {
+    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0 || fdKey < 0)
+    {
+        throw std::runtime_error("Failed to open file or key file for writing");
+    }
+
+    file.assign(fd);
+    keyFile.assign(fdKey);
 }
 
 FileWriter::~FileWriter()
@@ -46,27 +55,6 @@ FileWriter::~FileWriter()
     deallocateBuffers();
     file.close();
     keyFile.close();
-}
-
-bool FileWriter::initialize()
-{
-    auto numRetries = 5UL;
-    auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    while ((fd < 0 || fdKey < 0))
-    {
-        fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-        fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-        if (numRetries <= 0)
-        {
-            return false;
-        }
-        --numRetries;
-    }
-
-    file.assign(fd);
-    keyFile.assign(fdKey);
-    return true;
 }
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)

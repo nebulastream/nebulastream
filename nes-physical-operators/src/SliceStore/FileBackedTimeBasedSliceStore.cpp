@@ -179,19 +179,6 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     return slicesVec;
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark)
-{
-    std::scoped_lock lock(readWriteMutex);
-    return DefaultTimeBasedSliceStore::getTriggerableWindowSlices(globalWatermark);
-}
-
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
-{
-    std::scoped_lock lock(readWriteMutex);
-    return DefaultTimeBasedSliceStore::getAllNonTriggeredSlices();
-}
-
 std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(
     const SliceEnd sliceEnd,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -315,7 +302,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const UpdateSlicesMetaData& metaData)
 {
     std::scoped_lock lock(readWriteMutex);
-    //std::cout << "Updating slices\n";
     const auto& [timestamp, seqNumber, originId] = metaData.bufferMetaData;
     const auto watermark
         = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
@@ -556,7 +542,6 @@ void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId orig
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
 {
-    std::cout << "Measuring exec times\n";
     constexpr auto numElements = USE_TEST_DATA_SIZES.size();
     if constexpr (numElements < 2)
     {
@@ -576,13 +561,8 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
                 SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx, false);
-
-            //std::cout << "Got file writer\n";
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
-
-            //std::cout << "Wrote data to ssd\n";
             runSingleAwaitable(ioCtx, fileWriter->flush());
-            //std::cout << "Executed measurement\n";
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
@@ -624,7 +604,6 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
     const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
     const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
     readExecTimeFunction = {readSlope, readIntercept};
-    std::cout << "Done measuring exec times\n";
 }
 
 }

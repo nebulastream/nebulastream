@@ -12,9 +12,6 @@
     limitations under the License.
 */
 
-#include <iostream>
-
-
 #include <SliceStore/MemoryController/MemoryController.hpp>
 
 namespace NES
@@ -85,10 +82,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     }
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
-    if (!fileWriter->initialize())
-    {
-        return nullptr;
-    }
+
     allWritersMap[filePath] = true;
     writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
@@ -132,14 +126,13 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 {
     const std::string sideStr = joinBuildSide == JoinBuildSideType::Left ? "left" : "right";
     return (workingDir
-            / std::filesystem::path(
-                fmt::format(
-                    "memory_controller_{}_{}_{}_{}_{}",
-                    queryId.getRawValue(),
-                    originId.getRawValue(),
-                    sideStr,
-                    sliceEnd.getRawValue(),
-                    threadId.getRawValue())))
+            / std::filesystem::path(fmt::format(
+                "memory_controller_{}_{}_{}_{}_{}",
+                queryId.getRawValue(),
+                originId.getRawValue(),
+                sideStr,
+                sliceEnd.getRawValue(),
+                threadId.getRawValue())))
         .string();
 }
 
@@ -184,7 +177,6 @@ void MemoryController::deallocateReadBuffer(char* buffer)
 
 char* MemoryController::allocateWriteBuffer()
 {
-    //std::cout << "Allocating buffer\n";
     if (bufferSize == 0)
     {
         return nullptr;
@@ -197,7 +189,6 @@ char* MemoryController::allocateWriteBuffer()
         throw std::runtime_error("No write buffers available for allocation!");
     }
 
-    //std::cout << "Buffer available\n";
     char* buffer = freeWriteBuffers.back();
     freeWriteBuffers.pop_back();
     return buffer;

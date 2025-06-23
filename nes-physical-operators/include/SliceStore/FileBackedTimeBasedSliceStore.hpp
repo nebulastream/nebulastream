@@ -90,9 +90,6 @@ public:
         WorkerThreadId workerThreadId,
         JoinBuildSideType joinBuildSide,
         const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-    getTriggerableWindowSlices(Timestamp globalWatermark) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
