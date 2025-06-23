@@ -73,8 +73,11 @@ struct ArenaRef
 
     VariableSizedData allocateVariableSizedData(const nautilus::val<size_t>& sizeInBytes);
 
-private:
+    // Todo: find better solution
+    /// The InputFormatterTask uses the arenaRef directly from a proxy function call to bypass tracing.
+    /// It is always the first operator in its pipeline. Thus, the ArenaRef and the Arena do not get out of sync.
     nautilus::val<Arena*> arenaRef;
+private:
     nautilus::val<size_t> availableSpaceForPointer;
     nautilus::val<int8_t*> spacePointer;
 };
@@ -126,6 +129,8 @@ struct ExecutionContext final
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
+
+    PipelineExecutionContext& getPipelineContext() const { return *pipelineContext.value; };
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;

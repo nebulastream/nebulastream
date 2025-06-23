@@ -32,12 +32,18 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
+VariableSizedData::VariableSizedData(
+    const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size, const nautilus::val<bool>& isPointerToInputData)
+    : size(size), ptrToVarSized(reference), isPointerToInputData(isPointerToInputData)
+{
+}
+
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
     : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized), isPointerToInputData(other.isPointerToInputData)
 {
 }
 
@@ -50,11 +56,12 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
     size = other.size;
     ptrToVarSized = other.ptrToVarSized;
+    isPointerToInputData = other.isPointerToInputData;
     return *this;
 }
 
 VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
+    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized)), isPointerToInputData(std::move(other.isPointerToInputData))
 {
 }
 
@@ -67,6 +74,7 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
+    isPointerToInputData = std::move(other.isPointerToInputData);
     return *this;
 }
 
@@ -78,6 +86,17 @@ nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const naut
 nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData)
 {
     return varSizedData.isValid() == other;
+}
+
+nautilus::val<bool> VariableSizedData::getIsPointerToInputData() const
+{
+    return this->isPointerToInputData;
+}
+
+
+void VariableSizedData::setIsPointerToInputData(const nautilus::val<bool>& isPointerToInputData)
+{
+    this->isPointerToInputData = isPointerToInputData;
 }
 
 nautilus::val<bool> VariableSizedData::isValid() const
@@ -93,6 +112,7 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     {
         return {false};
     }
+    // Todo: if the VarSized is just a pointer to external data with size, getContent returns the wrong data
     const auto varSizedData = getContent();
     const auto rhsVarSizedData = rhs.getContent();
     const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
@@ -111,6 +131,10 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 {
+    if (isPointerToInputData)
+    {
+        return getContentSize();
+    }
     return getContentSize() + nautilus::val<uint32_t>(sizeof(uint32_t));
 }
 
@@ -121,6 +145,10 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
+    if (isPointerToInputData)
+    {
+        return ptrToVarSized;
+    }
     return ptrToVarSized + nautilus::val<uint64_t>(sizeof(uint32_t));
 }
 
