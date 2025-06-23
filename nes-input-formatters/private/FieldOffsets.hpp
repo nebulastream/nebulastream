@@ -83,6 +83,45 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         return createFieldSV(bufferView, bufferNumber, fieldOffset, fieldIdx);
     }
 
+    // static void applyReadFieldAtProxy(const Memory::TupleBuffer* tupleBuffer, uint64_t bufferSize, uint64_t tupleIdx, uint64_t fieldIdx, const FieldOffsets* const fieldOffsets)
+    static void applyReadFieldAtProxy(const Memory::TupleBuffer* tupleBuffer, const uint64_t bufferSize, const uint64_t tupleIdx, const uint64_t fieldIdx, const FieldOffsets* const fieldOffsets)
+    {
+        const auto bufferView = std::string_view(tupleBuffer->getBuffer<const char>(), bufferSize);
+        const auto fieldView = fieldOffsets->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
+        // NES_DEBUG("field view: {}{}{}", bufferSize, tupleIdx, fieldIdx);
+    }
+
+    template <typename IndexerMetaData>
+    [[nodiscard]] Record applyReadNextRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const RecordBuffer& recordBuffer,
+        nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData,
+        const size_t configuredBufferSize) const
+    {
+        Nautilus::Record record;
+        const auto bufferAddress = recordBuffer.getBuffer();
+
+        auto fieldOffsetsPtr = nautilus::val<FieldOffsets const*>(this);
+
+        /// static loop over number of fields (which don't change)
+        /// skips fields that are not part of projection and only traces invoke functions for fields that we need
+        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
+        {
+            const auto& fieldName = metaData.getSchema().getFieldAt(i).name;
+            if (not includesField(projections, fieldName))
+            {
+                continue;
+            }
+            nautilus::invoke(applyReadFieldAtProxy, recordBuffer.getReference(), nautilus::val<uint64_t>(configuredBufferSize), recordIndex, nautilus::val<uint64_t>(i), fieldOffsetsPtr);
+
+            // Todo: load (string) value
+            // -> parse text to internal representation (using nautilus, either nautilus function, or proxy function)
+            // auto value = loadValue(metaData.getSchema().getFieldAt(i).dataType, recordBuffer, fieldAddress);
+            // record.write(metaData.getSchema().getFieldAt(i).name, value);
+        }
+        return record;
+    }
     template <typename OffsetType>
     class FieldOffsetsBuffer
     {
@@ -124,6 +163,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     }
 
 public:
+    // FieldOffsets() = default;
     explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
     ~FieldOffsets() = default;
 

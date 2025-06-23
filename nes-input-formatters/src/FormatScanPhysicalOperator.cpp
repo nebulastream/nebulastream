@@ -40,14 +40,18 @@ namespace NES
 FormatScanPhysicalOperator::FormatScanPhysicalOperator(
     std::vector<Record::RecordFieldIdentifier> projections,
     std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
-    const size_t configuredBufferSize)
-    : projections(std::move(projections)), taskPipeline(std::move(inputFormatterTaskPipeline)), configuredBufferSize(configuredBufferSize)
+    const size_t configuredBufferSize,
+    const bool isFirstOperatorAfterSource)
+    : projections(std::move(projections))
+    , taskPipeline(std::move(inputFormatterTaskPipeline))
+    , configuredBufferSize(configuredBufferSize)
+    , isFirstOperatorAfterSource(isFirstOperatorAfterSource)
 {
 }
 
 void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize);
+    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize, isFirstOperatorAfterSource);
 }
 
 std::optional<PhysicalOperator> FormatScanPhysicalOperator::getChild() const

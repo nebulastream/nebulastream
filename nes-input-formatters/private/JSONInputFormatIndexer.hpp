@@ -33,12 +33,14 @@ constexpr auto JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
 
 struct JSONMetaData
 {
-    explicit JSONMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit JSONMetaData(const ParserConfig& config, Schema schema) : tupleDelimiter(config.tupleDelimiter), schema(schema) { };
 
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+    const Schema& getSchema() const { return this->schema; }
 
 private:
     std::string tupleDelimiter;
+    Schema schema;
 };
 
 class JSONInputFormatter final

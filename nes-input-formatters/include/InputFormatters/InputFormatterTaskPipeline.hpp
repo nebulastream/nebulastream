@@ -130,16 +130,16 @@ public:
     /// Second, uses the SequenceShredder to find spanning tuples.
     /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
     /// process all complete tuples and trailing spanning tuple.
-    void execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
+    void execute(const Memory::TupleBuffer&, PipelineExecutionContext&) override
     {
-        /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
-        if (rawTupleBuffer.getBufferSize() == 0)
-        {
-            NES_WARNING("Received empty buffer in InputFormatterTask.");
-            return;
-        }
-
-        this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
+        // /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
+        // if (rawTupleBuffer.getBufferSize() == 0)
+        // {
+        //     NES_WARNING("Received empty buffer in InputFormatterTask.");
+        //     return;
+        // }
+        //
+        // this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
     }
 
     void scan(
@@ -147,7 +147,8 @@ public:
         Nautilus::RecordBuffer& recordBuffer,
         const PhysicalOperator& child,
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const size_t configuredBufferSize) const
+        const size_t configuredBufferSize,
+        const bool isFirstOperatorAfterSource) const
     {
         /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
         if (recordBuffer.getNumRecords() == 0)
@@ -156,7 +157,7 @@ public:
             return;
         }
 
-        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize);
+        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
     }
 
     std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
@@ -167,13 +168,13 @@ public:
         virtual ~InputFormatterTaskConcept() = default;
         virtual void startTask() = 0;
         virtual void stopTask() = 0;
-        virtual void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) = 0;
         virtual void scanTask(
             ExecutionContext& executionCtx,
             Nautilus::RecordBuffer& recordBuffer,
             const PhysicalOperator& child,
             const std::vector<Record::RecordFieldIdentifier>& projections,
-            size_t configuredBufferSize)
+            size_t configuredBufferSize,
+            bool isFirstOperatorAfterSource)
             = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
@@ -185,18 +186,15 @@ public:
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : InputFormatterTask(std::move(inputFormatterTask)) { }
         void startTask() override { InputFormatterTask.startTask(); }
         void stopTask() override { InputFormatterTask.stopTask(); }
-        void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
-        {
-            InputFormatterTask.executeTask(rawTupleBuffer, pec);
-        }
         void scanTask(
             ExecutionContext& executionCtx,
             Nautilus::RecordBuffer& recordBuffer,
             const PhysicalOperator& child,
             const std::vector<Record::RecordFieldIdentifier>& projections,
-            const size_t configuredBufferSize) override
+            const size_t configuredBufferSize,
+            const bool isFirstOperatorAfterSource) override
         {
-            InputFormatterTask.scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize);
+            InputFormatterTask.scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
         }
         std::ostream& toString(std::ostream& os) const override { return InputFormatterTask.taskToString(os); }
 

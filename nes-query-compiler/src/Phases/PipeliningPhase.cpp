@@ -54,10 +54,10 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
     /// Prepend the default scan operator.
-    // Todo: construct correct InputFormatterTask(-Pipeline)
     auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
         OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
-    pipeline->prependOperator(FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize));
+    pipeline->prependOperator(
+        FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, false));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -70,11 +70,22 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto schema = wrappedOpAfterScan.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    // Todo: create a custom inputFormatterTaskPipeline
-    auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    const auto isFirstOperatorAfterSource = prevPipeline->isSourcePipeline();
+    auto inputFormatterTaskPipeline = [&prevPipeline, &schema, isFirstOperatorAfterSource]()
+    {
+        if (isFirstOperatorAfterSource)
+        {
+            const auto inputFormatterConfig
+                = prevPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+            return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+                OriginId(OriginId::INITIAL), schema.value(), inputFormatterConfig);
+        }
+        return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+    }();
 
-    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize));
+    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(
+        schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, isFirstOperatorAfterSource));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -214,6 +225,7 @@ void buildPipelineRecursively(
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
+        INVARIANT(not currentPipeline->isSourcePipeline(), "We don't force a new pipeline after the source pipeline");
         addDefaultScan(newPipelinePtr, *opWrapper, configuredBufferSize);
         for (auto& child : opWrapper->getChildren())
         {

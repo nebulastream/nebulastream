@@ -71,7 +71,7 @@ public:
     ~RecordBuffer() = default;
 
     // Todo: Ideally, make function below private and only expose to InputFormatterTask
-    const Memory::TupleBuffer& getTupleBuffer() const { return *tupleBufferRef.value; }
+    nautilus::val<Memory::TupleBuffer*> getTupleBuffer() const { return tupleBufferRef; }
 private:
     nautilus::val<Memory::TupleBuffer*> tupleBufferRef;
 };

@@ -229,22 +229,69 @@ public:
     }
 
     void scanTask(
-        ExecutionContext&,
-        Nautilus::RecordBuffer&,
-        const PhysicalOperator&,
-        const std::vector<Record::RecordFieldIdentifier>&,
-        const size_t /*configuredBufferSize*/)
+        ExecutionContext& executionCtx,
+        Nautilus::RecordBuffer& recordBuffer,
+        const PhysicalOperator& child,
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const size_t configuredBufferSize,
+        const bool)
     requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
     {
-        // Todo: enable scanTask on raw buffers
+        auto fieldIndexFunction = FieldIndexFunctionType(*executionCtx.pipelineContext.value->getBufferManager());
+        nautilus::invoke(
+            +[](const Memory::TupleBuffer* tupleBuffer,
+                PipelineExecutionContext* pec,
+                InputFormatterTask* inputFormatterTask,
+                FieldIndexFunctionType* fieldIndexFunction)
+            { inputFormatterTask->executeTask(RawTupleBuffer{*tupleBuffer}, *pec, *fieldIndexFunction); },
+            recordBuffer.getReference(),
+            executionCtx.pipelineContext,
+            nautilus::val<InputFormatterTask*>(this),
+            nautilus::val<FieldIndexFunctionType*>{&fieldIndexFunction});
+
+        // [x] 1. change lowering so that we pick the new scan operator, instead of the solo-input-formatter-task-pipeline
+        // [ ] 2. extend FieldOffsets to support nautilus functions
+        //      - requires 'readRecord' <-- how to do that?
+        //      - tracing! assemble a record (slow in interpreted mode), but will boil down to field accesses in compiled mode
+        // [x] 3. call proxy function to access c++ functions
+        // [ ] 4. then create loop like below (native)
+        //      - call readNextRecord on FieldOffsets FieldIndexFunction, instead of native
+
+        /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
+
+        // Todo: resolve spanning tuples
+        ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
+        if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
+        {
+            /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
+            /// in its raw input buffer.
+            // processRawBufferWithTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
+            NES_DEBUG("with case");
+            // Todo: need to return nautilus val
+            for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(fieldIndexFunction.getTotalNumberOfTuples()); i = i + 1_u64)
+            {
+                auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize);
+                (void)record;
+                (void)child;
+                // child.execute(executionCtx, record);
+            }
+        }
+        else
+        {
+            /// If the buffer does not delimit a single tuple, it may still connect two buffers that delimit tuples and therefore comple a
+            /// spanning tuple.
+            // processRawBufferWithoutTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
+            NES_DEBUG("without case");
+        }
     }
-    
+
     void scanTask(
         ExecutionContext& executionCtx,
         Nautilus::RecordBuffer& recordBuffer,
         const PhysicalOperator& child,
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const size_t /*configuredBufferSize*/)
+        const size_t configuredBufferSize,
+        const bool isFirstOperatorAfterSource)
     requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
     {
         /// initialize global state variables to keep track of the watermark ts and the origin id
@@ -256,44 +303,22 @@ public:
         executionCtx.lastChunk = recordBuffer.isLastChunk();
         /// call open on all child operators
         child.open(executionCtx, recordBuffer);
-        /// iterate over records in buffer
-        auto numberOfRecords = recordBuffer.getNumRecords();
+
+        /// The source sets the number of read bytes, instead of the number of records.
+        // Todo: make sure numRecords() returns a multiple of sizeOfTupleInBytes
+        auto numberOfRecords = (isFirstOperatorAfterSource)
+            ? recordBuffer.getNumRecords() / nautilus::static_val<uint64_t>(this->schemaInfo.getSizeOfTupleInBytes())
+            : recordBuffer.getNumRecords();
 
         auto fieldIndexFunction = FieldIndexFunctionType();
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
-            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData);
+            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize);
             child.execute(executionCtx, record);
         }
     }
 
-    /// Not supported (yet):
-    /// requires(FormatterType::IsFormattingRequired and not(HasSpanningTuple))
-    ///     - non-native formats without spanning tuples, since it is hard to guarantee that (mostly) text based data does not span buffers
-    /// requires(not(FormatterType::IsFormattingRequired) and HasSpanningTuple)
-    ///     - native format with spanning tuples, since it is hard to guarantee that we always read in full buffers and if we don't we need
-    ///       a mechanism to determine the offsets of the fields in the individual buffers asynchronously
-    void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
-    requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
-    {
-        /// If the format has fixed size tuple and no spanning tuples (give the assumption that tuples are aligned with the start of the buffers)
-        /// the InputFormatterTask does not need to do anything.
-        /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
-        /// leading to generated code that immediately operates on the data.
-        const auto [div, mod] = std::lldiv(static_cast<long long>(rawBuffer.getNumberOfTuples()), this->schemaInfo.getSizeOfTupleInBytes());
-        PRECONDITION(
-            mod == 0,
-            "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
-            rawBuffer.getNumberOfBytes(),
-            this->schemaInfo.getSizeOfTupleInBytes());
-        /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
-        const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->schemaInfo.getSizeOfTupleInBytes();
-        rawBuffer.setNumberOfTuples(numberOfTuplesInFormattedBuffer);
-        /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
-        rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-    }
-
-    void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
+    void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec, FieldIndexFunctionType& fieldIndexFunction)
     requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
     {
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
@@ -306,23 +331,23 @@ public:
         }
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
-        auto fieldIndexFunction = FieldIndexFunctionType(*pec.getBufferManager());
+        // auto fieldIndexFunction = FieldIndexFunctionType(*pec.getBufferManager());
         inputFormatIndexer->indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
-
-        /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
-        ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
-        if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < rawBuffer.getBufferSize())
-        {
-            /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
-            /// in its raw input buffer.
-            processRawBufferWithTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
-        }
-        else
-        {
-            /// If the buffer does not delimit a single tuple, it may still connect two buffers that delimit tuples and therefore comple a
-            /// spanning tuple.
-            processRawBufferWithoutTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
-        }
+        //
+        // /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
+        // ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
+        // if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < rawBuffer.getBufferSize())
+        // {
+        //     /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
+        //     /// in its raw input buffer.
+        //     processRawBufferWithTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
+        // }
+        // else
+        // {
+        //     /// If the buffer does not delimit a single tuple, it may still connect two buffers that delimit tuples and therefore comple a
+        //     /// spanning tuple.
+        //     processRawBufferWithoutTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
+        // }
     }
 
     std::ostream& taskToString(std::ostream& os) const
