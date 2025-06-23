@@ -90,7 +90,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
 
-    NES_DEBUG(
+    /*NES_DEBUG(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
         bufferMemory->leftSliceEnd,
@@ -101,7 +101,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
         windowInfo.windowStart,
-        windowInfo.windowEnd);
+        windowInfo.windowEnd);*/
 }
 
 }

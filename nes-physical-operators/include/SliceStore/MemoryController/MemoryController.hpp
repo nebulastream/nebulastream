@@ -29,8 +29,12 @@ public:
     MemoryController(size_t bufferSize, uint64_t numWorkerThreads, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
     ~MemoryController();
 
-    std::shared_ptr<FileWriter>
-    getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide, boost::asio::io_context& ioCtx);
+    std::shared_ptr<FileWriter> getFileWriter(
+        SliceEnd sliceEnd,
+        WorkerThreadId threadId,
+        JoinBuildSideType joinBuildSide,
+        boost::asio::io_context& ioCtx,
+        bool checkExistence = true);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
@@ -60,6 +64,7 @@ private:
     std::mutex readMemoryPoolMutex;
 
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether
+    std::vector<std::map<std::string, bool>> allFileWriters;
     std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
     std::vector<std::mutex> fileWriterMutexes;
 

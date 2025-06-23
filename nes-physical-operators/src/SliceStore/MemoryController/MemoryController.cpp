@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
+
+
 #include <SliceStore/MemoryController/MemoryController.hpp>
 
 namespace NES
@@ -42,6 +45,7 @@ MemoryController::MemoryController(
         }
     }
 
+    allFileWriters.resize(numWorkerThreads + 1);
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
 }
@@ -59,9 +63,14 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide, boost::asio::io_context& ioCtx)
+    const SliceEnd sliceEnd,
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide,
+    boost::asio::io_context& ioCtx,
+    const bool checkExistence)
 {
     /// Search for matching fileWriter to avoid attempting to open a file twice
+    auto& allWritersMap = allFileWriters[threadId.getRawValue()];
     auto& writerMap = fileWriters[threadId.getRawValue()];
     const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
@@ -70,8 +79,17 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     }
 
     const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
+    if (checkExistence and allWritersMap.contains(filePath))
+    {
+        throw std::runtime_error("FileWriter previously existed");
+    }
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
+    if (!fileWriter->initialize())
+    {
+        return nullptr;
+    }
+    allWritersMap[filePath] = true;
     writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
 }
@@ -114,13 +132,14 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 {
     const std::string sideStr = joinBuildSide == JoinBuildSideType::Left ? "left" : "right";
     return (workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_{}",
-                queryId.getRawValue(),
-                originId.getRawValue(),
-                sideStr,
-                sliceEnd.getRawValue(),
-                threadId.getRawValue())))
+            / std::filesystem::path(
+                fmt::format(
+                    "memory_controller_{}_{}_{}_{}_{}",
+                    queryId.getRawValue(),
+                    originId.getRawValue(),
+                    sideStr,
+                    sliceEnd.getRawValue(),
+                    threadId.getRawValue())))
         .string();
 }
 
@@ -140,7 +159,7 @@ char* MemoryController::allocateReadBuffer()
         return nullptr;
     }
 
-    std::scoped_lock lock(readMemoryPoolMutex);
+    const std::scoped_lock lock(readMemoryPoolMutex);
     if (freeReadBuffers.empty())
     {
         /// This should not happen as we deallocate buffers after updating slices
@@ -154,8 +173,7 @@ char* MemoryController::allocateReadBuffer()
 
 void MemoryController::deallocateReadBuffer(char* buffer)
 {
-    if (bufferSize == 0 || buffer == nullptr
-        || !(readMemoryPool.data() <= buffer && buffer < readMemoryPool.data() + readMemoryPool.size()))
+    if (bufferSize == 0 || buffer == nullptr || readMemoryPool.data() > buffer || buffer >= readMemoryPool.data() + readMemoryPool.size())
     {
         return;
     }
@@ -166,18 +184,20 @@ void MemoryController::deallocateReadBuffer(char* buffer)
 
 char* MemoryController::allocateWriteBuffer()
 {
+    //std::cout << "Allocating buffer\n";
     if (bufferSize == 0)
     {
         return nullptr;
     }
 
-    std::scoped_lock lock(writeMemoryPoolMutex);
+    const std::scoped_lock lock(writeMemoryPoolMutex);
     if (freeWriteBuffers.empty())
     {
         /// This should not happen as we deallocate buffers after updating slices
         throw std::runtime_error("No write buffers available for allocation!");
     }
 
+    //std::cout << "Buffer available\n";
     char* buffer = freeWriteBuffers.back();
     freeWriteBuffers.pop_back();
     return buffer;
