@@ -53,13 +53,11 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
     // Todo: construct correct InputFormatterTask(-Pipeline)
     auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
         OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
-    pipeline->prependOperator(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames(), std::move(inputFormatterTaskPipeline)));
+    pipeline->prependOperator(FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -72,14 +70,11 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto schema = wrappedOpAfterScan.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-
     // Todo: create a custom inputFormatterTaskPipeline
     auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
 
-    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames(), std::move(inputFormatterTaskPipeline)));
+    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());

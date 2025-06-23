@@ -45,6 +45,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
     auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
     // auto accessedFields = projection.getAccessedFields();
+    // auto scan = FormatScanPhysicalOperator(outputSchema.getFieldNames(), std::move(inputFormatterTaskPipeline), bufferSize);
     auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
         OriginId(OriginId::INITIAL), inputSchema, ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
     auto scan = FormatScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames(), std::move(inputFormatterTaskPipeline));

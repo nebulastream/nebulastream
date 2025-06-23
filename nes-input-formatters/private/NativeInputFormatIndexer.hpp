@@ -15,11 +15,14 @@
 #pragma once
 
 #include <ostream>
+#include <string_view>
 
 #include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include "Util/Ranges.hpp"
+
 
 namespace NES::InputFormatters
 {
@@ -27,20 +30,39 @@ namespace NES::InputFormatters
 class NativeMetaData
 {
 public:
-    NativeMetaData(ParserConfig, Schema) { /* noop */ }
+    NativeMetaData(ParserConfig, Schema schema) : schema(std::move(schema))
+    {
+        this->fieldOffsets = std::vector<size_t>(schema.getNumberOfFields());
+
+        size_t currentFieldSize = 0;
+        for (const auto& [fieldIdx, field] : this->schema | NES::views::enumerate)
+        {
+            this->fieldOffsets.at(fieldIdx) = currentFieldSize;
+            currentFieldSize += field.dataType.getSizeInBytes();
+        }
+    }
     static std::string_view getTupleDelimitingBytes() { return ""; }
+    [[nodiscard]] const Schema& getSchema() const { return schema; }
+    [[nodiscard]] const std::vector<size_t>& getFieldOffsets() const { return fieldOffsets; }
+
+private:
+    Schema schema;
+    std::vector<size_t> fieldOffsets;
 };
+
+template <NES::Schema::MemoryLayoutType MemoryLayoutType>
+class NativeFieldIndexFunction;
 
 /// The NativeInputFormatter formats buffers that contain data which all other 'Operators' can operate on.
 /// There is thus no need to parse the fields of the input data.
 template <bool HasSpanningTuple>
-class NativeInputFormatIndexer final : public InputFormatIndexer<struct NoopFormatter, NativeMetaData, /* IsFormattingRequired */ false>
+class NativeInputFormatIndexer final : public InputFormatIndexer<NativeFieldIndexFunction<Schema::MemoryLayoutType::ROW_LAYOUT>, NativeMetaData, /* IsFormattingRequired */ false>
 {
 public:
     NativeInputFormatIndexer() = default;
     ~NativeInputFormatIndexer() override = default;
 
-    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const NativeMetaData&) const override
+    void indexRawBuffer(NativeFieldIndexFunction<Schema::MemoryLayoutType::ROW_LAYOUT>&, const RawTupleBuffer&, const NativeMetaData&) const override
     {
         INVARIANT(not HasSpanningTuple, "The Native input formatter currently does not support spanning tuples.");
     }

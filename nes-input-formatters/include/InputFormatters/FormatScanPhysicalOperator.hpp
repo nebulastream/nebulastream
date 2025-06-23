@@ -32,23 +32,20 @@ namespace NES
 class FormatScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-    /// @param memoryLayout memory layout that describes the tuple buffer.
-    /// @param projections projection vector
     FormatScanPhysicalOperator(
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Record::RecordFieldIdentifier> projections,
-        std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline);
+        std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
+        size_t configuredBufferSize);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> taskPipeline;
     std::optional<PhysicalOperator> child;
+    size_t configuredBufferSize;
 };
 
 }

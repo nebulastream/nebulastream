@@ -38,45 +38,16 @@ namespace NES
 
 
 FormatScanPhysicalOperator::FormatScanPhysicalOperator(
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections,
-    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)), taskPipeline(std::move(inputFormatterTaskPipeline))
+    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
+    const size_t configuredBufferSize)
+    : projections(std::move(projections)), taskPipeline(std::move(inputFormatterTaskPipeline)), configuredBufferSize(configuredBufferSize)
 {
 }
 
 void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    // Todo: the goal is to call the input formatter task pipeline here (essentially its execute function, which we could rename to scan/index
-    // First step:
-    //  - support below scan functionality via 'IsFormattingRequired' and 'not(HasSpanningTuples)' case
-    //  - Requirements:
-    //      - NativeFieldIndexFunction with below nautilus function
-    //          - readRecord(projections) should be a call on the FieldIndexFunction
-    //          - checkout the RowTupleBufferMemoryProvider for the concrete implementation of 'readRecord'
-    //              - essentially move the 'RowTupleBufferMemoryProvider' to the RowNativeFieldIndexFunction (or have one and template it)
-
-    // Todo: remove both getter functions again and change interface of InputFormatterTask
-    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), *memoryProvider, projections);
-
-    // /// initialize global state variables to keep track of the watermark ts and the origin id
-    // executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    // executionCtx.originId = recordBuffer.getOriginId();
-    // executionCtx.currentTs = recordBuffer.getCreatingTs();
-    // executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    // executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    // executionCtx.lastChunk = recordBuffer.isLastChunk();
-    // /// call open on all child operators
-    // openChild(executionCtx, recordBuffer);
-    // /// iterate over records in buffer
-    // auto numberOfRecords = recordBuffer.getNumRecords();
-    //
-    // // Todo: instead of this for loop,
-    // for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
-    // {
-    //     auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-    //     executeChild(executionCtx, record);
-    // }
+    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize);
 }
 
 std::optional<PhysicalOperator> FormatScanPhysicalOperator::getChild() const

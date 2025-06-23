@@ -18,6 +18,7 @@
 #include <utility>
 
 #include <InputFormatIndexerRegistry.hpp>
+#include <NativeFieldIndexFunction.hpp>
 
 namespace NES::InputFormatters
 {
@@ -26,7 +27,7 @@ InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false>(
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NativeFieldIndexFunction<Schema::MemoryLayoutType::ROW_LAYOUT>, NativeMetaData, false>(
         std::move(inputFormatter), RawValueParser::QuotationType::NONE);
 }
 

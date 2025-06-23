@@ -142,7 +142,12 @@ public:
         this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
     }
 
-    void scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) const
+    void scan(
+        ExecutionContext& executionCtx,
+        Nautilus::RecordBuffer& recordBuffer,
+        const PhysicalOperator& child,
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const size_t configuredBufferSize) const
     {
         /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
         if (recordBuffer.getNumRecords() == 0)
@@ -151,7 +156,7 @@ public:
             return;
         }
 
-        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, memoryProvider, projections);
+        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize);
     }
 
     std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
@@ -163,7 +168,13 @@ public:
         virtual void startTask() = 0;
         virtual void stopTask() = 0;
         virtual void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) = 0;
-        virtual void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) = 0;
+        virtual void scanTask(
+            ExecutionContext& executionCtx,
+            Nautilus::RecordBuffer& recordBuffer,
+            const PhysicalOperator& child,
+            const std::vector<Record::RecordFieldIdentifier>& projections,
+            size_t configuredBufferSize)
+            = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -178,9 +189,14 @@ public:
         {
             InputFormatterTask.executeTask(rawTupleBuffer, pec);
         }
-        void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections) override
+        void scanTask(
+            ExecutionContext& executionCtx,
+            Nautilus::RecordBuffer& recordBuffer,
+            const PhysicalOperator& child,
+            const std::vector<Record::RecordFieldIdentifier>& projections,
+            const size_t configuredBufferSize) override
         {
-            InputFormatterTask.scanTask(executionCtx, recordBuffer, child, memoryProvider, projections);
+            InputFormatterTask.scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize);
         }
         std::ostream& toString(std::ostream& os) const override { return InputFormatterTask.taskToString(os); }
 

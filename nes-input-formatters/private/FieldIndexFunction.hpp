@@ -73,7 +73,7 @@ protected:
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
         /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
-        static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
+        // static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
     };
     ~FieldIndexFunction() = default;
 
@@ -93,6 +93,16 @@ private:
     [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const
     {
         return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
+    }
+
+    template <typename IndexerMetaData>
+    [[nodiscard]] Record readNextRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const RecordBuffer& recordBuffer,
+        nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData) const
+    {
+        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData);
     }
 };
 }

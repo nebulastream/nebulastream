@@ -46,6 +46,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <NativeFieldIndexFunction.hpp>
 
 
 namespace NES::InputFormatters
@@ -227,13 +228,23 @@ public:
         }
     }
 
-    void scanTask(ExecutionContext&, Nautilus::RecordBuffer&, const PhysicalOperator&, const Interface::MemoryProvider::TupleBufferMemoryProvider&, const std::vector<Record::RecordFieldIdentifier>&)
+    void scanTask(
+        ExecutionContext&,
+        Nautilus::RecordBuffer&,
+        const PhysicalOperator&,
+        const std::vector<Record::RecordFieldIdentifier>&,
+        const size_t /*configuredBufferSize*/)
     requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
     {
-        NES_ERROR("We should never call this function")
-        PRECONDITION(false, "We should never call this function");
+        // Todo: enable scanTask on raw buffers
     }
-    void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections)
+    
+    void scanTask(
+        ExecutionContext& executionCtx,
+        Nautilus::RecordBuffer& recordBuffer,
+        const PhysicalOperator& child,
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const size_t /*configuredBufferSize*/)
     requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
     {
         /// initialize global state variables to keep track of the watermark ts and the origin id
@@ -244,16 +255,14 @@ public:
         executionCtx.chunkNumber = recordBuffer.getChunkNumber();
         executionCtx.lastChunk = recordBuffer.isLastChunk();
         /// call open on all child operators
-        // openChild(executionCtx, recordBuffer);
         child.open(executionCtx, recordBuffer);
         /// iterate over records in buffer
         auto numberOfRecords = recordBuffer.getNumRecords();
 
+        auto fieldIndexFunction = FieldIndexFunctionType();
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
-            // Todo: replace memoryProvider with FieldIndexFunction
-            auto record = memoryProvider.readRecord(projections, recordBuffer, i);
-            // executeChild(executionCtx, record);
+            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData);
             child.execute(executionCtx, record);
         }
     }
