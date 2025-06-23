@@ -13,8 +13,6 @@
 */
 
 #include <filesystem>
-#include <iostream>
-
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <ErrorHandling.hpp>
 
@@ -52,7 +50,6 @@ FileWriter::~FileWriter()
 
 bool FileWriter::initialize()
 {
-    //std::cout << "Initializing file writer\n";
     auto numRetries = 5UL;
     auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
     auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -66,7 +63,6 @@ bool FileWriter::initialize()
         }
         --numRetries;
     }
-    //std::cout << "Done initializing file writer\n";
 
     file.assign(fd);
     keyFile.assign(fdKey);
@@ -75,13 +71,11 @@ bool FileWriter::initialize()
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 {
-    //std::cout << "Writing data\n";
     if (writeBuffer == nullptr)
     {
         writeBuffer = allocate();
     }
 
-    //std::cout << "Checking buffer size\n";
     const auto* dataPtr = static_cast<const char*>(data);
     if (bufferSize == 0)
     {
@@ -99,11 +93,9 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 
         if (writeBufferPos == bufferSize)
         {
-            //std::cout << "Flushing buffer\n";
             co_await flushBuffer(file, writeBuffer, writeBufferPos);
         }
     }
-    //std::cout << "Done writing\n";
     co_return;
 }
 
