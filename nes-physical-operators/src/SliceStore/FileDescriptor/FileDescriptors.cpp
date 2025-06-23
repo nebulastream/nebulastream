@@ -13,6 +13,8 @@
 */
 
 #include <filesystem>
+#include <iostream>
+
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <ErrorHandling.hpp>
 
@@ -38,15 +40,6 @@ FileWriter::FileWriter(
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    if (fd < 0 || fdKey < 0)
-    {
-        throw std::runtime_error("Failed to open file or key file for writing");
-    }
-
-    file.assign(fd);
-    keyFile.assign(fdKey);
 }
 
 FileWriter::~FileWriter()
@@ -57,13 +50,38 @@ FileWriter::~FileWriter()
     keyFile.close();
 }
 
+bool FileWriter::initialize()
+{
+    //std::cout << "Initializing file writer\n";
+    auto numRetries = 5UL;
+    auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    while ((fd < 0 || fdKey < 0))
+    {
+        fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        if (numRetries <= 0)
+        {
+            return false;
+        }
+        --numRetries;
+    }
+    //std::cout << "Done initializing file writer\n";
+
+    file.assign(fd);
+    keyFile.assign(fdKey);
+    return true;
+}
+
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 {
+    //std::cout << "Writing data\n";
     if (writeBuffer == nullptr)
     {
         writeBuffer = allocate();
     }
 
+    //std::cout << "Checking buffer size\n";
     const auto* dataPtr = static_cast<const char*>(data);
     if (bufferSize == 0)
     {
@@ -81,9 +99,11 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 
         if (writeBufferPos == bufferSize)
         {
+            //std::cout << "Flushing buffer\n";
             co_await flushBuffer(file, writeBuffer, writeBufferPos);
         }
     }
+    //std::cout << "Done writing\n";
     co_return;
 }
 
