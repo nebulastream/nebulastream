@@ -5,6 +5,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 
@@ -130,16 +132,56 @@ namespace NES
 
         if (conf.memoryLayout.getValue() == conf.memoryLayout.getDefaultValue())// == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
-            ///use new row layout memoryProvider
-            emitWrapperRow->addChild(scanWrapperRowNew);
-            scanWrapperRowNew->addChild(emitSelectionNew);
-            emitSelectionNew->addChild(wrapper);
-            wrapper->addChild(scanSelectionNew);
-            scanSelectionNew->addChild(emitWrapperRowNew);
-            emitWrapperRowNew->addChild(scanWrapperRow);
+            if (logicalOperator.tryGet<SelectionLogicalOperator>())
+            {
+                //swap in col
+                emitSelectionNew->addChild(wrapper);
+                wrapper->addChild(scanSelectionNew);
+                scanSelectionNew->addChild(emitWrapperRowNew);
+                emitWrapperRowNew->addChild(scanWrapperRow);
+                return std::make_pair(emitSelectionNew, scanWrapperRow);
+            }
+            if (logicalOperator.tryGet<MapLogicalOperator>())
+            {
+                //swap back to row
+                emitWrapperRow->addChild(scanWrapperRowNew);
+                scanWrapperRowNew->addChild(emitSelectionNew);
+                emitSelectionNew->addChild(wrapper);
+                wrapper->addChild(scanSelectionNew);
+                return std::make_pair(emitWrapperRow, scanSelectionNew);
+            }
+            else
+            {
+                ///use new row layout memoryProvider
+                emitWrapperRow->addChild(scanWrapperRowNew);
+                scanWrapperRowNew->addChild(emitSelectionNew);
+                emitSelectionNew->addChild(wrapper);
+                wrapper->addChild(scanSelectionNew);
+                scanSelectionNew->addChild(emitWrapperRowNew);
+                emitWrapperRowNew->addChild(scanWrapperRow);
+                return std::make_pair(emitWrapperRow, scanWrapperRow);
+            }
+
 
         }else ///use column layout memoryProvider
         {
+            if (logicalOperator.tryGet<SelectionLogicalOperator>())
+            {
+                emitSelectionWrapper->addChild(wrapper);
+                wrapper->addChild(scanSelectionWrapper);
+                scanSelectionWrapper->addChild(emitWrapperCol);
+                emitWrapperCol->addChild(scanWrapperRow);
+                return std::make_pair(emitSelectionWrapper, scanWrapperRow);
+            }
+            if (logicalOperator.tryGet<MapLogicalOperator>())
+            {
+                emitWrapperRow->addChild(scanWrapperCol);
+                scanWrapperCol->addChild(emitSelectionWrapper);
+                emitSelectionWrapper->addChild(wrapper);
+                wrapper->addChild(scanSelectionWrapper);
+                return std::make_pair(emitWrapperRow, scanSelectionWrapper);
+            }
+
             emitWrapperRow->addChild(scanWrapperCol);
             scanWrapperCol->addChild(emitSelectionWrapper);
             emitSelectionWrapper->addChild(wrapper);

@@ -37,12 +37,15 @@ static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indent
 
 std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
 {
+    const bool wrapper = not plan.operatorWrappers.empty();
     os << "PipelinedQueryPlan for Query: " << plan.getQueryId() << "\n";
     os << "Number of root pipelines: " << plan.getPipelines().size() << "\n";
     for (size_t i = 0; i < plan.getPipelines().size(); ++i)
     {
         os << "------------------\n";
         os << "Root Pipeline " << i << ":\n";
+        if (wrapper)
+            plan.getPipelines()[i]->operatorWrappers = plan.operatorWrappers;
         printPipeline(plan.getPipelines()[i].get(), os, 1);
     }
     return os;

@@ -52,6 +52,26 @@ std::string operatorChainToString(const PhysicalOperator& op, int indent)
     return result;
 }
 
+std::string operatorChainToString(const PhysicalOperator& op, int indent, std::unordered_map<OperatorId, std::shared_ptr<PhysicalOperatorWrapper>> operatorWrappers)
+{
+    auto wrapperIt = operatorWrappers.find(op.getId());
+    if (wrapperIt == operatorWrappers.end())
+    {
+        return operatorChainToString(op, indent);
+    }
+
+    std::shared_ptr<PhysicalOperatorWrapper>& wrapper = wrapperIt->second;
+    auto inputLayout = magic_enum::enum_name(wrapper->getInputSchema()->memoryLayoutType);
+    auto outputLayout = magic_enum::enum_name(wrapper->getOutputSchema()->memoryLayoutType);
+    std::string indentation(indent, ' ');
+    std::string result = fmt::format("{}{}{} to {}\n", indentation, op.toString(), inputLayout, outputLayout);
+    if (auto childOpt = op.getChild())
+    {
+        result += operatorChainToString(childOpt.value(), indent + 2, operatorWrappers);
+    }
+    return result;
+}
+
 std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
 {
     fmt::memory_buffer buf;
@@ -64,12 +84,20 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     fmt::format_to(
         std::back_inserter(buf), "{}Pipeline(ID({}), Provider({}))\n", indentStr, pipeline.getPipelineId().getRawValue(), modeName);
 
-    fmt::format_to(
-        std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));
+    if (not pipeline.operatorWrappers.empty())
+    {
+        fmt::format_to(
+            std::back_inserter(buf), "{}  Operator chain :\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4, pipeline.operatorWrappers));
+    }else
+    {
+        fmt::format_to(
+            std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));
 
+    }
     for (const auto& succ : pipeline.getSuccessors())
     {
         fmt::format_to(std::back_inserter(buf), "{}  Successor Pipeline:\n", indentStr);
+        succ->operatorWrappers = pipeline.operatorWrappers; // Copy operator wrappers to successor pipelines
         fmt::format_to(std::back_inserter(buf), "{}", pipelineToString(*succ, indent + 4));
     }
     return fmt::to_string(buf);

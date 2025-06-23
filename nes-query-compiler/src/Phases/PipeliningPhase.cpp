@@ -249,6 +249,33 @@ void buildPipelineRecursively(
 }
 
 }
+void collectOperators(const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
+                     std::unordered_map<OperatorId, std::shared_ptr<PhysicalOperatorWrapper>>& opMap,
+                     std::unordered_set<OperatorId>& visitedOperators) {
+    if (!opWrapper) {
+        return;
+    }
+
+    // Get the operator ID
+    const OperatorId opId = opWrapper->getPhysicalOperator().getId();
+
+    // Check if we've already visited this operator to avoid cycles
+    if (visitedOperators.find(opId) != visitedOperators.end()) {
+        return;
+    }
+
+    // Mark this operator as visited
+    visitedOperators.insert(opId);
+
+    // Add this operator to the map
+    opMap[opId] = opWrapper;
+
+    // Recursively process all children
+    for (const auto& child : opWrapper->getChildren()) {
+        collectOperators(child, opMap, visitedOperators);
+    }
+}
+
 
 std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
 {
@@ -256,13 +283,20 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionMode());
 
     OperatorPipelineMap pipelineMap;
-
     for (const auto& rootWrapper : physicalPlan.getRootOperators())
     {
         auto rootPipeline = std::make_shared<Pipeline>(rootWrapper->getPhysicalOperator());
         const auto opId = rootWrapper->getPhysicalOperator().getId();
         pipelineMap.emplace(opId, rootPipeline);
         pipelinedPlan->addPipeline(rootPipeline);
+        //NES_DEBUG("root wrapper: {}, layout: {} to {}", *rootPipeline, magic_enum::enum_name( rootWrapper->getInputSchema()->memoryLayoutType),magic_enum::enum_name( rootWrapper->getOutputSchema()->memoryLayoutType));
+        auto id = rootWrapper->getPhysicalOperator().getId();
+        std::unordered_map<OperatorId, std::shared_ptr<PhysicalOperatorWrapper>> operatorWrappers;
+        std::unordered_set<OperatorId> visitedOperators;
+
+        operatorWrappers[id]= rootWrapper;
+        collectOperators(rootWrapper, operatorWrappers, visitedOperators);
+        pipelinedPlan->operatorWrappers = std::move(operatorWrappers);
 
         for (const auto& child : rootWrapper->getChildren())
         {

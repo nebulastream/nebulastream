@@ -45,6 +45,7 @@ struct PipelinedQueryPlan final
     [[nodiscard]] const std::vector<std::shared_ptr<Pipeline>>& getPipelines() const;
     void addPipeline(const std::shared_ptr<Pipeline>& pipeline);
     void removePipeline(Pipeline& pipeline);
+    std::unordered_map<OperatorId, std::shared_ptr<PhysicalOperatorWrapper>> operatorWrappers;
 
 private:
     QueryId queryId;

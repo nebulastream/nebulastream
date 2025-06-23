@@ -78,6 +78,7 @@ struct Pipeline
     void clearSuccessors();
     void clearPredecessors();
     void removeSuccessor(const Pipeline& pipeline);
+    std::unordered_map<OperatorId, std::shared_ptr<PhysicalOperatorWrapper>> operatorWrappers;
 
 private:
     std::optional<ExecutionMode> executionMode;
