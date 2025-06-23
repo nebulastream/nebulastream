@@ -18,6 +18,8 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -28,7 +30,7 @@
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
+#include "InputFormatters/InputFormatterProvider.hpp"
 
 namespace NES
 {
@@ -42,8 +44,10 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
 
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
     auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
-    auto accessedFields = projection.getAccessedFields();
-    auto scan = FormatScanPhysicalOperator(scanMemoryProvider, accessedFields);
+    // auto accessedFields = projection.getAccessedFields();
+    auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        OriginId(OriginId::INITIAL), inputSchema, ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+    auto scan = FormatScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames(), std::move(inputFormatterTaskPipeline));
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 

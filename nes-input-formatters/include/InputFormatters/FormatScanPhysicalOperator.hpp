@@ -37,16 +37,17 @@ public:
     /// @param projections projection vector
     FormatScanPhysicalOperator(
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-        std::vector<Record::RecordFieldIdentifier> projections);
+        std::vector<Record::RecordFieldIdentifier> projections,
+        std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> taskPipeline;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> taskPipeline;
     std::optional<PhysicalOperator> child;
 };
 

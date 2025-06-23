@@ -236,8 +236,6 @@ public:
     void scanTask(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child, const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider, const std::vector<Record::RecordFieldIdentifier>& projections)
     requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
     {
-        // Todo:
-
         /// initialize global state variables to keep track of the watermark ts and the origin id
         executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
         executionCtx.originId = recordBuffer.getOriginId();
@@ -251,9 +249,9 @@ public:
         /// iterate over records in buffer
         auto numberOfRecords = recordBuffer.getNumRecords();
 
-        // Todo: instead of this for loop,
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
+            // Todo: replace memoryProvider with FieldIndexFunction
             auto record = memoryProvider.readRecord(projections, recordBuffer, i);
             // executeChild(executionCtx, record);
             child.execute(executionCtx, record);

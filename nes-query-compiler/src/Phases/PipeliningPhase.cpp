@@ -18,7 +18,9 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -30,8 +32,8 @@
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include "InputFormatters/InputFormatterProvider.hpp"
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -54,7 +56,10 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
-    pipeline->prependOperator(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    // Todo: construct correct InputFormatterTask(-Pipeline)
+    auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+        OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+    pipeline->prependOperator(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames(), std::move(inputFormatterTaskPipeline)));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -70,7 +75,11 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
-    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    // Todo: create a custom inputFormatterTaskPipeline
+    auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+            OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+
+    const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(memoryProvider, schema->getFieldNames(), std::move(inputFormatterTaskPipeline)));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());

@@ -39,13 +39,10 @@ namespace NES
 
 FormatScanPhysicalOperator::FormatScanPhysicalOperator(
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-    std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
+    std::vector<Record::RecordFieldIdentifier> projections,
+    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline)
+    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)), taskPipeline(std::move(inputFormatterTaskPipeline))
 {
-    auto inputFormatterTask = InputFormatters::InputFormatterTask<InputFormatters::NativeInputFormatIndexer<false>, struct NoopFormatter,
-        InputFormatters::NativeMetaData, false>(
-            OriginId(0), nullptr, Schema{}, InputFormatters::RawValueParser::QuotationType::NONE, ParserConfig{});
-    this->taskPipeline = std::make_shared<InputFormatters::InputFormatterTaskPipeline>(std::move(inputFormatterTask));
 }
 
 void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
