@@ -63,13 +63,14 @@ std::string_view ArrayAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
 }
+
 void ArrayAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     if (!onField.getDataType().isNumeric())
     {
-        NES_FATAL_ERROR("MergeAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        throw CannotInferSchema("MergeAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field

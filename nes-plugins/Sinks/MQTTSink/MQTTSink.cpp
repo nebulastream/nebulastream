@@ -34,8 +34,9 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <from_current.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
@@ -47,11 +48,11 @@ MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersMQTT::INPUT_FORMAT))
     {
-        case Configurations::InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
+        case InputFormat::CSV:
+            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
             break;
-        case Configurations::InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(sinkDescriptor.schema);
+        case InputFormat::JSON:
+            formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
@@ -92,7 +93,7 @@ void MQTTSink::stop(PipelineExecutionContext&)
     }
 }
 
-void MQTTSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
+void MQTTSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     if (inputBuffer.getNumberOfTuples() == 0)
     {
@@ -103,27 +104,27 @@ void MQTTSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecution
     const mqtt::message_ptr message = mqtt::make_message(topic, fBuf);
     message->set_qos(qos);
 
-    try
+    CPPTRACE_TRY
     {
         client->publish(message)->wait();
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         throw wrapExternalException();
     }
 }
 
-Configurations::DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterMQTTSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType RegisterMQTTSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return MQTTSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType SinkGeneratedRegistrar::RegisterMQTTSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType RegisterMQTTSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<MQTTSink>(sinkRegistryArguments.sinkDescriptor);
 }

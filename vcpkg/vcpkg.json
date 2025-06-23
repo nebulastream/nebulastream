@@ -28,6 +28,21 @@
           ]
         }
       ]
+    },
+    "video": {
+      "description": "video queries",
+      "dependencies": [
+        "aravis",
+        "openssl",
+        {
+          "name": "opencv4",
+          "default-features": false,
+          "features": [
+            "calib3d",
+            "jpeg"
+          ]
+        }
+      ]
     }
   },
   "dependencies": [
@@ -54,5 +69,9 @@
       "version": "0.8.3",
       "port-version": 0
     }
+  ],
+  "default-features": [
+    "video",
+    "mqtt"
   ]
 }

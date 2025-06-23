@@ -29,10 +29,10 @@
 #include <mqtt/async_client.h>
 #include <PayloadStash.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
-class MQTTSource : public Source
+class MQTTSource final : public Source
 {
 public:
     static inline const std::string NAME = "MQTT";
@@ -48,12 +48,12 @@ public:
     /// Open connection to MQTT broker.
     void open() override;
 
-    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Close connection to MQTT broker.
     void close() override;
 
-    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -68,7 +68,7 @@ private:
 
     PayloadStash payloadStash;
 
-    void writePayloadToBuffer(std::string_view payload, Memory::TupleBuffer& tb, size_t& tbOffset);
+    void writePayloadToBuffer(std::string_view payload, TupleBuffer& tb, size_t& tbOffset);
 };
 
 namespace detail::uuid
@@ -78,7 +78,7 @@ static std::mt19937 gen(rd());
 static std::uniform_int_distribution<> dis(0, 15);
 static std::uniform_int_distribution<> dis2(8, 11);
 
-std::string generateUUID()
+static std::string generateUUID()
 {
     std::stringstream ss;
     ss << std::hex;
@@ -114,13 +114,12 @@ std::string generateUUID()
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT config parameters.
 struct ConfigParametersMQTT
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
+    static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
         "serverURI",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SERVER_URI, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
+    static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
         "clientId",
         "generated",
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
@@ -132,18 +131,17 @@ struct ConfigParametersMQTT
             return detail::uuid::generateUUID();
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> TOPIC{
+    static inline const DescriptorConfig::ConfigParameter<std::string> TOPIC{
         "topic",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return Configurations::DescriptorConfig::tryGet(TOPIC, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TOPIC, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
+    static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flushIntervalMS",
         0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> QOS{
+    static inline const DescriptorConfig::ConfigParameter<int32_t> QOS{
         "qos",
         1,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint8_t>
@@ -157,8 +155,8 @@ struct ConfigParametersMQTT
             return qos;
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS);
 };
 
 }

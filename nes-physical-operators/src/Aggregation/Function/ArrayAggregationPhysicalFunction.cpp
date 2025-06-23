@@ -21,8 +21,7 @@
 #include <utility>
 
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -44,7 +43,7 @@ ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
     DataType resultType,
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> memProviderPagedVector)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , memProviderPagedVector(std::move(memProviderPagedVector))
 {
@@ -142,6 +141,7 @@ size_t ArrayAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
     return sizeof(Nautilus::Interface::PagedVector);
 }
+
 void ArrayAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
 {
     nautilus::invoke(
@@ -159,9 +159,9 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     auto memoryLayoutSchema = Schema().addField(std::string(StateFieldName), arguments.inputType);
-    auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(8192, memoryLayoutSchema);
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
-        = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+    auto layout = std::make_shared<ColumnLayout>(8192, memoryLayoutSchema);
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider
+        = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
 
     return std::make_shared<ArrayAggregationPhysicalFunction>(
         std::move(arguments.inputType),
