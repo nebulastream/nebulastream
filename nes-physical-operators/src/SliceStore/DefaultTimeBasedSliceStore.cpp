@@ -142,7 +142,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
 DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
     /// For performance reasons, we check if we can acquire a lock and if not we then simply skip checking if we can trigger anything
-    const auto windowsWriteLocked = windows.tryWLock();
+    const auto windowsWriteLocked = windows.wlock();
     if (windowsWriteLocked.isNull())
     {
         return {};

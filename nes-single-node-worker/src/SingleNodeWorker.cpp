@@ -60,6 +60,8 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     /// Writing the current throughput to the log
     auto callback = [](std::ofstream& file, const ThroughputListener::CallBackParams& callBackParams)
     {
+        //std::cout << "enteringCallback\n";
+
         /// Helper function to format the given value in SI units
         auto formatValue = [](double value, const std::string_view suffix)
         {

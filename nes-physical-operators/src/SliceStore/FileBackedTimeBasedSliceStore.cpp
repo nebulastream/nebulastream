@@ -160,6 +160,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const JoinBuildSideType joinBuildSide,
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
+    std::scoped_lock lock(readWriteMutex);
     const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
     const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
     auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
@@ -178,6 +179,19 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     return slicesVec;
 }
 
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
+FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark)
+{
+    std::scoped_lock lock(readWriteMutex);
+    return DefaultTimeBasedSliceStore::getTriggerableWindowSlices(globalWatermark);
+}
+
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
+{
+    std::scoped_lock lock(readWriteMutex);
+    return DefaultTimeBasedSliceStore::getAllNonTriggeredSlices();
+}
+
 std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(
     const SliceEnd sliceEnd,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -194,6 +208,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
+    std::scoped_lock lock(readWriteMutex);
     std::vector<std::shared_ptr<Slice>> slicesToDelete;
     NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
@@ -299,6 +314,8 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const UpdateSlicesMetaData& metaData)
 {
+    std::scoped_lock lock(readWriteMutex);
+    //std::cout << "Updating slices\n";
     const auto& [timestamp, seqNumber, originId] = metaData.bufferMetaData;
     const auto watermark
         = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
@@ -345,14 +362,18 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 }
                 case FileOperation::WRITE: {
                     const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
+                    if (!fileWriter)
                     {
-                        auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
-                        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
-                        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
+                        std::cout << "FileWriter could not be created\n";
+                        continue;
                     }
                     nljSlice->acquireCombinePagedVectorsLock();
                     if (pagedVector->getNumberOfPages() > 0)
                     {
+                        auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
+                        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
+                        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
+
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
                         /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
                         co_await fileWriter->flush();
@@ -495,6 +516,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const JoinBuildSideType joinBuildSide)
 {
+    std::scoped_lock lock(readWriteMutex);
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     const auto sliceEnd = slice->getSliceEnd();
     const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
@@ -515,6 +537,9 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             auto* const pagedVector = nljSlice->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            (void)pagedVector;
+            (void)bufferProvider;
+            (void)memoryLayout;
             nljSlice->releaseCombinePagedVectorsLock();
         }
 
@@ -531,6 +556,7 @@ void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId orig
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
 {
+    std::cout << "Measuring exec times\n";
     constexpr auto numElements = USE_TEST_DATA_SIZES.size();
     if constexpr (numElements < 2)
     {
@@ -549,9 +575,14 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx);
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx, false);
+
+            //std::cout << "Got file writer\n";
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
+
+            //std::cout << "Wrote data to ssd\n";
             runSingleAwaitable(ioCtx, fileWriter->flush());
+            //std::cout << "Executed measurement\n";
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
@@ -593,6 +624,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
     const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
     const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
     readExecTimeFunction = {readSlope, readIntercept};
+    std::cout << "Done measuring exec times\n";
 }
 
 }
