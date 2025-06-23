@@ -320,8 +320,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
-        /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
-
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
         if (!nljSlice->pagedVectorsCombined())
         {
@@ -329,12 +327,15 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             {
                 case FileOperation::READ: {
                     const auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
+
+                    /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
                     nljSlice->acquireCombinePagedVectorsLock();
+                    /// Check if there are tuples to read back
                     // TODO investigate why numTuples and numPages can be zero
                     if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
                         // TODO why would fileReader be zero
-                        if (fileReader)
+                        //if (fileReader)
                         {
                             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
                         }
@@ -345,20 +346,24 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 }
                 case FileOperation::WRITE: {
                     const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
-                    nljSlice->acquireCombinePagedVectorsLock();
-                    if (pagedVector->getNumberOfPages() > 0)
                     {
                         auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
                         const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
                         slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
 
-                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
-                        /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
-                        co_await fileWriter->flush();
-                        pagedVector->truncate(sliceStoreInfo.fileLayout);
+                        /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
+                        nljSlice->acquireCombinePagedVectorsLock();
+                        /// Check if there are tuples to offload
+                        if (pagedVector->getNumberOfPages() > 0)
+                        {
+                            co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
+                            /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
+                            co_await fileWriter->flush();
+                            pagedVector->truncate(sliceStoreInfo.fileLayout);
+                        }
+                        // TODO handle wrong predictions
+                        nljSlice->releaseCombinePagedVectorsLock();
                     }
-                    // TODO handle wrong predictions
-                    nljSlice->releaseCombinePagedVectorsLock();
                     fileWriter->deallocateBuffers();
                     break;
                 }
@@ -514,9 +519,6 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             auto* const pagedVector = nljSlice->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
-            (void)pagedVector;
-            (void)bufferProvider;
-            (void)memoryLayout;
             nljSlice->releaseCombinePagedVectorsLock();
         }
 
