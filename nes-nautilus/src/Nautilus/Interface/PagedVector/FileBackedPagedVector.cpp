@@ -192,15 +192,7 @@ uint64_t FileBackedPagedVector::getTotalNumberOfEntries() const
     {
         totalNumEntries += page.getNumberOfTuples();
     }
-    totalNumEntries += PagedVector::getTotalNumberOfEntries();
-    totalNumEntries += numTuplesOnDisk;
-    //if ((pages.getNumberOfPages() > 0 or keyPages.size() > 0) and totalNumEntries == 0)
-    if (totalNumEntries == 0)
-    {
-        //throw std::runtime_error("totalNumEntries should not be zero");
-        //std::cout << "totalNumEntries is zero\n";
-    }
-    return totalNumEntries;
+    return totalNumEntries + PagedVector::getTotalNumberOfEntries() + numTuplesOnDisk;
 }
 
 uint64_t FileBackedPagedVector::getNumberOfPages() const
