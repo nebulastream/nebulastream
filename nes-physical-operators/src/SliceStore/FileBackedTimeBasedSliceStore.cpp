@@ -160,7 +160,6 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const JoinBuildSideType joinBuildSide,
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
-    std::scoped_lock lock(readWriteMutex);
     const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
     const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
     auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
@@ -195,7 +194,6 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
-    std::scoped_lock lock(readWriteMutex);
     std::vector<std::shared_ptr<Slice>> slicesToDelete;
     NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
@@ -301,7 +299,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const UpdateSlicesMetaData& metaData)
 {
-    std::scoped_lock lock(readWriteMutex);
     const auto& [timestamp, seqNumber, originId] = metaData.bufferMetaData;
     const auto watermark
         = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
@@ -348,11 +345,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 }
                 case FileOperation::WRITE: {
                     const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
-                    if (!fileWriter)
-                    {
-                        std::cout << "FileWriter could not be created\n";
-                        continue;
-                    }
                     nljSlice->acquireCombinePagedVectorsLock();
                     if (pagedVector->getNumberOfPages() > 0)
                     {
@@ -502,7 +494,6 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const JoinBuildSideType joinBuildSide)
 {
-    std::scoped_lock lock(readWriteMutex);
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     const auto sliceEnd = slice->getSliceEnd();
     const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
@@ -560,7 +551,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx, false);
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
             runSingleAwaitable(ioCtx, fileWriter->flush());
         }

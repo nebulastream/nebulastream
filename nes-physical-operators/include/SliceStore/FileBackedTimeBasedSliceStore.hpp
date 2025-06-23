@@ -152,7 +152,6 @@ private:
     /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
-    std::mutex readWriteMutex;
 
     /// The pairs hold the slope and intercept needed to calculate execution times of write or read operations for certain data sizes
     /// which is also used for predictions.
