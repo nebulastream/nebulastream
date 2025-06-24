@@ -148,7 +148,8 @@ NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::stri
         return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
     }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
 
-    if (not NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx)))
+    if (not(NES::Util::toLowerCase(attachSourceTokens.at(nextTokenIdx)) == "raw"
+            || NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx))))
     {
         throw NES::SLTUnexpectedToken(
             "Expected token after source config to be a valid input formatter, but was: {}", attachSourceTokens.at(nextTokenIdx));
