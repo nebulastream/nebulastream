@@ -42,6 +42,7 @@ MemoryController::MemoryController(
         }
     }
 
+    allFileWriters.resize(numWorkerThreads + 1);
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
 }
@@ -59,9 +60,14 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide, boost::asio::io_context& ioCtx)
+    const SliceEnd sliceEnd,
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide,
+    boost::asio::io_context& ioCtx,
+    uint64_t checkExistence)
 {
     /// Search for matching fileWriter to avoid attempting to open a file twice
+    auto& allWritersMap = allFileWriters[threadId.getRawValue()];
     auto& writerMap = fileWriters[threadId.getRawValue()];
     const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
@@ -70,8 +76,13 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     }
 
     const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
+    if (checkExistence && allWritersMap.contains(filePath))
+    {
+        throw std::runtime_error("Requested FileWriter is not unique");
+    }
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
+    allWritersMap.emplace(filePath);
     writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
 }

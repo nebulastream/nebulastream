@@ -553,7 +553,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx);
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx, false);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
             runSingleAwaitable(ioCtx, fileWriter->flush());
         }
