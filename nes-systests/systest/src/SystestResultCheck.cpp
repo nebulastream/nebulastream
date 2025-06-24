@@ -274,10 +274,7 @@ std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& que
         return result;
     }
 
-    if (firstLine.find('$') != std::string::npos)
-    {
-        result.schema = parseFieldNames(firstLine);
-    }
+    result.schema = parseFieldNames(firstLine);
 
     while (std::getline(resultFile, firstLine))
     {
