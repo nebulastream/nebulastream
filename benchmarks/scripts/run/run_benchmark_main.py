@@ -144,6 +144,8 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"][
         "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
     worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
+    worker_config_yaml["worker"][
+        "numberOfBuffersInSourceLocalPools"] = current_benchmark_config.buffers_in_source_local_buffer_pool
     worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
     worker_config_yaml["worker"][
         "throughputListenerTimeInterval"] = current_benchmark_config.throughput_listener_time_interval
@@ -336,7 +338,7 @@ def run_benchmark(current_benchmark_config):
         # Starting the TCP servers
         [source_processes, tcp_server_ports] = start_tcp_servers(get_start_ports(), current_benchmark_config)
 
-        # Creating a new output folder and updating the configs with the current benchmark configs
+        # Creating new output and working directories and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
         working_dir = create_working_dir(output_folder)
         copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports)
