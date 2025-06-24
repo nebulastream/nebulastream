@@ -237,6 +237,16 @@ public:
         const bool)
     requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
     {
+        /// initialize global state variables to keep track of the watermark ts and the origin id
+        executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+        executionCtx.originId = recordBuffer.getOriginId();
+        executionCtx.currentTs = recordBuffer.getCreatingTs();
+        executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+        executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+        executionCtx.lastChunk = recordBuffer.isLastChunk();
+        /// call open on all child operators
+        child.open(executionCtx, recordBuffer);
+
         auto fieldIndexFunction = FieldIndexFunctionType(*executionCtx.pipelineContext.value->getBufferManager());
         nautilus::invoke(
             +[](const Memory::TupleBuffer* tupleBuffer,
@@ -271,9 +281,7 @@ public:
             for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(fieldIndexFunction.getTotalNumberOfTuples()); i = i + 1_u64)
             {
                 auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
-                (void)record;
-                (void)child;
-                // child.execute(executionCtx, record);
+                child.execute(executionCtx, record);
             }
         }
         else

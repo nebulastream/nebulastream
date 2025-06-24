@@ -127,8 +127,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             //     return RecordBuffer{indexBufferNautRef};
             // })(fieldOffsetsPtr);
 
-            const auto recordOffsetAddress = indexBuffer.getBuffer() + (recordIndex * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
-            const auto recordOffsetEndAddress = indexBuffer.getBuffer() + ((recordIndex + nautilus::static_val<uint64_t>(1)) * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto byteOffsetStart = ((recordIndex * nautilus::static_val<uint64_t>(numberOfFieldsInSchema + 1) + i) * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto recordOffsetAddress = indexBuffer.getBuffer() + byteOffsetStart;
+            const auto recordOffsetEndAddress = indexBuffer.getBuffer() + (byteOffsetStart + nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
             const auto fieldOffsetStart = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetAddress);
             const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetEndAddress);
 
@@ -136,16 +137,16 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
             const auto fieldAddress = recordBuffer.getBuffer() + fieldOffsetStart;
 
-            const auto parseRawValue = nautilus::invoke(+[](const RawValueParser::ParseFunctionSignature* parseFunction, const char* fieldAddress, const uint64_t fieldSize)
+            const auto parsedValue = nautilus::invoke(+[](const RawValueParser::ParseFunctionSignature*, const char* fieldAddress, const uint64_t fieldSize)
             {
                 const auto fieldView = std::string_view(fieldAddress, fieldSize);
-                (void) fieldView;
-                (void) parseFunction;
-                return fieldSize;
-                // parseFunction(fieldView, fieldAddress, fieldSize, fieldSize);
+                const auto value = NES::Util::from_chars_with_exception<uint64_t>(fieldView);
+                return value;
+                // return Nautilus::VarVal((*parseFunction)(fieldView));
             }, nautilus::val<const RawValueParser::ParseFunctionSignature*>(&parseFunctions.at(parseFunctionIdx)), fieldAddress, fieldSize);
             parseFunctionIdx = parseFunctionIdx + 1;
 
+            record.write(metaData.getSchema().getFieldAt(i).name, parsedValue);
 
             // nautilus::invoke(
             //     +[](const Memory::TupleBuffer* tupleBuffer,

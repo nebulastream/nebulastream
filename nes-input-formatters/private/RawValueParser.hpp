@@ -33,11 +33,7 @@ enum class QuotationType : uint8_t
     DOUBLE_QUOTE
 };
 
-using ParseFunctionSignature = std::function<void(
-    std::string_view inputString,
-    size_t writeOffsetInBytes,
-    Memory::AbstractBufferProvider& bufferProvider,
-    Memory::TupleBuffer& tupleBufferFormatted)>;
+using ParseFunctionSignature = std::function<void(std::string_view inputString)>;
 
 // using NautilusParseFunctionSignature = std::function<void(
 //     std::string_view inputString,
@@ -51,35 +47,23 @@ using ParseFunctionSignature = std::function<void(
 template <typename T>
 auto parseFieldString()
 {
-    return [](const std::string_view fieldValueString,
-              const size_t writeOffsetInBytes,
-              Memory::AbstractBufferProvider&,
-              Memory::TupleBuffer& tupleBufferFormatted)
+    return [](const std::string_view fieldValueString)
     {
-        const T parsedValue = NES::Util::from_chars_with_exception<T>(fieldValueString);
-        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *valuePtr = parsedValue;
+        return NES::Util::from_chars_with_exception<T>(fieldValueString);
     };
 }
 
 template <typename T>
 auto parseQuotedFieldString()
 {
-    return [](const std::string_view quotedFieldValueString,
-              const size_t writeOffsetInBytes,
-              Memory::AbstractBufferProvider&,
-              Memory::TupleBuffer& tupleBufferFormatted)
+    return [](const std::string_view quotedFieldValueString)
     {
         INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
-        const T parsedValue = NES::Util::from_chars_with_exception<T>(fieldValueString);
-        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *valuePtr = parsedValue;
+        return NES::Util::from_chars_with_exception<T>(fieldValueString);
     };
 }
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-ParseFunctionSignature getParseFunction(const DataType::Type physicalType, QuotationType quotationType);
+ParseFunctionSignature getParseFunction(DataType::Type physicalType, QuotationType quotationType);
 }
