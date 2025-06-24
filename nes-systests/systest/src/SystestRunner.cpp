@@ -72,7 +72,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 
-
 namespace NES::Systest
 {
 namespace
@@ -127,8 +126,11 @@ void processQueryWithError(
 }
 
 
-std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter)
+std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    const uint64_t timeoutInSeconds)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -172,17 +174,35 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
         return hasOneMoreQueryToStart;
     };
 
+    auto allQueriesStopped = false;
+    const auto start = std::chrono::high_resolution_clock::now();
     while (startMoreQueries() or not(active.empty() and pending.empty()))
     {
-        for (const auto& summary : querySubmitter.finishedQueries())
+        if (timeoutInSeconds > 0)
         {
-            auto it = active.find(summary.queryId);
-            if (it == active.end())
+            const auto now = std::chrono::high_resolution_clock::now();
+            if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count()) >= timeoutInSeconds)
             {
-                throw TestException("received unregistered queryId: {}", summary.queryId);
+                allQueriesStopped = true;
+                std::queue<SystestQuery> emptyQueue;
+                std::swap(pending, emptyQueue);
+                for (const auto& queryId : active | std::views::keys)
+                {
+                    querySubmitter.stopQuery(queryId);
+                }
             }
+        }
+        do
+        {
+            for (const auto& summary : querySubmitter.finishedQueries())
+            {
+                auto it = active.find(summary.queryId);
+                if (it == active.end())
+                {
+                    throw TestException("received unregistered queryId: {}", summary.queryId);
+                }
 
-            auto& runningQuery = it->second;
+                auto& runningQuery = it->second;
 
             if (summary.currentStatus == QueryStatus::Failed)
             {
@@ -214,6 +234,7 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
             }
             active.erase(it);
         }
+        } while (allQueriesStopped and not active.empty());
     }
 
     auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
@@ -244,7 +265,10 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    const uint64_t timeoutInSeconds)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -270,6 +294,11 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
+        if (timeoutInSeconds > 0)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(timeoutInSeconds));
+            submitter.stopQuery(queryId);
+        }
         const auto summary = submitter.finishedQueries().at(0);
 
         if (summary.runs.empty() or summary.runs.back().error.has_value())
@@ -352,16 +381,22 @@ void printQueryResultToStdOut(
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SingleNodeWorkerConfiguration& configuration,
+    const uint64_t timeoutInSeconds)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    return runQueries(queries, numConcurrentQueries, submitter, timeoutInSeconds);
 }
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const std::string& serverURI,
+    const uint64_t timeoutInSeconds)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    return runQueries(queries, numConcurrentQueries, submitter, timeoutInSeconds);
 }
 
 }
