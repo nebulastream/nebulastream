@@ -270,7 +270,7 @@ public:
             // Todo: need to return nautilus val
             for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(fieldIndexFunction.getTotalNumberOfTuples()); i = i + 1_u64)
             {
-                auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize);
+                auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
                 (void)record;
                 (void)child;
                 // child.execute(executionCtx, record);
@@ -313,7 +313,7 @@ public:
         auto fieldIndexFunction = FieldIndexFunctionType();
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
-            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize);
+            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
             child.execute(executionCtx, record);
         }
     }

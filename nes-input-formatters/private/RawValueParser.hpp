@@ -39,6 +39,12 @@ using ParseFunctionSignature = std::function<void(
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& tupleBufferFormatted)>;
 
+// using NautilusParseFunctionSignature = std::function<void(
+//     std::string_view inputString,
+//     size_t writeOffsetInBytes,
+//     Memory::AbstractBufferProvider& bufferProvider,
+//     Memory::TupleBuffer& tupleBufferFormatted)>;
+
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
 /// @Note given a string like '0751' and an integer value, from_chars creates an integer '751' from it. Also, '0.751' becomes '0'.

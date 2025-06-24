@@ -66,7 +66,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     [[nodiscard]] FieldOffsetsType applyGetOffsetOfFirstTupleDelimiter() const { return this->offsetOfFirstTuple; }
     [[nodiscard]] FieldOffsetsType applyGetOffsetOfLastTupleDelimiter() const { return this->offsetOfLastTuple; }
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const { return this->totalNumberOfTuples; }
-    [[nodiscard]] std::string_view applyReadFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx) const
+    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx) const
     {
         PRECONDITION(tupleIdx < this->totalNumberOfTuples, "TupleIdx {} is out of range [0-{}].", tupleIdx, this->totalNumberOfTuples);
         PRECONDITION(fieldIdx < this->numberOfFieldsInSchema, "FieldIdx {} is out of range [0-{}].", fieldIdx, numberOfFieldsInSchema);
@@ -83,12 +83,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         return createFieldSV(bufferView, bufferNumber, fieldOffset, fieldIdx);
     }
 
-    // static void applyReadFieldAtProxy(const Memory::TupleBuffer* tupleBuffer, uint64_t bufferSize, uint64_t tupleIdx, uint64_t fieldIdx, const FieldOffsets* const fieldOffsets)
-    static void applyReadFieldAtProxy(const Memory::TupleBuffer* tupleBuffer, const uint64_t bufferSize, const uint64_t tupleIdx, const uint64_t fieldIdx, const FieldOffsets* const fieldOffsets)
+    static const Memory::TupleBuffer* getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets)
     {
-        const auto bufferView = std::string_view(tupleBuffer->getBuffer<const char>(), bufferSize);
-        const auto fieldView = fieldOffsets->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
-        // NES_DEBUG("field view: {}{}{}", bufferSize, tupleIdx, fieldIdx);
+        return &fieldOffsets->offsetBuffers.front().tupleBuffer;
     }
 
     template <typename IndexerMetaData>
@@ -97,24 +94,74 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const size_t configuredBufferSize) const
+        const size_t /*configuredBufferSize*/,
+        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
     {
         Nautilus::Record record;
         const auto bufferAddress = recordBuffer.getBuffer();
 
-        auto fieldOffsetsPtr = nautilus::val<FieldOffsets const*>(this);
+        // Todo: the 'this' pointer is probably only valid during interpretation or for the very first call.
+        // .. on subsequent calls, we would require another 'this' pointer, since we created a new object
+        // .. we probably want to approach it in a similar way to how we approach tuple buffers
+        // .. we wrap the object in a nautilus object and pass it to nautilus, so that we trace creating the new object
+        auto fieldOffsetsPtr = nautilus::val<const FieldOffsets*>(this);
 
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
+        nautilus::static_val<uint64_t> parseFunctionIdx = 0;
         for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
         {
-            const auto& fieldName = metaData.getSchema().getFieldAt(i).name;
-            if (not includesField(projections, fieldName))
+            if (const auto& fieldName = metaData.getSchema().getFieldAt(i).name; not includesField(projections, fieldName))
             {
                 continue;
             }
-            nautilus::invoke(applyReadFieldAtProxy, recordBuffer.getReference(), nautilus::val<uint64_t>(configuredBufferSize), recordIndex, nautilus::val<uint64_t>(i), fieldOffsetsPtr);
 
+            // Todo: how to read/write value from buffer?
+            // -> ideally, without a proxy function call
+            // - determine offset(s) to fieldStringView
+            // - feed slice into nautilus function
+            const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr));
+            // const RecordBuffer indexBuffer = nautilus::invoke(+[](const FieldOffsets* const fieldOffsets)
+            // {
+            //     const auto indexBufferNautRef = nautilus::val<const Memory::TupleBuffer*>(&fieldOffsets->offsetBuffers.front().tupleBuffer);
+            //     return RecordBuffer{indexBufferNautRef};
+            // })(fieldOffsetsPtr);
+
+            const auto recordOffsetAddress = indexBuffer.getBuffer() + (recordIndex * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto recordOffsetEndAddress = indexBuffer.getBuffer() + ((recordIndex + nautilus::static_val<uint64_t>(1)) * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto fieldOffsetStart = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetAddress);
+            const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetEndAddress);
+
+            /// Determine the address and size. Somehow parse the underlying field
+            const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
+            const auto fieldAddress = recordBuffer.getBuffer() + fieldOffsetStart;
+
+            const auto parseRawValue = nautilus::invoke(+[](const RawValueParser::ParseFunctionSignature* parseFunction, const char* fieldAddress, const uint64_t fieldSize)
+            {
+                const auto fieldView = std::string_view(fieldAddress, fieldSize);
+                (void) fieldView;
+                (void) parseFunction;
+                return fieldSize;
+                // parseFunction(fieldView, fieldAddress, fieldSize, fieldSize);
+            }, nautilus::val<const RawValueParser::ParseFunctionSignature*>(&parseFunctions.at(parseFunctionIdx)), fieldAddress, fieldSize);
+            parseFunctionIdx = parseFunctionIdx + 1;
+
+
+            // nautilus::invoke(
+            //     +[](const Memory::TupleBuffer* tupleBuffer,
+            //         const uint64_t bufferSize,
+            //         const uint64_t tupleIdx,
+            //         const uint64_t fieldIdx,
+            //         const FieldOffsets* const fieldOffsets)
+            //     {
+            //         const auto bufferView = std::string_view(tupleBuffer->getBuffer<const char>(), bufferSize);
+            //         const auto fieldView = fieldOffsets->readFieldAt(bufferView, tupleIdx, fieldIdx);
+            //     },
+            //     recordBuffer.getReference(),
+            //     nautilus::val<uint64_t>(configuredBufferSize),
+            //     recordIndex,
+            //     nautilus::val<uint64_t>(i),
+            //     fieldOffsetsPtr);
             // Todo: load (string) value
             // -> parse text to internal representation (using nautilus, either nautilus function, or proxy function)
             // auto value = loadValue(metaData.getSchema().getFieldAt(i).dataType, recordBuffer, fieldAddress);
@@ -133,8 +180,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
         [[nodiscard]] OffsetType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
 
+        Memory::TupleBuffer tupleBuffer; //Todo: hide again <-- or create nautilus interface function that returns field offsets (is traced)
     private:
-        Memory::TupleBuffer tupleBuffer;
         std::span<OffsetType> fieldOffsetSpan;
     };
 

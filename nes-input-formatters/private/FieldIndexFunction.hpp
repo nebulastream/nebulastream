@@ -91,9 +91,10 @@ private:
         const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const size_t configuredBufferSize) const
+        const size_t configuredBufferSize,
+        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
     {
-        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData, configuredBufferSize);
+        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData, configuredBufferSize, parseFunctions);
     }
 };
 }
