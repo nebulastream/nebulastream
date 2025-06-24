@@ -128,7 +128,8 @@ std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
-    const QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap,
+    const uint64_t timeoutInSeconds)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -172,46 +173,65 @@ std::vector<RunningQuery> runQueries(
         return hasOneMoreQueryToStart;
     };
 
+    auto allQueriesStopped = false;
+    const auto start = std::chrono::high_resolution_clock::now();
     while (startMoreQueries() or not(active.empty() and pending.empty()))
     {
-        for (const auto& summary : querySubmitter.finishedQueries())
+        if (timeoutInSeconds > 0)
         {
-            auto it = active.find(summary.queryId);
-            if (it == active.end())
+            const auto now = std::chrono::high_resolution_clock::now();
+            if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count()) >= timeoutInSeconds)
             {
-                throw TestException("received unregistered queryId: {}", summary.queryId);
+                allQueriesStopped = true;
+                std::queue<SystestQuery> emptyQueue;
+                std::swap(pending, emptyQueue);
+                for (const auto& queryId : active | std::views::keys)
+                {
+                    querySubmitter.stopQuery(queryId);
+                }
             }
-
-            auto& runningQuery = it->second;
-
-            if (summary.currentStatus == QueryStatus::Failed)
-            {
-                INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
-            }
-            else
-            {
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
-                    {
-                        if (runningQuery->query.expectedError)
-                        {
-                            return fmt::format("expected error {} but query succeeded", runningQuery->query.expectedError->code);
-                        }
-                        runningQuery->querySummary = summary;
-                        if (auto err = checkResult(*runningQuery, queryResultMap))
-                        {
-                            return *err;
-                        }
-                        return std::string{};
-                    });
-            }
-            active.erase(it);
         }
+        do
+        {
+            for (const auto& summary : querySubmitter.finishedQueries())
+            {
+                auto it = active.find(summary.queryId);
+                if (it == active.end())
+                {
+                    throw TestException("received unregistered queryId: {}", summary.queryId);
+                }
+
+                auto& runningQuery = it->second;
+
+                if (summary.currentStatus == QueryStatus::Failed)
+                {
+                    INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
+                    processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
+                }
+                else
+                {
+                    reportResult(
+                        runningQuery,
+                        finished,
+                        queries.size(),
+                        failed,
+                        [&]
+                        {
+                            if (runningQuery->query.expectedError)
+                            {
+                                return fmt::format("expected error {} but query succeeded", runningQuery->query.expectedError->code);
+                            }
+                            runningQuery->querySummary = summary;
+                            if (auto err = checkResult(*runningQuery, queryResultMap))
+                            {
+                                return *err;
+                            }
+                            return std::string{};
+                        });
+                }
+                active.erase(it);
+            }
+        } while (allQueriesStopped and not active.empty());
     }
 
     auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
@@ -245,7 +265,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
-    const QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap,
+    const uint64_t timeoutInSeconds)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -271,6 +292,11 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
+        if (timeoutInSeconds > 0)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(timeoutInSeconds));
+            submitter.stopQuery(queryId);
+        }
         const auto summary = submitter.finishedQueries().at(0);
 
         if (summary.runs.empty() or summary.runs.back().error.has_value())
@@ -356,19 +382,21 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
-    const NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap,
+    const uint64_t timeoutInSeconds)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, timeoutInSeconds);
 }
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    const NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap,
+    const uint64_t timeoutInSeconds)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, timeoutInSeconds);
 }
 
 }
