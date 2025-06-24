@@ -349,3 +349,16 @@ FROM (SELECT DATA, SETOSA, VERSICOLOR, VIRGINICA, INFER_MODEL(iris, (DATA)) FROM
 INTO classificationVarsized;
 ----
 aaaaaaaaaaaaaaaa,virginica
+
+
+## ArgMax function on output vector
+CREATE SINK classificationVarsizedArgMax(INDEX UINT64) TYPE File;
+
+MODEL iris_varsized model/iris.onnx
+VARSIZED
+VARSIZED SPECIES_VECTOR
+
+SELECT ArgMax(SPECIES_VECTOR) as INDEX, INFER_MODEL(iris_varsized, (DATA)) FROM streamVarsized
+INTO classificationVarsizedArgMax;
+----
+2
