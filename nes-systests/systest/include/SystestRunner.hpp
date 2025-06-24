@@ -48,23 +48,32 @@ static constexpr auto padSizeQueryCounter = 3;
 
 /// Runs queries
 /// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+[[nodiscard]] std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    uint64_t timeoutInSeconds = 0);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration);
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const SingleNodeWorkerConfiguration& configuration,
+    uint64_t timeoutInSeconds);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+[[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI, uint64_t timeoutInSeconds);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    uint64_t timeoutInSeconds);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed
