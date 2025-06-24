@@ -20,3 +20,6 @@ add_plugin(MaxValue PhysicalFunction nes-physical-operators MaxValueExecutableFu
 
 add_plugin(iris_label LogicalFunction nes-logical-operators IrisLabelLogicalFunction.cpp)
 add_plugin(iris_label PhysicalFunction nes-physical-operators IrisLabelExecutableFunction.cpp)
+
+add_plugin(SpeechRecognitionLabel LogicalFunction nes-logical-operators SpeechRecognitionLabelLogicalFunction.cpp)
+add_plugin(SpeechRecognitionLabel PhysicalFunction nes-physical-operators SpeechRecognitionLabelExecutableFunction.cpp)
