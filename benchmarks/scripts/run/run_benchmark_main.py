@@ -226,7 +226,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     max_retries = 10
     generator_seed = 42
     for j, port in enumerate(starting_ports):
-        for i in range(benchmark_config.no_physical_sources_per_logical_source):
+        for i in range(current_benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 remainingServers = len(starting_ports) - j
                 cmd = f"{TCP_SERVER} -p {port} " \
@@ -402,12 +402,20 @@ def format_data_size(size_in_bytes):
         size_in_bytes /= 1024
 
 
-if __name__ == "__main__":
+def main():
     if BUILD_PROJECT:
         # Removing the build folder and compiling the project
         clear_build_dir()
         compile_project()
 
+    # Remove tmp directory as benchmarks will fail if another user created this
+    if subprocess.Popen("rm -rf /tmp/dump", shell=True).returncode is not None:
+        print("Could not remove /tmp/dump. Restart after executing\nsudo rm -rf /tmp/dump")
+        return
+
+    print("################################################################")
+    print("Running benchmark main")
+    print("################################################################\n")
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
 
     for attempt in range(NUM_RETRIES_PER_RUN):
@@ -481,6 +489,10 @@ if __name__ == "__main__":
     copy_command = f"scp -r {SERVER_NAME}:{results_path} {DESTINATION_PATH}"
     print(f"\n\033[96mSize of results is {format_data_size(get_directory_size(results_path))}. "
           f"Copy with:\n{copy_command}\033[0m")
+
+
+if __name__ == "__main__":
+    main()
 
     # print("\nStarting post processing...\n")
     # # Compare the results of default slice store and file backed variant

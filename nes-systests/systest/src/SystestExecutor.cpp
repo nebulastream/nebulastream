@@ -101,6 +101,9 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     /// endless mode
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
 
+    /// timeout in sec
+    program.add_argument("--timeout").help("timeout in seconds for systest").default_value(0).scan<'i', int>();
+
     /// single node worker config
     program.add_argument("--")
         .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
@@ -295,6 +298,11 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.endlessMode = true;
     }
 
+    if (program.is_used("--timeout"))
+    {
+        config.timeoutInSeconds = program.get<int>("--timeout");
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << Systest::loadTestFileMap(config);
@@ -455,10 +463,12 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             std::ranges::shuffle(queries, rng);
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+        const auto timeoutInSeconds = config.timeoutInSeconds.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, systestStarterGlobals.getQueryResultMap());
+            failedQueries = runQueriesAtRemoteWorker(
+                queries, numberConcurrentQueries, grpcURI, systestStarterGlobals.getQueryResultMap(), timeoutInSeconds);
         }
         else
         {
@@ -475,7 +485,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             {
                 nlohmann::json benchmarkResults;
                 failedQueries = Systest::runQueriesAndBenchmark(
-                    queries, singleNodeWorkerConfiguration, benchmarkResults, systestStarterGlobals.getQueryResultMap());
+                    queries, singleNodeWorkerConfiguration, benchmarkResults, systestStarterGlobals.getQueryResultMap(), timeoutInSeconds);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -485,7 +495,11 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             else
             {
                 failedQueries = runQueriesAtLocalWorker(
-                    queries, numberConcurrentQueries, singleNodeWorkerConfiguration, systestStarterGlobals.getQueryResultMap());
+                    queries,
+                    numberConcurrentQueries,
+                    singleNodeWorkerConfiguration,
+                    systestStarterGlobals.getQueryResultMap(),
+                    timeoutInSeconds);
             }
         }
         if (not failedQueries.empty())

@@ -33,15 +33,15 @@ import PostProcessing
 # Configuration for compilation
 BUILD_PROJECT = False
 BUILD_DIR = "cmake-build-relnologging"
-# SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
-SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
+NES_DIR = "nebulastream-public_1"
+SOURCE_DIR = os.path.join("/home/ntantow/Documents/NebulaStream", NES_DIR)
 CMAKE_TOOLCHAIN_FILE = "/home/ntantow/Documents/NebulaStream/vcpkg/scripts/buildsystems/vcpkg.cmake"
 LOG_LEVEL = "LEVEL_NONE"
 CMAKE_BUILD_TYPE = "Release"
 USE_LIBCXX_IF_AVAILABLE = "False"  # False for using libstdcxx, True for libcxx
 ENABLE_LARGE_TESTS = 1
-SYSTEST_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-systest/systest/systest")
-TEST_DATA = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-systest/testdata")
+SYSTEST_PATH = os.path.join("$(pwd)", BUILD_DIR, "nes-systests/systest/systest")
+TEST_DATA = os.path.join("$(pwd)", BUILD_DIR, "nes-systests/testdata")
 
 # Configuration for benchmark run
 NUM_RUNS_PER_CONFIG = 3
@@ -63,7 +63,7 @@ ENGINE_STATS_FILE = "EngineStats_"
 PIPELINE_TXT = "pipelines.txt"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 TEST_NAME = "Nexmark.test:05"
-TEST_FILE_PATH = os.path.join(SOURCE_DIR, "nes-systest/benchmark", TEST_NAME)
+TEST_FILE_PATH = os.path.join("$(pwd)", "nes-systests/benchmark", TEST_NAME)
 
 
 # Helper functions
@@ -118,7 +118,7 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
     with open(os.path.join(output_folder, BENCHMARK_CONFIG_FILE), 'w') as output_file:
         yaml.dump(current_benchmark_dict, output_file)
 
-    cmd = f"{SYSTEST_PATH} -t {TEST_FILE_PATH} -b --workingDir={working_dir} --data {TEST_DATA} --groups large -- " \
+    cmd = f"{SYSTEST_PATH} -t {TEST_FILE_PATH} -b --workingDir={working_dir} --timeout={MEASURE_INTERVAL} --data {TEST_DATA} --groups large -- " \
           f"--worker.queryEngine.numberOfWorkerThreads={current_benchmark_config.number_of_worker_threads} " \
           f"--worker.queryEngine.taskQueueSize={current_benchmark_config.task_queue_size} " \
           f"--worker.bufferSizeInBytes={current_benchmark_config.buffer_size_in_bytes} " \
@@ -142,7 +142,7 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.withPrediction={current_benchmark_config.with_prediction} " \
           f"--worker.queryOptimizer.watermarkPredictorType={current_benchmark_config.watermark_predictor_type}"
     # print(f"Starting the systest with {cmd}")
-    process = subprocess.Popen(cmd.split(" ")) #, stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd, shell=True)  # , cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started systest with pid {pid}")
     return process
@@ -172,15 +172,16 @@ def run_benchmark(current_benchmark_config):
         working_dir = create_working_dir(output_folder)
 
         # Starting the systest
-        systest_process = start_systest(output_folder, working_dir, current_benchmark_config)
+        systest_process = start_systest(output_folder, "$(pwd)/" + working_dir, current_benchmark_config)
 
         # Waiting for the systest to start
         time.sleep(WAIT_BETWEEN_COMMANDS)
 
         print(f"Waiting for {MEASURE_INTERVAL}s before stopping the systest...")
-        time.sleep(MEASURE_INTERVAL)  # Allow query engine stats to be printed
-        print("Stopping systest...")
+        systest_process.wait(timeout=MEASURE_INTERVAL)  # Allow query engine stats to be printed
+        print("Stopping the systest...")
     finally:
+        time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = [systest_process]
         for proc in all_processes:
             terminate_process_if_exists(proc)
@@ -221,12 +222,30 @@ def format_data_size(size_in_bytes):
         size_in_bytes /= 1024
 
 
-if __name__ == "__main__":
+def main():
     if BUILD_PROJECT:
         # Removing the build folder and compiling the project
         clear_build_dir()
         compile_project()
 
+    # Remove tmp directory as benchmarks will fail if another user created this
+    if subprocess.Popen("rm -rf /tmp/dump", shell=True).returncode is not None:
+        print("Could not remove /tmp/dump. Restart after executing\nsudo rm -rf /tmp/dump")
+        return
+
+    # We use pwd to create file paths which will only work from nes root directory
+    process = subprocess.Popen(f"cat {TEST_FILE_PATH.split(":")[0]}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    _, stderr = process.communicate()
+    if stderr != '':
+        print("Execute from nebulastream root directory")
+        return
+
+    # If executable was built with docker we need to create a symlink for testdata
+    subprocess.Popen(f"ln -s $(pwd) {os.path.join("/tmp", NES_DIR)}", shell=True)
+
+    print("################################################################")
+    print("Running systest main")
+    print("################################################################\n")
     ALL_SYSTEST_CONFIGS = BenchmarkConfig.create_systest_configs()
 
     for attempt in range(NUM_RETRIES_PER_RUN):
@@ -300,6 +319,10 @@ if __name__ == "__main__":
     copy_command = f"scp -r {SERVER_NAME}:{results_path} {DESTINATION_PATH}"
     print(f"\n\033[96mSize of results is {format_data_size(get_directory_size(results_path))}. "
           f"Copy with:\n{copy_command}\033[0m")
+
+
+if __name__ == "__main__":
+    main()
 
     # print("\nStarting post processing...\n")
     # # Compare the results of default slice store and file backed variant
