@@ -30,5 +30,6 @@ std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfigu
         &testDataDir,
         &endlessMode,
         &excludeGroups,
-        &grpcAddressUri};
+        &grpcAddressUri,
+        &timeoutInSeconds};
 }
