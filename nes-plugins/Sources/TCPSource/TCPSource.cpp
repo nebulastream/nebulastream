@@ -47,6 +47,8 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
+#include "GeneratorDataRegistry.hpp"
+
 
 namespace NES::Sources
 {
@@ -345,5 +347,11 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
+
+///NOLINTNEXTLINE (performance-unnecessary-value-param)
+GeneratorDataRegistryReturnType
+GeneratorDataGeneratedRegistrar::RegisterTCPGeneratorData(GeneratorDataRegistryArguments systestAdaptorArguments)
+{
     return systestAdaptorArguments.physicalSourceConfig;
+}
 }
