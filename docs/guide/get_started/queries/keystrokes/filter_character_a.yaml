@@ -1,0 +1,30 @@
+query: |
+  SELECT * FROM keystrokes WHERE key == VARSIZED("a") INTO filtered_character_a;
+sink:
+  name: filtered_character_a
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/filter_character_a.csv"
+    append: true
+
+logical:
+  - name: keystrokes
+    schema:
+      - name: key
+        type: VARSIZED
+      - name: timestamp
+        type: UINT64
+physical:
+  - logical: keystrokes
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 9000
+      socketHost: data-generator
+      socketBufferSize: 2
+      flushIntervalMS: 100
+      connectTimeoutSeconds: 1000

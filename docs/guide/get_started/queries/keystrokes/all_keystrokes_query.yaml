@@ -1,0 +1,30 @@
+query: |
+  SELECT * FROM keystrokes INTO all_keystrokes_sink;
+sink:
+  name: all_keystrokes_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/all_keystrokes_query.csv"
+    append: true
+
+logical:
+  - name: keystrokes
+    schema:
+      - name: key
+        type: VARSIZED
+      - name: timestamp
+        type: UINT64
+physical:
+  - logical: keystrokes
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 9000
+      socketHost: data-generator
+      socketBufferSize: 2
+      flushIntervalMS: 100
+      connectTimeoutSeconds: 1000
