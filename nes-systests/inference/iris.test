@@ -332,7 +332,7 @@ virginica
 virginica
 virginica
 
-## Model Inference with VarSized input and output parameters
+## Model Inference with VarSized input and and multiple output parameters
 Source streamVarsized VARSIZED data INLINE
 aaaaaaaaaaaaaaaa
 
@@ -347,3 +347,17 @@ FROM (SELECT INFER_MODEL(iris, (data)) FROM streamVarsized)
 INTO classificationVarsized
 ----
 aaaaaaaaaaaaaaaa,virginica
+
+
+## ArgMax function on output vector
+Sink classificationVarsizedArgMax UINT64 streamVarsized$index
+
+MODEL iris_varsized TESTDATA/model/iris.onnx
+VARSIZED
+VARSIZED species_vector
+
+SELECT ArgMax(species_vector) as index
+FROM (SELECT INFER_MODEL(iris_varsized, (data)) FROM streamVarsized)
+INTO classificationVarsizedArgMax
+----
+2
