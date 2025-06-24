@@ -129,7 +129,6 @@ def get_default_params_dict():
 def get_additional_default_values():
     # Set some values as default
     default_timestamp_increments = [1, 1000]
-    default_match_rates = [90, 50, 10]
     default_queries = []
     window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
     for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
@@ -138,7 +137,7 @@ def get_additional_default_values():
         # slide = int(size_and_slide.group(2))
         if size != 10000:
             default_queries.append(query)
-    return default_timestamp_increments, default_match_rates, default_queries
+    return default_timestamp_increments, default_queries
 
 
 # This class stores all information needed to run a single benchmark
@@ -233,6 +232,56 @@ class BenchmarkConfig:
         }
 
 
+def create_systest_configs():
+    # Generate configurations where only one parameter varies from the default value
+    configs = []
+    default_params = get_default_params_dict()
+    shared_params = {
+        "number_of_worker_threads": NUMBER_OF_WORKER_THREADS,
+        "buffer_size_in_bytes": BUFFER_SIZES,
+        "page_size": PAGE_SIZES,
+    }
+    file_backed_params = {
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
+        "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS,
+        "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS,
+        "min_read_state_size": MIN_READ_STATE_SIZES,
+        "min_write_state_size": MIN_WRITE_STATE_SIZES,
+        "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
+        "file_layout": FILE_LAYOUTS,
+        "with_prediction": WITH_PREDICTIONS,
+        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES
+    }
+
+    # Generate configurations for each shared parameter (one per value)
+    for param, values in shared_params.items():
+        for value in values:
+            for slice_store_type in SLICE_STORE_TYPES:
+                config_params = default_params.copy()
+                config_params["slice_store_type"] = slice_store_type
+                config_params[param] = value
+                configs.append(BenchmarkConfig(**config_params))
+    # Generate configurations for each file backed parameter (one per value)
+    for param, values in file_backed_params.items():
+        for value in values:
+            config_params = default_params.copy()
+            config_params["slice_store_type"] = "FILE_BACKED"
+            config_params[param] = value
+            configs.append(BenchmarkConfig(**config_params))
+
+    # Add all combinations of memory bounds where lower is smaller than or equal to upper
+    for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+        for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+            if lower_memory_bound <= upper_memory_bound:
+                config_params = default_params.copy()
+                config_params["slice_store_type"] = "FILE_BACKED"
+                config_params["lower_memory_bound"] = lower_memory_bound
+                config_params["upper_memory_bound"] = upper_memory_bound
+                configs.append(BenchmarkConfig(**config_params))
+
+    return configs
+
+
 def create_benchmark_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
@@ -286,41 +335,38 @@ def create_benchmark_configs():
                 configs.append(BenchmarkConfig(**config_params))
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments, default_match_rates, default_queries = get_additional_default_values()
+    default_timestamp_increments, default_queries = get_additional_default_values()
     for timestamp_increment in default_timestamp_increments:
-        for match_rate in default_match_rates:
-            for query in default_queries:
-                if (timestamp_increment, match_rate, query) == (default_params['timestamp_increment'],
-                                                                default_params['match_rate'],
-                                                                default_params['query']):
-                    continue
-                for param, values in shared_params.items():
-                    for value in values:
-                        for slice_store_type in SLICE_STORE_TYPES:
-                            config_params = default_params.copy()
-                            config_params["slice_store_type"] = slice_store_type
-                            config_params["timestamp_increment"] = timestamp_increment
-                            config_params["query"] = query
-                            config_params[param] = value
-                            configs.append(BenchmarkConfig(**config_params))
-                for param, values in file_backed_params.items():
-                    for value in values:
+        for query in default_queries:
+            if (timestamp_increment, query) == (default_params['timestamp_increment'], default_params['query']):
+                continue
+            for param, values in shared_params.items():
+                for value in values:
+                    for slice_store_type in SLICE_STORE_TYPES:
                         config_params = default_params.copy()
-                        config_params["slice_store_type"] = "FILE_BACKED"
+                        config_params["slice_store_type"] = slice_store_type
                         config_params["timestamp_increment"] = timestamp_increment
                         config_params["query"] = query
                         config_params[param] = value
                         configs.append(BenchmarkConfig(**config_params))
-                for lower_memory_bound in LOWER_MEMORY_BOUNDS:
-                    for upper_memory_bound in UPPER_MEMORY_BOUNDS:
-                        if lower_memory_bound <= upper_memory_bound:
-                            config_params = default_params.copy()
-                            config_params["slice_store_type"] = "FILE_BACKED"
-                            config_params["timestamp_increment"] = timestamp_increment
-                            config_params["query"] = query
-                            config_params["lower_memory_bound"] = lower_memory_bound
-                            config_params["upper_memory_bound"] = upper_memory_bound
-                            configs.append(BenchmarkConfig(**config_params))
+            for param, values in file_backed_params.items():
+                for value in values:
+                    config_params = default_params.copy()
+                    config_params["slice_store_type"] = "FILE_BACKED"
+                    config_params["timestamp_increment"] = timestamp_increment
+                    config_params["query"] = query
+                    config_params[param] = value
+                    configs.append(BenchmarkConfig(**config_params))
+            for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+                for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+                    if lower_memory_bound <= upper_memory_bound:
+                        config_params = default_params.copy()
+                        config_params["slice_store_type"] = "FILE_BACKED"
+                        config_params["timestamp_increment"] = timestamp_increment
+                        config_params["query"] = query
+                        config_params["lower_memory_bound"] = lower_memory_bound
+                        config_params["upper_memory_bound"] = upper_memory_bound
+                        configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
@@ -337,7 +383,7 @@ def create_watermark_predictor_benchmark_configs():
     del default_params["file_operation_time_delta"]
     del default_params["query"]
 
-    default_timestamp_increments, _, default_queries = get_additional_default_values()
+    default_timestamp_increments, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
@@ -365,24 +411,21 @@ def create_memory_bounds_benchmark_configs():
     # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
     default_params = get_default_params_dict()
     del default_params["timestamp_increment"]
-    del default_params["match_rate"]
     del default_params["lower_memory_bound"]
     del default_params["upper_memory_bound"]
     del default_params["with_prediction"]
     del default_params["query"]
 
-    default_timestamp_increments, default_match_rates, default_queries = get_additional_default_values()
+    default_timestamp_increments, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
-                        match_rate=match_rate,
                         slice_store_type=slice_store_type,
                         lower_memory_bound=lower_memory_bound,
                         upper_memory_bound=upper_memory_bound,
                         with_prediction=with_prediction,
                         query=query)
         for timestamp_increment in default_timestamp_increments
-        for match_rate in default_match_rates
         for slice_store_type in ["FILE_BACKED"]
         for lower_memory_bound in LOWER_MEMORY_BOUNDS
         for upper_memory_bound in UPPER_MEMORY_BOUNDS
@@ -399,7 +442,7 @@ def create_match_rate_benchmark_configs():
     del default_params["match_rate"]
     del default_params["query"]
 
-    default_timestamp_increments, _, default_queries = get_additional_default_values()
+    default_timestamp_increments, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
@@ -419,7 +462,7 @@ def create_query_benchmark_configs():
     del default_params["timestamp_increment"]
     del default_params["query"]
 
-    default_timestamp_increments, _, default_queries = get_additional_default_values()
+    default_timestamp_increments, default_queries = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
