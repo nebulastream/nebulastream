@@ -1,0 +1,1 @@
+python3 check_query.py /home/x/uni/nebulastream-public/build-docker/nes-systests/testdata/small/events10k500b.csv --stdout | docker run -i    --workdir $(pwd)     -v $(pwd):$(pwd)      nebulastream/nes-development:local  build-docker/nes-systests/systest/checksum/checksum

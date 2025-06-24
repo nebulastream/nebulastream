@@ -102,8 +102,9 @@ private:
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
     QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod; /// Number of entries in the hash map
+    uint64_t sizeOfEntriesOnCurrentPage = 0; /// Number of entries in the hash map
     uint64_t sizeOfDataOnVarsizedPage = 0; /// Number of entries in the hash map
-    uint64_t varSizedPageSize; /// Size of one storage page in bytes TODO: do not hardcode these
+    uint64_t varSizedPageSize; /// Size of one storage page in bytes
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
     uint64_t entriesPerPage; /// Number of entries per page
     uint64_t numberOfChains; /// Number of buckets in the hash map

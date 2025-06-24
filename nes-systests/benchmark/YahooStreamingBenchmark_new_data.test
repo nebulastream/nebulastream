@@ -5,8 +5,12 @@
 # Source definitions
 SourceCSV ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events1k.csv
 SourceCSV ysb10k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events10k.csv
+SourceCSV ysb1k500b VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events1k500b.csv
+SourceCSV ysb10k500b VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events10k500b.csv
+SourceCSV ysb1k4b VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events1k4b.csv
+SourceCSV ysb10k4b VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/small/events10k4b.csv
 
-SINK printSink1k UINT64 ysb1k$start UINT64 ysb1k$end
+#SINK printSink1k UINT64 ysb1k$start UINT64 ysb1k$end
 #SINK printSink10k UINT64 ysb10k$start UINT64 ysb10k$end
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
@@ -40,4 +44,64 @@ WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO CHECKSUM;
 ----
 1000333, 3975971931
+# Checksum for 1000000 events with 1 event per millisecond
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb1k500b
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+334001, 12006094707
+# Checksum for 1000000 events with 1 event per millisecond
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb10k500b
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+1000334, 35914797394
+# Checksum for 1000000 events with 1 event per millisecond
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb1k4b
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+332666, 632408711
+# Checksum for 1000000 events with 1 event per millisecond
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb10k4b
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+981955, 1821021512
 # Checksum for 1000000 events with 1 event per millisecond

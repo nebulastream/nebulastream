@@ -74,7 +74,7 @@ public:
         = {"varSizedStorageMethod",
            HashMapVarSizedStorageMethod::SINGLE_BUFFER,
            "How to store variable sized data in a chained hashmap"
-           "[SINGLE_BUFFER|PAGES]. "};
+           "[SINGLE_BUFFER|PAGES|JOINT_PAGES]. "};
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
