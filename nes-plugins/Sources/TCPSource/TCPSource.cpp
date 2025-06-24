@@ -49,6 +49,8 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
+#include "GeneratorDataRegistry.hpp"
+
 namespace NES
 {
 
@@ -344,5 +346,12 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
         throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+}
+
+///NOLINTNEXTLINE (performance-unnecessary-value-param)
+GeneratorDataRegistryReturnType
+GeneratorDataGeneratedRegistrar::RegisterTCPGeneratorData(GeneratorDataRegistryArguments systestAdaptorArguments)
+{
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 }
