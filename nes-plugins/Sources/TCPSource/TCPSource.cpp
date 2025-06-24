@@ -345,4 +345,5 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
+    return systestAdaptorArguments.physicalSourceConfig;
 }
