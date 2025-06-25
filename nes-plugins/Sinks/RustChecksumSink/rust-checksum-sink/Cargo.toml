@@ -1,0 +1,12 @@
+[package]
+name = "rust-checksum-sink-cxx"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+cxx = "1.0.158"
+
+[build-dependencies]
+cxx-build = "1.0.158" 
+
