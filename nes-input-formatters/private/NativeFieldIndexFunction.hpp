@@ -99,7 +99,6 @@ class NativeFieldIndexFunction final : public FieldIndexFunction<NativeFieldInde
     [[nodiscard]] Nautilus::Record applyReadNextRecord(
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
         const Nautilus::RecordBuffer& recordBuffer,
-        const nautilus::val<int8_t*>&,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const size_t,

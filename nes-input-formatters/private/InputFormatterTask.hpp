@@ -351,7 +351,7 @@ public:
         executionCtx.lastChunk = recordBuffer.isLastChunk();
         /// call open on all child operators
         child.open(executionCtx, recordBuffer);
-
+        // Todo: allocate fixSizeBufferPool with 1 buffer and buffer size that matches exactly required number of indexes for spanning tuples?
         // Todo: Wrap spanning tuples in struct and return pointer to struct and decompose that struct
         auto leadingSpanningTupleFIF = nautilus::invoke(
             +[](const PipelineExecutionContext* pec)
@@ -420,13 +420,15 @@ public:
                     {
                         // Todo: don't return bool from 'processSpanningTuple'? <-- should be guaranteed at this point
                         if (processSpanningTuple<IndexerMetaData>(
-                                stagedBuffers,
-                                spanningTupleData.getLeadingSpanningTuplePointer(),
-                                inputFormatterTask->indexerMetaData))
+                                stagedBuffers, spanningTupleData.getLeadingSpanningTuplePointer(), inputFormatterTask->indexerMetaData))
                         {
                             // Todo: create RawTupleBuffer from spanningTupleData pointer and pass to inputFormatIndexer
                             inputFormatterTask->inputFormatIndexer->indexRawBuffer(
-                                *leadingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()), spanningTupleData.getSizeOfLeadingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                                *leadingSTFieldIndexFunction,
+                                RawTupleBuffer{
+                                    std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()),
+                                    spanningTupleData.getSizeOfLeadingSpanningTuple()},
+                                inputFormatterTask->indexerMetaData);
                         }
                     }
                     if (spanningTupleData.hasTrailingSpanningTuple())
@@ -435,7 +437,11 @@ public:
                                 stagedBuffers, spanningTupleData.getTrailingTuplePointer(), inputFormatterTask->indexerMetaData))
                         {
                             inputFormatterTask->inputFormatIndexer->indexRawBuffer(
-                                *trailingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getTrailingTuplePointer()), spanningTupleData.getSizeOfTrailingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                                *trailingSTFieldIndexFunction,
+                                RawTupleBuffer{
+                                    std::bit_cast<const char*>(spanningTupleData.getTrailingTuplePointer()),
+                                    spanningTupleData.getSizeOfTrailingSpanningTuple()},
+                                inputFormatterTask->indexerMetaData);
                         }
                     }
                 }
@@ -466,12 +472,14 @@ public:
                     if (spanningTupleData.hasLeadingSpanningTuple())
                     {
                         if (processSpanningTuple<IndexerMetaData>(
-                                stagedBuffers,
-                                spanningTupleData.getLeadingSpanningTuplePointer(),
-                                inputFormatterTask->indexerMetaData))
+                                stagedBuffers, spanningTupleData.getLeadingSpanningTuplePointer(), inputFormatterTask->indexerMetaData))
                         {
                             inputFormatterTask->inputFormatIndexer->indexRawBuffer(
-                                *leadingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()), spanningTupleData.getSizeOfLeadingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                                *leadingSTFieldIndexFunction,
+                                RawTupleBuffer{
+                                    std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()),
+                                    spanningTupleData.getSizeOfLeadingSpanningTuple()},
+                                inputFormatterTask->indexerMetaData);
                         }
                     }
                 }
@@ -490,25 +498,25 @@ public:
         if (spanningTupleData.value->hasLeadingSpanningTuple())
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
-            // Todo: must pass pointers to spanning tuples here
             auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getLeadingSpanningTuplePointer());
-            auto record = leadingSpanningTupleFIF.value->readNextRecord(
-                projections, recordBuffer, recordPtr, recordIndex, indexerMetaData, configuredBufferSize, parseFunctions);
+            auto record
+                = leadingSpanningTupleFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
             child.execute(executionCtx, record);
         }
+        // Todo: could also hide below loop in function of FIF
         for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(rawBufferSpanningTupleFIF.value->getTotalNumberOfTuples());
              i = i + 1_u64)
         {
             auto record = rawBufferSpanningTupleFIF.value->readNextRecord(
-                projections, recordBuffer, recordBuffer.getBuffer(), i, indexerMetaData, configuredBufferSize, parseFunctions);
+                projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
             child.execute(executionCtx, record);
         }
         if (spanningTupleData.value->hasTrailingSpanningTuple())
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
             auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getTrailingTuplePointer());
-            auto record = trailingSpanningTupleFIF.value->readNextRecord(
-                projections, recordBuffer, recordPtr, recordIndex, indexerMetaData, configuredBufferSize, parseFunctions);
+            auto record
+                = trailingSpanningTupleFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
             child.execute(executionCtx, record);
         }
     }
@@ -542,7 +550,7 @@ public:
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
             auto record
-                = fieldIndexFunction.readNextRecord(projections, recordBuffer, recordBuffer.getBuffer(), i, indexerMetaData, configuredBufferSize, parseFunctions);
+                = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
             child.execute(executionCtx, record);
         }
     }

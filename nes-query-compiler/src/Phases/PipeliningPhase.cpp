@@ -47,16 +47,28 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// This is used only when the wrapped operator does not already provide a scan
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
 /// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
-void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
+void addDefaultScan(const std::shared_ptr<Pipeline>& prevPipeline, const std::shared_ptr<Pipeline>& currentPipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
-    PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
+    PRECONDITION(currentPipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
     /// Prepend the default scan operator.
-    auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-        OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
-    pipeline->prependOperator(
+    const auto isFirstOperatorAfterSource = prevPipeline->isSourcePipeline();
+    auto inputFormatterTaskPipeline = [&prevPipeline, &schema, isFirstOperatorAfterSource]()
+    {
+        if (isFirstOperatorAfterSource)
+        {
+            const auto inputFormatterConfig
+                = prevPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+            return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+                OriginId(OriginId::INITIAL), schema.value(), inputFormatterConfig);
+        }
+        return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+            OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+    }();
+
+    currentPipeline->prependOperator(
         FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, false));
 }
 
@@ -225,8 +237,7 @@ void buildPipelineRecursively(
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
-        INVARIANT(not currentPipeline->isSourcePipeline(), "We don't force a new pipeline after the source pipeline");
-        addDefaultScan(newPipelinePtr, *opWrapper, configuredBufferSize);
+        addDefaultScan(currentPipeline, newPipelinePtr, *opWrapper, configuredBufferSize);
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
