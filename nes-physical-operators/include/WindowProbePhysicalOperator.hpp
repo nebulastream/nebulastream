@@ -33,7 +33,7 @@ public:
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
     /// Therefore, any setup to the operator handler should ONLY happen in the WindowProbePhysicalOperator.
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override;
 
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

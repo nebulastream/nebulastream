@@ -45,7 +45,7 @@ protected:
 
 private:
     [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
-    compilePipeline() const;
+    compilePipeline(const nautilus::engine::NautilusEngine& engine) const;
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
