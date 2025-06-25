@@ -23,6 +23,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
+#include "Nautilus/Interface/Record.hpp"
 
 namespace NES::InputFormatters::RawValueParser
 {
@@ -35,11 +36,6 @@ enum class QuotationType : uint8_t
 
 using ParseFunctionSignature = std::function<void(std::string_view inputString)>;
 
-// using NautilusParseFunctionSignature = std::function<void(
-//     std::string_view inputString,
-//     size_t writeOffsetInBytes,
-//     Memory::AbstractBufferProvider& bufferProvider,
-//     Memory::TupleBuffer& tupleBufferFormatted)>;
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -47,10 +43,7 @@ using ParseFunctionSignature = std::function<void(std::string_view inputString)>
 template <typename T>
 auto parseFieldString()
 {
-    return [](const std::string_view fieldValueString)
-    {
-        return NES::Util::from_chars_with_exception<T>(fieldValueString);
-    };
+    return [](const std::string_view fieldValueString) { return NES::Util::from_chars_with_exception<T>(fieldValueString); };
 }
 
 template <typename T>
@@ -63,6 +56,44 @@ auto parseQuotedFieldString()
         return NES::Util::from_chars_with_exception<T>(fieldValueString);
     };
 }
+
+template <typename T>
+nautilus::val<T> parseIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
+{
+    switch (quotationType)
+    {
+        case QuotationType::NONE: {
+            return nautilus::invoke(
+                +[](const char* fieldAddress, const uint64_t fieldSize)
+                {
+                    const auto fieldView = std::string_view(fieldAddress, fieldSize);
+                    return NES::Util::from_chars_with_exception<T>(fieldView);
+                },
+                fieldAddress,
+                fieldSize);
+        }
+        case QuotationType::DOUBLE_QUOTE: {
+            return nautilus::invoke(
+                +[](const char* fieldAddress, const uint64_t fieldSize)
+                {
+                    INVARIANT(fieldSize >= 2, "Input string must be at least 2 characters long.");
+                    const auto fieldView = std::string_view(fieldAddress + 1, fieldSize - 1);
+                    return NES::Util::from_chars_with_exception<T>(fieldView);
+                },
+                fieldAddress,
+                fieldSize);
+        }
+    }
+}
+
+void parseRawValueIntoRecord(
+    DataType::Type physicalType,
+    Nautilus::Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    QuotationType quotationType);
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
 ParseFunctionSignature getParseFunction(DataType::Type physicalType, QuotationType quotationType);

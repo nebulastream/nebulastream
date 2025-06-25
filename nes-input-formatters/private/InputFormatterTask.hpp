@@ -128,11 +128,7 @@ public:
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
-        , parseFunctions(
-              schema.getFields()
-              | std::views::transform([quotationType](const auto& field)
-                                      { return RawValueParser::getParseFunction(field.dataType.type, quotationType); })
-              | std::ranges::to<std::vector>())
+        , quotationType(quotationType)
     {
     }
     ~InputFormatterTask() = default;
@@ -419,7 +415,7 @@ public:
                 spanningTupleData);
 
             // Todo: we need to access 'readSpanningRecord' using 'value' here, since it is a wrapped nautilus val pointer
-            auto record = leadingFieldAccessFunction.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, parseFunctions, leadingFieldAccessFunction);
+            auto record = leadingFieldAccessFunction.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFieldAccessFunction);
             child.execute(executionCtx, record);
         }
 
@@ -435,7 +431,7 @@ public:
         for (nautilus::val<uint64_t> i = 0_u64; i < totalNumberOfTuples; i = i + 1_u64)
         {
             auto record = rawFieldAccessFunction.value->readSpanningRecord(
-                projections, recordBuffer.getBuffer(), i, indexerMetaData, parseFunctions, rawFieldAccessFunction);
+                projections, recordBuffer.getBuffer(), i, indexerMetaData, quotationType, rawFieldAccessFunction);
             child.execute(executionCtx, record);
         }
 
@@ -454,7 +450,7 @@ public:
                 spanningTupleData);
 
             auto record = trailingFieldAccessFunction.value->readSpanningRecord(
-                projections, recordPtr, recordIndex, indexerMetaData, parseFunctions, trailingFieldAccessFunction);
+                projections, recordPtr, recordIndex, indexerMetaData, quotationType, trailingFieldAccessFunction);
             child.execute(executionCtx, record);
         }
     }
@@ -464,7 +460,7 @@ public:
         Nautilus::RecordBuffer& recordBuffer,
         const PhysicalOperator& child,
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const size_t configuredBufferSize,
+        const size_t /*configuredBufferSize*/,
         const bool isFirstOperatorAfterSource)
     requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
     {
@@ -488,7 +484,7 @@ public:
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
             auto record
-                = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
+                = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData);
             child.execute(executionCtx, record);
         }
     }
@@ -508,7 +504,7 @@ private:
     SchemaInfo schemaInfo;
     IndexerMetaData indexerMetaData;
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
-    std::vector<RawValueParser::ParseFunctionSignature> parseFunctions;
+    RawValueParser::QuotationType quotationType;
 };
 
 }

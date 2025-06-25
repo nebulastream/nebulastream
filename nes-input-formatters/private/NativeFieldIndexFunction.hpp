@@ -100,9 +100,7 @@ class NativeFieldIndexFunction final : public FieldIndexFunction<NativeFieldInde
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
         const Nautilus::RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex,
-        const IndexerMetaData& metaData,
-        const size_t,
-        const std::vector<RawValueParser::ParseFunctionSignature>&) const
+        const IndexerMetaData& metaData) const
     requires(MemoryLayoutType == NES::Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         /// read all fields

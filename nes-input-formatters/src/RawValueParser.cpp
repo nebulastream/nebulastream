@@ -17,10 +17,12 @@
 #include <cstdint>
 #include <cstring>
 #include <string_view>
+
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include "Nautilus/Interface/Record.hpp"
 
 namespace NES::InputFormatters::RawValueParser
 {
@@ -136,6 +138,75 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
             throw NotImplemented("Cannot parse undefined type.");
     }
     return nullptr;
+}
+
+void parseRawValueIntoRecord(
+    const DataType::Type physicalType,
+    Nautilus::Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    const QuotationType quotationType)
+{
+    switch (physicalType)
+    {
+        case DataType::Type::INT8: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::INT16: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::INT32: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::INT64: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::UINT8: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::UINT16: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::UINT32: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::UINT64: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::FLOAT32: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::FLOAT64: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::CHAR: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::BOOLEAN: {
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize, quotationType));
+            return;
+        }
+        case DataType::Type::VARSIZED: {
+            // record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, quotationType));
+            return;
+            // return getBasicStringParseFunction();
+        }
+        case DataType::Type::UNDEFINED:
+            throw NotImplemented("Cannot parse undefined type.");
+    }
+    std::unreachable();
 }
 
 ParseFunctionSignature getParseFunction(const DataType::Type physicalType, const QuotationType quotationType)

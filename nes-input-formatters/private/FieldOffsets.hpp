@@ -95,12 +95,11 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
+        const RawValueParser::QuotationType quotationType,
         nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     {
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
-        nautilus::static_val<uint64_t> parseFunctionIdx = 0;
         Nautilus::Record record;
         for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
         {
@@ -109,12 +108,13 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
-            // Todo: somehow access indexBuffer without relying on the 'this' invoke call
             const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr));
 
-            const auto byteOffsetStart = ((recordIndex * nautilus::static_val<uint64_t>(numberOfFieldsInSchema + 1) + i) * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto byteOffsetStart
+                = ((recordIndex * nautilus::static_val(numberOfFieldsInSchema + 1) + i) * nautilus::static_val(sizeof(FieldOffsetsType)));
             const auto recordOffsetAddress = indexBuffer.getBuffer() + byteOffsetStart;
-            const auto recordOffsetEndAddress = indexBuffer.getBuffer() + (byteOffsetStart + nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
+            const auto recordOffsetEndAddress
+                = indexBuffer.getBuffer() + (byteOffsetStart + nautilus::static_val(sizeof(FieldOffsetsType)));
             const auto fieldOffsetStart = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetAddress);
             const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetEndAddress);
 
@@ -122,17 +122,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
 
-            const auto parsedValue = nautilus::invoke(+[](const RawValueParser::ParseFunctionSignature*, const char* fieldAddress, const uint64_t fieldSize)
-            {
-                const auto fieldView = std::string_view(fieldAddress, fieldSize);
-                // Todo: enable to parse more than just uint64_t
-                const auto value = NES::Util::from_chars_with_exception<uint64_t>(fieldView);
-                return value;
-                // return Nautilus::VarVal((*parseFunction)(fieldView));
-            }, nautilus::val<const RawValueParser::ParseFunctionSignature*>(&parseFunctions.at(parseFunctionIdx)), fieldAddress, fieldSize);
-            parseFunctionIdx = parseFunctionIdx + 1;
-
-            record.write(metaData.getSchema().getFieldAt(i).name, parsedValue);
+            const auto& currentField = metaData.getSchema().getFieldAt(i);
+            RawValueParser::parseRawValueIntoRecord(
+                currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name, quotationType);
         }
         return record;
     }
@@ -140,6 +132,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     template <typename OffsetType>
     class FieldOffsetsBuffer
     {
+        friend FieldOffsets;
+
     public:
         explicit FieldOffsetsBuffer(Memory::TupleBuffer tupleBuffer)
             : tupleBuffer(std::move(tupleBuffer))
@@ -148,8 +142,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
         [[nodiscard]] OffsetType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
 
-        Memory::TupleBuffer tupleBuffer; //Todo: hide again <-- or create nautilus interface function that returns field offsets (is traced)
     private:
+        Memory::TupleBuffer tupleBuffer;
         std::span<OffsetType> fieldOffsetSpan;
     };
 
