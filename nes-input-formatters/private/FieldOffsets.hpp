@@ -26,6 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <FieldIndexFunction.hpp>
 #include <InputFormatterTask.hpp>
+#include "Nautilus/Interface/Record.hpp"
 
 
 namespace NES::InputFormatters
@@ -94,10 +95,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
+        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     {
-        auto fieldOffsetsPtr = nautilus::val<const FieldOffsets*>(this);
-
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         nautilus::static_val<uint64_t> parseFunctionIdx = 0;
@@ -109,7 +109,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
+            // Todo: somehow access indexBuffer without relying on the 'this' invoke call
             const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr));
+
             const auto byteOffsetStart = ((recordIndex * nautilus::static_val<uint64_t>(numberOfFieldsInSchema + 1) + i) * nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
             const auto recordOffsetAddress = indexBuffer.getBuffer() + byteOffsetStart;
             const auto recordOffsetEndAddress = indexBuffer.getBuffer() + (byteOffsetStart + nautilus::static_val<uint64_t>(sizeof(FieldOffsetsType)));
@@ -133,18 +135,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             record.write(metaData.getSchema().getFieldAt(i).name, parsedValue);
         }
         return record;
-    }
-
-    template <typename IndexerMetaData>
-    [[nodiscard]] Record applyReadNextRecord(
-        const std::vector<Record::RecordFieldIdentifier>& projections,
-        const Nautilus::RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex,
-        const IndexerMetaData& metaData,
-        const size_t /*configuredBufferSize*/,
-        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
-    {
-        return applyReadSpanningRecord(projections, recordBuffer.getBuffer(), recordIndex, metaData, parseFunctions);
     }
 
     template <typename OffsetType>

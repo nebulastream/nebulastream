@@ -397,7 +397,7 @@ public:
             indexTuplesProxy,
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
-            nautilus::val<InputFormatterTask*>(this),
+            nautilus::val<InputFormatterTask*>(this), //Todo: figure out if works (might though, because the address is tied to the (pipeline) operator and thus l'stable'
             nautilus::val<size_t>(configuredBufferSize),
             nautilus::val<ExecutionContext*>(&executionCtx));
 
@@ -413,9 +413,13 @@ public:
             auto recordPtr = nautilus::invoke(
                 +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getLeadingSpanningTuplePointer(); },
                 spanningTupleData);
-            // Todo: figure out if tracing in 'readSpanningRecord' is sufficient (analog for trailing)
-            auto record = spanningTupleData.value->getLeadingSpanningTupleFIF().readSpanningRecord(
-                projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
+
+            auto leadingFieldAccessFunction = nautilus::invoke(
+                +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getLeadingSpanningTupleFIF(); },
+                spanningTupleData);
+
+            // Todo: we need to access 'readSpanningRecord' using 'value' here, since it is a wrapped nautilus val pointer
+            auto record = leadingFieldAccessFunction.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, parseFunctions, leadingFieldAccessFunction);
             child.execute(executionCtx, record);
         }
 
@@ -423,10 +427,15 @@ public:
         const nautilus::val<uint64_t> totalNumberOfTuples = nautilus::invoke(
             +[](SpanningTupleData* spanningTupleData) { return spanningTupleData->getRawBufferFIF().getTotalNumberOfTuples(); },
             spanningTupleData);
+
+        auto rawFieldAccessFunction = nautilus::invoke(
+            +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getRawBufferFIF(); },
+            spanningTupleData);
+
         for (nautilus::val<uint64_t> i = 0_u64; i < totalNumberOfTuples; i = i + 1_u64)
         {
-            auto record = spanningTupleData.value->getRawBufferFIF().readNextRecord(
-                projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
+            auto record = rawFieldAccessFunction.value->readSpanningRecord(
+                projections, recordBuffer.getBuffer(), i, indexerMetaData, parseFunctions, rawFieldAccessFunction);
             child.execute(executionCtx, record);
         }
 
@@ -439,8 +448,13 @@ public:
             auto recordPtr = nautilus::invoke(
                 +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getTrailingTuplePointer(); },
                 spanningTupleData);
-            auto record = spanningTupleData.value->getTrailingSpanningTupleFIF().readSpanningRecord(
-                projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
+
+            auto trailingFieldAccessFunction = nautilus::invoke(
+                +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getTrailingSpanningTupleFIF(); },
+                spanningTupleData);
+
+            auto record = trailingFieldAccessFunction.value->readSpanningRecord(
+                projections, recordPtr, recordIndex, indexerMetaData, parseFunctions, trailingFieldAccessFunction);
             child.execute(executionCtx, record);
         }
     }
