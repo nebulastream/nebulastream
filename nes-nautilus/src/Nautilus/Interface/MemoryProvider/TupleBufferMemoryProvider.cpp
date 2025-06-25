@@ -44,10 +44,18 @@ uint32_t storeAssociatedTextValueProxy(
     const Memory::TupleBuffer* tupleBuffer,
     Memory::AbstractBufferProvider* bufferProvider,
     const int8_t* textValue,
-    const uint32_t totalVariableSize)
+    const uint32_t totalVariableSize,
+    const uint32_t contentSize)
 {
     auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
     INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
+
+    if (*reinterpret_cast<const uint32_t*>(textValue) != contentSize)
+    {
+        std::memcpy(buffer.value().getBuffer<int8_t>(), &contentSize, sizeof(uint32_t));
+        std::memcpy(buffer.value().getBuffer<int8_t>() + sizeof(uint32_t), textValue, contentSize);
+        return tupleBuffer->storeChildBuffer(buffer.value());
+    }
     std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
     return tupleBuffer->storeChildBuffer(buffer.value());
 }
@@ -93,9 +101,10 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (physicalType.type == DataType::Type::VARSIZED)
     {
-        const auto textValue = value.cast<VariableSizedData>();
+        auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
-            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
+            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize(), textValue.getContentSize());
+
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

@@ -57,6 +57,9 @@ auto parseQuotedFieldString()
     };
 }
 
+Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType);
+
 template <typename T>
 nautilus::val<T> parseIntoNautilusRecord(
     const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)

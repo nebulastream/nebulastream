@@ -140,6 +140,23 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
     return nullptr;
 }
 
+Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
+{
+    switch (quotationType)
+    {
+        case QuotationType::NONE: {
+            return Nautilus::VariableSizedData(fieldAddress, fieldSize);
+        }
+        case QuotationType::DOUBLE_QUOTE: {
+            const auto adjustedAddress = fieldAddress + nautilus::val<int8_t>(1);
+            const auto adjustedFieldSize = fieldSize + nautilus::val<uint64_t>(1);
+            return Nautilus::VariableSizedData(adjustedAddress, adjustedFieldSize);
+        }
+    }
+    std::unreachable();
+}
+
 void parseRawValueIntoRecord(
     const DataType::Type physicalType,
     Nautilus::Record& record,
@@ -199,9 +216,8 @@ void parseRawValueIntoRecord(
             return;
         }
         case DataType::Type::VARSIZED: {
-            // record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize, quotationType));
             return;
-            // return getBasicStringParseFunction();
         }
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
