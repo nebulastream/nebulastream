@@ -74,52 +74,42 @@ Interface::HashMap* getHashJoinHashMapProxy(
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
 
-void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
-    StreamJoinBuildPhysicalOperator::setup(executionCtx);
+    StreamJoinBuildPhysicalOperator::setup(executionCtx, engine);
 
     /// Creating the cleanup function for the slice of current stream
-    nautilus::invoke(
-        +[](HJOperatorHandler* operatorHandler, const HJBuildPhysicalOperator* buildOperator, const JoinBuildSideType buildSide)
-        {
-            nautilus::engine::Options options;
-            options.setOption("engine.Compilation", true);
-            const nautilus::engine::NautilusEngine nautilusEngine(options);
-
-            /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-            /// ReSharper disable once CppPassValueParameterByConstReference
-            /// NOLINTBEGIN(performance-unnecessary-value-param)
-            const auto cleanupStateNautilusFunction
-                = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
-                    [copyOfFieldKeys = buildOperator->hashMapOptions.fieldKeys,
-                     copyOfFieldValues = buildOperator->hashMapOptions.fieldValues,
-                     copyOfEntriesPerPage = buildOperator->hashMapOptions.entriesPerPage,
-                     copyOfEntrySize = buildOperator->hashMapOptions.entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
-                    {
-                        const Interface::ChainedHashMapRef hashMapRef(
-                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                        for (const auto entry : hashMapRef)
+    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
+    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+    /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const auto cleanupStateNautilusFunction
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(engine.registerFunction(std::function(
+            [copyOfFieldKeys = hashMapOptions.fieldKeys,
+             copyOfFieldValues = hashMapOptions.fieldValues,
+             copyOfEntriesPerPage = hashMapOptions.entriesPerPage,
+             copyOfEntrySize = hashMapOptions.entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+            {
+                const Interface::ChainedHashMapRef hashMapRef(
+                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                    const auto state = entryRefReset.getValueMemArea();
+                    nautilus::invoke(
+                        +[](int8_t* pagedVectorMemArea) -> void
                         {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
-                            const auto state = entryRefReset.getValueMemArea();
-                            nautilus::invoke(
-                                +[](int8_t* pagedVectorMemArea) -> void
-                                {
-                                    /// Calls the destructor of the PagedVector
-                                    auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
-                                        pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                                    pagedVector->~PagedVector();
-                                },
-                                state);
-                        }
-                    })));
-            /// NOLINTEND(performance-unnecessary-value-param)
-            operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, buildSide);
-        },
-        executionCtx.getGlobalOperatorHandler(operatorHandlerId),
-        nautilus::val<const HJBuildPhysicalOperator*>(this),
-        nautilus::val<JoinBuildSideType>(joinBuildSide));
+                            /// Calls the destructor of the PagedVector
+                            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
+                                pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                            pagedVector->~PagedVector();
+                        },
+                        state);
+                }
+            })));
+    /// NOLINTEND(performance-unnecessary-value-param)
+    const auto operatorHandler = dynamic_cast<HJOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const

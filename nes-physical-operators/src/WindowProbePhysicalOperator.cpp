@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <WindowProbePhysicalOperator.hpp>
 
 #include <optional>
 #include <utility>
@@ -25,7 +26,6 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
-#include <WindowProbePhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -74,10 +74,10 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
-void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
     /// Giving child operators the change to setup
-    setupChild(executionCtx);
+    setupChild(executionCtx, engine);
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
 }
 

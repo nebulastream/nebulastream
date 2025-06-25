@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
 #include <memory>
 #include <optional>
@@ -22,7 +23,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -148,8 +148,6 @@ getStage(const std::shared_ptr<Pipeline>& pipeline, Nautilus::Configurations::Ex
             INVARIANT(false, "Invalid backend");
         }
     }
-    options.setOption("toConsole", true);
-    options.setOption("toFile", true);
 
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }

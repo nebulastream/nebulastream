@@ -22,6 +22,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -79,9 +80,9 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
-    setupChild(executionCtx);
+    setupChild(executionCtx, engine);
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

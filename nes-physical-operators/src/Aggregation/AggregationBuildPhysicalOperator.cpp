@@ -77,49 +77,39 @@ Interface::HashMap* getAggHashMapProxy(
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
-void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
-    WindowBuildPhysicalOperator::setup(executionCtx);
+    WindowBuildPhysicalOperator::setup(executionCtx, engine);
 
     /// Creating the cleanup function for the slice of current stream
-    nautilus::invoke(
-        +[](AggregationOperatorHandler* operatorHandler, const AggregationBuildPhysicalOperator* buildOperator)
-        {
-            nautilus::engine::Options options;
-            options.setOption("engine.Compilation", true);
-            const nautilus::engine::NautilusEngine nautilusEngine(options);
-
-            /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-            /// ReSharper disable once CppPassValueParameterByConstReference
-            /// NOLINTBEGIN(performance-unnecessary-value-param)
-            const auto cleanupStateNautilusFunction
-                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
-                    [copyOfFieldKeys = buildOperator->hashMapOptions.fieldKeys,
-                     copyOfFieldValues = buildOperator->hashMapOptions.fieldValues,
-                     copyOfEntriesPerPage = buildOperator->hashMapOptions.entriesPerPage,
-                     copyOfEntrySize = buildOperator->hashMapOptions.entrySize,
-                     copyOfAggregationFunctions
-                     = buildOperator->aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
+    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+    /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const auto cleanupStateNautilusFunction
+        = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(engine.registerFunction(std::function(
+            [copyOfFieldKeys = hashMapOptions.fieldKeys,
+             copyOfFieldValues = hashMapOptions.fieldValues,
+             copyOfEntriesPerPage = hashMapOptions.entriesPerPage,
+             copyOfEntrySize = hashMapOptions.entrySize,
+             copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+            {
+                const Interface::ChainedHashMapRef hashMapRef(
+                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                    auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                     {
-                        const Interface::ChainedHashMapRef hashMapRef(
-                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                        for (const auto entry : hashMapRef)
-                        {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
-                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                            {
-                                aggFunction->cleanup(state);
-                                state = state + aggFunction->getSizeOfStateInBytes();
-                            }
-                        }
-                    })));
-            /// NOLINTEND(performance-unnecessary-value-param)
-            operatorHandler->cleanupStateNautilusFunction = cleanupStateNautilusFunction;
-        },
-        executionCtx.getGlobalOperatorHandler(operatorHandlerId),
-        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+                        aggFunction->cleanup(state);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                }
+            })));
+    /// NOLINTEND(performance-unnecessary-value-param)
+    const auto operatorHandler = dynamic_cast<AggregationOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    operatorHandler->cleanupStateNautilusFunction = cleanupStateNautilusFunction;
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const

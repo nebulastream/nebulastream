@@ -31,6 +31,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <boost/core/demangle.hpp>
+#include <Engine.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -59,7 +60,8 @@ struct PhysicalOperatorConcept
     virtual void setChild(struct PhysicalOperator child) = 0;
 
     /// This is called once before the operator starts processing records.
-    virtual void setup(ExecutionContext& executionCtx) const;
+    /// We pass the nautilus::engine  give the possibility to the operator to create custom executable nautilus functions
+    virtual void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
 
     /// Opens the operator for processing records.
     /// This is called before each batch of records is processed.
@@ -81,7 +83,7 @@ struct PhysicalOperatorConcept
 
 protected:
     /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext& executionCtx) const;
+    void setupChild(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
     void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void executeChild(ExecutionContext& executionCtx, Record& record) const;
@@ -117,7 +119,7 @@ struct PhysicalOperator
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
     void setChild(PhysicalOperator child);
 
-    void setup(ExecutionContext& executionCtx) const;
+    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void terminate(ExecutionContext& executionCtx) const;
@@ -176,7 +178,10 @@ private:
 
         void setChild(PhysicalOperator child) override { data.setChild(child); }
 
-        void setup(ExecutionContext& executionCtx) const override { data.setup(executionCtx); }
+        void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override
+        {
+            data.setup(executionCtx, engine);
+        }
 
         void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
 

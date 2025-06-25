@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <PhysicalOperator.hpp>
 
 #include <memory>
 #include <optional>
@@ -25,8 +26,8 @@
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <Engine.hpp>
 #include <ExecutionContext.hpp>
-#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -39,9 +40,9 @@ PhysicalOperatorConcept::PhysicalOperatorConcept(OperatorId existingId) : id(exi
 {
 }
 
-void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
-    setupChild(executionCtx);
+    setupChild(executionCtx, engine);
 }
 
 void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
@@ -64,11 +65,11 @@ void PhysicalOperatorConcept::execute(ExecutionContext& executionCtx, Record& re
     executeChild(executionCtx, record);
 }
 
-void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
     if (const auto child = getChild())
     {
-        child.value().setup(executionCtx);
+        child.value().setup(executionCtx, engine);
     }
 }
 void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -126,9 +127,9 @@ void PhysicalOperator::setChild(PhysicalOperator child)
     self->setChild(std::move(child));
 }
 
-void PhysicalOperator::setup(ExecutionContext& executionCtx) const
+void PhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
 {
-    self->setup(executionCtx);
+    self->setup(executionCtx, engine);
 }
 
 void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

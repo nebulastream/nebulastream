@@ -55,7 +55,7 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
         HashMapOptions hashMapOptions);
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

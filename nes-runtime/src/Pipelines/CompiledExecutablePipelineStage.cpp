@@ -53,7 +53,7 @@ void CompiledExecutablePipelineStage::execute(
 }
 
 nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
-CompiledExecutablePipelineStage::compilePipeline() const
+CompiledExecutablePipelineStage::compilePipeline(const nautilus::engine::NautilusEngine& engine) const
 {
     try
     {
@@ -71,8 +71,6 @@ CompiledExecutablePipelineStage::compilePipeline() const
             pipeline->getRootOperator().close(ctx, recordBuffer);
         };
         /// NOLINTEND(performance-unnecessary-value-param)
-
-        const nautilus::engine::NautilusEngine engine(options);
         return engine.registerFunction(compiledFunction);
     }
     catch (...)
@@ -101,8 +99,9 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->getRootOperator().setup(ctx);
-    compiledPipelineFunction = this->compilePipeline();
+    const nautilus::engine::NautilusEngine engine(options);
+    pipeline->getRootOperator().setup(ctx, engine);
+    compiledPipelineFunction = this->compilePipeline(engine);
 }
 
 }
