@@ -115,7 +115,7 @@ private:
 };
 
 /// Type-erased wrapper around InputFormatterTask
-class InputFormatterTaskPipeline final : public ExecutablePipelineStage
+class InputFormatterTaskPipeline
 {
 public:
     template <InputFormatterTaskType T>
@@ -125,28 +125,16 @@ public:
     {
     }
 
-    ~InputFormatterTaskPipeline() override = default;
+    ~InputFormatterTaskPipeline() = default;
 
-    void start(PipelineExecutionContext&) override { this->inputFormatterTask->startTask(); }
     /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
-    void stop(PipelineExecutionContext&) override { this->inputFormatterTask->stopTask(); }
+    void stop(PipelineExecutionContext&) { this->inputFormatterTask->stopTask(); }
+
     /// (concurrently) executes an InputFormatterTask.
     /// First, uses the concrete input formatter implementation to determine the indexes of all fields of all full tuples.
     /// Second, uses the SequenceShredder to find spanning tuples.
     /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
     /// process all complete tuples and trailing spanning tuple.
-    void execute(const Memory::TupleBuffer&, PipelineExecutionContext&) override
-    {
-        // /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
-        // if (rawTupleBuffer.getBufferSize() == 0)
-        // {
-        //     NES_WARNING("Received empty buffer in InputFormatterTask.");
-        //     return;
-        // }
-        //
-        // this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
-    }
-
     void scan(
         ExecutionContext& executionCtx,
         Nautilus::RecordBuffer& recordBuffer,
@@ -166,13 +154,12 @@ public:
             executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
     }
 
-    std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
+    std::ostream& toString(std::ostream& os) const { return this->inputFormatterTask->toString(os); }
 
     /// Describes what a InputFormatterTask that is in the InputFormatterTaskPipeline does (interface).
     struct InputFormatterTaskConcept
     {
         virtual ~InputFormatterTaskConcept() = default;
-        virtual void startTask() = 0;
         virtual void stopTask() = 0;
         virtual void scanTask(
             ExecutionContext& executionCtx,
@@ -190,7 +177,6 @@ public:
     struct InputFormatterTaskModel final : InputFormatterTaskConcept
     {
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : InputFormatterTask(std::move(inputFormatterTask)) { }
-        void startTask() override { InputFormatterTask.startTask(); }
         void stopTask() override { InputFormatterTask.stopTask(); }
         void scanTask(
             ExecutionContext& executionCtx,

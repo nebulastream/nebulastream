@@ -217,8 +217,6 @@ public:
     InputFormatterTask(InputFormatterTask&&) = default;
     InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
-    void startTask() { /* noop */ }
-
     void stopTask() const
     {
         /// If the InputFormatterTask needs to handle spanning tuples, it uses the SequenceShredder.
@@ -348,9 +346,14 @@ public:
         const size_t configuredBufferSize,
         ExecutionContext* executionCtx)
     {
-        inputFormatterTask->executeTask(RawTupleBuffer{*tupleBuffer}, *pec, fieldIndexFunctions->rawBufferFIF);
 
         thread_local SpanningTupleData spanningTupleData{};
+        if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
+        {
+            pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return &spanningTupleData;
+        }
+        inputFormatterTask->inputFormatIndexer->indexRawBuffer(fieldIndexFunctions->rawBufferFIF, RawTupleBuffer{*tupleBuffer}, inputFormatterTask->indexerMetaData);
 
         if (/*hasTupleDelimiter*/ fieldIndexFunctions->rawBufferFIF.getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
         {
@@ -551,20 +554,6 @@ public:
                 = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
             child.execute(executionCtx, record);
         }
-    }
-
-    void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec, FieldIndexFunctionType& fieldIndexFunction)
-    requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
-    {
-        /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
-        /// If not (should very rarely be the case), we put the task back.
-        /// After enough out-of-range requests, the SequenceShredder increases the size of its ring buffer.
-        if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
-        {
-            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-            return;
-        }
-        inputFormatIndexer->indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
     }
 
     std::ostream& taskToString(std::ostream& os) const
