@@ -409,7 +409,11 @@ public:
                 spanningTupleData))
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
-            auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getLeadingSpanningTuplePointer());
+            // Todo: get rid of the invoke call (analog for trailing)
+            auto recordPtr = nautilus::invoke(
+                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getLeadingSpanningTuplePointer(); },
+                spanningTupleData);
+            // Todo: figure out if tracing in 'readSpanningRecord' is sufficient (analog for trailing)
             auto record = spanningTupleData.value->getLeadingSpanningTupleFIF().readSpanningRecord(
                 projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
             child.execute(executionCtx, record);
@@ -432,7 +436,9 @@ public:
                 spanningTupleData))
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
-            auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getTrailingTuplePointer());
+            auto recordPtr = nautilus::invoke(
+                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getTrailingTuplePointer(); },
+                spanningTupleData);
             auto record = spanningTupleData.value->getTrailingSpanningTupleFIF().readSpanningRecord(
                 projections, recordPtr, recordIndex, indexerMetaData, parseFunctions);
             child.execute(executionCtx, record);
