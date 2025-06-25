@@ -89,12 +89,13 @@ private:
     [[nodiscard]] Record readNextRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
+        const nautilus::val<int8_t*>& recordBufferPtr,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const size_t configuredBufferSize,
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
     {
-        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData, configuredBufferSize, parseFunctions);
+        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordBufferPtr, recordIndex, metaData, configuredBufferSize, parseFunctions);
     }
 };
 }

@@ -91,14 +91,14 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadNextRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+        const Nautilus::RecordBuffer&,
+        const nautilus::val<int8_t*>& recordBufferPtr,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const size_t /*configuredBufferSize*/,
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions) const
     {
         Nautilus::Record record;
-        const auto bufferAddress = recordBuffer.getBuffer();
 
         // Todo: the 'this' pointer is probably only valid during interpretation or for the very first call.
         // .. on subsequent calls, we would require another 'this' pointer, since we created a new object
@@ -135,7 +135,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             /// Determine the address and size. Somehow parse the underlying field
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
-            const auto fieldAddress = recordBuffer.getBuffer() + fieldOffsetStart;
+            const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
 
             const auto parsedValue = nautilus::invoke(+[](const RawValueParser::ParseFunctionSignature*, const char* fieldAddress, const uint64_t fieldSize)
             {

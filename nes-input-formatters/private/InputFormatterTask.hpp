@@ -122,15 +122,17 @@ void processTuple(
 /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
 /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
 /// Lastly, formats the full spanning tuple.
-template <typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool IsFormattingRequired>
-void processSpanningTuple(
-    const std::span<const StagedBuffer> stagedBuffersSpan,
-    Memory::AbstractBufferProvider& bufferProvider,
-    Memory::TupleBuffer& formattedBuffer,
-    const SchemaInfo& schemaInfo,
-    const IndexerMetaData& indexerMetaData,
-    const InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, IsFormattingRequired>& inputFormatIndexer,
-    const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions)
+template <IndexerMetaDataType IndexerMetaData>
+bool processSpanningTuple(
+    const std::vector<StagedBuffer> stagedBuffersSpan,
+    int8_t* spanningTuplePointer, /// is of the right size
+    // Memory::AbstractBufferProvider& bufferProvider,
+    // Memory::TupleBuffer& formattedBuffer,
+    // const SchemaInfo& schemaInfo,
+    const IndexerMetaData& indexerMetaData
+    // const InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, IsFormattingRequired>& inputFormatIndexer,
+    // const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions
+)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
     /// If the buffers are not empty, there are at least three buffers
@@ -154,16 +156,20 @@ void processSpanningTuple(
     spanningTupleStringStream << indexerMetaData.getTupleDelimitingBytes();
 
     const std::string completeSpanningTuple(spanningTupleStringStream.str());
+
     const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * indexerMetaData.getTupleDelimitingBytes().size();
     if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
     {
-        auto fieldIndexFunction = FieldIndexFunctionType(bufferProvider);
-        lastBuffer.setSpanningTuple(completeSpanningTuple);
-        inputFormatIndexer.indexRawBuffer(fieldIndexFunction, lastBuffer.getRawTupleBuffer(), indexerMetaData);
-        processTuple<FieldIndexFunctionType>(
-            completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
-        formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+        memcpy(spanningTuplePointer, completeSpanningTuple.data(), completeSpanningTuple.size());
+        return true;
+        // auto fieldIndexFunction = FieldIndexFunctionType(bufferProvider);
+        // lastBuffer.setSpanningTuple(completeSpanningTuple);
+        // inputFormatIndexer.indexRawBuffer(fieldIndexFunction, lastBuffer.getRawTupleBuffer(), indexerMetaData);
+        // processTuple<FieldIndexFunctionType>(
+        //     completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
+        // formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
     }
+    return false;
 }
 
 
@@ -228,6 +234,105 @@ public:
         }
     }
 
+    class SpanningTupleData
+    {
+    public:
+        SpanningTupleData() = default;
+
+        void setAllocatedMemory(int8_t* spanningTuplePtr) { this->spanningTuplePtr = spanningTuplePtr; }
+        void increaseLeadingSpanningTupleSize(const size_t additionalBytes) { leadingSpanningTupleSizeInBytes += additionalBytes; }
+        void increaseTrailingSpanningTupleSize(const size_t additionalBytes) { trailingSpanningTupleSizeInBytes += additionalBytes; }
+
+        size_t getSizeOfLeadingSpanningTuple() const { return leadingSpanningTupleSizeInBytes; }
+        size_t getSizeOfTrailingSpanningTuple() const { return trailingSpanningTupleSizeInBytes; }
+        size_t getTotalSize() const { return leadingSpanningTupleSizeInBytes + trailingSpanningTupleSizeInBytes; }
+
+        int8_t* getLeadingSpanningTuplePointer() const { return spanningTuplePtr; }
+        int8_t* getTrailingTuplePointer() const { return spanningTuplePtr + trailingSpanningTupleSizeInBytes; }
+
+        bool hasLeadingSpanningTuple() const { return leadingSpanningTupleSizeInBytes > 0; }
+        bool hasTrailingSpanningTuple() const { return trailingSpanningTupleSizeInBytes > 0; }
+
+    private:
+        int8_t* spanningTuplePtr = nullptr;
+        size_t leadingSpanningTupleSizeInBytes = 0;
+        size_t trailingSpanningTupleSizeInBytes = 0;
+    };
+
+    static void calculateSizeOfSpanningTuples(
+        SpanningTupleData& spanningTupleData,
+        const bool hasTupleDelimiter,
+        const std::vector<StagedBuffer>& spanningTupleBuffers,
+        const size_t indexOfSequenceNumberInStagedBuffers,
+        const size_t sizeOfTupleDelimiterInBytes)
+    {
+        // size_t sizeOfSpanningTuple = 2 * sizeOfTupleDelimiterInBytes;
+        if (hasTupleDelimiter)
+        {
+            const bool hasLeadingST = indexOfSequenceNumberInStagedBuffers != 0;
+            const bool hasTrailingST = indexOfSequenceNumberInStagedBuffers < spanningTupleBuffers.size() - 1;
+            INVARIANT(hasLeadingST or hasTrailingST, "cannot calculate size of spanning tuple for buffers without spanning tuples");
+            if (hasLeadingST and not hasTrailingST)
+            {
+                spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
+                spanningTupleData.increaseLeadingSpanningTupleSize(
+                    spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers - 1; ++i)
+                {
+                    spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
+                }
+                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+                return;
+            }
+            if (not hasLeadingST and hasTrailingST)
+            {
+                spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
+                spanningTupleData.increaseTrailingSpanningTupleSize(
+                    spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                for (size_t i = indexOfSequenceNumberInStagedBuffers; i < spanningTupleBuffers.size() - 1; ++i)
+                {
+                    spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
+                }
+                spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+                return;
+            }
+            if (hasLeadingST and hasTrailingST)
+            {
+                spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
+                spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
+                /// Size of leading spanning tuple
+                spanningTupleData.increaseLeadingSpanningTupleSize(
+                    spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers - 1; ++i)
+                {
+                    spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
+                }
+                spanningTupleData.increaseTrailingSpanningTupleSize(
+                    spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getLeadingBytes().size());
+
+                /// Size of trailing spanning tuple
+                spanningTupleData.increaseTrailingSpanningTupleSize(
+                    spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                for (size_t i = indexOfSequenceNumberInStagedBuffers; i < spanningTupleBuffers.size() - 1; ++i)
+                {
+                    spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
+                }
+                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+                return;
+            }
+        }
+        else
+        {
+            spanningTupleData.increaseLeadingSpanningTupleSize(
+                spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+            spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+            for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
+            {
+                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
+            }
+        }
+    }
+
     void scanTask(
         ExecutionContext& executionCtx,
         Nautilus::RecordBuffer& recordBuffer,
@@ -247,49 +352,164 @@ public:
         /// call open on all child operators
         child.open(executionCtx, recordBuffer);
 
-        auto fieldIndexFunction = FieldIndexFunctionType(*executionCtx.pipelineContext.value->getBufferManager());
-        nautilus::invoke(
+        // Todo: Wrap spanning tuples in struct and return pointer to struct and decompose that struct
+        auto leadingSpanningTupleFIF = nautilus::invoke(
+            +[](const PipelineExecutionContext* pec)
+            {
+                thread_local FieldIndexFunctionType threadLocalLeadingFIF = FieldIndexFunctionType(*pec->getBufferManager());
+                return &threadLocalLeadingFIF;
+            },
+            executionCtx.pipelineContext);
+
+        auto trailingSpanningTupleFIF = nautilus::invoke(
+            +[](const PipelineExecutionContext* pec)
+            {
+                thread_local FieldIndexFunctionType threadLocalTrailingFIF = FieldIndexFunctionType(*pec->getBufferManager());
+                return &threadLocalTrailingFIF;
+            },
+            executionCtx.pipelineContext);
+
+        auto rawBufferSpanningTupleFIF = nautilus::invoke(
+            +[](const PipelineExecutionContext* pec)
+            {
+                thread_local FieldIndexFunctionType threadLocalRawBufferFIF = FieldIndexFunctionType(*pec->getBufferManager());
+                return &threadLocalRawBufferFIF;
+            },
+            executionCtx.pipelineContext);
+
+        auto spanningTupleData = nautilus::invoke(
             +[](const Memory::TupleBuffer* tupleBuffer,
                 PipelineExecutionContext* pec,
                 InputFormatterTask* inputFormatterTask,
-                FieldIndexFunctionType* fieldIndexFunction)
-            { inputFormatterTask->executeTask(RawTupleBuffer{*tupleBuffer}, *pec, *fieldIndexFunction); },
+                FieldIndexFunctionType* leadingSTFieldIndexFunction,
+                FieldIndexFunctionType* trailingSTFieldIndexFunction,
+                FieldIndexFunctionType* rawBufferFieldIndexFunction,
+                const size_t configuredBufferSize,
+                ExecutionContext* executionCtx)
+            {
+                inputFormatterTask->executeTask(RawTupleBuffer{*tupleBuffer}, *pec, *rawBufferFieldIndexFunction);
+
+                thread_local SpanningTupleData spanningTupleData{};
+
+                if (/*hasTupleDelimiter*/ rawBufferFieldIndexFunction->getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
+                {
+                    const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers]
+                        = inputFormatterTask->sequenceShredder->processSequenceNumber<true>(
+                            StagedBuffer{
+                                RawTupleBuffer{*tupleBuffer},
+                                tupleBuffer->getNumberOfTuples(), /// size in bytes
+                                rawBufferFieldIndexFunction->getOffsetOfFirstTupleDelimiter(),
+                                rawBufferFieldIndexFunction->getOffsetOfLastTupleDelimiter()},
+                            tupleBuffer->getSequenceNumber().getRawValue());
+
+                    if (stagedBuffers.size() <= 1)
+                    {
+                        return &spanningTupleData;
+                    }
+
+                    calculateSizeOfSpanningTuples(
+                        spanningTupleData,
+                        true,
+                        stagedBuffers,
+                        indexOfSequenceNumberInStagedBuffers,
+                        inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
+                    spanningTupleData.setAllocatedMemory(
+                        executionCtx->allocateMemory(nautilus::val<size_t>(spanningTupleData.getTotalSize())).value);
+
+                    if (spanningTupleData.hasLeadingSpanningTuple())
+                    {
+                        // Todo: don't return bool from 'processSpanningTuple'? <-- should be guaranteed at this point
+                        if (processSpanningTuple<IndexerMetaData>(
+                                stagedBuffers,
+                                spanningTupleData.getLeadingSpanningTuplePointer(),
+                                inputFormatterTask->indexerMetaData))
+                        {
+                            // Todo: create RawTupleBuffer from spanningTupleData pointer and pass to inputFormatIndexer
+                            inputFormatterTask->inputFormatIndexer->indexRawBuffer(
+                                *leadingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()), spanningTupleData.getSizeOfLeadingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                        }
+                    }
+                    if (spanningTupleData.hasTrailingSpanningTuple())
+                    {
+                        if (processSpanningTuple<IndexerMetaData>(
+                                stagedBuffers, spanningTupleData.getTrailingTuplePointer(), inputFormatterTask->indexerMetaData))
+                        {
+                            inputFormatterTask->inputFormatIndexer->indexRawBuffer(
+                                *trailingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getTrailingTuplePointer()), spanningTupleData.getSizeOfTrailingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                        }
+                    }
+                }
+                else
+                {
+                    const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers]
+                        = inputFormatterTask->sequenceShredder->processSequenceNumber<false>(
+                            StagedBuffer{
+                                RawTupleBuffer{*tupleBuffer},
+                                tupleBuffer->getNumberOfTuples(), /// size in bytes
+                                rawBufferFieldIndexFunction->getOffsetOfFirstTupleDelimiter(),
+                                rawBufferFieldIndexFunction->getOffsetOfLastTupleDelimiter()},
+                            tupleBuffer->getSequenceNumber().getRawValue());
+
+                    if (stagedBuffers.size() < 3)
+                    {
+                        return &spanningTupleData;
+                    }
+
+                    calculateSizeOfSpanningTuples(
+                        spanningTupleData,
+                        true,
+                        stagedBuffers,
+                        indexOfSequenceNumberInStagedBuffers,
+                        inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
+                    spanningTupleData.setAllocatedMemory(
+                        executionCtx->allocateMemory(nautilus::val<size_t>(spanningTupleData.getTotalSize())).value);
+                    if (spanningTupleData.hasLeadingSpanningTuple())
+                    {
+                        if (processSpanningTuple<IndexerMetaData>(
+                                stagedBuffers,
+                                spanningTupleData.getLeadingSpanningTuplePointer(),
+                                inputFormatterTask->indexerMetaData))
+                        {
+                            inputFormatterTask->inputFormatIndexer->indexRawBuffer(
+                                *leadingSTFieldIndexFunction, RawTupleBuffer{std::bit_cast<const char*>(spanningTupleData.getLeadingSpanningTuplePointer()), spanningTupleData.getSizeOfLeadingSpanningTuple()}, inputFormatterTask->indexerMetaData);
+                        }
+                    }
+                }
+                return &spanningTupleData;
+            },
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
             nautilus::val<InputFormatterTask*>(this),
-            nautilus::val<FieldIndexFunctionType*>{&fieldIndexFunction});
+            leadingSpanningTupleFIF,
+            trailingSpanningTupleFIF,
+            rawBufferSpanningTupleFIF,
+            nautilus::val<size_t>(configuredBufferSize),
+            nautilus::val<ExecutionContext*>(&executionCtx));
 
-        // [x] 1. change lowering so that we pick the new scan operator, instead of the solo-input-formatter-task-pipeline
-        // [ ] 2. extend FieldOffsets to support nautilus functions
-        //      - requires 'readRecord' <-- how to do that?
-        //      - tracing! assemble a record (slow in interpreted mode), but will boil down to field accesses in compiled mode
-        // [x] 3. call proxy function to access c++ functions
-        // [ ] 4. then create loop like below (native)
-        //      - call readNextRecord on FieldOffsets FieldIndexFunction, instead of native
-
-        /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
-
-        // Todo: resolve spanning tuples
-        ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
-        if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
+        // Todo: the below actions must be traced!
+        if (spanningTupleData.value->hasLeadingSpanningTuple())
         {
-            /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
-            /// in its raw input buffer.
-            // processRawBufferWithTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
-            NES_DEBUG("with case");
-            // Todo: need to return nautilus val
-            for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(fieldIndexFunction.getTotalNumberOfTuples()); i = i + 1_u64)
-            {
-                auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
-                child.execute(executionCtx, record);
-            }
+            auto recordIndex = nautilus::val<uint64_t>(0);
+            // Todo: must pass pointers to spanning tuples here
+            auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getLeadingSpanningTuplePointer());
+            auto record = leadingSpanningTupleFIF.value->readNextRecord(
+                projections, recordBuffer, recordPtr, recordIndex, indexerMetaData, configuredBufferSize, parseFunctions);
+            child.execute(executionCtx, record);
         }
-        else
+        for (nautilus::val<uint64_t> i = 0_u64; i < nautilus::val<uint64_t>(rawBufferSpanningTupleFIF.value->getTotalNumberOfTuples());
+             i = i + 1_u64)
         {
-            /// If the buffer does not delimit a single tuple, it may still connect two buffers that delimit tuples and therefore comple a
-            /// spanning tuple.
-            // processRawBufferWithoutTupleDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
-            NES_DEBUG("without case");
+            auto record = rawBufferSpanningTupleFIF.value->readNextRecord(
+                projections, recordBuffer, recordBuffer.getBuffer(), i, indexerMetaData, configuredBufferSize, parseFunctions);
+            child.execute(executionCtx, record);
+        }
+        if (spanningTupleData.value->hasTrailingSpanningTuple())
+        {
+            auto recordIndex = nautilus::val<uint64_t>(0);
+            auto recordPtr = nautilus::val<int8_t*>(spanningTupleData.value->getTrailingTuplePointer());
+            auto record = trailingSpanningTupleFIF.value->readNextRecord(
+                projections, recordBuffer, recordPtr, recordIndex, indexerMetaData, configuredBufferSize, parseFunctions);
+            child.execute(executionCtx, record);
         }
     }
 
@@ -321,7 +541,8 @@ public:
         auto fieldIndexFunction = FieldIndexFunctionType();
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
-            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData, configuredBufferSize, parseFunctions);
+            auto record
+                = fieldIndexFunction.readNextRecord(projections, recordBuffer, recordBuffer.getBuffer(), i, indexerMetaData, configuredBufferSize, parseFunctions);
             child.execute(executionCtx, record);
         }
     }
@@ -341,7 +562,7 @@ public:
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
         // auto fieldIndexFunction = FieldIndexFunctionType(*pec.getBufferManager());
         inputFormatIndexer->indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
-        //
+
         // /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
         // ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
         // if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < rawBuffer.getBufferSize())
@@ -466,10 +687,10 @@ private:
         }
 
         /// 2. process tuples in buffer
-        if (fieldIndexFunction.getTotalNumberOfTuples() > 0)
-        {
-            parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec);
-        }
+        // if (fieldIndexFunction.getTotalNumberOfTuples() > 0)
+        // {
+        //     parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec);
+        // }
 
         /// 3. process trailing spanning tuple if required
         if (/* hasTrailingSpanningTuple */ indexOfSequenceNumberInStagedBuffers < (stagedBuffers.size() - 1))

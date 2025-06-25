@@ -51,6 +51,8 @@ FormatScanPhysicalOperator::FormatScanPhysicalOperator(
 
 void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    // implement: use setup to set InputFormatterTaskPipeline in operatorHandler and initiate stuff like field offsets, etc.
+    // -> if there are lifetime issues
     this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize, isFirstOperatorAfterSource);
 }
 

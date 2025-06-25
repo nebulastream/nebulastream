@@ -81,11 +81,16 @@ public:
     explicit RawTupleBuffer(Memory::TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer)), bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getNumberOfTuples()) { };
 
+    // Todo: make private
+    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple)
+        : rawBuffer(Memory::TupleBuffer{}), bufferView(rawDataPtr, sizeOfSpanningTuple) { };
+
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer(const RawTupleBuffer& other) = default;
     RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
 
+    // Todo: somehow avoid problems when creating RawTupleBuffer from pointer
     [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
     [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept { return rawBuffer.getSequenceNumber(); }
@@ -157,7 +162,8 @@ public:
             return;
         }
 
-        this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
+        this->inputFormatterTask->scanTask(
+            executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
     }
 
     std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
