@@ -119,7 +119,14 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetEndAddress);
 
             /// Determine the address and size. Somehow parse the underlying field
-            const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
+            auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
+            // Todo: find better way to only deduct size of field delimiter if field is last field
+            if (i < metaData.getSchema().getNumberOfFields() - 1)
+            {
+                fieldSize -= nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
+            }
+
+
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
 
             const auto& currentField = metaData.getSchema().getFieldAt(i);
