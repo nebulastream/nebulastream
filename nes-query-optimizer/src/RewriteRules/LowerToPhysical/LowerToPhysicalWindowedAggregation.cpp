@@ -201,8 +201,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         pageSize,
         numberOfBuckets);
 
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());
+    auto sliceAndWindowStore
+        = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
     auto handler = std::make_shared<AggregationOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
     auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
     auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
