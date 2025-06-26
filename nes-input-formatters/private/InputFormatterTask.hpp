@@ -157,7 +157,7 @@ public:
     {
     public:
         // Todo: allocate fixSizeBufferPool with 1 buffer and buffer size that matches exactly required number of indexes for spanning tuples?
-        explicit SpanningTupleData(Memory::AbstractBufferProvider& bufferProvider)
+        explicit SpanningTupleData(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
             : leadingSpanningTupleFIF(FieldIndexFunctionType(bufferProvider))
             , trailingSpanningTupleFIF(FieldIndexFunctionType(bufferProvider))
             , rawBufferFIF(FieldIndexFunctionType(bufferProvider)) { };
@@ -271,10 +271,9 @@ public:
         const size_t configuredBufferSize,
         Arena* arenaRef)
     {
-        std::thread::id this_id = std::this_thread::get_id();
-        std::cout << "In proxy: " << this_id << std::endl;
-
-        thread_local SpanningTupleData spanningTupleData{*pec->getBufferManager()};
+        /// We need to copy assign a 'new' SpanningTupleData, since it is thread_local and not (re)constructed on all iterations but the first
+        thread_local auto spanningTupleData = SpanningTupleData{pec->getBufferManager()};
+        spanningTupleData = SpanningTupleData{pec->getBufferManager()};
         if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
             pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);
@@ -306,8 +305,7 @@ public:
                 stagedBuffers,
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
-            spanningTupleData.setAllocatedMemory(
-                arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
+            spanningTupleData.setAllocatedMemory(arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
 
             if (spanningTupleData.hasLeadingSpanningTuple())
             {
@@ -354,8 +352,7 @@ public:
                 stagedBuffers,
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
-            spanningTupleData.setAllocatedMemory(
-                arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
+            spanningTupleData.setAllocatedMemory(arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
             if (spanningTupleData.hasLeadingSpanningTuple())
             {
                 processSpanningTuple<IndexerMetaData>(
@@ -391,19 +388,21 @@ public:
         /// call open on all child operators
         child.open(executionCtx, recordBuffer);
 
-        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
-        std::thread::id this_id = std::this_thread::get_id();
-        std::cout << "before proxy: " << this_id << std::endl;
+        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist;
         auto spanningTupleData = nautilus::invoke(
             indexTuplesProxy,
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
-            nautilus::val<InputFormatterTask*>(this), //Todo: figure out if works (might though, because the address is tied to the (pipeline) operator and thus l'stable'
+            nautilus::val<InputFormatterTask*>(
+                this), //Todo: figure out if works (might though, because the address is tied to the (pipeline) operator and thus l'stable'
             nautilus::val<size_t>(configuredBufferSize),
             executionCtx.pipelineMemoryProvider.arena.arenaRef);
 
-        // Todo: replace invokes with smarter approach? <-- can we somehow trace writing the below there values?
-        // .. can't 'hardcode' thread_local address into traced code, since other threads will have other thread_local state
+        // Todo: could do a single invoke that returns all three below values (bool, record, leadingFIF) then if case becomes just the last two lines
+        // Or may allow to trace specific functions/members of SpanningTupleData
+        // -> could call function like:
+        // spanningTupleData.value->traceLeadingST()
+
         /// parse leading spanning tuple if exists
         if (const auto hasLeadingST = nautilus::invoke(
                 +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->hasLeadingSpanningTuple(); },
@@ -420,7 +419,8 @@ public:
                 spanningTupleData);
 
             // Todo: we need to access 'readSpanningRecord' using 'value' here, since it is a wrapped nautilus val pointer
-            auto record = leadingFieldAccessFunction.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFieldAccessFunction);
+            auto record = leadingFieldAccessFunction.value->readSpanningRecord(
+                projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFieldAccessFunction);
             child.execute(executionCtx, record);
         }
 
@@ -430,8 +430,7 @@ public:
             spanningTupleData);
 
         auto rawFieldAccessFunction = nautilus::invoke(
-            +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getRawBufferFIF(); },
-            spanningTupleData);
+            +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getRawBufferFIF(); }, spanningTupleData);
 
         for (nautilus::val<uint64_t> i = 0_u64; i < totalNumberOfTuples; i = i + 1_u64)
         {
@@ -488,8 +487,7 @@ public:
         auto fieldIndexFunction = FieldIndexFunctionType();
         for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
         {
-            auto record
-                = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData);
+            auto record = fieldIndexFunction.readNextRecord(projections, recordBuffer, i, indexerMetaData);
             child.execute(executionCtx, record);
         }
     }

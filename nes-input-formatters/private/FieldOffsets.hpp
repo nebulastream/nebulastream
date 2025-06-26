@@ -180,7 +180,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
 public:
     // FieldOffsets() = default;
-    explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
+    explicit FieldOffsets(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : bufferProvider(std::move(bufferProvider)) { };
     ~FieldOffsets() = default;
 
     /// InputFormatter interface functions:
@@ -196,23 +196,23 @@ public:
         if constexpr (NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
         {
             this->maxNumberOfTuplesInFormattedBuffer
-                = (this->bufferProvider.getBufferSize()) / ((numberOfFieldsInSchema + 1) * sizeof(FieldOffsetsType));
+                = (this->bufferProvider->getBufferSize()) / ((numberOfFieldsInSchema + 1) * sizeof(FieldOffsetsType));
             this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema + 1;
         }
         else
         {
             /// Each field requires two offsets.
             this->maxNumberOfTuplesInFormattedBuffer
-                = (this->bufferProvider.getBufferSize()) / ((numberOfFieldsInSchema + 1) * (2 * sizeof(FieldOffsetsType)));
+                = (this->bufferProvider->getBufferSize()) / ((numberOfFieldsInSchema + 1) * (2 * sizeof(FieldOffsetsType)));
             this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema;
         }
         PRECONDITION(
             this->maxNumberOfTuplesInFormattedBuffer != 0,
             "The buffer is of size {}, which is not large enough to represent a single tuple.",
-            this->bufferProvider.getBufferSize());
+            this->bufferProvider->getBufferSize());
         this->maxIndex = ((numberOfOffsetsPerTuple)*maxNumberOfTuplesInFormattedBuffer);
         this->totalNumberOfTuples = 0;
-        this->offsetBuffers.emplace_back(this->bufferProvider.getBufferBlocking());
+        this->offsetBuffers.emplace_back(this->bufferProvider->getBufferBlocking());
     }
 
     /// Assures that there is space to write one more tuple and returns a pointer to write the field offsets (of one tuple) to.
@@ -278,7 +278,8 @@ private:
     std::vector<FieldOffsetsBuffer<typename FieldOffsetTypeSelector<NumOffsetsPerField>::type>> offsetBuffers;
     /// The InputFormatterTask guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance, since the
     /// InputFormatterTask constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets the ABP as an argument
-    Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    // Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     /// Sets the metadata for the current buffer, uses the buffer provider to get a new buffer.
     void allocateNewChildBuffer()
@@ -290,7 +291,7 @@ private:
             (numberOfOffsetsPerTuple));
 
         totalNumberOfTuples += maxNumberOfTuplesInFormattedBuffer;
-        this->offsetBuffers.emplace_back(bufferProvider.getBufferBlocking());
+        this->offsetBuffers.emplace_back(bufferProvider->getBufferBlocking());
         this->currentIndex = 0;
     }
 };

@@ -1,0 +1,47 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+Source stream UINT64 id FLOAT64 value UINT64 timestamp
+1,1.3,1000
+2,1.3,1001
+3,1.3,1002
+4,2.3,2000
+5,19.3,19000
+6,20.3,20000
+7,21.3,21000
+
+SINK sinkFloatValue UINT64 stream$id FLOAT64 stream$value
+
+SELECT id, value FROM stream WHERE id < UINT64(4) INTO sinkFloatValue
+----
+1 1.3
+2 1.3
+3 1.3
+
+
+Source streamWithText UINT64 id VARSIZED value
+1,test1
+4,test2
+12,test1
+
+SINK sinkTextValue UINT64 streamWithText$id VARSIZED streamWithText$value
+
+SELECT id, value FROM streamWithText WHERE id < UINT64(4) INTO sinkTextValue
+----
+1 test1
+
+Source streamWithTextAndTimestamp UINT64 id VARSIZED value UINT64 timestamp
+1,test1,1000
+4,test2,1002
+12,test1,1001
+
+SINK sinkTextValueNoTimestamp UINT64 streamWithTextAndTimestamp$id VARSIZED streamWithTextAndTimestamp$value
+SELECT id, value FROM streamWithTextAndTimestamp WHERE id < UINT64(4) INTO sinkTextValueNoTimestamp
+----
+1 test1
+
+SINK sinkTextTimestamp UINT64 streamWithTextAndTimestamp$id VARSIZED streamWithTextAndTimestamp$value UINT64 streamWithTextAndTimestamp$timestamp
+SELECT id, value, timestamp FROM streamWithTextAndTimestamp WHERE id < UINT64(4) INTO sinkTextTimestamp
+----
+1 test1 1000
