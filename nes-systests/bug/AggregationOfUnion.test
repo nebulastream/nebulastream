@@ -1,0 +1,48 @@
+# name: bug/AggregationOfUnion.test
+# description: Currently, the pipelining phase creates a scenario where the query would share the WindowAggregationBuild,
+#               but still have multiple origin IDs. This prevents the single terminate from triggering the release of pending slices.
+#               As you can see in the dump of the pipelines. Pipeline 2, which contains the aggregation build, is shared and thus will be
+#               terminated only once. What we want is to duplicate the AggregationBuild as the emit for both source pipelines.
+#               The issue is tracked under TODO #913
+# groups: [Union]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+
+Source stream2 UINT64 id UINT64 value UINT64 timestamp
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
+
+Source stream3 UINT64 id UINT64 id2 UINT64 value UINT64 timestamp
+1,2,2,3000
+1,2,2,3001
+1,2,2,3002
+1,2,2,3003
+
+SINK sink4 UINT64 max_id
+SELECT MAX(id) as max_id
+FROM (
+    SELECT * FROM stream UNION SELECT * FROM stream2
+)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sink4
+----
+1
+2
+
+SINK sink5 UINT64 max_id
+SELECT MAX(id) as max_id
+FROM (
+    SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2)
+)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sink5
+----
+1
+2
+
