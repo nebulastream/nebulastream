@@ -59,6 +59,14 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
     opHandler->triggerAllWindows(piplineContext);
 }
 
+/// The slice store needs to know in how many pipelines this operator appears, and consequently, how many terminations it will receive
+void registerActivePipeline(OperatorHandler* ptrOpHandler)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
+}
+
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
@@ -80,8 +88,9 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext&) const {
-    /*noop*/
+void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const {
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(registerActivePipeline, operatorHandlerMemRef);
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

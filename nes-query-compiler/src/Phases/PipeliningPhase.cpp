@@ -171,7 +171,6 @@ void buildPipelineRecursively(
             {
                 currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
             }
-            pipelineMap.emplace(opId, currentPipeline);
             for (auto& child : opWrapper->getChildren())
             {
                 buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
