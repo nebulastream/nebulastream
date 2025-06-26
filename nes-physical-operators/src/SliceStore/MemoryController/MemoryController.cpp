@@ -36,7 +36,7 @@ MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, co
     {
         /// Subtract number of worker threads to be able to create file readers at any time
         this->memoryControllerInfo.maxNumFileDescriptors
-            = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors - numWorkerThreads);
+            = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors) - numWorkerThreads;
     }
     limiter = std::make_unique<AtomicLimiter>(this->memoryControllerInfo.maxNumFileDescriptors);
 }
@@ -121,30 +121,20 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     return fileWriter;
 }
 
-std::shared_ptr<FileReader> MemoryController::getFileReader(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide, const bool forceRead)
+std::shared_ptr<FileReader>
+MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
-    (void)forceRead;
-
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     auto& writerMap = fileWriters[threadId.getRawValue()];
     const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
-        /// Return immediately if there is no capacity to create a new file descriptor
-        /*if (not(forceRead ? limiter->acquireToken() : limiter->tryAcquireToken()))
-        {
-            return nullptr;
-        }*/
-
         writerMap.erase(it);
         const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
             filePath,
             [this] { return memoryPool.allocateReadBuffer(); },
             [this](char* buf) { memoryPool.deallocateReadBuffer(buf); },
-            //[this] { limiter->decrementTokenCounter(); },
-            [] {},
             memoryControllerInfo.fileDescriptorBufferSize);
     }
 
@@ -185,18 +175,10 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 void MemoryController::removeFileSystem(
     const std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it, const WorkerThreadId threadId)
 {
-    //limiter->acquireToken();
-
     /// Files are deleted in FileReader destructor
     const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
     fileWriters[threadId.getRawValue()].erase(it);
-    const FileReader fileReader(
-        filePath,
-        [] { return nullptr; },
-        [](char*) {},
-        //[this] { limiter->decrementTokenCounter(); },
-        [] {},
-        0);
+    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, 0);
 }
 
 MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads)
