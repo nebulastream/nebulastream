@@ -122,8 +122,7 @@ private:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         const std::vector<WorkerThreadId>& threadIds,
-        JoinBuildSideType joinBuildSide,
-        bool forceRead) const;
+        JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
