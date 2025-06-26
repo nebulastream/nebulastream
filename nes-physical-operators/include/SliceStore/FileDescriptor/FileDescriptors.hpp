@@ -40,6 +40,8 @@ public:
         size_t bufferSize);
     ~FileWriter();
 
+    bool initialize();
+
     boost::asio::awaitable<void> write(const void* data, size_t size);
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
     boost::asio::awaitable<uint32_t> writeVarSized(const void* data);
@@ -74,6 +76,7 @@ public:
         const std::string& filePath,
         const std::function<char*()>& allocate,
         const std::function<void(char*)>& deallocate,
+        const std::function<void()>& callInDestructor,
         size_t bufferSize);
     ~FileReader();
 
@@ -99,6 +102,7 @@ private:
     std::string filePath;
     std::function<char*()> allocate;
     std::function<void(char*)> deallocate;
+    std::function<void()> callInDestructor;
 };
 
 }
