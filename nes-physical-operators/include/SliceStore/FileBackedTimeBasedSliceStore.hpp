@@ -14,18 +14,10 @@
 
 #pragma once
 
-#include <atomic>
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <optional>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/MemoryController/MemoryController.hpp>
-#include <SliceStore/Slice.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
-#include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -35,14 +27,14 @@ namespace NES
 enum class FileOperation : uint8_t
 {
     READ,
-    WRITE
+    WRITE,
+    FORCE_WRITE
 };
 
 struct SliceStoreInfo
 {
     uint64_t lowerMemoryBound;
     uint64_t upperMemoryBound;
-    uint64_t fileDescriptorBufferSize;
     uint64_t maxNumWatermarkGaps;
     uint64_t maxNumSequenceNumbers;
     uint64_t minReadStateSize;
@@ -50,13 +42,6 @@ struct SliceStoreInfo
     uint64_t fileOperationTimeDelta;
     FileLayout fileLayout;
     bool withPrediction;
-};
-
-struct MemoryControllerInfo
-{
-    std::filesystem::path workingDir;
-    QueryId queryId;
-    OriginId outputOriginId;
 };
 
 struct UpdateSlicesMetaData
@@ -123,11 +108,21 @@ private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesProactiveWithPrediction(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
-    void readSliceFromFiles(
-        const std::shared_ptr<Slice>& slice,
+    boost::asio::awaitable<void> writeSliceToFile(
+        boost::asio::io_context& ioCtx,
+        const std::shared_ptr<NLJSlice>& nljSlice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        JoinBuildSideType joinBuildSide);
+        WorkerThreadId threadId,
+        JoinBuildSideType joinBuildSide,
+        bool forceWrite) const;
+
+    void readSliceFromFiles(
+        const std::shared_ptr<NLJSlice>& nljSlice,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        const std::vector<WorkerThreadId>& threadIds,
+        JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
@@ -159,10 +154,8 @@ private:
     std::pair<double, double> readExecTimeFunction;
 
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
-    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory. TODO
+    /// pool used by them. The map keeps track of which slices were requested by the build operator since the last call to updateSlices.
     std::shared_ptr<MemoryController> memoryController;
-    std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, bool>> slicesInMemory;
-    std::vector<std::mutex> slicesInMemoryMutexes;
     std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
     SliceStoreInfo sliceStoreInfo;
