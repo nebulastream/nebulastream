@@ -33,11 +33,6 @@ static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indent
 {
     const std::string indent(indentLevel * 2, ' ');
     os << indent << *pipeline << "\n";
-    for (const auto& succ : pipeline->getSuccessors())
-    {
-        os << indent << "Successor Pipeline:\n";
-        os << indent << "  " << *succ << "\n";
-    }
 }
 
 std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
