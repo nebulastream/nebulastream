@@ -42,7 +42,7 @@ struct SlicesAndState
 class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
+    DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide);
 
     ~DefaultTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
@@ -53,6 +53,7 @@ public:
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
+    void incrementNumberOfInputPipelines() override;
     uint64_t getWindowSize() const override;
 
 private:
@@ -66,10 +67,9 @@ private:
     /// and increases for each window info.
     std::atomic<SequenceNumber::Underlying> sequenceNumber;
 
-    /// Depending on the number of origins, we have to handle the slices differently.
-    /// For example, in getAllNonTriggeredSlices(), we have to wait until all origins have called this method to ensure correctness
-    /// The numberOfActiveOrigins shall be guarded by the windows Mutex.
-    uint64_t numberOfActiveOrigins;
+    /// If a window build operator appears in multiple pipelines, it may get terminated multiple times
+    /// We need to track how many input pipelines have not terminated yet, to only release pending slices after the last termination
+    std::atomic<uint64_t> numberOfActiveInputPipelines;
 };
 
 }
