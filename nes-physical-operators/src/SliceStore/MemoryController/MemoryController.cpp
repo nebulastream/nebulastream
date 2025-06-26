@@ -19,26 +19,15 @@
 namespace NES
 {
 
-MemoryController::MemoryController(const uint64_t numWorkerThreads, MemoryControllerInfo memoryControllerInfo)
-    : fileWriterCount(0), memoryControllerInfo(std::move(memoryControllerInfo))
+MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, const uint64_t numWorkerThreads)
+    : memoryControllerInfo(std::move(memoryControllerInfo))
+    , memoryPool(this->memoryControllerInfo.fileDescriptorBufferSize, this->memoryControllerInfo.numberOfBuffersPerWorker, numWorkerThreads)
+    , fileWriterCount(0)
 {
-    if (memoryControllerInfo.fileDescriptorBufferSize > 0)
-    {
-        const auto writePoolSize = std::max(1024 * numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
-        const auto readPoolSize = std::max(1024 * numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+    /// Memory pool adjusts the buffer size to account for separate key and payload buffers
+    this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
 
-        writeMemoryPool.reserve(memoryControllerInfo.fileDescriptorBufferSize * writePoolSize);
-        for (size_t i = 0; i < writePoolSize; ++i)
-        {
-            freeWriteBuffers.push_back(writeMemoryPool.data() + i * memoryControllerInfo.fileDescriptorBufferSize);
-        }
-        readMemoryPool.reserve(memoryControllerInfo.fileDescriptorBufferSize * readPoolSize);
-        for (size_t i = 0; i < readPoolSize; ++i)
-        {
-            freeReadBuffers.push_back(readMemoryPool.data() + i * memoryControllerInfo.fileDescriptorBufferSize);
-        }
-    }
-
+    /// We need one additional thread for initializing the slice store, i.e. measuring execution times
     allFileWriters.resize(numWorkerThreads + 1);
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
@@ -70,10 +59,10 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const bool,
     const bool checkExistence)
 {
-    //if (fileWriterCount % 1000 == 0)
+    /*if (fileWriterCount % 1000 == 0)
     {
-        //std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
-    }
+        std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
+    }*/
     if (std::cmp_greater_equal(fileWriterCount.load(), fileDescriptorLimit))
     {
         std::cout << "File descriptor limit is reached\n";
@@ -110,8 +99,8 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx,
         filePath,
-        [this] { return allocateWriteBuffer(); },
-        [this](char* buf) { deallocateWriteBuffer(buf); },
+        [this] { return memoryPool.allocateWriteBuffer(); },
+        [this](char* buf) { memoryPool.deallocateWriteBuffer(buf); },
         memoryControllerInfo.fileDescriptorBufferSize);
     if (not fileWriter->initialize())
     {
@@ -135,8 +124,8 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
         const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
             filePath,
-            [this] { return allocateReadBuffer(); },
-            [this](char* buf) { deallocateReadBuffer(buf); },
+            [this] { return memoryPool.allocateReadBuffer(); },
+            [this](char* buf) { memoryPool.deallocateReadBuffer(buf); },
             [this] { --fileWriterCount; },
             memoryControllerInfo.fileDescriptorBufferSize);
     }
@@ -184,9 +173,31 @@ void MemoryController::removeFileSystem(
     const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, [this] { --fileWriterCount; }, 0);
 }
 
-char* MemoryController::allocateReadBuffer()
+MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads)
+    : fileDescriptorBufferSize(bufferSize / POOL_SIZE_MULTIPLIER)
 {
-    if (memoryControllerInfo.fileDescriptorBufferSize == 0)
+    if (fileDescriptorBufferSize > 0)
+    {
+        // TODO add option for pool size
+        const auto writePoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
+        const auto readPoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
+
+        writeMemoryPool.reserve(fileDescriptorBufferSize * writePoolSize);
+        for (size_t i = 0; i < writePoolSize; ++i)
+        {
+            freeWriteBuffers.push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
+        }
+        readMemoryPool.reserve(fileDescriptorBufferSize * readPoolSize);
+        for (size_t i = 0; i < readPoolSize; ++i)
+        {
+            freeReadBuffers.push_back(readMemoryPool.data() + i * fileDescriptorBufferSize);
+        }
+    }
+}
+
+char* MemoryPool::allocateReadBuffer()
+{
+    if (fileDescriptorBufferSize == 0)
     {
         return nullptr;
     }
@@ -201,9 +212,9 @@ char* MemoryController::allocateReadBuffer()
     return buffer;
 }
 
-void MemoryController::deallocateReadBuffer(char* buffer)
+void MemoryPool::deallocateReadBuffer(char* buffer)
 {
-    if (memoryControllerInfo.fileDescriptorBufferSize == 0 or buffer == nullptr or readMemoryPool.data() > buffer
+    if (fileDescriptorBufferSize == 0 or buffer == nullptr or readMemoryPool.data() > buffer
         or buffer >= readMemoryPool.data() + readMemoryPool.capacity())
     {
         return;
@@ -214,9 +225,9 @@ void MemoryController::deallocateReadBuffer(char* buffer)
     readMemoryPoolCondition.notify_one();
 }
 
-char* MemoryController::allocateWriteBuffer()
+char* MemoryPool::allocateWriteBuffer()
 {
-    if (memoryControllerInfo.fileDescriptorBufferSize == 0)
+    if (fileDescriptorBufferSize == 0)
     {
         return nullptr;
     }
@@ -232,17 +243,11 @@ char* MemoryController::allocateWriteBuffer()
     return buffer;
 }
 
-void MemoryController::deallocateWriteBuffer(char* buffer)
+void MemoryPool::deallocateWriteBuffer(char* buffer)
 {
-    if (memoryControllerInfo.fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
+    if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
         or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
     {
-        if (memoryControllerInfo.fileDescriptorBufferSize != 0 and buffer != nullptr)
-        {
-            const auto memoryPoolAddr = writeMemoryPool.data();
-            const auto memoryPoolSize = writeMemoryPool.capacity();
-            std::cout << fmt::format("Could not deallocate write buffer\nbuffer: {}\npool  : {}\nsize  : {}", buffer, memoryPoolAddr, memoryPoolSize);
-        }
         return;
     }
 
@@ -251,6 +256,11 @@ void MemoryController::deallocateWriteBuffer(char* buffer)
     freeWriteBuffers.push_back(buffer);
     //std::cout << "Deallocated write buffer\n";
     writeMemoryPoolCondition.notify_one();
+}
+
+uint64_t MemoryPool::getFileDescriptorBufferSize() const
+{
+    return fileDescriptorBufferSize;
 }
 
 }

@@ -23,17 +23,17 @@ namespace NES
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
-    const SliceStoreInfo& sliceStoreInfo,
+    SliceStoreInfo sliceStoreInfo,
     MemoryControllerInfo memoryControllerInfo,
     const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide, inputOrigins.size())
     , watermarkProcessor(std::make_shared<MultiOriginWatermarkProcessor>(inputOrigins))
-    , sliceStoreInfo(sliceStoreInfo)
-    , numberOfWorkerThreads(0)
+    , sliceStoreInfo(std::move(sliceStoreInfo))
     , memoryControllerInfo(std::move(memoryControllerInfo))
+    , numberOfWorkerThreads(0)
 {
-    if (sliceStoreInfo.lowerMemoryBound > sliceStoreInfo.upperMemoryBound)
+    if (this->sliceStoreInfo.lowerMemoryBound > this->sliceStoreInfo.upperMemoryBound)
     {
         throw std::runtime_error("lowerMemoryBound cannot be larger than upperMemoryBound");
     }
@@ -68,8 +68,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , memoryController(other.memoryController)
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , sliceStoreInfo(other.sliceStoreInfo)
-    , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
+    , numberOfWorkerThreads(other.numberOfWorkerThreads)
 {
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
     {
@@ -86,9 +86,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , memoryController(std::move(other.memoryController))
     , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
     , sliceStoreInfo(std::move(other.sliceStoreInfo))
-    , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
+    , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
 {
 }
 
@@ -101,8 +101,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     memoryController = other.memoryController;
     alteredSlicesPerThread = other.alteredSlicesPerThread;
     sliceStoreInfo = other.sliceStoreInfo;
-    numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
+    numberOfWorkerThreads = other.numberOfWorkerThreads;
 
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
     {
@@ -121,9 +121,9 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     memoryController = std::move(other.memoryController);
     alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
     sliceStoreInfo = std::move(other.sliceStoreInfo);
-    numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
+    numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
 
     DefaultTimeBasedSliceStore::operator=(std::move(other));
     return *this;
@@ -253,7 +253,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
 
     /// Initialise memory controller and measure execution times for reading and writing
-    memoryController = std::make_shared<MemoryController>(numberOfWorkerThreads, memoryControllerInfo);
+    memoryController = std::make_shared<MemoryController>(memoryControllerInfo, numberOfWorkerThreads);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
