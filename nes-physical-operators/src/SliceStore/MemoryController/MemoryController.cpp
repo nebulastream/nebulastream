@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <SliceStore/MemoryController/MemoryController.hpp>
+#include <sys/statvfs.h>
 
 namespace NES
 {
@@ -23,7 +25,7 @@ MemoryController::MemoryController(
     std::filesystem::path workingDir,
     const QueryId queryId,
     const OriginId originId)
-    : bufferSize(bufferSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId)
+    : bufferSize(bufferSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId), fileWriterCount(0)
 {
     if (bufferSize > 0)
     {
@@ -45,6 +47,12 @@ MemoryController::MemoryController(
     allFileWriters.resize(numWorkerThreads + 1);
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
+
+    fileDescriptorLimit = sysconf(_SC_OPEN_MAX);
+    if (fileDescriptorLimit == -1)
+    {
+        throw std::runtime_error("Failed to determine the file descriptor limit.");
+    }
 }
 
 MemoryController::~MemoryController()
@@ -64,8 +72,17 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide,
     boost::asio::io_context& ioCtx,
-    uint64_t checkExistence)
+    const uint64_t checkExistence)
 {
+    if (fileWriterCount % 1000 == 0)
+    {
+        std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
+    }
+    if (fileWriterCount >= static_cast<uint64_t>(fileDescriptorLimit))
+    {
+        std::cout << "File descriptor limit is reached\n";
+        return nullptr;
+    }
     /// Search for matching fileWriter to avoid attempting to open a file twice
     auto& allWritersMap = allFileWriters[threadId.getRawValue()];
     auto& writerMap = fileWriters[threadId.getRawValue()];
@@ -75,13 +92,32 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         return it->second;
     }
 
+    ++fileWriterCount;
     const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-    if (checkExistence && allWritersMap.contains(filePath))
+    if (checkExistence and allWritersMap.contains(filePath))
     {
-        throw std::runtime_error("Requested FileWriter is not unique");
+        //throw std::runtime_error("Requested FileWriter is not unique");
+        --fileWriterCount;
+        std::cout << "Requested FileWriter is not unique\n";
+        return nullptr;
     }
+    /*{
+        struct statvfs buffer;
+        if (statvfs(filePath.c_str(), &buffer) != 0)
+        {
+            --fileWriterCount;
+            std::cout << "Error getting file system information\n";
+            return nullptr;
+        }
+        std::cout << fmt::format("Number of free inodes: {}\n", buffer.f_ffree);
+    }*/
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
+    if (not fileWriter->initialize())
+    {
+        --fileWriterCount;
+        return nullptr;
+    }
     allWritersMap.emplace(filePath);
     writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
@@ -98,7 +134,11 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
         writerMap.erase(it);
         const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
-            filePath, [this] { return allocateReadBuffer(); }, [this](char* buf) { deallocateReadBuffer(buf); }, bufferSize);
+            filePath,
+            [this] { return allocateReadBuffer(); },
+            [this](char* buf) { deallocateReadBuffer(buf); },
+            [this]() { --fileWriterCount; },
+            bufferSize);
     }
 
     return nullptr;
@@ -141,7 +181,7 @@ void MemoryController::removeFileSystem(
     /// Files are deleted in FileReader destructor
     const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
     fileWriters[threadId.getRawValue()].erase(it);
-    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, 0);
+    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, [this]() { --fileWriterCount; }, 0);
 }
 
 char* MemoryController::allocateReadBuffer()
