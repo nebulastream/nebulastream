@@ -33,15 +33,16 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : workGuard(boost::asio::make_work_guard(ioContext))
-    //, ioThread([this] { ioContext.run(); })
+    , ioThread([this] { ioContext.run(); })
     , sliceAndWindowStore(std::move(sliceAndWindowStore))
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
-    /*for (auto i = 0UL; i < std::thread::hardware_concurrency(); ++i)
-    {
-        ioThreads.emplace_back([this]() { ioContext.run(); });
+    //for (auto i = 0UL; i < std::thread::hardware_concurrency(); ++i)
+    //for (auto i = 0UL; i < 4; ++i)
+    /*{
+        ioThreads.emplace_back([this] { ioContext.run(); });
     }*/
     //ioThread = std::thread([this]() { ioContext.run(); });
     //ioContext.run();
@@ -50,21 +51,16 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
 {
     workGuard.reset();
-    /*ioContext.stop();
-    if (ioThread.joinable())
-    {
-        ioThread.join();
-    }*/
 
-    /*ioContext.stop();
-    for (auto& thread : ioThreads)
+    ioContext.stop();
+    /*for (auto& thread : ioThreads)
     {
         thread.join();
     }*/
-    /*if (ioThread.joinable())
+    if (ioThread.joinable())
     {
         ioThread.join();
-    }*/
+    }
 }
 
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
