@@ -25,6 +25,7 @@ FileWriter::FileWriter(
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
+    const std::function<void()>& onDestruct,
     const size_t bufferSize)
     : ioCtx(ioCtx)
     , file(ioCtx)
@@ -38,6 +39,7 @@ FileWriter::FileWriter(
     , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
+    , onDestruct(onDestruct)
 {
     const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
     const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -56,6 +58,8 @@ FileWriter::~FileWriter()
     deallocateBuffers();
     file.close();
     keyFile.close();
+
+    onDestruct();
 }
 
 bool FileWriter::initialize()
@@ -251,7 +255,7 @@ FileReader::FileReader(
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
-    const std::function<void()>& callInDestructor,
+    const std::function<void()>& onDestruct,
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
@@ -265,7 +269,7 @@ FileReader::FileReader(
     , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
-    , callInDestructor(callInDestructor)
+    , onDestruct(onDestruct)
 {
     if (!file.is_open())
     {
@@ -287,7 +291,7 @@ FileReader::~FileReader()
     deallocate(readKeyBuffer);
     std::filesystem::remove(filePath + "_key.dat");
 
-    callInDestructor();
+    onDestruct();
 }
 
 size_t FileReader::read(void* dest, const size_t size)
