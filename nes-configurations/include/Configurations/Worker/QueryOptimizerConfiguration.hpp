@@ -97,7 +97,7 @@ public:
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption upperMemoryBound
         = {"upperMemoryBound",
-           "0",
+           std::to_string(UINT64_MAX),
            "Upper memory bound in bytes for file backed slice store.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxNumWatermarkGaps
@@ -136,10 +136,10 @@ public:
            WatermarkPredictorType::KALMAN,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
-    NES::Configurations::UIntOption fileDescriptorGenerationRate
-        = {"fileDescriptorGenerationRate",
-           "0",
-           "Maximum number of file descriptors that are created per second for file backed slice store (0 equals no limit).",
+    NES::Configurations::UIntOption maxNumFileDescriptors
+        = {"maxNumFileDescriptors",
+           "1024",
+           "Maximum number of file descriptors that exist at once for file backed slice store (0 equals no limit).",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption fileDescriptorBufferSize
         = {"fileDescriptorBufferSize",
@@ -175,7 +175,7 @@ private:
             &fileLayout,
             &withPrediction,
             &watermarkPredictorType,
-            &fileDescriptorGenerationRate,
+            &maxNumFileDescriptors,
             &fileDescriptorBufferSize,
             &numberOfBuffersPerWorker,
             &fileBackedWorkingDir};
