@@ -146,6 +146,11 @@ public:
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of file writers and readers for file backed data structures.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption numberOfBuffersPerWorker
+        = {"numberOfBuffersPerWorker",
+           "256",
+           "Number of buffers per worker for file backed data structures.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::StringOption fileBackedWorkingDir
         = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
@@ -172,6 +177,7 @@ private:
             &watermarkPredictorType,
             &fileDescriptorGenerationRate,
             &fileDescriptorBufferSize,
+            &numberOfBuffersPerWorker,
             &fileBackedWorkingDir};
     }
 };

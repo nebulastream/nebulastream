@@ -11,7 +11,6 @@ worker:
     sliceStoreType: DEFAULT
     lowerMemoryBound: 0
     upperMemoryBound: 0
-    fileDescriptorBufferSize: 4096
     maxNumWatermarkGaps: 0
     maxNumSequenceNumbers: 0
     minReadStateSize: 0
@@ -20,6 +19,9 @@ worker:
     fileLayout: NO_SEPARATION
     withPrediction: true
     watermarkPredictorType: KALMAN
+    fileDescriptorGenerationRate: 100
+    fileDescriptorBufferSize: 4096
+    numberOfBuffersPerWorker: 256
     fileBackedWorkingDir: ""
 
   queryEngine:
