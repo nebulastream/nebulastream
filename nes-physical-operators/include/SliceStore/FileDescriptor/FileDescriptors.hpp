@@ -78,7 +78,6 @@ public:
         const std::string& filePath,
         const std::function<char*()>& allocate,
         const std::function<void(char*)>& deallocate,
-        const std::function<void()>& onDestruct,
         size_t bufferSize);
     ~FileReader();
 
@@ -104,7 +103,6 @@ private:
     std::string filePath;
     std::function<char*()> allocate;
     std::function<void(char*)> deallocate;
-    std::function<void()> onDestruct;
 };
 
 }

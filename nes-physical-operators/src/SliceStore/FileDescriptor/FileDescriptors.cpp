@@ -255,7 +255,6 @@ FileReader::FileReader(
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
-    const std::function<void()>& onDestruct,
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
@@ -269,7 +268,6 @@ FileReader::FileReader(
     , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
-    , onDestruct(onDestruct)
 {
     if (!file.is_open())
     {
@@ -290,8 +288,6 @@ FileReader::~FileReader()
     keyFile.close();
     deallocate(readKeyBuffer);
     std::filesystem::remove(filePath + "_key.dat");
-
-    onDestruct();
 }
 
 size_t FileReader::read(void* dest, const size_t size)

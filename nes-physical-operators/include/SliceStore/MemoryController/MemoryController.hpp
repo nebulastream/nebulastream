@@ -120,7 +120,7 @@ public:
         JoinBuildSideType joinBuildSide,
         bool forceWrite,
         bool checkExistence);
-    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide, bool forceRead);
+    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
