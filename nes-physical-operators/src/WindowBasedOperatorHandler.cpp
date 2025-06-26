@@ -33,6 +33,7 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : workGuard(boost::asio::make_work_guard(ioContext))
+    //, ioThread([this] { ioContext.run(); })
     , sliceAndWindowStore(std::move(sliceAndWindowStore))
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
@@ -49,6 +50,12 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
 {
     workGuard.reset();
+    /*ioContext.stop();
+    if (ioThread.joinable())
+    {
+        ioThread.join();
+    }*/
+
     /*ioContext.stop();
     for (auto& thread : ioThreads)
     {

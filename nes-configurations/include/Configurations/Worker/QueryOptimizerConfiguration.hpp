@@ -100,11 +100,6 @@ public:
            "0",
            "Upper memory bound in bytes for file backed slice store.",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption fileDescriptorBufferSize
-        = {"fileDescriptorBufferSize",
-           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
-           "Buffer size of file writers and readers for file backed data structures.",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption maxNumWatermarkGaps
         = {"maxNumWatermarkGaps",
            "0",
@@ -141,6 +136,16 @@ public:
            WatermarkPredictorType::KALMAN,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
+    NES::Configurations::UIntOption fileDescriptorGenerationRate
+        = {"fileDescriptorGenerationRate",
+           "0",
+           "Maximum number of file descriptors that are created per second for file backed slice store (0 equals no limit).",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption fileDescriptorBufferSize
+        = {"fileDescriptorBufferSize",
+           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
+           "Buffer size of file writers and readers for file backed data structures.",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::StringOption fileBackedWorkingDir
         = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
@@ -157,7 +162,6 @@ private:
             &sliceStoreType,
             &lowerMemoryBound,
             &upperMemoryBound,
-            &fileDescriptorBufferSize,
             &maxNumWatermarkGaps,
             &maxNumSequenceNumbers,
             &minReadStateSize,
@@ -166,6 +170,8 @@ private:
             &fileLayout,
             &withPrediction,
             &watermarkPredictorType,
+            &fileDescriptorGenerationRate,
+            &fileDescriptorBufferSize,
             &fileBackedWorkingDir};
     }
 };
