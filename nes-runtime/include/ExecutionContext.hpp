@@ -123,8 +123,8 @@ struct ArenaRef
         return result;
     }
 
-private:
     nautilus::val<Arena*> arenaRef;
+private:
     nautilus::val<size_t> availableSpaceForPointer;
     nautilus::val<int8_t*> spacePointer;
 };

@@ -269,8 +269,11 @@ public:
         PipelineExecutionContext* pec,
         InputFormatterTask* inputFormatterTask,
         const size_t configuredBufferSize,
-        ExecutionContext* executionCtx)
+        Arena* arenaRef)
     {
+        std::thread::id this_id = std::this_thread::get_id();
+        std::cout << "In proxy: " << this_id << std::endl;
+
         thread_local SpanningTupleData spanningTupleData{*pec->getBufferManager()};
         if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
@@ -304,7 +307,7 @@ public:
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
             spanningTupleData.setAllocatedMemory(
-                executionCtx->allocateMemory(nautilus::val<size_t>(spanningTupleData.getTotalSize())).value);
+                arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
 
             if (spanningTupleData.hasLeadingSpanningTuple())
             {
@@ -352,7 +355,7 @@ public:
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
             spanningTupleData.setAllocatedMemory(
-                executionCtx->allocateMemory(nautilus::val<size_t>(spanningTupleData.getTotalSize())).value);
+                arenaRef->allocateMemory(spanningTupleData.getTotalSize()));
             if (spanningTupleData.hasLeadingSpanningTuple())
             {
                 processSpanningTuple<IndexerMetaData>(
@@ -389,13 +392,15 @@ public:
         child.open(executionCtx, recordBuffer);
 
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
+        std::thread::id this_id = std::this_thread::get_id();
+        std::cout << "before proxy: " << this_id << std::endl;
         auto spanningTupleData = nautilus::invoke(
             indexTuplesProxy,
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
             nautilus::val<InputFormatterTask*>(this), //Todo: figure out if works (might though, because the address is tied to the (pipeline) operator and thus l'stable'
             nautilus::val<size_t>(configuredBufferSize),
-            nautilus::val<ExecutionContext*>(&executionCtx));
+            executionCtx.pipelineMemoryProvider.arena.arenaRef);
 
         // Todo: replace invokes with smarter approach? <-- can we somehow trace writing the below there values?
         // .. can't 'hardcode' thread_local address into traced code, since other threads will have other thread_local state

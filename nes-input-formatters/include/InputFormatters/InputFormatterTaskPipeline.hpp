@@ -144,11 +144,12 @@ public:
         const bool isFirstOperatorAfterSource) const
     {
         /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
-        if (recordBuffer.getNumRecords() == 0)
-        {
-            NES_WARNING("Received empty buffer in InputFormatterTask.");
-            return;
-        }
+        // Todo: can't check if numRecords == 0, since it may be initialized with 0 during tracing
+        // if (recordBuffer.getNumRecords() == 0)
+        // {
+        //     NES_WARNING("Received empty buffer in InputFormatterTask.");
+        //     return;
+        // }
 
         this->inputFormatterTask->scanTask(
             executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);

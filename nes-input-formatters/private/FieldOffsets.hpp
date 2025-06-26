@@ -111,7 +111,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr));
 
             const auto byteOffsetStart
-                = ((recordIndex * nautilus::static_val(numberOfFieldsInSchema + 1) + i) * nautilus::static_val(sizeof(FieldOffsetsType)));
+                = ((recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields() + 1) + i) * nautilus::static_val(sizeof(FieldOffsetsType)));
             const auto recordOffsetAddress = indexBuffer.getBuffer() + byteOffsetStart;
             const auto recordOffsetEndAddress
                 = indexBuffer.getBuffer() + (byteOffsetStart + nautilus::static_val(sizeof(FieldOffsetsType)));
@@ -123,7 +123,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             // Todo: find better way to only deduct size of field delimiter if field is last field
             if (i < metaData.getSchema().getNumberOfFields() - 1)
             {
-                fieldSize -= nautilus::static_val<uint64_t>(sizeOfFieldDelimiter);
+                fieldSize -= nautilus::static_val<uint64_t>(metaData.getTupleDelimitingBytes().size()); //Todo: should be 'getFieldDelimitingBytes'
             }
 
 
