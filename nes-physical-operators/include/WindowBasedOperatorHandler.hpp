@@ -115,7 +115,7 @@ protected:
     //std::vector<std::thread> ioThreads;
     boost::asio::io_context ioContext;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard;
-    //std::thread ioThread;
+    std::thread ioThread;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;

@@ -54,8 +54,9 @@ FileWriter::FileWriter(
 
 FileWriter::~FileWriter()
 {
+    flushAndDeallocateBuffers();
     /// Buffer needs to be flushed manually before calling the destructor
-    deallocateBuffers();
+    //deallocateBuffers();
     file.close();
     keyFile.close();
 
