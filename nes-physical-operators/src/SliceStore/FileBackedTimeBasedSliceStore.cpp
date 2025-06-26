@@ -274,6 +274,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
+    std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
     for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
         //if (slice == nullptr)
@@ -441,13 +442,13 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     {
         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
         /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
-        co_await fileWriter->flush();
+        //co_await fileWriter->flush();
         pagedVector->truncate(sliceStoreInfo.fileLayout);
     }
 
     // TODO handle wrong predictions
     nljSlice->releaseCombinePagedVectorsLock();
-    fileWriter->deallocateBuffers();
+    //fileWriter->deallocateBuffers();
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -498,15 +499,15 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, true, false);
+                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left, true, false);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
-            runSingleAwaitable(ioCtx, fileWriter->flush());
+            //runSingleAwaitable(ioCtx, fileWriter->flush());
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto sizeRead
             = memoryController
-                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left)
+                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left)
                   ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 
