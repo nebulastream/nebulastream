@@ -72,6 +72,9 @@ private:
     std::filesystem::path workingDir;
     QueryId queryId;
     OriginId originId;
+
+    long fileDescriptorLimit;
+    std::atomic_uint64_t fileWriterCount;
 };
 
 }

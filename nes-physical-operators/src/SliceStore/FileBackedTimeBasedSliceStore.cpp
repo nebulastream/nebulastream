@@ -346,6 +346,10 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 }
                 case FileOperation::WRITE: {
                     const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
+                    if (fileWriter == nullptr)
+                    {
+                        continue;
+                    }
                     {
                         auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
                         const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
