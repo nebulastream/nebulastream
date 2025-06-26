@@ -170,7 +170,8 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
                     std::views::iota(0UL, numberOfWorkerThreads), [&workerThreadIds](uint64_t i) { workerThreadIds.emplace_back(i); });
                 return workerThreadIds;
             }(),
-            joinBuildSide);
+            joinBuildSide,
+            true);
     }
     return slice;
 }
@@ -230,7 +231,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     /// Now we can remove/call destructor on every slice without still holding the lock
     for (const auto& slice : slicesToDelete)
     {
-        memoryController->deleteSliceFiles(slice->getSliceEnd());
+        //memoryController->deleteSliceFiles(slice->getSliceEnd());
     }
     slicesToDelete.clear();
 }
@@ -287,7 +288,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             switch (operation)
             {
                 case FileOperation::READ: {
-                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide);
+                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide, false);
                     break;
                 }
                 case FileOperation::WRITE: {
@@ -455,13 +456,14 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const std::vector<WorkerThreadId>& threadIds,
-    const JoinBuildSideType joinBuildSide) const
+    const JoinBuildSideType joinBuildSide,
+    const bool forceRead) const
 {
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     for (const auto threadId : threadIds)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
+        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide, forceRead))
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
@@ -498,7 +500,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, false, false);
+                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, true, false);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
             runSingleAwaitable(ioCtx, fileWriter->flush());
         }
@@ -506,7 +508,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
         const auto sizeRead
             = memoryController
-                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left)
+                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, true)
                   ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 

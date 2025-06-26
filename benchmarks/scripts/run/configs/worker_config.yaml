@@ -19,7 +19,7 @@ worker:
     fileLayout: NO_SEPARATION
     withPrediction: true
     watermarkPredictorType: KALMAN
-    fileDescriptorGenerationRate: 100
+    maxNumFileDescriptors: 1048576
     fileDescriptorBufferSize: 4096
     numberOfBuffersPerWorker: 256
     fileBackedWorkingDir: ""

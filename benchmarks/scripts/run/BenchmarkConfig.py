@@ -55,7 +55,7 @@ FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WITH_PREDICTIONS = ["true", "false"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
-FILE_DESCRIPTOR_GENERATION_RATES = [100, 1000, 0]
+MAX_NUM_FILE_DESCRIPTORS = [1048576, 64, 1024]
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 NUM_BUFFERS_PER_WORKER = [256, 1024, 4096, 1, 64]
 
@@ -123,7 +123,7 @@ def get_default_params_dict():
         "file_layout": FILE_LAYOUTS[0],
         "with_prediction": WITH_PREDICTIONS[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES[0],
-        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES[0],
+        "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS[0],
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
         "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER[0],
         "query": get_queries()[0]
@@ -165,7 +165,7 @@ class BenchmarkConfig:
                  file_layout,
                  with_prediction,
                  watermark_predictor_type,
-                 file_descriptor_generation_rate,
+                 max_num_file_descriptors,
                  file_descriptor_buffer_size,
                  num_buffers_per_worker,
                  query,
@@ -192,7 +192,7 @@ class BenchmarkConfig:
         self.file_layout = file_layout
         self.with_prediction = with_prediction
         self.watermark_predictor_type = watermark_predictor_type
-        self.file_descriptor_generation_rate = file_descriptor_generation_rate
+        self.max_num_file_descriptors = max_num_file_descriptors
         self.file_descriptor_buffer_size = file_descriptor_buffer_size
         self.num_buffers_per_worker = num_buffers_per_worker
         self.query = query
@@ -230,7 +230,7 @@ class BenchmarkConfig:
             "file_layout": self.file_layout,
             "with_prediction": self.with_prediction,
             "watermark_predictor_type": self.watermark_predictor_type,
-            "file_descriptor_generation_rate": self.file_descriptor_generation_rate,
+            "max_num_file_descriptors": self.max_num_file_descriptors,
             "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
             "num_buffers_per_worker": self.num_buffers_per_worker,
             "query": self.query,
@@ -260,7 +260,7 @@ def create_systest_configs():
         "file_layout": FILE_LAYOUTS,
         "with_prediction": WITH_PREDICTIONS,
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES,
-        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES,
+        "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS,
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
     }
@@ -317,7 +317,7 @@ def create_benchmark_configs():
         "file_layout": FILE_LAYOUTS,
         "with_prediction": WITH_PREDICTIONS,
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES,
-        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES,
+        "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS,
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
     }
@@ -510,7 +510,7 @@ def create_all_benchmark_configs():
             file_layout,
             with_prediction,
             watermark_predictor_type,
-            file_descriptor_generation_rate,
+            max_num_file_descriptors,
             file_descriptor_buffer_size,
             num_buffers_per_worker,
             query
@@ -533,7 +533,7 @@ def create_all_benchmark_configs():
         for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" else [WITH_PREDICTIONS[0]])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if slice_store_type == "FILE_BACKED" else [WATERMARK_PREDICTOR_TYPES[0]])
-        for file_descriptor_generation_rate in (FILE_DESCRIPTOR_GENERATION_RATES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_GENERATION_RATES[0]])
+        for max_num_file_descriptors in (MAX_NUM_FILE_DESCRIPTORS if slice_store_type == "FILE_BACKED" else [MAX_NUM_FILE_DESCRIPTORS[0]])
         for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
         for num_buffers_per_worker in (NUM_BUFFERS_PER_WORKER if slice_store_type == "FILE_BACKED" else [NUM_BUFFERS_PER_WORKER[0]])
         for query in get_queries()
