@@ -13,6 +13,7 @@
 */
 
 #include <filesystem>
+#include <iostream>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <ErrorHandling.hpp>
 
@@ -55,6 +56,37 @@ FileWriter::~FileWriter()
     deallocateBuffers();
     file.close();
     keyFile.close();
+}
+
+bool FileWriter::initialize()
+{
+    return true;
+    auto numRetries = 5UL;
+    int fd, fdKey;
+    do
+    {
+        if (--numRetries < 0)
+        {
+            std::cout << "Failed to open file for writing\n";
+            return false;
+        }
+        fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    } while (fd < 0);
+    numRetries = 5UL;
+    do
+    {
+        if (--numRetries < 0)
+        {
+            std::cout << "Failed to open key file for writing\n";
+            return false;
+        }
+        fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    } while (fdKey < 0);
+
+    //std::cout << "FileWriter init successful\n";
+    file.assign(fd);
+    keyFile.assign(fdKey);
+    return true;
 }
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
@@ -219,6 +251,7 @@ FileReader::FileReader(
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
+    const std::function<void()>& callInDestructor,
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
@@ -232,6 +265,7 @@ FileReader::FileReader(
     , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
+    , callInDestructor(callInDestructor)
 {
     if (!file.is_open())
     {
@@ -252,6 +286,8 @@ FileReader::~FileReader()
     keyFile.close();
     deallocate(readKeyBuffer);
     std::filesystem::remove(filePath + "_key.dat");
+
+    callInDestructor();
 }
 
 size_t FileReader::read(void* dest, const size_t size)
