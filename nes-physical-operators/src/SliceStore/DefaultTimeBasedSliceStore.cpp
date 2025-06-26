@@ -35,9 +35,8 @@
 
 namespace NES
 {
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
-    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfActiveOrigins(numberOfInputOrigins)
+DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const uint64_t windowSize, const uint64_t windowSlide)
+    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfActiveInputPipelines(0)
 {
 }
 
@@ -140,10 +139,10 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
     /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
     const auto windowsWriteLocked = windows.wlock();
 
-    /// numberOfActiveOrigins is guarded by the windows lock.
-    /// If this method gets called, we know that an origin has terminated.
-    INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
-    --numberOfActiveOrigins;
+    /// numberOfActiveInputPipelines is guarded by the windows lock.
+    /// If this method gets called, we know that an input pipeline has terminated.
+    INVARIANT(numberOfActiveInputPipelines > 0, "Method should not be called if all input pipelines have terminated.");
+    numberOfActiveInputPipelines -= 1;
 
     /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
@@ -165,26 +164,26 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
             case WindowInfoState::EMITTED_TO_PROBE:
                 continue;
             case WindowInfoState::WINDOW_FILLING: {
-                /// If we are waiting on more than one origin to terminate, we can not trigger the window yet
-                if (numberOfActiveOrigins > 0)
+                /// If we are waiting on another pipeline to terminate, we can not trigger the window yet
+                if (numberOfActiveInputPipelines > 0)
                 {
                     windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
                     NES_TRACE(
-                        "Waiting on termination for window end {} and number of origins terminated {}",
+                        "Waiting on termination for window end {} and number of active input pipelines {}",
                         windowInfo.windowEnd,
-                        numberOfActiveOrigins);
+                        numberOfActiveInputPipelines);
                     break;
                 }
                 addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
                 break;
             }
             case WindowInfoState::WAITING_ON_TERMINATION: {
-                /// Checking if all origins have terminated (i.e., the number of origins terminated is 0, as we will decrement it during fetch_sub)
+                /// Checking if all input pipelines have terminated (i.e., the number of active input pipelines is 0, as we will decrement it during fetch_sub)
                 NES_TRACE(
-                    "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
+                    "Checking if all input pipelines have terminated for window with window end {} and number of active pipelines {}",
                     windowInfo.windowEnd,
-                    numberOfActiveOrigins);
-                if (numberOfActiveOrigins > 0)
+                    numberOfActiveInputPipelines);
+                if (numberOfActiveInputPipelines > 0)
                 {
                     continue;
                 }
@@ -264,6 +263,11 @@ void DefaultTimeBasedSliceStore::deleteState()
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
+}
+
+void DefaultTimeBasedSliceStore::incrementNumberOfInputPipelines()
+{
+    numberOfActiveInputPipelines += 1;
 }
 
 uint64_t DefaultTimeBasedSliceStore::getWindowSize() const

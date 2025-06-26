@@ -76,6 +76,11 @@ public:
     /// Deletes all slices, directly in this call
     virtual void deleteState() = 0;
 
+    /// Increments the number of pipelines that contain a build(!) operator using this slice store, in order to track the expected number of terminations.
+    /// This should be called each time an operator whose handler uses this store is set up.
+    /// Note: This should not be inferred when the store is created during the lowering stage, as the same build operator may appear in multiple pipelines.
+    virtual void incrementNumberOfInputPipelines() = 0;
+
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
 };
