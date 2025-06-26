@@ -58,6 +58,7 @@ T runSingleAwaitable(boost::asio::io_context& ioCtx, boost::asio::awaitable<T> t
     while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
     {
         ioCtx.poll();
+        //std::this_thread::yield();
     }
     return future.get();
 
@@ -114,6 +115,7 @@ protected:
     //std::vector<std::thread> ioThreads;
     boost::asio::io_context ioContext;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard;
+    //std::thread ioThread;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;

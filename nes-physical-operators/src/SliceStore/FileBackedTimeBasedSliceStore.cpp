@@ -12,23 +12,11 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <memory>
-#include <optional>
-#include <utility>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <ranges>
 #include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
-#include <SliceStore/Slice.hpp>
 #include <SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
-#include <Time/Timestamp.hpp>
-#include <folly/Synchronized.h>
-#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -78,13 +66,11 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(other.writeExecTimeFunction)
     , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
-    , slicesInMemory(other.slicesInMemory)
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , sliceStoreInfo(other.sliceStoreInfo)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
 {
-    slicesInMemoryMutexes = std::vector<std::mutex>(other.numberOfWorkerThreads);
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
     {
         watermarkPredictorUpdateCnt.emplace(origin, count.load());
@@ -98,8 +84,6 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
-    , slicesInMemory(std::move(other.slicesInMemory))
-    , slicesInMemoryMutexes(std::move(other.slicesInMemoryMutexes))
     , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
     , sliceStoreInfo(std::move(other.sliceStoreInfo))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
@@ -110,42 +94,38 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore& other)
 {
-    DefaultTimeBasedSliceStore::operator=(other);
-    slicesInMemoryMutexes = std::vector<std::mutex>(other.numberOfWorkerThreads);
-    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
-    {
-        watermarkPredictorUpdateCnt.emplace(origin, count.load());
-    }
-
     watermarkProcessor = other.watermarkProcessor;
     watermarkPredictors = other.watermarkPredictors;
     writeExecTimeFunction = other.writeExecTimeFunction;
     readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
-    slicesInMemory = other.slicesInMemory;
     alteredSlicesPerThread = other.alteredSlicesPerThread;
     sliceStoreInfo = other.sliceStoreInfo;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
+
+    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
+    {
+        watermarkPredictorUpdateCnt.emplace(origin, count.load());
+    }
+    DefaultTimeBasedSliceStore::operator=(other);
     return *this;
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
 {
-    DefaultTimeBasedSliceStore::operator=(std::move(other));
-
     watermarkProcessor = std::move(other.watermarkProcessor);
     watermarkPredictors = std::move(other.watermarkPredictors);
     writeExecTimeFunction = std::move(other.writeExecTimeFunction);
     readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
-    slicesInMemory = std::move(other.slicesInMemory);
-    slicesInMemoryMutexes = std::move(other.slicesInMemoryMutexes);
     alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
     sliceStoreInfo = std::move(other.sliceStoreInfo);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
+
+    DefaultTimeBasedSliceStore::operator=(std::move(other));
     return *this;
 }
 
@@ -162,18 +142,9 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 {
     const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
     const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
-    auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
-
     for (const auto& slice : slicesVec)
     {
         alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(slice);
-
-        /// We acquire the lock for each invocation as slicesVec should only contain one element and we do not want to lock while adding to alteredSlicesPerThread
-        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
-        if (const auto sliceEnd = slice->getSliceEnd(); !slicesInMemoryMap.contains({sliceEnd, joinBuildSide}))
-        {
-            slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
-        }
     }
     return slicesVec;
 }
@@ -187,7 +158,19 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     const auto& slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
     if (slice.has_value())
     {
-        readSliceFromFiles(slice.value(), bufferProvider, memoryLayout, joinBuildSide);
+        readSliceFromFiles(
+            std::dynamic_pointer_cast<NLJSlice>(slice.value()),
+            bufferProvider,
+            memoryLayout,
+            [this]
+            {
+                std::vector<WorkerThreadId> workerThreadIds;
+                workerThreadIds.reserve(numberOfWorkerThreads);
+                std::ranges::for_each(
+                    std::views::iota(0UL, numberOfWorkerThreads), [&workerThreadIds](uint64_t i) { workerThreadIds.emplace_back(i); });
+                return workerThreadIds;
+            }(),
+            joinBuildSide);
     }
     return slice;
 }
@@ -244,21 +227,11 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         }
     }
 
+    /// Now we can remove/call destructor on every slice without still holding the lock
     for (const auto& slice : slicesToDelete)
     {
-        const auto sliceEnd = slice->getSliceEnd();
-        memoryController->deleteSliceFiles(sliceEnd);
-
-        for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
-        {
-            auto& slicesInMemoryMap = slicesInMemory[threadId];
-            const std::scoped_lock lock(slicesInMemoryMutexes[threadId]);
-            slicesInMemoryMap.erase({sliceEnd, JoinBuildSideType::Left});
-            slicesInMemoryMap.erase({sliceEnd, JoinBuildSideType::Right});
-        }
+        memoryController->deleteSliceFiles(slice->getSliceEnd());
     }
-
-    /// Now we can remove/call destructor on every slice without still holding the lock
     slicesToDelete.clear();
 }
 
@@ -272,10 +245,6 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 {
     this->numberOfWorkerThreads = numberOfWorkerThreads;
 
-    /// Store which slices are in memory per thread to reduce attempted concurrent accesses
-    slicesInMemory.resize(numberOfWorkerThreads);
-    slicesInMemoryMutexes = std::vector<std::mutex>(numberOfWorkerThreads);
-
     /// Initialise maps to keep track of altered slices
     for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
     {
@@ -284,12 +253,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
 
     /// Initialise memory controller and measure execution times for reading and writing
-    memoryController = std::make_shared<MemoryController>(
-        sliceStoreInfo.fileDescriptorBufferSize,
-        numberOfWorkerThreads,
-        memoryControllerInfo.workingDir,
-        memoryControllerInfo.queryId,
-        memoryControllerInfo.outputOriginId);
+    memoryController = std::make_shared<MemoryController>(numberOfWorkerThreads, memoryControllerInfo);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
@@ -316,66 +280,28 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         {
             //continue;
         }
-        const auto sliceEnd = slice->getSliceEnd();
-        const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
-        if (!nljSlice->pagedVectorsCombined())
+        if (const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice); !nljSlice->pagedVectorsCombined())
         {
             switch (operation)
             {
                 case FileOperation::READ: {
-                    const auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
-
-                    /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
-                    nljSlice->acquireCombinePagedVectorsLock();
-                    /// Check if there are tuples to read back
-                    // TODO investigate why numTuples and numPages can be zero
-                    if (pagedVector->getNumberOfTuplesOnDisk() > 0)
-                    {
-                        // TODO why would fileReader be zero
-                        //if (fileReader)
-                        {
-                            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
-                        }
-                    }
-                    // TODO handle wrong predictions
-                    nljSlice->releaseCombinePagedVectorsLock();
+                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide);
                     break;
                 }
                 case FileOperation::WRITE: {
-                    const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
-                    if (fileWriter == nullptr)
-                    {
-                        continue;
-                    }
-                    {
-                        auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
-                        const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
-                        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = false;
-
-                        /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
-                        nljSlice->acquireCombinePagedVectorsLock();
-                        /// Check if there are tuples to offload
-                        if (pagedVector->getNumberOfPages() > 0)
-                        {
-                            co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
-                            /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
-                            co_await fileWriter->flush();
-                            pagedVector->truncate(sliceStoreInfo.fileLayout);
-                        }
-                        // TODO handle wrong predictions
-                        nljSlice->releaseCombinePagedVectorsLock();
-                    }
-                    fileWriter->deallocateBuffers();
+                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide, false);
+                    break;
+                }
+                case FileOperation::FORCE_WRITE: {
+                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide, true);
                     break;
                 }
             }
         }
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
-    co_return;
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
@@ -416,7 +342,7 @@ FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadI
     std::ranges::transform(
         alteredSlicesPerThread[{threadId, joinBuildSide}],
         std::back_inserter(slicesToUpdate),
-        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
+        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::FORCE_WRITE); });
 
     alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
@@ -470,13 +396,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                 >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
-            auto& slicesInMemoryMap = slicesInMemory[threadId.getRawValue()];
-            const std::scoped_lock lock(slicesInMemoryMutexes[threadId.getRawValue()]);
-            if (!slicesInMemoryMap[{sliceEnd, joinBuildSide}])
-            {
-                slicesToUpdate.emplace_back(slice, FileOperation::READ);
-            }
-            /// Slice is already being read back if map entry is true
+            slicesToUpdate.emplace_back(slice, FileOperation::READ);
         }
         else if (
             stateSizeInMemory > sliceStoreInfo.minWriteStateSize
@@ -497,36 +417,57 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     return slicesToUpdate;
 }
 
-void FileBackedTimeBasedSliceStore::readSliceFromFiles(
-    const std::shared_ptr<Slice>& slice,
+boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
+    boost::asio::io_context& ioCtx,
+    const std::shared_ptr<NLJSlice>& nljSlice,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const JoinBuildSideType joinBuildSide)
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide,
+    const bool forceWrite) const
+{
+    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide, forceWrite, true);
+    if (fileWriter == nullptr)
+    {
+        co_return;
+    }
+    auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
+
+    /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
+    nljSlice->acquireCombinePagedVectorsLock();
+
+    /// Check if there are tuples to offload
+    if (pagedVector->getNumberOfPages() > 0)
+    {
+        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
+        /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
+        co_await fileWriter->flush();
+        pagedVector->truncate(sliceStoreInfo.fileLayout);
+    }
+
+    // TODO handle wrong predictions
+    nljSlice->releaseCombinePagedVectorsLock();
+    fileWriter->deallocateBuffers();
+}
+
+void FileBackedTimeBasedSliceStore::readSliceFromFiles(
+    const std::shared_ptr<NLJSlice>& nljSlice,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const std::vector<WorkerThreadId>& threadIds,
+    const JoinBuildSideType joinBuildSide) const
 {
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
-    const auto sliceEnd = slice->getSliceEnd();
-    const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-    // TODO create threadId map, then try to acquire lock and if unsuccessful try other threadId until map is empty
-    for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
+    for (const auto threadId : threadIds)
     {
-        auto& slicesInMemoryMap = slicesInMemory[threadId];
-        const std::scoped_lock lock(slicesInMemoryMutexes[threadId]);
-        if (slicesInMemoryMap[{sliceEnd, joinBuildSide}])
+        /// Only read from file if the slice was written out earlier for this build side and not yet read back
+        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
         {
-            /// Slice has already been read from file for this thread and build side
-            continue;
-        }
-
-        /// Only read from file if the slice was written out earlier for this build side
-        if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
-        {
-            auto* const pagedVector = nljSlice->getPagedVectorRef(WorkerThreadId(threadId), joinBuildSide);
+            auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
             nljSlice->releaseCombinePagedVectorsLock();
         }
-
-        slicesInMemoryMap[{sliceEnd, joinBuildSide}] = true;
     }
 }
 
@@ -557,7 +498,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         {
             /// FileWriter should be destroyed when calling getFileReader
             const auto fileWriter = memoryController->getFileWriter(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, ioCtx, false);
+                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), JoinBuildSideType::Left, false, false);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
             runSingleAwaitable(ioCtx, fileWriter->flush());
         }
