@@ -24,18 +24,28 @@
 namespace NES
 {
 
+struct MemoryControllerInfo
+{
+    uint64_t fileDescriptorBufferSize;
+    uint64_t fileDescriptorGenerationRate;
+    std::filesystem::path workingDir;
+    QueryId queryId;
+    OriginId outputOriginId;
+};
+
 class MemoryController
 {
 public:
-    MemoryController(size_t bufferSize, uint64_t numWorkerThreads, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
+    MemoryController(uint64_t numWorkerThreads, MemoryControllerInfo  memoryControllerInfo);
     ~MemoryController();
 
     std::shared_ptr<FileWriter> getFileWriter(
+        boost::asio::io_context& ioCtx,
         SliceEnd sliceEnd,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide,
-        boost::asio::io_context& ioCtx,
-        uint64_t checkExistence = true);
+        bool forceWrite,
+        bool checkExistence);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
@@ -54,14 +64,14 @@ private:
     char* allocateReadBuffer();
     void deallocateReadBuffer(char* buffer);
 
-    size_t bufferSize;
-
     std::vector<char> writeMemoryPool;
     std::vector<char*> freeWriteBuffers;
+    std::condition_variable writeMemoryPoolCondition;
     std::mutex writeMemoryPoolMutex;
 
     std::vector<char> readMemoryPool;
     std::vector<char*> freeReadBuffers;
+    std::condition_variable readMemoryPoolCondition;
     std::mutex readMemoryPoolMutex;
 
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether
@@ -69,12 +79,11 @@ private:
     std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
     std::vector<std::mutex> fileWriterMutexes;
 
-    std::filesystem::path workingDir;
-    QueryId queryId;
-    OriginId originId;
-
+    ///
     long fileDescriptorLimit;
     std::atomic_uint64_t fileWriterCount;
+
+    MemoryControllerInfo memoryControllerInfo;
 };
 
 }

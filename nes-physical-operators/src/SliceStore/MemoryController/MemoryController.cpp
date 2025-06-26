@@ -19,28 +19,23 @@
 namespace NES
 {
 
-MemoryController::MemoryController(
-    const size_t bufferSize,
-    const uint64_t numWorkerThreads,
-    std::filesystem::path workingDir,
-    const QueryId queryId,
-    const OriginId originId)
-    : bufferSize(bufferSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId), fileWriterCount(0)
+MemoryController::MemoryController(const uint64_t numWorkerThreads, MemoryControllerInfo memoryControllerInfo)
+    : fileWriterCount(0), memoryControllerInfo(std::move(memoryControllerInfo))
 {
-    if (bufferSize > 0)
+    if (memoryControllerInfo.fileDescriptorBufferSize > 0)
     {
-        const auto writePoolSize = std::max(numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
-        const auto readPoolSize = std::max(numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto writePoolSize = std::max(1024 * numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto readPoolSize = std::max(1024 * numWorkerThreads * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
 
-        writeMemoryPool.resize(bufferSize * writePoolSize);
+        writeMemoryPool.reserve(memoryControllerInfo.fileDescriptorBufferSize * writePoolSize);
         for (size_t i = 0; i < writePoolSize; ++i)
         {
-            freeWriteBuffers.push_back(writeMemoryPool.data() + i * bufferSize);
+            freeWriteBuffers.push_back(writeMemoryPool.data() + i * memoryControllerInfo.fileDescriptorBufferSize);
         }
-        readMemoryPool.resize(bufferSize * readPoolSize);
+        readMemoryPool.reserve(memoryControllerInfo.fileDescriptorBufferSize * readPoolSize);
         for (size_t i = 0; i < readPoolSize; ++i)
         {
-            freeReadBuffers.push_back(readMemoryPool.data() + i * bufferSize);
+            freeReadBuffers.push_back(readMemoryPool.data() + i * memoryControllerInfo.fileDescriptorBufferSize);
         }
     }
 
@@ -68,17 +63,18 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
+    boost::asio::io_context& ioCtx,
     const SliceEnd sliceEnd,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide,
-    boost::asio::io_context& ioCtx,
-    const uint64_t checkExistence)
+    const bool,
+    const bool checkExistence)
 {
-    if (fileWriterCount % 1000 == 0)
+    //if (fileWriterCount % 1000 == 0)
     {
-        std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
+        //std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
     }
-    if (fileWriterCount >= static_cast<uint64_t>(fileDescriptorLimit))
+    if (std::cmp_greater_equal(fileWriterCount.load(), fileDescriptorLimit))
     {
         std::cout << "File descriptor limit is reached\n";
         return nullptr;
@@ -112,7 +108,11 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         std::cout << fmt::format("Number of free inodes: {}\n", buffer.f_ffree);
     }*/
     auto fileWriter = std::make_shared<FileWriter>(
-        ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
+        ioCtx,
+        filePath,
+        [this] { return allocateWriteBuffer(); },
+        [this](char* buf) { deallocateWriteBuffer(buf); },
+        memoryControllerInfo.fileDescriptorBufferSize);
     if (not fileWriter->initialize())
     {
         --fileWriterCount;
@@ -137,8 +137,8 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
             filePath,
             [this] { return allocateReadBuffer(); },
             [this](char* buf) { deallocateReadBuffer(buf); },
-            [this]() { --fileWriterCount; },
-            bufferSize);
+            [this] { --fileWriterCount; },
+            memoryControllerInfo.fileDescriptorBufferSize);
     }
 
     return nullptr;
@@ -164,11 +164,11 @@ std::string
 MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide) const
 {
     const std::string sideStr = joinBuildSide == JoinBuildSideType::Left ? "left" : "right";
-    return (workingDir
+    return (memoryControllerInfo.workingDir
             / std::filesystem::path(fmt::format(
                 "memory_controller_{}_{}_{}_{}_{}",
-                queryId.getRawValue(),
-                originId.getRawValue(),
+                memoryControllerInfo.queryId.getRawValue(),
+                memoryControllerInfo.outputOriginId.getRawValue(),
                 sideStr,
                 sliceEnd.getRawValue(),
                 threadId.getRawValue())))
@@ -181,68 +181,76 @@ void MemoryController::removeFileSystem(
     /// Files are deleted in FileReader destructor
     const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
     fileWriters[threadId.getRawValue()].erase(it);
-    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, [this]() { --fileWriterCount; }, 0);
+    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, [this] { --fileWriterCount; }, 0);
 }
 
 char* MemoryController::allocateReadBuffer()
 {
-    if (bufferSize == 0)
+    if (memoryControllerInfo.fileDescriptorBufferSize == 0)
     {
         return nullptr;
     }
 
-    const std::scoped_lock lock(readMemoryPoolMutex);
-    if (freeReadBuffers.empty())
-    {
-        /// This should not happen as we deallocate buffers after updating slices
-        throw std::runtime_error("No read buffers available for allocation!");
-    }
+    //std::cout << "Getting read buffer\n";
+    std::unique_lock lock(readMemoryPoolMutex);
+    readMemoryPoolCondition.wait(lock, [this] { return !freeReadBuffers.empty(); });
 
     char* buffer = freeReadBuffers.back();
     freeReadBuffers.pop_back();
+    //std::cout << "Got read buffer\n";
     return buffer;
 }
 
 void MemoryController::deallocateReadBuffer(char* buffer)
 {
-    if (bufferSize == 0 || buffer == nullptr || readMemoryPool.data() > buffer || buffer >= readMemoryPool.data() + readMemoryPool.size())
+    if (memoryControllerInfo.fileDescriptorBufferSize == 0 or buffer == nullptr or readMemoryPool.data() > buffer
+        or buffer >= readMemoryPool.data() + readMemoryPool.capacity())
     {
         return;
     }
 
     const std::scoped_lock lock(readMemoryPoolMutex);
     freeReadBuffers.push_back(buffer);
+    readMemoryPoolCondition.notify_one();
 }
 
 char* MemoryController::allocateWriteBuffer()
 {
-    if (bufferSize == 0)
+    if (memoryControllerInfo.fileDescriptorBufferSize == 0)
     {
         return nullptr;
     }
 
-    const std::scoped_lock lock(writeMemoryPoolMutex);
-    if (freeWriteBuffers.empty())
-    {
-        /// This should not happen as we deallocate buffers after updating slices
-        throw std::runtime_error("No write buffers available for allocation!");
-    }
+    //std::cout << "Getting write buffer\n";
+    std::unique_lock lock(writeMemoryPoolMutex);
+    //std::cout << fmt::format("Number of available write buffers: {}\n", freeWriteBuffers.size());
+    writeMemoryPoolCondition.wait(lock, [this] { return !freeWriteBuffers.empty(); });
 
     char* buffer = freeWriteBuffers.back();
     freeWriteBuffers.pop_back();
+    //std::cout << "Got write buffer\n";
     return buffer;
 }
 
 void MemoryController::deallocateWriteBuffer(char* buffer)
 {
-    if (bufferSize == 0 || buffer == nullptr
-        || !(writeMemoryPool.data() <= buffer && buffer < writeMemoryPool.data() + writeMemoryPool.size()))
+    if (memoryControllerInfo.fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
+        or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
     {
+        if (memoryControllerInfo.fileDescriptorBufferSize != 0 and buffer != nullptr)
+        {
+            const auto memoryPoolAddr = writeMemoryPool.data();
+            const auto memoryPoolSize = writeMemoryPool.capacity();
+            std::cout << fmt::format("Could not deallocate write buffer\nbuffer: {}\npool  : {}\nsize  : {}", buffer, memoryPoolAddr, memoryPoolSize);
+        }
         return;
     }
 
+    //std::cout << "Deallocating write buffer\n";
     const std::scoped_lock lock(writeMemoryPoolMutex);
     freeWriteBuffers.push_back(buffer);
+    //std::cout << "Deallocated write buffer\n";
+    writeMemoryPoolCondition.notify_one();
 }
 
 }

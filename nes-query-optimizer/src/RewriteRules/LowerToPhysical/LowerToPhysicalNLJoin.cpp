@@ -197,7 +197,6 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
             SliceStoreInfo(
                 conf.lowerMemoryBound.getValue(),
                 conf.upperMemoryBound.getValue(),
-                conf.fileDescriptorBufferSize.getValue(),
                 conf.maxNumWatermarkGaps.getValue(),
                 conf.maxNumSequenceNumbers.getValue(),
                 conf.minReadStateSize.getValue(),
@@ -205,7 +204,12 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
                 conf.fileOperationTimeDelta.getValue(),
                 conf.fileLayout.getValue(),
                 conf.withPrediction.getValue()),
-            MemoryControllerInfo(conf.fileBackedWorkingDir.getValue(), queryId, logicalOperator.getOutputOriginIds()[0]),
+            MemoryControllerInfo(
+                conf.fileDescriptorBufferSize.getValue(),
+                conf.fileDescriptorGenerationRate.getValue(),
+                conf.fileBackedWorkingDir.getValue(),
+                queryId,
+                logicalOperator.getOutputOriginIds()[0]),
             conf.watermarkPredictorType,
             inputOriginIds);
     }
