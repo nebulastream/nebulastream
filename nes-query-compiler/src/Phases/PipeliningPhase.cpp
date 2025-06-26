@@ -267,11 +267,10 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
         for (const auto& child : rootWrapper->getChildren())
         {
             buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
-            NES_DEBUG("Constructed pipelines: {}", *pipelinedPlan);
         }
     }
 
-    NES_DEBUG("Constructed pipeline plan with {} root pipelines.", pipelinedPlan->getPipelines().size());
+    NES_DEBUG("Constructed pipeline plan with {} root pipelines.\n{}", pipelinedPlan->getPipelines().size(), *pipelinedPlan);
     return pipelinedPlan;
 }
 }
