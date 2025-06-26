@@ -26,17 +26,19 @@ MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, co
     /// Memory pool adjusts the buffer size to account for separate key and payload buffers
     this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
 
-    /// We need one additional thread for initializing the slice store, i.e. measuring execution times
-    allFileWriters.resize(numWorkerThreads + 1);
-    fileWriters.resize(numWorkerThreads + 1);
-    fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
+    /// Create file writer map per thread to reduce the time waiting for mutexes
+    allFileWriters.resize(numWorkerThreads);
+    fileWriters.resize(numWorkerThreads);
+    fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads);
 
     /// Update maxNumFileDescriptors according to the systems supported maximum number of file descriptors and create limiter
     if (this->memoryControllerInfo.maxNumFileDescriptors > 0)
     {
+        this->memoryControllerInfo.maxNumFileDescriptors = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors);
+        /// Each worker thread must be able to have one file writer and one reader at once
+        assert(this->memoryControllerInfo.maxNumFileDescriptors > 2 * numWorkerThreads);
         /// Subtract number of worker threads to be able to create file readers at any time
-        this->memoryControllerInfo.maxNumFileDescriptors
-            = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors) - numWorkerThreads;
+        this->memoryControllerInfo.maxNumFileDescriptors -= numWorkerThreads;
     }
     limiter = std::make_unique<AtomicLimiter>(this->memoryControllerInfo.maxNumFileDescriptors);
 }
