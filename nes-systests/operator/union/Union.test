@@ -113,9 +113,9 @@ WINDOW TUMBLING(timestamp, size 1 sec)
 INTO sink4
 ----
 65
+2
 
-# This demonstrates that an aggregation only progresses the water mark if all origins watermark progresses
-# Stream6 does not send a timestamp > 2000 so the window never triggers and no tuple is produced
+# This demonstrates that all pending windows are triggered at the end of the execution
 Source stream6 UINT64 value UINT64 timestamp INLINE
 1,1000
 12,1001
@@ -136,3 +136,29 @@ FROM (
 WINDOW TUMBLING(timestamp, size 1 sec)
 INTO sink4
 ----
+65
+2
+
+# This demonstrates that the previous test still works when a union is nested in a projection
+Source stream8 UINT64 value UINT64 timestamp INLINE
+1,1000
+12,1001
+32,1002
+1,1003
+
+Source stream9 UINT64 value UINT64 timestamp INLINE
+65,1000
+21,1001
+3,1002
+2,2003
+
+SINK sink6 UINT64 max_value
+SELECT MAX(value) as max_value
+FROM (
+    SELECT * FROM (SELECT * FROM stream8 UNION SELECT * FROM stream9)
+)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sink6
+----
+65
+2
