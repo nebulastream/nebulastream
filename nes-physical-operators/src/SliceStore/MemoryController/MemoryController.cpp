@@ -22,7 +22,6 @@ namespace NES
 MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, const uint64_t numWorkerThreads)
     : memoryControllerInfo(std::move(memoryControllerInfo))
     , memoryPool(this->memoryControllerInfo.fileDescriptorBufferSize, this->memoryControllerInfo.numberOfBuffersPerWorker, numWorkerThreads)
-    , fileWriterCount(0)
 {
     /// Memory pool adjusts the buffer size to account for separate key and payload buffers
     this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
@@ -32,11 +31,14 @@ MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, co
     fileWriters.resize(numWorkerThreads + 1);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
 
-    fileDescriptorLimit = sysconf(_SC_OPEN_MAX);
-    if (fileDescriptorLimit == -1)
+    /// Update maxNumFileDescriptors according to the systems supported maximum number of file descriptors and create limiter
+    if (this->memoryControllerInfo.maxNumFileDescriptors > 0)
     {
-        throw std::runtime_error("Failed to determine the file descriptor limit.");
+        /// Subtract number of worker threads to be able to create file readers at any time
+        this->memoryControllerInfo.maxNumFileDescriptors
+            = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors - numWorkerThreads);
     }
+    limiter = std::make_unique<AtomicLimiter>(this->memoryControllerInfo.maxNumFileDescriptors);
 }
 
 MemoryController::~MemoryController()
@@ -56,18 +58,24 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide,
-    const bool,
+    const bool forceWrite,
     const bool checkExistence)
 {
+    /// Return immediately if there is no capacity to create a new file descriptor
+    if (not(forceWrite ? limiter->acquireToken() : limiter->tryAcquireToken()))
+    {
+        return nullptr;
+    }
+
     /*if (fileWriterCount % 1000 == 0)
     {
         std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
     }*/
-    if (std::cmp_greater_equal(fileWriterCount.load(), fileDescriptorLimit))
+    /*if (std::cmp_greater_equal(fileWriterCount.load(), fileDescriptorLimit))
     {
         std::cout << "File descriptor limit is reached\n";
         return nullptr;
-    }
+    }*/
     /// Search for matching fileWriter to avoid attempting to open a file twice
     auto& allWritersMap = allFileWriters[threadId.getRawValue()];
     auto& writerMap = fileWriters[threadId.getRawValue()];
@@ -77,12 +85,12 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         return it->second;
     }
 
-    ++fileWriterCount;
+    //++fileWriterCount;
     const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
     if (checkExistence and allWritersMap.contains(filePath))
     {
         //throw std::runtime_error("Requested FileWriter is not unique");
-        --fileWriterCount;
+        //--fileWriterCount;
         std::cout << "Requested FileWriter is not unique\n";
         return nullptr;
     }
@@ -101,10 +109,11 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         filePath,
         [this] { return memoryPool.allocateWriteBuffer(); },
         [this](char* buf) { memoryPool.deallocateWriteBuffer(buf); },
+        [this] { limiter->decrementTokenCounter(); },
         memoryControllerInfo.fileDescriptorBufferSize);
     if (not fileWriter->initialize())
     {
-        --fileWriterCount;
+        //--fileWriterCount;
         return nullptr;
     }
     allWritersMap.emplace(filePath);
@@ -112,21 +121,30 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     return fileWriter;
 }
 
-std::shared_ptr<FileReader>
-MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+std::shared_ptr<FileReader> MemoryController::getFileReader(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide, const bool forceRead)
 {
+    (void)forceRead;
+
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     auto& writerMap = fileWriters[threadId.getRawValue()];
     const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
+        /// Return immediately if there is no capacity to create a new file descriptor
+        /*if (not(forceRead ? limiter->acquireToken() : limiter->tryAcquireToken()))
+        {
+            return nullptr;
+        }*/
+
         writerMap.erase(it);
         const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
             filePath,
             [this] { return memoryPool.allocateReadBuffer(); },
             [this](char* buf) { memoryPool.deallocateReadBuffer(buf); },
-            [this] { --fileWriterCount; },
+            //[this] { limiter->decrementTokenCounter(); },
+            [] {},
             memoryControllerInfo.fileDescriptorBufferSize);
     }
 
@@ -167,10 +185,18 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 void MemoryController::removeFileSystem(
     const std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it, const WorkerThreadId threadId)
 {
+    //limiter->acquireToken();
+
     /// Files are deleted in FileReader destructor
     const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
     fileWriters[threadId.getRawValue()].erase(it);
-    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, [this] { --fileWriterCount; }, 0);
+    const FileReader fileReader(
+        filePath,
+        [] { return nullptr; },
+        [](char*) {},
+        //[this] { limiter->decrementTokenCounter(); },
+        [] {},
+        0);
 }
 
 MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads)
@@ -261,6 +287,104 @@ void MemoryPool::deallocateWriteBuffer(char* buffer)
 uint64_t MemoryPool::getFileDescriptorBufferSize() const
 {
     return fileDescriptorBufferSize;
+}
+
+RateLimiter::RateLimiter(const uint64_t rate) : rate(rate), tokens(rate), lastUpdate(std::chrono::high_resolution_clock::now())
+{
+}
+
+bool RateLimiter::acquireToken()
+{
+    if (rate == 0)
+    {
+        return true;
+    }
+    const std::scoped_lock lock(mutex);
+
+    while (true)
+    {
+        const auto now = std::chrono::high_resolution_clock::now();
+        const auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() / 1000.0;
+        tokens += timeElapsed * rate;
+        tokens = std::min(tokens, static_cast<double>(rate));
+        lastUpdate = now;
+
+        if (tokens >= 1)
+        {
+            tokens -= 1;
+            return true;
+        }
+        auto sleepTime = std::chrono::milliseconds(static_cast<int64_t>((1 - tokens) / rate * 1000.0));
+        std::this_thread::sleep_for(sleepTime);
+    }
+}
+
+bool RateLimiter::tryAcquireToken()
+{
+    if (rate == 0)
+    {
+        return true;
+    }
+    const std::scoped_lock lock(mutex);
+
+    const auto now = std::chrono::high_resolution_clock::now();
+    const auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() / 1000.0;
+    tokens += timeElapsed * rate;
+    tokens = std::min(tokens, static_cast<double>(rate));
+    lastUpdate = now;
+
+    if (tokens >= 1)
+    {
+        tokens -= 1;
+        return true;
+    }
+    return false;
+}
+
+AtomicLimiter::AtomicLimiter(const uint64_t limit) : limit(limit), counter(0)
+{
+}
+
+bool AtomicLimiter::acquireToken()
+{
+    if (limit == 0)
+    {
+        return true;
+    }
+    while (true)
+    {
+        if (counter.fetch_add(1, std::memory_order_relaxed) < limit)
+        {
+            return true;
+        }
+        /// Revert increment if limit is exceeded and leep for a short duration to prevent busy waiting
+        counter.fetch_sub(1, std::memory_order_relaxed);
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    }
+}
+
+bool AtomicLimiter::tryAcquireToken()
+{
+    if (limit == 0)
+    {
+        return true;
+    }
+    if (uint64_t currentValue = counter.load(std::memory_order_relaxed); currentValue < limit)
+    {
+        // Use compare-exchange to ensure atomic increment
+        return counter.compare_exchange_weak(currentValue, currentValue + 1);
+    }
+    return false;
+}
+
+void AtomicLimiter::decrementTokenCounter()
+{
+    counter.fetch_sub(1, std::memory_order_relaxed);
+}
+
+uint64_t AtomicLimiter::getTokenCounter()
+{
+    return counter;
 }
 
 }

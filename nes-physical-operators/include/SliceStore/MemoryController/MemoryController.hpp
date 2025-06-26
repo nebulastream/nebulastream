@@ -16,18 +16,20 @@
 
 #include <map>
 #include <set>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/Slice.hpp>
+#include <sys/resource.h>
 
 namespace NES
 {
 
 struct MemoryControllerInfo
 {
+    uint64_t maxNumFileDescriptors;
     uint64_t fileDescriptorBufferSize;
-    uint64_t fileDescriptorGenerationRate;
     uint64_t numberOfBuffersPerWorker;
     std::filesystem::path workingDir;
     QueryId queryId;
@@ -63,6 +65,48 @@ private:
     uint64_t fileDescriptorBufferSize;
 };
 
+class AbstractLimiter
+{
+public:
+    virtual ~AbstractLimiter() = default;
+    virtual bool acquireToken() = 0;
+    virtual bool tryAcquireToken() = 0;
+    virtual void decrementTokenCounter() = 0;
+    virtual uint64_t getTokenCounter() = 0;
+};
+
+class RateLimiter final : AbstractLimiter
+{
+public:
+    explicit RateLimiter(uint64_t rate);
+
+    bool acquireToken() override;
+    bool tryAcquireToken() override;
+    void decrementTokenCounter() override { }
+    uint64_t getTokenCounter() override { return 0; }
+
+private:
+    const uint64_t rate;
+    double tokens;
+    std::chrono::system_clock::time_point lastUpdate;
+    std::mutex mutex;
+};
+
+class AtomicLimiter final : AbstractLimiter
+{
+public:
+    explicit AtomicLimiter(uint64_t limit);
+
+    bool acquireToken() override;
+    bool tryAcquireToken() override;
+    void decrementTokenCounter() override;
+    uint64_t getTokenCounter() override;
+
+private:
+    const uint64_t limit;
+    std::atomic_uint64_t counter;
+};
+
 class MemoryController
 {
 public:
@@ -76,7 +120,7 @@ public:
         JoinBuildSideType joinBuildSide,
         bool forceWrite,
         bool checkExistence);
-    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide, bool forceRead);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
@@ -93,10 +137,28 @@ private:
 
     MemoryControllerInfo memoryControllerInfo;
     MemoryPool memoryPool;
-
-    ///
-    long fileDescriptorLimit;
-    std::atomic_uint64_t fileWriterCount;
+    std::unique_ptr<AtomicLimiter> limiter;
 };
+
+inline uint64_t setFileDescriptorLimit(uint64_t limit)
+{
+    rlimit rlp;
+    if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
+    {
+        std::cerr << "Failed to get the file descriptor limit.\n";
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue();
+    }
+    limit = std::min(rlp.rlim_max, limit);
+
+    rlp.rlim_cur = limit;
+    if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
+    {
+        std::cerr << "Failed to set the file descriptor limit.\n";
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue();
+    }
+
+    std::cout << fmt::format("Maximum number of file descriptors: {}\n", limit);
+    return limit;
+}
 
 }

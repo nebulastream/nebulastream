@@ -172,7 +172,7 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"]["queryOptimizer"][
         "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
     worker_config_yaml["worker"]["queryOptimizer"][
-        "fileDescriptorGenerationRate"] = current_benchmark_config.file_descriptor_generation_rate
+        "maxNumFileDescriptors"] = current_benchmark_config.max_num_file_descriptors
     worker_config_yaml["worker"]["queryOptimizer"][
         "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
     worker_config_yaml["worker"]["queryOptimizer"][

@@ -140,7 +140,7 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.fileLayout={current_benchmark_config.file_layout} " \
           f"--worker.queryOptimizer.withPrediction={current_benchmark_config.with_prediction} " \
           f"--worker.queryOptimizer.watermarkPredictorType={current_benchmark_config.watermark_predictor_type} " \
-          f"--worker.queryOptimizer.fileDescriptorGenerationRate={current_benchmark_config.file_descriptor_generation_rate} " \
+          f"--worker.queryOptimizer.maxNumFileDescriptors={current_benchmark_config.max_num_file_descriptors} " \
           f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
           f"--worker.queryOptimizer.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
         # print(f"Starting the systest with {cmd}")

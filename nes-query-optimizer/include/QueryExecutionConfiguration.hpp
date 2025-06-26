@@ -83,7 +83,7 @@ public:
            {std::make_shared<NumberValidation>()}};
     UIntOption upperMemoryBound
         = {"upperMemoryBound",
-           "0",
+           std::to_string(UINT64_MAX),
            "Upper memory bound in bytes for file backed slice store.",
            {std::make_shared<NumberValidation>()}};
     UIntOption maxNumWatermarkGaps
@@ -121,11 +121,11 @@ public:
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
            "Type of watermark predictor for file backed slice store "
-        "[KALMAN|REGRESSION|RLS]."};
-    UIntOption fileDescriptorGenerationRate
-        = {"fileDescriptorGenerationRate",
-           "0",
-           "Maximum number of file descriptors that are created per second for file backed slice store (0 equals no limit).",
+           "[KALMAN|REGRESSION|RLS]."};
+    UIntOption maxNumFileDescriptors
+        = {"maxNumFileDescriptors",
+           "1024",
+           "Maximum number of file descriptors that exist at once for file backed slice store (0 equals no limit).",
            {std::make_shared<NumberValidation>()}};
     UIntOption fileDescriptorBufferSize
         = {"fileDescriptorBufferSize",
@@ -160,7 +160,7 @@ private:
             &fileLayout,
             &withPrediction,
             &watermarkPredictorType,
-            &fileDescriptorGenerationRate,
+            &maxNumFileDescriptors,
             &fileDescriptorBufferSize,
             &numberOfBuffersPerWorker,
             &fileBackedWorkingDir};
