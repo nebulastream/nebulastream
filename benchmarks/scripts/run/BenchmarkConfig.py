@@ -47,7 +47,6 @@ SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 # File-backed worker configuration parameters
 LOWER_MEMORY_BOUNDS = [0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
 UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024]
-FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 30, 100, 500, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
@@ -56,6 +55,9 @@ FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WITH_PREDICTIONS = ["true", "false"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
+FILE_DESCRIPTOR_GENERATION_RATES = [100, 1000, 0]
+FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
+NUM_BUFFERS_PER_WORKER = [256, 1024, 4096, 1, 64]
 
 
 def get_queries():
@@ -113,7 +115,6 @@ def get_default_params_dict():
         "page_size": PAGE_SIZES[0],
         "lower_memory_bound": LOWER_MEMORY_BOUNDS[0],
         "upper_memory_bound": UPPER_MEMORY_BOUNDS[0],
-        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
         "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS[0],
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS[0],
         "min_read_state_size": MIN_READ_STATE_SIZES[0],
@@ -122,6 +123,9 @@ def get_default_params_dict():
         "file_layout": FILE_LAYOUTS[0],
         "with_prediction": WITH_PREDICTIONS[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES[0],
+        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES[0],
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
+        "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER[0],
         "query": get_queries()[0]
     }
 
@@ -153,7 +157,6 @@ class BenchmarkConfig:
                  slice_store_type,
                  lower_memory_bound,
                  upper_memory_bound,
-                 file_descriptor_buffer_size,
                  max_num_watermark_gaps,
                  max_num_sequence_numbers,
                  min_read_state_size,
@@ -162,6 +165,9 @@ class BenchmarkConfig:
                  file_layout,
                  with_prediction,
                  watermark_predictor_type,
+                 file_descriptor_generation_rate,
+                 file_descriptor_buffer_size,
+                 num_buffers_per_worker,
                  query,
                  task_queue_size=10000000,
                  buffers_in_global_buffer_manager=200000,
@@ -178,7 +184,6 @@ class BenchmarkConfig:
         self.slice_store_type = slice_store_type
         self.lower_memory_bound = lower_memory_bound
         self.upper_memory_bound = upper_memory_bound
-        self.file_descriptor_buffer_size = file_descriptor_buffer_size
         self.max_num_watermark_gaps = max_num_watermark_gaps
         self.max_num_sequence_numbers = max_num_sequence_numbers
         self.min_read_state_size = min_read_state_size
@@ -187,6 +192,9 @@ class BenchmarkConfig:
         self.file_layout = file_layout
         self.with_prediction = with_prediction
         self.watermark_predictor_type = watermark_predictor_type
+        self.file_descriptor_generation_rate = file_descriptor_generation_rate
+        self.file_descriptor_buffer_size = file_descriptor_buffer_size
+        self.num_buffers_per_worker = num_buffers_per_worker
         self.query = query
 
         ## Values for configuring the single node worker such that the query showcases the bottleneck
@@ -214,7 +222,6 @@ class BenchmarkConfig:
             "slice_store_type": self.slice_store_type,
             "lower_memory_bound": self.lower_memory_bound,
             "upper_memory_bound": self.upper_memory_bound,
-            "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
             "max_num_watermark_gaps": self.max_num_watermark_gaps,
             "max_num_sequence_numbers": self.max_num_sequence_numbers,
             "min_read_state_size": self.min_read_state_size,
@@ -223,6 +230,9 @@ class BenchmarkConfig:
             "file_layout": self.file_layout,
             "with_prediction": self.with_prediction,
             "watermark_predictor_type": self.watermark_predictor_type,
+            "file_descriptor_generation_rate": self.file_descriptor_generation_rate,
+            "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
+            "num_buffers_per_worker": self.num_buffers_per_worker,
             "query": self.query,
             "task_queue_size": self.task_queue_size,
             "buffers_in_global_buffer_manager": self.buffers_in_global_buffer_manager,
@@ -242,7 +252,6 @@ def create_systest_configs():
         "page_size": PAGE_SIZES,
     }
     file_backed_params = {
-        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS,
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS,
         "min_read_state_size": MIN_READ_STATE_SIZES,
@@ -250,7 +259,10 @@ def create_systest_configs():
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
         "file_layout": FILE_LAYOUTS,
         "with_prediction": WITH_PREDICTIONS,
-        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES
+        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES,
+        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES,
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
+        "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
     }
 
     # Generate configurations for each shared parameter (one per value)
@@ -297,7 +309,6 @@ def create_benchmark_configs():
         "query": get_queries()
     }
     file_backed_params = {
-        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "max_num_watermark_gaps": MAX_NUM_WATERMARK_GAPS,
         "max_num_sequence_numbers": MAX_NUM_SEQUENCE_NUMBERS,
         "min_read_state_size": MIN_READ_STATE_SIZES,
@@ -305,7 +316,10 @@ def create_benchmark_configs():
         "file_operation_time_delta": FILE_OPERATION_TIME_DELTAS,
         "file_layout": FILE_LAYOUTS,
         "with_prediction": WITH_PREDICTIONS,
-        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES
+        "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES,
+        "file_descriptor_generation_rate": FILE_DESCRIPTOR_GENERATION_RATES,
+        "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
+        "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
     }
 
     # Generate configurations for each shared parameter (one per value)
@@ -462,15 +476,15 @@ def create_query_benchmark_configs():
     del default_params["timestamp_increment"]
     del default_params["query"]
 
-    default_timestamp_increments, default_queries = get_additional_default_values()
+    default_timestamp_increments, _ = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
                         slice_store_type=slice_store_type,
                         query=query)
         for timestamp_increment in default_timestamp_increments
-        for slice_store_type in ["FILE_BACKED"]
-        for query in default_queries
+        for slice_store_type in SLICE_STORE_TYPES
+        for query in get_queries()
     ]
 
 
@@ -488,7 +502,6 @@ def create_all_benchmark_configs():
             slice_store_type,
             lower_memory_bound,
             upper_memory_bound,
-            file_descriptor_buffer_size,
             max_num_watermark_gaps,
             max_num_sequence_numbers,
             min_read_state_size,
@@ -497,6 +510,9 @@ def create_all_benchmark_configs():
             file_layout,
             with_prediction,
             watermark_predictor_type,
+            file_descriptor_generation_rate,
+            file_descriptor_buffer_size,
+            num_buffers_per_worker,
             query
         )
         for batch_size in BATCH_SIZES
@@ -509,7 +525,6 @@ def create_all_benchmark_configs():
         for slice_store_type in SLICE_STORE_TYPES
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
-        for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
         for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if slice_store_type == "FILE_BACKED" else [MAX_NUM_WATERMARK_GAPS[0]])
         for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if slice_store_type == "FILE_BACKED" else [MAX_NUM_SEQUENCE_NUMBERS[0]])
         for min_read_state_size in (MIN_READ_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_READ_STATE_SIZES[0]])
@@ -518,6 +533,9 @@ def create_all_benchmark_configs():
         for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" else [WITH_PREDICTIONS[0]])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if slice_store_type == "FILE_BACKED" else [WATERMARK_PREDICTOR_TYPES[0]])
+        for file_descriptor_generation_rate in (FILE_DESCRIPTOR_GENERATION_RATES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_GENERATION_RATES[0]])
+        for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])
+        for num_buffers_per_worker in (NUM_BUFFERS_PER_WORKER if slice_store_type == "FILE_BACKED" else [NUM_BUFFERS_PER_WORKER[0]])
         for query in get_queries()
         if lower_memory_bound <= upper_memory_bound
     ]

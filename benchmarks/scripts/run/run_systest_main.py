@@ -132,7 +132,6 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.sliceStoreType={current_benchmark_config.slice_store_type} " \
           f"--worker.queryOptimizer.lowerMemoryBound={current_benchmark_config.lower_memory_bound} " \
           f"--worker.queryOptimizer.upperMemoryBound={current_benchmark_config.upper_memory_bound} " \
-          f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
           f"--worker.queryOptimizer.maxNumWatermarkGaps={current_benchmark_config.max_num_watermark_gaps} " \
           f"--worker.queryOptimizer.maxNumSequenceNumbers={current_benchmark_config.max_num_sequence_numbers} " \
           f"--worker.queryOptimizer.minReadStateSize={current_benchmark_config.min_read_state_size} " \
@@ -140,8 +139,11 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.fileOperationTimeDelta={current_benchmark_config.file_operation_time_delta} " \
           f"--worker.queryOptimizer.fileLayout={current_benchmark_config.file_layout} " \
           f"--worker.queryOptimizer.withPrediction={current_benchmark_config.with_prediction} " \
-          f"--worker.queryOptimizer.watermarkPredictorType={current_benchmark_config.watermark_predictor_type}"
-    # print(f"Starting the systest with {cmd}")
+          f"--worker.queryOptimizer.watermarkPredictorType={current_benchmark_config.watermark_predictor_type} " \
+          f"--worker.queryOptimizer.fileDescriptorGenerationRate={current_benchmark_config.file_descriptor_generation_rate} " \
+          f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
+          f"--worker.queryOptimizer.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
+        # print(f"Starting the systest with {cmd}")
     process = subprocess.Popen(cmd, shell=True)  # , cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started systest with pid {pid}")
