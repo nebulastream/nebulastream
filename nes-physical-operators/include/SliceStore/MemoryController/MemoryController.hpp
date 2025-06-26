@@ -28,15 +28,45 @@ struct MemoryControllerInfo
 {
     uint64_t fileDescriptorBufferSize;
     uint64_t fileDescriptorGenerationRate;
+    uint64_t numberOfBuffersPerWorker;
     std::filesystem::path workingDir;
     QueryId queryId;
     OriginId outputOriginId;
 };
 
+class MemoryPool
+{
+public:
+    MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads);
+
+    char* allocateWriteBuffer();
+    void deallocateWriteBuffer(char* buffer);
+    char* allocateReadBuffer();
+    void deallocateReadBuffer(char* buffer);
+
+    uint64_t getFileDescriptorBufferSize() const;
+
+private:
+    /// We need a multiple of 2 buffers as we might need to separate keys and payload depending on the used FileLayout
+    static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
+
+    std::vector<char> writeMemoryPool;
+    std::vector<char*> freeWriteBuffers;
+    std::condition_variable writeMemoryPoolCondition;
+    std::mutex writeMemoryPoolMutex;
+
+    std::vector<char> readMemoryPool;
+    std::vector<char*> freeReadBuffers;
+    std::condition_variable readMemoryPoolCondition;
+    std::mutex readMemoryPoolMutex;
+
+    uint64_t fileDescriptorBufferSize;
+};
+
 class MemoryController
 {
 public:
-    MemoryController(uint64_t numWorkerThreads, MemoryControllerInfo  memoryControllerInfo);
+    MemoryController(MemoryControllerInfo memoryControllerInfo, uint64_t numWorkerThreads);
     ~MemoryController();
 
     std::shared_ptr<FileWriter> getFileWriter(
@@ -51,39 +81,22 @@ public:
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
-    /// We need a multiple of 2 buffers as we might need to separate keys and payload depending on the used FileLayout
-    static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
-
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
     void
     removeFileSystem(std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it, WorkerThreadId threadId);
-
-    char* allocateWriteBuffer();
-    void deallocateWriteBuffer(char* buffer);
-    char* allocateReadBuffer();
-    void deallocateReadBuffer(char* buffer);
-
-    std::vector<char> writeMemoryPool;
-    std::vector<char*> freeWriteBuffers;
-    std::condition_variable writeMemoryPoolCondition;
-    std::mutex writeMemoryPoolMutex;
-
-    std::vector<char> readMemoryPool;
-    std::vector<char*> freeReadBuffers;
-    std::condition_variable readMemoryPoolCondition;
-    std::mutex readMemoryPoolMutex;
 
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether
     std::vector<std::set<std::string>> allFileWriters;
     std::vector<std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
     std::vector<std::mutex> fileWriterMutexes;
 
+    MemoryControllerInfo memoryControllerInfo;
+    MemoryPool memoryPool;
+
     ///
     long fileDescriptorLimit;
     std::atomic_uint64_t fileWriterCount;
-
-    MemoryControllerInfo memoryControllerInfo;
 };
 
 }

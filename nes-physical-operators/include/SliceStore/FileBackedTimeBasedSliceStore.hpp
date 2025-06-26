@@ -60,7 +60,7 @@ public:
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
-        const SliceStoreInfo& sliceStoreInfo,
+        SliceStoreInfo sliceStoreInfo,
         MemoryControllerInfo memoryControllerInfo,
         WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
@@ -159,9 +159,9 @@ private:
     std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
     SliceStoreInfo sliceStoreInfo;
-    uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;
     std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
+    uint64_t numberOfWorkerThreads;
 };
 
 }

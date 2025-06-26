@@ -159,8 +159,6 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"]["queryOptimizer"]["lowerMemoryBound"] = current_benchmark_config.lower_memory_bound
     worker_config_yaml["worker"]["queryOptimizer"]["upperMemoryBound"] = current_benchmark_config.upper_memory_bound
     worker_config_yaml["worker"]["queryOptimizer"][
-        "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
-    worker_config_yaml["worker"]["queryOptimizer"][
         "maxNumWatermarkGaps"] = current_benchmark_config.max_num_watermark_gaps
     worker_config_yaml["worker"]["queryOptimizer"][
         "maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
@@ -173,6 +171,12 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"]["queryOptimizer"]["withPrediction"] = current_benchmark_config.with_prediction
     worker_config_yaml["worker"]["queryOptimizer"][
         "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
+    worker_config_yaml["worker"]["queryOptimizer"][
+        "fileDescriptorGenerationRate"] = current_benchmark_config.file_descriptor_generation_rate
+    worker_config_yaml["worker"]["queryOptimizer"][
+        "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
+    worker_config_yaml["worker"]["queryOptimizer"][
+        "numberOfBuffersPerWorker"] = current_benchmark_config.num_buffers_per_worker
     worker_config_yaml["worker"]["queryOptimizer"]["fileBackedWorkingDir"] = working_dir
 
     # Query Engine Configuration
