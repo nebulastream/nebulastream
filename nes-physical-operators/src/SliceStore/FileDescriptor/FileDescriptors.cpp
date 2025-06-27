@@ -39,8 +39,8 @@ FileWriter::FileWriter(
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY, 0644);
+    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY, 0644);
     if (fd < 0 || fdKey < 0)
     {
         throw std::runtime_error("Failed to open file or key file for writing");
@@ -88,6 +88,19 @@ bool FileWriter::initialize()
     file.assign(fd);
     keyFile.assign(fdKey);
     return true;
+}
+
+std::vector<std::string> FileWriter::getFilePaths() const
+{
+    std::vector<std::string> filePaths;
+    filePaths.reserve(varSizedCnt + 2);
+    for (auto i = 0UL; i < varSizedCnt; ++i)
+    {
+        filePaths.emplace_back(filePath + fmt::format("_{}.dat", i));
+    }
+    filePaths.emplace_back(filePath + ".dat");
+    filePaths.emplace_back(filePath + "_key.dat");
+    return filePaths;
 }
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)

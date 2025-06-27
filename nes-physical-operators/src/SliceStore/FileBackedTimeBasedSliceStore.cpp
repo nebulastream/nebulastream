@@ -276,7 +276,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    //std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
+    std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
     for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
         //if (slice == nullptr)
@@ -294,11 +294,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     break;
                 }
                 case FileOperation::WRITE: {
-                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide, false);
-                    break;
-                }
-                case FileOperation::FORCE_WRITE: {
-                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide, true);
+                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide);
                     break;
                 }
             }
@@ -345,7 +341,7 @@ FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadI
     std::ranges::transform(
         alteredSlicesPerThread[{threadId, joinBuildSide}],
         std::back_inserter(slicesToUpdate),
-        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::FORCE_WRITE); });
+        [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
 
     alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
@@ -426,10 +422,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const WorkerThreadId threadId,
-    const JoinBuildSideType joinBuildSide,
-    const bool forceWrite) const
+    const JoinBuildSideType joinBuildSide) const
 {
-    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide, forceWrite, true);
+    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide);
     if (fileWriter == nullptr)
     {
         co_return;
@@ -500,17 +495,15 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
         {
             /// FileWriter should be destroyed when calling getFileReader
-            const auto fileWriter = memoryController->getFileWriter(
-                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left, true, false);
+            const auto fileWriter
+                = memoryController->getFileWriter(ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
             //runSingleAwaitable(ioCtx, fileWriter->flush());
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto sizeRead
-            = memoryController
-                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left)
-                  ->read(data.data(), dataSize);
+        const auto sizeRead = memoryController->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left)
+                                  ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 
         if (sizeRead != dataSize)

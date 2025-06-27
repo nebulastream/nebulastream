@@ -27,8 +27,7 @@ namespace NES
 enum class FileOperation : uint8_t
 {
     READ,
-    WRITE,
-    FORCE_WRITE
+    WRITE
 };
 
 struct SliceStoreInfo
@@ -114,8 +113,7 @@ private:
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide,
-        bool forceWrite) const;
+        JoinBuildSideType joinBuildSide) const;
 
     void readSliceFromFiles(
         const std::shared_ptr<NLJSlice>& nljSlice,

@@ -71,27 +71,31 @@ public:
     MemoryController(MemoryControllerInfo memoryControllerInfo, uint64_t numWorkerThreads, uint64_t minNumFileDescriptorsPerWorker);
     ~MemoryController();
 
-    std::shared_ptr<FileWriter> getFileWriter(
-        boost::asio::io_context& ioCtx,
-        SliceEnd sliceEnd,
-        WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide,
-        bool forceWrite,
-        bool checkExistence);
+    std::shared_ptr<FileWriter>
+    getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
+    struct ThreadLocalWriters
+    {
+        std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>> writers;
+        std::deque<std::pair<SliceEnd, JoinBuildSideType>> lru;
+        uint64_t openCount = 0;
+        std::mutex mutex;
+    };
+
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
-    void removeFileSystem(
-        std::unordered_map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it, WorkerThreadId threadId);
+    static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(
+        std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>& writers,
+        std::deque<std::pair<SliceEnd, JoinBuildSideType>>& lru,
+        uint64_t& openCount,
+        const std::pair<SliceEnd, JoinBuildSideType>& key);
 
-    /// FileWriters are grouped by thread id thus reducing the time waiting to lock mutexes
-    std::vector<std::set<std::string>> allFileWriters;
-    std::vector<std::unordered_map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
-    std::vector<std::mutex> fileWriterMutexes;
+    /// Writers are grouped by thread thus reducing resource contention
+    std::vector<ThreadLocalWriters> threadWriters;
 
     MemoryControllerInfo memoryControllerInfo;
     MemoryPool memoryPool;
