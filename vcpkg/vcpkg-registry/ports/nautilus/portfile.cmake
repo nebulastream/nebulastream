@@ -13,14 +13,10 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF 364c89c184430e1ccd0d9422fc73b1cc54c33ca8
-        SHA512 e152ecd75fc881bf12622fd443890d7a33c86ce1f31ce3b59ecce5878ac03bb75210048af53dbf714095332c9d6acd86434ea1ef7e59a20c2fd97fd5e8023b08
+		REF aa4ce72c30e5df5d650dd1d82f3a8498a6b38aff
+        SHA512 9aeda9758d250ced57f3db9c6e848da5180d1dc7a9f6f54a7d072607e86ba3b2611a15aabed80be5a017567f0ec511844f38ddbbc2a38c8b4d6edeaed2c78521
 		PATCHES
-		0001_fixes_clang_tidy.patch
-		0002_llvm_v20.patch
-		0003-disable-ubsan-function-call-check.patch
-		0004-disable-mlir-multithreading.patch
-		0005-clang-tidy-memory-leak.patch
+		0001-disable-ubsan-function-call-check.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
