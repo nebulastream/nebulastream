@@ -37,7 +37,7 @@ public:
     WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
 
-    StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};
+    StringOption localWorkerHost = {"local_worker_host", "127.0.0.1", "Worker IP or hostname."};
 
     /// Port for the RPC server of the Worker. This is used to receive control messages from the coordinator or other workers .
     UIntOption rpcPort = {"rpcPort", "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};

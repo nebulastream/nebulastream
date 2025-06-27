@@ -81,7 +81,7 @@ public:
            StreamJoinStrategy::NESTED_LOOP_JOIN,
            "Join Strategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
-    NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelines_txt_file_path", "pipelines.txt", "Path to dump pipeline details."};
 
 private:
     std::vector<BaseOption*> getOptions() override

@@ -33,29 +33,29 @@ public:
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
     NES::Configurations::StringOption testsDiscoverDir
-        = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
+        = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     NES::Configurations::StringOption testDataDir
-        = {"testDataDir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
+        = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     NES::Configurations::StringOption configDir
-        = {"configDir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
+        = {"config_dir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
     NES::Configurations::StringOption directlySpecifiedTestFiles
-        = {"directlySpecifiedTestFiles",
+        = {"directly_specified_test_files",
            "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     NES::Configurations::SequenceOption<NES::Configurations::UIntOption> testQueryNumbers
-        = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
+        = {"test_query_numbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     NES::Configurations::StringOption testFileExtension
-        = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
+        = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
     NES::Configurations::StringOption workingDir
-        = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
-    NES::Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
+        = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
+    NES::Configurations::BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
     NES::Configurations::UIntOption numberConcurrentQueries
-        = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
-    NES::Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
-    NES::Configurations::SequenceOption<NES::Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
-    NES::Configurations::SequenceOption<NES::Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
-    NES::Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
-    NES::Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
+        = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
+    NES::Configurations::BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
+    NES::Configurations::SequenceOption<NES::Configurations::StringOption> testGroups = {"test_groups", "test groups to run"};
+    NES::Configurations::SequenceOption<NES::Configurations::StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
+    NES::Configurations::StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
+    NES::Configurations::StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     NES::Configurations::StringOption grpcAddressUri
         = {"grpc",
            "",
