@@ -26,6 +26,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>

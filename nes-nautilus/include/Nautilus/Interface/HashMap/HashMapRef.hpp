@@ -53,6 +53,10 @@ public:
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
         = 0;
 
+    /// This function performs a lookup to the hash map with the otherEntry.
+    /// It returns either the entry or a nullptr, depending on if the other entry key is in the hash map or not
+    virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
+
 protected:
     nautilus::val<HashMap*> hashMapRef;
 };

@@ -48,16 +48,14 @@ bool CastToTypeLogicalFunction::operator==(const LogicalFunctionConcept& rhs) co
 {
     if (const auto* other = dynamic_cast<const CastToTypeLogicalFunction*>(&rhs))
     {
-        return *this == *other and this->child == other->getChildren().at(0);
+        return *this == *other;
     }
     return false;
 }
 
 bool operator==(const CastToTypeLogicalFunction& lhs, const CastToTypeLogicalFunction& rhs)
 {
-    const bool dataTypesMatch = rhs.castToType == lhs.castToType;
-    const auto childrenMatch = rhs.child == lhs.child;
-    return dataTypesMatch and childrenMatch;
+    return rhs.castToType == lhs.castToType;
 }
 
 DataType CastToTypeLogicalFunction::getDataType() const
@@ -103,7 +101,8 @@ std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    PRECONDITION(
+        arguments.children.size() == 1, "CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
 }
 
