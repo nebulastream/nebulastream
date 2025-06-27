@@ -84,9 +84,17 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         return createFieldSV(bufferView, bufferNumber, fieldOffset, fieldIdx);
     }
 
-    static const Memory::TupleBuffer* getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets)
+    const Memory::TupleBuffer* getBufferByWithRecordIndex(const uint64_t recordIdx) const
     {
-        return &fieldOffsets->offsetBuffers.front().tupleBuffer;
+        const auto recordIdxForDiv = (recordIdx == 0) ? 0 : recordIdx;
+        const auto bufferNumber = recordIdxForDiv / maxNumberOfTuplesInFormattedBuffer;
+        return &this->offsetBuffers.at(bufferNumber).tupleBuffer;
+    }
+
+    static const Memory::TupleBuffer* getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets, const uint64_t recordIdx)
+    {
+        // Todo: determine which buffer to access first
+        return fieldOffsets->getBufferByWithRecordIndex(recordIdx);
     }
 
     template <typename IndexerMetaData>
@@ -108,8 +116,10 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
-            const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr));
+            const auto indexBuffer = RecordBuffer(nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr, recordIndex));
 
+            // Todo: if we need to access another buffer than the first, we need to recalculate the 'byteOffsetStart' (starting from 0)
+            // Need: address of field and size of field
             const auto byteOffsetStart
                 = ((recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields() + 1) + i) * nautilus::static_val(sizeof(FieldOffsetsType)));
             const auto recordOffsetAddress = indexBuffer.getBuffer() + byteOffsetStart;
