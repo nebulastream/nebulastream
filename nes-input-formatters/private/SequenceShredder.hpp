@@ -68,7 +68,7 @@ public:
     /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
-        if (sizeOfBufferInBytes == sizeOfTupleDelimiter)
+        if (not(isValidRawBuffer()))
         {
             return "";
         }

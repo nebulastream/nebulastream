@@ -61,7 +61,7 @@ using FieldOffsetsType = uint32_t;
 /// Lastly, formats the full spanning tuple.
 template <IndexerMetaDataType IndexerMetaData>
 void processSpanningTuple(
-    const std::vector<StagedBuffer> stagedBuffersSpan,
+    const std::span<const StagedBuffer>& stagedBuffersSpan,
     int8_t* spanningTuplePointer, /// is of the right size
     const IndexerMetaData& indexerMetaData)
 {
@@ -171,7 +171,7 @@ public:
         size_t getTotalSize() const { return leadingSpanningTupleSizeInBytes + trailingSpanningTupleSizeInBytes; }
 
         int8_t* getLeadingSpanningTuplePointer() const { return spanningTuplePtr; }
-        int8_t* getTrailingTuplePointer() const { return spanningTuplePtr + trailingSpanningTupleSizeInBytes; }
+        int8_t* getTrailingTuplePointer() const { return spanningTuplePtr + leadingSpanningTupleSizeInBytes; }
 
         bool hasLeadingSpanningTuple() const { return leadingSpanningTupleSizeInBytes > 0; }
         bool hasTrailingSpanningTuple() const { return trailingSpanningTupleSizeInBytes > 0; }
@@ -197,18 +197,18 @@ public:
         const size_t indexOfSequenceNumberInStagedBuffers,
         const size_t sizeOfTupleDelimiterInBytes)
     {
-        // size_t sizeOfSpanningTuple = 2 * sizeOfTupleDelimiterInBytes;
         if (hasTupleDelimiter)
         {
             const bool hasLeadingST = indexOfSequenceNumberInStagedBuffers != 0;
             const bool hasTrailingST = indexOfSequenceNumberInStagedBuffers < spanningTupleBuffers.size() - 1;
             INVARIANT(hasLeadingST or hasTrailingST, "cannot calculate size of spanning tuple for buffers without spanning tuples");
+
             if (hasLeadingST and not hasTrailingST)
             {
                 spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
                 spanningTupleData.increaseLeadingSpanningTupleSize(
                     spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
-                for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers - 1; ++i)
+                for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
                 {
                     spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
                 }
@@ -220,7 +220,7 @@ public:
                 spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
                 spanningTupleData.increaseTrailingSpanningTupleSize(
                     spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
-                for (size_t i = indexOfSequenceNumberInStagedBuffers; i < spanningTupleBuffers.size() - 1; ++i)
+                for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
                 {
                     spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
                 }
@@ -230,37 +230,41 @@ public:
             if (hasLeadingST and hasTrailingST)
             {
                 spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
-                spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
                 /// Size of leading spanning tuple
-                spanningTupleData.increaseLeadingSpanningTupleSize(
-                    spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
-                for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers - 1; ++i)
+                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers; ++i)
                 {
                     spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
                 }
-                spanningTupleData.increaseTrailingSpanningTupleSize(
-                    spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getLeadingBytes().size());
+                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getLeadingBytes().size());
 
                 /// Size of trailing spanning tuple
+                spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
                 spanningTupleData.increaseTrailingSpanningTupleSize(
                     spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
-                for (size_t i = indexOfSequenceNumberInStagedBuffers; i < spanningTupleBuffers.size() - 1; ++i)
+                for (size_t i = indexOfSequenceNumberInStagedBuffers + 1; i < spanningTupleBuffers.size() - 1; ++i)
                 {
                     spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
                 }
-                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+                spanningTupleData.increaseTrailingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
                 return;
             }
         }
         else
         {
-            spanningTupleData.increaseLeadingSpanningTupleSize(
-                spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+            /// the raw buffer had no delimiter, the spanning tuple consists of at least three buffers.
+            /// add tuple delimiter padding, if format has tuple delimiter
+            spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
+            /// add size of trailing bytes behind last tuple delimiter (start of spanning tuple)
             spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.back().getLeadingBytes().size());
+            /// add sizes of buffers in between the two buffers with delimiters
             for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
             {
                 spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
             }
+            /// add size of leading bytes in front of first tuple delimiter of the last tuple delimiter (end of spanning tuple)
+            spanningTupleData.increaseLeadingSpanningTupleSize(
+                spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
         }
     }
 
@@ -283,7 +287,7 @@ public:
         inputFormatterTask->inputFormatIndexer->indexRawBuffer(
             spanningTupleData.getRawBufferFIF(), RawTupleBuffer{*tupleBuffer}, inputFormatterTask->indexerMetaData);
 
-        if (/*hasTupleDelimiter*/ spanningTupleData.getRawBufferFIF().getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
+        if (const bool hasTupleDelimiter = spanningTupleData.getRawBufferFIF().getOffsetOfFirstTupleDelimiter() < configuredBufferSize)
         {
             const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers]
                 = inputFormatterTask->sequenceShredder->processSequenceNumber<true>(
@@ -301,7 +305,7 @@ public:
 
             calculateSizeOfSpanningTuples(
                 spanningTupleData,
-                true,
+                hasTupleDelimiter,
                 stagedBuffers,
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
@@ -309,8 +313,9 @@ public:
 
             if (spanningTupleData.hasLeadingSpanningTuple())
             {
+                const auto leadingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
                 processSpanningTuple<IndexerMetaData>(
-                    stagedBuffers, spanningTupleData.getLeadingSpanningTuplePointer(), inputFormatterTask->indexerMetaData);
+                    leadingSpanningTupleBuffers, spanningTupleData.getLeadingSpanningTuplePointer(), inputFormatterTask->indexerMetaData);
                 inputFormatterTask->inputFormatIndexer->indexRawBuffer(
                     spanningTupleData.getLeadingSpanningTupleFIF(),
                     RawTupleBuffer{
@@ -320,8 +325,11 @@ public:
             }
             if (spanningTupleData.hasTrailingSpanningTuple())
             {
+                const auto trailingSpanningTupleBuffers
+                = std::span(stagedBuffers)
+                      .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
                 processSpanningTuple<IndexerMetaData>(
-                    stagedBuffers, spanningTupleData.getTrailingTuplePointer(), inputFormatterTask->indexerMetaData);
+                    trailingSpanningTupleBuffers, spanningTupleData.getTrailingTuplePointer(), inputFormatterTask->indexerMetaData);
                 inputFormatterTask->inputFormatIndexer->indexRawBuffer(
                     spanningTupleData.getTrailingSpanningTupleFIF(),
                     RawTupleBuffer{
@@ -348,7 +356,7 @@ public:
 
             calculateSizeOfSpanningTuples(
                 spanningTupleData,
-                true,
+                hasTupleDelimiter,
                 stagedBuffers,
                 indexOfSequenceNumberInStagedBuffers,
                 inputFormatterTask->indexerMetaData.getTupleDelimitingBytes().size());
