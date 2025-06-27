@@ -28,9 +28,7 @@ MemoryController::MemoryController(
     this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
 
     /// Create file writer map per thread to reduce the time waiting for mutexes
-    allFileWriters.resize(numWorkerThreads);
-    fileWriters.resize(numWorkerThreads);
-    fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads);
+    threadWriters = std::vector<ThreadLocalWriters>(numWorkerThreads);
 
     /// Update maxNumFileDescriptors according to the system's supported maximum number of file descriptors and create limiter
     if (this->memoryControllerInfo.maxNumFileDescriptors > 0)
@@ -42,6 +40,8 @@ MemoryController::MemoryController(
         this->memoryControllerInfo.maxNumFileDescriptors -= numWorkerThreads * minNumFileDescriptorsPerWorker;
         /// Divide by number of descriptors per worker as each created file writer potentially needs to open this amount of descriptors
         this->memoryControllerInfo.maxNumFileDescriptors /= minNumFileDescriptorsPerWorker;
+        /// Divide by number of worker threads as we enforce a limit on each worker separately
+        this->memoryControllerInfo.maxNumFileDescriptors /= numWorkerThreads;
     }
     else
     {
@@ -53,92 +53,73 @@ MemoryController::MemoryController(
 MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
-    for (auto i = 0UL; i < fileWriters.size(); ++i)
+    for (auto i = 0UL; i < threadWriters.size(); ++i)
     {
-        for (auto mapIt = fileWriters[i].begin(); mapIt != fileWriters[i].end(); ++mapIt)
+        auto& [writers, lru, openCount, mutex] = threadWriters[i];
+        for (auto mapIt = writers.begin(); mapIt != writers.end(); ++mapIt)
         {
-            removeFileSystem(mapIt, WorkerThreadId(i));
+            deleteFileWriter(writers, lru, openCount, mapIt->first);
         }
     }
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    boost::asio::io_context& ioCtx,
-    const SliceEnd sliceEnd,
-    const WorkerThreadId threadId,
-    const JoinBuildSideType joinBuildSide,
-    const bool forceWrite,
-    const bool checkExistence)
+    boost::asio::io_context& ioCtx, const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
-    std::cout << fmt::format("Number of available file descriptors: {}\n", limiter->getNumAvailableFileWriters());
-    /// Return immediately if there is no capacity to create a new file descriptor
-    if (not(forceWrite ? limiter->acquireToken() : limiter->tryAcquireToken()))
-    {
-        return nullptr;
-    }
+    auto& [writers, lru, openCount, mutex] = threadWriters[threadId.getRawValue()];
+    const auto key = std::make_pair(sliceEnd, joinBuildSide);
+    const std::scoped_lock lock(mutex);
 
-    /*if (fileWriterCount % 1000 == 0)
+    /// Search for matching writer to avoid attempting to open a file twice
+    if (const auto it = writers.find(key); it != writers.end())
     {
-        std::cout << fmt::format("File descriptor count: {}\n", fileWriterCount.load());
-    }*/
-    /*if (std::cmp_greater_equal(fileWriterCount.load(), fileDescriptorLimit))
-    {
-        std::cout << "File descriptor limit is reached\n";
-        return nullptr;
-    }*/
-    /// Search for matching fileWriter to avoid attempting to open a file twice
-    auto& allWritersMap = allFileWriters[threadId.getRawValue()];
-    auto& writerMap = fileWriters[threadId.getRawValue()];
-    const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
-    if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
-    {
+        /// Move key to the back of LRU list
+        if (const auto pos = std::ranges::find(lru, key); pos != lru.end())
+        {
+            lru.erase(pos);
+        }
+        lru.push_back(key);
         return it->second;
     }
 
-    //++fileWriterCount;
-    const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-    if (checkExistence and allWritersMap.contains(filePath))
+    /// Close file descriptor if needed
+    if (openCount >= this->memoryControllerInfo.maxNumFileDescriptors && !lru.empty())
     {
-        //throw std::runtime_error("Requested FileWriter is not unique");
-        //--fileWriterCount;
-        std::cout << "Requested FileWriter is not unique\n";
-        return nullptr;
+        const auto& evictKey = lru.front();
+        deleteFileWriter(writers, lru, openCount, evictKey);
     }
-    /*{
-        struct statvfs buffer;
-        if (statvfs(filePath.c_str(), &buffer) != 0)
-        {
-            --fileWriterCount;
-            std::cout << "Error getting file system information\n";
-            return nullptr;
-        }
-        std::cout << fmt::format("Number of free inodes: {}\n", buffer.f_ffree);
-    }*/
-    auto fileWriter = std::make_shared<FileWriter>(
+
+    auto writer = std::make_shared<FileWriter>(
         ioCtx,
-        filePath,
+        constructFilePath(sliceEnd, threadId, joinBuildSide),
         [this, threadId] { return memoryPool.allocateWriteBuffer(threadId); },
         [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(buf, threadId); },
         memoryControllerInfo.fileDescriptorBufferSize);
-    if (not fileWriter->initialize())
-    {
-        //--fileWriterCount;
-        return nullptr;
-    }
-    allWritersMap.emplace(filePath);
-    writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
-    return fileWriter;
+
+    writers[key] = writer;
+    lru.push_back(key);
+    ++openCount;
+
+    return writer;
 }
 
 std::shared_ptr<FileReader>
 MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
+    auto& [writers, lru, openCount, mutex] = threadWriters[threadId.getRawValue()];
+    const auto key = std::make_pair(sliceEnd, joinBuildSide);
+    const std::scoped_lock lock(mutex);
+
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
-    auto& writerMap = fileWriters[threadId.getRawValue()];
-    const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
-    if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
+    if (const auto it = writers.find(key); it != writers.end())
     {
-        writerMap.erase(it);
+        if (const auto pos = std::ranges::find(lru, key); pos != lru.end())
+        {
+            lru.erase(pos);
+        }
+        writers.erase(it);
+        openCount--;
+
         const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
             filePath,
@@ -152,16 +133,26 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
-    for (auto i = 0UL; i < fileWriters.size(); ++i)
+    std::vector<std::shared_ptr<FileWriter>> writersToDelete;
+    for (auto i = 0UL; i < threadWriters.size(); ++i)
     {
-        auto& writerMap = fileWriters[i];
-        const std::scoped_lock lock(fileWriterMutexes[i]);
+        auto& [writers, lru, openCount, mutex] = threadWriters[i];
         for (const auto& joinBuildSide : {JoinBuildSideType::Left, JoinBuildSideType::Right})
         {
-            if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
+            const std::scoped_lock lock(mutex);
+            const auto& writer = deleteFileWriter(writers, lru, openCount, {sliceEnd, joinBuildSide});
+            if (writer.has_value())
             {
-                removeFileSystem(it, WorkerThreadId(i));
+                writersToDelete.emplace_back(writer.value());
             }
+        }
+    }
+
+    for (const auto& writer : writersToDelete)
+    {
+        for (const auto& filePath : writer->getFilePaths())
+        {
+            std::filesystem::remove(filePath);
         }
     }
 }
@@ -181,14 +172,24 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
         .string();
 }
 
-void MemoryController::removeFileSystem(
-    const std::unordered_map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it,
-    const WorkerThreadId threadId)
+std::optional<std::shared_ptr<FileWriter>> MemoryController::deleteFileWriter(
+    std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>& writers,
+    std::deque<std::pair<SliceEnd, JoinBuildSideType>>& lru,
+    uint64_t& openCount,
+    const std::pair<SliceEnd, JoinBuildSideType>& key)
 {
-    /// Files are deleted in FileReader destructor
-    const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
-    fileWriters[threadId.getRawValue()].erase(it);
-    const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, 0);
+    if (const auto it = writers.find(key); it != writers.end())
+    {
+        if (const auto pos = std::ranges::find(lru, key); pos != lru.end())
+        {
+            lru.erase(pos);
+        }
+        writers.erase(it);
+        openCount--;
+
+        return it->second;
+    }
+    return {};
 }
 
 MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads)
@@ -236,7 +237,7 @@ char* MemoryPool::allocateWriteBuffer(const WorkerThreadId threadId)
     return buffer;
 }
 
-void MemoryPool::deallocateWriteBuffer(char* buffer, WorkerThreadId threadId)
+void MemoryPool::deallocateWriteBuffer(char* buffer, const WorkerThreadId threadId)
 {
     if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
         or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
