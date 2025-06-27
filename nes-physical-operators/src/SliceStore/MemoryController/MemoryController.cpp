@@ -19,7 +19,8 @@
 namespace NES
 {
 
-MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, const uint64_t numWorkerThreads)
+MemoryController::MemoryController(
+    MemoryControllerInfo memoryControllerInfo, const uint64_t numWorkerThreads, const uint64_t minNumFileDescriptorsPerWorker)
     : memoryControllerInfo(std::move(memoryControllerInfo))
     , memoryPool(this->memoryControllerInfo.fileDescriptorBufferSize, this->memoryControllerInfo.numberOfBuffersPerWorker, numWorkerThreads)
 {
@@ -31,16 +32,22 @@ MemoryController::MemoryController(MemoryControllerInfo memoryControllerInfo, co
     fileWriters.resize(numWorkerThreads);
     fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads);
 
-    /// Update maxNumFileDescriptors according to the systems supported maximum number of file descriptors and create limiter
+    /// Update maxNumFileDescriptors according to the system's supported maximum number of file descriptors and create limiter
     if (this->memoryControllerInfo.maxNumFileDescriptors > 0)
     {
         this->memoryControllerInfo.maxNumFileDescriptors = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors);
-        /// Each worker thread must be able to have one file writer and one reader at once
-        assert(this->memoryControllerInfo.maxNumFileDescriptors > 2 * numWorkerThreads);
-        /// Subtract number of worker threads to be able to create file readers at any time
-        this->memoryControllerInfo.maxNumFileDescriptors -= numWorkerThreads;
+        /// Each worker thread must be able to have minNumFileDescriptorsPerWorker many file writers and readers at once
+        assert(this->memoryControllerInfo.maxNumFileDescriptors > 2 * numWorkerThreads * minNumFileDescriptorsPerWorker);
+        /// Subtract number of worker threads multiplied by number of descriptors per worker to be able to create file readers at any time
+        this->memoryControllerInfo.maxNumFileDescriptors -= numWorkerThreads * minNumFileDescriptorsPerWorker;
+        /// Divide by number of descriptors per worker as each created file writer potentially needs to open this amount of descriptors
+        this->memoryControllerInfo.maxNumFileDescriptors /= minNumFileDescriptorsPerWorker;
     }
-    limiter = std::make_unique<AtomicLimiter>(this->memoryControllerInfo.maxNumFileDescriptors);
+    else
+    {
+        /// Set the descriptor limit to the system's maximum amount while preserving the value of maxNumFileDescriptors to disable limiter
+        setFileDescriptorLimit(UINT64_MAX);
+    }
 }
 
 MemoryController::~MemoryController()
@@ -63,6 +70,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const bool forceWrite,
     const bool checkExistence)
 {
+    std::cout << fmt::format("Number of available file descriptors: {}\n", limiter->getNumAvailableFileWriters());
     /// Return immediately if there is no capacity to create a new file descriptor
     if (not(forceWrite ? limiter->acquireToken() : limiter->tryAcquireToken()))
     {
@@ -109,9 +117,8 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     auto fileWriter = std::make_shared<FileWriter>(
         ioCtx,
         filePath,
-        [this] { return memoryPool.allocateWriteBuffer(); },
-        [this](char* buf) { memoryPool.deallocateWriteBuffer(buf); },
-        [this] { limiter->decrementTokenCounter(); },
+        [this, threadId] { return memoryPool.allocateWriteBuffer(threadId); },
+        [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(buf, threadId); },
         memoryControllerInfo.fileDescriptorBufferSize);
     if (not fileWriter->initialize())
     {
@@ -175,7 +182,8 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 }
 
 void MemoryController::removeFileSystem(
-    const std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it, const WorkerThreadId threadId)
+    const std::unordered_map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it,
+    const WorkerThreadId threadId)
 {
     /// Files are deleted in FileReader destructor
     const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
@@ -188,21 +196,59 @@ MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWo
 {
     if (fileDescriptorBufferSize > 0)
     {
-        // TODO add option for pool size
         const auto writePoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
         const auto readPoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
 
         writeMemoryPool.reserve(fileDescriptorBufferSize * writePoolSize);
+        writeMemoryPoolCondition = std::vector<std::condition_variable>(numWorkerThreads);
+        writeMemoryPoolMutex = std::vector<std::mutex>(numWorkerThreads);
+        freeWriteBuffers.resize(numWorkerThreads);
+
         for (size_t i = 0; i < writePoolSize; ++i)
         {
-            freeWriteBuffers.push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
+            freeWriteBuffers[i % numWorkerThreads].push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
         }
+
         readMemoryPool.reserve(fileDescriptorBufferSize * readPoolSize);
         for (size_t i = 0; i < readPoolSize; ++i)
         {
             freeReadBuffers.push_back(readMemoryPool.data() + i * fileDescriptorBufferSize);
         }
     }
+}
+
+char* MemoryPool::allocateWriteBuffer(const WorkerThreadId threadId)
+{
+    if (fileDescriptorBufferSize == 0)
+    {
+        return nullptr;
+    }
+
+    //std::cout << "Getting write buffer\n";
+    std::unique_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    //std::cout << fmt::format("Number of available write buffers: {}\n", freeWriteBuffers.size());
+    writeMemoryPoolCondition[threadId.getRawValue()].wait(
+        lock, [this, threadId] { return !freeWriteBuffers[threadId.getRawValue()].empty(); });
+
+    char* buffer = freeWriteBuffers[threadId.getRawValue()].back();
+    freeWriteBuffers[threadId.getRawValue()].pop_back();
+    //std::cout << "Got write buffer\n";
+    return buffer;
+}
+
+void MemoryPool::deallocateWriteBuffer(char* buffer, WorkerThreadId threadId)
+{
+    if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
+        or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
+    {
+        return;
+    }
+
+    //std::cout << "Deallocating write buffer\n";
+    const std::scoped_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    freeWriteBuffers[threadId.getRawValue()].push_back(buffer);
+    //std::cout << "Deallocated write buffer\n";
+    writeMemoryPoolCondition[threadId.getRawValue()].notify_one();
 }
 
 char* MemoryPool::allocateReadBuffer()
@@ -235,140 +281,9 @@ void MemoryPool::deallocateReadBuffer(char* buffer)
     readMemoryPoolCondition.notify_one();
 }
 
-char* MemoryPool::allocateWriteBuffer()
-{
-    if (fileDescriptorBufferSize == 0)
-    {
-        return nullptr;
-    }
-
-    //std::cout << "Getting write buffer\n";
-    std::unique_lock lock(writeMemoryPoolMutex);
-    //std::cout << fmt::format("Number of available write buffers: {}\n", freeWriteBuffers.size());
-    writeMemoryPoolCondition.wait(lock, [this] { return !freeWriteBuffers.empty(); });
-
-    char* buffer = freeWriteBuffers.back();
-    freeWriteBuffers.pop_back();
-    //std::cout << "Got write buffer\n";
-    return buffer;
-}
-
-void MemoryPool::deallocateWriteBuffer(char* buffer)
-{
-    if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
-        or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
-    {
-        return;
-    }
-
-    //std::cout << "Deallocating write buffer\n";
-    const std::scoped_lock lock(writeMemoryPoolMutex);
-    freeWriteBuffers.push_back(buffer);
-    //std::cout << "Deallocated write buffer\n";
-    writeMemoryPoolCondition.notify_one();
-}
-
 uint64_t MemoryPool::getFileDescriptorBufferSize() const
 {
     return fileDescriptorBufferSize;
-}
-
-RateLimiter::RateLimiter(const uint64_t rate) : rate(rate), tokens(rate), lastUpdate(std::chrono::high_resolution_clock::now())
-{
-}
-
-bool RateLimiter::acquireToken()
-{
-    if (rate == 0)
-    {
-        return true;
-    }
-    const std::scoped_lock lock(mutex);
-
-    while (true)
-    {
-        const auto now = std::chrono::high_resolution_clock::now();
-        const auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() / 1000.0;
-        tokens += timeElapsed * rate;
-        tokens = std::min(tokens, static_cast<double>(rate));
-        lastUpdate = now;
-
-        if (tokens >= 1)
-        {
-            tokens -= 1;
-            return true;
-        }
-        auto sleepTime = std::chrono::milliseconds(static_cast<int64_t>((1 - tokens) / rate * 1000.0));
-        std::this_thread::sleep_for(sleepTime);
-    }
-}
-
-bool RateLimiter::tryAcquireToken()
-{
-    if (rate == 0)
-    {
-        return true;
-    }
-    const std::scoped_lock lock(mutex);
-
-    const auto now = std::chrono::high_resolution_clock::now();
-    const auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() / 1000.0;
-    tokens += timeElapsed * rate;
-    tokens = std::min(tokens, static_cast<double>(rate));
-    lastUpdate = now;
-
-    if (tokens >= 1)
-    {
-        tokens -= 1;
-        return true;
-    }
-    return false;
-}
-
-AtomicLimiter::AtomicLimiter(const uint64_t limit) : limit(limit), counter(0)
-{
-}
-
-bool AtomicLimiter::acquireToken()
-{
-    if (limit == 0)
-    {
-        return true;
-    }
-    while (true)
-    {
-        if (counter.fetch_add(1, std::memory_order_relaxed) < limit)
-        {
-            return true;
-        }
-        /// Revert increment if limit is exceeded and leep for a short duration to prevent busy waiting
-        counter.fetch_sub(1, std::memory_order_relaxed);
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-    }
-}
-
-bool AtomicLimiter::tryAcquireToken()
-{
-    if (limit == 0)
-    {
-        return true;
-    }
-    if (uint64_t currentValue = counter.load(std::memory_order_relaxed); currentValue < limit)
-    {
-        // Use compare-exchange to ensure atomic increment
-        return counter.compare_exchange_weak(currentValue, currentValue + 1);
-    }
-    return false;
-}
-
-void AtomicLimiter::decrementTokenCounter()
-{
-    counter.fetch_sub(1, std::memory_order_relaxed);
-}
-
-uint64_t AtomicLimiter::getTokenCounter()
-{
-    return counter;
 }
 
 }
