@@ -72,7 +72,7 @@ jobs:
               --groups large \
               -- \
               --worker.queryOptimizer.execution_mode=COMPILER \
-              --worker.queryEngine.numberOfWorkerThreads=${{ inputs.number_of_worker_threads }} \
+              --worker.queryEngine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
               --worker.queryOptimizer.operatorBufferSize=${{ inputs.buffer_size }} \
               --worker.bufferSizeInBytes=${{ inputs.buffer_size }} \
               --worker.queryOptimizer.pageSize=${{ inputs.page_size }} \
