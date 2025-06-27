@@ -25,7 +25,6 @@ FileWriter::FileWriter(
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
-    const std::function<void()>& onDestruct,
     const size_t bufferSize)
     : ioCtx(ioCtx)
     , file(ioCtx)
@@ -39,7 +38,6 @@ FileWriter::FileWriter(
     , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
-    , onDestruct(onDestruct)
 {
     const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
     const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -59,8 +57,6 @@ FileWriter::~FileWriter()
     //deallocateBuffers();
     file.close();
     keyFile.close();
-
-    onDestruct();
 }
 
 bool FileWriter::initialize()
@@ -225,7 +221,7 @@ void FileWriter::flushAndDeallocateBuffers()
         });
 
     /// Use non-blocking calls to wait for the flush operation to complete
-    while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+    while (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready)
     {
         ioCtx.poll();
     }
