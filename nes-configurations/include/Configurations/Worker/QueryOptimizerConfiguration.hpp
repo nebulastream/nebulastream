@@ -54,32 +54,32 @@ public:
     QueryOptimizerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     NES::Configurations::EnumOption<DumpMode> dumpMode
-        = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
-    NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
+        = {"dump_mode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
+    NES::Configurations::StringOption dumpPath = {"dump_path", "", "Path to dump query compilation details."};
     NES::Configurations::EnumOption<Nautilus::Configurations::ExecutionMode> executionMode
-        = {"executionMode",
+        = {"execution_mode",
            Nautilus::Configurations::ExecutionMode::COMPILER,
            "ExecutionMode for the query compiler "
            "[COMPILER|INTERPRETER]."};
     NES::Configurations::UIntOption numberOfPartitions
-        = {"numberOfPartitions",
+        = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption pageSize
-        = {"pageSize",
+        = {"page_size",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption operatorBufferSize
-        = {"operatorBufferSize",
+        = {"operator_buffer_size",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
-        = {"joinStrategy",
+        = {"join_strategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
-           "WindowingStrategy"
+           "Join Strategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
 
