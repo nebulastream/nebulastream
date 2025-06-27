@@ -54,8 +54,8 @@ struct UpdateSlicesMetaData
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
-    //static constexpr std::array<size_t, 10> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
-    static constexpr std::array<size_t, 6> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
+    //static constexpr std::array<size_t, 10> TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
+    static constexpr std::array<size_t, 6> TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
@@ -125,7 +125,7 @@ private:
         JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);
-    void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
+    void measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes);
 
     static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
     {
