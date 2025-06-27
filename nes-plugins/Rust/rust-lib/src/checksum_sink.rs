@@ -5,21 +5,6 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-#[cxx::bridge]
-mod ffi {
-    #[namespace = "NES::Rust"]
-    extern "Rust" {
-        type ChecksumSink;
-        // SAFETY: The C++ side (class RustChecksumSink) doesn't free the path String
-        //         as long as the RustChecksumImpl lives
-        unsafe fn new_rust_checksum_sink(path: &str) -> Box<ChecksumSink>;
-        fn start(&mut self) -> Result<()>;
-        fn execute(&mut self, formatted: &str);
-        fn stop(&mut self) -> Result<()>;
-        fn free_rust_checksum_sink(_: Box<ChecksumSink>);
-    }
-}
-
 pub struct ChecksumSink {
     path: String,
     output_file: Option<File>,

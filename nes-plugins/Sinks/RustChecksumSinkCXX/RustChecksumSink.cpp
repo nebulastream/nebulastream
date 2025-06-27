@@ -27,9 +27,9 @@ limitations under the License.
 
 namespace NES::Sinks
 {
-    static rust::Box<Rust::ChecksumSink> createRustImpl(const SinkDescriptor& sinkDescriptor)
+    static rust::Box<Rust::ChecksumSinkImpl> createRustImpl(const SinkDescriptor& sinkDescriptor)
     {
-        std::string path = sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH);
+        std::string path = sinkDescriptor.getFromConfig(ConfigParametersRustChecksum::FILEPATH);
         return Rust::new_rust_checksum_sink(rust::Str(path.data(), path.size()));
     }
 
@@ -52,21 +52,21 @@ namespace NES::Sinks
     void RustChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
     {
         const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
-        this->impl->execute(rust::Str(formatted.data(), formatted.size()))
+        this->impl->execute(rust::Str(formatted.data(), formatted.size()));
     }
 
     Configurations::DescriptorConfig::Config RustChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
     {
-        return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
+        return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersRustChecksum>(std::move(config), NAME);
     }
 
     SinkValidationRegistryReturnType
-    SinkValidationGeneratedRegistrar::RegisterRustChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
+    SinkValidationGeneratedRegistrar::RegisterRustChecksumCXXSinkValidation(SinkValidationRegistryArguments sinkConfig)
     {
         return RustChecksumSink::validateAndFormat(std::move(sinkConfig.config));
     }
 
-    SinkRegistryReturnType SinkGeneratedRegistrar::RegisterRustChecksumSink(SinkRegistryArguments sinkRegistryArguments)
+    SinkRegistryReturnType SinkGeneratedRegistrar::RegisterRustChecksumCXXSink(SinkRegistryArguments sinkRegistryArguments)
     {
         return std::make_unique<RustChecksumSink>(sinkRegistryArguments.sinkDescriptor);
     }

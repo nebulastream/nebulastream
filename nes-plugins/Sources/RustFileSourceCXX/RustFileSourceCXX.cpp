@@ -24,12 +24,12 @@ limitations under the License.
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include "RustFileSourceCXX.hpp"
-#include "cxx.hpp"
-#include "lib.rs.hpp"
+#include "Rust/cxx.hpp"
+#include "Rust/lib.rs.hpp"
 
 namespace NES::Sources
 {
-    static rust::Box<Rust::RustFileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
+    static rust::Box<Rust::FileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
     {
         std::string path = static_cast<std::string>(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH));
         return Rust::new_rust_file_source(rust::Str(path.data(), path.size()));
