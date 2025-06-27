@@ -1,5 +1,6 @@
+
 [package]
-name = "rust-example-cxx"
+name = "rust-lib"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,8 +8,9 @@ edition = "2024"
 crate-type = ["staticlib"]
 
 [dependencies]
-cxx = "1.0.156"
-anyhow = "1.0.97"
+cxx = "1.0.160"
+anyhow = "1.0.98"
 
 [build-dependencies]
-cxx-build = "1.0.156"
+cxx-build = "1.0.160"
+

@@ -29,7 +29,7 @@ limitations under the License.
 
 namespace NES::Sources
 {
-    static rust::Box<Rust::RustFileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
+    static rust::Box<Rust::FileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
     {
         std::string path = static_cast<std::string>(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH));
         return Rust::new_rust_file_source(rust::Str(path.data(), path.size()));

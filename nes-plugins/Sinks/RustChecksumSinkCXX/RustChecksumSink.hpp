@@ -29,6 +29,8 @@ limitations under the License.
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "cxx.hpp"
+#include "lib.rs.hpp"
 
 namespace NES::Sinks
 {
@@ -53,7 +55,7 @@ namespace NES::Sinks
         std::ostream& toString(std::ostream& os) const override { return os << "RustChecksumSink"; }
 
     private:
-        rust::ChecksumSink* impl;
+        rust::Box<Rust::ChecksumSink> impl;
         std::unique_ptr<CSVFormat> formatter;
     };
 

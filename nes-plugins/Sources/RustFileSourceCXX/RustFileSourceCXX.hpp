@@ -19,8 +19,8 @@ limitations under the License.
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ostream>
-#include "cxx.hpp"
-#include "lib.rs.hpp"
+#include <Rust/cxx.hpp>
+#include <Rust/lib.rs.hpp>
 
 namespace NES::Sources
 {
@@ -50,7 +50,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    rust::Box<Rust::RustFileSourceImpl> impl;
+    rust::Box<Rust::FileSourceImpl> impl;
 };
 
 struct ConfigParametersCSV

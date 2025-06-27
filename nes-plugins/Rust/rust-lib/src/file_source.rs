@@ -1,33 +1,16 @@
-use std::fs::File;
-use std::path::Path;
 use anyhow::anyhow;
-use std::slice;
+use std::fs::File;
 use std::io::Read;
+use std::path::Path;
+use std::slice;
 
-#[cxx::bridge]
-mod ffi {
-    #[namespace = "NES::Rust"]
-    extern "Rust" {
-        type RustFileSourceImpl;
-        // SAFETY: The C++ side (class RustFileSource) doesn't free the path String
-        //         as long as the RustFileSourceImpl lives
-        unsafe fn new_rust_file_source<'a>(path: &'a str) -> Box<RustFileSourceImpl>;
-        fn open(&mut self) -> Result<()>;
-        fn close(&mut self) -> Result<()>;
-        unsafe fn fill_tuple_buffer(&mut self, tuple_buffer: *mut u8, buf_len: u64) -> Result<u64>;
-        fn to_string(&self) -> String;
-        fn free_string(s: String);
-        fn free_rust_file_source(_: Box<RustFileSourceImpl>);
-    }
-}
-
-pub struct RustFileSourceImpl {
+pub struct FileSource {
     path: String,
     file: Option<File>,
-    num_bytes_read: usize
+    num_bytes_read: usize,
 }
 
-impl RustFileSourceImpl {
+impl FileSource {
     pub fn open(&mut self) -> anyhow::Result<()> {
         if self.file.is_some() {
             return Err(anyhow!("RustFileSourceImpl already open."));
@@ -44,7 +27,11 @@ impl RustFileSourceImpl {
         Ok(())
     }
 
-    pub fn fill_tuple_buffer(&mut self, tuple_buffer: *mut u8, buf_len: u64) -> anyhow::Result<u64> {
+    pub fn fill_tuple_buffer(
+        &mut self,
+        tuple_buffer: *mut u8,
+        buf_len: u64,
+    ) -> anyhow::Result<u64> {
         let file = if let Some(ref mut f) = self.file {
             f
         } else {
@@ -63,26 +50,31 @@ impl RustFileSourceImpl {
         let mut read_bytes: usize = 0;
         while (read_bytes as u64) < buf_len {
             let just_read = file.read(&mut tuple_buffer[read_bytes..])?;
-            if just_read == 0 { break; }
+            if just_read == 0 {
+                break;
+            }
             read_bytes += just_read;
         }
         Ok(read_bytes as u64)
     }
 
     pub fn to_string(&self) -> String {
-        format!("RustFileSourceImpl(filepath: {}, totalNumBytesRead: {})", self.path, self.num_bytes_read)
+        format!(
+            "RustFileSourceImpl(filepath: {}, totalNumBytesRead: {})",
+            self.path, self.num_bytes_read
+        )
     }
 }
 
-pub fn new_rust_file_source(path: &str) -> Box<RustFileSourceImpl> {
-    Box::new(RustFileSourceImpl {
+pub fn new_rust_file_source(path: &str) -> Box<FileSource> {
+    Box::new(FileSource {
         path: path.to_string(),
         file: None,
-        num_bytes_read: 0
+        num_bytes_read: 0,
     })
 }
 
-pub fn free_rust_file_source(_: Box<RustFileSourceImpl>) {
+pub fn free_rust_file_source(_: Box<FileSource>) {
     // Gets freed automatically when going out of scope
 }
 
