@@ -41,6 +41,7 @@ public:
     ~FileWriter();
 
     bool initialize();
+    std::vector<std::string> getFilePaths() const;
 
     boost::asio::awaitable<void> write(const void* data, size_t size);
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
