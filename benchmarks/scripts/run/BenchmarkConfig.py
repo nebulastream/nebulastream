@@ -20,14 +20,14 @@ import numpy as np
 ## First value of every parameter is the default value
 # Source configuration parameters
 BATCH_SIZES = [1000, 100000, 1, 100]
-TIMESTAMP_INCREMENTS = [1, 100, 1000, 10000, 100000]
-INGESTION_RATES = [0, 1000, 10000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
-MATCH_RATES = [70, 50, 30, 10, 0, 101, 99, 90]  # match rate in percent, values > 100 simply use a counter for every server
+TIMESTAMP_INCREMENTS = [1, 100, 1000, 100000]
+INGESTION_RATES = [0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
+MATCH_RATES = [70, 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
 
 # Shared worker configuration parameters
 NUMBER_OF_WORKER_THREADS = [4, 8, 16, 1]
-BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
-PAGE_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
+BUFFER_SIZES = [4096, 16384, 524288, 1024]
+PAGE_SIZES = [4096, 16384, 524288, 1024]
 WINDOW_SIZE_SLIDE = [
     # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
     (1000 * 1000 * 1000, 1000 * 1000 * 1000),
@@ -49,15 +49,15 @@ LOWER_MEMORY_BOUNDS = [0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1
 UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 128 * 1024 * 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 30, 100, 500, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
-MIN_READ_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
-MIN_WRITE_STATE_SIZES = [0, 64, 128, 512, 1024, 4096, 16384]
-FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100, 1000]
+MIN_READ_STATE_SIZES = [0, 128, 1024, 4096, 16384]
+MIN_WRITE_STATE_SIZES = [0, 128, 1024, 4096, 16384]
+FILE_OPERATION_TIME_DELTAS = [0, 1, 10, 100]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WITH_PREDICTIONS = ["true", "false"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
-MAX_NUM_FILE_DESCRIPTORS = [1048576, 64, 1024]
-FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 32768, 131072, 524288, 1024]
-NUM_BUFFERS_PER_WORKER = [256, 1024, 4096, 1, 64]
+MAX_NUM_FILE_DESCRIPTORS = [4096, 16384, 0, 64, 1024]  # 0 means no limit (will fail if system's hard limit is exceeded)
+FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 16384, 524288, 1024]
+NUM_BUFFERS_PER_WORKER = [4096, 16384, 0, 64, 1024]
 
 
 def get_queries():
