@@ -63,6 +63,7 @@ public:
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
 private:
+    // TODO read locks for each paged vector
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;

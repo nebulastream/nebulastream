@@ -253,8 +253,10 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
 
     /// Initialise memory controller and measure execution times for reading and writing
-    memoryController = std::make_shared<MemoryController>(memoryControllerInfo, numberOfWorkerThreads);
-    measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
+    /// Separate keys means keys and payload are written to separate files, and we may need an additional descriptor for variable sized data
+    const auto minNumFileDescriptorsPerWorker = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 3UL : 2UL;
+    memoryController = std::make_shared<MemoryController>(memoryControllerInfo, numberOfWorkerThreads, minNumFileDescriptorsPerWorker);
+    measureReadAndWriteExecTimes(TEST_DATA_SIZES);
 }
 
 boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
@@ -274,7 +276,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
+    //std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
     for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
         //if (slice == nullptr)
@@ -479,9 +481,9 @@ void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId orig
     watermarkPredictors[originId]->update(ingestionTimesForWatermarks);
 }
 
-void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
+void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes)
 {
-    constexpr auto numElements = USE_TEST_DATA_SIZES.size();
+    constexpr auto numElements = TEST_DATA_SIZES.size();
     if constexpr (numElements < 2)
     {
         throw std::invalid_argument("At least two points are required to initialize the model.");
