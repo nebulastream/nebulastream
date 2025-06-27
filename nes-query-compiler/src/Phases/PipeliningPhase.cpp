@@ -34,6 +34,8 @@
 #include <PipelinedQueryPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include "InputFormatters/InputFormatterProvider.hpp"
+#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
+#include "Util/Strings.hpp"
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -210,6 +212,39 @@ void buildPipelineRecursively(
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
+        if (currentPipeline->isSourcePipeline())
+        {
+            /// If the immediate successor of a source pipeline is a sink pipeline, inject a scan-emit pipeline.
+            /// (We can't genenally skip the scan-emit, even if the formats match, since the sink receives the buffers asynchronously
+            ///  and would, without sorting, write out garabage. We could insert a sorting operator, or for sources with a dedicated thread,
+            ///  attach the sink directly to the source, to guarantee order (the source should just forward buffers)).
+            auto schema = opWrapper->getInputSchema();
+            INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
+
+            auto inputFormatterTaskPipeline = [&currentPipeline, &schema]()
+            {
+                const auto inputFormatterConfig
+                    = currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+                return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+                    OriginId(OriginId::INITIAL), schema.value(), inputFormatterConfig);
+            }();
+
+            const auto sourcePipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(
+                schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, true));
+            currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
+
+            addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
+
+            INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
+            const auto emitOperatorId = sourcePipeline->getRootOperator().getChild().value().getId();
+            pipelineMap[emitOperatorId] = sourcePipeline;
+
+            const auto sinkPipeline = std::make_shared<Pipeline>(*sink);
+            sourcePipeline->addSuccessor(sinkPipeline, sourcePipeline);
+            auto sinkPipelinePtr = sourcePipeline->getSuccessors().back();
+            pipelineMap.emplace(opId, sinkPipelinePtr);
+            return;
+        }
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
