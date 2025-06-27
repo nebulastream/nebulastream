@@ -43,7 +43,7 @@ public:
     UIntOption rpcPort = {"rpcPort", "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
 
     EnumOption<LogLevel> logLevel
-        = {"logLevel", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+        = {"log_level", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
 

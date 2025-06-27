@@ -66,7 +66,7 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
     {
         ScalarOption<std::string> a{"A", "False", "This is Option A"};
         ScalarOption<size_t> b{"B", "42", "This is Option B"};
-        EnumOption<TestEnum> c{"C", TestEnum::YES, "This is Option C"};
+        EnumOption<TestEnum> c{"c", TestEnum::YES, "This is Option C"};
         SequenceOption<InnerConfiguration> d{"D", "This is Option D"};
         InnerConfiguration e{"E", "This is Option E"};
 
@@ -81,7 +81,7 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
         ss.str(),
         R"(    - A: This is Option A (Default: False)
     - B: This is Option B (Default: 42)
-    - C: This is Option C (Default: YES)
+    - c: This is Option C (Default: YES)
     - D: This is Option D (Multiple)
         - B: This is Inner Option B (Default: 54)
     - E: This is Option E
