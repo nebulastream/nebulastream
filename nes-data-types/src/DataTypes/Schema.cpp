@@ -98,7 +98,6 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
     {
         return matchedFields.front();
     }
-    NES_WARNING("Schema: field with name {} does not exist", fieldName);
     return std::nullopt;
 }
 
