@@ -41,8 +41,8 @@ class MemoryPool
 public:
     MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads);
 
-    char* allocateWriteBuffer(WorkerThreadId threadId);
-    void deallocateWriteBuffer(char* buffer, WorkerThreadId threadId);
+    char* allocateWriteBuffer();
+    void deallocateWriteBuffer(char* buffer);
     char* allocateReadBuffer();
     void deallocateReadBuffer(char* buffer);
 
@@ -53,9 +53,9 @@ private:
     static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
 
     std::vector<char> writeMemoryPool;
-    std::vector<std::vector<char*>> freeWriteBuffers;
-    std::vector<std::condition_variable> writeMemoryPoolCondition;
-    std::vector<std::mutex> writeMemoryPoolMutex;
+    std::vector<char*> freeWriteBuffers;
+    std::condition_variable writeMemoryPoolCondition;
+    std::mutex writeMemoryPoolMutex;
 
     std::vector<char> readMemoryPool;
     std::vector<char*> freeReadBuffers;
@@ -88,11 +88,11 @@ private:
 
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
-    static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(
+    std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(
         std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>& writers,
         std::deque<std::pair<SliceEnd, JoinBuildSideType>>& lru,
         uint64_t& openCount,
-        const std::pair<SliceEnd, JoinBuildSideType>& key);
+        const std::pair<SliceEnd, JoinBuildSideType>& key) const;
 
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
