@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/x64.cmake)
-
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
+add_executable(sql-parser-simple-fuzz Fuzz.cpp)
+target_link_libraries(sql-parser-simple-fuzz nes-sql-parser)
+target_compile_options(sql-parser-simple-fuzz PRIVATE -fsanitize=fuzzer)
+target_link_options(sql-parser-simple-fuzz PRIVATE -fsanitize=fuzzer)

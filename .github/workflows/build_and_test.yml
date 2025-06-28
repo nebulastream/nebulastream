@@ -77,27 +77,52 @@ jobs:
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         # To reduce the load on our CI, we do not run all our tests with Benchmark.
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
-        sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
+        sanitizer: [ 'asan', 'ubsan', 'tsan', 'none' ]
+        # due to limited capacity:
         exclude:
-          # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
+          # no libstdcxx tests on arm
           - arch: arm64
             stdlib: 'libstdcxx'
+          # no sanitized tests on arm
           - arch: arm64
-            sanitizer: 'address'
+            sanitizer: 'asan'
           - arch: arm64
-            sanitizer: 'undefined'
+            sanitizer: 'tsan'
           - arch: arm64
-            sanitizer: 'thread'
+            sanitizer: 'ubsan'
+          # no Release tests on arm
+          - arch: arm64
+            build_type: Release
+          # no sanitized Release tests on x64
+          - arch: x64
+            build_type: Release
+            sanitizer: asan
+          - arch: x64
+            build_type: Release
+            sanitizer: tsan
+          - arch: x64
+            build_type: Release
+            sanitizer: ubsan
+          # also only only run sanitizers with self-built, sanitized libcxx
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: asan
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: tsan
+          - arch: x64
+            stdlib: libstdcxx
+            sanitizer: ubsan
           # TODO #808 Enable TSAN with libc++
           - stdlib: 'libcxx'
-            sanitizer: 'thread'
+            sanitizer: 'tsan'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -179,7 +204,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-last.xml
           path: /junit.xml
 
   build-without-tests:
