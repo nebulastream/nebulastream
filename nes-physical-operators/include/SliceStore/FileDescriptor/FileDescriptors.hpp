@@ -35,7 +35,7 @@ public:
     FileWriter(
         boost::asio::io_context& ioCtx,
         const std::string& filePath,
-        const std::function<char*()>& allocate,
+        const std::function<char*(const FileWriter* writer)>& allocate,
         const std::function<void(char*)>& deallocate,
         size_t bufferSize);
     ~FileWriter();
@@ -66,7 +66,7 @@ private:
 
     uint32_t varSizedCnt;
     std::string filePath;
-    std::function<char*()> allocate;
+    std::function<char*(const FileWriter* writer)> allocate;
     std::function<void(char*)> deallocate;
 };
 

@@ -23,13 +23,13 @@ namespace NES
 FileWriter::FileWriter(
     boost::asio::io_context& ioCtx,
     const std::string& filePath,
-    const std::function<char*()>& allocate,
+    const std::function<char*(const FileWriter* writer)>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
     : ioCtx(ioCtx)
     , file(ioCtx)
     , keyFile(ioCtx)
-    , writeBuffer(allocate())
+    , writeBuffer(nullptr)
     , writeKeyBuffer(nullptr)
     , writeBufferPos(0)
     , writeKeyBufferPos(0)
@@ -107,7 +107,7 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 {
     if (writeBuffer == nullptr)
     {
-        writeBuffer = allocate();
+        writeBuffer = allocate(this);
     }
 
     const auto* dataPtr = static_cast<const char*>(data);
@@ -137,7 +137,7 @@ boost::asio::awaitable<void> FileWriter::writeKey(const void* data, size_t size)
 {
     if (writeKeyBuffer == nullptr)
     {
-        writeKeyBuffer = allocate();
+        writeKeyBuffer = allocate(this);
     }
 
     const auto* dataPtr = static_cast<const char*>(data);
