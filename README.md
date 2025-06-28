@@ -59,3 +59,4 @@ This project supports multiple build types to cater to different stages of devel
 - **Assert Checks**: Disabled.
 - **Use Case**: Designed for maximum performance, omitting all logging and assert checks, including null pointer checks. Suitable for thoroughly tested environments where performance is critical.
 - Use this with care, as this is not regularly tested, i.e., Release terminates deterministically if a bug occurs (failed invariant/precondition), whereas Benchmark will be in an undefined state.
+
