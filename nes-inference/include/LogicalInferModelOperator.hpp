@@ -59,7 +59,7 @@ public:
 
     void serialize(SerializableOperator& serializableOperator) const;
 
-    [[nodiscard]] TraitSet getTraitSet() const { return TraitSet{}; }
+    [[nodiscard]] TraitSet getTraitSet() const { return traitSet; }
 
     [[nodiscard]] LogicalInferModelOperator withTraitSet(TraitSet traitSet) const
     {

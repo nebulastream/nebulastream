@@ -20,7 +20,7 @@
 #include <LogicalInferModelOperator.hpp>
 #include <ModelCatalog.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 ModelInferenceCompilationRule::ModelInferenceCompilationRule(std::shared_ptr<const Nebuli::Inference::ModelCatalog> modelCatalog)

@@ -33,14 +33,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/process.hpp>
-#include <boost/process/search_path.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/pipe.hpp>
+#include <boost/process/v1/search_path.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 #include <Model.hpp>
 
-namespace bp = boost::process;
+namespace bp = boost::process::v1;
 using namespace std::literals;
 
 namespace NES::Nebuli::Inference

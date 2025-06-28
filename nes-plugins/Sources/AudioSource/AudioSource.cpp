@@ -46,7 +46,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-#include "GeneratorDataRegistry.hpp"
+#include <GeneratorDataRegistry.hpp>
 
 namespace NES::Sources
 {
@@ -191,7 +191,6 @@ void AudioSource::open()
     NES_INFO("AudioSource::open: Connected to server.");
 }
 
-
 size_t fillBuffer(int sockfd, NES::Memory::TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
 {
     const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer(), numberOfSamples * sampleWidth);
@@ -205,6 +204,7 @@ size_t fillBuffer(int sockfd, NES::Memory::TupleBuffer& tupleBuffer, size_t numb
 size_t AudioSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider&, const std::stop_token&)
 {
     static std::chrono::nanoseconds timePerSample{1000000000 / sampleRate};
+
     struct __attribute__((packed)) Tuple
     {
         uint64_t timestamp;
@@ -312,7 +312,6 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterAudioSource(SourceReg
     validate(sourceRegistryArguments);
     return std::make_unique<AudioSource>(sourceRegistryArguments.sourceDescriptor);
 }
-
 
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
 GeneratorDataRegistryReturnType

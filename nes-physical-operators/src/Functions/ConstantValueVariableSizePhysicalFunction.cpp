@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <string_view>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -36,6 +37,15 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
     *std::bit_cast<uint32_t*>(data.data()) = size;
     /// ...followed by the value
     std::memcpy(data.data() + sizeof(uint32_t), value, size);
+}
+
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(std::string_view value)
+    : data(value.size() + sizeof(uint32_t))
+{
+    /// The first four bytes of the VariableSizedData contain the size...
+    *std::bit_cast<uint32_t*>(data.data()) = static_cast<uint32_t>(value.size());
+    /// ...followed by the value
+    std::memcpy(data.data() + sizeof(uint32_t), value.data(), value.size());
 }
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include "IREEAdapter.hpp"
+#include <IREEAdapter.hpp>
+
 #include <fstream>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
-#include "IREERuntimeWrapper.hpp"
-
+#include <IREERuntimeWrapper.hpp>
 #include <Model.hpp>
 
 namespace NES

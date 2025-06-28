@@ -18,6 +18,7 @@
 #include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
@@ -41,6 +42,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
     constexpr auto sequentialAggregationRule = SequentialAggregationRule{};
+    auto modelInferenceCompilationRule = ModelInferenceCompilationRule{modelCatalog};
 
     inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);
@@ -50,7 +52,10 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     NES_INFO("After Source Expansion:\n{}", newPlan);
     redundantUnionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Union Removal:\n{}", newPlan);
+    modelInferenceCompilationRule.apply(newPlan);
     typeInference.apply(newPlan);
+
+    sequentialAggregationRule.apply(newPlan);
 
     redundantProjectionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Projection Removal:\n{}", newPlan);

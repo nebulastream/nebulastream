@@ -412,7 +412,7 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, testfile.modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, testfile.modelCatalog};
@@ -784,6 +784,7 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -859,6 +860,18 @@ struct SystestBinder::Impl
                 {
                     globalConfigOverrides = mergeConfigurations(overrides, globalConfigOverrides);
                 }
+            });
+
+
+        parser.registerOnModelCallback(
+            [&](Nebuli::Inference::ModelDescriptor&& model)
+            {
+                /// By default, all relative paths are relative to the testDataDir.
+                if (!model.path.is_absolute())
+                {
+                    model.path = testDataDir / model.path;
+                }
+                modelCatalog->registerModel(std::move(model));
             });
 
         parser.registerOnDifferentialQueryBlockCallback(

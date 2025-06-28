@@ -211,7 +211,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
                 directlySpecifiedTestFiles,
                 std::make_shared<SourceCatalog>(),
                 std::make_shared<SinkCatalog>(),
-                std::shared_ptr<Nebuli::Inference::ModelCatalog>());
+                std::make_shared<Nebuli::Inference::ModelCatalog>());
             return TestFileMap{{testfile.file, testfile}};
         }
         /// case: load a concrete set of tests
@@ -224,7 +224,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             testNumbers,
             std::make_shared<SourceCatalog>(),
             std::make_shared<SinkCatalog>(),
-            std::shared_ptr<Nebuli::Inference::ModelCatalog>());
+            std::make_shared<Nebuli::Inference::ModelCatalog>());
         return TestFileMap{{testfile.file, testfile}};
     }
 

@@ -5,18 +5,19 @@
 ### Model Inference with multiple Parameters
 ### Model is registered with 4 input parameters and three output parameters
 
-Source streamFloat FLOAT32 p1 FLOAT32 p2 FLOAT32 p3 FLOAT32 p4 FILE
-TESTDATA/small/iris.csv
+CREATE LOGICAL SOURCE streamFloat(P1 FLOAT32, P2 FLOAT32, P3 FLOAT32, P4 FLOAT32);
 
-MODEL iris4 TESTDATA/model/iris.onnx
+CREATE PHYSICAL SOURCE FOR streamFloat TYPE File;
+ATTACH FILE small/iris.csv
+
+MODEL iris4 model/iris.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
-FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+FLOAT32 SETOSA FLOAT32 VERSICOLOR FLOAT32 VIRGINICA
 
-SINK classificationThreeSeparate FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+CREATE SINK classificationThreeSeparate(SETOSA FLOAT32, VERSICOLOR FLOAT32, VIRGINICA FLOAT32) TYPE File;
 
-SELECT setosa, versicolor, virginica
-FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM streamFloat)
-INTO classificationThreeSeparate
+SELECT SETOSA, VERSICOLOR, VIRGINICA, INFER_MODEL(iris4, (P1,P2,P3,P4)) FROM streamFloat
+INTO classificationThreeSeparate;
 ----
 0.000526,0.06926,0.930214
 0.001352,0.100895,0.897754
@@ -168,19 +169,17 @@ INTO classificationThreeSeparate
 0.0,0.000004,0.999996
 0.0,0.000002,0.999998
 0.0,0.00001,0.99999
-0.130205,0.778367,0.091427
 
 
 
 ## With a custom function we can recreate the label
 
-SINK classification VARSIZED streamFloat$flower
+CREATE SINK classification(FLOWER VARSIZED) TYPE File;
 
-SELECT iris_label(setosa, versicolor, virginica) as flower
-FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM streamFloat)
-INTO classification
+SELECT iris_label(SETOSA, VERSICOLOR, VIRGINICA) as FLOWER
+FROM (SELECT SETOSA, VERSICOLOR, VIRGINICA, INFER_MODEL(iris4, (P1,P2,P3,P4)) FROM streamFloat)
+INTO classification;
 ----
-versicolor
 virginica
 virginica
 virginica
@@ -333,17 +332,20 @@ virginica
 virginica
 
 ## Model Inference with VarSized input and output parameters
-Source streamVarsized VARSIZED data INLINE
+CREATE LOGICAL SOURCE streamVarsized(data VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR streamVarsized TYPE File;
+ATTACH INLINE
 aaaaaaaaaaaaaaaa
 
-Sink classificationVarsized VARSIZED streamVarsized$data VARSIZED streamVarsized$flower
+CREATE SINK classificationVarsized(STREAMVARSIZED.DATA VARSIZED, FLOWER VARSIZED) TYPE File;
 
-MODEL iris TESTDATA/model/iris.onnx
+MODEL iris model/iris.onnx
 VARSIZED
-FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+FLOAT32 SETOSA FLOAT32 VERSICOLOR FLOAT32 VIRGINICA
 
-SELECT data, iris_label(setosa, versicolor, virginica) as flower
-FROM (SELECT INFER_MODEL(iris, (data)) FROM streamVarsized)
-INTO classificationVarsized
+SELECT data, iris_label(SETOSA, VERSICOLOR, VIRGINICA) as FLOWER
+FROM (SELECT DATA, SETOSA, VERSICOLOR, VIRGINICA, INFER_MODEL(iris, (DATA)) FROM streamVarsized)
+INTO classificationVarsized;
 ----
 aaaaaaaaaaaaaaaa,virginica

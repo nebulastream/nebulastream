@@ -47,7 +47,7 @@ struct ConfigParametersAudio
         true,
         [](const std::unordered_map<std::string, std::string>& config)
         { return Configurations::DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
-        
+
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost",
         std::nullopt,

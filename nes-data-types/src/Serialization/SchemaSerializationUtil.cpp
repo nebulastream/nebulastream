@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Serialization/SchemaSerializationUtil.hpp>
+
 #include <DataTypes/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableSchema.pb.h>
 
@@ -50,7 +52,7 @@ SerializableSchema SchemaSerializationUtil::serializeSchema(const Schema& schema
 Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
 {
     /// de-serialize field from serialized schema to the schema object.
-    NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
+    NES_TRACE("SchemaSerializationUtil:: deserialize schema ");
     auto deserializedSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     for (const auto& serializedField : serializedSchema.fields())
     {
@@ -65,12 +67,12 @@ Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& seri
     {
         case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
             deserializedSchema.memoryLayoutType = Schema::MemoryLayoutType::ROW_LAYOUT;
-            NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
+            NES_TRACE("SchemaSerializationUtil:: deserialized row Layout");
             break;
         }
         case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
             deserializedSchema.memoryLayoutType = Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
-            NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
+            NES_TRACE("SchemaSerializationUtil:: deserialized columnar Layout");
             break;
         }
         default: {
