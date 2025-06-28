@@ -36,13 +36,21 @@ struct MemoryControllerInfo
     OriginId outputOriginId;
 };
 
+struct ThreadLocalWriters
+{
+    std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>> writers;
+    std::deque<std::pair<SliceEnd, JoinBuildSideType>> lru;
+    uint64_t openCount = 0;
+    std::mutex mutex;
+};
+
 class MemoryPool
 {
 public:
     MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads);
 
-    char* allocateWriteBuffer();
-    void deallocateWriteBuffer(char* buffer);
+    char* allocateWriteBuffer(std::vector<ThreadLocalWriters>& threadWriters, const FileWriter* writer, WorkerThreadId threadId);
+    void deallocateWriteBuffer(char* buffer, WorkerThreadId threadId);
     char* allocateReadBuffer();
     void deallocateReadBuffer(char* buffer);
 
@@ -53,9 +61,9 @@ private:
     static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
 
     std::vector<char> writeMemoryPool;
-    std::vector<char*> freeWriteBuffers;
-    std::condition_variable writeMemoryPoolCondition;
-    std::mutex writeMemoryPoolMutex;
+    std::vector<std::vector<char*>> freeWriteBuffers;
+    std::vector<std::condition_variable> writeMemoryPoolCondition;
+    std::vector<std::mutex> writeMemoryPoolMutex;
 
     std::vector<char> readMemoryPool;
     std::vector<char*> freeReadBuffers;
@@ -73,19 +81,12 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    void unlockFileWriter(const WorkerThreadId threadId);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
-    struct ThreadLocalWriters
-    {
-        std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>> writers;
-        std::deque<std::pair<SliceEnd, JoinBuildSideType>> lru;
-        uint64_t openCount = 0;
-        std::mutex mutex;
-    };
-
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
     std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(
