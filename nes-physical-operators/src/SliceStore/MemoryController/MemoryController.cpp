@@ -13,6 +13,8 @@
 */
 
 #include <iostream>
+#include <ranges>
+
 #include <SliceStore/MemoryController/MemoryController.hpp>
 #include <sys/statvfs.h>
 
@@ -69,6 +71,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 {
     auto& [writers, lru, openCount, mutex] = threadWriters[threadId.getRawValue()];
     const auto key = std::make_pair(sliceEnd, joinBuildSide);
+    //mutex.lock();
     const std::scoped_lock lock(mutex);
 
     /// Search for matching writer to avoid attempting to open a file twice and update LRU if needed
@@ -94,18 +97,26 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
             deleteFileWriter(writers, lru, openCount, evictKey);
         }
         lru.push_back(key);
-        ++openCount;
+        //++openCount;
     }
 
+    //std::cout << fmt::format(
+    //    "Number of file descriptors for thread {}: {}\n", threadId.getRawValue(), 1048576 / threadWriters.size() - openCount);
     auto writer = std::make_shared<FileWriter>(
         ioCtx,
         constructFilePath(sliceEnd, threadId, joinBuildSide),
-        [this] { return memoryPool.allocateWriteBuffer(); },
-        [this](char* buf) { memoryPool.deallocateWriteBuffer(buf); },
+        [this, threadId](const FileWriter* obj) { return memoryPool.allocateWriteBuffer(threadWriters, obj, threadId); },
+        [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(buf, threadId); },
         memoryControllerInfo.fileDescriptorBufferSize);
 
     writers[key] = writer;
+    ++openCount;
     return writer;
+}
+
+void MemoryController::unlockFileWriter(const WorkerThreadId threadId)
+{
+    threadWriters[threadId.getRawValue()].mutex.unlock();
 }
 
 std::shared_ptr<FileReader>
@@ -124,9 +135,10 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
             {
                 lru.erase(pos);
             }
-            openCount--;
+            //openCount--;
         }
         writers.erase(it);
+        openCount--;
 
         return std::make_shared<FileReader>(
             constructFilePath(sliceEnd, threadId, joinBuildSide),
@@ -169,13 +181,14 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 {
     const std::string sideStr = joinBuildSide == JoinBuildSideType::Left ? "left" : "right";
     return (memoryControllerInfo.workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_{}",
-                memoryControllerInfo.queryId.getRawValue(),
-                memoryControllerInfo.outputOriginId.getRawValue(),
-                sideStr,
-                sliceEnd.getRawValue(),
-                threadId.getRawValue())))
+            / std::filesystem::path(
+                fmt::format(
+                    "memory_controller_{}_{}_{}_{}_{}",
+                    memoryControllerInfo.queryId.getRawValue(),
+                    memoryControllerInfo.outputOriginId.getRawValue(),
+                    sideStr,
+                    sliceEnd.getRawValue(),
+                    threadId.getRawValue())))
         .string();
 }
 
@@ -193,9 +206,10 @@ std::optional<std::shared_ptr<FileWriter>> MemoryController::deleteFileWriter(
             {
                 lru.erase(pos);
             }
-            openCount--;
+            //openCount--;
         }
         writers.erase(it);
+        openCount--;
         return it->second;
     }
     return {};
@@ -210,10 +224,12 @@ MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWo
         const auto readPoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
 
         writeMemoryPool.reserve(fileDescriptorBufferSize * writePoolSize);
+        writeMemoryPoolCondition = std::vector<std::condition_variable>(numWorkerThreads);
+        writeMemoryPoolMutex = std::vector<std::mutex>(numWorkerThreads);
         freeWriteBuffers.reserve(numWorkerThreads);
         for (size_t i = 0; i < writePoolSize; ++i)
         {
-            freeWriteBuffers.push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
+            freeWriteBuffers[i % numWorkerThreads].push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
         }
 
         readMemoryPool.reserve(fileDescriptorBufferSize * readPoolSize);
@@ -225,7 +241,7 @@ MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWo
     }
 }
 
-char* MemoryPool::allocateWriteBuffer()
+char* MemoryPool::allocateWriteBuffer(std::vector<ThreadLocalWriters>& threadWriters, const FileWriter* writer, WorkerThreadId threadId)
 {
     if (fileDescriptorBufferSize == 0)
     {
@@ -233,17 +249,60 @@ char* MemoryPool::allocateWriteBuffer()
     }
 
     //std::cout << "Getting write buffer\n";
-    std::unique_lock lock(writeMemoryPoolMutex);
-    //std::cout << fmt::format("Number of available write buffers: {}\n", freeWriteBuffers.size());
-    writeMemoryPoolCondition.wait(lock, [this] { return !freeWriteBuffers.empty(); });
+    std::unique_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    /*std::cout << fmt::format(
+        "Number of available write buffers for thread {} before free: {}\n",
+        threadId.getRawValue(),
+        freeWriteBuffers[threadId.getRawValue()].size());*/
+    if (freeWriteBuffers[threadId.getRawValue()].empty())
+    {
+        lock.unlock();
+        auto& [writers, lru, openCount, mutex] = threadWriters[threadId.getRawValue()];
+        const std::scoped_lock innerLock(mutex);
 
-    char* buffer = freeWriteBuffers.back();
-    freeWriteBuffers.pop_back();
+        if (not lru.empty())
+        {
+            const auto& key = lru.front();
+            if (const auto it = writers.find(key); it != writers.end())
+            {
+                //std::cout << "Freeing...\n";
+                it->second->flushAndDeallocateBuffers();
+            }
+            else
+            {
+                //std::cout << "No file descriptor found\n";
+            }
+        }
+        else
+        {
+            //std::cout << "Try Freeing...\n";
+            for (const auto& val : writers | std::views::values)
+            {
+                if (val.get() != writer)
+                {
+                    //std::cout << "Freeing...\n";
+                    val->flushAndDeallocateBuffers();
+                    //std::cout << "Done freeing...\n";
+                    //break;
+                }
+            }
+        }
+        lock.lock();
+    }
+    /*std::cout << fmt::format(
+        "Number of available write buffers for thread {} after free: {}\n",
+        threadId.getRawValue(),
+        freeWriteBuffers[threadId.getRawValue()].size());*/
+    writeMemoryPoolCondition[threadId.getRawValue()].wait(
+        lock, [this, threadId] { return !freeWriteBuffers[threadId.getRawValue()].empty(); });
+
+    char* buffer = freeWriteBuffers[threadId.getRawValue()].back();
+    freeWriteBuffers[threadId.getRawValue()].pop_back();
     //std::cout << "Got write buffer\n";
     return buffer;
 }
 
-void MemoryPool::deallocateWriteBuffer(char* buffer)
+void MemoryPool::deallocateWriteBuffer(char* buffer, WorkerThreadId threadId)
 {
     if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
         or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
@@ -252,10 +311,10 @@ void MemoryPool::deallocateWriteBuffer(char* buffer)
     }
 
     //std::cout << "Deallocating write buffer\n";
-    const std::scoped_lock lock(writeMemoryPoolMutex);
-    freeWriteBuffers.push_back(buffer);
+    const std::scoped_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    freeWriteBuffers[threadId.getRawValue()].push_back(buffer);
     //std::cout << "Deallocated write buffer\n";
-    writeMemoryPoolCondition.notify_one();
+    writeMemoryPoolCondition[threadId.getRawValue()].notify_one();
 }
 
 char* MemoryPool::allocateReadBuffer()
