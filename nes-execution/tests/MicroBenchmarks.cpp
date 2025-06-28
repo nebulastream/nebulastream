@@ -21,7 +21,7 @@
 /// NOTE: Comment out define if measurements are taken
 //#define LOGGING
 
-#define MEASUREMENT_DIR "05-02"
+#define MEASUREMENT_DIR "03-02-4GB"
 
 namespace NES
 {
@@ -784,19 +784,33 @@ public:
             const auto expectedPagedVector = copyPagedVector(*pagedVector);
             NES_INFO("PagedVector copied");
 
-            if constexpr (SeparateKeys == SAME_FILE_KEYS)
+            if constexpr (SeparateKeys != SEPARATE_FILES_SUCCESSIVELY)
             {
-                const auto execTimesSize = execTimesInMs.size();
-                writePagedVectorToFile<SAME_FILE_PAYLOAD>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
-                clearPagedVector<SAME_FILE_PAYLOAD>(pagedVector, bufferManager, execTimesInMs);
-                execTimesInMs.resize(execTimesSize);
+                if constexpr (SeparateKeys == SAME_FILE_KEYS)
+                {
+                    const auto execTimesSize = execTimesInMs.size();
+                    writePagedVectorToFile<SAME_FILE_PAYLOAD>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+                    clearPagedVector<SAME_FILE_PAYLOAD>(pagedVector, bufferManager, execTimesInMs);
+                    execTimesInMs.resize(execTimesSize);
+                }
+
+                writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+                clearPagedVector<SeparateKeys>(pagedVector, bufferManager, execTimesInMs);
+                writeFileToPagedVector<SeparateKeys>(
+                    pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, execTimesInMs);
+            }
+            else
+            {
+                std::vector<double> payloadExecTimesInMs;
+                writePagedVectorToFile<SEPARATE_FILES_PAYLOAD>(pagedVector, memoryLayout, fileNames, fileBufferSize, payloadExecTimesInMs);
+                clearPagedVector<SEPARATE_FILES_PAYLOAD>(pagedVector, bufferManager, payloadExecTimesInMs);
+
+                writePagedVectorToFile<SEPARATE_FILES_KEYS>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
+                clearPagedVector<SEPARATE_FILES_KEYS>(pagedVector, bufferManager, execTimesInMs);
+                writeFileToPagedVector<SEPARATE_FILES_KEYS>(
+                    pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, execTimesInMs);
             }
 
-            writePagedVectorToFile<SeparateKeys>(pagedVector, memoryLayout, fileNames, fileBufferSize, execTimesInMs);
-            clearPagedVector<SeparateKeys>(pagedVector, bufferManager, execTimesInMs);
-
-            writeFileToPagedVector<SeparateKeys>(
-                pagedVector, memoryLayout, bufferManager, fileNames, numBuffers, fileBufferSize, execTimesInMs);
             comparePagedVectors(expectedPagedVector, pagedVector, execTimesInMs);
         }
 
@@ -820,6 +834,11 @@ TEST_P(MicroBenchmarksTest, DISABLED_separationTestSeparateFilesPayloadOnly)
 TEST_P(MicroBenchmarksTest, DISABLED_separationTestSeparateFilesPayloadAndKey)
 {
     runSeparationTests<SEPARATE_FILES_KEYS>();
+}
+
+TEST_P(MicroBenchmarksTest, separationTestSeparateFilesPayloadAndKeySuccessively)
+{
+    runSeparationTests<SEPARATE_FILES_SUCCESSIVELY>();
 }
 
 TEST_P(MicroBenchmarksTest, DISABLED_separationTestSameFilePayloadOnly)
