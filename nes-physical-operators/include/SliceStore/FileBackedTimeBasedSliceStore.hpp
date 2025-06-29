@@ -109,7 +109,7 @@ private:
 
     boost::asio::awaitable<void> writeSliceToFile(
         boost::asio::io_context& ioCtx,
-        const std::shared_ptr<NLJSlice>& nljSlice,
+        const std::shared_ptr<NLJSlice> nljSlice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,

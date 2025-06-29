@@ -38,9 +38,9 @@ struct MemoryControllerInfo
 
 struct ThreadLocalWriters
 {
-    std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>> writers;
-    std::deque<std::pair<SliceEnd, JoinBuildSideType>> lru;
-    uint64_t openCount = 0;
+    using WriterKey = std::pair<SliceEnd, JoinBuildSideType>;
+    std::map<WriterKey, std::pair<std::shared_ptr<FileWriter>, std::list<WriterKey>::iterator>> writers;
+    std::list<WriterKey> lruQueue;
     std::mutex mutex;
 };
 
@@ -62,7 +62,7 @@ private:
 
     std::vector<char> writeMemoryPool;
     std::vector<std::vector<char*>> freeWriteBuffers;
-    std::vector<std::condition_variable> writeMemoryPoolCondition;
+    //std::vector<std::condition_variable> writeMemoryPoolCondition;
     std::vector<std::mutex> writeMemoryPoolMutex;
 
     std::vector<char> readMemoryPool;
@@ -73,6 +73,7 @@ private:
     uint64_t fileDescriptorBufferSize;
 };
 
+// TODO rename FileDescriptorManager
 class MemoryController
 {
 public:
@@ -81,19 +82,15 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    void unlockFileWriter(const WorkerThreadId threadId);
+    void unlockFileWriter(WorkerThreadId threadId);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
-    std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
-    std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(
-        std::map<std::pair<SliceEnd, JoinBuildSideType>, std::shared_ptr<FileWriter>>& writers,
-        std::deque<std::pair<SliceEnd, JoinBuildSideType>>& lru,
-        uint64_t& openCount,
-        const std::pair<SliceEnd, JoinBuildSideType>& key) const;
+    static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key);
 
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
