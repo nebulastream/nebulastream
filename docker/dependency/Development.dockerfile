@@ -3,6 +3,7 @@ ARG TAG=latest
 FROM nebulastream/nes-development-dependency:${TAG}
 
 ARG ANTLR4_VERSION=4.13.2
+ARG GRPC_HEALTH_PROBE_VERSION=0.4.13
 
 RUN apt-get update -y && apt-get install -y \
         clang-format-${LLVM_TOOLCHAIN_VERSION} \
@@ -42,3 +43,6 @@ RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-proj
     printers.register_libcxx_printer_loader()
     end
 EOF
+
+RUN wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-$(dpkg --print-architecture) && \
+  chmod +x /bin/grpc_health_probe
