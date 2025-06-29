@@ -94,18 +94,22 @@ public:
 
 private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
+        const std::vector<std::shared_ptr<Slice>>& slices,
         const Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Timestamp watermark,
         WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide);
+        JoinBuildSideType joinBuildSide) const;
 
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesReactive(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesProactiveWithoutPrediction(Timestamp watermark, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    static std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+    updateSlicesReactive(const std::vector<std::shared_ptr<Slice>>& slices);
+    static std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+    updateSlicesProactiveWithoutPrediction(const std::vector<std::shared_ptr<Slice>>& slices, Timestamp watermark);
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesProactiveWithPrediction(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+        const std::vector<std::shared_ptr<Slice>>& slices,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        WorkerThreadId threadId,
+        JoinBuildSideType joinBuildSide) const;
 
     boost::asio::awaitable<void> writeSliceToFile(
         boost::asio::io_context& ioCtx,

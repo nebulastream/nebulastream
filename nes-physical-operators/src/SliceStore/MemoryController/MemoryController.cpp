@@ -100,39 +100,6 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         return writer;
     }
 
-    if (memoryControllerInfo.maxNumFileDescriptors > 0)
-    {
-        /// Close file descriptor if needed
-        if (lruQueue.size() >= memoryControllerInfo.maxNumFileDescriptors)
-        {
-            std::cout << fmt::format("Number of file descriptors before deleting: {}\n", lruQueue.size());
-            for (auto i = 0UL; i < std::min(10UL, lruQueue.size()); ++i)
-            //while (not lruQueue.empty())
-            {
-                //std::cout << fmt::format(
-                //    "Closing oldest descriptor for thread {} and size of LRU {}...\n", threadId.getRawValue(), lru.size());
-                const auto& evictKey = lruQueue.back();
-                if (evictKey == key)
-                {
-                    throw std::runtime_error("Fucking hell shit1");
-                }
-                const auto& local = deleteFileWriter(threadWriters[threadId.getRawValue()], evictKey);
-                if (not local.has_value())
-                {
-                    throw std::runtime_error("Fucking hell shit");
-                }
-                /*std::cout << fmt::format(
-                    "Closed oldest descriptor for thread {} and size of LRU {} and useCount {}...\n",
-                    threadId.getRawValue(),
-                    lru.size(),
-                    local.value().use_count());*/
-            }
-            //return nullptr;
-            std::cout << fmt::format("Number of file descriptors after deleting: {}\n", lruQueue.size());
-        }
-        //lru.push_back(key);
-    }
-
     /*const auto totalNumDescriptors
         = std::distance(std::filesystem::directory_iterator("/proc/self/fd"), std::filesystem::directory_iterator{});
     std::cout << fmt::format(
@@ -150,11 +117,6 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     lruQueue.push_front(key);
     writers[key] = std::make_pair(writer, lruQueue.begin());
     return writer;
-}
-
-void MemoryController::unlockFileWriter(const WorkerThreadId threadId)
-{
-    threadWriters[threadId.getRawValue()].mutex.unlock();
 }
 
 std::shared_ptr<FileReader>
@@ -189,6 +151,78 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
     return nullptr;
 }
 
+void MemoryController::closeFileDescriptors(const WorkerThreadId threadId, const uint64_t numFileDescriptorsToClose)
+{
+    auto& [writers, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
+    const std::scoped_lock lock(mutex);
+
+    if (memoryControllerInfo.maxNumFileDescriptors > 0)
+    {
+        /// Close file descriptor if needed
+        if (lruQueue.size() >= memoryControllerInfo.maxNumFileDescriptors)
+        {
+            std::cout << fmt::format("Number of file descriptors before deleting: {}\n", lruQueue.size());
+            for (auto i = 0UL; i < std::min(numFileDescriptorsToClose, lruQueue.size()); ++i)
+            //while (not lruQueue.empty())
+            {
+                //std::cout << fmt::format(
+                //    "Closing oldest descriptor for thread {} and size of LRU {}...\n", threadId.getRawValue(), lru.size());
+                const auto& evictKey = lruQueue.back();
+                /*if (evictKey == key)
+                {
+                    throw std::runtime_error("Fucking hell shit1");
+                }*/
+                const auto& local = deleteFileWriter(threadWriters[threadId.getRawValue()], evictKey);
+                if (not local.has_value())
+                {
+                    throw std::runtime_error("Fucking hell shit");
+                }
+                /*std::cout << fmt::format(
+                    "Closed oldest descriptor for thread {} and size of LRU {} and useCount {}...\n",
+                    threadId.getRawValue(),
+                    lru.size(),
+                    local.value().use_count());*/
+            }
+            //return nullptr;
+            std::cout << fmt::format("Number of file descriptors after deleting: {}\n", lruQueue.size());
+        }
+        //lru.push_back(key);
+    }
+}
+
+boost::asio::awaitable<void>
+MemoryController::closeFileDescriptorsAsync(const WorkerThreadId threadId, const uint64_t numFileDescriptorsToOpen)
+{
+    auto& [writers, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
+
+    if (memoryControllerInfo.maxNumFileDescriptors > 0)
+    {
+        /// Close file descriptor if needed
+        if (lruQueue.size() >= memoryControllerInfo.maxNumFileDescriptors)
+        {
+            uint64_t loopCounter = std::min(numFileDescriptorsToOpen - getNumAvailableFileDescriptors(threadId), numFileDescriptorsToOpen);
+            for (auto i = 0UL; i < loopCounter; ++i)
+            {
+                std::shared_ptr<FileWriter> writer;
+                {
+                    const std::scoped_lock lock(mutex);
+                    const auto& evictKey = lruQueue.back();
+                    writer = deleteFileWriter(threadWriters[threadId.getRawValue()], evictKey).value();
+                }
+                co_await writer->flush();
+                loopCounter = std::min(numFileDescriptorsToOpen - getNumAvailableFileDescriptors(threadId), numFileDescriptorsToOpen);
+            }
+        }
+    }
+}
+
+uint64_t MemoryController::getNumAvailableFileDescriptors(const WorkerThreadId threadId)
+{
+    auto& [_, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
+    const std::scoped_lock lock(mutex);
+    return memoryControllerInfo.maxNumFileDescriptors - lruQueue.size();
+}
+
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
     std::vector<std::shared_ptr<FileWriter>> writersToDelete;
@@ -216,13 +250,14 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 {
     const std::string sideStr = joinBuildSide == JoinBuildSideType::Left ? "left" : "right";
     return (memoryControllerInfo.workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_{}",
-                memoryControllerInfo.queryId.getRawValue(),
-                memoryControllerInfo.outputOriginId.getRawValue(),
-                sideStr,
-                sliceEnd.getRawValue(),
-                threadId.getRawValue())))
+            / std::filesystem::path(
+                fmt::format(
+                    "memory_controller_{}_{}_{}_{}_{}",
+                    memoryControllerInfo.queryId.getRawValue(),
+                    memoryControllerInfo.outputOriginId.getRawValue(),
+                    sideStr,
+                    sliceEnd.getRawValue(),
+                    threadId.getRawValue())))
         .string();
 }
 
