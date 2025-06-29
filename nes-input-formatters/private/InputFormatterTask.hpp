@@ -153,6 +153,19 @@ public:
         }
     }
 
+    struct SpanningTuplePOD
+    {
+        int8_t* leadingSpanningTuplePtr = nullptr;
+        int8_t* trailingSpanningTuplePtr = nullptr;
+        bool hasLeadingSpanningTupleBool = false;
+        bool hasTrailingSpanningTupleBool = false;
+        uint64_t totalNumberOfTuples = 0;
+
+        FieldIndexFunctionType leadingSpanningTupleFIF;
+        FieldIndexFunctionType trailingSpanningTupleFIF;
+        FieldIndexFunctionType rawBufferFIF;
+    };
+
     class SpanningTupleData
     {
     public:
@@ -180,6 +193,10 @@ public:
         FieldIndexFunctionType& getTrailingSpanningTupleFIF() { return trailingSpanningTupleFIF; }
         FieldIndexFunctionType& getRawBufferFIF() { return rawBufferFIF; }
 
+        FieldIndexFunctionType takeLeadingSpanningTupleFIF() { return std::move(leadingSpanningTupleFIF); }
+        FieldIndexFunctionType takeTrailingSpanningTupleFIF() { return std::move(trailingSpanningTupleFIF); }
+        FieldIndexFunctionType takeRawBufferFIF() { return std::move(rawBufferFIF); }
+
     private:
         int8_t* spanningTuplePtr = nullptr;
         size_t leadingSpanningTupleSizeInBytes = 0;
@@ -188,7 +205,24 @@ public:
         FieldIndexFunctionType leadingSpanningTupleFIF;
         FieldIndexFunctionType trailingSpanningTupleFIF;
         FieldIndexFunctionType rawBufferFIF;
+
+        bool hasLeadingSpanningTupleBool = false;
+        bool hasTrailingSpanningTupleBool = false;
+        uint64_t totalNumberOfTuples = 0;
     };
+
+    static SpanningTuplePOD createSpanningTuplePOD(SpanningTupleData& spanningTupleData)
+    {
+        return SpanningTuplePOD{
+            .leadingSpanningTuplePtr = spanningTupleData.getLeadingSpanningTuplePointer(),
+            .trailingSpanningTuplePtr = spanningTupleData.getTrailingTuplePointer(),
+            .hasLeadingSpanningTupleBool = spanningTupleData.hasLeadingSpanningTuple(),
+            .hasTrailingSpanningTupleBool = spanningTupleData.hasTrailingSpanningTuple(),
+            .totalNumberOfTuples = spanningTupleData.getRawBufferFIF().getTotalNumberOfTuples(),
+            .leadingSpanningTupleFIF = spanningTupleData.takeLeadingSpanningTupleFIF(),
+            .trailingSpanningTupleFIF = spanningTupleData.takeTrailingSpanningTupleFIF(),
+            .rawBufferFIF = spanningTupleData.takeRawBufferFIF()};
+    }
 
     static void calculateSizeOfSpanningTuples(
         SpanningTupleData& spanningTupleData,
@@ -231,12 +265,14 @@ public:
             {
                 spanningTupleData.increaseLeadingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
                 /// Size of leading spanning tuple
-                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
+                spanningTupleData.increaseLeadingSpanningTupleSize(
+                    spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimiterInBytes).size());
                 for (size_t i = 1; i < indexOfSequenceNumberInStagedBuffers; ++i)
                 {
                     spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[i].getSizeOfBufferInBytes());
                 }
-                spanningTupleData.increaseLeadingSpanningTupleSize(spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getLeadingBytes().size());
+                spanningTupleData.increaseLeadingSpanningTupleSize(
+                    spanningTupleBuffers[indexOfSequenceNumberInStagedBuffers].getLeadingBytes().size());
 
                 /// Size of trailing spanning tuple
                 spanningTupleData.increaseTrailingSpanningTupleSize(2 * sizeOfTupleDelimiterInBytes);
@@ -268,7 +304,7 @@ public:
         }
     }
 
-    static SpanningTupleData* indexTuplesProxy(
+    static SpanningTuplePOD* indexTuplesProxy(
         const Memory::TupleBuffer* tupleBuffer,
         PipelineExecutionContext* pec,
         InputFormatterTask* inputFormatterTask,
@@ -276,12 +312,13 @@ public:
         Arena* arenaRef)
     {
         /// We need to copy assign a 'new' SpanningTupleData, since it is thread_local and not (re)constructed on all iterations but the first
-        thread_local auto spanningTupleData = SpanningTupleData{pec->getBufferManager()};
-        spanningTupleData = SpanningTupleData{pec->getBufferManager()};
+        thread_local SpanningTuplePOD spanningTuplePOD{};
+        auto spanningTupleData = SpanningTupleData{pec->getBufferManager()};
         if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
             pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-            return &spanningTupleData;
+            spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+            return &spanningTuplePOD;
         }
 
         inputFormatterTask->inputFormatIndexer->indexRawBuffer(
@@ -300,7 +337,8 @@ public:
 
             if (stagedBuffers.size() <= 1)
             {
-                return &spanningTupleData;
+                spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+                return &spanningTuplePOD;
             }
 
             calculateSizeOfSpanningTuples(
@@ -326,8 +364,8 @@ public:
             if (spanningTupleData.hasTrailingSpanningTuple())
             {
                 const auto trailingSpanningTupleBuffers
-                = std::span(stagedBuffers)
-                      .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
+                    = std::span(stagedBuffers)
+                          .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
                 processSpanningTuple<IndexerMetaData>(
                     trailingSpanningTupleBuffers, spanningTupleData.getTrailingTuplePointer(), inputFormatterTask->indexerMetaData);
                 inputFormatterTask->inputFormatIndexer->indexRawBuffer(
@@ -351,7 +389,8 @@ public:
 
             if (stagedBuffers.size() < 3)
             {
-                return &spanningTupleData;
+                spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+                return &spanningTuplePOD;
             }
 
             calculateSizeOfSpanningTuples(
@@ -373,7 +412,15 @@ public:
                     inputFormatterTask->indexerMetaData);
             }
         }
-        return &spanningTupleData;
+        spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+        return &spanningTuplePOD;
+    }
+
+    template <typename T>
+    static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
+    {
+#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+        return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
     }
 
     void scanTask(
@@ -397,7 +444,7 @@ public:
         child.open(executionCtx, recordBuffer);
 
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist;
-        auto spanningTupleData = nautilus::invoke(
+        auto spanningTuplePOD = nautilus::invoke(
             indexTuplesProxy,
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
@@ -412,33 +459,28 @@ public:
         // spanningTupleData.value->traceLeadingST()
 
         /// parse leading spanning tuple if exists
-        if (const auto hasLeadingST = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->hasLeadingSpanningTuple(); },
-                spanningTupleData))
+        if (const nautilus::val<bool> hasLeadingPtr
+            = *getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasLeadingSpanningTupleBool));
+            hasLeadingPtr)
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
-            // Todo: get rid of the invoke call (analog for trailing)
+            auto leadingFIF
+                = getMemberWithOffset<FieldIndexFunctionType>(spanningTuplePOD, offsetof(SpanningTuplePOD, leadingSpanningTupleFIF));
+            // Todo: can't access member if it is a pointer (yet) so need to rely on nautilus call
             auto recordPtr = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getLeadingSpanningTuplePointer(); },
-                spanningTupleData);
-
-            auto leadingFieldAccessFunction = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getLeadingSpanningTupleFIF(); },
-                spanningTupleData);
+                +[](SpanningTuplePOD* spanningTuplePOD) { return spanningTuplePOD->leadingSpanningTuplePtr; }, spanningTuplePOD);
 
             // Todo: we need to access 'readSpanningRecord' using 'value' here, since it is a wrapped nautilus val pointer
-            auto record = leadingFieldAccessFunction.value->readSpanningRecord(
-                projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFieldAccessFunction);
+            auto record
+                = leadingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFIF);
             child.execute(executionCtx, record);
         }
 
         /// parse raw tuple buffer (if there are complete tuples in it)
-        const nautilus::val<uint64_t> totalNumberOfTuples = nautilus::invoke(
-            +[](SpanningTupleData* spanningTupleData) { return spanningTupleData->getRawBufferFIF().getTotalNumberOfTuples(); },
-            spanningTupleData);
-
-        auto rawFieldAccessFunction = nautilus::invoke(
-            +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getRawBufferFIF(); }, spanningTupleData);
+        const nautilus::val<uint64_t> totalNumberOfTuples
+            = *getMemberWithOffset<uint64_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, totalNumberOfTuples));
+        auto rawFieldAccessFunction
+            = getMemberWithOffset<FieldIndexFunctionType>(spanningTuplePOD, offsetof(SpanningTuplePOD, rawBufferFIF));
 
         for (nautilus::val<uint64_t> i = 0_u64; i < totalNumberOfTuples; i = i + 1_u64)
         {
@@ -448,21 +490,18 @@ public:
         }
 
         /// parse trailing spanning tuple if exists
-        if (const auto hasTrailingST = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->hasTrailingSpanningTuple(); },
-                spanningTupleData))
+        if (const nautilus::val<bool> hasTrailingPtr
+            = *getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasTrailingSpanningTupleBool));
+            hasTrailingPtr)
         {
             auto recordIndex = nautilus::val<uint64_t>(0);
+            auto trailingFIF
+                = getMemberWithOffset<FieldIndexFunctionType>(spanningTuplePOD, offsetof(SpanningTuplePOD, trailingSpanningTupleFIF));
             auto recordPtr = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return finalSpanningTupleData->getTrailingTuplePointer(); },
-                spanningTupleData);
+                +[](SpanningTuplePOD* spanningTuplePOD) { return spanningTuplePOD->trailingSpanningTuplePtr; }, spanningTuplePOD);
 
-            auto trailingFieldAccessFunction = nautilus::invoke(
-                +[](SpanningTupleData* finalSpanningTupleData) { return &finalSpanningTupleData->getTrailingSpanningTupleFIF(); },
-                spanningTupleData);
-
-            auto record = trailingFieldAccessFunction.value->readSpanningRecord(
-                projections, recordPtr, recordIndex, indexerMetaData, quotationType, trailingFieldAccessFunction);
+            auto record
+                = trailingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, trailingFIF);
             child.execute(executionCtx, record);
         }
     }

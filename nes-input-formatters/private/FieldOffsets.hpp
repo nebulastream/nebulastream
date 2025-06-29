@@ -189,7 +189,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     }
 
 public:
-    // FieldOffsets() = default;
+    FieldOffsets() = default;
     explicit FieldOffsets(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : bufferProvider(std::move(bufferProvider)) { };
     ~FieldOffsets() = default;
 
