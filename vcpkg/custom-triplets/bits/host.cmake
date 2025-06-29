@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/x64.cmake)
 
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
+# specific settings for Host dependencies
+# (c.f. https://learn.microsoft.com/en-us/vcpkg/users/host-dependencies)
+
+# only build release to save space for debug symbols
+set(VCPKG_BUILD_TYPE release)

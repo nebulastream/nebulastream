@@ -11,5 +11,5 @@
 # limitations under the License.
 
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/x64.cmake)
-
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/bits/host.cmake)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libstdcxx.cmake)

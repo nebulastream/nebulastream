@@ -102,12 +102,12 @@ jobs:
           - name: tupleBuffer_debugging
             arg: -DCMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS=ON
         stdlib: [ libcxx, libstdcxx ]
-        sanitizer: [ none, address, undefined, thread ]
+        sanitizer: [ none, asan, tsan, ubsan ]
         build_type: [ RelWithDebInfo, Debug ]
         exclude:
           # TODO #808 libc++ has to be compiled with TSAN
           - stdlib: libcxx
-            sanitizer: thread
+            sanitizer: tsan
     steps:
       - uses: actions/checkout@v4
         with:

@@ -15,7 +15,57 @@ SET(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/vcpkg/vcpkg-registry/ports")
 SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
-option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
+
+if (DEFINED ENV{VCPKG_STDLIB})
+    set(USE_CPP_STDLIB $ENV{VCPKG_STDLIB})
+    set(USE_CPP_STDLIB_LIBCXX_PATH $ENV{USE_CPP_STDLIB_LIBCXX_PATH})
+else ()
+    set(USE_CPP_STDLIB "libstdcxx" CACHE STRING "C++ stdlib to use. libstdcxx (distro default), libcxx")
+    set_property(CACHE USE_CPP_STDLIB PROPERTY STRINGS "libstdcxx" "libcxx")
+endif ()
+
+
+if (USE_CPP_STDLIB STREQUAL "libcxx")
+    if (    DEFINED ENV{USE_CPP_STDLIB_LIBCXX_PATH}
+        AND DEFINED USE_CPP_STDLIB_LIBCXX_PATH
+        AND NOT $ENV{USE_CPP_STDLIB_LIBCXX_PATH} STREQUAL ${USE_CPP_STDLIB_LIBCXX_PATH})
+        message(FATAL_ERROR "CPP_STDLIB_CUSTOM_PATH in env and as cache var conflict: $ENV{USE_CPP_STDLIB_LIBCXX_PATH} in env, ${CPP_STDLIB_CUSTOM_PATH} in cache!")
+    elseif (DEFINED ENV{USE_CPP_STDLIB_LIBCXX_PATH})
+        set(USE_CPP_STDLIB_LIBCXX_PATH $ENV{USE_CPP_STDLIB_LIBCXX_PATH})
+    else()
+        set(USE_CPP_STDLIB_LIBCXX_PATH "" CACHE STRING "Path to dir containing custom libc++s")
+        set(ENV{USE_CPP_STDLIB_LIBCXX_PATH} "${USE_CPP_STDLIB_LIBCXX_PATH}")
+    endif()
+    list(APPEND VCPKG_ENV_PASSTHROUGH "USE_CPP_STDLIB_LIBCXX_PATH")
+
+    if (NOT EXISTS ${USE_CPP_STDLIB_LIBCXX_PATH})
+        message(FATAL_ERROR "Please set USE_CPP_STDLIB_LIBCXX_PATH to directory containing libc++ "
+        "(currently: ${USE_CPP_STDLIB_LIBCXX_PATH}). "
+        "\n"
+        "You can obtain libc++ from e.g. https://github.com/nebulastream/clang-binaries/releases, "
+        "https://apt.llvm.org, or built it yourself as described in https://libcxx.llvm.org/VendorDocumentation.html. "
+        "\n"
+        "Point USE_CPP_STDLIB_LIBCXX_PATH to e.g. /lib/llvm-${LLVM_TOOLCHAIN_VERSION} if libc++-${LLVM_TOOLCHAIN_VERSION}-dev was installed via apt."
+        )
+    endif()
+
+    if (NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++abi.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libunwind.so.1"
+        OR NOT EXISTS "${USE_CPP_STDLIB_LIBCXX_PATH}/include/c++/v1/")
+        message(FATAL_ERROR "Path to custom libc++ does not exist or is missing expected files.")
+    endif()
+
+    # this makes the hash of the libc++ a part of the VCPKG ABI,
+    # i.e. if the hash of e.g. libc++.so.1 changes, the dependencies are rebuilt
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++.so.1"    ENV{VCPKG_LIBCXX_HASH_LIB} )
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libc++abi.so.1" ENV{VCPKG_LIBCXX_HASH_ABI} )
+    file(SHA256 "${USE_CPP_STDLIB_LIBCXX_PATH}/lib/libunwind.so.1" ENV{VCPKG_LIBCXX_HASH_UNW} )
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_LIB")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_ABI")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "VCPKG_LIBCXX_HASH_UNW")
+endif()
+
 
 if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
@@ -51,12 +101,14 @@ if ($CACHE{DOCKER_DEV_IMAGE})
         )
     endif ()
 
-    # Overwriting stdlib and sanitizer option based on docker image
-    if ($ENV{VCPKG_STDLIB} STREQUAL "libstdcxx")
-        SET(USE_LIBCXX_IF_AVAILABLE OFF)
+    if (NOT $ENV{VCPKG_STDLIB} STREQUAL ${USE_CPP_STDLIB})
+        message(FATAL_ERROR "env var VCPKG_STDLIB ($ENV{VCPKG_STDLIB}) does not match cache var USE_CPP_STDLIB (${USE_CPP_STDLIB})")
     endif()
 
-    SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
+    if (NOT $ENV{VCPKG_SANITIZER} STREQUAL ${SANITIZER_OPTION})
+        message(FATAL_ERROR "env var VCPKG_SANITIZER ($ENV{VCPKG_SANITIZER}) does not match SANITIZER_OPTION (${SANITIZER_OPTION})")
+    endif()
+
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -102,12 +154,7 @@ else ()
     # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
     # nautilus cmake configuration to find the locally installed version of MLIR.
     SET(ENV{MLIR_DIR} "${MLIR_DIR}")
-    SET(VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
-endif ()
-
-SET(VCPKG_STDLIB "libcxx")
-if (NOT USE_LIBCXX_IF_AVAILABLE)
-    SET(VCPKG_STDLIB "local")
+    list(APPEND VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
 endif ()
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE VCPKG_HOST_PROCESSOR)
@@ -124,8 +171,8 @@ if (NOT VCPKG_HOST_OS MATCHES "Linux")
     message(FATAL_ERROR "Only linux is supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
 endif ()
 
-SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
-SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-none-${VCPKG_STDLIB}")
+SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${USE_CPP_STDLIB}")
+SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-host")
 
 message(STATUS "VPCKG target triplet: ${VCPKG_TARGET_TRIPLET}")
 message(STATUS "VPCKG host triplet: ${VCPKG_HOST_TRIPLET}")
