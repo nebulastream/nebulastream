@@ -137,28 +137,36 @@ bool NLJSlice::pagedVectorsCombined()
 size_t NLJSlice::getStateSizeInMemoryForThreadId(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
-    const std::scoped_lock lock(combinePagedVectorsMutex);
-    if (combinedPagedVectors)
-    {
-        return 0;
-    }
     const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
     const auto pageSize = memoryLayout->getBufferSize();
-    const auto numPages = pagedVector->getNumberOfPages();
+    uint64_t numPages = 0;
+
+    {
+        const std::scoped_lock lock(combinePagedVectorsMutex);
+        if (combinedPagedVectors)
+        {
+            return 0;
+        }
+        numPages = pagedVector->getNumberOfPages();
+    }
     return pageSize * numPages;
 }
 
 size_t NLJSlice::getStateSizeOnDiskForThreadId(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
-    const std::scoped_lock lock(combinePagedVectorsMutex);
-    if (combinedPagedVectors)
-    {
-        return 0;
-    }
     const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
     const auto entrySize = memoryLayout->getTupleSize();
-    const auto numTuples = pagedVector->getNumberOfTuplesOnDisk();
+    uint64_t numTuples = 0;
+
+    {
+        const std::scoped_lock lock(combinePagedVectorsMutex);
+        if (combinedPagedVectors)
+        {
+            return 0;
+        }
+        numTuples = pagedVector->getNumberOfTuplesOnDisk();
+    }
     return entrySize * numTuples;
 }
 

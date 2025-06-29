@@ -42,7 +42,7 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
 boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const std::shared_ptr<FileWriter>& fileWriter,
+    const std::shared_ptr<FileWriter> fileWriter,
     FileLayout fileLayout)
 {
     /// We cannot separate keys and payload if there are no keys
@@ -229,7 +229,7 @@ void FileBackedPagedVector::appendKeyPageIfFull(
 boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
     const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const std::shared_ptr<FileWriter>& fileWriter)
+    const std::shared_ptr<FileWriter> fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout
@@ -277,7 +277,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
-    const std::shared_ptr<FileWriter>& fileWriter)
+    const std::shared_ptr<FileWriter> fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout

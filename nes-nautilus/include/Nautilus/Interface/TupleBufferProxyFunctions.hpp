@@ -23,6 +23,11 @@ namespace NES::Nautilus::ProxyFunctions
 {
 inline int8_t* NES_Memory_TupleBuffer_getBuffer(Memory::TupleBuffer* tupleBuffer)
 {
+    if (tupleBuffer == nullptr)
+    {
+        std::cout << "FUUCKK\n";
+        return nullptr;
+    }
     return tupleBuffer->getBuffer();
 };
 

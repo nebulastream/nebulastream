@@ -55,7 +55,7 @@ T runSingleAwaitable(boost::asio::io_context& ioCtx, boost::asio::awaitable<T> t
 {
     /// Use non-blocking calls to wait for task completion
     auto future = boost::asio::co_spawn(ioCtx, std::move(task), boost::asio::use_future);
-    while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+    while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) //
     {
         ioCtx.poll();
         //std::this_thread::yield();
