@@ -27,6 +27,7 @@ FileWriter::FileWriter(
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
     : ioCtx(ioCtx)
+    , strand(ioCtx.get_executor())
     , file(ioCtx)
     , keyFile(ioCtx)
     , writeBuffer(nullptr)
@@ -41,7 +42,7 @@ FileWriter::FileWriter(
 {
     const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY, 0644);
     const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY, 0644);
-    if (fd < 0 || fdKey < 0)
+    if (fd < 0 or fdKey < 0)
     {
         throw std::runtime_error("Failed to open file or key file for writing");
     }
@@ -55,112 +56,24 @@ FileWriter::~FileWriter()
     flushAndDeallocateBuffers();
     /// Buffer needs to be flushed manually before calling the destructor
     //deallocateBuffers();
-    file.close();
-    keyFile.close();
+    if (file.is_open())
+    {
+        file.close();
+    }
+    if (keyFile.is_open())
+    {
+        keyFile.close();
+    }
 }
 
-bool FileWriter::initialize()
+boost::asio::awaitable<void> FileWriter::write(const void* data, const size_t size)
 {
-    return true;
-    auto numRetries = 5UL;
-    int fd, fdKey;
-    do
-    {
-        if (--numRetries < 0)
-        {
-            std::cout << "Failed to open file for writing\n";
-            return false;
-        }
-        fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    } while (fd < 0);
-    numRetries = 5UL;
-    do
-    {
-        if (--numRetries < 0)
-        {
-            std::cout << "Failed to open key file for writing\n";
-            return false;
-        }
-        fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    } while (fdKey < 0);
-
-    //std::cout << "FileWriter init successful\n";
-    file.assign(fd);
-    keyFile.assign(fdKey);
-    return true;
+    co_await write(data, size, file, writeBuffer, writeBufferPos);
 }
 
-std::vector<std::string> FileWriter::getFilePaths() const
+boost::asio::awaitable<void> FileWriter::writeKey(const void* data, const size_t size)
 {
-    std::vector<std::string> filePaths;
-    filePaths.reserve(varSizedCnt + 2);
-    for (auto i = 0UL; i < varSizedCnt; ++i)
-    {
-        filePaths.emplace_back(filePath + fmt::format("_{}.dat", i));
-    }
-    filePaths.emplace_back(filePath + ".dat");
-    filePaths.emplace_back(filePath + "_key.dat");
-    return filePaths;
-}
-
-boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
-{
-    if (writeBuffer == nullptr)
-    {
-        writeBuffer = allocate(this);
-    }
-
-    const auto* dataPtr = static_cast<const char*>(data);
-    if (bufferSize == 0)
-    {
-        co_await flushBuffer(file, writeBuffer, writeBufferPos);
-        co_return;
-    }
-
-    while (size > 0)
-    {
-        const auto copySize = std::min(size, bufferSize - writeBufferPos);
-        std::memcpy(writeBuffer + writeBufferPos, dataPtr, copySize);
-        writeBufferPos += copySize;
-        dataPtr += copySize;
-        size -= copySize;
-
-        if (writeBufferPos == bufferSize)
-        {
-            co_await flushBuffer(file, writeBuffer, writeBufferPos);
-        }
-    }
-    co_return;
-}
-
-boost::asio::awaitable<void> FileWriter::writeKey(const void* data, size_t size)
-{
-    if (writeKeyBuffer == nullptr)
-    {
-        writeKeyBuffer = allocate(this);
-    }
-
-    const auto* dataPtr = static_cast<const char*>(data);
-    if (bufferSize == 0)
-    {
-        co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
-        co_return;
-    }
-
-    while (size > 0)
-    {
-        const auto copySize = std::min(size, bufferSize - writeKeyBufferPos);
-        std::memcpy(writeKeyBuffer + writeKeyBufferPos, dataPtr, copySize);
-        writeKeyBufferPos += copySize;
-        dataPtr += copySize;
-        size -= copySize;
-
-        if (writeKeyBufferPos == bufferSize)
-        {
-            co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
-        }
-    }
-    co_return;
+    co_await write(data, size, keyFile, writeKeyBuffer, writeKeyBufferPos);
 }
 
 boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data)
@@ -176,44 +89,29 @@ boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data)
     varSizedFile.assign(fd);
 
     auto varSizedDataSize = *static_cast<const uint32_t*>(data) + sizeof(uint32_t);
-    co_await flushBuffer(varSizedFile, static_cast<const char*>(data), varSizedDataSize);
+    co_await writeToFile(static_cast<const char*>(data), varSizedDataSize, varSizedFile);
     varSizedFile.close();
 
     co_return varSizedCnt++;
-}
-
-boost::asio::awaitable<void> FileWriter::flush()
-{
-    if (bufferSize == 0)
-    {
-        co_return;
-    }
-
-    if (writeBuffer != nullptr && writeBufferPos > 0)
-    {
-        co_await flushBuffer(file, writeBuffer, writeBufferPos);
-    }
-    if (writeKeyBuffer != nullptr && writeKeyBufferPos > 0)
-    {
-        co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
-    }
-    co_return;
 }
 
 void FileWriter::flushAndDeallocateBuffers()
 {
     std::promise<void> promise;
     const std::future<void> future = promise.get_future();
+    //auto self = shared_from_this();
 
     // TODO schedule the awaitable flush to run on the same io context
     boost::asio::post(
-        ioCtx,
+        strand,
         [this, &promise]
         {
             try
             {
                 boost::asio::co_spawn(
-                    ioCtx,
+                    //self->ioCtx,
+                    //self->flush(),
+                    strand,
                     flush(),
                     [&promise](const std::exception_ptr& e)
                     {
@@ -242,23 +140,82 @@ void FileWriter::flushAndDeallocateBuffers()
     deallocateBuffers();
 }
 
+void FileWriter::deleteAllFiles()
+{
+    file.close();
+    keyFile.close();
+
+    std::filesystem::remove(filePath + ".dat");
+    std::filesystem::remove(filePath + "_key.dat");
+    for (auto i = 0UL; i < varSizedCnt; ++i)
+    {
+        std::filesystem::remove(filePath + fmt::format("_{}.dat", i));
+    }
+}
+
+boost::asio::awaitable<void> FileWriter::flush()
+{
+    if (bufferSize == 0)
+    {
+        co_return;
+    }
+
+    if (file.is_open() and writeBuffer != nullptr and writeBufferPos > 0)
+    {
+        co_await writeToFile(writeBuffer, writeBufferPos, file);
+    }
+    if (keyFile.is_open() and writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
+    {
+        co_await writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+    }
+}
+
 void FileWriter::deallocateBuffers()
 {
+    //if (writeBuffer != nullptr)
     deallocate(writeBuffer);
     writeBuffer = nullptr;
+    //if (writeKeyBuffer != nullptr)
     deallocate(writeKeyBuffer);
     writeKeyBuffer = nullptr;
 }
 
-boost::asio::awaitable<void> FileWriter::flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size)
+boost::asio::awaitable<void>
+FileWriter::write(const void* data, size_t size, boost::asio::posix::stream_descriptor& stream, char*& buffer, size_t& bufferPos) const
+{
+    const auto* dataPtr = static_cast<const char*>(data);
+    if (bufferSize == 0)
+    {
+        co_await writeToFile(dataPtr, size, stream);
+        co_return;
+    }
+    if (buffer == nullptr)
+    {
+        buffer = allocate(this);
+    }
+
+    while (size > 0)
+    {
+        const auto copySize = std::min(size, bufferSize - bufferPos);
+        std::memcpy(buffer + bufferPos, dataPtr, copySize);
+        bufferPos += copySize;
+        dataPtr += copySize;
+        size -= copySize;
+
+        if (bufferPos == bufferSize)
+        {
+            co_await writeToFile(buffer, bufferPos, stream);
+        }
+    }
+}
+
+boost::asio::awaitable<void> FileWriter::writeToFile(const char* buffer, size_t& size, boost::asio::posix::stream_descriptor& stream)
 {
     const auto newBuffer = std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
     std::memcpy(newBuffer.get(), buffer, size);
 
     co_await boost::asio::async_write(stream, boost::asio::buffer(newBuffer.get(), size), boost::asio::use_awaitable);
-
     size = 0;
-    co_return;
 }
 
 FileReader::FileReader(
@@ -302,31 +259,31 @@ FileReader::~FileReader()
 
 size_t FileReader::read(void* dest, const size_t size)
 {
-    return read(dest, size, readBuffer, readBufferPos, readBufferEnd, file);
+    return read(dest, size, file, readBuffer, readBufferPos, readBufferEnd);
 }
 
 size_t FileReader::readKey(void* dest, const size_t size)
 {
-    if (readKeyBuffer == nullptr)
+    if (bufferSize > 0 and readKeyBuffer == nullptr)
     {
         readKeyBuffer = allocate();
     }
 
-    return read(dest, size, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd, keyFile);
+    return read(dest, size, keyFile, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd);
 }
 
 Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
 {
     const auto filePathStr = filePath + fmt::format("_{}.dat", idx);
     std::ifstream varSizedFile(filePathStr, std::ios::in | std::ios::binary);
-    if (!varSizedFile.is_open())
+    if (not varSizedFile.is_open())
     {
         throw std::runtime_error("Failed to open variable sized data file for reading");
     }
 
     uint32_t varSizedDataSize;
     varSizedFile.read(reinterpret_cast<char*>(&varSizedDataSize), sizeof(uint32_t));
-    if ((varSizedFile.fail() && !varSizedFile.eof()) || varSizedFile.gcount() != sizeof(uint32_t))
+    if ((varSizedFile.fail() and !varSizedFile.eof()) or varSizedFile.gcount() != sizeof(uint32_t))
     {
         throw std::ios_base::failure("Failed to read variable sized data size from file");
     }
@@ -335,10 +292,14 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
     {
         *buffer.value().getBuffer<uint32_t>() = varSizedDataSize;
         varSizedFile.read(buffer.value().getBuffer<char>() + sizeof(uint32_t), varSizedDataSize);
-        if ((varSizedFile.fail() && !varSizedFile.eof()) || varSizedFile.gcount() != varSizedDataSize)
+        if ((varSizedFile.fail() and !varSizedFile.eof()) or varSizedFile.gcount() != varSizedDataSize)
         {
             throw std::ios_base::failure("Failed to read variable sized data from file");
         }
+
+        varSizedFile.close();
+        std::filesystem::remove(filePathStr);
+
         return buffer.value();
     }
     else
@@ -348,7 +309,7 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
 }
 
 size_t
-FileReader::read(void* dest, const size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const
+FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const
 {
     auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
@@ -383,7 +344,7 @@ FileReader::read(void* dest, const size_t dataSize, char* buffer, size_t& buffer
 size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& fileStream)
 {
     fileStream.read(buffer, dataSize);
-    if (fileStream.fail() && !fileStream.eof())
+    if (fileStream.fail() and !fileStream.eof())
     {
         throw std::ios_base::failure("Failed to read from file");
     }
