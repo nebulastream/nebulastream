@@ -1,0 +1,51 @@
+# name: AudioStream.test
+# description: Audio stream queries for demonstration purpose
+# groups: [Audio]
+
+# Inline source definition
+Source audio_source UINT64 timestamp INT16 value INLINE
+0,-432
+6,430
+12,-427
+18,432
+18,-432
+25,432
+
+SINK audio_sink UINT64 audio_source$timestamp INT16 audio_source$value
+
+SELECT * FROM audio_source INTO audio_sink
+----
+0,-432
+6,430
+12,-427
+18,432
+18,-432
+25,432
+
+# For large tests we usually don't store the input data inline but use an external file.
+# By default the CMake build does not download large files, this has to be explicitly enabled via
+# the -DENABLE_LARGE_TESTS=ON option during the CMake configuration.
+
+Source audio_source_file UINT64 timestamp FLOAT32 value FILE
+TESTDATA/small/nine-audio.csv
+
+# There is no Sink definition has we are using the CHECKSUM sink, which will count the number of received values
+# and calculate a checksum.
+SELECT * FROM audio_source_file INTO CHECKSUM
+----
+16000,13032892
+
+# The Last test uses a custom source and requires the TCP generator to run on port 1234.
+# The test intentionally fails
+Source tcp_audio_stream INT16 value
+
+ATTACH TCP Raw tcp_audio_stream GENERATOR
+CONFIG/sources/audio_default.yaml
+
+SINK tcp_audio_sink INT16 value
+
+SELECT * FROM tcp_audio_stream INTO tcp_audio_sink
+----
+1
+2
+3

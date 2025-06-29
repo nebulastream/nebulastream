@@ -38,14 +38,14 @@ MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
 }
 
 void MinAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Record& record)
 {
     /// Reading the old min value from the aggregation state.
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType.type);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);

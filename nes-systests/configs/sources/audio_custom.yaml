@@ -1,0 +1,7 @@
+type: Audio
+numberOfBuffersInLocalPool: 16
+socketPort: 1234
+socketHost: localhost
+sampleRate: 16000
+sampleWidth: 2
+realTimestamp: false

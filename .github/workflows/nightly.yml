@@ -105,9 +105,11 @@ jobs:
         sanitizer: [ none, address, undefined, thread ]
         build_type: [ RelWithDebInfo, Debug ]
         exclude:
-          # TODO #808 libc++ has to be compiled with TSAN
-          - stdlib: libcxx
-            sanitizer: thread
+          # For the Demo branch we disable any debug builds
+          - stdlib: 'libstdcxx'
+          - sanitizer: 'address'
+          - sanitizer: 'thread'
+          - sanitizer: 'undefined'
     steps:
       - uses: actions/checkout@v4
         with:

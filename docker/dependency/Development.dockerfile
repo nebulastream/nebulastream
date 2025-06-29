@@ -13,6 +13,13 @@ RUN apt-get update -y && apt-get install -y \
         python3-venv \
         python3-bs4
 
+ENV PIPX_HOME=/opt/pipx \
+    PIPX_BIN_DIR=/usr/local/bin \
+    PATH=$PIPX_BIN_DIR:$PATH
+
+RUN pipx ensurepath
+RUN pipx install iree-base-compiler==3.3.0 && pipx inject iree-base-compiler onnx
+
 # install alternative more recent JRE until 21.0.7 is packaged for Noble 24.04
 # then it should be replaced with openjdk-21-jre-headless
 # https://bugs.openjdk.org/browse/JDK-8345296

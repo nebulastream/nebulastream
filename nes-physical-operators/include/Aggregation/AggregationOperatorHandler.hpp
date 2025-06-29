@@ -47,7 +47,8 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool sequentialProcessing);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 

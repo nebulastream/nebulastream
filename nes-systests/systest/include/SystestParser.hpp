@@ -26,6 +26,7 @@
 #include <DataTypes/DataType.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -38,6 +39,7 @@ enum class TokenType : uint8_t
     INVALID,
     LOGICAL_SOURCE,
     ATTACH_SOURCE,
+    MODEL,
     SINK,
     QUERY,
     RESULT_DELIMITER,
@@ -92,6 +94,7 @@ public:
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using SystestLogicalSourceCallback = std::function<void(const SystestLogicalSource&)>;
     using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
+    using ModelCallback = std::function<void(Nebuli::Inference::ModelDescriptor&&)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
 
@@ -99,6 +102,7 @@ public:
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback);
+    void registerOnModelCallback(ModelCallback callback);
     void registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback);
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
@@ -122,6 +126,7 @@ private:
 
     [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>> expectSystestLogicalSource();
     [[nodiscard]] SystestAttachSource expectAttachSource();
+    [[nodiscard]] Nebuli::Inference::ModelDescriptor expectModel();
     [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::filesystem::path expectFilePath();
@@ -130,6 +135,7 @@ private:
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
+    ModelCallback onModelCallback;
     SystestLogicalSourceCallback onSystestLogicalSourceCallback;
     SystestAttachSourceCallback onAttachSourceCallback;
     SystestSinkCallback onSystestSinkCallback;

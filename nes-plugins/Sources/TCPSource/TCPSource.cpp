@@ -47,6 +47,8 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
+#include "GeneratorDataRegistry.hpp"
+
 
 namespace NES::Sources
 {
@@ -202,7 +204,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token&)
 {
     try
     {
@@ -344,5 +346,12 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
         throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+}
+
+///NOLINTNEXTLINE (performance-unnecessary-value-param)
+GeneratorDataRegistryReturnType
+GeneratorDataGeneratedRegistrar::RegisterTCPGeneratorData(GeneratorDataRegistryArguments systestAdaptorArguments)
+{
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 }

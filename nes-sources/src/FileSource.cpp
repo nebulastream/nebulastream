@@ -58,7 +58,7 @@ void FileSource::close()
 {
     this->inputFile.close();
 }
-size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider&, const std::stop_token&)
 {
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();
