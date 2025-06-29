@@ -129,6 +129,10 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
     df['query'] = df['query'].astype(str)  # Ensure query is string
     df['query_label'] = df['query'].apply(get_query_label)
 
+    # Use consistent colors instead of gradients
+    row_color = '#1f77b4'  # blue
+    col_color = '#ff7f0e'  # orange
+
     # Create separate plots for each thread size
     for thread_count in sorted(df['threads'].unique()):
         thread_df = df[df['threads'] == thread_count].copy()
@@ -170,7 +174,7 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
                     row_mean = row_data['full_query_duration'].mean()
                     row_std = row_data['full_query_duration'].std()
                     ax.bar(row_pos, row_mean, width=bar_width,
-                           color=ROW_COLORS.get(buffer_str, '#1f77b4'),
+                           color=row_color,
                            label=f"ROW {buffer_size}" if i == 0 else "_nolegend_")
                     if not np.isnan(row_std):
                         ax.errorbar(row_pos, row_mean, yerr=row_std, color='black', capsize=5)
@@ -181,7 +185,7 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
                     col_mean = col_data['full_query_duration'].mean()
                     col_std = col_data['full_query_duration'].std()
                     ax.bar(col_pos, col_mean, width=bar_width,
-                           color=COL_COLORS.get(buffer_str, '#ff7f0e'),
+                           color=col_color,
                            label=f"COL {buffer_size}" if i == 0 else "_nolegend_")
                     if not np.isnan(col_std):
                         ax.errorbar(col_pos, col_mean, yerr=col_std, color='black', capsize=5)
@@ -203,16 +207,15 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
             # Create legend with all buffer sizes but grouped by layout
             handles, labels = [], []
             for bs in buffer_sizes:
-                bs_str = str(bs)
-                handles.append(plt.Rectangle((0,0),1,1, color=ROW_COLORS.get(bs_str, '#1f77b4')))
+                handles.append(plt.Rectangle((0,0),1,1, color=row_color))
                 labels.append(f"ROW {bs}")
 
             for bs in buffer_sizes:
-                bs_str = str(bs)
-                handles.append(plt.Rectangle((0,0),1,1, color=COL_COLORS.get(bs_str, '#ff7f0e')))
+                handles.append(plt.Rectangle((0,0),1,1, color=col_color))
                 labels.append(f"COL {bs}")
 
-            plt.legend(handles, labels)
+            # Position legend in upper left to avoid overlap with bars
+            plt.legend(handles, labels, loc='lower right', bbox_to_anchor=(0.01, 0.99))
             plt.tight_layout()
 
             # Save to both main directory and query subfolder
