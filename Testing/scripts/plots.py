@@ -345,8 +345,146 @@ def create_throughput_by_parameter_chart(df, output_dir):
             plt.tight_layout()
             plt.savefig(os.path.join(output_dir, f'query{query}_pipeline_comparison_threads_{thread_count}.png'))
             plt.close()
-        # Rest of the code remains the same...
-        # (Individual pipeline charts, buffer size and threads charts)
+
+def create_computational_throughput_chart(df, output_dir):
+    """Create pipeline computational throughput comparison charts with special handling for pipeline 1."""
+    # Add TupleSizeInBytes handling for pipeline 1
+    if 'TupleSizeInBytes' in df.columns and 'pipeline_1_comp_tp' in df.columns:
+        df.loc[:, 'pipeline_1_comp_tuples_per_sec'] = df['pipeline_1_comp_tp'] / df['TupleSizeInBytes']
+
+    df['query_label'] = df['query'].apply(get_query_label)
+
+    # Get all pipeline computational throughput columns (excluding pipeline 1 bytes)
+    pipeline_tp_cols = [col for col in df.columns if 'pipeline_' in col and 'comp_tp' in col
+                        and not col.startswith('pipeline_1_comp_tp')]
+
+    # Add converted pipeline 1 if available
+    if 'pipeline_1_comp_tuples_per_sec' in df.columns:
+        pipeline_tp_cols.append('pipeline_1_comp_tuples_per_sec')
+
+    # For each query, create thread-specific plots
+    for query in sorted(df['query'].unique()):
+        query_df = df[df['query'] == query]
+        query_label = get_query_label(query)
+
+        # For each thread count, create comparison plots
+        for thread_count in sorted(query_df['threads'].unique()):
+            thread_df = query_df[query_df['threads'] == thread_count]
+
+            # Get relevant pipelines with data
+            relevant_pipeline_cols = []
+            for col in pipeline_tp_cols:
+                if thread_df[col].notna().any() and thread_df[col].max() > 0:
+                    relevant_pipeline_cols.append(col)
+
+            if not relevant_pipeline_cols:
+                continue
+
+            # Extract pipeline IDs
+            pipeline_ids = []
+            for col in relevant_pipeline_cols:
+                if col == 'pipeline_1_comp_tuples_per_sec':
+                    pipeline_ids.append(1)
+                else:
+                    pipeline_ids.append(int(col.split('_')[1]))
+            pipeline_ids = sorted(list(set(pipeline_ids)))
+
+            # Create comparison bar chart with color gradients
+            plt.figure(figsize=(16, 10))
+            ax = plt.gca()
+
+            buffer_sizes = sorted(thread_df['buffer_size'].unique())
+            n_buffers = len(buffer_sizes)
+
+            # Set up spacing for grouped bars
+            bar_width = 0.35
+            group_spacing = 0.2
+            pipeline_spacing = n_buffers * 2 * (bar_width + group_spacing) + 1
+
+            # Create color gradients
+            row_colors = [to_rgba('#1f77b4', alpha=0.5 + 0.5 * i / max(1, n_buffers-1))
+                          for i in range(n_buffers)]
+            col_colors = [to_rgba('#ff7f0e', alpha=0.5 + 0.5 * i / max(1, n_buffers-1))
+                          for i in range(n_buffers)]
+
+            # Position trackers
+            x_positions = []
+            x_labels = []
+            pipeline_centers = []
+
+            # For each pipeline, show comparison for each buffer size
+            for p_idx, pipeline_id in enumerate(pipeline_ids):
+                pipeline_start = p_idx * pipeline_spacing
+                pipeline_centers.append(pipeline_start + pipeline_spacing/2)
+
+                # Get column name
+                if pipeline_id == 1 and 'pipeline_1_comp_tuples_per_sec' in relevant_pipeline_cols:
+                    col_name = 'pipeline_1_comp_tuples_per_sec'
+                    pipeline_label = "Pipeline 1 (tuples/s)"
+                else:
+                    col_name = f'pipeline_{pipeline_id}_comp_tp'
+                    pipeline_label = f"Pipeline {pipeline_id}"
+
+                # Draw bars for each buffer size
+                for b_idx, buffer_size in enumerate(buffer_sizes):
+                    buffer_df = thread_df[thread_df['buffer_size'] == buffer_size]
+
+                    # Calculate positions
+                    row_pos = pipeline_start + b_idx * 2 * (bar_width + group_spacing)
+                    col_pos = row_pos + bar_width
+
+                    # Draw ROW bar
+                    row_df = buffer_df[buffer_df['layout'] == 'ROW_LAYOUT']
+                    if not row_df.empty and col_name in row_df.columns:
+                        row_value = row_df[col_name].mean()
+                        row_bar = ax.bar(row_pos, row_value, width=bar_width,
+                                         color=row_colors[b_idx],
+                                         label=f'ROW {buffer_size}' if p_idx == 0 and b_idx == 0 else "")
+
+                        # Value label
+                        if not np.isnan(row_value) and row_value > 0:
+                            ax.text(row_pos, row_value * 1.05, f"{row_value:.2e}",
+                                    ha='center', va='bottom', rotation=90, size=8)
+
+                    # Draw COLUMNAR bar
+                    col_df = buffer_df[buffer_df['layout'] == 'COLUMNAR_LAYOUT']
+                    if not col_df.empty and col_name in col_df.columns:
+                        col_value = col_df[col_name].mean()
+                        col_bar = ax.bar(col_pos, col_value, width=bar_width,
+                                         color=col_colors[b_idx],
+                                         label=f'COL {buffer_size}' if p_idx == 0 and b_idx == 0 else "")
+
+                        # Value label
+                        if not np.isnan(col_value) and col_value > 0:
+                            ax.text(col_pos, col_value * 1.05, f"{col_value:.2e}",
+                                    ha='center', va='bottom', rotation=90, size=8)
+
+                    # Track position for labels
+                    if p_idx == 0:
+                        x_positions.append((row_pos + col_pos) / 2)
+                        x_labels.append(f"Buffer\n{buffer_size}")
+
+                # Add pipeline label
+                ax.text(pipeline_start + pipeline_spacing/2, ax.get_ylim()[1] * 0.02,
+                        pipeline_label, ha='center', va='bottom', fontweight='bold',
+                        bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))
+
+            # Add pipeline separators
+            for pos in pipeline_centers[:-1]:
+                ax.axvline(x=(pos + pipeline_centers[pipeline_centers.index(pos)+1])/2,
+                           color='black', linestyle='--', alpha=0.3)
+
+            # Set plot styling
+            ax.set_yscale('log')  # Log scale for better visibility
+            ax.grid(True, linestyle='--', alpha=0.7, axis='y')
+
+            plt.title(f'{query_label}: Pipeline Computational Throughput ({thread_count} Threads)')
+            plt.ylabel('Computational Throughput (tuples/s)')
+            plt.xticks([])  # Hide default x-ticks
+            plt.legend(loc='upper right')
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, f'query{query}_comp_throughput_threads_{thread_count}.png'))
+            plt.close()
 
 def main():
     if len(sys.argv) < 2:
@@ -369,7 +507,7 @@ def main():
     create_throughput_comparison_chart(df, output_dir)
     create_pipeline_percentage_chart(df, output_dir)
     create_throughput_by_parameter_chart(df, output_dir)
-
+    create_computational_throughput_chart(df, output_dir)
     print(f"Charts created in directory: {output_dir}")
 
 if __name__ == "__main__":
