@@ -147,34 +147,47 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
             plt.figure(figsize=(10, 6))
             ax = plt.gca()
 
-            # Use bar plot instead of boxplot for better visibility
-            # Group by layout and buffer size
-            grouped = query_df.groupby(['layout', 'buffer_size'])
+            # Get unique buffer sizes
+            buffer_sizes = sorted(query_df['buffer_size'].unique())
 
-            # Set up positions for bars
-            positions = np.arange(len(grouped))
-            bar_width = 0.6
-            labels = []
+            # Set up positions for bars - now grouped by buffer_size
+            bar_width = 0.35
+            buffer_positions = np.arange(len(buffer_sizes)) * 3  # Allow space between buffer size groups
+            bar_labels = []
 
-            # Draw bars with distinctive colors
-            for i, ((layout, buffer_size), group) in enumerate(grouped):
-                if group['full_query_duration'].isna().all():
-                    continue
-
-                mean_val = group['full_query_duration'].mean()
-                std_val = group['full_query_duration'].std()
-
+            # Draw bars with ROW/COL of same buffer size next to each other
+            for i, buffer_size in enumerate(buffer_sizes):
                 buffer_str = str(buffer_size)
-                if layout == 'ROW_LAYOUT':
-                    color = ROW_COLORS.get(buffer_str, '#1f77b4')
-                    label = f"ROW {buffer_size}"
-                else:
-                    color = COL_COLORS.get(buffer_str, '#ff7f0e')
-                    label = f"COL {buffer_size}"
+                buffer_df = query_df[query_df['buffer_size'] == buffer_size]
 
-                ax.bar(positions[i], mean_val, width=bar_width, color=color, label=label)
-                ax.errorbar(positions[i], mean_val, yerr=std_val, color='black', capsize=5)
-                labels.append(label)
+                # Position for this buffer size group
+                row_pos = buffer_positions[i]
+                col_pos = buffer_positions[i] + bar_width + 0.05
+
+                # ROW layout bar
+                row_data = buffer_df[buffer_df['layout'] == 'ROW_LAYOUT']
+                if not row_data.empty and not row_data['full_query_duration'].isna().all():
+                    row_mean = row_data['full_query_duration'].mean()
+                    row_std = row_data['full_query_duration'].std()
+                    ax.bar(row_pos, row_mean, width=bar_width,
+                           color=ROW_COLORS.get(buffer_str, '#1f77b4'),
+                           label=f"ROW {buffer_size}" if i == 0 else "_nolegend_")
+                    if not np.isnan(row_std):
+                        ax.errorbar(row_pos, row_mean, yerr=row_std, color='black', capsize=5)
+
+                # COLUMNAR layout bar
+                col_data = buffer_df[buffer_df['layout'] == 'COLUMNAR_LAYOUT']
+                if not col_data.empty and not col_data['full_query_duration'].isna().all():
+                    col_mean = col_data['full_query_duration'].mean()
+                    col_std = col_data['full_query_duration'].std()
+                    ax.bar(col_pos, col_mean, width=bar_width,
+                           color=COL_COLORS.get(buffer_str, '#ff7f0e'),
+                           label=f"COL {buffer_size}" if i == 0 else "_nolegend_")
+                    if not np.isnan(col_std):
+                        ax.errorbar(col_pos, col_mean, yerr=col_std, color='black', capsize=5)
+
+                # Add group label centered between row and col
+                bar_labels.append(f"{buffer_size}")
 
             # Only scale y-axis if we have data
             if not query_df['full_query_duration'].isna().all():
@@ -182,21 +195,25 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
 
             # Set styling
             plt.title(f'{query_label}: Query Duration by Layout ({thread_count} Threads)')
-            plt.xlabel('Configuration')
-            plt.ylabel(f'Full Query Duration (s)')  # Default unit
-            plt.xticks(positions, labels, rotation=45, ha='right')
+            plt.xlabel('Buffer Size')
+            plt.ylabel(f'Full Query Duration ({unit if "unit" in locals() else "s"})')
+            plt.xticks(buffer_positions + bar_width/2, bar_labels)
             plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-            plt.tight_layout()
 
-            # Create legend with all buffer sizes
+            # Create legend with all buffer sizes but grouped by layout
             handles, labels = [], []
-            for bs in sorted(query_df['buffer_size'].unique()):
+            for bs in buffer_sizes:
                 bs_str = str(bs)
                 handles.append(plt.Rectangle((0,0),1,1, color=ROW_COLORS.get(bs_str, '#1f77b4')))
                 labels.append(f"ROW {bs}")
+
+            for bs in buffer_sizes:
+                bs_str = str(bs)
                 handles.append(plt.Rectangle((0,0),1,1, color=COL_COLORS.get(bs_str, '#ff7f0e')))
                 labels.append(f"COL {bs}")
+
             plt.legend(handles, labels)
+            plt.tight_layout()
 
             # Save to both main directory and query subfolder
             plt.savefig(os.path.join(output_dir, f'layout_vs_duration_query{query}_threads_{thread_count}.png'))
