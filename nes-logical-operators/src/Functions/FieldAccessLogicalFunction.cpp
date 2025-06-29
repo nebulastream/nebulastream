@@ -81,7 +81,10 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     const auto existingField = schema.getFieldByName(fieldName);
-    INVARIANT(existingField, "field is not part of the schema");
+    if (!existingField)
+    {
+        throw CannotInferSchema("Expected {} to be part of the schema: {}", fieldName, schema);
+    }
 
     auto copy = *this;
     copy.dataType = existingField.value().dataType;
