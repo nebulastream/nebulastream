@@ -29,7 +29,7 @@ enum class FileLayout : uint8_t
     SEPARATE_KEYS
 };
 
-class FileWriter
+class FileWriter : public std::enable_shared_from_this<FileWriter>
 {
 public:
     FileWriter(
@@ -40,21 +40,23 @@ public:
         size_t bufferSize);
     ~FileWriter();
 
-    bool initialize();
-    std::vector<std::string> getFilePaths() const;
-
     boost::asio::awaitable<void> write(const void* data, size_t size);
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
     boost::asio::awaitable<uint32_t> writeVarSized(const void* data);
 
-    boost::asio::awaitable<void> flush();
     void flushAndDeallocateBuffers();
-    void deallocateBuffers();
+    void deleteAllFiles();
 
 private:
-    static boost::asio::awaitable<void> flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size);
+    boost::asio::awaitable<void> flush();
+    void deallocateBuffers();
+
+    boost::asio::awaitable<void>
+    write(const void* data, size_t size, boost::asio::posix::stream_descriptor& stream, char*& buffer, size_t& bufferPos) const;
+    static boost::asio::awaitable<void> writeToFile(const char* buffer, size_t& size, boost::asio::posix::stream_descriptor& stream);
 
     boost::asio::io_context& ioCtx;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand;
     boost::asio::posix::stream_descriptor file;
     boost::asio::posix::stream_descriptor keyFile;
 
@@ -85,7 +87,7 @@ public:
     Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
-    size_t read(void* dest, size_t dataSize, char* buffer, size_t& bufferPos, size_t& bufferEnd, std::ifstream& fileStream) const;
+    size_t read(void* dest, size_t dataSize, std::ifstream& fileStream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const;
     static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& fileStream);
 
     std::ifstream file;
