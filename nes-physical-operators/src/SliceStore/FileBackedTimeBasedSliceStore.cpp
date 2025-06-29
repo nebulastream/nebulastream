@@ -230,7 +230,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     /// Now we can remove/call destructor on every slice without still holding the lock
     for (const auto& slice : slicesToDelete)
     {
-        memoryController->deleteSliceFiles(slice->getSliceEnd());
+        //memoryController->deleteSliceFiles(slice->getSliceEnd());
     }
     slicesToDelete.clear();
 }
@@ -276,7 +276,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    std::cout << fmt::format("Update slices {}\n", threadId.getRawValue());
+    std::cout << fmt::format("Updating slices for thread {}\n", threadId.getRawValue());
     for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
     {
         //if (slice == nullptr)
@@ -418,21 +418,22 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 
 boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     boost::asio::io_context& ioCtx,
-    const std::shared_ptr<NLJSlice>& nljSlice,
+    const std::shared_ptr<NLJSlice> nljSlice,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide) const
 {
-    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide);
-    if (fileWriter == nullptr)
-    {
-        co_return;
-    }
-    auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
-
     /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
     nljSlice->acquireCombinePagedVectorsLock();
+
+    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide);
+    //if (fileWriter == nullptr)
+    {
+        //co_return;
+    }
+
+    auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
     /// Check if there are tuples to offload
     if (pagedVector->getNumberOfPages() > 0)
@@ -444,9 +445,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     }
 
     // TODO handle wrong predictions
+    //memoryController->unlockFileWriter(threadId);
     nljSlice->releaseCombinePagedVectorsLock();
     //fileWriter->deallocateBuffers();
-    //memoryController->unlockFileWriter(threadId);
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -456,6 +457,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const std::vector<WorkerThreadId>& threadIds,
     const JoinBuildSideType joinBuildSide) const
 {
+    nljSlice->acquireCombinePagedVectorsLock();
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     for (const auto threadId : threadIds)
     {
@@ -463,11 +465,10 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
-            nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
-            nljSlice->releaseCombinePagedVectorsLock();
         }
     }
+    nljSlice->releaseCombinePagedVectorsLock();
 }
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
@@ -510,7 +511,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
         if (sizeRead != dataSize)
         {
-            //throw std::runtime_error("Data does not match");
+            throw std::runtime_error("Data does not match");
         }
 
         const auto startTicks
