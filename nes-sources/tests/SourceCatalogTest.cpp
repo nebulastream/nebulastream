@@ -91,8 +91,13 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical2 = physical2Opt.value();
 
-    ASSERT_EQ(physical1.getPhysicalSourceId(), 0);
-    ASSERT_EQ(physical2.getPhysicalSourceId(), 1);
+    ASSERT_EQ(physical1.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()});
+    ASSERT_EQ(physical2.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()+1});
+
+    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
+    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
+    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).value(), physical1);
+    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).value(), physical2);
 
     auto expectedSources = std::unordered_set{physical1, physical2};
     const auto expect12Opt = sourceCatalog.getPhysicalSources(*sourceOpt);
@@ -111,7 +116,9 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
-    ASSERT_EQ(physical3.getPhysicalSourceId(), 2);
+    ASSERT_EQ(physical3.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()+2});
+    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical3.getPhysicalSourceId()).has_value());
+    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical3.getPhysicalSourceId()).value(), physical3);
 
     const auto actualPhysicalSources = sourceCatalog.getPhysicalSources(*sourceOpt);
 

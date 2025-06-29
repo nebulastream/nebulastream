@@ -69,7 +69,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
 
 SourceDescriptor::SourceDescriptor(
     LogicalSource logicalSource,
-    const uint64_t physicalSourceId,
+    const PhysicalSourceId physicalSourceId,
     const WorkerId workerId,
     std::string sourceType,
     const int numberOfBuffersInLocalPool,
@@ -105,7 +105,7 @@ WorkerId SourceDescriptor::getWorkerId() const
     return workerId;
 }
 
-uint64_t SourceDescriptor::getPhysicalSourceId() const
+PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
 }

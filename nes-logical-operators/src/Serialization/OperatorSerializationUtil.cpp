@@ -126,10 +126,9 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), std::make_shared<Schema>(schema)};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
-    const auto physicalSourceId = sourceDescriptor.physicalsourceid();
+    const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
     const auto& sourceType = sourceDescriptor.sourcetype();
-    const auto workerIdInt = sourceDescriptor.workerid();
-    const auto workerId = WorkerId{workerIdInt};
+    const auto workerId = WorkerId{sourceDescriptor.workerid()};
     const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.

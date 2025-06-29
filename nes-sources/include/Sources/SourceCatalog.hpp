@@ -73,7 +73,7 @@ public:
     [[nodiscard]] bool containsLogicalSource(const LogicalSource& logicalSource) const;
     [[nodiscard]] bool containsLogicalSource(const std::string& logicalSourceName) const;
 
-    [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(uint64_t physicalSourceId) const;
+    [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it
@@ -85,9 +85,9 @@ public:
 
 private:
     mutable std::recursive_mutex catalogMutex;
-    std::atomic_uint64_t nextPhysicalSourceId{0};
+    std::atomic<PhysicalSourceId::Underlying> nextPhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()};
     std::unordered_map<std::string, LogicalSource> namesToLogicalSourceMapping;
-    std::unordered_map<uint64_t, SourceDescriptor> idsToPhysicalSources;
+    std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
 };
 }

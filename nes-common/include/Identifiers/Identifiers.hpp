@@ -28,6 +28,7 @@ using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
+using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
@@ -43,6 +44,9 @@ static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;
 
 static constexpr OriginId INVALID_ORIGIN_ID = INVALID<OriginId>;
 static constexpr OriginId INITIAL_ORIGIN_ID = INITIAL<OriginId>;
+
+static constexpr PhysicalSourceId INVALID_PHYSICAL_SOURCE_ID = INVALID<PhysicalSourceId>;
+static constexpr PhysicalSourceId INITIAL_PHYSICAL_SOURCE_ID = INITIAL<PhysicalSourceId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;
