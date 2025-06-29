@@ -28,25 +28,11 @@
           ]
         }
       ]
-    },
-    "video": {
-      "description": "video queries",
-      "dependencies": [
-        "aravis",
-        "openssl",
-        {
-          "name": "opencv4",
-          "default-features": false,
-          "features": [
-            "calib3d",
-            "jpeg"
-          ]
-        }
-      ]
     }
   },
   "dependencies": [
     "antlr4",
+    "openssl",
     "argparse",
     "boost-asio",
     "boost-system",
@@ -67,7 +53,6 @@
     "ireeruntime"
   ],
   "default-features": [
-    "video",
     "mqtt"
   ]
 }
