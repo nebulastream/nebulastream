@@ -33,3 +33,9 @@ SELECT * FROM (SELECT id AS id, (id + 1) AS id_plus_1, value as value, (value + 
 19000 20000 1 19 19000 1 19 19000
 20000 21000 1 20 20000 1 20 20000
 21000 22000 1 21 21000 1 21 21000
+
+
+# Query 2 - Join two streams with multiple join keys and a selection clause, the helper attributes end and start always come additionally but should respect the user desired SELECT format
+SELECT id, id_plus_1, value2_plus_1
+FROM (SELECT id AS id, (id + 1) AS id_plus_1, value as value, (value + 1) AS value_plus_1, timestamp FROM stream) INNER JOIN (SELECT id2 AS i2, (id2 + 1) AS id2_plus_1, value2 as value2, (value2 + 1) AS value2_plus_1, timestamp FROM stream2) ON (id = id2 AND value = value2 AND id_plus_1 = id2_plus_1 AND value_plus_1 = value2_plus_1) WINDOW TUMBLING (timestamp, size 1 sec) INTO SINK;
+----
