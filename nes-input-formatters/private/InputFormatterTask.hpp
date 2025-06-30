@@ -171,10 +171,10 @@ public:
     {
     public:
         // Todo: allocate fixSizeBufferPool with 1 buffer and buffer size that matches exactly required number of indexes for spanning tuples?
-        explicit SpanningTupleData(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
-            : leadingSpanningTupleFIF(FieldIndexFunctionType(bufferProvider))
-            , trailingSpanningTupleFIF(FieldIndexFunctionType(bufferProvider))
-            , rawBufferFIF(FieldIndexFunctionType(bufferProvider)) { };
+        explicit SpanningTupleData()
+            : leadingSpanningTupleFIF(FieldIndexFunctionType())
+            , trailingSpanningTupleFIF(FieldIndexFunctionType())
+            , rawBufferFIF(FieldIndexFunctionType()) { };
 
         void setAllocatedMemory(int8_t* spanningTuplePtr) { this->spanningTuplePtr = spanningTuplePtr; }
         void increaseLeadingSpanningTupleSize(const size_t additionalBytes) { leadingSpanningTupleSizeInBytes += additionalBytes; }
@@ -314,7 +314,7 @@ public:
     {
         /// We need to copy assign a 'new' SpanningTupleData, since it is thread_local and not (re)constructed on all iterations but the first
         thread_local SpanningTuplePOD spanningTuplePOD{};
-        auto spanningTupleData = SpanningTupleData{pec->getBufferManager()};
+        SpanningTupleData spanningTupleData{};
         if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
             pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);

@@ -102,7 +102,7 @@ void CSVInputFormatIndexer::indexRawBuffer(
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
         initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
-        fieldOffsets.writeOffsetsOfNextTuple(); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        // fieldOffsets.writeOffsetsOfNextTuple(); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;

@@ -105,7 +105,7 @@ void JSONInputFormatter::indexRawBuffer(
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
         setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->numberOfFieldsInSchema);
-        fieldOffsets.writeOffsetsOfNextTuple();
+        // fieldOffsets.writeOffsetsOfNextTuple();
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + DELIMITER_SIZE;
