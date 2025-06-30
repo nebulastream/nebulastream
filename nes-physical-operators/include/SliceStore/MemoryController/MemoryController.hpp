@@ -82,9 +82,12 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    void unlockFileWriter(WorkerThreadId threadId);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
+    uint64_t getNumAvailableFileDescriptors(WorkerThreadId threadId);
+    void closeFileDescriptors(WorkerThreadId threadId, uint64_t numFileDescriptorsToClose);
+    boost::asio::awaitable<void> closeFileDescriptorsAsync(WorkerThreadId threadId, uint64_t numFileDescriptorsToClose);
+    boost::asio::awaitable<uint64_t> closeFileDescriptorsIfNeededAsync(WorkerThreadId threadId, uint64_t numFileDescriptorsToOpen);
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:

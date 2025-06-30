@@ -45,9 +45,28 @@ void updateSlicesProxy(
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
 
-    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
+    if (auto* const sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        runSingleAwaitable(
+        auto numSlicesToUpdate
+            = runSingleAwaitable(opHandler->getIoContext(), sliceStore->closeFileDescriptorsIfNeeded(workerThreadId, joinBuildSide));
+        while (numSlicesToUpdate > 0)
+        {
+            std::cout << fmt::format("Number of slices to update: {}\n", numSlicesToUpdate);
+            runSingleAwaitable(
+                opHandler->getIoContext(),
+                sliceStore->updateSlices(
+                    opHandler->getIoContext(),
+                    bufferProvider,
+                    memoryLayout,
+                    UpdateSlicesMetaData(
+                        workerThreadId,
+                        joinBuildSide,
+                        BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId),
+                        numSlicesToUpdate)));
+            numSlicesToUpdate
+                = runSingleAwaitable(opHandler->getIoContext(), sliceStore->closeFileDescriptorsIfNeeded(workerThreadId, joinBuildSide));
+        }
+        /*runSingleAwaitable(
             opHandler->getIoContext(),
             sliceStore->updateSlices(
                 opHandler->getIoContext(),
@@ -56,7 +75,8 @@ void updateSlicesProxy(
                 UpdateSlicesMetaData(
                     workerThreadId,
                     joinBuildSide,
-                    BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
+                    BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId),
+                    0)));*/
     }
 }
 
