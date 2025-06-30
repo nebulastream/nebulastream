@@ -76,7 +76,7 @@ namespace NES
         auto handlerId = getNextOperatorHandlerId();
         auto emitSelection = EmitPhysicalOperator(handlerId, memoryProviderOutCol);
 
-
+        /// TODO: only use one MemoryProvider to save memory
         auto memoryProviderInRowNew = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
         std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.operatorBufferSize.getValue(), schemaIn));
         auto memoryProviderOutRowNew = std::make_shared<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(

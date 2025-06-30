@@ -3,7 +3,7 @@
 
 # Define parameter arrays
 memory_layouts=("COLUMNAR_LAYOUT" "ROW_LAYOUT")
-buffer_sizes=("40000000" "400000" "4000")
+buffer_sizes=("20000000" "400000" "4000")
 worker_threads=("1" "2" "4" "8")
 debs_queries=("01" "02" "03" "04" "05" "06")
 
@@ -16,6 +16,7 @@ mkdir -p "$PROJECT_DIR/Testing/stats"
 DOCKER_IMAGE="nebulastream/nes-development:local"
 DOCKER_OPTS="--entrypoint= -v /home/user/.cache/ccache:/home/ubuntu/.ccache/ccache -v /home/user/CLionProjects/nebulastream:/tmp/nebulastream --cap-add SYS_ADMIN --cap-add SYS_PTRACE --rm"
 #--cpuset-cpus 0-7
+#TODO: use as many cores as threads
 #incrementing benchmark id for each run
 LAST_BENCHMARK=$(find "$PROJECT_DIR/Testing/stats" -maxdepth 1 -type d -name "benchmark*" | sort -V | tail -n 1)
 if [ -z "$LAST_BENCHMARK" ]; then
