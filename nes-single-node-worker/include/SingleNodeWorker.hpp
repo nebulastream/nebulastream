@@ -38,11 +38,12 @@ struct PrintingStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    std::shared_ptr<PrintingStatisticListener> listener;
+    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineStatisticsListener;
+    std::shared_ptr<SystemEventListener> systemEventListener;
     std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
     std::unique_ptr<QueryOptimizer> optimizer;
-    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
     explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);
@@ -61,7 +62,7 @@ public:
     /// @return QueryId which identifies the registered Query
     [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan plan) const;
 
-    /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
+    /// Starts the Query asynchronously and moves it into the RunningState. Query execution errors are only reported during runtime
     /// of the query.
     /// @param queryId identifies the registered query
     void startQuery(QueryId queryId);

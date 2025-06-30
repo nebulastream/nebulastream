@@ -32,7 +32,7 @@ namespace NES
 NodeEngineBuilder::NodeEngineBuilder(
     const NES::Configurations::WorkerConfiguration& workerConfiguration,
     std::shared_ptr<SystemEventListener> systemEventListener,
-    std::shared_ptr<QueryEngineStatisticListener> statisticEventListener)
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticEventListener)
     : workerConfiguration(workerConfiguration)
     , systemEventListener(std::move(std::move(systemEventListener)))
     , statisticEventListener(std::move(std::move(statisticEventListener)))
