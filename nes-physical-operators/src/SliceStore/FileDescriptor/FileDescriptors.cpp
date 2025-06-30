@@ -40,8 +40,8 @@ FileWriter::FileWriter(
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY, 0644);
-    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY, 0644);
+    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
+    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
     if (fd < 0 or fdKey < 0)
     {
         throw std::runtime_error("Failed to open file or key file for writing");
