@@ -33,7 +33,7 @@ public:
     boost::asio::awaitable<void> writeToFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        const std::shared_ptr<FileWriter> fileWriter,
+        const std::shared_ptr<FileWriter>& fileWriter,
         FileLayout fileLayout);
 
     /// Reads the projected fields of all tuples from fileStorage.
@@ -58,13 +58,13 @@ private:
     boost::asio::awaitable<void> writePayloadAndKeysToSeparateFiles(
         const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        const std::shared_ptr<FileWriter> fileWriter);
+        const std::shared_ptr<FileWriter>& fileWriter);
 
     boost::asio::awaitable<void> writePayloadOnlyToFile(
         const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        const std::shared_ptr<FileWriter> fileWriter);
+        const std::shared_ptr<FileWriter>& fileWriter);
 
     void readSeparatelyFromFiles(
         const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,

@@ -48,7 +48,6 @@ struct UpdateSlicesMetaData
     WorkerThreadId threadId;
     JoinBuildSideType joinBuildSide;
     BufferMetaData bufferMetaData;
-    uint64_t numSlicesToUpdate;
 };
 
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
@@ -86,8 +85,6 @@ public:
     /// Sets number of worker threads. Needs to be called before working with the slice store
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
 
-    boost::asio::awaitable<uint64_t> closeFileDescriptorsIfNeeded(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
-
     /// TODO
     boost::asio::awaitable<void> updateSlices(
         boost::asio::io_context& ioCtx,
@@ -97,26 +94,22 @@ public:
 
 private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
-        const std::vector<std::shared_ptr<Slice>>& slices,
         const Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Timestamp watermark,
         WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide) const;
+        JoinBuildSideType joinBuildSide);
 
-    static std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesReactive(const std::vector<std::shared_ptr<Slice>>& slices);
-    static std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-    updateSlicesProactiveWithoutPrediction(const std::vector<std::shared_ptr<Slice>>& slices, Timestamp watermark);
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+    updateSlicesReactive(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+    updateSlicesProactiveWithoutPrediction(Timestamp watermark, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> updateSlicesProactiveWithPrediction(
-        const std::vector<std::shared_ptr<Slice>>& slices,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        WorkerThreadId threadId,
-        JoinBuildSideType joinBuildSide) const;
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     boost::asio::awaitable<void> writeSliceToFile(
         boost::asio::io_context& ioCtx,
-        const std::shared_ptr<NLJSlice> nljSlice,
+        const std::shared_ptr<NLJSlice>& nljSlice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,
