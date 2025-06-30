@@ -31,7 +31,6 @@
 #include <Aggregation/Function/SumAggregationFunction.hpp>
 #include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
-#include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
@@ -47,7 +46,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
