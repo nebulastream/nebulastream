@@ -29,7 +29,7 @@
 #include <Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Aggregation/Function/MinAggregationFunction.hpp>
 #include <Aggregation/Function/SumAggregationFunction.hpp>
-#include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
+#include <Aggregation/Function/TemporalSequenceAggregationPhysicalFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
@@ -195,14 +195,11 @@ std::vector<std::shared_ptr<AggregationFunction>> getAggregationPhysicalFunction
                 NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
             auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
             
-            aggregationFunctions.emplace_back(std::make_shared<TemporalSequenceAggregationFunction>(
+            aggregationPhysicalFunctions.emplace_back(std::make_shared<TemporalSequenceAggregationPhysicalFunction>(
                 std::move(varsizedType),       // Input type (VARSIZED for trajectory state)
                 std::move(physicalFinalType), // Result type (will be VARSIZED)
-                std::move(aggregationInputExpression), // Primary input (we'll use longitude)
-                aggregationResultFieldIdentifier,
-                std::move(lonPhysicalFunction),
-                std::move(latPhysicalFunction),
-                std::move(timestampPhysicalFunction),
+                std::move(aggregationInputFunction), // Primary input function
+                resultFieldIdentifier,
                 std::move(memoryProvider)));
         }
         else

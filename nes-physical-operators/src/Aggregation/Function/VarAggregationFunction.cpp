@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -36,7 +36,7 @@ VarAggregationFunction::VarAggregationFunction(
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     DataType countType)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , countType(std::move(countType))
 {
 }
