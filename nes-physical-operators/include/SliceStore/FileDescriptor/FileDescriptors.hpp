@@ -44,11 +44,11 @@ public:
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
     boost::asio::awaitable<uint32_t> writeVarSized(const void* data);
 
-    boost::asio::awaitable<void> flush();
     void flushAndDeallocateBuffers();
     void deleteAllFiles();
 
 private:
+    boost::asio::awaitable<void> flush();
     void deallocateBuffers();
 
     boost::asio::awaitable<void>
@@ -56,7 +56,6 @@ private:
     static boost::asio::awaitable<void> writeToFile(const char* buffer, size_t& size, boost::asio::posix::stream_descriptor& stream);
 
     boost::asio::io_context& ioCtx;
-    boost::asio::strand<boost::asio::io_context::executor_type> strand;
     boost::asio::posix::stream_descriptor file;
     boost::asio::posix::stream_descriptor keyFile;
 
