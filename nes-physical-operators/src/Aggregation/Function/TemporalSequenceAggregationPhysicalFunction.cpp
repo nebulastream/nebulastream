@@ -26,10 +26,9 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <nautilus/function.hpp>
 
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
@@ -37,7 +36,6 @@
 
 namespace NES
 {
-
 constexpr static std::string_view StateFieldName = "value";
 
 TemporalSequenceAggregationPhysicalFunction::TemporalSequenceAggregationPhysicalFunction(
@@ -51,14 +49,13 @@ TemporalSequenceAggregationPhysicalFunction::TemporalSequenceAggregationPhysical
 {
 }
 
-void TemporalSequenceAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Nautilus::Record& record)
+void TemporalSequenceAggregationPhysicalFunction::lift(const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
 {
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     Record aggregateStateRecord(
-        {{std::string(StateFieldName), inputFunction.execute(record, pipelineMemoryProvider.arena)}});
+        {{std::string(StateFieldName), inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena)}});
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector);
-    pagedVectorRef.writeRecord(aggregateStateRecord, pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(aggregateStateRecord, executionContext.pipelineMemoryProvider.bufferProvider);
 }
 
 void TemporalSequenceAggregationPhysicalFunction::combine(
@@ -96,13 +93,7 @@ Nautilus::Record TemporalSequenceAggregationPhysicalFunction::lower(
 
     auto entrySize = memProviderPagedVector->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
 
-    // Allocate memory for variable sized data (size + content)
-    const auto totalSize = numberOfEntries * entrySize;
-    const auto memoryArea = pipelineMemoryProvider.arena.allocateMemory(totalSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
-    
-    // Write size to the beginning of allocated memory
-    VarVal(nautilus::val<uint32_t>(totalSize)).writeToMemory(memoryArea);
-    VariableSizedData variableSized(memoryArea, totalSize);
+    auto variableSized = pipelineMemoryProvider.arena.allocateVariableSizedData(numberOfEntries * entrySize);
 
     /// Copy from paged vector
     const auto endIt = pagedVectorRef.end(allFieldNames);
@@ -162,7 +153,16 @@ void TemporalSequenceAggregationPhysicalFunction::cleanup(nautilus::val<Aggregat
         aggregationState);
 }
 
-// Note: TemporalSequenceAggregationPhysicalFunction is not registered through the registry.
-// It is manually instantiated in LowerToPhysicalWindowedAggregation.cpp when processing TemporalSequence aggregations.
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterTemporalSequenceAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
+{
+    INVARIANT(arguments.memProviderPagedVector.has_value(), "Memory provider paged vector not set");
+    return std::make_shared<TemporalSequenceAggregationPhysicalFunction>(
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        arguments.memProviderPagedVector.value());
+}
 
 }
