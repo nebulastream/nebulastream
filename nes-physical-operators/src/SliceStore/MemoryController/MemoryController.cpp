@@ -75,7 +75,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const std::scoped_lock lock(mutex);
 
     /// Search for matching writer to avoid attempting to open a file twice and update LRU if needed
-    if (const auto it = writers.find(key); it != writers.end())
+    if (const auto it = writers.find(key); it != writers.end() and it->second.first != nullptr)
     {
         const auto sizeOfLRU = lruQueue.size();
         auto& [writer, listIt] = it->second;
@@ -129,7 +129,7 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     if (const auto it = writers.find(key); it != writers.end())
     {
-        if (memoryControllerInfo.maxNumFileDescriptors > 0)
+        if (memoryControllerInfo.maxNumFileDescriptors > 0 and it->second.second != lruQueue.end())
         {
             //if (const auto pos = std::ranges::find(lru, key); pos != lru.end())
             {
@@ -168,7 +168,7 @@ void MemoryController::closeFileDescriptors(const WorkerThreadId threadId, const
             {
                 //std::cout << fmt::format(
                 //    "Closing oldest descriptor for thread {} and size of LRU {}...\n", threadId.getRawValue(), lru.size());
-                const auto& evictKey = lruQueue.back();
+                const auto evictKey = lruQueue.back();
                 /*if (evictKey == key)
                 {
                     throw std::runtime_error("Fucking hell shit1");
@@ -178,6 +178,7 @@ void MemoryController::closeFileDescriptors(const WorkerThreadId threadId, const
                 {
                     throw std::runtime_error("Fucking hell shit");
                 }
+                writers[evictKey] = {nullptr, lruQueue.end()};
                 /*std::cout << fmt::format(
                     "Closed oldest descriptor for thread {} and size of LRU {} and useCount {}...\n",
                     threadId.getRawValue(),
@@ -198,20 +199,26 @@ boost::asio::awaitable<void> MemoryController::closeFileDescriptorsAsync(const W
         /// Close file descriptor if needed
         //if (lruQueue.size() >= memoryControllerInfo.maxNumFileDescriptors)
         {
+            uint64_t queueSize;
+            {
+                const std::scoped_lock lock(mutex);
+                queueSize = lruQueue.size();
+            }
             //std::cout << fmt::format("Number of file descriptors before deleting: {}\n", lruQueue.size());
-            numFileDescriptorsToClose = std::min(numFileDescriptorsToClose, lruQueue.size());
+            numFileDescriptorsToClose = std::min(numFileDescriptorsToClose, queueSize);
             for (auto i = 0UL; i < numFileDescriptorsToClose; ++i)
             {
                 std::shared_ptr<FileWriter> writer;
                 {
                     const std::scoped_lock lock(mutex);
-                    const auto& evictKey = lruQueue.back();
+                    const auto evictKey = lruQueue.back();
                     writer = deleteFileWriter(threadWriters[threadId.getRawValue()], evictKey).value();
+                    writers[evictKey] = {nullptr, lruQueue.end()};
                 }
                 co_await writer->flush();
             }
-            if (numFileDescriptorsToClose > 0)
-                std::cout << fmt::format("Closed {} file descriptors\n", numFileDescriptorsToClose);
+            //if (numFileDescriptorsToClose > 0)
+                //std::cout << fmt::format("Closed {} file descriptors\n", numFileDescriptorsToClose);
             //std::cout << fmt::format("Number of file descriptors after deleting: {}\n", lruQueue.size());
         }
     }
@@ -238,16 +245,18 @@ MemoryController::closeFileDescriptorsIfNeededAsync(const WorkerThreadId threadI
                 std::shared_ptr<FileWriter> writer;
                 {
                     const std::scoped_lock lock(mutex);
-                    const auto& evictKey = lruQueue.back();
+                    const auto evictKey = lruQueue.back();
                     writer = deleteFileWriter(threadWriters[threadId.getRawValue()], evictKey).value();
+                    writers[evictKey] = {nullptr, lruQueue.end()};
                 }
                 co_await writer->flush();
             }
             if (numFileDescriptorsToClose > 0)
-            //std::cout << fmt::format("Closed {} file descriptors\n", numFileDescriptorsToClose);
-            //std::cout << fmt::format("Number of file descriptors after deleting: {}\n", lruQueue.size());
+                //std::cout << fmt::format("Closed {} file descriptors\n", numFileDescriptorsToClose);
+                //std::cout << fmt::format("Number of file descriptors after deleting: {}\n", lruQueue.size());
                 std::cout << fmt::format(
-                    "Number of file descriptors to open: {}, number of file descriptors needed to close: {}, number of file descriptors closed: {}\n",
+                    "Number of file descriptors to open: {}, number of file descriptors needed to close: {}, number of file descriptors "
+                    "closed: {}\n",
                     numFileDescriptorsToOpen,
                     numFileDescriptorsNeededToClose,
                     numFileDescriptorsToClose);
