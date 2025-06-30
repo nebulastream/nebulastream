@@ -19,7 +19,10 @@
 #include <ranges>
 #include <vector>
 #include <Functions/FunctionProvider.hpp>
+
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -40,6 +43,39 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
+    if (conf.useSingleMemoryLayout)
+    {
+        bufferSize = conf.operatorBufferSize.getValue();
+
+    }
+    if (inputSchema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
+        auto scanLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, inputSchema);
+        auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(scanLayout);
+        auto scan = ScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames());
+        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+
+        auto emitLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, outputSchema);
+        auto emitMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(emitLayout);
+        auto emit = EmitPhysicalOperator(handlerId, emitMemoryProvider);
+        auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            emit,
+            outputSchema,
+            outputSchema,
+            handlerId,
+            std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::EMIT,
+            std::vector{scanWrapper});
+
+        /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
+        const std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
+        return {.root = emitWrapper, .leafs = {scanWrapper}};
+    }
+    if (inputSchema.memoryLayoutType != Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
+        NES_ERROR("MemoryLayoutType: {} is not supported for Projection", magic_enum::enum_name(inputSchema.memoryLayoutType));
+    }
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
     auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
     auto accessedFields = projection.getAccessedFields();
