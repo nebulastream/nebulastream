@@ -38,6 +38,7 @@
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
+#include <NautilusUtil.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
@@ -416,13 +417,6 @@ public:
         return &spanningTuplePOD;
     }
 
-    template <typename T>
-    static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
-    {
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-        return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
-    }
-
     void scanTask(
         ExecutionContext& executionCtx,
         Nautilus::RecordBuffer& recordBuffer,
@@ -448,31 +442,24 @@ public:
             indexTuplesProxy,
             recordBuffer.getReference(),
             executionCtx.pipelineContext,
-            nautilus::val<InputFormatterTask*>(
-                this), //Todo: figure out if works (might though, because the address is tied to the (pipeline) operator and thus l'stable'
+            nautilus::val<InputFormatterTask*>(this),
             nautilus::val<size_t>(configuredBufferSize),
             executionCtx.pipelineMemoryProvider.arena.arenaRef);
-
-        // Todo: could do a single invoke that returns all three below values (bool, record, leadingFIF) then if case becomes just the last two lines
-        // Or may allow to trace specific functions/members of SpanningTupleData
-        // -> could call function like:
-        // spanningTupleData.value->traceLeadingST()
 
         /// parse leading spanning tuple if exists
         if (const nautilus::val<bool> hasLeadingPtr
             = *getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasLeadingSpanningTupleBool));
             hasLeadingPtr)
         {
-            auto recordIndex = nautilus::val<uint64_t>(0);
+            /// Get leading field index function and a pointer to the spanning tuple 'record'
             auto leadingFIF
                 = getMemberWithOffset<FieldIndexFunctionType>(spanningTuplePOD, offsetof(SpanningTuplePOD, leadingSpanningTupleFIF));
-            // Todo: can't access member if it is a pointer (yet) so need to rely on nautilus call
-            auto recordPtr = nautilus::invoke(
-                +[](SpanningTuplePOD* spanningTuplePOD) { return spanningTuplePOD->leadingSpanningTuplePtr; }, spanningTuplePOD);
+            auto spanningRecordPtr = getMemberPtrPLACEHOLDER<int8_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, leadingSpanningTuplePtr));
 
-            // Todo: we need to access 'readSpanningRecord' using 'value' here, since it is a wrapped nautilus val pointer
-            auto record
-                = leadingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, leadingFIF);
+            /// 'leadingFIF.value' is essentially the static function FieldIndexFunctionType::readsSpanningRecord
+            auto recordIndex = nautilus::val<uint64_t>(0);
+            auto record = leadingFIF.value->readSpanningRecord(
+                projections, spanningRecordPtr, recordIndex, indexerMetaData, quotationType, leadingFIF);
             child.execute(executionCtx, record);
         }
 
@@ -494,12 +481,11 @@ public:
             = *getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasTrailingSpanningTupleBool));
             hasTrailingPtr)
         {
-            auto recordIndex = nautilus::val<uint64_t>(0);
             auto trailingFIF
                 = getMemberWithOffset<FieldIndexFunctionType>(spanningTuplePOD, offsetof(SpanningTuplePOD, trailingSpanningTupleFIF));
-            auto recordPtr = nautilus::invoke(
-                +[](SpanningTuplePOD* spanningTuplePOD) { return spanningTuplePOD->trailingSpanningTuplePtr; }, spanningTuplePOD);
+            auto recordPtr = getMemberPtrPLACEHOLDER<int8_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, trailingSpanningTuplePtr));
 
+            auto recordIndex = nautilus::val<uint64_t>(0);
             auto record
                 = trailingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, quotationType, trailingFIF);
             child.execute(executionCtx, record);
