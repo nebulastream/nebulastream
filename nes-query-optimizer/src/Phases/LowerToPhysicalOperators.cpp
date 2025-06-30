@@ -167,8 +167,9 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
         if (op.tryGet<SelectionLogicalOperator>())
         {
             auto selection = op.get<SelectionLogicalOperator>();
-            auto selectionFunc = selection.getPredicate().tryGet<NES::GreaterEqualsLogicalFunction>();
-            auto res = selectionFunc.value().explain(ExplainVerbosity::Short);
+            auto selectionFunc = selection.getPredicate();
+            auto res = selectionFunc.explain(ExplainVerbosity::Short);
+
             for (const std::string& fieldName : allFieldNames)
             {
                 if (res.find(fieldName) != std::string::npos) { //if the fieldname is part of the selection function
