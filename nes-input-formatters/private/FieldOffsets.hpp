@@ -79,7 +79,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     [[nodiscard]] Record applyReadSpanningRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& recordBufferPtr,
-        nautilus::val<uint64_t>& recordIndex,
+        const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const RawValueParser::QuotationType quotationType,
         nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
@@ -87,14 +87,13 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         Nautilus::Record record;
+        const auto indexBufferPtr = nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
         for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
         {
             if (const auto& fieldName = metaData.getSchema().getFieldAt(i).name; not includesField(projections, fieldName))
             {
                 continue;
             }
-
-            const auto indexBufferPtr = nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
 
             // Todo: convert to switch (and reduce duplicate code
             if constexpr (NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)

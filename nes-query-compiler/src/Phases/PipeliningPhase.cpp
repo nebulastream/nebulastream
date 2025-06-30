@@ -49,7 +49,11 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// This is used only when the wrapped operator does not already provide a scan
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
 /// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
-void addDefaultScan(const std::shared_ptr<Pipeline>& prevPipeline, const std::shared_ptr<Pipeline>& currentPipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
+void addDefaultScan(
+    const std::shared_ptr<Pipeline>& prevPipeline,
+    const std::shared_ptr<Pipeline>& currentPipeline,
+    const PhysicalOperatorWrapper& wrappedOp,
+    uint64_t configuredBufferSize)
 {
     PRECONDITION(currentPipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
     auto schema = wrappedOp.getInputSchema();
@@ -140,6 +144,13 @@ void buildPipelineRecursively(
 {
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
+    // Todo: given two sources, followed by a union and a sink
+    // - Union in front of FormatScan causes below if to trigger and to add the same FormatScan pipeline to the other source
+    // - but a FormatScan cannot be shared by sources (raw value parser)
+    // - somehow need to create new pipeline for FormatScan, but at the same time make sure the pipelines share the same following pipeline and
+    //   that emits are set correctly
+    // and not currentPipeline->getRootOperator().tryGet<FormatScanPhysicalOperator>()
+    // and not it->second->getRootOperator().tryGet<FormatScanPhysicalOperator>() <-- this fulfills the above, but also reuses the emit, ledaing to an emit without operator handler
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
@@ -229,8 +240,8 @@ void buildPipelineRecursively(
                     OriginId(OriginId::INITIAL), schema.value(), inputFormatterConfig);
             }();
 
-            const auto sourcePipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(
-                schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, true));
+            const auto sourcePipeline = std::make_shared<Pipeline>(
+                FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, true));
             currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
             addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);

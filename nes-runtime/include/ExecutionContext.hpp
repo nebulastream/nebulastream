@@ -73,6 +73,7 @@ struct Arena
         {
             fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
             lastAllocationSize = bufferProvider->getBufferSize();
+            currentOffset = sizeInBytes;
             return fixedSizeBuffers.back().getBuffer();
         }
 
@@ -116,6 +117,12 @@ struct ArenaRef
                 sizeInBytes);
             availableSpaceForPointer
                 = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::lastAllocationSize));
+            const auto currentOffset
+                = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::currentOffset));
+            availableSpaceForPointer -= currentOffset;
+            auto result = spacePointer;
+            spacePointer += currentOffset;
+            return result;
         }
         availableSpaceForPointer -= sizeInBytes;
         auto result = spacePointer;
@@ -123,6 +130,9 @@ struct ArenaRef
         return result;
     }
 
+    // Todo: find better solution
+    /// The InputFormatterTask uses the arenaRef directly from a proxy function call to bypass tracing.
+    /// It is always the first operator in its pipeline. Thus, the ArenaRef and the Arena do not get out of sync.
     nautilus::val<Arena*> arenaRef;
 private:
     nautilus::val<size_t> availableSpaceForPointer;

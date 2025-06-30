@@ -143,15 +143,16 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
 Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
     const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
 {
+    const nautilus::val<bool> isPointerToInputData{true};
     switch (quotationType)
     {
         case QuotationType::NONE: {
-            return Nautilus::VariableSizedData(fieldAddress, fieldSize);
+            return Nautilus::VariableSizedData(fieldAddress, fieldSize, isPointerToInputData);
         }
         case QuotationType::DOUBLE_QUOTE: {
             const auto adjustedAddress = fieldAddress + nautilus::val<int8_t>(1);
             const auto adjustedFieldSize = fieldSize + nautilus::val<uint64_t>(1);
-            return Nautilus::VariableSizedData(adjustedAddress, adjustedFieldSize);
+            return Nautilus::VariableSizedData(adjustedAddress, adjustedFieldSize, isPointerToInputData);
         }
     }
     std::unreachable();

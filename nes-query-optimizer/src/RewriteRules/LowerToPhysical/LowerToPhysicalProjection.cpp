@@ -41,7 +41,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
-    auto bufferSize = conf.pageSize.getValue();
+    auto bufferSize = conf.operatorBufferSize.getValue();
     // auto accessedFields = projection.getAccessedFields();
     // auto scan = FormatScanPhysicalOperator(outputSchema.getFieldNames(), std::move(inputFormatterTaskPipeline), bufferSize);
     // LogicalOperator
