@@ -259,6 +259,15 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     measureReadAndWriteExecTimes(TEST_DATA_SIZES);
 }
 
+boost::asio::awaitable<uint64_t>
+FileBackedTimeBasedSliceStore::closeFileDescriptorsIfNeeded(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+{
+    const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
+    const auto numFileDescriptorsAvailable
+        = co_await memoryController->closeFileDescriptorsIfNeededAsync(threadId, alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    co_return numFileDescriptorsAvailable;
+}
+
 boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     boost::asio::io_context& ioCtx,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -277,42 +286,68 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const auto joinBuildSide = metaData.joinBuildSide;
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
     std::cout << fmt::format("Updating slices for thread {}\n", threadId.getRawValue());
-    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
+    //const auto numAlteredSlices = alteredSlicesPerThread[{threadId, joinBuildSide}].size();
+    //auto numSlicesToUpdate = co_await closeFileDescriptorsIfNeeded(threadId, joinBuildSide);
+    //while (numSlicesToUpdate > 0)
     {
-        //if (slice == nullptr)
-        {
-            //continue;
-        }
+        //const auto numAvailableFileDescriptors = memoryController->getNumAvailableFileDescriptors(threadId);
+        //const auto numFileDescriptorsToClose = numAlteredSlices - numAvailableFileDescriptors;
+        //memoryController->closeFileDescriptors(threadId, numFileDescriptorsToClose);
+        //std::vector<std::shared_ptr<Slice>> slicesToUpdate(alteredSlicesPerThread[{threadId, joinBuildSide}]);
+        const auto numSlicesToUpdate = metaData.numSlicesToUpdate;
+        //const auto numSlicesToUpdate = alteredSlicesPerThread[{threadId, joinBuildSide}].size();
+        std::vector<std::shared_ptr<Slice>> slicesToUpdate;
+        slicesToUpdate.reserve(numSlicesToUpdate);
+        slicesToUpdate.insert(
+            slicesToUpdate.end(),
+            alteredSlicesPerThread[{threadId, joinBuildSide}].begin(),
+            alteredSlicesPerThread[{threadId, joinBuildSide}].begin() + numSlicesToUpdate);
+        alteredSlicesPerThread[{threadId, joinBuildSide}].erase(
+            alteredSlicesPerThread[{threadId, joinBuildSide}].begin(),
+            alteredSlicesPerThread[{threadId, joinBuildSide}].begin() + numSlicesToUpdate);
 
-        /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
-        if (const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice); !nljSlice->pagedVectorsCombined())
+        for (auto&& [slice, operation] :
+             getSlicesToUpdate(slicesToUpdate, bufferProvider, memoryLayout, watermark, threadId, joinBuildSide))
         {
-            switch (operation)
+            //if (slice == nullptr)
             {
-                case FileOperation::READ: {
-                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide);
-                    break;
-                }
-                case FileOperation::WRITE: {
-                    co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide);
-                    break;
+                //continue;
+            }
+
+            /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
+            if (const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice); !nljSlice->pagedVectorsCombined())
+            {
+                switch (operation)
+                {
+                    case FileOperation::READ: {
+                        readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide);
+                        break;
+                    }
+                    case FileOperation::WRITE: {
+                        co_await writeSliceToFile(ioCtx, nljSlice, bufferProvider, memoryLayout, threadId, joinBuildSide);
+                        break;
+                    }
                 }
             }
         }
+        //numSlicesToUpdate = co_await closeFileDescriptorsIfNeeded(threadId, joinBuildSide);
+        //co_await memoryController->closeFileDescriptorsAsync(threadId, numSlicesToUpdate);
     }
+    //alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
+    const std::vector<std::shared_ptr<Slice>>& slices,
     const Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const Timestamp watermark,
     const WorkerThreadId threadId,
-    const JoinBuildSideType joinBuildSide)
+    const JoinBuildSideType joinBuildSide) const
 {
     if (sliceStoreInfo.upperMemoryBound == 0)
     {
-        return updateSlicesReactive(threadId, joinBuildSide);
+        return updateSlicesReactive(slices);
     }
 
     const auto totalSizeOfUsedBuffers
@@ -320,42 +355,41 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         + bufferProvider->getTotalSizeOfUnpooledBufferChunks();
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.upperMemoryBound)
     {
-        return updateSlicesReactive(threadId, joinBuildSide);
+        return updateSlicesReactive(slices);
     }
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.lowerMemoryBound)
     {
-        return sliceStoreInfo.withPrediction ? updateSlicesProactiveWithPrediction(memoryLayout, threadId, joinBuildSide)
-                                             : updateSlicesProactiveWithoutPrediction(watermark, threadId, joinBuildSide);
+        return sliceStoreInfo.withPrediction ? updateSlicesProactiveWithPrediction(slices, memoryLayout, threadId, joinBuildSide)
+                                             : updateSlicesProactiveWithoutPrediction(slices, watermark);
     }
 
     return std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>{};
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
-FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+FileBackedTimeBasedSliceStore::updateSlicesReactive(const std::vector<std::shared_ptr<Slice>>& slices)
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    slicesToUpdate.reserve(slices.size());
 
     std::ranges::transform(
-        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        slices,
         std::back_inserter(slicesToUpdate),
         [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesProactiveWithoutPrediction(
-    const Timestamp watermark, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+    const std::vector<std::shared_ptr<Slice>>& slices, const Timestamp watermark)
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    slicesToUpdate.reserve(slices.size());
 
     std::ranges::transform(
-        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        slices,
         std::back_inserter(slicesToUpdate),
         [watermark](const std::shared_ptr<Slice>& slice)
         {
@@ -366,18 +400,20 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
             return std::make_pair(slice, FileOperation::READ);
         });
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
 }
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+    const std::vector<std::shared_ptr<Slice>>& slices,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId threadId,
+    const JoinBuildSideType joinBuildSide) const
 {
     /// Reserve space for every altered slice as we might update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    slicesToUpdate.reserve(slices.size());
 
-    for (auto&& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
+    for (auto&& slice : slices)
     {
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
@@ -412,7 +448,6 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         /// Slice should not be written out or read back in any other case
     }
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
 }
 
@@ -462,10 +497,13 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (const auto threadId : threadIds)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
+        //if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
-            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            //pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            (void)pagedVector;
+            (void)bufferProvider;
+            (void)memoryLayout;
         }
     }
     nljSlice->releaseCombinePagedVectorsLock();

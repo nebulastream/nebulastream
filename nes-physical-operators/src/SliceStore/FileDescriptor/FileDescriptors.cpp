@@ -53,7 +53,8 @@ FileWriter::FileWriter(
 
 FileWriter::~FileWriter()
 {
-    flushAndDeallocateBuffers();
+    if (file.is_open() or keyFile.is_open())
+        flushAndDeallocateBuffers();
     /// Buffer needs to be flushed manually before calling the destructor
     //deallocateBuffers();
     if (file.is_open())
@@ -136,8 +137,6 @@ void FileWriter::flushAndDeallocateBuffers()
     {
         ioCtx.poll();
     }
-
-    deallocateBuffers();
 }
 
 void FileWriter::deleteAllFiles()
@@ -163,11 +162,15 @@ boost::asio::awaitable<void> FileWriter::flush()
     if (file.is_open() and writeBuffer != nullptr and writeBufferPos > 0)
     {
         co_await writeToFile(writeBuffer, writeBufferPos, file);
+        file.close();
     }
     if (keyFile.is_open() and writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
     {
         co_await writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+        keyFile.close();
     }
+
+    deallocateBuffers();
 }
 
 void FileWriter::deallocateBuffers()
