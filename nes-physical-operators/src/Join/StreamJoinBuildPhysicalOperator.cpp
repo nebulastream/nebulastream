@@ -47,7 +47,7 @@ void updateSlicesProxy(
 
     if (auto* const sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        auto numSlicesToUpdate
+        /*auto numSlicesToUpdate
             = runSingleAwaitable(opHandler->getIoContext(), sliceStore->closeFileDescriptorsIfNeeded(workerThreadId, joinBuildSide));
         while (numSlicesToUpdate > 0)
         {
@@ -65,8 +65,8 @@ void updateSlicesProxy(
                         numSlicesToUpdate)));
             numSlicesToUpdate
                 = runSingleAwaitable(opHandler->getIoContext(), sliceStore->closeFileDescriptorsIfNeeded(workerThreadId, joinBuildSide));
-        }
-        /*runSingleAwaitable(
+        }*/
+        runSingleAwaitable(
             opHandler->getIoContext(),
             sliceStore->updateSlices(
                 opHandler->getIoContext(),
@@ -76,7 +76,7 @@ void updateSlicesProxy(
                     workerThreadId,
                     joinBuildSide,
                     BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId),
-                    0)));*/
+                    0)));
     }
 }
 
