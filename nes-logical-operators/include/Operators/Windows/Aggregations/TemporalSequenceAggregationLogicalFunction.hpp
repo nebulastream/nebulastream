@@ -34,7 +34,7 @@ namespace NES
  * - Latitude field (FLOAT64) 
  * - Timestamp field (UINT64 or timestamp)
  * 
- * Output: VARSIZED data containing serialized TemporalSequence in MF-JSON format
+ * Output: UINT64 containing point count (simplified proof-of-concept)
  * 
  * Usage in SQL:
  * SELECT TEMPORAL_SEQUENCE(longitude, latitude, timestamp) AS trajectory
@@ -83,8 +83,8 @@ public:
 private:
     static constexpr std::string_view NAME = "TemporalSequence";
     static constexpr DataType::Type inputAggregateStampType = DataType::Type::UNDEFINED;  // Multi-field input
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::VARSIZED; // MEOS state 
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::VARSIZED;   // MF-JSON result
+    static constexpr DataType::Type partialAggregateStampType = DataType::Type::VARSIZED;   // Trajectory state 
+    static constexpr DataType::Type finalAggregateStampType = DataType::Type::VARSIZED;     // MEOS trajectory result
 
     // Field access functions for spatial-temporal coordinates
     FieldAccessLogicalFunction lonField;       // Longitude field

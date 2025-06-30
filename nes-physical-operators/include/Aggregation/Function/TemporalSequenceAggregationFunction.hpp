@@ -21,48 +21,35 @@
 #include <Aggregation/Function/AggregationFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
-// Forward declare MEOS types - but we need to use raw pointers due to incomplete types
-namespace MEOS {
-    class Meos;
-}
-
-// MEOS temporal state structure definition
-// Using raw pointers to avoid incomplete type issues with unique_ptr
-struct MEOSTemporalState {
-    std::unique_ptr<MEOS::Meos> meosWrapper;
-    std::vector<void*> temporalInstants;  // Will store MEOS::Meos::TemporalInstant*
-    void* temporalSequence;               // Will store MEOS::Meos::TemporalSequence*
-    bool isInitialized;
-    size_t pointCount;
-    
-    MEOSTemporalState();
-    ~MEOSTemporalState();
-};
+// Simplified trajectory aggregation
+// Tracks trajectory bounds and statistics instead of collecting all points
+// Memory layout: count(8) + minLon(8) + maxLon(8) + minLat(8) + maxLat(8) + firstTs(8) + lastTs(8)
 
 namespace NES
 {
 
 /**
- * @brief Aggregation function that collects spatial-temporal points into a MEOS TemporalSequence
- * and returns it as serialized VARSIZED data.
+ * @brief Simplified trajectory aggregation function that tracks spatial-temporal bounds
+ * and returns trajectory summary data.
  * 
  * This function expects input records with:
  * - longitude (double)
  * - latitude (double) 
  * - timestamp (int64 or timestamp type)
  * 
- * Output: VARSIZED data containing serialized TemporalSequence in MF-JSON format
+ * Output: Trajectory summary containing bounds and statistics
  * 
- * MEOS Integration Features:
- * - Uses actual MEOS TemporalInstant objects for each point
- * - Builds MEOS TemporalSequence from accumulated points
- * - Supports MF-JSON serialization format
- * - Handles MEOS temporal operations (intersection, distance, etc.)
- * - Provides fallback mechanisms for error handling
+ * Proof-of-concept Features:
+ * - Tracks min/max longitude and latitude bounds
+ * - Counts total number of points
+ * - Records first and last timestamps
+ * - Returns simple JSON summary format
+ * - Foundation for incremental MEOS integration
  */
 class TemporalSequenceAggregationFunction : public AggregationFunction
 {
@@ -74,7 +61,8 @@ public:
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         PhysicalFunction lonFunction,
         PhysicalFunction latFunction,
-        PhysicalFunction timestampFunction);
+        PhysicalFunction timestampFunction,
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
@@ -101,30 +89,10 @@ public:
     ~TemporalSequenceAggregationFunction() override = default;
 
 private:
-    PhysicalFunction lonFunction;   // Function to extract longitude
-    PhysicalFunction latFunction;   // Function to extract latitude  
+    PhysicalFunction lonFunction;       // Function to extract longitude
+    PhysicalFunction latFunction;       // Function to extract latitude  
     PhysicalFunction timestampFunction; // Function to extract timestamp
-
-    // Legacy state structure for backward compatibility
-    struct TemporalPointState {
-        std::vector<double> longitudes;
-        std::vector<double> latitudes;
-        std::vector<int64_t> timestamps;
-        size_t count;
-    };
-
-    // MEOS-integrated helper functions
-    std::string serializeTemporalSequenceWithMEOS(MEOSTemporalState* state) const;
-    std::string createSimpleTemporalSequenceString(MEOSTemporalState* state) const;
-    void updateTemporalSequence(MEOSTemporalState* state);
-    void accumulatePointSimple(MEOSTemporalState* state, double longitude, double latitude, int64_t timestamp);
-    
-    // Memory management functions
-    static MEOSTemporalState* getMEOSStateFromMemory(nautilus::val<AggregationState*> aggregationState);
-
-    // Legacy helper functions (kept for compatibility)
-    std::string serializeTemporalSequence(const TemporalPointState& state) const;
-    static TemporalPointState* getStateFromMemory(nautilus::val<AggregationState*> aggregationState);
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
 };
 
 } 

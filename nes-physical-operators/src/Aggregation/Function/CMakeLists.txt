@@ -27,4 +27,5 @@ add_source_files(nes-physical-operators
         SumAggregationFunction.cpp
         TemporalSequenceAggregationFunction.cpp
         VarAggregationFunction.cpp
+        TemporalSequenceAggregationFunction.cpp
 )

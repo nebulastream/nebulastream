@@ -16,6 +16,7 @@
 #define NES_PLUGINS_MEOS_HPP
 
 #include <string>
+#include <vector>
 
 namespace MEOS {
 extern "C" {
@@ -62,8 +63,22 @@ class Meos {
     class TemporalSequence {
     public:
         explicit TemporalSequence(double lon, double lat, int t_out);
+        
+        // Constructor for creating trajectory from multiple points
+        explicit TemporalSequence(const std::vector<TemporalInstant*>& instants);
+        
+        // Constructor for creating trajectory from coordinate arrays
+        TemporalSequence(const std::vector<double>& longitudes, 
+                        const std::vector<double>& latitudes, 
+                        const std::vector<long long>& timestamps, 
+                        int srid = 4326);
+        
         ~TemporalSequence();
 
+        // Serialization methods
+        std::string serialize() const;
+        std::string toMFJSON() const;
+        
         // bool intersects(const TemporalInstant& point) const;
         // double distance(const TemporalInstant& point) const;
         double length(const TemporalInstant& instant) const;

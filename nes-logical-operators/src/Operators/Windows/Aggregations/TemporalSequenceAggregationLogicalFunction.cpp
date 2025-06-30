@@ -88,24 +88,12 @@ void TemporalSequenceAggregationLogicalFunction::inferStamp(const Schema& schema
     auto newLatField = latField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     auto newTimestampField = timestampField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
 
-    // Validate field types
-    if (!newLonField.getDataType().isDouble())
-    {
-        throw CannotInferSchema("TemporalSequence longitude field must be FLOAT64/DOUBLE, but got {}", 
-                               newLonField.getDataType().toString());
-    }
+    // Validate field types - longitude and latitude must be floating point numbers
+    INVARIANT(newLonField.getDataType().isFloat(), "TemporalSequence longitude field must be FLOAT32 or FLOAT64, but got {}", newLonField.getDataType());
+    INVARIANT(newLatField.getDataType().isFloat(), "TemporalSequence latitude field must be FLOAT32 or FLOAT64, but got {}", newLatField.getDataType());
     
-    if (!newLatField.getDataType().isDouble())
-    {
-        throw CannotInferSchema("TemporalSequence latitude field must be FLOAT64/DOUBLE, but got {}",
-                               newLatField.getDataType().toString());
-    }
-    
-    if (!newTimestampField.getDataType().isInteger() && !newTimestampField.getDataType().isTimestamp())
-    {
-        throw CannotInferSchema("TemporalSequence timestamp field must be UINT64 or timestamp, but got {}",
-                               newTimestampField.getDataType().toString());
-    }
+    // Timestamp must be an integer type (for Unix timestamps)
+    INVARIANT(newTimestampField.getDataType().isInteger(), "TemporalSequence timestamp field must be integer type, but got {}", newTimestampField.getDataType());
 
     // Update field references
     lonField = newLonField;
@@ -115,7 +103,7 @@ void TemporalSequenceAggregationLogicalFunction::inferStamp(const Schema& schema
     // Update base class onField to longitude field
     onField = newLonField;
     
-    // Set the result type to VARSIZED
+    // Set the result type to VARSIZED (MEOS trajectory)
     auto newAsField = asField.withDataType(DataTypeProvider::provideDataType(finalAggregateStampType));
     asField = newAsField.get<FieldAccessLogicalFunction>();
     
@@ -153,23 +141,21 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterTemporalSequenceAggregatio
     // TemporalSequence requires 4 fields: [lon, lat, timestamp, as_field]
     // Or 3 fields if as_field is auto-generated: [lon, lat, timestamp]
     
+    PRECONDITION(arguments.fields.size() == 3 || arguments.fields.size() == 4, 
+        "TemporalSequenceAggregationLogicalFunction requires 3 or 4 fields (lon, lat, timestamp[, as_field]), but got {}",
+        arguments.fields.size());
+        
     if (arguments.fields.size() == 4)
     {
         // [lon, lat, timestamp, as_field]
         return TemporalSequenceAggregationLogicalFunction::create(
             arguments.fields[0], arguments.fields[1], arguments.fields[2], arguments.fields[3]);
     }
-    else if (arguments.fields.size() == 3)
+    else
     {
         // [lon, lat, timestamp] - auto-generate as_field
         return TemporalSequenceAggregationLogicalFunction::create(
             arguments.fields[0], arguments.fields[1], arguments.fields[2]);
-    }
-    else
-    {
-        throw ErrorHandling::Exception(
-            "TemporalSequenceAggregationLogicalFunction requires 3 or 4 fields (lon, lat, timestamp[, as_field]), but got {}",
-            arguments.fields.size());
     }
 }
 

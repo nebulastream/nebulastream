@@ -31,6 +31,7 @@
 #include <Aggregation/Function/SumAggregationFunction.hpp>
 #include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
+#include <Aggregation/Function/TemporalSequenceAggregationFunction.hpp>
 #include <Aggregation/WindowAggregation.hpp>
 #include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
@@ -46,6 +47,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
@@ -175,6 +177,35 @@ std::vector<std::shared_ptr<AggregationFunction>> getAggregationPhysicalFunction
                 std::move(aggregationInputFunction),
                 resultFieldIdentifier,
                 std::move(countType)));
+        }
+        else if (name == "TemporalSequence")
+        {
+            // Cast to get access to the specific TemporalSequence fields
+            auto* temporalSeqDescriptor = dynamic_cast<const TemporalSequenceAggregationLogicalFunction*>(descriptor.get());
+            PRECONDITION(temporalSeqDescriptor, "Expected TemporalSequenceAggregationLogicalFunction but got different type");
+            
+            // Create physical functions for all three input fields
+            auto lonPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getLonField());
+            auto latPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getLatField());
+            auto timestampPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getTimestampField());
+            
+            // TEMPORAL_SEQUENCE outputs VARSIZED trajectory data
+            auto varsizedType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+            
+            // Create memory layout and provider for PagedVector
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+                NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
+            auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
+            
+            aggregationFunctions.emplace_back(std::make_shared<TemporalSequenceAggregationFunction>(
+                std::move(varsizedType),       // Input type (VARSIZED for trajectory state)
+                std::move(physicalFinalType), // Result type (will be VARSIZED)
+                std::move(aggregationInputExpression), // Primary input (we'll use longitude)
+                aggregationResultFieldIdentifier,
+                std::move(lonPhysicalFunction),
+                std::move(latPhysicalFunction),
+                std::move(timestampPhysicalFunction),
+                std::move(memoryProvider)));
         }
         else
         {
