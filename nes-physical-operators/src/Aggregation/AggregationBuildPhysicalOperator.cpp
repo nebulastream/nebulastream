@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Engine.hpp>
@@ -40,11 +41,9 @@
 
 namespace NES
 {
-Interface::HashMap* getAggHashMapProxy(
-    const AggregationOperatorHandler* operatorHandler,
-    const Timestamp timestamp,
-    const WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator)
+
+std::shared_ptr<AggregationSlice> getAggregationSliceProxy(
+    const AggregationOperatorHandler* operatorHandler, const Timestamp timestamp, const AggregationBuildPhysicalOperator* buildOperator)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
@@ -74,6 +73,16 @@ Interface::HashMap* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+    return aggregationSlice;
+}
+
+Interface::HashMap* getAggHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const AggregationBuildPhysicalOperator* buildOperator)
+{
+    const auto aggregationSlice = getAggregationSliceProxy(operatorHandler, timestamp, buildOperator);
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
@@ -114,14 +123,14 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, con
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerId),
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

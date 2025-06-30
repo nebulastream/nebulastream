@@ -28,6 +28,7 @@
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SliceCacheOperatorHandler.hpp>
 
 namespace NES
 {
@@ -54,7 +55,7 @@ struct BufferMetaData
 /// It assumes that they have a build and a probe phase.
 /// The build phase is the phase where the operator adds tuples to window(s) / the state.
 /// The probe phase gets triggered by the build phase and is the phase where the operator processes the build-up state, e.g., performs the join or aggregation.
-class WindowBasedOperatorHandler : public OperatorHandler
+class WindowBasedOperatorHandler : public OperatorHandler, public SliceCacheOperatorHandler
 {
 public:
     WindowBasedOperatorHandler(

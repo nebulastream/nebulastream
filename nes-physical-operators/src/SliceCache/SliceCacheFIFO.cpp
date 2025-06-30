@@ -15,8 +15,8 @@
 #include <SliceCache/SliceCacheFIFO.hpp>
 
 #include <cstdint>
-#include <SliceCache/SliceCache.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
 

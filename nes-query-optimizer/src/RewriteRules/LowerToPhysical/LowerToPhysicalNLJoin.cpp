@@ -30,6 +30,7 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Join/NestedLoopJoin/NLJBuildCachePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
@@ -155,7 +156,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    //// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
+    /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto rightInputSchema = join.getInputSchemas()[0];
     auto leftInputSchema = join.getInputSchemas()[1];
     auto outputSchema = join.getOutputSchema();
@@ -177,26 +178,60 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
 
-    auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
-
-    auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider);
+    const uint64_t numberOfOriginIds = inputOriginIds.size();
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+        windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
+    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    std::shared_ptr<PhysicalOperatorWrapper> leftBuildWrapper = nullptr;
+    std::shared_ptr<PhysicalOperatorWrapper> rightBuildWrapper = nullptr;
+    switch (conf.sliceCacheConfiguration.sliceCacheType.getValue())
+    {
+        case NES::Configurations::SliceCacheType::NONE:
+            leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                NLJBuildPhysicalOperator{handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider},
+                leftInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                NLJBuildPhysicalOperator{handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider},
+                rightInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            break;
+        case NES::Configurations::SliceCacheType::TWO_QUEUES:
+        case NES::Configurations::SliceCacheType::LRU:
+        case NES::Configurations::SliceCacheType::FIFO:
+        case NES::Configurations::SliceCacheType::SECOND_CHANCE:
+            NES::Configurations::SliceCacheOptions sliceCacheOptions{
+                conf.sliceCacheConfiguration.sliceCacheType.getValue(), conf.sliceCacheConfiguration.numberOfEntriesSliceCache.getValue()};
+            leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                NLJBuildCachePhysicalOperator{
+                    handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider, sliceCacheOptions},
+                leftInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                NLJBuildCachePhysicalOperator{
+                    handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider, sliceCacheOptions},
+                rightInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            break;
+    }
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator
         = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
 
-    const uint64_t numberOfOriginIds = inputOriginIds.size();
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
-
-    auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
-
-    auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator), rightInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    INVARIANT(leftBuildWrapper != nullptr and rightBuildWrapper != nullptr, "Left and right build wrapper must NOT be null");
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),

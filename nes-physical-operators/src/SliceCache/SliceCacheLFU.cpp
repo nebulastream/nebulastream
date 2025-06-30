@@ -59,7 +59,6 @@ SliceCacheLFU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, co
     const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, minFrequency);
     *getFrequency(minFrequencyIndex) = 1;
     return dataStructure;
-
 }
 
 nautilus::val<uint64_t*> SliceCacheLFU::getFrequency(const nautilus::val<uint64_t>& pos)

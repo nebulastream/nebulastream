@@ -13,12 +13,11 @@
 */
 
 #pragma once
-
 #include <memory>
+#include <Configurations/Worker/SliceCacheConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
-#include <Join/HashJoin/HJSlice.hpp>
-#include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -31,36 +30,29 @@
 
 namespace NES
 {
-class HJBuildPhysicalOperator;
-std::shared_ptr<HJSlice>
-getHJSliceProxy(const HJOperatorHandler* operatorHandler, const Timestamp timestamp, const HJBuildPhysicalOperator* buildOperator);
-Interface::HashMap* getHashJoinHashMapProxy(
-    const HJOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
-    JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator);
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
 /// via a hash function.
-class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
+class HJBuildCachePhysicalOperator final : public HJBuildPhysicalOperator
 {
 public:
-    friend std::shared_ptr<HJSlice>
-    getHJSliceProxy(const HJOperatorHandler* operatorHandler, const Timestamp timestamp, const HJBuildPhysicalOperator* buildOperator);
-    HJBuildPhysicalOperator(
+    HJBuildCachePhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        HashMapOptions hashMapOptions);
-    ~HJBuildPhysicalOperator() override = default;
+        HashMapOptions hashMapOptions,
+        NES::Configurations::SliceCacheOptions sliceCacheOptions);
+    ~HJBuildCachePhysicalOperator() override = default;
     void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-protected:
-    HashMapOptions hashMapOptions;
+private:
+    /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch
+    NES::Configurations::SliceCacheOptions sliceCacheOptions;
+
 };
 
 }

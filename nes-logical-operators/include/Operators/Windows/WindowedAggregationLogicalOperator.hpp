@@ -45,9 +45,8 @@ public:
         std::vector<FieldAccessLogicalFunction> groupingKey,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
         std::shared_ptr<Windowing::WindowType> windowType);
+    ~WindowedAggregationLogicalOperator() override = default;
 
-
-    [[nodiscard]] std::vector<std::string> getGroupByKeyNames() const;
     [[nodiscard]] bool isKeyed() const;
 
     [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> getWindowAggregation() const;

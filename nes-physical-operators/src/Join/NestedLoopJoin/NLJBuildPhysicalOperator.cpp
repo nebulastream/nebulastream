@@ -34,17 +34,6 @@
 
 namespace NES
 {
-SliceStart getNLJSliceStartProxy(const NLJSlice* nljSlice)
-{
-    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    return nljSlice->getSliceStart();
-}
-
-SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
-{
-    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    return nljSlice->getSliceEnd();
-}
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,

@@ -12,6 +12,7 @@
 
 add_source_files(nes-physical-operators
         HJBuildPhysicalOperator.cpp
+        HJBuildCachePhysicalOperator.cpp
         HJOperatorHandler.cpp
         HJProbePhysicalOperator.cpp
         HJSlice.cpp

@@ -14,12 +14,12 @@
 
 #pragma once
 #include <functional>
-#include <WindowBuildPhysicalOperator.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Util.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -55,12 +55,14 @@ public:
         const nautilus::val<uint64_t*>& missesRef);
     ~SliceCache() override = default;
 
-    using SliceCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
+    using SliceCacheReplacement = std::function<nautilus::val<int8_t*>(
+        const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
     virtual nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) = 0;
 
     virtual nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
     virtual nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
+
 protected:
     virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();

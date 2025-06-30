@@ -44,6 +44,7 @@ class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction);
+    ~WindowBuildPhysicalOperator() override = default;
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if

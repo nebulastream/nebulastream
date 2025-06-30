@@ -19,6 +19,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <Aggregation/AggregationBuildCachePhysicalOperator.hpp>
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
@@ -204,11 +205,39 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());
     auto handler = std::make_shared<AggregationOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
-    auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
     auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
 
-    auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    std::shared_ptr<PhysicalOperatorWrapper> buildWrapper = nullptr;
+    switch (conf.sliceCacheConfiguration.sliceCacheType.getValue())
+    {
+        case NES::Configurations::SliceCacheType::NONE: {
+            buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                AggregationBuildPhysicalOperator{handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions},
+                newInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            break;
+        }
+        case NES::Configurations::SliceCacheType::FIFO:
+        case NES::Configurations::SliceCacheType::LRU:
+        case NES::Configurations::SliceCacheType::SECOND_CHANCE:
+        case NES::Configurations::SliceCacheType::TWO_QUEUES: {
+            NES::Configurations::SliceCacheOptions sliceCacheOptions{
+                conf.sliceCacheConfiguration.sliceCacheType.getValue(), conf.sliceCacheConfiguration.numberOfEntriesSliceCache.getValue()};
+            buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+                AggregationBuildCachePhysicalOperator{
+                    handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions, sliceCacheOptions},
+                newInputSchema,
+                outputSchema,
+                handlerId,
+                handler,
+                PhysicalOperatorWrapper::PipelineLocation::EMIT);
+            break;
+        }
+    }
+    INVARIANT(buildWrapper != nullptr, "Build must be a valid AggregationBuildPhysicalOperator");
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,

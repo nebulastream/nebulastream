@@ -44,12 +44,8 @@
 
 namespace NES
 {
-Interface::HashMap* getHashJoinHashMapProxy(
-    const HJOperatorHandler* operatorHandler,
-    const Timestamp timestamp,
-    const WorkerThreadId workerThreadId,
-    const JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator)
+std::shared_ptr<HJSlice>
+getHJSliceProxy(const HJOperatorHandler* operatorHandler, const Timestamp timestamp, const HJBuildPhysicalOperator* buildOperator)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
@@ -60,17 +56,27 @@ Interface::HashMap* getHashJoinHashMapProxy(
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+    const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(
-        hashMap.size() == 1,
+        slices.size() == 1,
         "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
         "slicing, but got {}",
-        hashMap.size());
+        slices.size());
 
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
-    INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
+    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slices[0]);
+    INVARIANT(hjSlice != nullptr, "HJSlice can not be null");
+    return hjSlice;
+}
+Interface::HashMap* getHashJoinHashMapProxy(
+    const HJOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const JoinBuildSideType buildSide,
+    const HJBuildPhysicalOperator* buildOperator)
+{
+    const auto hjSlice = getHJSliceProxy(operatorHandler, timestamp, buildOperator);
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
 

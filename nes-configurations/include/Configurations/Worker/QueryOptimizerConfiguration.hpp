@@ -23,13 +23,14 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/Worker/SliceCacheConfiguration.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES::Configurations
 {
 
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
-static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
+static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 4096;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 
@@ -90,10 +91,19 @@ public:
            "JoinStrategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN]."};
 
+    NES::Configurations::SliceCacheConfiguration sliceCacheConfiguration = {"sliceCache", "Slice Cache Configuration"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize};
+        return {
+            &executionMode,
+            &pageSize,
+            &numberOfPartitions,
+            &joinStrategy,
+            &numberOfRecordsPerKey,
+            &operatorBufferSize,
+            &sliceCacheConfiguration};
     }
 };
 

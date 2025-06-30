@@ -15,6 +15,7 @@ add_subdirectory(Function)
 
 add_source_files(nes-physical-operators
         AggregationBuildPhysicalOperator.cpp
+        AggregationBuildCachePhysicalOperator.cpp
         AggregationOperatorHandler.cpp
         AggregationProbePhysicalOperator.cpp
         AggregationSlice.cpp

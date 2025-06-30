@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -133,6 +134,42 @@ void AggregationOperatorHandler::triggerSlices(
             tupleBuffer.getSequenceNumber(),
             tupleBuffer.getOriginId());
     }
+}
+
+void AggregationOperatorHandler::allocateSliceCacheEntries(
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+{
+    /// If the slice cache has already been created, we simply return
+    if (hasSliceCacheCreated.exchange(true))
+    {
+        return;
+    }
+
+    PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider should not be null");
+
+    /// As we have a left and right side, we have to allocate the slice cache entries for both sides
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    {
+        const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
+        INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
+
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
+        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        sliceCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
+    }
+}
+
+const int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const StartSliceCacheEntriesArgs& startSliceCacheEntriesArgs) const
+{
+    PRECONDITION(
+        numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
+    const auto pos = startSliceCacheEntriesArgs.workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size();
+    INVARIANT(
+        not sliceCacheEntriesBufferForWorkerThreads.empty() or pos < sliceCacheEntriesBufferForWorkerThreads.size(),
+        "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
+    return sliceCacheEntriesBufferForWorkerThreads[pos].getBuffer();
 }
 
 }

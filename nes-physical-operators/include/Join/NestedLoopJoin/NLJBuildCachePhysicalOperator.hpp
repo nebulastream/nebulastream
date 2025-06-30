@@ -16,7 +16,8 @@
 
 #include <cstdint>
 #include <memory>
-#include <Join/StreamJoinBuildPhysicalOperator.hpp>
+#include <Configurations/Worker/SliceCacheConfiguration.hpp>
+#include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -26,21 +27,26 @@
 namespace NES
 {
 
-/// This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
-/// corresponding slice one after the other. Afterward, the second phase (NLJProbe) will start joining the tuples
-/// via two nested loops.
-class NLJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
+
+class NLJBuildCachePhysicalOperator final : public NLJBuildPhysicalOperator
 {
 public:
-    NLJBuildPhysicalOperator(
+    NLJBuildCachePhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
-    ~NLJBuildPhysicalOperator() override = default;
+        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        NES::Configurations::SliceCacheOptions sliceCacheOptions);
+    ~NLJBuildCachePhysicalOperator() override = default;
 
-    NLJBuildPhysicalOperator(const NLJBuildPhysicalOperator& other) = default;
+    NLJBuildCachePhysicalOperator(const NLJBuildCachePhysicalOperator& other) = default;
 
+    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
+
+private:
+    /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch
+    NES::Configurations::SliceCacheOptions sliceCacheOptions;
 };
 }

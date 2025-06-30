@@ -15,6 +15,7 @@ add_source_files(nes-physical-operators
         SliceCache2Q.cpp
         SliceCacheFIFO.cpp
         SliceCacheLFU.cpp
+        SliceCacheUtil.cpp
         SliceCacheLRU.cpp
         SliceCacheSecondChance.cpp
 )
