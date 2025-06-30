@@ -27,7 +27,6 @@ FileWriter::FileWriter(
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
     : ioCtx(ioCtx)
-    , strand(ioCtx.get_executor())
     , file(ioCtx)
     , keyFile(ioCtx)
     , writeBuffer(nullptr)
@@ -53,18 +52,9 @@ FileWriter::FileWriter(
 
 FileWriter::~FileWriter()
 {
-    if (file.is_open() or keyFile.is_open())
-        flushAndDeallocateBuffers();
-    /// Buffer needs to be flushed manually before calling the destructor
-    //deallocateBuffers();
-    if (file.is_open())
-    {
-        file.close();
-    }
-    if (keyFile.is_open())
-    {
-        keyFile.close();
-    }
+    flushAndDeallocateBuffers();
+    file.close();
+    keyFile.close();
 }
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, const size_t size)
@@ -100,19 +90,15 @@ void FileWriter::flushAndDeallocateBuffers()
 {
     std::promise<void> promise;
     const std::future<void> future = promise.get_future();
-    //auto self = shared_from_this();
 
-    // TODO schedule the awaitable flush to run on the same io context
     boost::asio::post(
-        strand,
+        ioCtx,
         [this, &promise]
         {
             try
             {
                 boost::asio::co_spawn(
-                    //self->ioCtx,
-                    //self->flush(),
-                    strand,
+                    ioCtx,
                     flush(),
                     [&promise](const std::exception_ptr& e)
                     {
@@ -137,6 +123,8 @@ void FileWriter::flushAndDeallocateBuffers()
     {
         ioCtx.poll();
     }
+
+    deallocateBuffers();
 }
 
 void FileWriter::deleteAllFiles()
@@ -159,26 +147,20 @@ boost::asio::awaitable<void> FileWriter::flush()
         co_return;
     }
 
-    if (file.is_open() and writeBuffer != nullptr and writeBufferPos > 0)
+    if (writeBuffer != nullptr and writeBufferPos > 0)
     {
         co_await writeToFile(writeBuffer, writeBufferPos, file);
-        file.close();
     }
-    if (keyFile.is_open() and writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
+    if (writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
     {
         co_await writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
-        keyFile.close();
     }
-
-    deallocateBuffers();
 }
 
 void FileWriter::deallocateBuffers()
 {
-    //if (writeBuffer != nullptr)
     deallocate(writeBuffer);
     writeBuffer = nullptr;
-    //if (writeKeyBuffer != nullptr)
     deallocate(writeKeyBuffer);
     writeKeyBuffer = nullptr;
 }

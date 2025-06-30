@@ -84,16 +84,12 @@ public:
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
-    uint64_t getNumAvailableFileDescriptors(WorkerThreadId threadId);
-    void closeFileDescriptors(WorkerThreadId threadId, uint64_t numFileDescriptorsToClose);
-    boost::asio::awaitable<void> closeFileDescriptorsAsync(WorkerThreadId threadId, uint64_t numFileDescriptorsToClose);
-    boost::asio::awaitable<uint64_t> closeFileDescriptorsIfNeededAsync(WorkerThreadId threadId, uint64_t numFileDescriptorsToOpen);
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
     [[nodiscard]] std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
-    static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key);
+    std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key) const;
 
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
@@ -119,7 +115,6 @@ inline uint64_t setFileDescriptorLimit(uint64_t limit)
         return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue();
     }
 
-    std::cout << fmt::format("Maximum number of file descriptors: {}\n", limit);
     return limit;
 }
 
