@@ -294,8 +294,8 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         //const auto numFileDescriptorsToClose = numAlteredSlices - numAvailableFileDescriptors;
         //memoryController->closeFileDescriptors(threadId, numFileDescriptorsToClose);
         //std::vector<std::shared_ptr<Slice>> slicesToUpdate(alteredSlicesPerThread[{threadId, joinBuildSide}]);
-        const auto numSlicesToUpdate = metaData.numSlicesToUpdate;
-        //const auto numSlicesToUpdate = alteredSlicesPerThread[{threadId, joinBuildSide}].size();
+        //const auto numSlicesToUpdate = metaData.numSlicesToUpdate;
+        const auto numSlicesToUpdate = alteredSlicesPerThread[{threadId, joinBuildSide}].size();
         std::vector<std::shared_ptr<Slice>> slicesToUpdate;
         slicesToUpdate.reserve(numSlicesToUpdate);
         slicesToUpdate.insert(
@@ -331,7 +331,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             }
         }
         //numSlicesToUpdate = co_await closeFileDescriptorsIfNeeded(threadId, joinBuildSide);
-        //co_await memoryController->closeFileDescriptorsAsync(threadId, numSlicesToUpdate);
+        co_await memoryController->closeFileDescriptorsAsync(threadId, numSlicesToUpdate);
     }
     //alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
@@ -497,13 +497,21 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (const auto threadId : threadIds)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        //if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
+        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
-            //pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
             (void)pagedVector;
             (void)bufferProvider;
             (void)memoryLayout;
+            if (pagedVector->getNumberOfTuplesOnDisk() > 0)
+            {
+                //std::cout << "Oh no\n";
+            }
+        }
+        else
+        {
+            //std::cout << "Oh no\n";
         }
     }
     nljSlice->releaseCombinePagedVectorsLock();
