@@ -14,14 +14,12 @@
 
 #pragma once
 
+#include <list>
 #include <map>
-#include <set>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <SliceStore/Slice.hpp>
-#include <sys/resource.h>
 
 namespace NES
 {
@@ -88,34 +86,13 @@ private:
 
     static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key);
 
+    static uint64_t setAndGetFileDescriptorLimit(uint64_t limit);
+
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
 
     FileDescriptorManagerInfo fileDescriptorManagerInfo;
     MemoryPool memoryPool;
 };
-
-inline uint64_t setFileDescriptorLimit(uint64_t limit)
-{
-    /// Reserve file descriptors for stdin, stdout and stderr TODO
-    constexpr auto reservedFileDescriptors = 30;
-
-    rlimit rlp;
-    if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
-    {
-        std::cerr << "Failed to get the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - reservedFileDescriptors;
-    }
-    limit = std::min(rlp.rlim_max, limit);
-
-    rlp.rlim_cur = limit;
-    if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
-    {
-        std::cerr << "Failed to set the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - reservedFileDescriptors;
-    }
-
-    return limit - reservedFileDescriptors;
-}
 
 }
