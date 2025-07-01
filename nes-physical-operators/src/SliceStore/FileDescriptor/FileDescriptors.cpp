@@ -209,27 +209,17 @@ boost::asio::awaitable<void> FileWriter::writeToFile(const char* buffer, size_t&
     size = 0;
 }
 
-FileReader::FileReader(
-    const std::string& filePath,
-    //char* readBuffer,
-    //char* readKeyBuffer,
-    const std::function<char*()>& allocate,
-    const std::function<void(char*)>& deallocate,
-    const size_t bufferSize)
+FileReader::FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
-    //, readBuffer(readBuffer)
-    //, readKeyBuffer(readKeyBuffer)
-    , readBuffer(nullptr)
-    , readKeyBuffer(nullptr)
+    , readBuffer(readBuffer)
+    , readKeyBuffer(readKeyBuffer)
     , readBufferPos(0)
     , readKeyBufferPos(0)
     , readBufferEnd(0)
     , readKeyBufferEnd(0)
     , bufferSize(bufferSize)
     , filePath(filePath)
-    , allocate(allocate)
-    , deallocate(deallocate)
 {
     if (not file.is_open() or not keyFile.is_open())
     {
@@ -240,11 +230,9 @@ FileReader::FileReader(
 FileReader::~FileReader()
 {
     file.close();
-    deallocate(readBuffer);
     std::filesystem::remove(filePath + ".dat");
 
     keyFile.close();
-    deallocate(readKeyBuffer);
     std::filesystem::remove(filePath + "_key.dat");
 }
 
@@ -294,16 +282,12 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
     }
 }
 
-size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const
+size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const
 {
     auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
     {
         return readFromFile(destPtr, dataSize, stream);
-    }
-    if (buffer == nullptr)
-    {
-        buffer = allocate();
     }
 
     auto totalRead = 0UL;

@@ -51,8 +51,7 @@ public:
 
     char* allocateWriteBuffer(WorkerThreadId threadId, ThreadLocalWriters& threadWriters, const FileWriter* writer);
     void deallocateWriteBuffer(WorkerThreadId threadId, char* buffer);
-    char* allocateReadBuffer(WorkerThreadId threadId, bool keyBuffer);
-    void deallocateReadBuffer(WorkerThreadId threadId, char* buffer);
+    char* getReadBufferForThread(WorkerThreadId threadId, bool keyBuffer);
 
     uint64_t getFileDescriptorBufferSize() const;
 
@@ -62,9 +61,6 @@ private:
     std::vector<std::mutex> writeMemoryPoolMutexes;
 
     std::vector<char> readMemoryPool;
-    std::vector<std::vector<char*>> freeReadBuffers;
-    std::vector<std::condition_variable> readMemoryPoolConditions;
-    std::vector<std::mutex> readMemoryPoolMutexes;
 
     uint64_t fileDescriptorBufferSize;
     uint64_t poolSizeMultiplier;
