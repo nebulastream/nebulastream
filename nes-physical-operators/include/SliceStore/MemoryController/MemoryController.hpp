@@ -47,37 +47,41 @@ struct ThreadLocalWriters
 class MemoryPool
 {
 public:
-    MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads);
+    MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads, uint64_t poolSizeMultiplier);
 
-    char* allocateWriteBuffer(std::vector<ThreadLocalWriters>& threadWriters, const FileWriter* writer, WorkerThreadId threadId);
-    void deallocateWriteBuffer(char* buffer, WorkerThreadId threadId);
-    char* allocateReadBuffer();
+    char* allocateWriteBuffer(WorkerThreadId threadId, ThreadLocalWriters& threadWriters, const FileWriter* writer);
+    void deallocateWriteBuffer(WorkerThreadId threadId, char* buffer);
+    char* allocateReadBuffer(WorkerThreadId threadId, bool keyBuffer);
     void deallocateReadBuffer(char* buffer);
 
     uint64_t getFileDescriptorBufferSize() const;
 
 private:
-    /// We need a multiple of 2 buffers as we might need to separate keys and payload depending on the used FileLayout
-    static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
-
     std::vector<char> writeMemoryPool;
     std::vector<std::vector<char*>> freeWriteBuffers;
-    //std::vector<std::condition_variable> writeMemoryPoolCondition;
-    std::vector<std::mutex> writeMemoryPoolMutex;
+    std::vector<std::mutex> writeMemoryPoolMutexes;
 
     std::vector<char> readMemoryPool;
+    //std::vector<std::vector<char*>> freeReadBuffers;
+    //std::vector<std::condition_variable> readMemoryPoolConditions;
+    //std::vector<std::mutex> readMemoryPoolMutexes;
     std::vector<char*> freeReadBuffers;
     std::condition_variable readMemoryPoolCondition;
     std::mutex readMemoryPoolMutex;
 
     uint64_t fileDescriptorBufferSize;
+    uint64_t poolSizeMultiplier;
 };
 
 // TODO rename FileDescriptorManager
 class MemoryController
 {
 public:
-    MemoryController(MemoryControllerInfo memoryControllerInfo, uint64_t numWorkerThreads, uint64_t minNumFileDescriptorsPerWorker);
+    MemoryController(
+        MemoryControllerInfo memoryControllerInfo,
+        uint64_t numWorkerThreads,
+        uint64_t minNumFileDescriptorsPerWorker,
+        uint64_t memoryPoolSizeMultiplier);
     ~MemoryController();
 
     std::shared_ptr<FileWriter>

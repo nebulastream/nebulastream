@@ -22,6 +22,7 @@
 namespace NES
 {
 
+// TODO open key files only when needed
 enum class FileLayout : uint8_t
 {
     NO_SEPARATION,
@@ -29,7 +30,7 @@ enum class FileLayout : uint8_t
     SEPARATE_KEYS
 };
 
-class FileWriter : public std::enable_shared_from_this<FileWriter>
+class FileWriter
 {
 public:
     FileWriter(
@@ -44,6 +45,7 @@ public:
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
     boost::asio::awaitable<uint32_t> writeVarSized(const void* data);
 
+    [[nodiscard]] bool hasBuffer() const;
     void flushAndDeallocateBuffers();
     void deleteAllFiles();
 
@@ -76,6 +78,8 @@ class FileReader
 public:
     FileReader(
         const std::string& filePath,
+        //char* readBuffer,
+        //char* readKeyBuffer,
         const std::function<char*()>& allocate,
         const std::function<void(char*)>& deallocate,
         size_t bufferSize);
@@ -86,8 +90,8 @@ public:
     Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
-    size_t read(void* dest, size_t dataSize, std::ifstream& fileStream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const;
-    static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& fileStream);
+    size_t read(void* dest, size_t dataSize, std::ifstream& stream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const;
+    static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& stream);
 
     std::ifstream file;
     std::ifstream keyFile;

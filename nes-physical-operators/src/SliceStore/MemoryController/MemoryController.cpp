@@ -19,9 +19,16 @@ namespace NES
 {
 
 MemoryController::MemoryController(
-    MemoryControllerInfo memoryControllerInfo, const uint64_t numWorkerThreads, const uint64_t minNumFileDescriptorsPerWorker)
+    MemoryControllerInfo memoryControllerInfo,
+    const uint64_t numWorkerThreads,
+    const uint64_t minNumFileDescriptorsPerWorker,
+    const uint64_t memoryPoolSizeMultiplier)
     : memoryControllerInfo(std::move(memoryControllerInfo))
-    , memoryPool(this->memoryControllerInfo.fileDescriptorBufferSize, this->memoryControllerInfo.numberOfBuffersPerWorker, numWorkerThreads)
+    , memoryPool(
+          this->memoryControllerInfo.fileDescriptorBufferSize,
+          this->memoryControllerInfo.numberOfBuffersPerWorker,
+          numWorkerThreads,
+          memoryPoolSizeMultiplier)
 {
     /// Memory pool adjusts the buffer size to account for separate key and payload buffers
     this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
@@ -107,8 +114,9 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const auto writer = std::make_shared<FileWriter>(
         ioCtx,
         constructFilePath(sliceEnd, threadId, joinBuildSide),
-        [this, threadId](const FileWriter* fw) { return memoryPool.allocateWriteBuffer(threadWriters, fw, threadId); },
-        [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(buf, threadId); },
+        [this, threadId](const FileWriter* fw)
+        { return memoryPool.allocateWriteBuffer(threadId, threadWriters[threadId.getRawValue()], fw); },
+        [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(threadId, buf); },
         memoryControllerInfo.fileDescriptorBufferSize);
 
     lruQueue.push_front(key);
@@ -135,11 +143,13 @@ MemoryController::getFileReader(const SliceEnd sliceEnd, const WorkerThreadId th
         foundWriter = true;
     }
 
-    /// Create reader after writer is out of scope to ensure staying within the given file descriptor limit
+    /// Create reader after writer is out of scope to ensure staying below the given file descriptor limit
     return foundWriter ? std::make_optional(
                              std::make_shared<FileReader>(
                                  constructFilePath(sliceEnd, threadId, joinBuildSide),
-                                 [this] { return memoryPool.allocateReadBuffer(); },
+                                 //memoryPool.allocateReadBuffer(threadId, false),
+                                 //memoryPool.allocateReadBuffer(threadId, true),
+                                 [this, threadId] { return memoryPool.allocateReadBuffer(threadId, false); },
                                  [this](char* buf) { memoryPool.deallocateReadBuffer(buf); },
                                  memoryControllerInfo.fileDescriptorBufferSize))
                        : std::nullopt;
@@ -171,13 +181,14 @@ std::string
 MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide) const
 {
     return (memoryControllerInfo.workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_{}",
-                memoryControllerInfo.queryId.getRawValue(),
-                memoryControllerInfo.outputOriginId.getRawValue(),
-                magic_enum::enum_name(joinBuildSide),
-                sliceEnd.getRawValue(),
-                threadId.getRawValue())))
+            / std::filesystem::path(
+                fmt::format(
+                    "memory_controller_{}_{}_{}_{}_{}",
+                    memoryControllerInfo.queryId.getRawValue(),
+                    memoryControllerInfo.outputOriginId.getRawValue(),
+                    magic_enum::enum_name(joinBuildSide),
+                    sliceEnd.getRawValue(),
+                    threadId.getRawValue())))
         .string();
 }
 
@@ -195,107 +206,96 @@ MemoryController::deleteFileWriter(ThreadLocalWriters& local, const std::pair<Sl
     return {};
 }
 
-MemoryPool::MemoryPool(const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads)
-    : fileDescriptorBufferSize(bufferSize / POOL_SIZE_MULTIPLIER)
+MemoryPool::MemoryPool(
+    const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads, const uint64_t poolSizeMultiplier)
+    : fileDescriptorBufferSize(bufferSize / poolSizeMultiplier), poolSizeMultiplier(poolSizeMultiplier)
 {
+    (void)this->poolSizeMultiplier;
+    if (numBuffersPerWorker == 0)
+    {
+        fileDescriptorBufferSize = 0;
+    }
     if (fileDescriptorBufferSize > 0)
     {
-        const auto writePoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
-        const auto readPoolSize = std::max(1UL, numBuffersPerWorker) * numWorkerThreads * POOL_SIZE_MULTIPLIER;
-
+        const auto writePoolSize = numBuffersPerWorker * numWorkerThreads * poolSizeMultiplier;
         writeMemoryPool.reserve(fileDescriptorBufferSize * writePoolSize);
-        //writeMemoryPoolCondition = std::vector<std::condition_variable>(numWorkerThreads);
-        writeMemoryPoolMutex = std::vector<std::mutex>(numWorkerThreads);
+        writeMemoryPoolMutexes = std::vector<std::mutex>(numWorkerThreads);
         freeWriteBuffers.resize(numWorkerThreads);
+
         for (size_t i = 0; i < writePoolSize; ++i)
         {
             freeWriteBuffers[i % numWorkerThreads].push_back(writeMemoryPool.data() + i * fileDescriptorBufferSize);
         }
 
+        /// We only need poolSizeMultiplier many read buffers per worker as we always destroy the reader immediately after use
+        const auto readPoolSize = numWorkerThreads * poolSizeMultiplier;
         readMemoryPool.reserve(fileDescriptorBufferSize * readPoolSize);
-        freeReadBuffers.reserve(numWorkerThreads);
+        //readMemoryPoolMutexes = std::vector<std::mutex>(numWorkerThreads);
+        //freeReadBuffers.resize(numWorkerThreads);
         for (size_t i = 0; i < readPoolSize; ++i)
         {
+            //freeReadBuffers[i % numWorkerThreads].push_back(readMemoryPool.data() + i * fileDescriptorBufferSize);
             freeReadBuffers.push_back(readMemoryPool.data() + i * fileDescriptorBufferSize);
         }
     }
 }
 
-char* MemoryPool::allocateWriteBuffer(
-    std::vector<ThreadLocalWriters>& threadWriters, const FileWriter* writer, const WorkerThreadId threadId)
+char* MemoryPool::allocateWriteBuffer(const WorkerThreadId threadId, ThreadLocalWriters& threadWriters, const FileWriter* writer)
 {
     if (fileDescriptorBufferSize == 0)
     {
         return nullptr;
     }
 
-    std::unique_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    std::unique_lock lock(writeMemoryPoolMutexes[threadId.getRawValue()]);
     if (freeWriteBuffers[threadId.getRawValue()].empty())
     {
         lock.unlock();
-        auto& [writers, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
+        auto& [writers, lruQueue, mutex] = threadWriters;
         const std::scoped_lock innerLock(mutex);
 
-        // TODO
-        /*for (auto elem = lruQueue.rbegin(); elem != lruQueue.rend(); ++elem)
+        auto numWritersToDeallocate = 1UL;
+        for (auto keyIt = lruQueue.rbegin(); keyIt != lruQueue.rend(); ++keyIt)
         {
-            if (const auto it = writers.find(*elem); it != writers.end())
+            if (const auto it = writers.find(*keyIt); it != writers.end())
             {
                 const auto& [curWriter, _] = it->second;
-                if (curWriter.get() != writer)
+                if (curWriter->hasBuffer() and curWriter.get() != writer)
                 {
                     curWriter->flushAndDeallocateBuffers();
-                    lock.lock();
-                    if (not freeWriteBuffers[threadId.getRawValue()].empty())
+                    if (--numWritersToDeallocate <= 0)
                     {
                         break;
                     }
-                    lock.unlock();
                 }
-            }
-        }*/
-        for (const auto& [curWriter, _] : writers | std::views::values)
-        {
-            if (curWriter != nullptr and curWriter.get() != writer)
-            {
-                curWriter->flushAndDeallocateBuffers();
             }
         }
         lock.lock();
         //std::cout << fmt::format(
         //    "Number of buffers available for thread {}: {}\n", threadId.getRawValue(), freeWriteBuffers[threadId.getRawValue()].size());
-    };
-    /*std::cout << fmt::format(
-        "Number of available write buffers for thread {} after free: {}\n",
-        threadId.getRawValue(),
-        freeWriteBuffers[threadId.getRawValue()].size());*/
-    //writeMemoryPoolCondition[threadId.getRawValue()].wait(
-    //    lock, [this, threadId] { return !freeWriteBuffers[threadId.getRawValue()].empty(); });
+    }
 
     char* buffer = freeWriteBuffers[threadId.getRawValue()].back();
     freeWriteBuffers[threadId.getRawValue()].pop_back();
     return buffer;
 }
 
-void MemoryPool::deallocateWriteBuffer(char* buffer, const WorkerThreadId threadId)
+void MemoryPool::deallocateWriteBuffer(const WorkerThreadId threadId, char* buffer)
 {
     if (fileDescriptorBufferSize == 0 or buffer == nullptr or writeMemoryPool.data() > buffer
         or buffer >= writeMemoryPool.data() + writeMemoryPool.capacity())
     {
-        if (buffer != nullptr)
-            std::cout << "Shit fuck\n";
         return;
     }
 
-    //std::cout << "Deallocating write buffer\n";
-    const std::scoped_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
+    const std::scoped_lock lock(writeMemoryPoolMutexes[threadId.getRawValue()]);
     freeWriteBuffers[threadId.getRawValue()].push_back(buffer);
-    //std::cout << "Deallocated write buffer\n";
-    //writeMemoryPoolCondition[threadId.getRawValue()].notify_one();
 }
 
-char* MemoryPool::allocateReadBuffer()
+char* MemoryPool::allocateReadBuffer(const WorkerThreadId threadId, const bool keyBuffer)
 {
+    (void)threadId;
+    (void)keyBuffer;
     if (fileDescriptorBufferSize == 0)
     {
         return nullptr;
@@ -313,6 +313,8 @@ char* MemoryPool::allocateReadBuffer()
     freeReadBuffers.pop_back();
     //std::cout << "Got read buffer\n";
     return buffer;
+    //auto* const buffer = readMemoryPool.data() + threadId.getRawValue() * fileDescriptorBufferSize * poolSizeMultiplier;
+    //return keyBuffer ? buffer + fileDescriptorBufferSize : buffer;
 }
 
 void MemoryPool::deallocateReadBuffer(char* buffer)
