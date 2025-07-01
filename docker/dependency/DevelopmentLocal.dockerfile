@@ -19,9 +19,9 @@ RUN apt update && apt install -y \
     bison\
     git\
     pkg-config\
-    libelf-dev\
-    linux-tools-common \
-    linux-tools-`uname -r`
+    libelf-dev \
+    clang-tools-19 \
+    linux-tools-common
 
 
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
