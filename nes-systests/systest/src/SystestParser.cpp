@@ -701,6 +701,12 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
     }
     key.pop_back();
 
+    /// Check if the key is empty after removing the colon
+    if (key.empty())
+    {
+        throw SLTUnexpectedToken("Expected configuration key before colon, but got empty key");
+    }
+
     std::getline(stream >> std::ws, valueList);
     
     /// Validate that we have a value
@@ -729,6 +735,13 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
         {
             throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
         }
+        
+        /// Check if there are commas in the value, which indicates multiple values without brackets
+        if (valueList.find(',') != std::string::npos)
+        {
+            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
+        }
+        
         values = {valueList};
     }
 

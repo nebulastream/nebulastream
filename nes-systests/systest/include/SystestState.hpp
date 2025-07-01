@@ -133,7 +133,8 @@ struct SystestQuery
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
         std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
-        std::optional<ExpectedError> expectedError);
+        std::optional<ExpectedError> expectedError,
+        std::optional<ConfigurationOverride> configOverride);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
 
@@ -146,6 +147,7 @@ struct SystestQuery
     Schema expectedSinkSchema;
     std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount;
     std::optional<ExpectedError> expectedError;
+    std::optional<ConfigurationOverride> configOverride;
 };
 
 
@@ -158,6 +160,7 @@ struct RunningQuery
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;
     std::optional<Exception> exception;
+    std::optional<ConfigurationOverride> configOverride;
 
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;
@@ -302,7 +305,8 @@ private:
                     std::move(workingDir),
                     sinkSchema,
                     std::move(sourceNamesToFilepathAndCount),
-                    std::move(expectedError));
+                    std::move(expectedError),
+                    configurationOverride);
             }
             return;
         }

@@ -128,7 +128,9 @@ std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
-    const QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap,
+    size_t* globalQueryCounter,
+    size_t totalQueries)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -155,18 +157,23 @@ std::vector<RunningQuery> runQueries(
                 {
                     hasOneMoreQueryToStart = true;
                     querySubmitter.startQuery(*reg);
-                    active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
+                    auto rq = std::make_shared<RunningQuery>(nextQuery, *reg);
+                    rq->configOverride = nextQuery.configOverride;
+                    active.emplace(*reg, rq);
                 }
                 else
                 {
-                    processQueryWithError(std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {reg.error()});
+                    auto rq = std::make_shared<RunningQuery>(nextQuery);
+                    rq->configOverride = nextQuery.configOverride;
+                    processQueryWithError(rq, finished, queries.size(), failed, {reg.error()});
                 }
             }
             else
             {
                 /// There was an error during query parsing, report the result and don't register the query
-                processQueryWithError(
-                    std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {nextQuery.queryPlan.error()});
+                auto rq = std::make_shared<RunningQuery>(nextQuery);
+                rq->configOverride = nextQuery.configOverride;
+                processQueryWithError(rq, finished, queries.size(), failed, {nextQuery.queryPlan.error()});
             }
         }
         return hasOneMoreQueryToStart;
@@ -193,8 +200,8 @@ std::vector<RunningQuery> runQueries(
             {
                 reportResult(
                     runningQuery,
-                    finished,
-                    queries.size(),
+                    *globalQueryCounter,
+                    totalQueries,
                     failed,
                     [&]
                     {
@@ -245,12 +252,12 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
-    const QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap,
+    size_t* globalQueryCounter,
+    size_t totalQueries)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
-    std::size_t queryFinishedCounter = 0;
-    const auto totalQueries = queries.size();
     for (const auto& queryToRun : queries)
     {
         if (not queryToRun.queryPlan.has_value())
@@ -268,6 +275,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         auto queryId = registrationResult.value();
 
         auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
+        runningQueryPtr->configOverride = queryToRun.configOverride;
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
@@ -308,11 +316,10 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         ranQueries.back()->passed = not errorMessage.has_value();
         const auto queryPerformanceMessage
             = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
-        printQueryResultToStdOut(
-            *ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
+        printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), *globalQueryCounter, totalQueries, queryPerformanceMessage);
         ranQueries.emplace_back(ranQueries.back());
 
-        queryFinishedCounter += 1;
+        *globalQueryCounter += 1;
     }
 
     return serializeExecutionResults(
@@ -330,13 +337,21 @@ void printQueryResultToStdOut(
     const auto queryNumberAsString = runningQuery.query.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
-
-    /// spd logger cannot handle multiline prints with proper color and pattern.
-    /// And as this is only for test runs we use stdout here.
+    std::string overrideStr;
+    if (runningQuery.configOverride && !runningQuery.configOverride->overrideParameters.empty())
+    {
+        std::vector<std::string> kvs;
+        for (const auto& [k, v] : runningQuery.configOverride->overrideParameters)
+        {
+            kvs.push_back(fmt::format("{}={}", k, v));
+        }
+        overrideStr = fmt::format(" [Override: {}]", fmt::join(kvs, ", "));
+    }
     std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << runningQuery.query.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
-    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
+    std::cout << overrideStr;
+    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber + overrideStr.size()), '.');
     if (runningQuery.passed)
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
@@ -356,19 +371,23 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
-    const NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap,
+    size_t* globalQueryCounter,
+    size_t totalQueries)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, globalQueryCounter, totalQueries);
 }
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    const NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap,
+    size_t* globalQueryCounter,
+    size_t totalQueries)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, globalQueryCounter, totalQueries);
 }
 
 }
