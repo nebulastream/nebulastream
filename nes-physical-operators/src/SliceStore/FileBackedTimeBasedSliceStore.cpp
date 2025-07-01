@@ -24,13 +24,13 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
     SliceStoreInfo sliceStoreInfo,
-    MemoryControllerInfo memoryControllerInfo,
+    FileDescriptorManagerInfo fileDescriptorManagerInfo,
     const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide, inputOrigins.size())
     , watermarkProcessor(std::make_shared<MultiOriginWatermarkProcessor>(inputOrigins))
     , sliceStoreInfo(std::move(sliceStoreInfo))
-    , memoryControllerInfo(std::move(memoryControllerInfo))
+    , fileDescriptorManagerInfo(std::move(fileDescriptorManagerInfo))
     , numberOfWorkerThreads(0)
 {
     if (this->sliceStoreInfo.lowerMemoryBound > this->sliceStoreInfo.upperMemoryBound)
@@ -65,10 +65,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , watermarkPredictors(other.watermarkPredictors)
     , writeExecTimeFunction(other.writeExecTimeFunction)
     , readExecTimeFunction(other.readExecTimeFunction)
-    , memoryController(other.memoryController)
+    , fileDescriptorManager(other.fileDescriptorManager)
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , sliceStoreInfo(other.sliceStoreInfo)
-    , memoryControllerInfo(other.memoryControllerInfo)
+    , fileDescriptorManagerInfo(other.fileDescriptorManagerInfo)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
 {
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
@@ -83,10 +83,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , watermarkPredictors(std::move(other.watermarkPredictors))
     , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
-    , memoryController(std::move(other.memoryController))
+    , fileDescriptorManager(std::move(other.fileDescriptorManager))
     , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
     , sliceStoreInfo(std::move(other.sliceStoreInfo))
-    , memoryControllerInfo(std::move(other.memoryControllerInfo))
+    , fileDescriptorManagerInfo(std::move(other.fileDescriptorManagerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
 {
@@ -98,10 +98,10 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     watermarkPredictors = other.watermarkPredictors;
     writeExecTimeFunction = other.writeExecTimeFunction;
     readExecTimeFunction = other.readExecTimeFunction;
-    memoryController = other.memoryController;
+    fileDescriptorManager = other.fileDescriptorManager;
     alteredSlicesPerThread = other.alteredSlicesPerThread;
     sliceStoreInfo = other.sliceStoreInfo;
-    memoryControllerInfo = other.memoryControllerInfo;
+    fileDescriptorManagerInfo = other.fileDescriptorManagerInfo;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
 
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
@@ -118,10 +118,10 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     watermarkPredictors = std::move(other.watermarkPredictors);
     writeExecTimeFunction = std::move(other.writeExecTimeFunction);
     readExecTimeFunction = std::move(other.readExecTimeFunction);
-    memoryController = std::move(other.memoryController);
+    fileDescriptorManager = std::move(other.fileDescriptorManager);
     alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
     sliceStoreInfo = std::move(other.sliceStoreInfo);
-    memoryControllerInfo = std::move(other.memoryControllerInfo);
+    fileDescriptorManagerInfo = std::move(other.fileDescriptorManagerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
 
@@ -232,7 +232,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     /// Now we can remove/call destructor on every slice without still holding the lock
     for (const auto& slice : slicesToDelete)
     {
-        memoryController->deleteSliceFiles(slice->getSliceEnd());
+        fileDescriptorManager->deleteSliceFiles(slice->getSliceEnd());
     }
     slicesToDelete.clear();
 }
@@ -259,8 +259,8 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     /// We then also need two buffers, one for key and one for payload file
     const auto minNumFileDescriptorsPerWorker = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 3UL : 2UL;
     const auto memoryPoolSizeMultiplier = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 2UL : 1UL;
-    memoryController = std::make_shared<MemoryController>(
-        memoryControllerInfo, numberOfWorkerThreads, minNumFileDescriptorsPerWorker, memoryPoolSizeMultiplier);
+    fileDescriptorManager = std::make_shared<FileDescriptorManager>(
+        fileDescriptorManagerInfo, numberOfWorkerThreads, minNumFileDescriptorsPerWorker, memoryPoolSizeMultiplier);
     measureReadAndWriteExecTimes(TEST_DATA_SIZES);
 }
 
@@ -424,7 +424,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide) const
 {
-    const auto fileWriter = memoryController->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide);
+    const auto fileWriter = fileDescriptorManager->getFileWriter(ioCtx, nljSlice->getSliceEnd(), threadId, joinBuildSide);
     auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
     /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
@@ -453,7 +453,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (const auto threadToRead : threadsToRead)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadToRead, workerThread, joinBuildSide);
+        if (auto fileReader = fileDescriptorManager->getFileReader(nljSlice->getSliceEnd(), threadToRead, workerThread, joinBuildSide);
             fileReader.has_value())
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
@@ -490,14 +490,14 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
         {
             /// FileWriter should be destroyed when calling getFileReader
-            const auto fileWriter
-                = memoryController->getFileWriter(ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left);
+            const auto fileWriter = fileDescriptorManager->getFileWriter(
+                ioCtx, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left);
             runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto sizeRead
-            = memoryController
+            = fileDescriptorManager
                   ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), WorkerThreadId(0), JoinBuildSideType::Left)
                   .value()
                   ->read(data.data(), dataSize);
