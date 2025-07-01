@@ -67,8 +67,8 @@ public:
             std::uniform_int_distribution idDistrib(0UL, idUpperBound);
             std::uniform_int_distribution valueDistrib(0, 10000);
 
-            const auto interval = std::chrono::microseconds(
-                static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 * batchSize / ingestionRate : 0)));
+            const auto interval
+                = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 * batchSize / ingestionRate : 0)));
             std::cout << "Ingestion interval: " << static_cast<uint64_t>(interval.count()) << '\n';
             auto nextSendTime = std::chrono::high_resolution_clock::now();
             const auto startTime = nextSendTime;
