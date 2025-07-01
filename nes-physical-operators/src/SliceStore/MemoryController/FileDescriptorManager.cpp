@@ -13,45 +13,46 @@
 */
 
 #include <ranges>
-#include <SliceStore/MemoryController/MemoryController.hpp>
+#include <SliceStore/FileDescriptorManager/FileDescriptorManager.hpp>
 
 namespace NES
 {
 
-MemoryController::MemoryController(
-    MemoryControllerInfo memoryControllerInfo,
+FileDescriptorManager::FileDescriptorManager(
+    FileDescriptorManagerInfo memoryControllerInfo,
     const uint64_t numWorkerThreads,
     const uint64_t minNumFileDescriptorsPerWorker,
     const uint64_t memoryPoolSizeMultiplier)
-    : memoryControllerInfo(std::move(memoryControllerInfo))
+    : fileDescriptorManagerInfo(std::move(memoryControllerInfo))
     , memoryPool(
-          this->memoryControllerInfo.fileDescriptorBufferSize,
-          this->memoryControllerInfo.numberOfBuffersPerWorker,
+          this->fileDescriptorManagerInfo.fileDescriptorBufferSize,
+          this->fileDescriptorManagerInfo.numberOfBuffersPerWorker,
           numWorkerThreads,
           memoryPoolSizeMultiplier)
 {
     /// Memory pool adjusts the buffer size to account for separate key and payload buffers
-    this->memoryControllerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
+    this->fileDescriptorManagerInfo.fileDescriptorBufferSize = memoryPool.getFileDescriptorBufferSize();
 
     /// Create file writer map per thread thus reducing resource contention
     threadWriters = std::vector<ThreadLocalWriters>(numWorkerThreads);
 
     /// Update maxNumFileDescriptors according to the system's supported maximum number of file descriptors and create limiter
-    if (this->memoryControllerInfo.maxNumFileDescriptors > 0)
+    if (this->fileDescriptorManagerInfo.maxNumFileDescriptors > 0)
     {
-        this->memoryControllerInfo.maxNumFileDescriptors = setFileDescriptorLimit(this->memoryControllerInfo.maxNumFileDescriptors);
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors
+            = setFileDescriptorLimit(this->fileDescriptorManagerInfo.maxNumFileDescriptors);
         /// Each worker thread must be allowed to have minNumFileDescriptorsPerWorker many file writers and readers at once
-        if (this->memoryControllerInfo.maxNumFileDescriptors < 2 * numWorkerThreads * minNumFileDescriptorsPerWorker)
+        if (this->fileDescriptorManagerInfo.maxNumFileDescriptors < 2 * numWorkerThreads * minNumFileDescriptorsPerWorker)
         {
             throw std::runtime_error("Not enough file descriptors available for the specified number of worker threads");
         }
 
         /// Subtract number of worker threads multiplied by number of descriptors per worker to be able to create file readers at any time
-        this->memoryControllerInfo.maxNumFileDescriptors -= numWorkerThreads * minNumFileDescriptorsPerWorker;
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors -= numWorkerThreads * minNumFileDescriptorsPerWorker;
         /// Divide by number of descriptors per worker as each created file writer potentially needs to open this amount of descriptors
-        this->memoryControllerInfo.maxNumFileDescriptors /= minNumFileDescriptorsPerWorker;
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors /= minNumFileDescriptorsPerWorker;
         /// Divide by number of worker threads as we enforce a limit on each worker separately
-        this->memoryControllerInfo.maxNumFileDescriptors /= numWorkerThreads;
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors /= numWorkerThreads;
     }
     else
     {
@@ -60,7 +61,7 @@ MemoryController::MemoryController(
     }
 }
 
-MemoryController::~MemoryController()
+FileDescriptorManager::~FileDescriptorManager()
 {
     // TODO investigate why destructor is never called
     for (auto& [writers, _, mutex] : threadWriters)
@@ -73,7 +74,7 @@ MemoryController::~MemoryController()
     }
 }
 
-std::shared_ptr<FileWriter> MemoryController::getFileWriter(
+std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
     boost::asio::io_context& ioCtx, const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     auto& [writers, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
@@ -93,7 +94,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     }
 
     /// Close file descriptors if needed
-    if (memoryControllerInfo.maxNumFileDescriptors > 0 and lruQueue.size() >= memoryControllerInfo.maxNumFileDescriptors)
+    if (fileDescriptorManagerInfo.maxNumFileDescriptors > 0 and lruQueue.size() >= fileDescriptorManagerInfo.maxNumFileDescriptors)
     {
         for (auto i = 0UL; i < std::min(1UL, lruQueue.size()); ++i)
         {
@@ -117,14 +118,14 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
         [this, threadId](const FileWriter* fw)
         { return memoryPool.allocateWriteBuffer(threadId, threadWriters[threadId.getRawValue()], fw); },
         [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(threadId, buf); },
-        memoryControllerInfo.fileDescriptorBufferSize);
+        fileDescriptorManagerInfo.fileDescriptorBufferSize);
 
     lruQueue.push_front(key);
     writers[key] = {writer, lruQueue.begin()};
     return writer;
 }
 
-std::optional<std::shared_ptr<FileReader>> MemoryController::getFileReader(
+std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
     const SliceEnd sliceEnd, const WorkerThreadId threadToRead, const WorkerThreadId workerThread, const JoinBuildSideType joinBuildSide)
 {
     auto& [writers, lruQueue, mutex] = threadWriters[threadToRead.getRawValue()];
@@ -148,11 +149,11 @@ std::optional<std::shared_ptr<FileReader>> MemoryController::getFileReader(
                              constructFilePath(sliceEnd, threadToRead, joinBuildSide),
                              memoryPool.getReadBufferForThread(workerThread, false),
                              memoryPool.getReadBufferForThread(workerThread, true),
-                             memoryControllerInfo.fileDescriptorBufferSize))
+                             fileDescriptorManagerInfo.fileDescriptorBufferSize))
                        : std::nullopt;
 }
 
-void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
+void FileDescriptorManager::deleteSliceFiles(const SliceEnd sliceEnd)
 {
     std::vector<std::shared_ptr<FileWriter>> writersToDelete;
     for (auto& local : threadWriters)
@@ -174,14 +175,14 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
     }
 }
 
-std::string
-MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide) const
+std::string FileDescriptorManager::constructFilePath(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide) const
 {
-    return (memoryControllerInfo.workingDir
+    return (fileDescriptorManagerInfo.workingDir
             / std::filesystem::path(fmt::format(
                 "memory_controller_{}_{}_{}_{}_{}",
-                memoryControllerInfo.queryId.getRawValue(),
-                memoryControllerInfo.outputOriginId.getRawValue(),
+                fileDescriptorManagerInfo.queryId.getRawValue(),
+                fileDescriptorManagerInfo.outputOriginId.getRawValue(),
                 magic_enum::enum_name(joinBuildSide),
                 sliceEnd.getRawValue(),
                 threadId.getRawValue())))
@@ -189,7 +190,7 @@ MemoryController::constructFilePath(const SliceEnd sliceEnd, const WorkerThreadI
 }
 
 std::optional<std::shared_ptr<FileWriter>>
-MemoryController::deleteFileWriter(ThreadLocalWriters& local, const std::pair<SliceEnd, JoinBuildSideType>& key)
+FileDescriptorManager::deleteFileWriter(ThreadLocalWriters& local, const std::pair<SliceEnd, JoinBuildSideType>& key)
 {
     auto& [writers, lruQueue, _] = local;
     if (const auto it = writers.find(key); it != writers.end())

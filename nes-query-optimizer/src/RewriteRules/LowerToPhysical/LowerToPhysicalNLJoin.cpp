@@ -204,7 +204,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
                 conf.fileOperationTimeDelta.getValue(),
                 conf.fileLayout.getValue(),
                 conf.withPrediction.getValue()),
-            MemoryControllerInfo(
+            FileDescriptorManagerInfo(
                 conf.maxNumFileDescriptors.getValue(),
                 conf.fileDescriptorBufferSize.getValue(),
                 conf.numberOfBuffersPerWorker.getValue(),

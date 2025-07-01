@@ -26,7 +26,7 @@
 namespace NES
 {
 
-struct MemoryControllerInfo
+struct FileDescriptorManagerInfo
 {
     uint64_t maxNumFileDescriptors;
     uint64_t fileDescriptorBufferSize;
@@ -66,16 +66,15 @@ private:
     uint64_t poolSizeMultiplier;
 };
 
-// TODO rename FileDescriptorManager
-class MemoryController
+class FileDescriptorManager
 {
 public:
-    MemoryController(
-        MemoryControllerInfo memoryControllerInfo,
+    FileDescriptorManager(
+        FileDescriptorManagerInfo memoryControllerInfo,
         uint64_t numWorkerThreads,
         uint64_t minNumFileDescriptorsPerWorker,
         uint64_t memoryPoolSizeMultiplier);
-    ~MemoryController();
+    ~FileDescriptorManager();
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
@@ -92,7 +91,7 @@ private:
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
 
-    MemoryControllerInfo memoryControllerInfo;
+    FileDescriptorManagerInfo fileDescriptorManagerInfo;
     MemoryPool memoryPool;
 };
 
