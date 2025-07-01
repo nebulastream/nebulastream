@@ -43,7 +43,14 @@ FileWriter::FileWriter(
     const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
     if (fd < 0 or fdKey < 0)
     {
-        throw std::runtime_error("Failed to open file or key file for writing");
+        if (errno == EMFILE)
+        {
+            throw std::runtime_error("Failed to open file or key file for writing: Too many open files (EMFILE)");
+        }
+        else
+        {
+            throw std::runtime_error(fmt::format("Failed to open file or key file for writing: {}", std::strerror(errno)));
+        }
     }
 
     file.assign(fd);
@@ -223,7 +230,14 @@ FileReader::FileReader(const std::string& filePath, char* readBuffer, char* read
 {
     if (not file.is_open() or not keyFile.is_open())
     {
-        throw std::ios_base::failure("Failed to open file or key file for reading");
+        if (errno == EMFILE)
+        {
+            throw std::runtime_error("Failed to open file or key file for reading: Too many open files (EMFILE)");
+        }
+        else
+        {
+            throw std::runtime_error(fmt::format("Failed to open file or key file for reading: {}", std::strerror(errno)));
+        }
     }
 }
 

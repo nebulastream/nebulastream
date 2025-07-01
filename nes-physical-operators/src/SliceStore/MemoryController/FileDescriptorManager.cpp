@@ -13,6 +13,7 @@
 */
 
 #include <ranges>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <SliceStore/FileDescriptorManager/FileDescriptorManager.hpp>
 
 namespace NES
@@ -40,7 +41,7 @@ FileDescriptorManager::FileDescriptorManager(
     if (this->fileDescriptorManagerInfo.maxNumFileDescriptors > 0)
     {
         this->fileDescriptorManagerInfo.maxNumFileDescriptors
-            = setFileDescriptorLimit(this->fileDescriptorManagerInfo.maxNumFileDescriptors);
+            = setAndGetFileDescriptorLimit(this->fileDescriptorManagerInfo.maxNumFileDescriptors);
         /// Each worker thread must be allowed to have minNumFileDescriptorsPerWorker many file writers and readers at once
         if (this->fileDescriptorManagerInfo.maxNumFileDescriptors < 2 * numWorkerThreads * minNumFileDescriptorsPerWorker)
         {
@@ -57,7 +58,7 @@ FileDescriptorManager::FileDescriptorManager(
     else
     {
         /// Set the descriptor limit to the system's maximum amount while preserving the value of maxNumFileDescriptors to disable limiter
-        setFileDescriptorLimit(UINT64_MAX);
+        setAndGetFileDescriptorLimit(UINT64_MAX);
     }
 }
 
@@ -96,6 +97,7 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
     /// Close file descriptors if needed
     if (fileDescriptorManagerInfo.maxNumFileDescriptors > 0 and lruQueue.size() >= fileDescriptorManagerInfo.maxNumFileDescriptors)
     {
+        // TODO close files in batches?
         for (auto i = 0UL; i < std::min(1UL, lruQueue.size()); ++i)
         {
             const auto evictKey = lruQueue.back();
@@ -103,14 +105,6 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
             writers[evictKey] = {nullptr, lruQueue.end()};
         }
     }
-
-    /*const auto totalNumDescriptors
-        = std::distance(std::filesystem::directory_iterator("/proc/self/fd"), std::filesystem::directory_iterator{});
-    std::cout << fmt::format(
-        "Number of file descriptors for thread {} is {} and total num used is {}\n",
-        threadId.getRawValue(),
-        lruQueue.size(),
-        totalNumDescriptors);*/
 
     const auto writer = std::make_shared<FileWriter>(
         ioCtx,
@@ -203,6 +197,30 @@ FileDescriptorManager::deleteFileWriter(ThreadLocalWriters& local, const std::pa
     return {};
 }
 
+uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
+{
+    /// Reserve descriptors for any file that was already opened and add a buffer as insurance for future descriptors that might be opened
+    const auto numOpenDescriptors
+        = std::distance(std::filesystem::directory_iterator("/proc/self/fd"), std::filesystem::directory_iterator{}) + 10UL;
+
+    rlimit rlp;
+    if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
+    {
+        std::cerr << "Failed to get the file descriptor limit.\n";
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
+    }
+    limit = std::min(rlp.rlim_max, limit);
+
+    rlp.rlim_cur = limit;
+    if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
+    {
+        std::cerr << "Failed to set the file descriptor limit.\n";
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
+    }
+
+    return limit - numOpenDescriptors;
+}
+
 MemoryPool::MemoryPool(
     const uint64_t bufferSize, const uint64_t numBuffersPerWorker, const uint64_t numWorkerThreads, const uint64_t poolSizeMultiplier)
     : fileDescriptorBufferSize(bufferSize / poolSizeMultiplier), poolSizeMultiplier(poolSizeMultiplier)
@@ -243,6 +261,7 @@ char* MemoryPool::allocateWriteBuffer(const WorkerThreadId threadId, ThreadLocal
         auto& [writers, lruQueue, mutex] = threadWriters;
         const std::scoped_lock innerLock(mutex);
 
+        // TODO deallocate buffers in batches?
         auto numWritersToDeallocate = 1UL;
         for (auto keyIt = lruQueue.rbegin(); keyIt != lruQueue.rend(); ++keyIt)
         {
