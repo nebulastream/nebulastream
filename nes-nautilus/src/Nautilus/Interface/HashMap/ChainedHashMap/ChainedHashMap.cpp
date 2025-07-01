@@ -146,7 +146,7 @@ AbstractHashMapEntry*
 ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
-    if (entries == nullptr)
+    if (entries == nullptr) [[unlikely]]
     {
         /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
         /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator

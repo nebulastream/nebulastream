@@ -89,18 +89,18 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautil
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(engine.registerFunction(std::function(
+    const auto cleanupStateNautilusFunction = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(engine.registerFunction(
+        std::function(
             [copyOfFieldKeys = hashMapOptions.fieldKeys,
              copyOfFieldValues = hashMapOptions.fieldValues,
              copyOfEntriesPerPage = hashMapOptions.entriesPerPage,
              copyOfEntrySize = hashMapOptions.entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
             {
-                const Interface::ChainedHashMapRef hashMapRef(
-                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                const Interface::ChainedHashMapRef hashMapRef{
+                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize};
                 for (const auto entry : hashMapRef)
                 {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset{entry, hashMap, copyOfFieldKeys, copyOfFieldValues};
                     const auto state = entryRefReset.getValueMemArea();
                     nautilus::invoke(
                         +[](int8_t* pagedVectorMemArea) -> void
