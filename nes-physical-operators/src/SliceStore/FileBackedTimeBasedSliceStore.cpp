@@ -447,11 +447,11 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (const auto threadId : threadIds)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide))
+        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide); fileReader.has_value())
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
-            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, sliceStoreInfo.fileLayout);
+            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
             nljSlice->releaseCombinePagedVectorsLock();
         }
     }
@@ -490,6 +490,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto sizeRead = memoryController->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left)
+                                  .value()
                                   ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 

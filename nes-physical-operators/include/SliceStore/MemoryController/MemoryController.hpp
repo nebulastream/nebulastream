@@ -82,14 +82,14 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    std::shared_ptr<FileReader> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::optional<std::shared_ptr<FileReader>> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
     [[nodiscard]] std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
-    std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key) const;
+    static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key);
 
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
@@ -100,11 +100,14 @@ private:
 
 inline uint64_t setFileDescriptorLimit(uint64_t limit)
 {
+    /// Reserve file descriptors for stdin, stdout and stderr
+    constexpr auto reservedFileDescriptors = 30;
+
     rlimit rlp;
     if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
     {
         std::cerr << "Failed to get the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue();
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - reservedFileDescriptors;
     }
     limit = std::min(rlp.rlim_max, limit);
 
@@ -112,10 +115,10 @@ inline uint64_t setFileDescriptorLimit(uint64_t limit)
     if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
     {
         std::cerr << "Failed to set the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue();
+        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - reservedFileDescriptors;
     }
 
-    return limit;
+    return limit - reservedFileDescriptors;
 }
 
 }

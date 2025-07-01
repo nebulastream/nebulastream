@@ -210,7 +210,7 @@ FileReader::FileReader(
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
-    , readBuffer(allocate())
+    , readBuffer(nullptr)
     , readKeyBuffer(nullptr)
     , readBufferPos(0)
     , readKeyBufferPos(0)
@@ -249,11 +249,6 @@ size_t FileReader::read(void* dest, const size_t size)
 
 size_t FileReader::readKey(void* dest, const size_t size)
 {
-    if (bufferSize > 0 and readKeyBuffer == nullptr)
-    {
-        readKeyBuffer = allocate();
-    }
-
     return read(dest, size, keyFile, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd);
 }
 
@@ -294,12 +289,16 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
 }
 
 size_t
-FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const
+FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const
 {
     auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
     {
         return readFromFile(destPtr, dataSize, fileStream);
+    }
+    if (buffer == nullptr)
+    {
+        buffer = allocate();
     }
 
     auto totalRead = 0UL;

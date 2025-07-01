@@ -86,7 +86,7 @@ public:
     Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
-    size_t read(void* dest, size_t dataSize, std::ifstream& fileStream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const;
+    size_t read(void* dest, size_t dataSize, std::ifstream& fileStream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const;
     static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& fileStream);
 
     std::ifstream file;
