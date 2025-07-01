@@ -100,7 +100,7 @@ private:
 
 inline uint64_t setFileDescriptorLimit(uint64_t limit)
 {
-    /// Reserve file descriptors for stdin, stdout and stderr
+    /// Reserve file descriptors for stdin, stdout and stderr TODO
     constexpr auto reservedFileDescriptors = 30;
 
     rlimit rlp;
