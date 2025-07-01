@@ -153,9 +153,10 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     const SliceEnd sliceEnd,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
-    const auto& slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
+    const auto& slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
     if (slice.has_value())
     {
         readSliceFromFiles(
@@ -164,12 +165,13 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
             memoryLayout,
             [this]
             {
-                std::vector<WorkerThreadId> workerThreadIds;
-                workerThreadIds.reserve(numberOfWorkerThreads);
+                std::vector<WorkerThreadId> allThreadIds;
+                allThreadIds.reserve(numberOfWorkerThreads);
                 std::ranges::for_each(
-                    std::views::iota(0UL, numberOfWorkerThreads), [&workerThreadIds](uint64_t i) { workerThreadIds.emplace_back(i); });
-                return workerThreadIds;
+                    std::views::iota(0UL, numberOfWorkerThreads), [&allThreadIds](uint64_t i) { allThreadIds.emplace_back(i); });
+                return allThreadIds;
             }(),
+            threadId,
             joinBuildSide);
     }
     return slice;
@@ -288,7 +290,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             switch (operation)
             {
                 case FileOperation::READ: {
-                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, joinBuildSide);
+                    readSliceFromFiles(nljSlice, bufferProvider, memoryLayout, {threadId}, threadId, joinBuildSide);
                     break;
                 }
                 case FileOperation::WRITE: {
@@ -443,16 +445,18 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const std::shared_ptr<NLJSlice>& nljSlice,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const std::vector<WorkerThreadId>& threadIds,
+    const std::vector<WorkerThreadId>& threadsToRead,
+    const WorkerThreadId workerThread,
     const JoinBuildSideType joinBuildSide) const
 {
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
-    for (const auto threadId : threadIds)
+    for (const auto threadToRead : threadsToRead)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadId, joinBuildSide); fileReader.has_value())
+        if (auto fileReader = memoryController->getFileReader(nljSlice->getSliceEnd(), threadToRead, workerThread, joinBuildSide);
+            fileReader.has_value())
         {
-            auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
+            auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
             nljSlice->releaseCombinePagedVectorsLock();
@@ -492,9 +496,11 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto sizeRead = memoryController->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), JoinBuildSideType::Left)
-                                  .value()
-                                  ->read(data.data(), dataSize);
+        const auto sizeRead
+            = memoryController
+                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), WorkerThreadId(0), JoinBuildSideType::Left)
+                  .value()
+                  ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 
         if (sizeRead != dataSize)

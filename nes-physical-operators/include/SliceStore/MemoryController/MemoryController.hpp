@@ -52,7 +52,7 @@ public:
     char* allocateWriteBuffer(WorkerThreadId threadId, ThreadLocalWriters& threadWriters, const FileWriter* writer);
     void deallocateWriteBuffer(WorkerThreadId threadId, char* buffer);
     char* allocateReadBuffer(WorkerThreadId threadId, bool keyBuffer);
-    void deallocateReadBuffer(char* buffer);
+    void deallocateReadBuffer(WorkerThreadId threadId, char* buffer);
 
     uint64_t getFileDescriptorBufferSize() const;
 
@@ -62,12 +62,9 @@ private:
     std::vector<std::mutex> writeMemoryPoolMutexes;
 
     std::vector<char> readMemoryPool;
-    //std::vector<std::vector<char*>> freeReadBuffers;
-    //std::vector<std::condition_variable> readMemoryPoolConditions;
-    //std::vector<std::mutex> readMemoryPoolMutexes;
-    std::vector<char*> freeReadBuffers;
-    std::condition_variable readMemoryPoolCondition;
-    std::mutex readMemoryPoolMutex;
+    std::vector<std::vector<char*>> freeReadBuffers;
+    std::vector<std::condition_variable> readMemoryPoolConditions;
+    std::vector<std::mutex> readMemoryPoolMutexes;
 
     uint64_t fileDescriptorBufferSize;
     uint64_t poolSizeMultiplier;
@@ -86,7 +83,8 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    std::optional<std::shared_ptr<FileReader>> getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    std::optional<std::shared_ptr<FileReader>>
+    getFileReader(SliceEnd sliceEnd, WorkerThreadId threadToRead, WorkerThreadId workerThread, JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
