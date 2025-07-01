@@ -76,13 +76,7 @@ private:
 class FileReader
 {
 public:
-    FileReader(
-        const std::string& filePath,
-        //char* readBuffer,
-        //char* readKeyBuffer,
-        const std::function<char*()>& allocate,
-        const std::function<void(char*)>& deallocate,
-        size_t bufferSize);
+    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize);
     ~FileReader();
 
     size_t read(void* dest, size_t size);
@@ -90,7 +84,7 @@ public:
     Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
-    size_t read(void* dest, size_t dataSize, std::ifstream& stream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const;
+    size_t read(void* dest, size_t dataSize, std::ifstream& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const;
     static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& stream);
 
     std::ifstream file;
@@ -105,8 +99,6 @@ private:
     size_t bufferSize;
 
     std::string filePath;
-    std::function<char*()> allocate;
-    std::function<void(char*)> deallocate;
 };
 
 }
