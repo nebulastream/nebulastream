@@ -49,6 +49,7 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     OperatorHandler* ptrOpHandler,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId workerThreadId,
     const JoinBuildSideType joinBuildSide,
     const SliceEnd sliceEnd)
 {
@@ -59,7 +60,8 @@ NLJSlice* getNLJSliceRefFromEndProxy(
 
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
+    const auto slice
+        = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, workerThreadId, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
     return dynamic_cast<NLJSlice*>(slice.value().get());
@@ -169,6 +171,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         operatorHandlerMemRef,
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(leftMemoryProvider->getMemoryLayout().get()),
+        executionCtx.workerThreadId,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left),
         sliceIdLeft);
     const auto sliceRefRight = invoke(
@@ -176,6 +179,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         operatorHandlerMemRef,
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(rightMemoryProvider->getMemoryLayout().get()),
+        executionCtx.workerThreadId,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right),
         sliceIdRight);
 
