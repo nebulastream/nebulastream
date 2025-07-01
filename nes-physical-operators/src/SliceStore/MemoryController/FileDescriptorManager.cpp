@@ -127,24 +127,24 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
     const std::scoped_lock lock(mutex);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
-    auto foundWriter = false;
     if (const auto it = writers.find(key); it != writers.end())
     {
         if (auto& [writer, listIt] = it->second; writer != nullptr)
         {
             lruQueue.erase(listIt);
+            /// Reset use count to ensure the writer's descuction before creating a reader to stay below the given file descriptor limit
+            writer.reset();
         }
         writers.erase(it);
-        foundWriter = true;
+
+        return std::make_shared<FileReader>(
+            constructFilePath(sliceEnd, threadToRead, joinBuildSide),
+            memoryPool.getReadBufferForThread(workerThread, false),
+            memoryPool.getReadBufferForThread(workerThread, true),
+            fileDescriptorManagerInfo.fileDescriptorBufferSize);
     }
 
-    /// Create reader after writer is out of scope to ensure staying below the given file descriptor limit
-    return foundWriter ? std::make_optional(std::make_shared<FileReader>(
-                             constructFilePath(sliceEnd, threadToRead, joinBuildSide),
-                             memoryPool.getReadBufferForThread(workerThread, false),
-                             memoryPool.getReadBufferForThread(workerThread, true),
-                             fileDescriptorManagerInfo.fileDescriptorBufferSize))
-                       : std::nullopt;
+    return {};
 }
 
 void FileDescriptorManager::deleteSliceFiles(const SliceEnd sliceEnd)
