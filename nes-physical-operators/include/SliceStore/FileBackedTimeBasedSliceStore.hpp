@@ -78,6 +78,7 @@ public:
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
@@ -119,7 +120,8 @@ private:
         const std::shared_ptr<NLJSlice>& nljSlice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        const std::vector<WorkerThreadId>& threadIds,
+        const std::vector<WorkerThreadId>& threadsToRead,
+        WorkerThreadId workerThread,
         JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);

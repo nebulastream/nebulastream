@@ -75,6 +75,7 @@ public:
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide)
         = 0;
 
