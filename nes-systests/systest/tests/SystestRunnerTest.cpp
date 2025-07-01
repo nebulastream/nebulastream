@@ -65,7 +65,8 @@ NES::Systest::SystestQuery makeQuery(const NES::LogicalPlan& plan, std::optional
         PATH_TO_BINARY_DIR,
         NES::Schema{},
         {},
-        std::move(expected)};
+        std::move(expected),
+        std::nullopt};
 }
 /// Overload for parse‑time error
 NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Exception>& parseErr, const NES::Systest::ExpectedError& expected)
@@ -79,7 +80,8 @@ NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Excepti
         PATH_TO_BINARY_DIR,
         NES::Schema{},
         {},
-        expected};
+        expected,
+        std::nullopt};
 }
 }
 
@@ -117,8 +119,15 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     auto dummyQueryResultMap = QueryResultMap{};
+    size_t globalQueryCounter = 0;
+    size_t totalQueries = 1;
     const auto result = runQueries(
-        {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, dummyQueryResultMap);
+        {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})},
+        1,
+        submitter,
+        dummyQueryResultMap,
+        &globalQueryCounter,
+        totalQueries);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -141,11 +150,13 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap);
+    size_t globalQueryCounter = 0;
+    size_t totalQueries = 1;
+    const auto result2 = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap, &globalQueryCounter, totalQueries);
 
-    ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
-    EXPECT_EQ(result.front().exception->code(), 10000);
+    ASSERT_EQ(result2.size(), 1);
+    EXPECT_FALSE(result2.front().passed);
+    EXPECT_EQ(result2.front().exception->code(), 10000);
 }
 
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
@@ -164,13 +175,17 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries(
+    size_t globalQueryCounter = 0;
+    size_t totalQueries = 1;
+    const auto result3 = runQueries(
         {makeQuery(plan, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
-        dummyQueryResultMap);
+        dummyQueryResultMap,
+        &globalQueryCounter,
+        totalQueries);
 
-    ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
+    ASSERT_EQ(result3.size(), 1);
+    EXPECT_FALSE(result3.front().passed);
 }
 }

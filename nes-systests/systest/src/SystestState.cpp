@@ -134,7 +134,8 @@ SystestQuery::SystestQuery(
     std::filesystem::path workingDir,
     const Schema& sinkSchema,
     std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
-    std::optional<ExpectedError> expectedError)
+    std::optional<ExpectedError> expectedError,
+    std::optional<ConfigurationOverride> configOverride)
     : testName(std::move(testName))
     , queryDefinition(std::move(queryDefinition))
     , sqlLogicTestFile(std::move(sqlLogicTestFile))
@@ -143,7 +144,8 @@ SystestQuery::SystestQuery(
     , workingDir(std::move(workingDir))
     , expectedSinkSchema(std::move(sinkSchema))
     , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
-    , expectedError(expectedError)
+    , expectedError(std::move(expectedError))
+    , configOverride(std::move(configOverride))
 {
 }
 
@@ -270,8 +272,10 @@ std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> loadQueries
         try
         {
             loadQueriesFromTestFile(testfile, systestStarterGlobals);
-            queries = testfile.queriesWithConfig;
-
+            for (const auto& [overrideConfig, queriesVec] : testfile.queriesWithConfig)
+            {
+                queries[overrideConfig].insert(queries[overrideConfig].end(), queriesVec.begin(), queriesVec.end());
+            }
             ++loadedFiles;
         }
         catch (const Exception& exception)
