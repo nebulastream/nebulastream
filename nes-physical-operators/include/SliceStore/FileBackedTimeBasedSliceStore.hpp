@@ -16,7 +16,7 @@
 
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <SliceStore/MemoryController/MemoryController.hpp>
+#include <SliceStore/FileDescriptorManager/FileDescriptorManager.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -60,7 +60,7 @@ public:
         uint64_t windowSize,
         uint64_t windowSlide,
         SliceStoreInfo sliceStoreInfo,
-        MemoryControllerInfo memoryControllerInfo,
+        FileDescriptorManagerInfo fileDescriptorManagerInfo,
         WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
@@ -153,13 +153,13 @@ private:
     std::pair<double, double> writeExecTimeFunction;
     std::pair<double, double> readExecTimeFunction;
 
-    /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
+    /// The FileDescriptorManager manages the creation and destruction of FileReader and FileWriter objects and controls the internal memory
     /// pool used by them. The map keeps track of which slices were requested by the build operator since the last call to updateSlices.
-    std::shared_ptr<MemoryController> memoryController;
+    std::shared_ptr<FileDescriptorManager> fileDescriptorManager;
     std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
     SliceStoreInfo sliceStoreInfo;
-    MemoryControllerInfo memoryControllerInfo;
+    FileDescriptorManagerInfo fileDescriptorManagerInfo;
     std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
     uint64_t numberOfWorkerThreads;
 };
