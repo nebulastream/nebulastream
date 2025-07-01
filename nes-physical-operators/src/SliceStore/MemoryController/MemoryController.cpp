@@ -229,58 +229,41 @@ char* MemoryPool::allocateWriteBuffer(
         return nullptr;
     }
 
-    //std::cout << "Getting write buffer\n";
     std::unique_lock lock(writeMemoryPoolMutex[threadId.getRawValue()]);
-    /*std::cout << fmt::format(
-        "Number of available write buffers for thread {} before free: {}\n",
-        threadId.getRawValue(),
-        freeWriteBuffers[threadId.getRawValue()].size());*/
     if (freeWriteBuffers[threadId.getRawValue()].empty())
-    //auto freeBuffers = [&lock, threadId, threadWriters, this, writer]()
     {
         lock.unlock();
         auto& [writers, lruQueue, mutex] = threadWriters[threadId.getRawValue()];
         const std::scoped_lock innerLock(mutex);
 
-        //if (not lruQueue.empty())
-        if (false)
+        // TODO
+        /*for (auto elem = lruQueue.rbegin(); elem != lruQueue.rend(); ++elem)
         {
-            //for (auto i = 0UL; i < std::min(UINT64_MAX, lruQueue.size()); ++i)
-            for (const auto key : lruQueue)
+            if (const auto it = writers.find(*elem); it != writers.end())
             {
-                //const auto key = lruQueue.back();
-                if (const auto it = writers.find(key); it != writers.end())
+                const auto& [curWriter, _] = it->second;
+                if (curWriter.get() != writer)
                 {
-                    const auto& [curWriter, _] = it->second;
-                    if (curWriter.get() != writer)
-                        continue;
-                    std::cout << "Freeing...\n";
                     curWriter->flushAndDeallocateBuffers();
-                }
-                else
-                {
-                    std::cout << "No file descriptor found\n";
+                    lock.lock();
+                    if (not freeWriteBuffers[threadId.getRawValue()].empty())
+                    {
+                        break;
+                    }
+                    lock.unlock();
                 }
             }
-        }
-        else
+        }*/
+        for (const auto& [curWriter, _] : writers | std::views::values)
         {
-            std::cout << "Try Freeing...\n";
-            for (const auto& [curWriter, _] : writers | std::views::values)
+            if (curWriter != nullptr and curWriter.get() != writer)
             {
-                if (curWriter != nullptr and curWriter.get() != writer)
-                //if (curWriter.get() != writer)
-                {
-                    //std::cout << "Freeing...\n";
-                    curWriter->flushAndDeallocateBuffers();
-                    //std::cout << "Done freeing...\n";
-                    //break;
-                }
+                curWriter->flushAndDeallocateBuffers();
             }
         }
         lock.lock();
-        std::cout << fmt::format(
-            "Number of buffers available for thread {}: {}\n", threadId.getRawValue(), freeWriteBuffers[threadId.getRawValue()].size());
+        //std::cout << fmt::format(
+        //    "Number of buffers available for thread {}: {}\n", threadId.getRawValue(), freeWriteBuffers[threadId.getRawValue()].size());
     };
     /*std::cout << fmt::format(
         "Number of available write buffers for thread {} after free: {}\n",
@@ -291,7 +274,6 @@ char* MemoryPool::allocateWriteBuffer(
 
     char* buffer = freeWriteBuffers[threadId.getRawValue()].back();
     freeWriteBuffers[threadId.getRawValue()].pop_back();
-    //std::cout << "Got write buffer\n";
     return buffer;
 }
 
