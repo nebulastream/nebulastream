@@ -14,12 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  get-dev-images-for-base-branch:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ github.event.pull_request.base.sha }}
-
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
@@ -63,14 +57,12 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits }}
 
   run_code_coverage:
-    needs: [ get-dev-images, get-dev-images-for-base-branch ]
+    needs: [ get-dev-images ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
-      base_sha: ${{ github.event.pull_request.base.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      base_dev_image_tag: ${{ needs.get-dev-images-for-base-branch.outputs.image-tag }}
       number_of_commits: ${{ github.event.pull_request.commits }}
     secrets: inherit
 
