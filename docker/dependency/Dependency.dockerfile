@@ -4,10 +4,10 @@
 # We use x64 for amd64 and arm64 for aarch64. We always assume linux.
 
 ARG TAG=latest
-# Download and extract mlir in a separate build container to reduce the overall image size by only
-# copying the required files into the final dependency container
-FROM alpine:latest AS llvm-download
-# Which architecture to build the dependencies for. Either x64 or arm64, matches the names in our vcpkg toolchains
+
+# fetch prebuilt deps in separate container to reduce overall image size
+# c.f. https://docs.docker.com/build/building/multi-stage/
+FROM alpine:latest AS prebuilt-deps-download
 ARG ARCH
 ARG SANITIZER="none"
 ARG STDLIB=libcxx
@@ -22,8 +22,8 @@ RUN zstd --decompress libcxx.tar.zstd --stdout | tar -x
 FROM nebulastream/nes-development-base:${TAG}
 ARG STDLIB=libcxx
 
-COPY --from=llvm-download /clang /clang
-COPY --from=llvm-download /libcxx /libcxx
+COPY --from=prebuilt-deps-download /clang /clang
+COPY --from=prebuilt-deps-download /libcxx /libcxx
 ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 
 ADD vcpkg /vcpkg_input
