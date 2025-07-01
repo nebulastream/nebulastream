@@ -86,6 +86,11 @@ boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data)
     co_return varSizedCnt++;
 }
 
+bool FileWriter::hasBuffer() const
+{
+    return writeBuffer != nullptr or writeKeyBuffer != nullptr;
+}
+
 void FileWriter::flushAndDeallocateBuffers()
 {
     std::promise<void> promise;
@@ -147,6 +152,7 @@ boost::asio::awaitable<void> FileWriter::flush()
         co_return;
     }
 
+    // TODO check if files are open
     if (writeBuffer != nullptr and writeBufferPos > 0)
     {
         co_await writeToFile(writeBuffer, writeBufferPos, file);
@@ -205,11 +211,15 @@ boost::asio::awaitable<void> FileWriter::writeToFile(const char* buffer, size_t&
 
 FileReader::FileReader(
     const std::string& filePath,
+    //char* readBuffer,
+    //char* readKeyBuffer,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
+    //, readBuffer(readBuffer)
+    //, readKeyBuffer(readKeyBuffer)
     , readBuffer(nullptr)
     , readKeyBuffer(nullptr)
     , readBufferPos(0)
@@ -221,13 +231,9 @@ FileReader::FileReader(
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    if (!file.is_open())
+    if (not file.is_open() or not keyFile.is_open())
     {
-        throw std::ios_base::failure("Failed to open file for reading");
-    }
-    if (!keyFile.is_open())
-    {
-        throw std::ios_base::failure("Failed to open key file for reading");
+        throw std::ios_base::failure("Failed to open file or key file for reading");
     }
 }
 
@@ -288,13 +294,12 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
     }
 }
 
-size_t
-FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const
+size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream, char*& buffer, size_t& bufferPos, size_t& bufferEnd) const
 {
     auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
     {
-        return readFromFile(destPtr, dataSize, fileStream);
+        return readFromFile(destPtr, dataSize, stream);
     }
     if (buffer == nullptr)
     {
@@ -306,7 +311,7 @@ FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, c
     {
         if (bufferPos == bufferEnd)
         {
-            bufferEnd = readFromFile(buffer, bufferSize, fileStream);
+            bufferEnd = readFromFile(buffer, bufferSize, stream);
             bufferPos = 0;
             if (bufferEnd == 0)
             {
@@ -325,14 +330,14 @@ FileReader::read(void* dest, const size_t dataSize, std::ifstream& fileStream, c
     return totalRead;
 }
 
-size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& fileStream)
+size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& stream)
 {
-    fileStream.read(buffer, dataSize);
-    if (fileStream.fail() and !fileStream.eof())
+    stream.read(buffer, dataSize);
+    if (stream.fail() and !stream.eof())
     {
         throw std::ios_base::failure("Failed to read from file");
     }
-    return fileStream.gcount();
+    return stream.gcount();
 }
 
 }
