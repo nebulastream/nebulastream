@@ -81,7 +81,7 @@ Nautilus::Record MedianAggregationPhysicalFunction::lower(
     const auto numberOfEntries = invoke(
         +[](const Interface::PagedVector* pagedVector)
         {
-            const auto numberOfEntriesVal = pagedVector->getTotalNumberOfEntries();
+            const auto numberOfEntriesVal = pagedVector->getNumberOfEntries();
             INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
             return numberOfEntriesVal;
         },
