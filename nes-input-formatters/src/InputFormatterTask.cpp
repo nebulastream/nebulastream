@@ -39,9 +39,8 @@ void InputFormatterTask::stop(PipelineExecutionContext& pipelineExecutionContext
 
 void InputFormatterTask::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.formattingTask = true;
     inputFormatter->parseTupleBufferRaw(
-        inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getUsedMemorySize(), *sequenceShredder);
+        inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples(), *sequenceShredder);
 }
 std::ostream& InputFormatterTask::toString(std::ostream& os) const
 {

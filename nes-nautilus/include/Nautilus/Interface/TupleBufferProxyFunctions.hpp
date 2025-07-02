@@ -71,11 +71,6 @@ inline void NES_Memory_TupleBuffer_setSequenceNumber(Memory::TupleBuffer* tupleB
     tupleBuffer->setSequenceNumber(sequenceNumber);
 };
 
-inline void NES_Memory_TupleBuffer_setUsedMemorySize(Memory::TupleBuffer* tupleBuffer, const uint64_t usedMemorySize)
-{
-    tupleBuffer->setUsedMemorySize(usedMemorySize);
-}
-
 inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::TupleBuffer* tupleBuffer)
 {
     return tupleBuffer->getSequenceNumber();

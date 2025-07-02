@@ -26,7 +26,7 @@ using ChronoClock = std::chrono::system_clock;
 
 struct EventBase
 {
-    EventBase(const WorkerThreadId threadId, const QueryId queryId) : threadId(threadId), queryId(queryId) { }
+    EventBase(WorkerThreadId threadId, QueryId queryId) : threadId(threadId), queryId(queryId) { }
     EventBase() = default;
 
     ChronoClock::time_point timestamp = ChronoClock::now();
@@ -36,18 +36,8 @@ struct EventBase
 
 struct TaskExecutionStart : EventBase
 {
-    TaskExecutionStart(
-        const WorkerThreadId threadId,
-        const QueryId queryId,
-        const PipelineId pipelineId,
-        const TaskId taskId,
-        const size_t numberOfTuples,
-        const size_t bytesInTupleBuffer)
-        : EventBase(threadId, queryId)
-        , pipelineId(pipelineId)
-        , taskId(taskId)
-        , numberOfTuples(numberOfTuples)
-        , bytesInTupleBuffer(bytesInTupleBuffer)
+    TaskExecutionStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, size_t numberOfTuples)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples)
     {
     }
     TaskExecutionStart() = default;
@@ -55,27 +45,12 @@ struct TaskExecutionStart : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples;
-    size_t bytesInTupleBuffer;
 };
 
 struct TaskEmit : EventBase
 {
-    TaskEmit(
-        const WorkerThreadId threadId,
-        const QueryId queryId,
-        const PipelineId fromPipeline,
-        const PipelineId toPipeline,
-        const TaskId taskId,
-        const size_t numberOfTuples,
-        const size_t bytesInTupleBuffer,
-        const bool formattingTask)
-        : EventBase(threadId, queryId)
-        , fromPipeline(fromPipeline)
-        , toPipeline(toPipeline)
-        , taskId(taskId)
-        , numberOfTuples(numberOfTuples)
-        , bytesInTupleBuffer(bytesInTupleBuffer)
-        , formattingTask(formattingTask)
+    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId, size_t numberOfTuples)
+        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId), numberOfTuples(numberOfTuples)
     {
     }
     TaskEmit() = default;
@@ -84,13 +59,11 @@ struct TaskEmit : EventBase
     PipelineId toPipeline = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples{};
-    size_t bytesInTupleBuffer;
-    bool formattingTask;
 };
 
 struct TaskExecutionComplete : EventBase
 {
-    TaskExecutionComplete(const WorkerThreadId threadId, const QueryId queryId, const PipelineId pipelineId, const TaskId taskId)
+    TaskExecutionComplete(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId)
         : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
     {
     }
@@ -103,7 +76,7 @@ struct TaskExecutionComplete : EventBase
 
 struct TaskExpired : EventBase
 {
-    TaskExpired(const WorkerThreadId threadId, const QueryId queryId, const PipelineId pipelineId, const TaskId taskId)
+    TaskExpired(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId)
         : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
     {
     }
@@ -114,22 +87,20 @@ struct TaskExpired : EventBase
 
 struct QueryStart : EventBase
 {
-    QueryStart(const WorkerThreadId threadId, const QueryId queryId) : EventBase(threadId, queryId) { }
+    QueryStart(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
     QueryStart() = default;
 };
 
 struct QueryStop : EventBase
 {
-    QueryStop(const WorkerThreadId threadId, const QueryId queryId) : EventBase(threadId, queryId) { }
+    QueryStop(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
     QueryStop() = default;
 };
 
 struct PipelineStart : EventBase
 {
-    PipelineStart(const WorkerThreadId threadId, const QueryId queryId, const PipelineId pipelineId)
-        : EventBase(threadId, queryId), pipelineId(pipelineId)
-    {
-    }
+    PipelineStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId) { }
     PipelineStart() = default;
 
     PipelineId pipelineId = INVALID<PipelineId>;
@@ -137,8 +108,7 @@ struct PipelineStart : EventBase
 
 struct PipelineStop : EventBase
 {
-    PipelineStop(const WorkerThreadId threadId, const QueryId queryId, const PipelineId pipeline_id)
-        : EventBase(threadId, queryId), pipelineId(pipeline_id)
+    PipelineStop(WorkerThreadId threadId, QueryId queryId, PipelineId pipeline_id) : EventBase(threadId, queryId), pipelineId(pipeline_id)
     {
     }
     PipelineStop() = default;

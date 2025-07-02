@@ -51,7 +51,6 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
         {
             watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
             found = true;
-            break;
         }
     }
     INVARIANT(
