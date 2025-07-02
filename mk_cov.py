@@ -75,7 +75,7 @@ def main():
     print(covs[0]["data"][0]["functions"][0].keys())
     print()
     print(covs[0]["data"][0]["totals"])
-    print(covs[1]["data"][0]["totals"])
+    # print(covs[1]["data"][0]["totals"])
 
 
 
