@@ -107,6 +107,7 @@ std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(cons
 }
 void RemoteWorkerQuerySubmitter::startQuery(const QueryId query)
 {
+    ids.insert(query);
     client.start(query);
 }
 void RemoteWorkerQuerySubmitter::stopQuery(const QueryId query)
