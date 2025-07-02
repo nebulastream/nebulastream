@@ -64,7 +64,7 @@ add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
 add_plugin(Sub PhysicalFunction nes-physical-operators SubPhysicalFunction.cpp)
 ```
 Notice the slight difference in the CMake function used here compared to optional plugins.
-While `add_optional_plugin` creates a standalone library that is then linked into the component’s library (e.g., `nes-physical-operators`),
+While `add_plugin_as_library` creates a standalone library that is then linked into the component’s library (e.g., `nes-physical-operators`),
 `add_plugin` integrates the plugin directly into the component’s library, making it active in every build.
 
 # Registries
