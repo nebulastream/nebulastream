@@ -15,7 +15,6 @@
 #include <chrono>
 #include <thread>
 
-#include <cpptrace/from_current.hpp>
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
 
 #include <Runtime/QueryTerminationType.hpp>
@@ -28,7 +27,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
 {
     NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
 
-    CPPTRACE_TRY
+    try
     {
         auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
         NES::SingleNodeWorker snw{NES::SingleNodeWorkerConfiguration{}};
@@ -52,7 +51,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
             }
         }
     }
-    CPPTRACE_CATCH(...)
+    catch (...)
     {
         return;
     }
