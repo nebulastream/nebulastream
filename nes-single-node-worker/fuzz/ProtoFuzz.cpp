@@ -38,18 +38,6 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
         }
         snw.startQuery(*res);
         snw.stopQuery(*res, NES::QueryTerminationType::Graceful);
-        while (true)
-        {
-            if (snw.getQuerySummary(*res)->currentStatus <= NES::QueryStatus::Running)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
-            }
-            else
-            {
-                return;
-            }
-        }
     }
     catch (...)
     {
