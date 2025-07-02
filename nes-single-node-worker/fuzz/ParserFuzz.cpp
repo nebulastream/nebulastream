@@ -18,6 +18,7 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include "ErrorHandling.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -50,6 +51,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     CPPTRACE_CATCH(...)
     {
+        NES::tryLogCurrentException();
         return 0;
     }
     return 0;
