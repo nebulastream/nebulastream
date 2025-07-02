@@ -46,9 +46,7 @@ public:
     /// Deletes the projected fields of all tuples.
     void truncate(FileLayout fileLayout);
 
-    [[nodiscard]] uint64_t getTotalNumberOfEntries() const override;
-    [[nodiscard]] uint64_t getNumberOfPages() const override;
-
+    [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
     [[nodiscard]] uint64_t getNumberOfTuplesOnDisk() const;
 
 private:
