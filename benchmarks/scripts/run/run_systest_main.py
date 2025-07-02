@@ -202,12 +202,6 @@ def run_benchmark(current_benchmark_config):
         return output_folder
 
 
-def load_csv(file_path):
-    if os.path.getsize(file_path) == 0:  # Check if the file is empty
-        return pd.DataFrame()  # Return an empty DataFrame
-    return pd.read_csv(file_path)
-
-
 def get_directory_size(directory):
     total_size = 0
     for filename in os.listdir(directory):
@@ -325,56 +319,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    # print("\nStarting post processing...\n")
-    # # Compare the results of default slice store and file backed variant
-    # file1 = f"/tmp/csv_sink_{1}.csv"
-    # file2 = f"/tmp/csv_sink_{2}.csv"
-    #
-    # df1 = load_csv(file1)
-    # df2 = load_csv(file2)
-    #
-    # # Check if either DataFrame is empty
-    # if df1.empty and df2.empty:
-    #     print("Both files are empty.")
-    # elif df1.empty:
-    #     print("File1 is empty.")
-    #     print(f"File2 has {len(df2)} rows with keys: {list(df2['tcp_source4$id4:UINT64'])}")
-    # elif df2.empty:
-    #     print("File2 is empty.")
-    #     print(f"File1 has {len(df1)} rows with keys: {list(df1['tcp_source4$id4:UINT64'])}")
-    # else:
-    #     # Set the key column as the index
-    #     key_column = "tcp_source4$id4:UINT64"
-    #     df1.set_index(key_column, inplace=True)
-    #     df2.set_index(key_column, inplace=True)
-    #
-    #     # Align rows based on the key column
-    #     common_keys = df1.index.intersection(df2.index)
-    #     df1_aligned = df1.loc[common_keys]
-    #     df2_aligned = df2.loc[common_keys]
-    #
-    #     # Compare rows and find differences
-    #     differences = []
-    #     for key in common_keys:
-    #         if not df1_aligned.loc[key].equals(df2_aligned.loc[key]):
-    #             differences.append((key, df1_aligned.loc[key].to_dict(), df2_aligned.loc[key].to_dict()))
-    #
-    #     # Print the differences
-    #     if not differences:
-    #         print("The rows with common keys are identical.")
-    #     else:
-    #         print("Differences found:")
-    #         for diff in differences:
-    #             print(f"Key {diff[0]} differs:")
-    #             print(f"File1: {diff[1]}")
-    #             print(f"File2: {diff[2]}")
-    #
-    #     # Identify additional keys in each file
-    #     extra_keys_file1 = df1.index.difference(df2.index)
-    #     extra_keys_file2 = df2.index.difference(df1.index)
-    #
-    #     if not extra_keys_file1.empty:
-    #         print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
-    #     if not extra_keys_file2.empty:
-    #         print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")

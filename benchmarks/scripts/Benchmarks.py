@@ -191,12 +191,12 @@ df = pd.read_csv(os.path.join('data', SERVER, DIRECTORY, FILE), dtype=dtypes)
 # Define configuration parameters
 shared_config_params = [
     'buffer_size_in_bytes', 'ingestion_rate', 'number_of_worker_threads', 'page_size', 'query', 'timestamp_increment',
-    'match_rate'
+    'match_rate', 'batch_size'
 ]
 file_backed_config_params = [
-    'file_descriptor_buffer_size', 'file_layout', 'file_operation_time_delta', 'max_num_sequence_numbers',
-    'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'watermark_predictor_type',
-    'lower_memory_bound', 'upper_memory_bound', 'with_prediction'
+    'file_descriptor_buffer_size', 'file_operation_time_delta', 'max_num_sequence_numbers', 'watermark_predictor_type',
+    'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'file_layout', 'max_num_file_descriptors',
+    'lower_memory_bound', 'upper_memory_bound', 'with_prediction', 'num_buffers_per_worker'
 ]
 all_config_params = shared_config_params + file_backed_config_params
 
