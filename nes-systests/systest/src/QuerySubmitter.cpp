@@ -24,8 +24,10 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -36,7 +38,9 @@ namespace NES::Systest
 
 std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
-    return worker.registerQuery(plan);
+    /// Make sure the queryplan is passed through serialization logic.
+    const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
+    return worker.registerQuery(QueryPlanSerializationUtil::deserializeQueryPlan(serialized));
 }
 void LocalWorkerQuerySubmitter::startQuery(QueryId query)
 {
