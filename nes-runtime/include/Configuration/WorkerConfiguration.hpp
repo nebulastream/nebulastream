@@ -19,13 +19,9 @@
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Configurations/WrapOption.hpp>
 #include <QueryEngineConfiguration.hpp>
 
 namespace NES::Configurations
@@ -36,24 +32,12 @@ public:
     WorkerConfiguration() = default;
     WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
-
-    StringOption localWorkerHost = {"localWorkerHost", "127.0.0.1", "Worker IP or hostname."};
-
-    /// Port for the RPC server of the Worker. This is used to receive control messages from the coordinator or other workers .
-    UIntOption rpcPort = {"rpcPort", "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
-
-    EnumOption<LogLevel> logLevel
-        = {"logLevel", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
-
-    QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
+    QueryEngineConfiguration queryEngine = {"queryEngine", "Configuration for the query engine"};
+    QueryOptimizerConfiguration queryOptimizer = {"queryOptimizer", "Configuration for the query optimizer"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
     UIntOption numberOfBuffersInGlobalBufferManager
         = {"numberOfBuffersInGlobalBufferManager", "1024", "Number buffers in global buffer pool.", {std::make_shared<NumberValidation>()}};
-
-    UIntOption numberOfBuffersPerWorker
-        = {"numberOfBuffersPerWorker", "128", "Number buffers in task local buffer pool.", {std::make_shared<NumberValidation>()}};
-
 
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     UIntOption numberOfBuffersInSourceLocalPools
@@ -65,23 +49,15 @@ public:
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    QueryOptimizerConfiguration queryOptimizer = {"queryOptimizer", "Configuration for the query optimizer"};
-    StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
-
 private:
     std::vector<NES::Configurations::BaseOption*> getOptions() override
     {
         return {
-            &localWorkerHost,
-            &rpcPort,
-            &configPath,
-            &queryEngineConfiguration,
+            &queryEngine,
+            &queryOptimizer,
             &numberOfBuffersInGlobalBufferManager,
-            &numberOfBuffersPerWorker,
             &numberOfBuffersInSourceLocalPools,
             &bufferSizeInBytes,
-            &logLevel,
-            &queryOptimizer,
         };
     }
 };
