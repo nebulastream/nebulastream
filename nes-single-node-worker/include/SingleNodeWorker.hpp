@@ -40,7 +40,6 @@ class SingleNodeWorker
 {
     std::shared_ptr<PrintingStatisticListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
-    size_t bufferSize;
     std::unique_ptr<QueryOptimizer> optimizer;
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
