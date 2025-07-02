@@ -84,7 +84,7 @@ void runStoreTest(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
     const uint64_t capacityPerPage = memoryProvider->getMemoryLayout()->getCapacity();
     const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
-    ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
     ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
 
     /// As we do lazy allocation, we do not create a new page if the last tuple fit on the page
@@ -105,7 +105,7 @@ void runRetrieveTest(
     /// Creating a buffer to store the retrieved records and then calling the compiled method to retrieve the records
     const uint64_t numberOfExpectedTuples = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), numberOfExpectedTuples);
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), numberOfExpectedTuples);
     auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeOfSchemaInBytes());
     ASSERT_TRUE(outputBufferVal.has_value());
     auto outputBuffer = outputBufferVal.value();

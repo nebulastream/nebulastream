@@ -55,16 +55,16 @@ public:
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
     [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
-    [[nodiscard]] virtual uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
+    [[nodiscard]] uint64_t getNumberOfEntries() const { return pages.getNumberOfEntries(); }
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const { return pages.getLastPage(); }
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
-    [[nodiscard]] virtual uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+    [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
 protected:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
     struct PagesWrapper
     {
-        [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
+        [[nodiscard]] uint64_t getNumberOfEntries() const;
         [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
         [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
         [[nodiscard]] uint64_t getNumberOfPages() const;

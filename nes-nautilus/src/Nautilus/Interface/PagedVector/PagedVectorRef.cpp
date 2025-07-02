@@ -31,7 +31,7 @@ namespace NES::Nautilus::Interface
 
 uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
 {
-    return pagedVector->getTotalNumberOfEntries();
+    return pagedVector->getNumberOfEntries();
 }
 
 const Memory::TupleBuffer* createNewEntryProxy(

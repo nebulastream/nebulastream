@@ -53,10 +53,9 @@ void updateSlicesProxy(
                 opHandler->getIoContext(),
                 bufferProvider,
                 memoryLayout,
-                UpdateSlicesMetaData(
-                    workerThreadId,
-                    joinBuildSide,
-                    BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
+                BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId),
+                workerThreadId,
+                joinBuildSide));
     }
 }
 

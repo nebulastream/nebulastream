@@ -128,46 +128,31 @@ void NLJSlice::releaseCombinePagedVectorsLock()
     combinePagedVectorsMutex.unlock();
 }
 
-bool NLJSlice::pagedVectorsCombined()
+bool NLJSlice::pagedVectorsCombined() const
 {
-    const std::scoped_lock lock(combinePagedVectorsMutex);
     return combinedPagedVectors;
 }
 
-size_t NLJSlice::getStateSizeInMemoryForThreadId(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+uint64_t NLJSlice::getNumTuplesInMemoryForThreadId(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
-    const auto pageSize = memoryLayout->getBufferSize();
-    uint64_t numPages = 0;
-
+    const std::scoped_lock lock(combinePagedVectorsMutex);
+    if (combinedPagedVectors)
     {
-        const std::scoped_lock lock(combinePagedVectorsMutex);
-        if (combinedPagedVectors)
-        {
-            return 0;
-        }
-        numPages = pagedVector->getNumberOfPages();
+        return 0;
     }
-    return pageSize * numPages;
+    return pagedVector->getNumberOfEntries();
 }
 
-size_t NLJSlice::getStateSizeOnDiskForThreadId(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+uint64_t NLJSlice::getNumTuplesOnDiskForThreadId(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
-    const auto entrySize = memoryLayout->getTupleSize();
-    uint64_t numTuples = 0;
-
+    const std::scoped_lock lock(combinePagedVectorsMutex);
+    if (combinedPagedVectors)
     {
-        const std::scoped_lock lock(combinePagedVectorsMutex);
-        if (combinedPagedVectors)
-        {
-            return 0;
-        }
-        numTuples = pagedVector->getNumberOfTuplesOnDisk();
+        return 0;
     }
-    return entrySize * numTuples;
+    return pagedVector->getNumberOfTuplesOnDisk();
 }
 
 }

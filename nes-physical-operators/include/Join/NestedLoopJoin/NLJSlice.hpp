@@ -19,7 +19,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
@@ -49,18 +48,16 @@ public:
     void acquireCombinePagedVectorsLock();
     void releaseCombinePagedVectorsLock();
 
-    /// Returns true if combinePagedVectors() method has already been called. Acquires a write lock for combinePagedVectorsMutex.
-    bool pagedVectorsCombined();
+    /// Returns true if combinePagedVectors() method has already been called. Does not acquire a lock for combinePagedVectorsMutex.
+    [[nodiscard]] bool pagedVectorsCombined() const;
 
-    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
-    /// Returns zero if paged vectors were already combined.
-    size_t getStateSizeInMemoryForThreadId(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    /// Returns the number of all tuples in the PagedVector in memory. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if PagedVectors were already combined.
+    uint64_t getNumTuplesInMemoryForThreadId(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
-    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
-    /// Returns zero if paged vectors were already combined.
-    size_t getStateSizeOnDiskForThreadId(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
+    /// Returns the number of all tuples in the PagedVector on disk. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if PagedVectors were already combined.
+    uint64_t getNumTuplesOnDiskForThreadId(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
 
 private:
     // TODO read locks for each paged vector

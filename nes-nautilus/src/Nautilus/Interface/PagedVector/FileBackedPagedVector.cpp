@@ -48,7 +48,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     /// We cannot separate keys and payload if there are no keys
     fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : FileLayout::NO_SEPARATION;
 
-    // TODO fix this method and remove preconditon
+    // TODO fix this method and remove precondition
     /*PRECONDITION(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
@@ -187,17 +187,7 @@ void FileBackedPagedVector::truncate(const FileLayout fileLayout)
 
 uint64_t FileBackedPagedVector::getTotalNumberOfEntries() const
 {
-    auto totalNumEntries = 0UL;
-    for (const auto& page : keyPages)
-    {
-        totalNumEntries += page.getNumberOfTuples();
-    }
-    return totalNumEntries + PagedVector::getTotalNumberOfEntries() + numTuplesOnDisk;
-}
-
-uint64_t FileBackedPagedVector::getNumberOfPages() const
-{
-    return pages.getNumberOfPages() + keyPages.size();
+    return getNumberOfEntries() + numTuplesOnDisk;
 }
 
 uint64_t FileBackedPagedVector::getNumberOfTuplesOnDisk() const

@@ -64,7 +64,6 @@ FileDescriptorManager::FileDescriptorManager(
 
 FileDescriptorManager::~FileDescriptorManager()
 {
-    // TODO investigate why destructor is never called
     for (auto& [writers, _, mutex] : threadWriters)
     {
         const std::scoped_lock lock(mutex);
