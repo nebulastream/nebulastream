@@ -17,8 +17,7 @@ import subprocess
 import tempfile
 import json
 
-def is_exe(file: str) -> bool:
-    file = Path(file)
+def is_exe(file: Path) -> bool:
     if not file.exists():
         return False
 
@@ -29,7 +28,7 @@ def is_exe(file: str) -> bool:
 
 
 def cov_from_cmd(cmd: list[str]):
-    assert is_exe(cmd[0])
+    assert is_exe(Path(cmd[0]))
     with tempfile.NamedTemporaryFile() as profraw, tempfile.NamedTemporaryFile() as profdata:
         env = os.environ | {
             "ASAN_OPTIONS": "detect_leaks=0",
