@@ -1,2 +1,6 @@
 # Ignore everything
 *
+
+# Re-include the folders and files we really need
+!scripts/
+!scripts/install_sys_dependencies.sh
