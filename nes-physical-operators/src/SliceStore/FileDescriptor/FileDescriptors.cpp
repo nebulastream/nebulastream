@@ -159,12 +159,11 @@ boost::asio::awaitable<void> FileWriter::flush()
         co_return;
     }
 
-    // TODO check if files are open
-    if (writeBuffer != nullptr and writeBufferPos > 0)
+    if (file.is_open() and writeBuffer != nullptr and writeBufferPos > 0)
     {
         co_await writeToFile(writeBuffer, writeBufferPos, file);
     }
-    if (writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
+    if (keyFile.is_open() and writeKeyBuffer != nullptr and writeKeyBufferPos > 0)
     {
         co_await writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
     }
@@ -190,6 +189,7 @@ FileWriter::write(const void* data, size_t size, boost::asio::posix::stream_desc
     if (buffer == nullptr)
     {
         buffer = allocate(this);
+        bufferPos = 0;
     }
 
     while (size > 0)
