@@ -14,6 +14,9 @@
     <img src="https://img.shields.io/badge/Benchmark-Conbench-blue?labelColor=3D444C"
          alt="Conbench" />
   </a>
+  <a href="https://codecov.io/github/nebulastream/nebulastream" > 
+    <img src="https://codecov.io/github/nebulastream/nebulastream/graph/badge.svg?token=ER83Nm1crF" alt="Codecov"/> 
+  </a>  
 </div>
 
 ----
