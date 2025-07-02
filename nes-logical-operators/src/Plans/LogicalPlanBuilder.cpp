@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Plans/LogicalPlanBuilder.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -36,7 +38,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -142,8 +143,8 @@ LogicalPlan LogicalPlanBuilder::addJoin(
                 if (visitedFunctions.find(leftVisitingOp) == visitedFunctions.end())
                 {
                     visitedFunctions.insert(leftVisitingOp);
-                    auto leftChild = leftVisitingOp.getChildren()[0];
-                    auto rightChild = leftVisitingOp.getChildren()[1];
+                    auto leftChild = leftVisitingOp.getChildren().at(0);
+                    auto rightChild = leftVisitingOp.getChildren().at(1);
                     /// ensure that the child nodes are not binary
                     if ((leftChild.getChildren().size() == 1) && (rightChild.getChildren().size() == 1))
                     {

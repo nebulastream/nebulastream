@@ -40,7 +40,7 @@ the container. Additional cmake flags can be appended to the command.
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake -B build-docker
 ```
 
@@ -50,7 +50,7 @@ The command to execute the build also requires, the current directory to be moun
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake --build build-docker -j
 ```
 
@@ -61,7 +61,7 @@ refer to the [ctest guide](https://cmake.org/cmake/help/latest/manual/ctest.1.ht
 docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
-     nebulastream/nes-development:local \
+     nebulastream/nes-development:libstdcxx \
      ctest --test-dir build-docker -j
 ```
 
@@ -97,7 +97,7 @@ docker run \
     -v $(pwd):$(pwd) \
     -v $(ccache -k cache_dir):$(ccache -k cache_dir) \
     -e CCACHE_DIR=$(ccache -k cache_dir) \
-    nebulastream/nes-development:local \
+    nebulastream/nes-development:libstdcxx \
     cmake -B build-docker
 ```
 
@@ -186,14 +186,15 @@ However, using both libraries comes with trade-offs. It limits us to the interse
 supported by both libraries. Additionally, the CI ensures that
 code compiles and runs successfully with libstdc++ and libc++ to maintain this dual compatibility.
 
-### Compiling with Libstdc++
+### Choosing a C++ Standard Library
 
-By default, NebulaStream attempts to build with libc++ if it is available on the host system (which is the case for all
-docker images).
-Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fallback to the default standard library on
-the system.
+NebulaStream can use the locally available C++ standard library (on linux usually GNU `libstdc++`) or LLVM's `libc++` (if available)
+by setting the CMake cache variable `USE_CPP_STDLIB`.
+It is also possible to supply a self-built libcxx by setting `USE_CPP_STDLIB` to `custom` and pointing
+`USE_CPP_STDLIB_LIBCXX_PATH` to the directory containing the libcxx.
+In Docker, NebulaStream defaults to `libc++` which is pre-installed in the image.
 
-If you intend to use the docker image with libstdc++ you can get the development image by pulling
+If you intend to use the docker image with the GNU `libstdc++` you can get the development image by pulling
 
 ```shell
 docker pull nebulastream/nes-development:latest-libstdcxx

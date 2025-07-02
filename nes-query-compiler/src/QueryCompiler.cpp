@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <QueryCompiler.hpp>
+
 #include <memory>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryCompiler.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -34,7 +35,6 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     }
     catch (...)
     {
-        tryLogCurrentException();
         return {};
     }
 }
