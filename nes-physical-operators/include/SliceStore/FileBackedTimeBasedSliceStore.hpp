@@ -43,13 +43,6 @@ struct SliceStoreInfo
     bool withPrediction;
 };
 
-struct UpdateSlicesMetaData
-{
-    WorkerThreadId threadId;
-    JoinBuildSideType joinBuildSide;
-    BufferMetaData bufferMetaData;
-};
-
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
@@ -67,11 +60,10 @@ public:
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore&& other) noexcept;
-    ~FileBackedTimeBasedSliceStore() override;
 
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp,
-        WorkerThreadId workerThreadId,
+        WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide,
         const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
@@ -81,7 +73,6 @@ public:
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
-    void deleteState() override;
 
     /// Sets number of worker threads. Needs to be called before working with the slice store
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
@@ -91,7 +82,9 @@ public:
         boost::asio::io_context& ioCtx,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        const UpdateSlicesMetaData& metaData);
+        const BufferMetaData& bufferMetaData,
+        WorkerThreadId threadId,
+        JoinBuildSideType joinBuildSide);
 
 private:
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> getSlicesToUpdate(
@@ -110,18 +103,18 @@ private:
 
     boost::asio::awaitable<void> writeSliceToFile(
         boost::asio::io_context& ioCtx,
-        const std::shared_ptr<NLJSlice>& nljSlice,
+        const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) const;
 
     void readSliceFromFiles(
-        const std::shared_ptr<NLJSlice>& nljSlice,
+        const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         const std::vector<WorkerThreadId>& threadsToRead,
-        WorkerThreadId workerThread,
+        WorkerThreadId workerThreadId,
         JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);

@@ -146,9 +146,9 @@ void PagedVector::PagesWrapper::clearPages()
 
 std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos) const
 {
-    if (entryPos >= getTotalNumberOfEntries())
+    if (entryPos >= getNumberOfEntries())
     {
-        NES_WARNING("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
+        NES_WARNING("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getNumberOfEntries());
         return {};
     }
 
@@ -175,7 +175,7 @@ std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos
     return {};
 }
 
-uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
+uint64_t PagedVector::PagesWrapper::getNumberOfEntries() const
 {
     /// We can not ensure that the last cumulative sum is up-to-date. Therefore, we need to add the penultimate sum + no. tuples of last page
     const auto penultimateCumulativeSum = (pages.size() > 1) ? pages.rbegin()[1].cumulativeSum : 0;
