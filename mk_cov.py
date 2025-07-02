@@ -37,7 +37,7 @@ def cov_from_cmd(cmd: list[str]):
         subprocess.run(cmd, check=True, env=env)
         subprocess.run(["llvm-profdata-19", "merge", "-sparse", profraw.name, "-o", profdata.name], check=True)
         cov_json = subprocess.run(["llvm-cov-19", "export", "-format=text", f"-instr-profile={profdata.name}", cmd[0]], check=True, capture_output=True, text=True)
-        cov_dir = Path(f"cov-{"_".join(cmd)}")
+        cov_dir = Path(f"cov-{"_".join(cmd)}".replace("/", "_"))
         subprocess.run(["llvm-cov-19", "show", "-format=html", f"-output-dir={cov_dir}", f"-instr-profile={profdata.name}", cmd[0]], check=True, capture_output=True, text=True)
 
         return json.loads(cov_json.stdout), cov_dir
