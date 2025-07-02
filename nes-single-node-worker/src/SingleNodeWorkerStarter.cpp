@@ -24,6 +24,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
+__asm__(".symver realpath,realpath@GLIBC_2.35");
 int main(const int argc, const char* argv[])
 {
     CPPTRACE_TRY
