@@ -1,0 +1,71 @@
+# name: milestone/Nexmark_more_data.test
+# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
+# We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
+# groups: [milestone, benchmark, large, Aggregation, Join]
+
+# Source definition. We have removed some columns that are not needed in our queries
+Source bid UINT64 timestamp INT32 auctionId INT32 bidder FLOAT64 price FILE
+TESTDATA/large/nexmark/bid_6GB.csv
+Source auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve UINT64 expires INT32 seller INT32 category FILE
+TESTDATA/large/nexmark/auction_707MB.csv
+Source person INT32 id VARSIZED name VARSIZED email_address VARSIZED credit_card VARSIZED city VARSIZED state UINT64 timestamp VARSIZED extra FILE
+TESTDATA/large/nexmark/person_840MB.csv
+
+# Query 0
+SELECT * FROM bid INTO CHECKSUM;
+----
+183991721 353216217968
+
+# Query 1
+SELECT timestamp, auctionId, bidder, price * FLOAT64(908) / FLOAT64(1000) AS price FROM bid INTO CHECKSUM;
+----
+183991721 370730288260
+
+# Query 2
+SELECT auctionId, price FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO CHECKSUM;
+----
+1511777 1211558031
+
+# Query 5
+SELECT start, end, auctionId, num, max_tmp
+FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
+      FROM bid
+      GROUP BY auctionId
+      WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+INNER JOIN (SELECT MAX(num_ids) AS max_tmp, start, end
+              FROM
+                    (SELECT auctionId, COUNT(auctionId) AS num_ids, start
+                     FROM bid
+                     GROUP BY auctionId
+                     WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+              WINDOW TUMBLING(start, SIZE 2 SEC))
+ON num >= max_tmp
+WINDOW TUMBLING(start, SIZE 2 SEC)
+INTO CHECKSUM;
+----
+10589 23372488
+
+
+# Query 8
+# Until PR #755 is not merged, we need to do another subquery to project the required fields
+SELECT start, end, id, name
+FROM (
+        SELECT *
+            FROM (SELECT * FROM person)
+        INNER JOIN
+            (SELECT * FROM auction)
+        ON id = seller WINDOW TUMBLING (timestamp, size 10 sec)
+    )
+INTO CHECKSUM;
+----
+10999751 33652579169
+
+
+# Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
+SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
+    FROM (SELECT * FROM bid)
+INNER JOIN
+    (SELECT * FROM auction)
+ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
+----
+182197843 1176742157900

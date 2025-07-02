@@ -68,7 +68,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-            const auto createFunction = opHandler->getCreateNewSlicesFunction();
+            const auto createFunction = opHandler->getCreateNewSlicesFunction({});
             return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction)[0].get());
         },
         operatorHandler,

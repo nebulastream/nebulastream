@@ -49,7 +49,8 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
-    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
 
     /// shared_ptr as multiple slices need access to it
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
