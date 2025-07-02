@@ -45,4 +45,7 @@ option(USE_LIBFUZZER "" OFF)
 if (USE_LIBFUZZER)
     add_compile_options(-fsanitize=fuzzer-no-link)
     add_link_options(-fsanitize=fuzzer-no-link)
+
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+    add_link_options(-fprofile-instr-generate -fcoverage-mapping)
 endif ()
