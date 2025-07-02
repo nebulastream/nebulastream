@@ -48,8 +48,6 @@ public:
     nautilus::val<OriginId> getOriginId();
     void setOriginId(const nautilus::val<OriginId>& originId);
 
-    void setUsedMemorySize(const nautilus::val<uint64_t>& usedMemorySize);
-
     /// Get the sequence number of the underlying tuple buffer. The sequence number is a monotonically increasing identifier for tuple buffers
     /// from the same origin.
     nautilus::val<SequenceNumber> getSequenceNumber();

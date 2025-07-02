@@ -30,13 +30,13 @@ public:
     explicit NodeEngineBuilder(
         const NES::Configurations::WorkerConfiguration& workerConfiguration,
         std::shared_ptr<SystemEventListener> systemEventListener,
-        std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener);
+        std::shared_ptr<QueryEngineStatisticListener> statisticListener);
 
     std::unique_ptr<NodeEngine> build();
 
 private:
     NES::Configurations::WorkerConfiguration workerConfiguration;
     std::shared_ptr<SystemEventListener> systemEventListener;
-    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticEventListener;
+    std::shared_ptr<QueryEngineStatisticListener> statisticEventListener;
 };
 }

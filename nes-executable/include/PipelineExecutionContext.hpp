@@ -54,7 +54,5 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;
-
-    bool formattingTask = false;
 };
 }
