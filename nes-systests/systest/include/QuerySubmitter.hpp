@@ -24,7 +24,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 
-#include <GRPCClient.hpp>
+#include <QueryManager/GRPCClient.hpp>
 
 namespace NES::Systest
 {
@@ -64,7 +64,7 @@ public:
 class RemoteWorkerQuerySubmitter final : public QuerySubmitter
 {
     std::unordered_set<QueryId> ids;
-    const GRPCClient client;
+    GRPCClient client;
 
 public:
     std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;

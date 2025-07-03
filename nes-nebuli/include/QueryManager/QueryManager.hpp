@@ -14,27 +14,32 @@
 
 #pragma once
 
-#include <cstddef>
 #include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <grpcpp/client_context.h>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-class GRPCClient
+class LogicalPlan;
+}
+
+namespace NES
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
 
+class QueryManager
+{
 public:
-    explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const NES::LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
-
-    [[nodiscard]] NES::QuerySummary status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
+    virtual ~QueryManager() = default;
+    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept = 0;
+    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
+    [[nodiscard]] virtual std::optional<QuerySummary> status(QueryId queryId) const = 0;
 };
 }
