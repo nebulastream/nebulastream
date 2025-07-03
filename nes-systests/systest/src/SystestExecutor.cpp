@@ -30,10 +30,14 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 #include <unistd.h>
 
 #include <Configurations/Util.hpp>
+#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -41,6 +45,8 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -379,19 +385,20 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     const auto grpcURI = config.grpcAddressUri.getValue();
     const auto runRemote = not grpcURI.empty();
 
-    auto submitter = [&]() -> std::unique_ptr<Systest::QuerySubmitter>
+    auto queryManager = [&]() -> std::unique_ptr<QueryManager>
     {
         if (runRemote)
         {
-            return std::make_unique<Systest::RemoteWorkerQuerySubmitter>(grpcURI);
+            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
         }
-        return std::make_unique<Systest::LocalWorkerQuerySubmitter>(singleNodeWorkerConfiguration);
+        return std::make_unique<EmbeddedWorkerQueryManager>(singleNodeWorkerConfiguration);
     }();
 
     while (true)
     {
         std::ranges::shuffle(queries, rng);
-        const auto failedQueries = runQueries(queries, numberConcurrentQueries, *submitter);
+        Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+        const auto failedQueries = runQueries(queries, numberConcurrentQueries, querySubmitter);
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
