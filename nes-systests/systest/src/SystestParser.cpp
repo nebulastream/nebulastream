@@ -902,19 +902,45 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
     key.pop_back();
 
     std::getline(stream >> std::ws, valueList);
-    if (valueList.empty() || valueList.front() != '[' || valueList.back() != ']')
+    
+    /// Validate that we have a value
+    if (valueList.empty())
     {
-        throw SLTUnexpectedToken("Expected list in square brackets: '{}'", valueList);
+        throw SLTUnexpectedToken("Expected configuration value after key '{}', but got empty value", key);
     }
-
-    valueList = valueList.substr(1, valueList.size() - 2);
-    auto values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+    
+    std::vector<std::string> values;
+    
+    /// Check if the value is wrapped in square brackets (multiple values)
+    if (valueList.front() == '[' && valueList.back() == ']')
+    {
+        /// Parse multiple values in square brackets
+        valueList = valueList.substr(1, valueList.size() - 2);
+        if (valueList.empty())
+        {
+            throw SLTUnexpectedToken("Expected at least one value in square brackets for key '{}', but got empty brackets", key);
+        }
+        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+    }
+    else
+    {
+        /// Single value without brackets - validate no brackets are present
+        if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
+        {
+            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
+        }
+        values = {valueList};
+    }
 
     INVARIANT(!values.empty(), "when expecting a configuration keyword the configuration should not be empty");
     std::vector<ConfigurationOverride> result;
     for (auto& value : values)
     {
         value = NES::Util::trimWhiteSpaces(value);
+        if (value.empty())
+        {
+            throw SLTUnexpectedToken("Empty configuration value found for key '{}'", key);
+        }
         ConfigurationOverride override;
         override.overrideParameters[key] = value;
         result.emplace_back(std::move(override));
