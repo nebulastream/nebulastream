@@ -174,24 +174,35 @@ std::vector<RunningQuery> runQueries(
         return hasOneMoreQueryToStart;
     };
 
-    auto allQueriesStopped = false;
-    const auto start = std::chrono::high_resolution_clock::now();
-    while (startMoreQueries() or not(active.empty() and pending.empty()))
-    {
-        if (timeoutInSeconds > 0)
+    std::atomic allQueriesStopped{false};
+    std::thread timeoutThread(
+        [&]
         {
-            const auto now = std::chrono::high_resolution_clock::now();
-            if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count()) >= timeoutInSeconds)
+            if (timeoutInSeconds > 0)
             {
-                allQueriesStopped = true;
-                std::queue<SystestQuery> emptyQueue;
-                std::swap(pending, emptyQueue);
-                for (const auto& queryId : active | std::views::keys)
+                const auto start = std::chrono::steady_clock::now();
+                while (not allQueriesStopped)
                 {
-                    querySubmitter.stopQuery(queryId);
+                    const auto now = std::chrono::steady_clock::now();
+                    if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count())
+                        >= timeoutInSeconds)
+                    {
+                        allQueriesStopped = true;
+                        std::queue<SystestQuery> emptyQueue;
+                        std::swap(pending, emptyQueue);
+                        for (const auto& queryId : active | std::views::keys)
+                        {
+                            querySubmitter.stopQuery(queryId);
+                        }
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 }
             }
-        }
+        });
+
+    while (startMoreQueries() or not(active.empty() and pending.empty()))
+    {
         do
         {
             for (const auto& summary : querySubmitter.finishedQueries())
@@ -237,6 +248,11 @@ std::vector<RunningQuery> runQueries(
         } while (allQueriesStopped and not active.empty());
     }
 
+    allQueriesStopped = true;
+    if (timeoutThread.joinable())
+    {
+        timeoutThread.join();
+    }
     auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
     return {failedViews.begin(), failedViews.end()};
 }
@@ -294,12 +310,34 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
-        if (timeoutInSeconds > 0)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(timeoutInSeconds));
-            submitter.stopQuery(queryId);
-        }
+
+        std::atomic queryStopped{false};
+        std::thread timeoutThread(
+            [&]
+            {
+                if (timeoutInSeconds > 0)
+                {
+                    const auto start = std::chrono::steady_clock::now();
+                    while (not queryStopped)
+                    {
+                        const auto now = std::chrono::steady_clock::now();
+                        if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count())
+                            >= timeoutInSeconds)
+                        {
+                            submitter.stopQuery(queryId);
+                            break;
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    }
+                }
+            });
+
         const auto summary = submitter.finishedQueries().at(0);
+        queryStopped = true;
+        if (timeoutThread.joinable())
+        {
+            timeoutThread.join();
+        }
 
         if (summary.runs.empty() or summary.runs.back().error.has_value())
         {
