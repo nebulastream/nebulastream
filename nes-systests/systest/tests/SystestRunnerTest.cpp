@@ -35,6 +35,7 @@
 #include <gtest/gtest.h>
 
 #include <Identifiers/NESStrongType.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -89,24 +90,23 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 };
 
-class MockSubmitter final : public QuerySubmitter
+class MockQueryManager final : public QueryManager
 {
 public:
     MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
-    MOCK_METHOD(void, startQuery, (QueryId), (override));
-    MOCK_METHOD(void, stopQuery, (QueryId), (override));
-    MOCK_METHOD(void, unregisterQuery, (QueryId), (override));
-    MOCK_METHOD(QuerySummary, waitForQueryTermination, (QueryId), (override));
-    MOCK_METHOD(std::vector<QuerySummary>, finishedQueries, (), (override));
+    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (noexcept, override));
+    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (noexcept, override));
+    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (noexcept, override));
+    MOCK_METHOD((std::expected<QuerySummary, Exception>), status, (QueryId), (const, noexcept, override));
 };
 
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
+    QuerySubmitter submitter{std::make_unique<MockQueryManager>()};
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
-    auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
+    const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
@@ -115,21 +115,20 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
     constexpr QueryId id{7};
-
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(submitter, startQuery(id));
-
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
 
-    EXPECT_CALL(submitter, finishedQueries())
-        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Failed, runtimeErr)}))
-        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
+    auto mockManager = std::make_unique<MockQueryManager>();
+    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockManager, start(id));
+    EXPECT_CALL(*mockManager, status(id))
+        .WillOnce(testing::Return(makeSummary(id, QueryStatus::Failed, runtimeErr)))
+        .WillRepeatedly(testing::Return(QuerySummary{}));
+
+    QuerySubmitter submitter{std::move(mockManager)};
 
     const LogicalPlan plan{};
-
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
@@ -143,16 +142,16 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    MockSubmitter submitter;
     constexpr QueryId id{11};
 
-    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(submitter, startQuery(id));
+    auto mockManager = std::make_unique<MockQueryManager>();
+    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockManager, start(id));
+    EXPECT_CALL(*mockManager, status(id))
+        .WillOnce(testing::Return(makeSummary(id, QueryStatus::Stopped, nullptr)))
+        .WillRepeatedly(testing::Return(QuerySummary{}));
 
-    EXPECT_CALL(submitter, finishedQueries())
-        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Stopped, nullptr)}))
-        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
-
+    QuerySubmitter submitter{std::move(mockManager)};
     const LogicalPlan plan{};
 
     const auto result = runQueries(

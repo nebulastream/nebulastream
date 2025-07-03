@@ -13,6 +13,7 @@
 */
 
 #include <cerrno>
+#include <climits>
 #include <cstddef>
 #include <cstring>
 #include <fstream>
@@ -21,10 +22,14 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <vector>
+
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/GRPCQueryManager.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Identifiers/Identifiers.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -39,10 +44,14 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <GRPCClient.hpp>
 #include <LegacyOptimizer.hpp>
-#include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+
+#ifdef EMBED_ENGINE
+    #include <Configurations/Util.hpp>
+    #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+    #include <SingleNodeWorkerConfiguration.hpp>
+#endif
 
 
 int main(int argc, char** argv)
@@ -90,20 +99,49 @@ int main(int argc, char** argv)
             NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
         }
 
+        std::shared_ptr<NES::QueryManager> queryManager{};
+        if (program.is_used("-s"))
+        {
+            queryManager = std::make_shared<NES::GRPCQueryManager>(
+                CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+        }
+        else
+        {
+#ifdef EMBED_ENGINE
+            auto confVec = program.get<std::vector<std::string>>("--");
+            if ((confVec.size() + 1) > INT_MAX)
+            {
+                NES_ERROR("Too many worker configuration options passed through, maximum is {}", INT_MAX);
+                return 1;
+            }
+            const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
+            std::vector<const char*> singleNodeArgV;
+            singleNodeArgV.reserve(singleNodeArgC + 1);
+            singleNodeArgV.push_back("systest"); /// dummy option as arg expects first arg to be the program name
+            for (auto& arg : confVec)
+            {
+                singleNodeArgV.push_back(arg.c_str());
+            }
+            auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
+                                              .value_or(NES::SingleNodeWorkerConfiguration{});
+
+            queryManager = std::make_shared<NES::EmbeddedWorkerQueryManager>(singleNodeWorkerConfig);
+#else
+            NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
+                      "single node worker.")
+            return 1;
+#endif
+        }
         bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (NES::CLI::Nebuli::*)(NES::QueryId)>>{
-                 {"start", &NES::CLI::Nebuli::startQuery},
-                 {"unregister", &NES::CLI::Nebuli::unregisterQuery},
-                 {"stop", &NES::CLI::Nebuli::stopQuery}})
+        for (const auto& [name, fn] :
+             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
+                 {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
-                auto serverUri = parser.get<std::string>("-s");
-                auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-                NES::CLI::Nebuli nebuli{client};
                 auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
-                (nebuli.*fn)(queryId);
+                ((*queryManager).*fn)(queryId);
                 handled = true;
                 break;
             }
@@ -171,15 +209,24 @@ int main(int argc, char** argv)
         else if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
-            auto client = std::make_shared<NES::GRPCClient>(
-                grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-            NES::CLI::Nebuli nebuli{client};
-            const auto queryId = nebuli.registerQuery(optimizedQueryPlan);
-            if (registerArgs.is_used("-x"))
+            const auto queryId = queryManager->registerQuery(optimizedQueryPlan);
+            if (queryId.has_value())
             {
-                nebuli.startQuery(queryId);
+                if (registerArgs.is_used("-x"))
+                {
+                    if (not queryManager->start(queryId.value()).has_value())
+                    {
+                        std::cerr << "Could not start query" << '\n';
+                        return 1;
+                    }
+                    std::cout << queryId.value().getRawValue();
+                }
             }
-            std::cout << queryId.getRawValue();
+            else
+            {
+                std::cerr << "Could not register query" << '\n';
+                return 1;
+            }
         }
 
         return 0;
