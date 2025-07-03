@@ -62,7 +62,7 @@ public:
 /// Given a file with some correct and some incorrect queries, make sure that only the incorrect queries fail
 TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
-    Configuration::SystestConfiguration config{};
+    SystestConfiguration config{};
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
@@ -88,7 +88,7 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
 {
     const auto& [directory, testFile] = GetParam();
     const auto testFileName = testFile + std::string(".dummy");
-    Configuration::SystestConfiguration config{};
+    SystestConfiguration config{};
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));

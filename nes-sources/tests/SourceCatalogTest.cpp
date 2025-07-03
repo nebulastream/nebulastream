@@ -79,14 +79,14 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
         NES::INITIAL<NES::WorkerId>,
         "testSource1",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        Configurations::DescriptorConfig::Config{},
+        DescriptorConfig::Config{},
         ParserConfig{});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
         NES::INITIAL<NES::WorkerId>,
         "testSource2",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        Configurations::DescriptorConfig::Config{},
+        DescriptorConfig::Config{},
         ParserConfig{});
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical2 = physical2Opt.value();
@@ -111,7 +111,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
         NES::INITIAL<WorkerId>,
         "testSource3",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        Configurations::DescriptorConfig::Config{},
+        DescriptorConfig::Config{},
         ParserConfig{});
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
@@ -141,14 +141,14 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
         NES::INITIAL<NES::WorkerId>,
         "testSource1",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        Configurations::DescriptorConfig::Config{},
+        DescriptorConfig::Config{},
         ParserConfig{});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         logicalSource,
         NES::INITIAL<NES::WorkerId>,
         "testSource2",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        Configurations::DescriptorConfig::Config{},
+        DescriptorConfig::Config{},
         ParserConfig{});
 
     ASSERT_TRUE(physical1Opt.has_value());
@@ -216,7 +216,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
                     NES::INITIAL<NES::WorkerId>,
                     "testSource",
                     SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-                    Configurations::DescriptorConfig::Config{},
+                    DescriptorConfig::Config{},
                     ParserConfig{});
                 if (physicalSourceOpt.has_value())
                 {

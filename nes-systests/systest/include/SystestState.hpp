@@ -31,9 +31,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <fmt/base.h>
-#include <fmt/format.h>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -41,6 +38,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
@@ -294,7 +293,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
-TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
+TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
 std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals);

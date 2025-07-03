@@ -65,7 +65,7 @@ struct RecordWithFields
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view functionName, const Configurations::ExecutionMode backend)
+    NameAndNautilusBackend(std::string_view functionName, const ExecutionMode backend)
         : functionName(std::move(functionName)), backend(backend)
     {
     }
@@ -89,7 +89,7 @@ struct NameAndNautilusBackend
     }
 
     std::string functionName;
-    Configurations::ExecutionMode backend;
+    ExecutionMode backend;
 };
 
 /// Struct that stores a min and max value.
@@ -153,7 +153,7 @@ public:
 
     void compileFillBufferFunction(
         std::string_view functionName,
-        Configurations::ExecutionMode backend,
+        ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema& schema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer);

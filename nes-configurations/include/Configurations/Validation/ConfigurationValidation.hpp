@@ -15,21 +15,15 @@
 
 #include <string>
 
-namespace NES::Configurations
+namespace NES
 {
 
-/**
- * @brief This class provides a general implementation for validation of configurations options.
- */
+/// @brief This class provides a general implementation for validation of configurations options
 class ConfigurationValidation
 {
 public:
     virtual ~ConfigurationValidation() = default;
-    /**
-     * @brief Method to check the validity of a configuration option
-     * @param configuration option
-     * @return success if validated
-     */
+    /// @brief Method to check the validity of a configuration option
     virtual bool isValid(const std::string&) const = 0;
 };
 }

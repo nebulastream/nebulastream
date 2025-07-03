@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <Configurations/TypedBaseOption.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 template <class Type, class Factory>
@@ -41,11 +41,6 @@ requires IsFactory<Type, Factory>
 class WrapOption : public TypedBaseOption<Type>
 {
 public:
-    /**
-     * @brief Constructor to create a new option that sets a name, and description.
-     * @param name of the option.
-     * @param description of the option.
-     */
     WrapOption(const std::string& name, const std::string& description);
     std::string toString() override;
 
@@ -81,7 +76,7 @@ void WrapOption<Type, Factory>::parseFromYAMLNode(YAML::Node node)
 
 template <class Type, class Factory>
 requires IsFactory<Type, Factory>
-std::string NES::Configurations::WrapOption<Type, Factory>::toString()
+std::string WrapOption<Type, Factory>::toString()
 {
     return "";
 }

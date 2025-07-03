@@ -65,19 +65,17 @@ public:
 
     struct ConfigParameters
     {
-        static inline const Configurations::DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
+        static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
             "TimeMs",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(TIME_MS, config); }};
-        static inline const Configurations::DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
+        static inline const DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
             "Function",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(FUNCTION, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FUNCTION, config); }};
 
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
+        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+            = DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
     };
 
 private:

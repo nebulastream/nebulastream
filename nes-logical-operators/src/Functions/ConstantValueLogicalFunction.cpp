@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/ConstantValueLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -99,8 +100,8 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
 
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
 
-    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
-    const SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    const DescriptorConfig::ConfigType configVariant = getConstantValue();
+    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
 
     return serializedFunction;
