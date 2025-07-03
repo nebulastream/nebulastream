@@ -15,36 +15,35 @@
 #include <QuerySubmitter.hpp>
 
 #include <chrono>
-#include <optional>
-#include <ranges>
+#include <memory>
 #include <thread>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 
-#include <Util/PlanRenderer.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
 
-std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
+QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+{
+}
+
+std::expected<QueryId, Exception> QuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
     /// Make sure the queryplan is passed through serialization logic.
     const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
     const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
     if (deserialized == plan)
     {
-        return worker.registerQuery(deserialized);
+        return queryManager->registerQuery(deserialized);
     }
     const auto exception = CannotSerialize(
         "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and deserialize(serialize(plan)):\n{}",
@@ -52,27 +51,32 @@ std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const
         explain(deserialized, ExplainVerbosity::Debug));
     return std::unexpected(exception);
 }
-void LocalWorkerQuerySubmitter::startQuery(QueryId query)
+
+void QuerySubmitter::startQuery(QueryId query)
 {
-    worker.startQuery(query);
+    if (auto started = queryManager->start(query); !started.has_value())
+    {
+        throw started.error();
+    }
     ids.emplace(query);
 }
-void LocalWorkerQuerySubmitter::stopQuery(QueryId query)
+
+void QuerySubmitter::stopQuery(const QueryId query)
 {
-    worker.stopQuery(query, QueryTerminationType::Graceful);
-}
-void LocalWorkerQuerySubmitter::unregisterQuery(QueryId query)
-{
-    worker.unregisterQuery(query);
+    queryManager->stop(query);
 }
 
-QuerySummary LocalWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
+void QuerySubmitter::unregisterQuery(const QueryId query)
+{
+    queryManager->unregister(query);
+}
+
+QuerySummary QuerySubmitter::waitForQueryTermination(const QueryId query)
 {
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        const auto summary = worker.getQuerySummary(query);
-        if (summary)
+        if (const auto summary = queryManager->status(query))
         {
             if (summary->currentStatus == QueryStatus::Stopped)
             {
@@ -82,14 +86,14 @@ QuerySummary LocalWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
     }
 }
 
-std::vector<QuerySummary> LocalWorkerQuerySubmitter::finishedQueries()
+std::vector<QuerySummary> QuerySubmitter::finishedQueries()
 {
     while (true)
     {
         std::vector<QuerySummary> results;
-        for (auto id : ids)
+        for (const auto id : ids)
         {
-            if (auto summary = worker.getQuerySummary(id))
+            if (auto summary = queryManager->status(id))
             {
                 if (summary->currentStatus == QueryStatus::Failed || summary->currentStatus == QueryStatus::Stopped)
                 {
@@ -110,67 +114,5 @@ std::vector<QuerySummary> LocalWorkerQuerySubmitter::finishedQueries()
 
         return results;
     }
-}
-LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const SingleNodeWorkerConfiguration& configuration) : worker(configuration)
-{
-}
-std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
-{
-    return QueryId(client.registerQuery(plan));
-}
-void RemoteWorkerQuerySubmitter::startQuery(const QueryId query)
-{
-    client.start(query);
-}
-void RemoteWorkerQuerySubmitter::stopQuery(const QueryId query)
-{
-    client.stop(query);
-}
-void RemoteWorkerQuerySubmitter::unregisterQuery(const QueryId query)
-{
-    client.unregister(query);
-}
-QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(const QueryId query)
-{
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        const auto summary = client.status(query);
-        if (summary.currentStatus == QueryStatus::Stopped)
-        {
-            return summary;
-        }
-    }
-}
-std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
-{
-    while (true)
-    {
-        std::vector<QuerySummary> results;
-        for (auto id : ids)
-        {
-            auto summary = client.status(id);
-            if (summary.currentStatus == QueryStatus::Failed || summary.currentStatus == QueryStatus::Stopped)
-            {
-                results.emplace_back(summary);
-            }
-        }
-        if (results.empty())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
-            continue;
-        }
-
-        for (auto& result : results)
-        {
-            ids.erase(result.queryId);
-        }
-
-        return results;
-    }
-}
-RemoteWorkerQuerySubmitter::RemoteWorkerQuerySubmitter(const std::string& serverURI)
-    : client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()))
-{
 }
 }

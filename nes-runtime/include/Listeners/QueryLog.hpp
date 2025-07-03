@@ -75,8 +75,8 @@ struct QueryLog : AbstractQueryStatusListener
     bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
     bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
 
-    [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId);
-    [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId);
+    [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
+    [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
 
 private:
     folly::Synchronized<QueryStatusLog> queryStatusLog;
