@@ -15,20 +15,20 @@
 #pragma once
 
 #include <utility>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
 struct LowerToPhysicalSource : AbstractRewriteRule
 {
-    explicit LowerToPhysicalSource(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
+    explicit LowerToPhysicalSource(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
+    QueryExecutionConfiguration conf;
 };
 
 }
