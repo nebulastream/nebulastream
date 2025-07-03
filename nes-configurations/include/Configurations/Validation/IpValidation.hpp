@@ -17,7 +17,7 @@
 #include <string>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 /**

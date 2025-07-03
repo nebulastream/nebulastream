@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace NES::Nautilus::Configurations
+namespace NES
 {
 enum class ExecutionMode : uint8_t
 {

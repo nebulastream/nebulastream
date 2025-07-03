@@ -48,7 +48,7 @@ public:
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
-    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
@@ -63,14 +63,13 @@ private:
 
 struct ConfigParametersChecksum
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
+    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
 };
 
 }

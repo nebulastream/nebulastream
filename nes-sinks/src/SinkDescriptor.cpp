@@ -32,12 +32,12 @@
 namespace NES::Sinks
 {
 
-SinkDescriptor::SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp)
+SinkDescriptor::SinkDescriptor(std::string sinkType, DescriptorConfig::Config&& config, bool addTimestamp)
     : Descriptor(std::move(config)), sinkType(std::move(sinkType)), addTimestamp(addTimestamp)
 {
 }
 
-Configurations::DescriptorConfig::Config
+DescriptorConfig::Config
 SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
     auto sinkValidationRegistryArguments = NES::Sinks::SinkValidationRegistryArguments(std::move(configPairs));

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Serialization/FunctionSerializationUtil.hpp>
 
 #include <memory>
 #include <vector>
@@ -19,7 +20,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Serialization/FunctionSerializationUtil.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -40,10 +40,10 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
 
     auto dataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.data_type());
 
-    NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
+    DescriptorConfig::Config functionDescriptorConfig{};
     for (const auto& [key, value] : serializedFunction.config())
     {
-        functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        functionDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
     auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, dataType);

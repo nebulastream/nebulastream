@@ -22,7 +22,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>

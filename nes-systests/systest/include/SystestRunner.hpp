@@ -70,7 +70,7 @@ static constexpr auto padSizeQueryCounter = 3;
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    const SingleNodeWorkerConfiguration& configuration,
     const QueryResultMap& queryResultMap);
 
 /// Run queries remote on the single-node-worker specified by the URI
@@ -85,7 +85,7 @@ static constexpr auto padSizeQueryCounter = 3;
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
     const QueryResultMap& queryResultMap);
 

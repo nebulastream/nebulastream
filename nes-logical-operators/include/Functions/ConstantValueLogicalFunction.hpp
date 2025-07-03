@@ -57,14 +57,14 @@ public:
 
     struct ConfigParameters
     {
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
+        static inline const DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
             "constantValueAsString",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config); }};
+            { return DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config); }};
 
-        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
+        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+            = DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
     };
 
 private:

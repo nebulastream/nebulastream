@@ -16,7 +16,7 @@
 
 #include <regex>
 
-namespace NES::Configurations
+namespace NES
 {
 
 bool FloatValidation::isValid(const std::string& parameter) const

@@ -17,7 +17,7 @@
 
 using namespace std::string_literals;
 
-namespace NES::Configurations
+namespace NES
 {
 
 enum class InputFormat : uint8_t

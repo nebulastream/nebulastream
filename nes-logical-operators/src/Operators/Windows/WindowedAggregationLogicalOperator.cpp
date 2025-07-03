@@ -324,7 +324,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     {
         *aggList.add_functions() = agg->serialize();
     }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = Configurations::descriptorConfigTypeToProto(aggList);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = descriptorConfigTypeToProto(aggList);
 
     /// Serialize keys if present
     if (isKeyed())
@@ -334,7 +334,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
         {
             *keyList.add_functions() = key.serialize();
         }
-        (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_KEYS] = Configurations::descriptorConfigTypeToProto(keyList);
+        (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_KEYS] = descriptorConfigTypeToProto(keyList);
     }
 
     /// Serialize window info
@@ -359,12 +359,12 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
             sliding->set_slide(slidingWindow->getSlide().getTime());
         }
     }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
 
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
+        = descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
+        = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;

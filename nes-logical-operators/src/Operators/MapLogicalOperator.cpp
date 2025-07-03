@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/MapLogicalOperator.hpp>
+
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -23,7 +25,6 @@
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -207,15 +208,15 @@ SerializableOperator MapLogicalOperator::serialize() const
 
     FunctionList funcList;
     *funcList.add_functions() = getMapFunction().serialize();
-    (*serializableOperator.mutable_config())["mapFunction"] = Configurations::descriptorConfigTypeToProto(funcList);
+    (*serializableOperator.mutable_config())["mapFunction"] = descriptorConfigTypeToProto(funcList);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
-NES::Configurations::DescriptorConfig::Config MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParameters>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParameters>(std::move(config), NAME);
 }
 
 LogicalOperatorRegistryReturnType

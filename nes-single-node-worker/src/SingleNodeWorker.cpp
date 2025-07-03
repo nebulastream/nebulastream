@@ -41,20 +41,20 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
     : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
-    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
+    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecutionConfiguration))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
     if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
-        < configuration.workerConfiguration.queryOptimizer.operatorBufferSize.getValue())
+        < configuration.workerConfiguration.defaultQueryExecutionConfiguration.operatorBufferSize.getValue())
     {
         throw InvalidConfigParameter(
             "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
-            configuration.workerConfiguration.queryOptimizer.operatorBufferSize.getValue());
+            configuration.workerConfiguration.defaultQueryExecutionConfiguration.operatorBufferSize.getValue());
     }
 }
 

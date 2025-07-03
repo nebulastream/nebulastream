@@ -23,40 +23,37 @@
 #include <Configurations/SequenceOption.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
-namespace NES::Configuration
+namespace NES
 {
 
-class SystestConfiguration final : public NES::Configurations::BaseConfiguration
+class SystestConfiguration final : public BaseConfiguration
 {
 public:
     SystestConfiguration() = default;
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
-    NES::Configurations::StringOption testsDiscoverDir
+    StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
-    NES::Configurations::StringOption testDataDir
+    StringOption testDataDir
         = {"testDataDir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
-    NES::Configurations::StringOption configDir
+    StringOption configDir
         = {"configDir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
-    NES::Configurations::StringOption directlySpecifiedTestFiles
+    StringOption directlySpecifiedTestFiles
         = {"directlySpecifiedTestFiles",
            "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    NES::Configurations::SequenceOption<NES::Configurations::UIntOption> testQueryNumbers
+    SequenceOption<UIntOption> testQueryNumbers
         = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    NES::Configurations::StringOption testFileExtension
-        = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
-    NES::Configurations::StringOption workingDir
-        = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
-    NES::Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
-    NES::Configurations::UIntOption numberConcurrentQueries
-        = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
-    NES::Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
-    NES::Configurations::SequenceOption<NES::Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
-    NES::Configurations::SequenceOption<NES::Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
-    NES::Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
-    NES::Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    NES::Configurations::StringOption grpcAddressUri
+    StringOption testFileExtension = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
+    StringOption workingDir = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
+    BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
+    UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
+    BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
+    SequenceOption<StringOption> testGroups = {"testGroups", "test groups to run"};
+    SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
+    StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
+    StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
+    StringOption grpcAddressUri
         = {"grpc",
            "",
            R"(The address to try to bind to the server in URI form. If
@@ -64,7 +61,7 @@ the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
-    NES::Configurations::BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
+    BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
