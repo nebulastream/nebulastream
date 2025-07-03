@@ -24,10 +24,13 @@
 #include <ostream>
 #include <utility>
 #include <vector>
+
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/GRPCQueryManager.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Identifiers/Identifiers.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -42,11 +45,15 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <GRPCClient.hpp>
 #include <LegacyOptimizer.hpp>
-#include <NebuLI.hpp>
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+
+#ifdef EMBED_ENGINE
+    #include <Configurations/Util.hpp>
+    #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+    #include <SingleNodeWorkerConfiguration.hpp>
+#endif
 
 
 int main(int argc, char** argv)
@@ -57,26 +64,27 @@ int main(int argc, char** argv)
         using argparse::ArgumentParser;
         ArgumentParser program("nebuli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
-        program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string("localhost:8080"));
-
+        program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string{"localhost:8080"});
+        /// single node worker config
+        program.add_argument("--")
+            .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
+            .default_value(std::vector<std::string>{})
+            .remaining();
         ArgumentParser registerQuery("register");
-        registerQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
         registerQuery.add_argument("-i", "--input")
             .default_value("-")
             .help("Read the query description. Use - for stdin which is the default");
-        registerQuery.add_argument("-x").flag();
+        registerQuery.add_argument("-x").help("Immediately start the query as well").flag();
+        registerQuery.add_argument("-w", "--wait").help("Wait for the query to finish").flag();
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queryId").scan<'i', size_t>();
-        startQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").scan<'i', size_t>();
-        stopQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
         ArgumentParser unregisterQuery("unregister");
         unregisterQuery.add_argument("queryId").scan<'i', size_t>();
-        unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
         ArgumentParser dump("dump");
         dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
@@ -92,41 +100,65 @@ int main(int argc, char** argv)
 
         program.parse_args(argc, argv);
 
+        if (program.get<bool>("-d"))
+        {
+            NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
+        }
+        std::shared_ptr<NES::QueryManager> queryManager{};
+
+        if (program.is_used("-s"))
+        {
+            queryManager = std::make_shared<NES::GRPCQueryManager>(
+                CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+        }
+        else
+        {
+#ifdef EMBED_ENGINE
+            auto confVec = program.get<std::vector<std::string>>("--");
+            if ((confVec.size() + 1) > INT_MAX)
+            {
+                NES_ERROR("Too many worker configuration options passed through, maximum is {}", INT_MAX);
+                return 1;
+            }
+            const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
+            std::vector<const char*> singleNodeArgV;
+            singleNodeArgV.reserve(singleNodeArgC + 1);
+            singleNodeArgV.push_back("systest"); /// dummy option as arg expects first arg to be the program name
+            for (auto& arg : confVec)
+            {
+                singleNodeArgV.push_back(arg.c_str());
+            }
+            auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
+                                              .value_or(NES::SingleNodeWorkerConfiguration{});
+
+            queryManager = std::make_shared<NES::EmbeddedWorkerQueryManager>(singleNodeWorkerConfig);
+#else
+            NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
+                      "single node worker.")
+            return 1;
+#endif
+        }
+
         const bool anySubcommandUsed
             = std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); });
         if (!anySubcommandUsed)
         {
-            auto serverUri = program.get<std::string>("-s");
-            if (not program.is_used("-s"))
-            {
-                std::cout << "No server URI provided, using default server URI: " << serverUri << '\n';
-            }
-            auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-            NES::Repl replClient(client);
+            NES::Repl replClient(queryManager);
             replClient.run();
             return 0;
         }
 
 
-        if (program.get<bool>("-d"))
-        {
-            NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
-        }
-
         bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (NES::CLI::Nebuli::*)(NES::QueryId)>>{
-                 {"start", &NES::CLI::Nebuli::startQuery},
-                 {"unregister", &NES::CLI::Nebuli::unregisterQuery},
-                 {"stop", &NES::CLI::Nebuli::stopQuery}})
+        for (const auto& [name, fn] :
+             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
+                 {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
-                auto serverUri = parser.get<std::string>("-s");
-                auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-                NES::CLI::Nebuli nebuli{client};
                 auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
-                (nebuli.*fn)(queryId);
+                ((*queryManager).*fn)(queryId);
                 handled = true;
                 break;
             }
@@ -194,15 +226,36 @@ int main(int argc, char** argv)
         else if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
-            auto client = std::make_shared<NES::GRPCClient>(
-                grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-            NES::CLI::Nebuli nebuli{client};
-            const auto queryId = nebuli.registerQuery(optimizedQueryPlan);
-            if (registerArgs.is_used("-x"))
+            const auto queryId = queryManager->registerQuery(optimizedQueryPlan);
+            if (queryId.has_value())
             {
-                nebuli.startQuery(queryId);
+                if (registerArgs.is_used("-x"))
+                {
+                    if (auto started = queryManager->start(queryId.value()); not started.has_value())
+                    {
+                        std::cerr << fmt::format("Could not start query with error {}\n", started.error().what());
+                        return 1;
+                    }
+                    std::cout << queryId.value().getRawValue();
+                    if (registerArgs.is_used("-w"))
+                    {
+                        auto status = queryManager->status(queryId.value());
+                        while (status.has_value()
+                               && !(
+                                   status.value().currentStatus == NES::QueryStatus::Stopped
+                                   || status.value().currentStatus == NES::QueryStatus::Failed))
+                        {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                            status = queryManager->status(queryId.value());
+                        }
+                    }
+                }
             }
-            std::cout << queryId.getRawValue();
+            else
+            {
+                std::cerr << std::format("Could not register query: {}\n", queryId.error().what());
+                return 1;
+            }
         }
 
         return 0;

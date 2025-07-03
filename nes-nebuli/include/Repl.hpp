@@ -17,9 +17,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <QueryManager/QueryManager.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <GRPCClient.hpp>
 #include <replxx.hxx>
 
 namespace NES
@@ -27,9 +27,9 @@ namespace NES
 
 class Repl
 {
-    std::shared_ptr<GRPCClient> grpcClient;
-    std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::shared_ptr<SinkCatalog> sinkCatalog;
+    SharedPtr<QueryManager> grpcClient;
+    SharedPtr<SourceCatalog> sourceCatalog;
+    SharedPtr<SinkCatalog> sinkCatalog;
 
     std::unique_ptr<replxx::Replxx> rx;
     std::vector<std::string> history;
@@ -53,7 +53,7 @@ class Repl
     [[nodiscard]] std::string readMultiLineQuery() const;
 
 public:
-    explicit Repl(std::shared_ptr<GRPCClient> client);
+    explicit Repl(std::shared_ptr<QueryManager> client);
     void run();
 };
 
