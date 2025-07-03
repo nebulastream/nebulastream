@@ -23,7 +23,6 @@
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -47,6 +46,7 @@
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
 #include <PhysicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES
@@ -103,8 +103,8 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
 
 namespace
 {
-std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
-    const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& configuration)
+std::vector<std::shared_ptr<AggregationPhysicalFunction>>
+getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration& configuration)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
