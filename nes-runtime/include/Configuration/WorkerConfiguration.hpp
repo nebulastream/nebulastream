@@ -24,7 +24,7 @@
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 class WorkerConfiguration final : public BaseConfiguration
 {

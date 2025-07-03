@@ -35,7 +35,7 @@
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
 
-namespace NES::Configurations
+namespace NES
 {
 
 namespace DescriptorConfigurationConstraints
@@ -331,10 +331,10 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
 
 }
 
-FMT_OSTREAM(NES::Configurations::Descriptor);
+FMT_OSTREAM(NES::Descriptor);
 
 
 template <typename T>
-struct fmt::formatter<NES::Configurations::DescriptorConfig::ConfigParameter<T>> : ostream_formatter
+struct fmt::formatter<NES::DescriptorConfig::ConfigParameter<T>> : ostream_formatter
 {
 };

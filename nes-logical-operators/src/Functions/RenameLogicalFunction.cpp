@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Functions/RenameLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -20,7 +22,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/RenameLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -130,8 +131,8 @@ SerializableFunction RenameLogicalFunction::serialize() const
     serializedFunction.set_function_type(NAME);
     serializedFunction.add_children()->CopyFrom(child.serialize());
 
-    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
-    const SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    const DescriptorConfig::ConfigType configVariant = getNewFieldName();
+    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["NewFieldName"] = variantDescriptor;
 
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());

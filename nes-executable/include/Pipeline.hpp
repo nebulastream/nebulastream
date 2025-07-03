@@ -59,8 +59,8 @@ struct Pipeline
 
     friend std::ostream& operator<<(std::ostream& os, const Pipeline&);
 
-    [[nodiscard]] std::optional<Nautilus::Configurations::ExecutionMode> getExecutionMode() const;
-    void setExecutionMode(Nautilus::Configurations::ExecutionMode mode);
+    [[nodiscard]] std::optional<ExecutionMode> getExecutionMode() const;
+    void setExecutionMode(ExecutionMode mode);
 
     [[nodiscard]] const PhysicalOperator& getRootOperator() const;
     void setRootOperator(const PhysicalOperator& op);
@@ -80,7 +80,7 @@ struct Pipeline
     void removeSuccessor(const Pipeline& pipeline);
 
 private:
-    std::optional<Nautilus::Configurations::ExecutionMode> executionMode;
+    std::optional<ExecutionMode> executionMode;
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;

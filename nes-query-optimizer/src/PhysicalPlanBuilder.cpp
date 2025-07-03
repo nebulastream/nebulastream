@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <PhysicalPlanBuilder.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -23,7 +24,6 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
-#include <PhysicalPlanBuilder.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 
@@ -40,7 +40,7 @@ void PhysicalPlanBuilder::addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> s
     sinks.emplace_back(std::move(sink));
 }
 
-void PhysicalPlanBuilder::setExecutionMode(Nautilus::Configurations::ExecutionMode mode)
+void PhysicalPlanBuilder::setExecutionMode(ExecutionMode mode)
 {
     executionMode = mode;
 }

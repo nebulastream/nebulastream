@@ -29,14 +29,14 @@
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableVariantDescriptor.pb.h>
 
-namespace NES::Configurations
+namespace NES
 {
 
 Descriptor::Descriptor(DescriptorConfig::Config&& config) : config(std::move(config))
 {
 }
 
-SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurations::DescriptorConfig::ConfigType& var)
+SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig::ConfigType& var)
 {
     SerializableVariantDescriptor protoVar;
     std::visit(
@@ -80,7 +80,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
             {
                 protoVar.set_string_value(arg);
             }
-            else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
+            else if constexpr (std::is_same_v<U, NES::EnumWrapper>)
             {
                 protoVar.mutable_enum_value()->set_value(arg.getValue());
             }
@@ -109,7 +109,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
     return protoVar;
 }
 
-Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar)
+DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar)
 {
     switch (protoVar.value_case())
     {
@@ -132,7 +132,7 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
         case SerializableVariantDescriptor::kStringValue:
             return protoVar.string_value();
         case SerializableVariantDescriptor::kEnumValue:
-            return Configurations::EnumWrapper(protoVar.enum_value().value());
+            return EnumWrapper(protoVar.enum_value().value());
         case SerializableVariantDescriptor::kFunctionList:
             return protoVar.function_list();
         case SerializableVariantDescriptor::kAggregationFunctionList:

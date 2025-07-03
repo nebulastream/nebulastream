@@ -126,7 +126,7 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
 
-    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
+    const DescriptorConfig::ConfigType configVariant = getFieldName();
     const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
 

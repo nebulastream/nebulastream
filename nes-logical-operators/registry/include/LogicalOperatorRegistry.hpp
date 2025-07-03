@@ -34,7 +34,7 @@ struct LogicalOperatorRegistryArguments
     std::vector<OriginId> outputOriginIds;
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
-    NES::Configurations::DescriptorConfig::Config config;
+    DescriptorConfig::Config config;
 };
 
 class LogicalOperatorRegistry

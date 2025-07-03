@@ -19,14 +19,14 @@
 #include <Configurations/PrintingVisitor.hpp>
 #include <Configurations/ScalarOption.hpp>
 
-namespace NES::Configuration
+namespace NES
 {
 
-class SingleNodeWorkerConfiguration final : public NES::Configurations::BaseConfiguration
+class SingleNodeWorkerConfiguration final : public BaseConfiguration
 {
 public:
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-    NES::Configurations::StringOption grpcAddressUri
+    StringOption grpcAddressUri
         = {"grpc",
            "[::]:8080",
            R"(The address to try to bind to the server in URI form. If
@@ -42,6 +42,6 @@ protected:
 
 public:
     SingleNodeWorkerConfiguration() = default;
-    NES::Configurations::WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
+    WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
 };
 }
