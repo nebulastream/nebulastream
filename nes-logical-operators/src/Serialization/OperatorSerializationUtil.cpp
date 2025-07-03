@@ -58,7 +58,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         {
             config[key] = protoToDescriptorConfigType(value);
         }
-        auto sinkName = config[SinkLogicalOperator::ConfigParameters::SINK_NAME];
+        auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
         INVARIANT(std::holds_alternative<std::string>(sinkName), "Expected a string");
 
         auto sinkOperator = SinkLogicalOperator();
