@@ -472,21 +472,25 @@ def main():
                                                         COMBINED_ENGINE_STATISTICS_FILE,
                                                         COMBINED_BENCHMARK_STATISTICS_FILE,
                                                         engine_stats_csv_path,
-                                                        benchmark_stats_csv_path)
+                                                        benchmark_stats_csv_path,
+                                                        SERVER_NAME)
         failed_run_folders = post_processing.main()
 
         # Re-running all runs that failed
         if not failed_run_folders:
-            print("All benchmarks completed successfully.")
+            print(f"All benchmarks completed successfully in {attempt + 1} attempt(s).")
             break
         else:
-            print(f"{len(failed_run_folders)} runs failed. Retrying...")
-            ALL_BENCHMARK_CONFIGS = [
-                BenchmarkConfig.BenchmarkConfig(
-                    **yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')))
-                for failed_run in failed_run_folders
-            ]
+            print(f"{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...")
+            ALL_BENCHMARK_CONFIGS = []
+            for failed_run in failed_run_folders:
+                config_dict = yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r'))
+                config_dict["batch_size"] = 1000
+                ALL_BENCHMARK_CONFIGS.append(BenchmarkConfig.BenchmarkConfig(**config_dict))
     else:
+        with open(os.path.join(SOURCE_DIR, "failed_benchmarks.txt"), "w") as f:
+            for failed_run in failed_run_folders:
+                f.write(f"{failed_run}\n")
         print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
