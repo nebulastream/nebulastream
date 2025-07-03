@@ -227,8 +227,12 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         resultJson.push_back({
             {"query name", queryRan.systestQuery.testName},
             {"time", executionTimeInSeconds},
-            {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
-            {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
+            {"bytesPerSecond",
+             queryRan.bytesProcessed.has_value() ? static_cast<double>(queryRan.bytesProcessed.value()) / executionTimeInSeconds
+                                                 : std::numeric_limits<double>::quiet_NaN()},
+            {"tuplesPerSecond",
+             queryRan.tuplesProcessed.has_value() ? static_cast<double>(queryRan.tuplesProcessed.value()) / executionTimeInSeconds
+                                                  : std::numeric_limits<double>::quiet_NaN()},
         });
     }
     return failedQueries;
