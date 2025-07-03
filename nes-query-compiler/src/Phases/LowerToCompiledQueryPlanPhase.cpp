@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
@@ -136,17 +137,16 @@ void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>
     it->predecessor.emplace_back(predecessor);
 }
 
-std::unique_ptr<ExecutablePipelineStage>
-getStage(const std::shared_ptr<Pipeline>& pipeline, Nautilus::Configurations::ExecutionMode executionMode)
+std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline>& pipeline, ExecutionMode executionMode)
 {
     nautilus::engine::Options options;
     switch (executionMode)
     {
-        case Nautilus::Configurations::ExecutionMode::COMPILER: {
+        case ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
             break;
         }
-        case Nautilus::Configurations::ExecutionMode::INTERPRETER: {
+        case ExecutionMode::INTERPRETER: {
             options.setOption("engine.Compilation", false);
             break;
         }

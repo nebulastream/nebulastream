@@ -283,9 +283,8 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
         }
         proj.mutable_function()->CopyFrom(fn.serialize());
     }
-    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME]
-        = Configurations::descriptorConfigTypeToProto(projList);
-    (*serializableOperator.mutable_config())[ConfigParameters::ASTERISK] = Configurations::descriptorConfigTypeToProto(asterisk);
+    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(projList);
+    (*serializableOperator.mutable_config())[ConfigParameters::ASTERISK] = descriptorConfigTypeToProto(asterisk);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;

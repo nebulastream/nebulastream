@@ -15,7 +15,7 @@
 
 #include <algorithm>
 
-namespace NES::Configurations
+namespace NES
 {
 
 bool BooleanValidation::isValid(const std::string& parameter) const

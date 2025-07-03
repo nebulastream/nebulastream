@@ -17,20 +17,14 @@
 #include <string>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
-/**
-* @brief This class implements validation for parameters that should represent non-negative integers
-*/
+/// @brief This class implements validation for parameters that should represent non-negative integers
 class NumberValidation : public ConfigurationValidation
 {
 public:
-    /**
-     * @brief Method to check the validity of a parameter as a non-negative integer
-     * @param number number to validate
-     * @return true if the parameter is a valid non-negative integer, false otherwise
-     */
+    /// @brief Method to check the validity of a parameter as a non-negative integer
     bool isValid(const std::string& number) const override;
 };
 }

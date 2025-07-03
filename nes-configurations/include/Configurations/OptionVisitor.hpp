@@ -12,9 +12,11 @@
     limitations under the License.
 */
 #pragma once
-#include <Configurations/BaseOption.hpp>
 
-namespace NES::Configurations
+#include <string>
+#include <string_view>
+
+namespace NES
 {
 class BaseConfiguration;
 class OptionVisitor

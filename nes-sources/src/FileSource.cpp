@@ -66,9 +66,9 @@ size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const 
     return numBytesRead;
 }
 
-NES::Configurations::DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
 std::ostream& FileSource::toString(std::ostream& str) const

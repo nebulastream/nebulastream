@@ -17,7 +17,9 @@
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 
-std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfiguration::getOptions()
+namespace NES
+{
+std::vector<BaseOption*> SystestConfiguration::getOptions()
 {
     return {
         &testsDiscoverDir,
@@ -31,4 +33,5 @@ std::vector<NES::Configurations::BaseOption*> NES::Configuration::SystestConfigu
         &endlessMode,
         &excludeGroups,
         &grpcAddressUri};
+}
 }

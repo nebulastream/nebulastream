@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/SelectionLogicalOperator.hpp>
 
 #include <cstddef>
 #include <string>
@@ -22,7 +23,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -188,8 +188,7 @@ SerializableOperator SelectionLogicalOperator::serialize() const
     FunctionList funcList;
     auto* serializedFunction = funcList.add_functions();
     serializedFunction->CopyFrom(getPredicate().serialize());
-    (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME]
-        = Configurations::descriptorConfigTypeToProto(funcList);
+    (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;

@@ -46,7 +46,7 @@ protected:
                                              INITIAL<WorkerId>,
                                              "CSV",
                                              SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-                                             Configurations::DescriptorConfig::Config{},
+                                             DescriptorConfig::Config{},
                                              dummyParserConfig)
                                          .value();
         sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));

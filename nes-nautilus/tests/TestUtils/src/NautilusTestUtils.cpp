@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NautilusTestUtils.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -34,7 +35,6 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -49,7 +49,6 @@
 #include <nautilus/val_ptr.hpp>
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
-#include <NautilusTestUtils.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -93,12 +92,11 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
     /// We set the threshold to be 10k tuples.
     constexpr auto thresholdForCompile = 10 * 1000;
-    auto backend
-        = numberOfTuples > thresholdForCompile ? Configurations::ExecutionMode::COMPILER : Configurations::ExecutionMode::INTERPRETER;
+    auto backend = numberOfTuples > thresholdForCompile ? ExecutionMode::COMPILER : ExecutionMode::INTERPRETER;
     if (not compiledFunctions.contains({FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend}))
     {
         nautilus::engine::Options options;
-        const auto compilation = backend == Configurations::ExecutionMode::COMPILER;
+        const auto compilation = backend == ExecutionMode::COMPILER;
         options.setOption("engine.Compilation", compilation);
         const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
@@ -164,7 +162,7 @@ Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType:
 
 void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
-    Configurations::ExecutionMode backend,
+    ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema& schema,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
@@ -233,7 +231,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
-    const bool compilation = (backend == Configurations::ExecutionMode::COMPILER);
+    const bool compilation = (backend == ExecutionMode::COMPILER);
     options.setOption("engine.Compilation", compilation);
     auto engine = nautilus::engine::NautilusEngine(options);
     auto compiledFunction = engine.registerFunction(tmp);

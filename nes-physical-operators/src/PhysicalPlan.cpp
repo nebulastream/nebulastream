@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <PhysicalPlan.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -24,7 +25,6 @@
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
-#include <PhysicalPlan.hpp>
 #include <SourcePhysicalOperator.hpp>
 
 namespace NES
@@ -32,7 +32,7 @@ namespace NES
 PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
-    Nautilus::Configurations::ExecutionMode executionMode,
+    ExecutionMode executionMode,
     uint64_t operatorBufferSize)
     : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
 {
@@ -63,7 +63,7 @@ const PhysicalPlan::Roots& PhysicalPlan::getRootOperators() const
     return rootOperators;
 }
 
-Nautilus::Configurations::ExecutionMode PhysicalPlan::getExecutionMode() const
+ExecutionMode PhysicalPlan::getExecutionMode() const
 {
     return executionMode;
 }

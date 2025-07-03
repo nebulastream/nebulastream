@@ -61,7 +61,7 @@ public:
         WorkerId workerId,
         const std::string& sourceType,
         int buffersInLocalPool,
-        NES::Configurations::DescriptorConfig::Config&& descriptorConfig,
+        DescriptorConfig::Config&& descriptorConfig,
         const ParserConfig& parserConfig);
 
     /// @brief removes a physical source

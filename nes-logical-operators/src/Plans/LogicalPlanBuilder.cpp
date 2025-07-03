@@ -49,7 +49,7 @@ namespace NES
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
-    const NES::Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
+    const DescriptorConfig::Config sourceDescriptorConfig{};
     auto queryPlan = LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
     return queryPlan;
 }

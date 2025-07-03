@@ -57,7 +57,7 @@ public:
     void unregisterQuery(QueryId query) override;
     QuerySummary waitForQueryTermination(QueryId query) override;
     std::vector<QuerySummary> finishedQueries() override;
-    explicit LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration);
+    explicit LocalWorkerQuerySubmitter(const SingleNodeWorkerConfiguration& configuration);
 };
 
 /// Communicates via gRPC to a remote worker.

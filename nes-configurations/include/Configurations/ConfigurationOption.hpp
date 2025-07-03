@@ -25,13 +25,11 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 
-namespace NES::Configurations
+namespace NES
 {
 
-/**
- * @brief Template for a ConfigurationOption object
- * @tparam T template parameter, depends on ConfigOptions
- */
+/// @brief Template for a ConfigurationOption object
+/// @tparam T template parameter, depends on ConfigOptions
 template <class T>
 class ConfigurationOption
 {
@@ -41,11 +39,7 @@ public:
         return std::make_shared<ConfigurationOption>(ConfigurationOption(name, value, description));
     };
 
-    /**
-     * @brief converts a ConfigurationOption Object into human readable format
-     * @return string representation of the config
-     */
-    std::string toString()
+    [[nodiscard]] std::string toString() const
     {
         std::stringstream ss;
         ss << "Name: " << name << "\n";
@@ -55,56 +49,29 @@ public:
         return ss.str();
     }
 
-    /**
-     * @brief converts config object to human readable form, only prints name and current value
-     * @return Name: current Value of config object
-     */
-    std::string toStringNameCurrentValue()
+    /// @brief converts config object to human readable form, only prints name and current value
+    [[nodiscard]] std::string toStringNameCurrentValue() const
     {
         std::stringstream ss;
         ss << name << ": " << value << "\n";
         return ss.str();
     }
 
-    /**
-     * @brief converts config object to human readable form, only prints name and current value
-     * @return Name: current Value of config object
-     */
-    std::string toStringNameCurrentValueEnum()
+    /// @brief converts config object to human readable form, only prints name and current value
+    [[nodiscard]] std::string toStringNameCurrentValueEnum() const
     {
         std::stringstream ss;
         ss << name << ": " << magic_enum::enum_name(value) << "\n";
         return ss.str();
     }
 
-    /**
-     * @brief converts the value of this object into a string
-     * @return string of the value of this object
-     */
+    /// @brief converts the value of this object into a string
     [[nodiscard]] std::string getValueAsString() const { return std::to_string(value); };
 
-    /**
-     * @brief get the name of the ConfigurationOption Object
-     * @return name of the config
-     */
-    std::string getName() { return name; }
-
-    /**
-     * @brief get the value of the ConfigurationOption Object
-     * @return the value of the config if not set then default value
-     */
+    std::string getName() const { return name; }
     [[nodiscard]] T getValue() const { return value; };
-
-    /**
-     * @brief sets the value
-     * @param value: the value to be used
-     */
     void setValue(T value) { this->value = value; }
 
-    /**
-     * @brief sets the value if it is defined
-     * @param yamlNode: the yaml field name to be used
-     */
     void setValueIfDefined(YAML::Node yamlNode)
     {
         if (!yamlNode.IsNull())
@@ -113,23 +80,9 @@ public:
         }
     }
 
-    /**
-     * @brief get the description of this parameter
-     * @return description of the config
-     */
     [[nodiscard]] std::string getDescription() const { return description; };
-
-    /**
-     * @brief get the default value of this parameter
-     * @return: the default value
-     */
     [[nodiscard]] T getDefaultValue() const { return defaultValue; };
 
-    /**
-     * @brief perform equality check between two config options
-     * @param other: other config option
-     * @return true if equal else return false
-     */
     bool equals(const std::any& other)
     {
         if (this == other)
@@ -145,10 +98,7 @@ public:
         return false;
     };
 
-    /**
-     * @brief converts a string to the appropriate InputFormat enum value and sets it
-     * @param inputFormat
-     */
+    /// @brief converts a string to the appropriate InputFormat enum value and sets it
     void setInputFormatEnum(std::string inputFormat)
     {
         if (inputFormat == "CSV")
@@ -162,12 +112,6 @@ public:
     }
 
 private:
-    /**
-     * @brief Constructs a ConfigurationOption<T> object
-     * @param name the name of the object
-     * @param value the value of the object
-     * @param description default value of the object
-     */
     explicit ConfigurationOption(std::string name, T value, std::string description)
         : name(std::move(name)), description(std::move(description)), value(value), defaultValue(value)
     {

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Pipeline.hpp>
 
 #include <Pipeline.hpp>
 
@@ -199,7 +200,7 @@ std::ostream& operator<<(std::ostream& os, const Pipeline& p)
     return os;
 }
 
-std::optional<Nautilus::Configurations::ExecutionMode> Pipeline::getExecutionMode() const
+std::optional<ExecutionMode> Pipeline::getExecutionMode() const
 {
     return executionMode;
 }
@@ -224,7 +225,7 @@ std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& Pipelin
     return operatorHandlers;
 }
 
-void Pipeline::setExecutionMode(Nautilus::Configurations::ExecutionMode mode)
+void Pipeline::setExecutionMode(ExecutionMode mode)
 {
     executionMode = mode;
 }

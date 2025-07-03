@@ -17,7 +17,7 @@
 #include <regex>
 #include <string>
 
-namespace NES::Configurations
+namespace NES
 {
 
 bool NumberValidation::isValid(const std::string& parameter) const

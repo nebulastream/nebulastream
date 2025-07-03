@@ -36,7 +36,7 @@ classDiagram
             const shared_ptr~Schema~ schema
             const string logicalSourceName
             const string sourceType
-            const Configurations::InputFormat inputFormat
+            const InputFormat inputFormat
         }
         class SourceHandle {
             + virtual void start()

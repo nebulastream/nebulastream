@@ -17,20 +17,14 @@
 #include <string>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
-/**
-    * @brief This class implements validation for parameters that should represent booleans
-    */
+/// @brief This class implements validation for parameters that should represent booleans
 class BooleanValidation : public ConfigurationValidation
 {
 public:
-    /**
-         * @brief Method to check the validity of a parameter as a bool
-         * @param boolean number to validate
-         * @return true if the parameter is a valid bool, false otherwise
-         */
+    /// @brief Method to check the validity of a parameter as a bool
     bool isValid(const std::string& boolean) const override;
 };
 }

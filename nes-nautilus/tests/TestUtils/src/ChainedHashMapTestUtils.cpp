@@ -67,13 +67,11 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<DataType::Type>& keyTypes,
-    const std::vector<DataType::Type>& valueTypes,
-    const Nautilus::Configurations::ExecutionMode backend)
+    const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, const ExecutionMode backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend
     nautilus::engine::Options options;
-    const bool compilation = (backend == Nautilus::Configurations::ExecutionMode::COMPILER);
+    const bool compilation = (backend == ExecutionMode::COMPILER);
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);

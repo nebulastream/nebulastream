@@ -101,8 +101,7 @@ std::vector<QuerySummary> LocalWorkerQuerySubmitter::finishedQueries()
         return results;
     }
 }
-LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : worker(configuration)
+LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const SingleNodeWorkerConfiguration& configuration) : worker(configuration)
 {
 }
 std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)

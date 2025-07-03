@@ -23,7 +23,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/PrintingVisitor.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 template <typename T>
 void generateHelp(std::ostream& ostream)

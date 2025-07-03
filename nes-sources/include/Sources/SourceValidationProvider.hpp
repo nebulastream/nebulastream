@@ -19,6 +19,5 @@
 
 namespace NES::Sources::SourceValidationProvider
 {
-NES::Configurations::DescriptorConfig::Config
-provide(const std::string& sourceType, std::unordered_map<std::string, std::string> stringConfig);
+DescriptorConfig::Config provide(const std::string& sourceType, std::unordered_map<std::string, std::string> stringConfig);
 }

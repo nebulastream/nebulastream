@@ -149,7 +149,7 @@ SerializableOperator SinkLogicalOperator::serialize() const
     }
 
     SerializableOperator serializableOperator;
-    const Configurations::DescriptorConfig::ConfigType timeVariant = sinkName;
+    const DescriptorConfig::ConfigType timeVariant = sinkName;
     (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
 
     serializableOperator.set_operator_id(id.getRawValue());
