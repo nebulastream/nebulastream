@@ -12,18 +12,24 @@
     limitations under the License.
 */
 
+#include <QueryOptimizer.hpp>
+
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
-#include <QueryOptimizer.hpp>
 
 namespace NES
 {
 PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
 {
+    return optimize(plan, defaultQueryExecution);
+}
+
+PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, QueryExecutionConfiguration defaultQueryExecution)
+{
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just lower to physical operators in a pure function.
-    return LowerToPhysicalOperators::apply(plan, conf);
+    return LowerToPhysicalOperators::apply(plan, defaultQueryExecution);
 }
 
 }

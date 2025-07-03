@@ -45,16 +45,16 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
-    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecutionConfiguration))
+    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
     if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
-        < configuration.workerConfiguration.defaultQueryExecutionConfiguration.operatorBufferSize.getValue())
+        < configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue())
     {
         throw InvalidConfigParameter(
             "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
-            configuration.workerConfiguration.defaultQueryExecutionConfiguration.operatorBufferSize.getValue());
+            configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
     }
 }
 

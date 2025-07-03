@@ -71,12 +71,12 @@ jobs:
               --data build/nes-systests/testdata \
               --groups large \
               -- \
-              --worker.queryOptimizer.executionMode=COMPILER \
+              --worker.defaultQueryExecution.executionMode=COMPILER \
               --worker.queryEngine.numberOfWorkerThreads=${{ inputs.number_of_worker_threads }} \
-              --worker.queryOptimizer.operatorBufferSize=${{ inputs.buffer_size }} \
+              --worker.defaultQueryExecution.operatorBufferSize=${{ inputs.buffer_size }} \
               --worker.bufferSizeInBytes=${{ inputs.buffer_size }} \
-              --worker.queryOptimizer.pageSize=${{ inputs.page_size }} \
-              --worker.queryOptimizer.numberOfPartitions=${{ inputs.number_of_partitions }} \
+              --worker.defaultQueryExecution.pageSize=${{ inputs.page_size }} \
+              --worker.defaultQueryExecution.numberOfPartitions=${{ inputs.number_of_partitions }} \
               --worker.numberOfBuffersInGlobalBufferManager=200000
 
       - name: Upload Test Logs on Failure
