@@ -52,12 +52,13 @@ message SerializableSourceDescriptorLogicalOperator
 
 message SerializableSinkLogicalOperator
 {
-  SerializableSinkDescriptor sinkDescriptor = 1;
+  string sinkName = 1;
+  optional SerializableSinkDescriptor sinkDescriptor = 2;
   message OriginList {
     repeated uint64 origin_ids = 1;
   }
-  repeated OriginList input_origin_lists = 2;
-  repeated uint64 output_origin_ids = 3;
+  repeated OriginList input_origin_lists = 3;
+  repeated uint64 output_origin_ids = 4;
 }
 
 message SerializableLogicalOperator {

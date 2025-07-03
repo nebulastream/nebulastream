@@ -15,6 +15,7 @@
 #include <Serialization/OperatorSerializationUtil.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -51,7 +52,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     if (serializedOperator.has_sink())
     {
         const auto& sink = serializedOperator.sink();
-        const auto& serializedSinkDescriptor = sink.sinkdescriptor();
+        const auto serializedSinkDescriptor = sink.has_sinkdescriptor() ? std::make_optional(sink.sinkdescriptor()) : std::nullopt;
         DescriptorConfig::Config config;
         for (const auto& [key, value] : serializedOperator.config())
         {
@@ -83,7 +84,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         }
         sinkOperator = sinkOperator.withOutputOriginIds(outputIds).get<SinkLogicalOperator>();
 
-        sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+        sinkOperator.sinkDescriptor
+            = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
 
         return sinkOperator;
     }

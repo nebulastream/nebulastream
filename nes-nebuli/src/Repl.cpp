@@ -27,17 +27,17 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <YAML/YAMLBinder.hpp>
 #include <ErrorHandling.hpp>
-#include <GRPCClient.hpp>
 #include <LegacyOptimizer.hpp>
 #include <replxx.hxx>
 
 namespace NES
 {
 
-Repl::Repl(std::shared_ptr<GRPCClient> client)
+Repl::Repl(std::shared_ptr<QueryManager> client)
     : grpcClient(std::move(client)), interactiveMode((isatty(STDIN_FILENO) != 0) and (isatty(STDOUT_FILENO) != 0))
 {
     if (interactiveMode)
@@ -295,25 +295,42 @@ std::string Repl::readMultiLineQuery() const
 
 bool Repl::executeQuery(const std::string& query)
 {
-    try
+    std::expected<LogicalPlan, Exception> optimizedPlan = [&]() -> std::expected<LogicalPlan, Exception>
     {
-        auto yamlBinder = CLI::YAMLBinder{sourceCatalog, sinkCatalog};
-        auto optimizer = CLI::LegacyOptimizer{sourceCatalog, sinkCatalog};
-        auto logicalPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        auto optimizedPlan = optimizer.optimize(logicalPlan);
+        try
+        {
+            auto yamlBinder = CLI::YAMLBinder{copyPtr(sourceCatalog), copyPtr(sinkCatalog)};
+            auto optimizer = CLI::LegacyOptimizer{copyPtr(sourceCatalog), copyPtr(sinkCatalog)};
+            auto logicalPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            auto optimizedPlan = optimizer.optimize(logicalPlan);
+            return optimizedPlan;
+        }
+        catch (const Exception& e)
+        {
+            return std::unexpected{e};
+        }
+    }();
 
-        auto queryId = grpcClient->registerQuery(optimizedPlan);
-        std::cout << "Query registered with ID: " << queryId << "\n";
-
-        grpcClient->start(QueryId{queryId});
-        std::cout << "Query started successfully.\n";
-        return true;
-    }
-    catch (const Exception& e)
+    if (not optimizedPlan.has_value())
     {
-        std::cout << "Error executing query: " << e.what() << "\n";
+        std::cout << std::format("Error executing query: {}\n", optimizedPlan.error().what());
         return false;
     }
+
+    auto queryIdExpected = grpcClient->registerQuery(optimizedPlan.value());
+    if (not queryIdExpected.has_value())
+    {
+        std::cout << fmt::format("Failed to register query: {}\n", queryIdExpected.error().what());
+        return false;
+    }
+    std::cout << fmt::format("Query registered with ID: {}\n", queryIdExpected.value());
+
+    if (const auto started = grpcClient->start(queryIdExpected.value()); not started.has_value())
+    {
+        std::cout << fmt::format("Failed to start query {}: {}\n", queryIdExpected.value(), started.error().what());
+    }
+    std::cout << "Query started successfully.\n";
+    return true;
 }
 
 void Repl::run()

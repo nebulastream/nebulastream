@@ -207,18 +207,18 @@ public:
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
     SystestQuery build() &&
     {
-        INVARIANT(not built, "Cannot build a SystestQuery twice");
+        PRECONDITION(not built, "Cannot build a SystestQuery twice");
         built = true;
-        INVARIANT(testName.has_value(), "Test name has not been set");
-        INVARIANT(testFilePath.has_value(), "Test file path has not been set");
-        INVARIANT(workingDir.has_value(), "Working directory has not been set");
-        INVARIANT(queryDefinition.has_value(), "Query definition has not been set");
-        INVARIANT(expectedResultsOrError.has_value(), "Expected results or error has not been set");
+        PRECONDITION(testName.has_value(), "Test name has not been set");
+        PRECONDITION(testFilePath.has_value(), "Test file path has not been set");
+        PRECONDITION(workingDir.has_value(), "Working directory has not been set");
+        PRECONDITION(queryDefinition.has_value(), "Query definition has not been set");
+        PRECONDITION(expectedResultsOrError.has_value(), "Expected results or error has not been set");
         const auto createPlanInfoOrException = [this]() -> std::expected<SystestQuery::PlanInfo, Exception>
         {
             if (not exception.has_value())
             {
-                INVARIANT(
+                PRECONDITION(
                     boundPlan.has_value() && optimizedPlan.has_value() && sourcesToFilePathsAndCounts.has_value()
                         && sinkOutputSchema.has_value() && additionalSourceThreads.has_value(),
                     "Neither optimized plan nor an exception has been set");
