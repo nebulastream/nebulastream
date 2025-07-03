@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Functions/FieldAccessLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -121,7 +122,7 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
 
-    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
+    const DescriptorConfig::ConfigType configVariant = getFieldName();
     const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
 

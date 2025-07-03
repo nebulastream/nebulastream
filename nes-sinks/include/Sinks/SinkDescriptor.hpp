@@ -26,13 +26,13 @@
 namespace NES::Sinks
 {
 
-struct SinkDescriptor final : NES::Configurations::Descriptor
+struct SinkDescriptor final : Descriptor
 {
-    explicit SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
+    explicit SinkDescriptor(std::string sinkType, DescriptorConfig::Config&& config, bool addTimestamp);
     ~SinkDescriptor() = default;
 
     /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.
-    static NES::Configurations::DescriptorConfig::Config
+    static DescriptorConfig::Config
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
     [[nodiscard]] NES::SerializableSinkDescriptor serialize() const;

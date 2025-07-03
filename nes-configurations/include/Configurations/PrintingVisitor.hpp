@@ -18,7 +18,7 @@
 #include <string_view>
 #include <Configurations/OptionVisitor.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 class PrintingVisitor final : public OptionVisitor
 {

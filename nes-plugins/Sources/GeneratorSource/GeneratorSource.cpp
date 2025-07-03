@@ -117,9 +117,9 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
     return str;
 }
 
-NES::Configurations::DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType

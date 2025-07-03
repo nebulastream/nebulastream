@@ -21,7 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <yaml-cpp/yaml.h>
 
-namespace NES::Configurations
+namespace NES
 {
 
 /// This class is the bases for all configuration.
@@ -40,9 +40,6 @@ public:
 
     /// @param inputParams map with key=command line parameter and value = value
     void overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams);
-
-    /// @param withOverwrite false if workerId is not in yaml file, true if it is and has to be changed
-    bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite);
 
     /// clears all options and set the default values
     void clear() override;

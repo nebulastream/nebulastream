@@ -31,8 +31,6 @@
 namespace NES
 {
 
-using namespace Configurations;
-
 class ConfigHelpMessageTest : public Testing::BaseIntegrationTest
 {
 public:
@@ -75,7 +73,7 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
     };
 
     std::stringstream ss;
-    Configurations::generateHelp<TestConfig>(ss);
+    generateHelp<TestConfig>(ss);
 
     EXPECT_EQ(
         ss.str(),

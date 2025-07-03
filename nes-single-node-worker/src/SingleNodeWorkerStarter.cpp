@@ -29,7 +29,7 @@ int main(const int argc, const char* argv[])
     CPPTRACE_TRY
     {
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
-        auto configuration = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
+        auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {
             return 0;

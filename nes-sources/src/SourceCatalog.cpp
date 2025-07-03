@@ -68,7 +68,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     WorkerId workerId,
     const std::string& sourceType,
     const int buffersInLocalPool,
-    Configurations::DescriptorConfig::Config&& descriptorConfig,
+    DescriptorConfig::Config&& descriptorConfig,
     const ParserConfig& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);

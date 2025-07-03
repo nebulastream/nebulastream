@@ -264,8 +264,7 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
     {
         *funcList.add_functions() = fn.serialize();
     }
-    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME]
-        = Configurations::descriptorConfigTypeToProto(funcList);
+    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;

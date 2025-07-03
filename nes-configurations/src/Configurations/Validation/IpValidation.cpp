@@ -18,7 +18,7 @@
 #include <regex>
 #include <string>
 
-namespace NES::Configurations
+namespace NES
 {
 bool IpValidation::isValid(const std::string& ip) const
 {

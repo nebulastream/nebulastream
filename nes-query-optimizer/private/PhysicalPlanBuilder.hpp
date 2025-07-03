@@ -34,7 +34,7 @@ class PhysicalPlanBuilder final
 public:
     explicit PhysicalPlanBuilder(QueryId id);
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
-    void setExecutionMode(Nautilus::Configurations::ExecutionMode mode);
+    void setExecutionMode(ExecutionMode mode);
     void setOperatorBufferSize(uint64_t bufferSize);
 
     /// R-value as finalize should be called once at the end, with a move() to 'build' the plan.
@@ -43,7 +43,7 @@ public:
 private:
     QueryId queryId;
     Roots sinks;
-    Nautilus::Configurations::ExecutionMode executionMode;
+    ExecutionMode executionMode;
     uint64_t operatorBufferSize{};
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink

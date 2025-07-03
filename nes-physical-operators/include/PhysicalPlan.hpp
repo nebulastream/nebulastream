@@ -38,19 +38,19 @@ public:
 
     [[nodiscard]] QueryId getQueryId() const;
     [[nodiscard]] const Roots& getRootOperators() const;
-    [[nodiscard]] Nautilus::Configurations::ExecutionMode getExecutionMode() const;
+    [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
 
 private:
     QueryId queryId;
     Roots rootOperators;
-    Nautilus::Configurations::ExecutionMode executionMode;
+    ExecutionMode executionMode;
     uint64_t operatorBufferSize;
 
     [[nodiscard]] std::string toString() const;
 
     friend class PhysicalPlanBuilder;
-    PhysicalPlan(QueryId id, Roots rootOperators, Nautilus::Configurations::ExecutionMode executionMode, uint64_t operatorBufferSize);
+    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
 };
 }
 FMT_OSTREAM(NES::PhysicalPlan);

@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 /// This class implements sequential options of a type that has to be a subtype of the BaseOption.
