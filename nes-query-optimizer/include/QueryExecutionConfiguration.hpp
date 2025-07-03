@@ -31,62 +31,48 @@ namespace NES
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
+
 enum class StreamJoinStrategy : uint8_t
 {
     NESTED_LOOP_JOIN
 };
-enum class DumpMode : uint8_t
-{
-    /// Disables all dumping
-    NONE,
-    /// Dumps intermediate representations to console, std:out
-    CONSOLE,
-    /// Dumps intermediate representations to file
-    FILE,
-    /// Dumps intermediate representations to console and file
-    FILE_AND_CONSOLE
-};
 
-class QueryOptimizerConfiguration : public BaseConfiguration
+class QueryExecutionConfiguration : public BaseConfiguration
 {
 public:
-    QueryOptimizerConfiguration() = default;
-    QueryOptimizerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    QueryExecutionConfiguration() = default;
+    QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
-    NES::Configurations::EnumOption<DumpMode> dumpMode
-        = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
-    NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
-    NES::Configurations::EnumOption<Nautilus::Configurations::ExecutionMode> executionMode
+    EnumOption<ExecutionMode> executionMode
         = {"executionMode",
-           Nautilus::Configurations::ExecutionMode::COMPILER,
-           "ExecutionMode for the query compiler "
+           ExecutionMode::COMPILER,
+           "Execution mode for the query compiler"
            "[COMPILER|INTERPRETER]."};
-    NES::Configurations::UIntOption numberOfPartitions
+    UIntOption numberOfPartitions
         = {"numberOfPartitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption pageSize
+           {std::make_shared<NumberValidation>()}};
+    UIntOption pageSize
         = {"pageSize",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption operatorBufferSize
+           {std::make_shared<NumberValidation>()}};
+    UIntOption operatorBufferSize
         = {"operatorBufferSize",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
-           {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
+           {std::make_shared<NumberValidation>()}};
+    EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
-           "WindowingStrategy"
-           "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
-    NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+           "joinStrategy"
+           "[NESTED_LOOP_JOIN]. "};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath, &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &operatorBufferSize};
     }
 };
 

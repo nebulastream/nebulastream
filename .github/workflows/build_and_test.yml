@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
+          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
       - name: Run Tests
         run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
       - uses: actions/upload-artifact@v4
