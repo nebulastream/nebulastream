@@ -15,31 +15,33 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <ErrorHandling.hpp>
 #include <Util/Pointers.hpp>
-#include <experimental/propagate_const>
-#include <GRPCClient.hpp>
 
-namespace NES::CLI
+
+namespace NES
+{
+class LogicalPlan;
+}
+
+namespace NES
 {
 
-class Nebuli
+class QueryManager
 {
-    SharedPtr<GRPCClient> grpcClient;
-
 public:
-    explicit Nebuli(const std::shared_ptr<GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
-
-    QueryId registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId queryId);
-    void stopQuery(QueryId queryId);
-    void unregisterQuery(QueryId queryId);
+    virtual ~QueryManager() = default;
+    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept = 0;
+    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
+    [[nodiscard]] virtual std::optional<QuerySummary> status(QueryId queryId) const = 0;
 };
 }
