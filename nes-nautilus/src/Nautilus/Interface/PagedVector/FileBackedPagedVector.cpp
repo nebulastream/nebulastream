@@ -332,7 +332,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        auto& lastPage = pages.getLastPage();
+        const auto& lastPage = pages.getLastPage();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto* lastPagePtr = const_cast<int8_t*>(lastPage.getBuffer()) + numTuplesLastPage * memoryLayout->getTupleSize();
 
