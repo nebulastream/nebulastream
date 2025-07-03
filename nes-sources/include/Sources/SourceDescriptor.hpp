@@ -48,7 +48,7 @@ struct ParserConfig
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
 
-class SourceDescriptor final : public NES::Configurations::Descriptor
+class SourceDescriptor final : public Descriptor
 {
 public:
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
@@ -96,7 +96,7 @@ private:
         WorkerId workerId,
         std::string sourceType,
         int32_t numberOfBuffersInLocalPool,
-        NES::Configurations::DescriptorConfig::Config&& config,
+        DescriptorConfig::Config&& config,
         ParserConfig parserConfig);
 };
 

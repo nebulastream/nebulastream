@@ -41,7 +41,7 @@ PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
-        case Configurations::InputFormat::CSV:
+        case InputFormat::CSV:
             outputParser = std::make_unique<CSVFormat>(sinkDescriptor.schema);
             break;
         default:
@@ -70,9 +70,9 @@ std::ostream& PrintSink::toString(std::ostream& str) const
     return str;
 }
 
-Configurations::DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)

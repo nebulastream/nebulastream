@@ -167,15 +167,13 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
         {
             throw UnknownSourceName("{}", logicalSourceName);
         }
-        PRECONDITION(
-            sourceConfig.contains(std::string{Configurations::SOURCE_TYPE_CONFIG}),
-            "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
-        auto sourceType = sourceConfig.at(std::string{Configurations::SOURCE_TYPE_CONFIG});
+        PRECONDITION(sourceConfig.contains(std::string{SOURCE_TYPE_CONFIG}), "Missing `SOURCE_TYPE_CONFIG` in source configuration");
+        auto sourceType = sourceConfig.at(std::string{SOURCE_TYPE_CONFIG});
         NES_DEBUG("Source type is: {}", sourceType);
 
         auto buffersInLocalPool = SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL;
 
-        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(std::string{Configurations::NUMBER_OF_BUFFERS_IN_LOCAL_POOL});
+        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(std::string{NUMBER_OF_BUFFERS_IN_LOCAL_POOL});
             configuredNumSourceLocalBuffers != sourceConfig.end())
         {
             if (const auto customBuffersInLocalPool = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))

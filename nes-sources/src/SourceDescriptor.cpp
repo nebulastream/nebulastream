@@ -73,7 +73,7 @@ SourceDescriptor::SourceDescriptor(
     const WorkerId workerId,
     std::string sourceType,
     const int numberOfBuffersInLocalPool,
-    Configurations::DescriptorConfig::Config&& config,
+    DescriptorConfig::Config&& config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)

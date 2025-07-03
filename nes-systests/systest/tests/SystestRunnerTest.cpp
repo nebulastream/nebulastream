@@ -67,7 +67,7 @@ NES::Systest::SystestQuery makeQuery(
         "test_query",
         NES::INVALID<NES::Systest::SystestQueryId>,
         SYSTEST_DATA_DIR "filter.dummy",
-        NES::Configuration::SystestConfiguration{}.workingDir.getValue(),
+        NES::SystestConfiguration{}.workingDir.getValue(),
         "SELECT * FROM test",
         planInfoOrException,
         std::move(expected),

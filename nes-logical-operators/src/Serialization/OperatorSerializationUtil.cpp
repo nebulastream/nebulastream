@@ -51,10 +51,10 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     {
         const auto& sink = serializedOperator.sink();
         const auto& serializedSinkDescriptor = sink.sinkdescriptor();
-        NES::Configurations::DescriptorConfig::Config config;
+        DescriptorConfig::Config config;
         for (const auto& [key, value] : serializedOperator.config())
         {
-            config[key] = NES::Configurations::protoToDescriptorConfigType(value);
+            config[key] = protoToDescriptorConfigType(value);
         }
         auto sinkName = config[SinkLogicalOperator::ConfigParameters::SINK_NAME];
         INVARIANT(std::holds_alternative<std::string>(sinkName), "Expected a string");
@@ -68,10 +68,10 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
     if (serializedOperator.has_operator_())
     {
-        NES::Configurations::DescriptorConfig::Config config;
+        DescriptorConfig::Config config;
         for (const auto& [key, value] : serializedOperator.config())
         {
-            config[key] = NES::Configurations::protoToDescriptorConfigType(value);
+            config[key] = protoToDescriptorConfigType(value);
         }
 
         auto registryArgument = NES::LogicalOperatorRegistryArguments{
@@ -139,10 +139,10 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
-    Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
+    DescriptorConfig::Config sourceDescriptorConfig{};
     for (const auto& [key, value] : sourceDescriptor.config())
     {
-        sourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        sourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
     return SourceDescriptor{
@@ -164,10 +164,10 @@ OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescr
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
-    NES::Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
+    DescriptorConfig::Config sinkDescriptorConfig{};
     for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
     {
-        sinkDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(desciptor);
+        sinkDescriptorConfig[key] = protoToDescriptorConfigType(desciptor);
     }
 
     auto sinkDescriptor

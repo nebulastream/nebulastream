@@ -28,7 +28,7 @@ namespace NES
 using LogicalFunctionRegistryReturnType = LogicalFunction;
 struct LogicalFunctionRegistryArguments
 {
-    NES::Configurations::DescriptorConfig::Config config;
+    DescriptorConfig::Config config;
     std::vector<LogicalFunction> children;
     DataType dataType;
 };

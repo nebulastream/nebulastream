@@ -194,7 +194,7 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 }
 
 
-TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
+TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     if (not config.directlySpecifiedTestFiles.getValue().empty()) /// load specifc test file
     {

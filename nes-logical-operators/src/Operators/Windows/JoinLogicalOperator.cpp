@@ -280,16 +280,15 @@ SerializableOperator JoinLogicalOperator::serialize() const
     FunctionList list;
     auto* serializedFunction = list.add_functions();
     serializedFunction->CopyFrom(getJoinFunction().serialize());
-    const NES::Configurations::DescriptorConfig::ConfigType functionList = list;
+    const DescriptorConfig::ConfigType functionList = list;
 
-    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_FUNCTION] = Configurations::descriptorConfigTypeToProto(functionList);
-    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE]
-        = Configurations::descriptorConfigTypeToProto(Configurations::EnumWrapper(joinType));
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
+    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_FUNCTION] = descriptorConfigTypeToProto(functionList);
+    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE] = descriptorConfigTypeToProto(EnumWrapper(joinType));
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
+        = descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
+        = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
@@ -306,11 +305,11 @@ LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOpera
     auto windowStartVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
     auto windowEndVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
-    if (std::holds_alternative<NES::FunctionList>(functionVariant) and std::holds_alternative<Configurations::EnumWrapper>(joinTypeVariant)
+    if (std::holds_alternative<NES::FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
         and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant))
     {
         auto functions = std::get<FunctionList>(functionVariant).functions();
-        auto joinType = std::get<Configurations::EnumWrapper>(joinTypeVariant);
+        auto joinType = std::get<EnumWrapper>(joinTypeVariant);
         auto windowStartFieldName = std::get<std::string>(windowStartVariant);
         auto windowEndFieldName = std::get<std::string>(windowEndVariant);
 

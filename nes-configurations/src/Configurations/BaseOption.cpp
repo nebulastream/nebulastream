@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <string>
 #include <Configurations/BaseOption.hpp>
 
-namespace NES::Configurations
+#include <string>
+
+namespace NES
 {
 
 BaseOption::BaseOption(const std::string& name, const std::string& description) : name(name), description(description) { };

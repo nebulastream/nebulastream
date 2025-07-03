@@ -152,7 +152,7 @@ using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
-TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
+TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 }
 

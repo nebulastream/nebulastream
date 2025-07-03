@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 
 #include <cstdint>
 #include <string>
@@ -22,7 +23,6 @@
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -189,10 +189,10 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
 
     FunctionList funcList;
     *funcList.add_functions() = onField.serialize();
-    const Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
+    const DescriptorConfig::ConfigType funcVariant = std::move(funcList);
     (*serializableOperator.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
 
-    const Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
+    const DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
     (*serializableOperator.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);

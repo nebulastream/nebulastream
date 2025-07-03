@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
 
-namespace NES::Configurations
+namespace NES
 {
 
 class OptionVisitor;

@@ -88,9 +88,9 @@ void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecu
     checksum.add(formatted);
 }
 
-Configurations::DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType

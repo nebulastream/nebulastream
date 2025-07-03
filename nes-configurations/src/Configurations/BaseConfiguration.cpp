@@ -16,23 +16,17 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>
 #include <exception>
-#include <filesystem>
-#include <fstream>
-#include <ios>
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/OptionVisitor.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) { };
@@ -185,77 +179,15 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
     }
 };
 
-std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
+std::unordered_map<std::string, BaseOption*> BaseConfiguration::getOptionMap()
 {
-    std::unordered_map<std::string, Configurations::BaseOption*> optionMap;
+    std::unordered_map<std::string, BaseOption*> optionMap;
     for (auto* option : getOptions())
     {
         auto identifier = option->getName();
         optionMap[identifier] = option;
     }
     return optionMap;
-}
-
-bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite)
-{
-    std::ifstream configFile(yamlFilePath);
-    std::stringstream ss;
-    std::string searchKey = "workerId: ";
-
-    if (!withOverwrite)
-    {
-        std::string yamlValueAsString = workerId.toString();
-        std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
-
-        if (!yamlFilePath.empty())
-        {
-            if (!std::filesystem::exists(yamlFilePath))
-            {
-                NES_WARNING("Worker.yaml was not found. Creating a new file.");
-            }
-            configFile >> ss.rdbuf();
-            try
-            {
-                std::ofstream output;
-                output.open(yamlFilePath, std::ios::app); /// append mode
-                output << yamlConfigValue;
-            }
-            catch (const std::exception& e)
-            {
-                throw InvalidConfigParameter("Exception while persisting in yaml file", e.what());
-            }
-        }
-        else
-        {
-            NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
-            return false;
-        }
-    }
-    else
-    {
-        ss << configFile.rdbuf();
-        std::string yamlContent = ss.str();
-
-        size_t startPos = yamlContent.find(searchKey);
-        if (startPos != std::string::npos)
-        {
-            /// move the position to the start of the value
-            startPos += searchKey.size();
-            /// find the end of the line
-            size_t endPos = yamlContent.find('\n', startPos);
-            /// replace the old value with the new value for workerId
-            yamlContent.replace(startPos, endPos - startPos, workerId.toString());
-        }
-        else
-        {
-            return false;
-        }
-
-        std::ofstream output(yamlFilePath);
-        output << yamlContent;
-    }
-    configFile.close();
-    return true;
 }
 
 }

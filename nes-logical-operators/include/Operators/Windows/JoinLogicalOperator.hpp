@@ -82,39 +82,35 @@ public:
 
     struct ConfigParameters
     {
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<NES::Configurations::EnumWrapper, JoinType> JOIN_TYPE{
+        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, JoinType> JOIN_TYPE{
             "joinType",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
 
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<NES::Configurations::EnumWrapper, FunctionList>
-            JOIN_FUNCTION{
-                "joinFunctionName",
-                std::nullopt,
-                [](const std::unordered_map<std::string, std::string>& config)
-                { return NES::Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config); }};
+        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FunctionList> JOIN_FUNCTION{
+            "joinFunctionName",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
 
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
             "windowStartFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
+            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
 
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
             "windowEndFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
+            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
 
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
+        static inline const DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
             "windowInfo",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
 
-        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(
+        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+            = DescriptorConfig::createConfigParameterContainerMap(
                 JOIN_TYPE, JOIN_FUNCTION, WINDOW_INFOS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
     };
 
