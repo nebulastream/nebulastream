@@ -143,8 +143,8 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.maxNumFileDescriptors={current_benchmark_config.max_num_file_descriptors} " \
           f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
           f"--worker.queryOptimizer.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
-        # print(f"Starting the systest with {cmd}")
-    process = subprocess.Popen(cmd, shell=True)  # , cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
+    # print(f"Starting the systest with {cmd}")
+    process = subprocess.Popen(cmd, shell=True, cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
     pid = process.pid
     print(f"Started systest with pid {pid}")
     return process
@@ -179,7 +179,7 @@ def run_benchmark(current_benchmark_config):
         # Waiting for the systest to start
         time.sleep(WAIT_BETWEEN_COMMANDS)
 
-        print(f"Waiting for {MEASURE_INTERVAL}s before stopping the systest...")
+        print(f"Waiting for max {MEASURE_INTERVAL}s before stopping the systest...")
         systest_process.wait(timeout=MEASURE_INTERVAL)  # Allow query engine stats to be printed
         print("Stopping the systest...")
     finally:
@@ -283,7 +283,7 @@ def main():
 
         # Calling the postprocessing main
         measurement_time = MEASURE_INTERVAL * 1000
-        startup_time = WAIT_BETWEEN_COMMANDS * 1000
+        startup_time = 0
         engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
         post_processing = PostProcessing.PostProcessing(output_folders,
                                                         measurement_time,
@@ -294,21 +294,25 @@ def main():
                                                         COMBINED_ENGINE_STATISTICS_FILE,
                                                         COMBINED_BENCHMARK_STATISTICS_FILE,
                                                         engine_stats_csv_path,
-                                                        benchmark_stats_csv_path)
+                                                        benchmark_stats_csv_path,
+                                                        SERVER_NAME)
         failed_run_folders = post_processing.main()
 
         # Re-running all runs that failed
         if not failed_run_folders:
-            print("All benchmarks completed successfully.")
+            print(f"All benchmarks completed successfully in {attempt + 1} attempt(s).")
             break
         else:
-            print(f"{len(failed_run_folders)} runs failed. Retrying...")
+            print(f"{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...")
             ALL_SYSTEST_CONFIGS = [
                 BenchmarkConfig.BenchmarkConfig(
                     **yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')))
                 for failed_run in failed_run_folders
             ]
     else:
+        with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "w") as f:
+            for failed_run in failed_run_folders:
+                f.write(f"{failed_run}\n")
         print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
