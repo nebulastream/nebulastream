@@ -60,6 +60,7 @@ endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/Sanitizers.cmake)
+include(cmake/Fuzz.cmake)
 include(cmake/ImportDependencies.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)

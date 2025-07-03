@@ -11,6 +11,9 @@
 # limitations under the License.
 
 add_subdirectory(src)
+if (USE_LIBFUZZER)
+  add_subdirectory(fuzz)
+endif()
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
