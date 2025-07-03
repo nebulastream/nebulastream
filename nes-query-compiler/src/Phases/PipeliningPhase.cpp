@@ -204,6 +204,10 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }
         const auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
+        if (auto handlerId = opWrapper->getHandlerId())
+        {
+            newPipeline->getOperatorHandlers().emplace(*handlerId, opWrapper->getHandler().value());
+        }
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;

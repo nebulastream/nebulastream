@@ -43,7 +43,7 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
-set(SMALL_DATA DATA{../testdata/,RECURSE:,REGEX:small.*})
+set(SMALL_DATA DATA{../testdata/,RECURSE:,REGEX:small.*|model.*})
 set(LARGE_DATA DATA{../testdata/,RECURSE:,REGEX:large.*})
 
 # Add code coverage if enabled

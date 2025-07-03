@@ -249,7 +249,7 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -289,6 +289,7 @@ valueExpression
     | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
     | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
+    | INFER_MODEL '(' IDENTIFIER ',' inferModelInputFields ')'       #inference
     | primaryExpression                                                                      #valueExpressionDefault
     ;
 
@@ -315,6 +316,8 @@ primaryExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;
+
+inferModelInputFields: primaryExpression;
 
 qualifiedName
     : identifier ('.' identifier)*
@@ -367,6 +370,7 @@ GROUPING: 'GROUPING';
 HAVING: 'HAVING' | 'having';
 IF: 'IF';
 IN: 'IN' | 'in';
+INFER_MODEL: 'INFER_MODEL' | 'infer_model';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';
@@ -377,7 +381,7 @@ LEFT: 'LEFT';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
-MERGE: 'MERGE' | 'merge';
+ARRAY_AGG: 'ARRAY_AGG' | 'array_agg';
 NATURAL: 'NATURAL';
 NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';

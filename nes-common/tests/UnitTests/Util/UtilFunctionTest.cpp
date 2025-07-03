@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
+
+#include <barrier>
+#include <filesystem>
 #include <vector>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -124,6 +128,46 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
     const std::string delimiter = "x";
     tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_EQ(tokens, test);
+}
+
+TEST(UtilFunctionTest, tempDirTest)
+{
+    constexpr size_t numThreads = 10;
+    constexpr size_t numIterations = 100;
+
+
+    std::vector<std::jthread> threads;
+    threads.reserve(numThreads);
+    std::barrier barrier(numThreads + 1);
+
+    for (size_t threadId = 0; threadId < numThreads; threadId++)
+    {
+        threads.emplace_back(
+            [&barrier]()
+            {
+                auto dir = Util::createTempDir("/tmp/tempDirTest-");
+                Util::TempDirectoryCleanup cleanup(dir);
+                barrier.arrive_and_wait();
+                for (size_t i = 0; i < numIterations; i++)
+                {
+                    auto dir = Util::createTempDir("/tmp/tempDirTest-");
+                    cleanup = Util::TempDirectoryCleanup(dir);
+                    EXPECT_TRUE(dir.string().starts_with("/tmp/tempDirTest-"));
+                    ASSERT_TRUE(std::filesystem::exists(dir));
+                    ASSERT_TRUE(std::filesystem::is_directory(dir));
+                }
+            });
+    }
+
+    barrier.arrive_and_wait();
+    threads.clear();
+}
+
+TEST(UtilFunctionTest, errnoStringTest)
+{
+    EXPECT_EQ(Util::errnoString(EINVAL), "Invalid argument");
+    EXPECT_EQ(Util::errnoString(EADDRNOTAVAIL), "Cannot assign requested address");
+    EXPECT_EQ(Util::errnoString(EILSEQ), "Invalid or incomplete multibyte or wide character");
 }
 
 }
