@@ -47,6 +47,7 @@ void threadRoutine(
         {
             continue;
         }
+        continue;
         std::visit(
             Overloaded{
                 [&](SubmitQuerySystemEvent startQuery)
