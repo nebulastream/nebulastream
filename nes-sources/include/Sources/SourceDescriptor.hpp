@@ -89,6 +89,7 @@ private:
     ParserConfig parserConfig;
     int32_t numberOfBuffersInLocalPool;
 
+public:
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         LogicalSource logicalSource,
