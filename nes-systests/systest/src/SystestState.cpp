@@ -522,7 +522,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
     std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
     std::unordered_map<SourceDescriptor, std::optional<SourceInputFile>> sourcesToFilePaths;
-    std::vector<ConfigurationOverride> configOverrides{ConfigurationOverride{}};
+    std::vector<ConfigurationOverride> currentConfigOverrides{ConfigurationOverride{}};
     std::vector<ConfigurationOverride> globalConfigOverrides{};
 
     std::unordered_map<std::string, Schema> sinkNamesToSchema{};
@@ -778,7 +778,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                     return mergedOverrides;
                 };
 
-                auto finalConfigOverrides = mergeConfigurations(configOverrides);
+                auto finalConfigOverrides = mergeConfigurations(currentConfigOverrides);
                 if (finalConfigOverrides.empty())
                 {
                     ConfigurationOverride defaultOverride{};
@@ -791,6 +791,10 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
                 }
+                
+                /// Reset currentConfigOverrides after applying it to this query
+                /// This ensures that Configuration tokens only apply to the next query
+                currentConfigOverrides = {ConfigurationOverride{}};
             }
             catch (Exception& e)
             {
@@ -831,7 +835,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                     return mergedOverrides;
                 };
 
-                auto finalConfigOverrides = mergeConfigurations(configOverrides);
+                auto finalConfigOverrides = mergeConfigurations(currentConfigOverrides);
                 if (finalConfigOverrides.empty())
                 {
                     ConfigurationOverride defaultOverride{};
@@ -844,16 +848,28 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
                 }
+                
+                /// Reset currentConfigOverrides after applying it to this query
+                /// This ensures that Configuration tokens only apply to the next query
+                currentConfigOverrides = {ConfigurationOverride{}};
             }
         });
-    parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { configOverrides = overrides; });
+    parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { currentConfigOverrides = overrides; });
     parser.registerOnGlobalConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { globalConfigOverrides = overrides; });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation& errorExpectation)
         {
-            auto& lastPlan = plansWithOverrides[configOverrides.back()].back();
-            lastPlan.expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
+            /// Find the last plan that was added and set the expected error
+            /// Since we reset currentConfigOverrides after each query, we need to find the plan differently
+            for (auto& [override, plans] : plansWithOverrides)
+            {
+                if (!plans.empty())
+                {
+                    plans.back().expectedError = ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message};
+                    break;
+                }
+            }
         });
     try
     {
