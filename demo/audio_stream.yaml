@@ -22,6 +22,6 @@ physical:
     sourceConfig:
       type: Audio
       socketHost: localhost
-      socketPort: 1234
-      sampleRate: 16000
+      socketPort: 50500
+      sampleRate: 48000
       sampleWidth: 2
