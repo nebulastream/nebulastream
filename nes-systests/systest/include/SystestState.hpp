@@ -85,7 +85,7 @@ class SourceInputFile
 public:
     using Underlying = std::filesystem::path;
 
-    explicit constexpr SourceInputFile(Underlying value) : value(std::move(value)) { }
+    explicit SourceInputFile(Underlying value) : value(std::move(value)) { }
 
     friend std::ostream& operator<<(std::ostream& os, const SourceInputFile& timestamp) { return os << timestamp.value; }
     [[nodiscard]] Underlying getRawValue() const { return value; }
