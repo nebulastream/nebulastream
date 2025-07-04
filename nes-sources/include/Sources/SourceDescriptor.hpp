@@ -85,6 +85,7 @@ private:
     std::string sourceType;
     ParserConfig parserConfig;
 
+public:
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
