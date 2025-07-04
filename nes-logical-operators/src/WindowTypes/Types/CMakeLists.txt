@@ -11,8 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        CountBasedWindowType.cpp
         TimeBasedWindowType.cpp
         WindowType.cpp
+        CountBasedWindow.cpp
         SlidingWindow.cpp
         TumblingWindow.cpp
 )
