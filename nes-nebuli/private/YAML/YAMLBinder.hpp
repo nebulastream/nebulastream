@@ -19,12 +19,16 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <experimental/propagate_const>
 
 namespace NES::CLI
 {
@@ -44,6 +48,7 @@ struct SchemaField
 struct Sink
 {
     std::string name;
+    std::vector<SchemaField> schema;
     std::string type;
     std::unordered_map<std::string, std::string> config;
 };
@@ -64,7 +69,7 @@ struct PhysicalSource
 struct QueryConfig
 {
     std::string query;
-    std::unordered_map<std::string, Sink> sinks;
+    std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };
@@ -82,14 +87,21 @@ struct BoundQueryConfig
 
 class YAMLBinder
 {
-    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::experimental::propagate_const<std::shared_ptr<SourceCatalog>> sourceCatalog;
+    std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
 
 public:
-    explicit YAMLBinder(const std::shared_ptr<SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
-    BoundQueryConfig parseAndBind(std::istream& inputStream);
+    explicit YAMLBinder(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    {
+    }
+    LogicalPlan parseAndBind(std::istream& inputStream);
 
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    [[nodiscard]] Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
     std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
+    std::vector<Sinks::SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
 };
 
 }

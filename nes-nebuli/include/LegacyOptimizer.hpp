@@ -20,6 +20,7 @@
 
 namespace NES
 {
+class SinkCatalog;
 class SourceCatalog;
 }
 namespace NES::CLI
@@ -29,8 +30,13 @@ class LegacyOptimizer
 public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
-    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    {
+    }
+
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 }

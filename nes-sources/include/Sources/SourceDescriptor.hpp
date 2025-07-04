@@ -14,18 +14,22 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cctype>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,8 +40,12 @@
 
 namespace NES
 {
+class SerializableQueryPlan;
 class SourceCatalog;
 class OperatorSerializationUtil;
+namespace IntegrationTestUtil
+{
+}
 
 struct ParserConfig
 {
@@ -45,16 +53,13 @@ struct ParserConfig
     std::string tupleDelimiter;
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
+    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
 
 class SourceDescriptor final : public NES::Configurations::Descriptor
 {
 public:
-    /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
-    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
-    static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL = -1;
-
     ~SourceDescriptor() = default;
     SourceDescriptor(const SourceDescriptor& other) = default;
     /// Deleted, because the descriptors have a const field
@@ -72,9 +77,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
-    [[nodiscard]] WorkerId getWorkerId() const;
     [[nodiscard]] uint64_t getPhysicalSourceId() const;
-    [[nodiscard]] int32_t getBuffersInLocalPool() const;
 
     [[nodiscard]] SerializableSourceDescriptor serialize() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -82,23 +85,54 @@ public:
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
+
     uint64_t physicalSourceId;
     LogicalSource logicalSource;
-    WorkerId workerId;
     std::string sourceType;
     ParserConfig parserConfig;
-    int32_t numberOfBuffersInLocalPool;
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        LogicalSource logicalSource,
         uint64_t physicalSourceId,
-        WorkerId workerId,
-        std::string sourceType,
-        int32_t numberOfBuffersInLocalPool,
+        LogicalSource logicalSource,
+        std::string_view sourceType,
         NES::Configurations::DescriptorConfig::Config&& config,
         ParserConfig parserConfig);
+
+public:
+    /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
+    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
+    static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL = -1;
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<int64_t> NUMBER_OF_BUFFERS_IN_LOCAL_POOL{
+        "numberOfBuffersInLocalPool",
+        INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return NES::Configurations::DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint64_t> LOCATION{
+        "location",
+        INVALID<WorkerId>.getRawValue(),
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            if (config.contains(LOCATION.name))
+            {
+                std::string location = config.at(LOCATION.name);
+                std::ranges::transform(location, location.begin(), ::toupper);
+                if (config.at(LOCATION.name) == "LOCAL")
+                {
+                    return std::optional{INITIAL<WorkerId>.getRawValue()};
+                }
+            }
+            return NES::Configurations::DescriptorConfig::tryGet(LOCATION, config);
+        }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, LOCATION);
 };
+
 
 }
 
@@ -112,3 +146,4 @@ struct std::hash<NES::SourceDescriptor>
 };
 
 FMT_OSTREAM(NES::SourceDescriptor);
+FMT_OSTREAM(NES::ParserConfig);

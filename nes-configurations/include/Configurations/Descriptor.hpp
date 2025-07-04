@@ -164,8 +164,7 @@ public:
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            if (key != SOURCE_TYPE_CONFIG and key != NUMBER_OF_BUFFERS_IN_LOCAL_POOL
-                and not SpecificConfiguration::parameterMap.contains(key))
+            if (not SpecificConfiguration::parameterMap.contains(key))
             {
                 throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
             }
@@ -302,8 +301,33 @@ public:
     template <typename... Args>
     static std::unordered_map<std::string, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
     {
-        return std::unordered_map<std::string, ConfigParameterContainer>(
-            {std::make_pair(parameters.name, std::forward<Args>(parameters))...});
+        std::unordered_map<std::string, ConfigParameterContainer> configParameterMap{};
+        auto inserter = [&configParameterMap](auto param)
+        {
+            if constexpr (requires {
+                              typename decltype(param)::Type;
+                              typename decltype(param)::EnumType;
+                              std::is_same_v<
+                                  ConfigParameter<typename decltype(param)::Type, typename decltype(param)::EnumType>,
+                                  decltype(param)>;
+                          })
+            {
+                configParameterMap.emplace(param.name, std::forward<decltype(param)>(param));
+            }
+            else if constexpr (std::is_same_v<decltype(param), std::unordered_map<std::string, ConfigParameterContainer>>)
+            {
+                for (const auto& [key, value] : param)
+                {
+                    configParameterMap.emplace(key, value);
+                }
+            }
+            else
+            {
+                static_assert(false, "Invalid config parameter type");
+            }
+        };
+        (inserter(parameters), ...);
+        return configParameterMap;
     }
 };
 
