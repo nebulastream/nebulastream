@@ -342,11 +342,19 @@ void printQueryResultToStdOut(
         }
         overrideStr = fmt::format(" [Override: {}]", fmt::join(kvs, ", "));
     }
-    std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
+    const auto counterPad = padSizeQueryCounter > queryCounterAsString.size() ? padSizeQueryCounter - queryCounterAsString.size() : 0;
+    std::cout << std::string(counterPad, ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.query.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
+    const auto numberPad = padSizeQueryNumber > queryNumberLength ? padSizeQueryNumber - queryNumberLength : 0;
+    std::cout << runningQuery.query.testName << ":" << std::string(numberPad, '0') << queryNumberAsString;
     std::cout << overrideStr;
-    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber + overrideStr.size()), '.');
+
+    const auto totalUsedSpace = queryNameLength + padSizeQueryNumber + overrideStr.size();
+    const auto paddingDots = (totalUsedSpace >= padSizeSuccess) ? 0 : (padSizeSuccess - totalUsedSpace);
+    const auto maxPadding = 1000;
+    const auto finalPadding = std::min<size_t>(paddingDots, maxPadding);
+    std::cout << std::string(finalPadding, '.');
+
     if (runningQuery.passed)
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
