@@ -85,6 +85,7 @@ private:
     std::string sourceType;
     ParserConfig parserConfig;
 
+public:
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
@@ -93,7 +94,6 @@ private:
         DescriptorConfig::Config config,
         ParserConfig parserConfig);
 
-public:
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
     static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL = -1;
