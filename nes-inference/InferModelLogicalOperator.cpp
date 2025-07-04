@@ -27,7 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 
-#include <LogicalInferModelOperator.hpp>
+#include <InferModelLogicalOperator.hpp>
 #include <Model.hpp>
 
 #include "LogicalOperatorRegistry.hpp"
@@ -35,19 +35,19 @@
 namespace NES::InferModel
 {
 
-LogicalInferModelOperator::LogicalInferModelOperator(Nebuli::Inference::Model model, std::vector<LogicalFunction> inputFields)
+InferModelLogicalOperator::InferModelLogicalOperator(Nebuli::Inference::Model model, std::vector<LogicalFunction> inputFields)
     : model(std::move(model)), inputFields(std::move(inputFields))
 {
 }
 
-std::string LogicalInferModelOperator::explain(ExplainVerbosity verbosity) const
+std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     return fmt::format(
         "INFER_MODEL(opId: {}, inputFields: [{}])",
         id,
         fmt::join(std::views::transform(inputFields, [&](const auto& field) { return field.explain(verbosity); }), ", "));
 }
-SerializableOperator LogicalInferModelOperator::serialize() const
+SerializableOperator InferModelLogicalOperator::serialize() const
 {
     SerializableLogicalOperator proto;
 
@@ -100,7 +100,7 @@ SerializableOperator LogicalInferModelOperator::serialize() const
     return serializableOperator;
 }
 
-LogicalOperator LogicalInferModelOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+LogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     PRECONDITION(inputSchemas.size() == 1, "Expected exactly one input schema");
 
@@ -161,7 +161,7 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelLogicalOperator(NE
                                 { return FunctionSerializationUtil::deserializeFunction(serializedFunction); })
         | std::ranges::to<std::vector>();
     auto model = Nebuli::Inference::deserializeModel(std::get<SerializableModel>(arguments.config.at("MODEL")));
-    auto logicalOperator = InferModel::LogicalInferModelOperator(model, functions);
+    auto logicalOperator = InferModel::InferModelLogicalOperator(model, functions);
 
     if (auto& id = arguments.id)
     {
@@ -170,7 +170,7 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelLogicalOperator(NE
 
     auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
                          .withOutputOriginIds(arguments.outputOriginIds)
-                         .get<InferModel::LogicalInferModelOperator>()
+                         .get<InferModel::InferModelLogicalOperator>()
                          .setInputSchema(arguments.inputSchemas)
                          .setOutputSchema(arguments.outputSchema);
     return logicalOp;
