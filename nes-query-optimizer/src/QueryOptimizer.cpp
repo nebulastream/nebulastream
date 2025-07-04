@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <QueryOptimizer.hpp>
+
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
-#include <QueryOptimizer.hpp>
 
 namespace NES
 {
