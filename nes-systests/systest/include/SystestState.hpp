@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -43,7 +44,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-
 #include <Identifiers/NESStrongType.hpp>
 
 struct ConfigurationOverride
@@ -328,6 +328,28 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
 std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> loadQueries(SystestStarterGlobals& systestStarterGlobals);
+
+class SystestProgressTracker
+{
+public:
+    SystestProgressTracker();
+    explicit SystestProgressTracker(size_t totalQueries);
+
+    void incrementQueryCounter();
+    [[nodiscard]] size_t getQueryCounter() const;
+    void setTotalQueries(size_t total);
+    
+    [[nodiscard]] size_t getTotalQueries() const;
+    
+    [[nodiscard]] double getProgress() const;
+    
+    void reset();
+    void reset(size_t newTotalQueries);
+
+private:
+    std::atomic<size_t> queryCounter{0};
+    size_t totalQueries{0};
+};
 }
 
 FMT_OSTREAM(NES::Systest::SystestField);

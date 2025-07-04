@@ -119,15 +119,13 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     auto dummyQueryResultMap = QueryResultMap{};
-    size_t globalQueryCounter = 0;
-    size_t totalQueries = 1;
+    NES::Systest::SystestProgressTracker context(1);
     const auto result = runQueries(
         {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})},
         1,
         submitter,
         dummyQueryResultMap,
-        &globalQueryCounter,
-        totalQueries);
+        context);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -150,9 +148,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    size_t globalQueryCounter = 0;
-    size_t totalQueries = 1;
-    const auto result2 = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap, &globalQueryCounter, totalQueries);
+    NES::Systest::SystestProgressTracker context(1);
+    const auto result2 = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap, context);
 
     ASSERT_EQ(result2.size(), 1);
     EXPECT_FALSE(result2.front().passed);
@@ -175,17 +172,46 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const LogicalPlan plan{};
 
     auto dummyQueryResultMap = QueryResultMap{};
-    size_t globalQueryCounter = 0;
-    size_t totalQueries = 1;
+    NES::Systest::SystestProgressTracker context(1);
     const auto result3 = runQueries(
         {makeQuery(plan, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
         dummyQueryResultMap,
-        &globalQueryCounter,
-        totalQueries);
+        context);
 
     ASSERT_EQ(result3.size(), 1);
     EXPECT_FALSE(result3.front().passed);
+}
+
+TEST_F(SystestRunnerTest, SystestProgressTrackerProgressTracking)
+{
+    NES::Systest::SystestProgressTracker context(10);
+    
+    // Initial state
+    EXPECT_EQ(context.getQueryCounter(), 0);
+    EXPECT_EQ(context.getTotalQueries(), 10);
+    EXPECT_DOUBLE_EQ(context.getProgress(), 0.0);
+    
+    // Increment counter
+    context.incrementQueryCounter();
+    EXPECT_EQ(context.getQueryCounter(), 1);
+    EXPECT_DOUBLE_EQ(context.getProgress(), 0.1);
+    
+    // Increment more
+    context.incrementQueryCounter();
+    context.incrementQueryCounter();
+    EXPECT_EQ(context.getQueryCounter(), 3);
+    EXPECT_DOUBLE_EQ(context.getProgress(), 0.3);
+    
+    // Reset
+    context.reset(5);
+    EXPECT_EQ(context.getQueryCounter(), 0);
+    EXPECT_EQ(context.getTotalQueries(), 5);
+    EXPECT_DOUBLE_EQ(context.getProgress(), 0.0);
+    
+    // Test edge case with zero total queries
+    NES::Systest::SystestProgressTracker emptyContext(0);
+    EXPECT_DOUBLE_EQ(emptyContext.getProgress(), 0.0);
 }
 }

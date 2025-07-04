@@ -317,7 +317,7 @@ void runEndlessMode(
         totalQueries += queries.size();
     }
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", totalQueries) << '\n';
-    size_t globalQueryCounter = 0;
+    NES::Systest::SystestProgressTracker context(totalQueries);
 
     const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
     auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
@@ -359,7 +359,7 @@ void runEndlessMode(
             std::ranges::shuffle(queries, rng);
             auto& submitter = *submitters[overrideConfig];
             const auto failedQueries
-                = NES::Systest::runQueries(queries, numberConcurrentQueries, submitter, queryResultMap, &globalQueryCounter, totalQueries);
+                = NES::Systest::runQueries(queries, numberConcurrentQueries, submitter, queryResultMap, context);
             if (!failedQueries.empty())
             {
                 std::stringstream outputMessage;
@@ -483,7 +483,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             {
                 totalQueries += queriesForConfig.size();
             }
-            size_t globalQueryCounter = 0;
+            NES::Systest::SystestProgressTracker context(totalQueries);
             for (const auto& [overrideConfig, queriesForConfig] : queries)
             {
                 for (auto& query : const_cast<std::vector<Systest::SystestQuery>&>(queriesForConfig))
@@ -495,8 +495,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                     numberConcurrentQueries,
                     grpcURI,
                     systestStarterGlobals.getQueryResultMap(),
-                    &globalQueryCounter,
-                    totalQueries);
+                    context);
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
             }
         }
@@ -511,7 +510,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                 {
                     totalQueries += queriesForConfig.size();
                 }
-                size_t globalQueryCounter = 0;
+                NES::Systest::SystestProgressTracker context(totalQueries);
                 for (const auto& [override, queriesForConfig] : queries)
                 {
                     auto configCopy = singleNodeWorkerConfiguration;
@@ -524,8 +523,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                         configCopy,
                         benchmarkResults,
                         systestStarterGlobals.getQueryResultMap(),
-                        &globalQueryCounter,
-                        totalQueries);
+                        context);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
                 std::cout << benchmarkResults.dump(4);
@@ -541,7 +539,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                 {
                     totalQueries += queriesForConfig.size();
                 }
-                size_t globalQueryCounter = 0;
+                NES::Systest::SystestProgressTracker context(totalQueries);
                 for (const auto& [override, queriesForConfig] : queries)
                 {
                     for (auto& query : const_cast<std::vector<Systest::SystestQuery>&>(queriesForConfig))
@@ -581,8 +579,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                         numberConcurrentQueries,
                         configCopy,
                         systestStarterGlobals.getQueryResultMap(),
-                        &globalQueryCounter,
-                        totalQueries);
+                        context);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

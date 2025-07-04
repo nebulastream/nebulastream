@@ -35,7 +35,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -50,7 +49,6 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
-
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -154,6 +152,29 @@ std::filesystem::path SystestQuery::resultFile() const
     return resultFile(workingDir, testName, queryIdInFile);
 }
 
+// SystestProgressTracker implementation
+SystestProgressTracker::SystestProgressTracker() = default;
+
+SystestProgressTracker::SystestProgressTracker(size_t totalQueries) : totalQueries(totalQueries) {}
+
+void SystestProgressTracker::incrementQueryCounter() { ++queryCounter; }
+
+size_t SystestProgressTracker::getQueryCounter() const { return queryCounter.load(); }
+
+void SystestProgressTracker::setTotalQueries(size_t total) { totalQueries = total; }
+
+size_t SystestProgressTracker::getTotalQueries() const { return totalQueries; }
+
+double SystestProgressTracker::getProgress() const { 
+    return totalQueries > 0 ? static_cast<double>(queryCounter.load()) / totalQueries : 0.0; 
+}
+
+void SystestProgressTracker::reset() { queryCounter = 0; }
+
+void SystestProgressTracker::reset(size_t newTotalQueries) { 
+    queryCounter = 0; 
+    totalQueries = newTotalQueries; 
+}
 
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {

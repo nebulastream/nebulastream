@@ -79,14 +79,14 @@ namespace
 template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
-    std::size_t& finishedCount,
-    std::size_t total,
+    SystestProgressTracker& context,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
     ErrorCallable&& errorBuilder)
 {
     std::string msg = errorBuilder();
     runningQuery->passed = msg.empty();
-    printQueryResultToStdOut(*runningQuery, msg, finishedCount++, total, "");
+    printQueryResultToStdOut(*runningQuery, msg, context.getQueryCounter(), context.getTotalQueries(), "");
+    context.incrementQueryCounter();
     if (!msg.empty())
     {
         failed.push_back(runningQuery);
@@ -100,16 +100,14 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 
 void processQueryWithError(
     std::shared_ptr<RunningQuery> runningQuery,
-    std::size_t& finished,
-    const size_t numQueries,
+    SystestProgressTracker& context,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
     const std::optional<Exception>& exception)
 {
     runningQuery->exception = exception;
     reportResult(
         runningQuery,
-        finished,
-        numQueries,
+        context,
         failed,
         [&]
         {
@@ -129,8 +127,7 @@ std::vector<RunningQuery> runQueries(
     const uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
     const QueryResultMap& queryResultMap,
-    size_t* globalQueryCounter,
-    size_t totalQueries)
+    SystestProgressTracker& context)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -142,7 +139,7 @@ std::vector<RunningQuery> runQueries(
     std::vector<std::shared_ptr<RunningQuery>> failed;
     std::size_t finished = 0;
 
-    const auto startMoreQueries = [&] -> bool
+    const auto startMoreQueries = [&]() -> bool
     {
         bool hasOneMoreQueryToStart = false;
         while (active.size() < numConcurrentQueries and not pending.empty())
@@ -165,7 +162,7 @@ std::vector<RunningQuery> runQueries(
                 {
                     auto rq = std::make_shared<RunningQuery>(nextQuery);
                     rq->configOverride = nextQuery.configOverride;
-                    processQueryWithError(rq, finished, queries.size(), failed, {reg.error()});
+                    processQueryWithError(rq, context, failed, {reg.error()});
                 }
             }
             else
@@ -173,7 +170,7 @@ std::vector<RunningQuery> runQueries(
                 /// There was an error during query parsing, report the result and don't register the query
                 auto rq = std::make_shared<RunningQuery>(nextQuery);
                 rq->configOverride = nextQuery.configOverride;
-                processQueryWithError(rq, finished, queries.size(), failed, {nextQuery.queryPlan.error()});
+                processQueryWithError(rq, context, failed, {nextQuery.queryPlan.error()});
             }
         }
         return hasOneMoreQueryToStart;
@@ -194,14 +191,13 @@ std::vector<RunningQuery> runQueries(
             if (summary.currentStatus == QueryStatus::Failed)
             {
                 INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
+                processQueryWithError(it->second, context, failed, summary.runs.back().error);
             }
             else
             {
                 reportResult(
                     runningQuery,
-                    *globalQueryCounter,
-                    totalQueries,
+                    context,
                     failed,
                     [&]
                     {
@@ -253,8 +249,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
     const QueryResultMap& queryResultMap,
-    size_t* globalQueryCounter,
-    size_t totalQueries)
+    SystestProgressTracker& context)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -316,10 +311,10 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         ranQueries.back()->passed = not errorMessage.has_value();
         const auto queryPerformanceMessage
             = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
-        printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), *globalQueryCounter, totalQueries, queryPerformanceMessage);
+        printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), context.getQueryCounter(), context.getTotalQueries(), queryPerformanceMessage);
         ranQueries.emplace_back(ranQueries.back());
 
-        *globalQueryCounter += 1;
+        context.incrementQueryCounter();
     }
 
     return serializeExecutionResults(
@@ -372,22 +367,21 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
     const NES::Systest::QueryResultMap& queryResultMap,
-    size_t* globalQueryCounter,
-    size_t totalQueries)
+    SystestProgressTracker& context)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, globalQueryCounter, totalQueries);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, context);
 }
+
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
-    const std::string& serverURI,
+    const std::string& grpcURI,
     const NES::Systest::QueryResultMap& queryResultMap,
-    size_t* globalQueryCounter,
-    size_t totalQueries)
+    SystestProgressTracker& context)
 {
-    RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, globalQueryCounter, totalQueries);
+    RemoteWorkerQuerySubmitter submitter(grpcURI);
+    return runQueries(queries, numConcurrentQueries, submitter, queryResultMap, context);
 }
 
 }
