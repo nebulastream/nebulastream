@@ -1,0 +1,33 @@
+Source stream1 UINT64 id1 UINT64 value UINT64 timestamp
+1,1,1000
+3,1,1001
+3,1,1002
+3,1,1003
+
+Source stream2 UINT64 id1 UINT64 value UINT64 timestamp
+3,2,1004
+3,2,1005
+2,2,1006
+3,2,1007
+
+Source stream3 UINT64 id2 UINT64 value1 UINT64 timestamp
+1,5,1008
+1,5,1009
+2,5,10010
+2,5,10011
+
+Source stream4 UINT64 id2 UINT64 value1 UINT64 timestamp
+4,5,10012
+4,5,10013
+4,5,10014
+4,5,10015
+
+SINK sink4 UINT64 max_id
+
+SELECT * FROM (
+    (SELECT * FROM stream1 UNION SELECT * FROM stream2) AS L INNER JOIN (SELECT * FROM stream3 UNION SELECT * FROM stream4) AS R on id1 = id2 WINDOW TUMBLING (timestamp, size 1 sec)
+)
+INTO sink4
+----
+1
+2
