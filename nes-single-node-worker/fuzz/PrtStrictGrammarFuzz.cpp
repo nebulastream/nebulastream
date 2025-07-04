@@ -38,68 +38,73 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <Fuzz.pb.h>
 #include <SerializableDataType.pb.h>
+#include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
-NES::Schema toSm(const NES::SerializableSchema& schema)
+namespace NES
 {
-    return NES::SchemaSerializationUtil::deserializeSchema(schema);
+
+Schema toSm(const SerializableSchema& schema)
+{
+    return SchemaSerializationUtil::deserializeSchema(schema);
 }
 
-NES::DataType toDt(const NES::SerializableDataType& type)
+DataType toDt(const SerializableDataType& type)
 {
-    return NES::DataTypeSerializationUtil::deserializeDataType(type);
+    return DataTypeSerializationUtil::deserializeDataType(type);
 }
 
-NES::LogicalFunction toLv(const NES::FValue& val)
+LogicalFunction toLv(const FValue& val)
 {
     if (val.has_fieldaccess())
     {
-        return NES::FieldAccessLogicalFunction(toDt(val.fieldaccess().datatype()), val.fieldaccess().fieldname());
+        return FieldAccessLogicalFunction(toDt(val.fieldaccess().datatype()), val.fieldaccess().fieldname());
     }
 
     if (val.has_const_())
     {
-        return NES::ConstantValueLogicalFunction(toDt(val.const_().datatype()), val.const_().valasstr());
+        return ConstantValueLogicalFunction(toDt(val.const_().datatype()), val.const_().valasstr());
     }
-    throw NES::CannotDeserialize("foo");
+    throw CannotDeserialize("foo");
 }
 
-NES::LogicalFunction toFn(const NES::FPredicate& pred)
+LogicalFunction toFn(const FPredicate& pred)
 {
     auto left = toLv(pred.left());
     auto right = toLv(pred.right());
-    const auto& t = pred.type();
-    if (t == NES::FPredicate_Type::FPredicate_Type_LT)
+    const auto& type = pred.type();
+    if (type == FPredicate_Type::FPredicate_Type_LT)
     {
-        return NES::LessLogicalFunction(left, right);
+        return LessLogicalFunction(left, right);
     }
-    if (t == NES::FPredicate_Type::FPredicate_Type_LE)
+    if (type == FPredicate_Type::FPredicate_Type_LE)
     {
-        return NES::LessEqualsLogicalFunction(left, right);
+        return LessEqualsLogicalFunction(left, right);
     }
-    if (t == NES::FPredicate_Type::FPredicate_Type_GE)
+    if (type == FPredicate_Type::FPredicate_Type_GE)
     {
-        return NES::GreaterEqualsLogicalFunction(left, right);
+        return GreaterEqualsLogicalFunction(left, right);
     }
-    if (t == NES::FPredicate_Type::FPredicate_Type_GT)
+    if (type == FPredicate_Type::FPredicate_Type_GT)
     {
-        return NES::GreaterLogicalFunction(left, right);
+        return GreaterLogicalFunction(left, right);
     }
-    throw NES::CannotDeserialize("foo");
+    throw CannotDeserialize("foo");
 }
 
-NES::LogicalOperator toOp(const NES::FOp& op)
+LogicalOperator toOp(const FOp& op)
 {
     if (op.has_source())
     {
-        auto src = NES::OperatorSerializationUtil::deserializeSourceDescriptor(op.source());
-        auto srcOp = NES::SourceDescriptorLogicalOperator{std::move(src)};
-        return srcOp.withOutputOriginIds({NES::OriginId{op.outputoriginid()}});
+        auto src = OperatorSerializationUtil::deserializeSourceDescriptor(op.source());
+        auto srcOp = SourceDescriptorLogicalOperator{std::move(src)};
+        return srcOp.withOutputOriginIds({OriginId{op.outputoriginid()}});
     }
     if (op.has_unop())
     {
@@ -108,45 +113,45 @@ NES::LogicalOperator toOp(const NES::FOp& op)
         if (unop.has_select())
         {
             const auto& pred = unop.select().predicate();
-            return NES::SelectionLogicalOperator(toFn(pred));
+            return SelectionLogicalOperator(toFn(pred));
         }
     }
     if (op.has_binop())
     {
     }
-    throw NES::CannotDeserialize("foo");
+    throw CannotDeserialize("foo");
 }
 
-NES::LogicalPlan toPlan(const NES::FQueryPlan& plan)
+LogicalPlan toPlan(const FQueryPlan& plan)
 {
     const auto& root = plan.rootoperator();
 
-    auto s = NES::SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
+    auto s = SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
     auto c = toOp(plan.rootoperator().child());
 
-    auto sink = NES::SinkLogicalOperator("foo");
-    sink.sinkDescriptor = NES::OperatorSerializationUtil::deserializeSinkDescriptor(root.sinkdescriptor());
-    return NES::LogicalPlan{sink.withChildren({c})};
+    auto sink = SinkLogicalOperator("foo");
+    sink.sinkDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(root.sinkdescriptor());
+    return LogicalPlan{sink.withChildren({c})};
 }
 
-DEFINE_PROTO_FUZZER(const NES::FQueryPlan& sqp)
+DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
 {
-    NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+    Logger::setupLogging("client.log", LogLevel::LOG_ERROR);
 
     CPPTRACE_TRY
     {
         auto dqp = toPlan(sqp);
-        NES::SingleNodeWorker snw{NES::Configuration::SingleNodeWorkerConfiguration{}};
+        SingleNodeWorker snw{Configuration::SingleNodeWorkerConfiguration{}};
         auto qid = snw.registerQuery(dqp);
         if (!qid)
         {
             throw qid.error();
         }
         snw.startQuery(*qid);
-        snw.stopQuery(*qid, NES::QueryTerminationType::Graceful);
+        snw.stopQuery(*qid, QueryTerminationType::Graceful);
         while (true)
         {
-            if (snw.getQuerySummary(*qid)->currentStatus <= NES::QueryStatus::Running)
+            if (snw.getQuerySummary(*qid)->currentStatus <= QueryStatus::Running)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
@@ -161,4 +166,6 @@ DEFINE_PROTO_FUZZER(const NES::FQueryPlan& sqp)
     {
         return;
     }
+}
+
 }
