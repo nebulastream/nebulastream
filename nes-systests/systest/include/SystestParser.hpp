@@ -127,6 +127,8 @@ private:
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
+    [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>>
+    expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens);
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;

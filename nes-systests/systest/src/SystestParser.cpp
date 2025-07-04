@@ -498,6 +498,58 @@ SystestParser::SystestSink SystestParser::expectSink() const
     return sink;
 }
 
+std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource>>
+SystestParser::expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens)
+{
+    std::vector<std::string> arguments;
+    auto curPos = attachSourceTokens.begin();
+    std::advance(curPos, 2);
+    for (; curPos != attachSourceTokens.end(); ++curPos)
+    {
+        if (magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
+        {
+            break;
+        }
+        arguments.emplace_back(*curPos);
+    }
+    source.fields = parseSchemaFields(arguments);
+    std::unordered_map<std::string, std::string> configOptions;
+    INVARIANT(
+        std::distance(curPos, attachSourceTokens.end()) % 2 != 0,
+        "Generator Config Options are always pairwise! Error in {}",
+        lines[currentLine]);
+    ++curPos;
+    while (curPos != attachSourceTokens.end())
+    {
+        std::string key = *curPos;
+        std::string value = *(++curPos);
+        value = value.ends_with(',') ? value.substr(0, value.size() - 1) : value;
+
+        configOptions.emplace(key, value);
+        ++curPos;
+    }
+    currentLine++;
+    std::vector<std::string> fieldSchemas;
+    while (!emptyOrComment(lines[currentLine]))
+    {
+        fieldSchemas.emplace_back(lines[currentLine]);
+        currentLine++;
+    }
+    return std::make_pair(
+        source,
+        SystestAttachSource{
+            .sourceType = "Generator",
+            .sourceConfigurationPath = "inline:///",
+            .inputFormatterType = "CSV",
+            .inputFormatterConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+            .logicalSourceName = source.name,
+            .testDataIngestionType = TestDataIngestionType::GENERATOR,
+            .tuples = {},
+            .fileDataPath = {},
+            .serverThreads = nullptr,
+            .inlineGeneratorConfiguration = InlineGeneratorConfiguration{.fieldSchema = fieldSchemas, .options = configOptions}});
+}
+
 std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource>> SystestParser::expectSystestLogicalSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
@@ -544,7 +596,8 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = expectTuples(false),
                         .fileDataPath = {},
-                        .serverThreads = nullptr};
+                        .serverThreads = nullptr,
+                        .inlineGeneratorConfiguration = std::nullopt};
                 }
                 case TestDataIngestionType::FILE: {
                     return SystestAttachSource{
@@ -557,7 +610,8 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = {},
                         .fileDataPath = expectFilePath(),
-                        .serverThreads = nullptr};
+                        .serverThreads = nullptr,
+                        .inlineGeneratorConfiguration = std::nullopt};
                 }
                 case TestDataIngestionType::GENERATOR: {
                     return SystestAttachSource{
@@ -570,13 +624,24 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = {},
                         .fileDataPath = {},
-                        .serverThreads = nullptr};
+                        .serverThreads = nullptr,
+                        .inlineGeneratorConfiguration = std::nullopt};
                 }
             }
             std::unreachable();
         }();
         return std::make_pair(source, attachSource);
     }
+    if (std::ranges::any_of(
+            attachSourceTokens
+                | std::views::transform([](const auto& token) { return magic_enum::enum_cast<NES::TestDataIngestionType>(token); })
+                | std::views::filter([](const auto& optType) { return optType.has_value(); }),
+            [](const auto& optType) { return optType.value() == NES::TestDataIngestionType::GENERATOR; }))
+    {
+        return expectInlineGeneratorSource(source, attachSourceTokens);
+    }
+
+
     const std::vector<std::string> arguments = attachSourceTokens | std::views::drop(2) | std::ranges::to<std::vector<std::string>>();
 
     /// After the source definition line we expect schema fields

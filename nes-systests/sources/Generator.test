@@ -1,6 +1,6 @@
 # name: sources/Generator.test
 # description: Tests the generator source
-# groups: [Sources]
+# groups: [Sources, Generator]
 
 Source generatorDefault UINT64 id UINT64 double GENERATOR
 CONFIG/sources/generator_10_tuples.yaml
