@@ -62,8 +62,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
-              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+        .help("directly specified test file, e.g., /path/to/Filter.test or a directory to discover test files in. You can also specify just the "
+              "filename (e.g., filter.test) and systest will search for it recursively in the discovery directory. Use "
+              "'path/to/Filter.test:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -191,6 +192,27 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         else
         {
             testFilePath = std::filesystem::path(testFileDefinition);
+        }
+
+        if (testFilePath.find('/') == std::string::npos and testFilePath.find('\\') == std::string::npos)
+        {
+            std::filesystem::path discoveryDir = config.testsDiscoverDir.getValue();
+            bool found = false;
+            for (auto& p :
+                 std::filesystem::recursive_directory_iterator(discoveryDir, std::filesystem::directory_options::skip_permission_denied))
+            {
+                if (p.is_regular_file() && p.path().filename() == testFilePath)
+                {
+                    testFilePath = p.path();
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                std::cerr << "Could not find test file '" << testFileDefinition << "' in discovery directory '" << discoveryDir << "'.\n";
+                std::exit(1);
+            }
         }
 
         if (std::filesystem::is_directory(testFilePath))
