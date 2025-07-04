@@ -481,12 +481,13 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "global_config_override.dummy";
     
-    /// Expected global configuration overrides
+    /// Expected global configuration overrides - now merged together
     std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides = {
         {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize1", "16"}}},
-         {.overrideParameters = {{"worker.queryOptimizer.pageSize1", "32"}}}},
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize2", "64"}}}}
+        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}}},
+         {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}}}},
+        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}, {"worker.queryOptimizer.pageSize2", "64"}}},
+         {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}, {"worker.queryOptimizer.pageSize2", "64"}}}}
     };
 
     /// Expected regular configuration overrides

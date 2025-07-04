@@ -855,7 +855,32 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
             }
         });
     parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { currentConfigOverrides = overrides; });
-    parser.registerOnGlobalConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { globalConfigOverrides = overrides; });
+    parser.registerOnGlobalConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { 
+        /// Merge global configurations instead of replacing them
+        if (globalConfigOverrides.empty())
+        {
+            globalConfigOverrides = overrides;
+        }
+        else
+        {
+            /// Merge the new overrides with existing global overrides
+            std::vector<ConfigurationOverride> mergedOverrides;
+            for (const auto& existingOverride : globalConfigOverrides)
+            {
+                for (const auto& newOverride : overrides)
+                {
+                    ConfigurationOverride mergedOverride = existingOverride;
+                    /// Merge new override parameters into the merged override
+                    for (const auto& [key, value] : newOverride.overrideParameters)
+                    {
+                        mergedOverride.overrideParameters[key] = value;
+                    }
+                    mergedOverrides.emplace_back(std::move(mergedOverride));
+                }
+            }
+            globalConfigOverrides = std::move(mergedOverrides);
+        }
+    });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation& errorExpectation)
