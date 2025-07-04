@@ -25,9 +25,61 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/UnionLogicalOperator.hpp"
 
 namespace NES::LegacyOptimizer
 {
+
+/// Create a binary union tree when expanding a logical source to multiple physical sources
+LogicalOperator createPhysicalSourceUnionTree(const std::unordered_set<SourceDescriptor>& descriptors)
+{
+    INVARIANT(descriptors.size() > 0, "The number of descriptors to union should be greater than 0");
+    std::vector<LogicalOperator> vec1{};
+    std::vector<LogicalOperator> vec2{};
+
+    std::vector<LogicalOperator>* currentLevel = &vec1;
+    std::vector<LogicalOperator>* nextLevel = &vec2;
+
+    /// Create the leaf operators
+    for (const auto& descriptor : descriptors)
+    {
+        currentLevel->emplace_back(SourceDescriptorLogicalOperator{descriptor});
+    }
+
+    if (descriptors.size() > 0)
+    {
+        return UnionLogicalOperator{true}.withChildren(std::move(*currentLevel));
+    }
+    else
+    {
+        return currentLevel->at(0);
+    }
+
+    /// Build tree levels bottom-up until only a single root operator is left
+    while (currentLevel->size() >= 2)
+    {
+        /// Process current tree level from right to left, unioning sibilings
+        while (currentLevel->size() >= 2)
+        {
+            LogicalOperator leftChild = std::move(currentLevel->back());
+            currentLevel->pop_back();
+            LogicalOperator rightChild = std::move(currentLevel->back());
+            currentLevel->pop_back();
+
+            LogicalOperator const unionOp = UnionLogicalOperator{};
+            nextLevel->emplace_back(unionOp.withChildren(std::vector{std::move(leftChild), std::move(rightChild)}));
+        }
+        if (currentLevel->size() == 1)
+        {
+            /// No available union partner on this level; pass on to the next
+            nextLevel->emplace_back(std::move(currentLevel->back()));
+            currentLevel->pop_back();
+        }
+        std::swap(nextLevel, currentLevel);
+    }
+    INVARIANT(currentLevel->size() == 1, "There should be a root operator left after building the union tree.");
+    return std::move(currentLevel->front());
+}
 
 void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
 {
@@ -71,8 +123,10 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
                 | std::ranges::to<std::vector>();
             for (const auto& entry : entries)
             {
-                children.emplace_back(SourceDescriptorLogicalOperator{entry});
+                //children.emplace_back(SourceDescriptorLogicalOperator{entry});
             }
+            children.emplace_back(createPhysicalSourceUnionTree(entries));
+
             auto newParent = parent.withChildren(std::move(children));
             auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
             INVARIANT(

@@ -37,7 +37,6 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
     auto outputSchema = logicalOperator.getOutputSchema();
 
     PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
-    PRECONDITION(inputSchemas.size() == 2, "UnionLogicalOperator should have exactly two schema, but has {}", inputSchemas.size());
 
     auto renames = inputSchemas
         | std::views::transform(

@@ -31,6 +31,7 @@ class UnionLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit UnionLogicalOperator();
+    explicit UnionLogicalOperator(bool keepSourceQualifiers);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -60,8 +61,10 @@ public:
 private:
     static constexpr std::string_view NAME = "Union";
 
+    bool keepSourceQualifiers = false;
     std::vector<LogicalOperator> children;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
+    std::vector<Schema> inputSchemas;
+    Schema outputSchema;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 };
