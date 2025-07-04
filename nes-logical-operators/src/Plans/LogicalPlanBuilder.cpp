@@ -49,7 +49,7 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalInferModelNameOperator.hpp>
+#include <InferModelNameLogicalOperator.hpp>
 
 namespace NES
 {
@@ -131,7 +131,7 @@ LogicalPlan
 LogicalPlanBuilder::addInferModel(const std::string& model, const std::vector<LogicalFunction>& inputFields, LogicalPlan queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map inferModel to query plan");
-    return promoteOperatorToRoot(queryPlan, LogicalOperator(InferModel::LogicalInferModelNameOperator(model, inputFields)));
+    return promoteOperatorToRoot(queryPlan, LogicalOperator(InferModel::InferModelNameLogicalOperator(model, inputFields)));
 }
 
 
