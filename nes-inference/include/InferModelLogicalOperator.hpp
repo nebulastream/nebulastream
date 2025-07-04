@@ -29,7 +29,7 @@ namespace NES::InferModel
 /**
  * @brief Infer model operator
  */
-class LogicalInferModelOperator : public LogicalOperatorConcept
+class InferModelLogicalOperator : public LogicalOperatorConcept
 {
     Nebuli::Inference::Model model;
     std::vector<LogicalFunction> inputFields;
@@ -42,7 +42,7 @@ class LogicalInferModelOperator : public LogicalOperatorConcept
 public:
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const { return model; }
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
-    LogicalInferModelOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
+    InferModelLogicalOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return {child}; }
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
@@ -54,7 +54,7 @@ public:
     }
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
     {
-        if (const auto* casted = dynamic_cast<const LogicalInferModelOperator*>(&rhs))
+        if (const auto* casted = dynamic_cast<const InferModelLogicalOperator*>(&rhs))
         {
             return model == casted->model && inputFields == casted->inputFields && child == casted->child
                 && casted->getInputSchemas() == getInputSchemas() && casted->getOutputSchema() == getOutputSchema()
@@ -67,7 +67,7 @@ public:
     [[nodiscard]] TraitSet getTraitSet() const override { return {}; }
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return {inputSchema}; }
     [[nodiscard]] const Schema& getInputSchema() const { return inputSchema; }
-    LogicalInferModelOperator setInputSchema(std::vector<Schema> inputSchemas) const
+    InferModelLogicalOperator setInputSchema(std::vector<Schema> inputSchemas) const
     {
         PRECONDITION(inputSchemas.size() == 1, "Expected exactly one schema");
         auto copy = *this;
@@ -75,7 +75,7 @@ public:
         return copy;
     }
     [[nodiscard]] Schema getOutputSchema() const override { return outputSchema; }
-    LogicalInferModelOperator setOutputSchema(Schema outputSchema) const
+    InferModelLogicalOperator setOutputSchema(Schema outputSchema) const
     {
         auto copy = *this;
         copy.outputSchema = std::move(outputSchema);

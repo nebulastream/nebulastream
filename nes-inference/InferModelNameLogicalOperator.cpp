@@ -26,14 +26,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 
-#include <LogicalInferModelNameOperator.hpp>
+#include <InferModelNameLogicalOperator.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace NES::InferModel
 {
 
 
-std::string LogicalInferModelNameOperator::explain(ExplainVerbosity) const
+std::string InferModelNameLogicalOperator::explain(ExplainVerbosity) const
 {
     return fmt::format("INFER_MODEL_NAME(opId: {}, modelName: {})", id, modelName);
 }
@@ -47,8 +47,8 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelNameLogicalOperato
                                 { return FunctionSerializationUtil::deserializeFunction(serializedFunction); })
         | std::ranges::to<std::vector>();
 
-    auto logicalOperator = InferModel::LogicalInferModelNameOperator(
-        std::get<std::string>(arguments.config.at(InferModel::LogicalInferModelNameOperator::ConfigParameters::MODEL_NAME)), functions);
+    auto logicalOperator = InferModel::InferModelNameLogicalOperator(
+        std::get<std::string>(arguments.config.at(InferModel::InferModelNameLogicalOperator::ConfigParameters::MODEL_NAME)), functions);
 
     if (auto& id = arguments.id)
     {
@@ -57,6 +57,6 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelNameLogicalOperato
 
     auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
                          .withOutputOriginIds(arguments.outputOriginIds)
-                         .get<InferModel::LogicalInferModelNameOperator>();
+                         .get<InferModel::InferModelNameLogicalOperator>();
     return logicalOp;
 }

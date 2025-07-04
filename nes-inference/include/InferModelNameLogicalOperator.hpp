@@ -29,7 +29,7 @@ namespace NES::InferModel
 /**
  * @brief Infer model operator
  */
-class LogicalInferModelNameOperator : public LogicalOperatorConcept
+class InferModelNameLogicalOperator : public LogicalOperatorConcept
 {
     std::string modelName;
     std::vector<LogicalFunction> inputFields;
@@ -38,7 +38,7 @@ class LogicalInferModelNameOperator : public LogicalOperatorConcept
     std::vector<OriginId> outputOriginIds;
 
 public:
-    LogicalInferModelNameOperator(std::string modelName, std::vector<LogicalFunction> inputFields)
+    InferModelNameLogicalOperator(std::string modelName, std::vector<LogicalFunction> inputFields)
         : modelName(std::move(modelName)), inputFields(std::move(inputFields))
     {
     }
@@ -56,7 +56,7 @@ public:
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
     {
-        if (const auto* casted = dynamic_cast<const LogicalInferModelNameOperator*>(&rhs))
+        if (const auto* casted = dynamic_cast<const InferModelNameLogicalOperator*>(&rhs))
         {
             return modelName == casted->modelName && inputFields == casted->inputFields && child == casted->child
                 && inputOriginIds == casted->inputOriginIds && outputOriginIds == casted->outputOriginIds;

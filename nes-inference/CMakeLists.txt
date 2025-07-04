@@ -29,8 +29,8 @@ endfunction()
 add_tests_if_enabled(tests)
 target_compile_definitions(nes-inference PUBLIC NEBULI_INFERENCE_SUPPORT)
 
-add_plugin_as_library(InferenceModelName LogicalOperator nes-logical-operators nes-inference-model-name-operator LogicalInferModelNameOperator.cpp)
-add_plugin_as_library(InferenceModel LogicalOperator nes-logical-operators nes-inference-model-operator LogicalInferModelOperator.cpp)
+add_plugin_as_library(InferenceModelName LogicalOperator nes-logical-operators nes-inference-model-name-operator InferModelNameLogicalOperator.cpp)
+add_plugin_as_library(InferenceModel LogicalOperator nes-logical-operators nes-inference-model-operator InferModelLogicalOperator.cpp)
 
 target_link_libraries(nes-inference-model-name-operator PRIVATE nes-inference)
 target_link_libraries(nes-inference-model-operator PRIVATE nes-inference)
