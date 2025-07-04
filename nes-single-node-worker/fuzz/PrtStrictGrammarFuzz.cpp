@@ -98,6 +98,39 @@ LogicalFunction toFn(const FPredicate& pred)
     throw CannotDeserialize("foo");
 }
 
+SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
+{
+    auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
+    const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), std::make_shared<Schema>(schema)};
+
+    /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
+    const auto physicalSourceId = sourceDescriptor.physicalsourceid();
+    const auto& sourceType = "File"s;
+    const auto workerIdInt = sourceDescriptor.workerid();
+    const auto workerId = WorkerId{workerIdInt};
+    const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
+
+    /// Deserialize the parser config.
+    const auto& serializedParserConfig = sourceDescriptor.parserconfig();
+    auto deserializedParserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+
+    /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
+    NES::Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
+    for (const auto& [key, value] : sourceDescriptor.config())
+    {
+        sourceDescriptorConfig[key] = NES::Configurations::protoToDescriptorConfigType(value);
+    }
+
+    return SourceDescriptor{
+        logicalSource,
+        physicalSourceId,
+        workerId,
+        sourceType,
+        buffersInLocalPool,
+        (std::move(sourceDescriptorConfig)),
+        deserializedParserConfig};
+}
+
 LogicalOperator toOp(const FOp& op)
 {
     if (op.has_source())
