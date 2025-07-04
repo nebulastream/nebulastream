@@ -185,4 +185,14 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideNoKeyTest)
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
+TEST_F(SystestParserInvalidTestFilesTest, GlobalConfigOverrideInvalidTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "global_config_override_invalid.dummy";
+
+    SystestParser parser{};
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }

@@ -30,7 +30,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
@@ -204,6 +203,7 @@ static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 static constexpr auto ErrorToken = "ERROR"s;
 static constexpr auto ConfigurationToken = "Configuration"s;
+static constexpr auto GlobalConfigurationToken = "GlobalConfiguration";
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
@@ -212,7 +212,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {SinkToken, TokenType::SINK},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
      {ErrorToken, TokenType::ERROR_EXPECTATION},
-     {ConfigurationToken, TokenType::CONFIGURATION}});
+     {ConfigurationToken, TokenType::CONFIGURATION},
+     {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -297,6 +298,11 @@ void SystestParser::registerOnConfigurationCallback(ConfigurationCallback callba
     this->onConfigurationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback)
+{
+    this->onGlobalConfigurationCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -365,6 +371,14 @@ void SystestParser::parse()
                 if (onConfigurationCallback)
                 {
                     onConfigurationCallback(std::move(config));
+                }
+                break;
+            }
+            case TokenType::GLOBAL_CONFIGURATION: {
+                auto config = expectGlobalConfiguration();
+                if (onGlobalConfigurationCallback)
+                {
+                    onGlobalConfigurationCallback(std::move(config));
                 }
                 break;
             }
@@ -753,6 +767,84 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
         if (value.empty())
         {
             throw SLTUnexpectedToken("Empty configuration value found for key '{}'", key);
+        }
+        ConfigurationOverride override;
+        override.overrideParameters[key] = value;
+        result.emplace_back(std::move(override));
+    }
+    return result;
+}
+
+std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
+{
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    const auto& line = lines[currentLine];
+    std::istringstream stream(line);
+    std::string key, valueList;
+
+    /// Skip the GlobalConfiguration token
+    std::string token;
+    stream >> token;
+    stream >> key;
+
+    if (!key.ends_with(":"))
+    {
+        throw SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
+    }
+    key.pop_back();
+
+    /// Check if the key is empty after removing the colon
+    if (key.empty())
+    {
+        throw SLTUnexpectedToken("Expected global configuration key before colon, but got empty key");
+    }
+
+    std::getline(stream >> std::ws, valueList);
+    
+    /// Validate that we have a value
+    if (valueList.empty())
+    {
+        throw SLTUnexpectedToken("Expected global configuration value after key '{}', but got empty value", key);
+    }
+    
+    std::vector<std::string> values;
+    
+    /// Check if the value is wrapped in square brackets (multiple values)
+    if (valueList.front() == '[' && valueList.back() == ']')
+    {
+        /// Parse multiple values in square brackets
+        valueList = valueList.substr(1, valueList.size() - 2);
+        if (valueList.empty())
+        {
+            throw SLTUnexpectedToken("Expected at least one value in square brackets for key '{}', but got empty brackets", key);
+        }
+        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+    }
+    else
+    {
+        /// Single value without brackets - validate no brackets are present
+        if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
+        {
+            throw SLTUnexpectedToken("Invalid global configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
+        }
+        
+        /// Check if there are commas in the value, which indicates multiple values without brackets
+        if (valueList.find(',') != std::string::npos)
+        {
+            throw SLTUnexpectedToken("Invalid global configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
+        }
+        
+        values = {valueList};
+    }
+
+    INVARIANT(!values.empty(), "when expecting a global configuration keyword the configuration should not be empty");
+    std::vector<ConfigurationOverride> result;
+    for (auto& value : values)
+    {
+        value = NES::Util::trimWhiteSpaces(value);
+        if (value.empty())
+        {
+            throw SLTUnexpectedToken("Empty global configuration value found for key '{}'", key);
         }
         ConfigurationOverride override;
         override.overrideParameters[key] = value;

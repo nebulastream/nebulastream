@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
@@ -42,7 +41,8 @@ enum class TokenType : uint8_t
     QUERY,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
-    CONFIGURATION
+    CONFIGURATION,
+    GLOBAL_CONFIGURATION
 };
 
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
@@ -96,6 +96,7 @@ public:
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -105,6 +106,7 @@ public:
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
     void registerOnConfigurationCallback(ConfigurationCallback callback);
+    void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
 
     void parse();
     void parseResultLines();
@@ -131,6 +133,7 @@ private:
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
     [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
+    [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
@@ -139,6 +142,7 @@ private:
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
     ConfigurationCallback onConfigurationCallback;
+    GlobalConfigurationCallback onGlobalConfigurationCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;

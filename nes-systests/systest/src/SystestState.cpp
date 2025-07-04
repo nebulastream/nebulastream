@@ -523,6 +523,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
     SystestParser parser{};
     std::unordered_map<SourceDescriptor, std::optional<SourceInputFile>> sourcesToFilePaths;
     std::vector<ConfigurationOverride> configOverrides{ConfigurationOverride{}};
+    std::vector<ConfigurationOverride> globalConfigOverrides{};
 
     std::unordered_map<std::string, Schema> sinkNamesToSchema{};
     auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
@@ -743,14 +744,49 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                 auto loadedQueryPlan = LoadedQueryPlan(
                     plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
 
-                if (configOverrides.empty())
+                /// Helper function to merge global configuration with regular configuration
+                auto mergeConfigurations = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
+                {
+                    if (globalConfigOverrides.empty())
+                    {
+                        return regularOverrides;
+                    }
+                    
+                    std::vector<ConfigurationOverride> mergedOverrides;
+                    if (regularOverrides.empty())
+                    {
+                        /// If no regular overrides, use global overrides
+                        mergedOverrides = globalConfigOverrides;
+                    }
+                    else
+                    {
+                        /// Merge global overrides with each regular override
+                        for (const auto& regularOverride : regularOverrides)
+                        {
+                            for (const auto& globalOverride : globalConfigOverrides)
+                            {
+                                ConfigurationOverride mergedOverride = globalOverride;
+                                /// Merge regular override parameters into the merged override
+                                for (const auto& [key, value] : regularOverride.overrideParameters)
+                                {
+                                    mergedOverride.overrideParameters[key] = value;
+                                }
+                                mergedOverrides.emplace_back(std::move(mergedOverride));
+                            }
+                        }
+                    }
+                    return mergedOverrides;
+                };
+
+                auto finalConfigOverrides = mergeConfigurations(configOverrides);
+                if (finalConfigOverrides.empty())
                 {
                     ConfigurationOverride defaultOverride{};
                     plansWithOverrides[defaultOverride].emplace_back(loadedQueryPlan);
                 }
                 else
                 {
-                    for (const auto& override : configOverrides)
+                    for (const auto& override : finalConfigOverrides)
                     {
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
@@ -760,14 +796,50 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
             {
                 auto loadedQueryPlan = LoadedQueryPlan(
                     std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
-                if (configOverrides.empty())
+                
+                /// Helper function to merge global configuration with regular configuration
+                auto mergeConfigurations = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
+                {
+                    if (globalConfigOverrides.empty())
+                    {
+                        return regularOverrides;
+                    }
+                    
+                    std::vector<ConfigurationOverride> mergedOverrides;
+                    if (regularOverrides.empty())
+                    {
+                        /// If no regular overrides, use global overrides
+                        mergedOverrides = globalConfigOverrides;
+                    }
+                    else
+                    {
+                        /// Merge global overrides with each regular override
+                        for (const auto& regularOverride : regularOverrides)
+                        {
+                            for (const auto& globalOverride : globalConfigOverrides)
+                            {
+                                ConfigurationOverride mergedOverride = globalOverride;
+                                /// Merge regular override parameters into the merged override
+                                for (const auto& [key, value] : regularOverride.overrideParameters)
+                                {
+                                    mergedOverride.overrideParameters[key] = value;
+                                }
+                                mergedOverrides.emplace_back(std::move(mergedOverride));
+                            }
+                        }
+                    }
+                    return mergedOverrides;
+                };
+
+                auto finalConfigOverrides = mergeConfigurations(configOverrides);
+                if (finalConfigOverrides.empty())
                 {
                     ConfigurationOverride defaultOverride{};
                     plansWithOverrides[defaultOverride].emplace_back(loadedQueryPlan);
                 }
                 else
                 {
-                    for (const auto& override : configOverrides)
+                    for (const auto& override : finalConfigOverrides)
                     {
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
@@ -775,6 +847,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
             }
         });
     parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { configOverrides = overrides; });
+    parser.registerOnGlobalConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { globalConfigOverrides = overrides; });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation& errorExpectation)
