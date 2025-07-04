@@ -104,7 +104,7 @@ def create_working_dir(output_folder):
 
 def create_output_folder():
     timestamp = int(time.time())
-    folder_name = os.path.join(WORKING_DIR, f"SpillingBenchmarks_{timestamp}")
+    folder_name = os.path.join(WORKING_DIR, f"SpillingSystests_{timestamp}")
     os.makedirs(folder_name, exist_ok=True)
     print(f"Created folder {folder_name}...")
     return folder_name
@@ -144,7 +144,7 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
           f"--worker.queryOptimizer.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
     # print(f"Starting the systest with {cmd}")
-    process = subprocess.Popen(cmd, shell=True, cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd, shell=True, cwd=SOURCE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     pid = process.pid
     print(f"Started systest with pid {pid}")
     return process
@@ -180,8 +180,15 @@ def run_benchmark(current_benchmark_config):
         time.sleep(WAIT_BETWEEN_COMMANDS)
 
         print(f"Waiting for max {MEASURE_INTERVAL}s before stopping the systest...")
-        systest_process.wait(timeout=MEASURE_INTERVAL)  # Allow query engine stats to be printed
-        print("Stopping the systest...")
+        try:
+            systest_process.wait(timeout=MEASURE_INTERVAL)  # Allow query engine stats to be printed
+        finally:
+            print("Stopping the systest...")
+
+            _, stderr = systest_process.communicate(timeout=WAIT_BEFORE_SIGKILL)
+            if stderr != '':
+                with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "a") as f:
+                    f.write(output_folder + ": " + stderr + "\n")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = [systest_process]
@@ -243,6 +250,8 @@ def main():
     print("Running systest main")
     print("################################################################\n")
     ALL_SYSTEST_CONFIGS = BenchmarkConfig.create_systest_configs()
+    with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "w") as f:
+        f.write("Errors in Systest: \n")
 
     for attempt in range(NUM_RETRIES_PER_RUN):
         num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
@@ -310,9 +319,10 @@ def main():
                 for failed_run in failed_run_folders
             ]
     else:
-        with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "w") as f:
+        with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "a") as f:
+            f.write("\nNo measurements available:\n")
             for failed_run in failed_run_folders:
-                f.write(f"{failed_run}\n")
+                f.write(f"{failed_run}, ")
         print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)

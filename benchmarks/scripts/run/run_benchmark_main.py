@@ -277,12 +277,12 @@ def submitting_query(query_file):
         cmd,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
         text=True
     )
 
     # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
-    stdout, stderr = process.communicate()
+    stdout, _ = process.communicate()
     query_id = stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
@@ -291,7 +291,7 @@ def submitting_query(query_file):
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
     # print(f"Starting the single node worker with {cmd}")
-    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     pid = process.pid
     print(f"Started single node worker with pid {pid}")
     return process
@@ -364,6 +364,11 @@ def run_benchmark(current_benchmark_config):
         time.sleep(MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP)  # Allow query engine stats to be printed
         stop_process = stop_query(query_id)
         print(f"Query {query_id} was stopped")
+
+        _, stderr = single_node_process.communicate(timeout=WAIT_BEFORE_SIGKILL)
+        if stderr != '':
+            with open(os.path.join(SOURCE_DIR, "failed_benchmarks.txt"), "a") as f:
+                f.write(output_folder + ": " + stderr + "\n")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = source_processes + [single_node_process] + [stop_process]
@@ -421,6 +426,8 @@ def main():
     print("Running benchmark main")
     print("################################################################\n")
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
+    with open(os.path.join(SOURCE_DIR, "failed_benchmarks.txt"), "w") as f:
+        f.write("Errors in Benchmarks: \n")
 
     for attempt in range(NUM_RETRIES_PER_RUN):
         num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
@@ -488,9 +495,10 @@ def main():
                 config_dict["batch_size"] = 1000
                 ALL_BENCHMARK_CONFIGS.append(BenchmarkConfig.BenchmarkConfig(**config_dict))
     else:
-        with open(os.path.join(SOURCE_DIR, "failed_benchmarks.txt"), "w") as f:
+        with open(os.path.join(SOURCE_DIR, "failed_benchmarks.txt"), "a") as f:
+            f.write("\nNo measurements available:\n")
             for failed_run in failed_run_folders:
-                f.write(f"{failed_run}\n")
+                f.write(f"{failed_run}, ")
         print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
