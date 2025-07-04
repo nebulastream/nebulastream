@@ -129,6 +129,7 @@ LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> 
 {
     auto copy = *this;
     copy.children = children;
+    copy.keepSourceQualifiers = keepSourceQualifiers;
     return copy;
 }
 
@@ -156,6 +157,7 @@ LogicalOperator UnionLogicalOperator::withInputOriginIds(std::vector<std::vector
 {
     auto copy = *this;
     copy.inputOriginIds = ids;
+    copy.keepSourceQualifiers = keepSourceQualifiers;
     return copy;
 }
 
@@ -163,6 +165,7 @@ LogicalOperator UnionLogicalOperator::withOutputOriginIds(std::vector<OriginId> 
 {
     auto copy = *this;
     copy.outputOriginIds = ids;
+    copy.keepSourceQualifiers = keepSourceQualifiers;
     return copy;
 }
 
@@ -220,6 +223,7 @@ LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputS
 {
     auto copy = *this;
     copy.inputSchemas = std::move(inputSchemas);
+    copy.keepSourceQualifiers = keepSourceQualifiers;
     return copy;
 }
 
@@ -227,6 +231,7 @@ LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema
 {
     auto copy = *this;
     copy.outputSchema = outputSchema;
+    copy.keepSourceQualifiers = outputSchema.getSourceNameQualifier().has_value();
     return copy;
 }
 

@@ -38,28 +38,45 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 
     PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
-    auto renames = inputSchemas
-        | std::views::transform(
-                       [&](const auto& schema)
-                       {
-                           return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
-                               schema,
-                               outputSchema,
-                               PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-                       })
-        | std::ranges::to<std::vector>();
 
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        UnionPhysicalOperator(),
-        source.getOutputSchema(),
-        logicalOperator.getOutputSchema(),
-        std::nullopt,
-        std::nullopt,
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
-        renames);
 
-    return {.root = wrapper, .leafs = renames};
+    if (source.keepSourceQualifiers)
+    {
+        auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+            UnionPhysicalOperator(),
+            source.getOutputSchema(),
+            logicalOperator.getOutputSchema(),
+            std::nullopt,
+            std::nullopt,
+            PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+
+        std::vector leafs(logicalOperator.getChildren().size(), wrapper);
+        return {.root = wrapper, .leafs = leafs};
+    } else
+    {
+        auto renames = inputSchemas
+            | std::views::transform(
+                           [&](const auto& schema)
+                           {
+                               return std::make_shared<PhysicalOperatorWrapper>(
+                                   UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
+                                   schema,
+                                   outputSchema,
+                                   PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+                           })
+            | std::ranges::to<std::vector>();
+        auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+            UnionPhysicalOperator(),
+            source.getOutputSchema(),
+            logicalOperator.getOutputSchema(),
+            std::nullopt,
+            std::nullopt,
+            PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
+            renames);
+
+        return {.root = wrapper, .leafs = renames};
+    }
+
 }
 
 RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterUnionRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT

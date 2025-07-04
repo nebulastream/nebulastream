@@ -58,10 +58,11 @@ public:
     [[nodiscard]] LogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
     [[nodiscard]] LogicalOperator setOutputSchema(const Schema& outputSchema) const;
 
+    bool keepSourceQualifiers = false;
+
 private:
     static constexpr std::string_view NAME = "Union";
 
-    bool keepSourceQualifiers = false;
     std::vector<LogicalOperator> children;
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
