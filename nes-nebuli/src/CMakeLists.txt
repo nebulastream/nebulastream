@@ -13,4 +13,4 @@
 add_subdirectory(LegacyOptimizer)
 add_subdirectory(YAML)
 
-add_source_files(nes-coordinator GRPCClient.cpp)
+add_source_files(nes-coordinator GRPCClient.cpp Repl.cpp)

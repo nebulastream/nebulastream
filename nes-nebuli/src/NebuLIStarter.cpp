@@ -40,6 +40,7 @@
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
 #include <NebuLI.hpp>
+#include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 
@@ -75,17 +76,34 @@ int main(int argc, char** argv)
         dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
         dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
 
+        ArgumentParser repl("repl");
+        repl.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+        repl.add_argument("--non-interactive").flag().help("Disable interactive mode for Docker environments");
+
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
+        program.add_subparser(repl);
 
         program.parse_args(argc, argv);
 
         if (program.get<bool>("-d"))
         {
             NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
+        }
+
+        /// Handle REPL mode
+        if (program.is_subcommand_used("repl"))
+        {
+            auto& replArgs = program.at<ArgumentParser>("repl");
+            auto serverUri = replArgs.get<std::string>("-s");
+            auto nonInteractive = replArgs.get<bool>("--non-interactive");
+            auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+            NES::CLI::Repl repl(client, !nonInteractive);
+            repl.run();
+            return 0;
         }
 
         bool handled = false;
