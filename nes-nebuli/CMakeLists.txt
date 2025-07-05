@@ -22,6 +22,7 @@ add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${LEGAC
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
+find_package(replxx CONFIG REQUIRED)
 
 target_include_directories(nes-nebuli-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -35,7 +36,7 @@ target_link_libraries(nes-nebuli-lib
 add_executable(nes-nebuli src/NebuLIStarter.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
+target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
 target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
