@@ -78,6 +78,7 @@ int main(int argc, char** argv)
 
         ArgumentParser repl("repl");
         repl.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+        repl.add_argument("--non-interactive").flag().help("Disable interactive mode for Docker environments");
 
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
@@ -98,8 +99,9 @@ int main(int argc, char** argv)
         {
             auto& replArgs = program.at<ArgumentParser>("repl");
             auto serverUri = replArgs.get<std::string>("-s");
+            auto nonInteractive = replArgs.get<bool>("--non-interactive");
             auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-            NES::CLI::Repl repl(client);
+            NES::CLI::Repl repl(client, !nonInteractive);
             repl.run();
             return 0;
         }

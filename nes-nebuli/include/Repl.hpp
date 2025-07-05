@@ -31,6 +31,7 @@ class Repl
     std::unique_ptr<replxx::Replxx> rx;
     std::vector<std::string> history;
     std::vector<QueryId> activeQueries;
+    bool interactiveMode = true;
 
     /// Commands
     static constexpr const char* HELP_CMD = "help";
@@ -54,8 +55,8 @@ class Repl
     LogicalPlan parseAndOptimizeQuery(const std::string& query);
 
 public:
-    explicit Repl(std::shared_ptr<GRPCClient> client);
-    ~Repl() = default;
+    explicit Repl(std::shared_ptr<GRPCClient> client, bool interactive = true);
+    ~Repl();
 
     void run();
 };

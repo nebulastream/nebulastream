@@ -27,7 +27,7 @@
 namespace NES::CLI
 {
 
-Repl::Repl(std::shared_ptr<GRPCClient> client) : grpcClient(std::move(client))
+Repl::Repl(std::shared_ptr<GRPCClient> client, bool interactive) : grpcClient(std::move(client)), interactiveMode(interactive)
 {
     setupReplxx();
 }
@@ -35,6 +35,8 @@ Repl::Repl(std::shared_ptr<GRPCClient> client) : grpcClient(std::move(client))
 void Repl::setupReplxx()
 {
     rx = std::make_unique<replxx::Replxx>();
+
+    rx->set_word_break_characters(" \t\n\r");
 
     /// Set up hints
     rx->set_hint_callback(
@@ -180,13 +182,30 @@ std::string Repl::readMultiLineQuery()
 
     do
     {
-        line = rx->input(getPrompt());
+        if (!interactiveMode)
+        {
+            /// Use std::getline for non-interactive mode
+            std::getline(std::cin, line);
+            if (std::cin.eof())
+            {
+                break;
+            }
+        }
+        else
+        {
+            /// Use Replxx for interactive mode
+            line = rx->input(getPrompt());
+        }
+
         if (line.empty())
         {
             continue;
         }
 
-        rx->history_add(line);
+        if (interactiveMode)
+        {
+            rx->history_add(line);
+        }
 
         for (char c : line)
         {
@@ -274,15 +293,34 @@ void Repl::run()
     {
         try
         {
-            std::string input = rx->input(getPrompt());
+            std::string input;
+
+            if (!interactiveMode)
+            {
+                /// Use std::getline for non-interactive mode to avoid terminal issues
+                std::cout << getPrompt();
+                std::getline(std::cin, input);
+                if (std::cin.eof())
+                {
+                    break;
+                }
+            }
+            else
+            {
+                /// Use Replxx for interactive mode
+                input = rx->input(getPrompt());
+            }
 
             if (input.empty())
             {
                 continue;
             }
 
-            /// Add to history
-            rx->history_add(input);
+            /// Add to history (only in interactive mode)
+            if (interactiveMode)
+            {
+                rx->history_add(input);
+            }
 
             /// Check if it's a command
             if (isCommand(input))
@@ -313,7 +351,11 @@ void Repl::run()
             std::cout << "Error: " << e.what() << "\n";
         }
     }
-    rx->history_save(".nebuli_history");
+
+    if (interactiveMode)
+    {
+        rx->history_save(".nebuli_history");
+    }
 }
 
 }
