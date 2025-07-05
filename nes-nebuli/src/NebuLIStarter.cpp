@@ -41,6 +41,7 @@
 #include <GRPCClient.hpp>
 #include <LegacyOptimizer.hpp>
 #include <NebuLI.hpp>
+#include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 
@@ -48,10 +49,11 @@ int main(int argc, char** argv)
 {
     CPPTRACE_TRY
     {
-        NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+        NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_ERROR);
         using argparse::ArgumentParser;
         ArgumentParser program("nebuli");
-        program.add_argument("-d", "--debug").flag().help("Dump the Query plan and enable debug logging");
+        program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
+        program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string("localhost:8080"));
 
         ArgumentParser registerQuery("register");
         registerQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
@@ -82,7 +84,25 @@ int main(int argc, char** argv)
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
 
+        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump};
+
         program.parse_args(argc, argv);
+
+        bool anySubcommandUsed = std::any_of(
+            subcommands.begin(), subcommands.end(), [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); });
+        if (!anySubcommandUsed)
+        {
+            auto serverUri = program.get<std::string>("-s");
+            if (not program.is_used("-s"))
+            {
+                std::cout << "No server URI provided, using default server URI: " << serverUri << std::endl;
+            }
+            auto client = std::make_shared<NES::GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+            NES::Repl replClient(client);
+            replClient.run();
+            return 0;
+        }
+
 
         if (program.get<bool>("-d"))
         {
