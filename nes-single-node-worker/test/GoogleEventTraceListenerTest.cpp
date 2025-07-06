@@ -62,13 +62,20 @@ TEST_F(GoogleEventTraceListenerTest, IncompleteEventsAreClosedOnShutdown)
     std::string content = buffer.str();
     
     // Check that incomplete events were added
-    EXPECT_TRUE(content.find("Query 1 (Incomplete)") != std::string::npos);
-    EXPECT_TRUE(content.find("Pipeline 1 (Query 1) (Incomplete)") != std::string::npos);
-    EXPECT_TRUE(content.find("Task 1 (Incomplete)") != std::string::npos);
+    EXPECT_TRUE(content.find("Query 1 (Forced Complete)") != std::string::npos);
+    EXPECT_TRUE(content.find("Pipeline 1 (Query 1) (Forced Complete)") != std::string::npos);
+    EXPECT_TRUE(content.find("Task 1 (Forced Complete)") != std::string::npos);
     
     // Check that the incomplete flag is set
     EXPECT_TRUE(content.find("\"incomplete\": true") != std::string::npos);
+    EXPECT_TRUE(content.find("\"forced_complete\": true") != std::string::npos);
     EXPECT_TRUE(content.find("\"reason\": \"system_shutdown\"") != std::string::npos);
+    
+    // Check that query_id is included in args
+    EXPECT_TRUE(content.find("\"query_id\": 1") != std::string::npos);
+    
+    // Check that events use EVENT_END (ph: "E") for forced completions
+    EXPECT_TRUE(content.find("\"ph\": \"E\"") != std::string::npos);
     
     // Verify the JSON is valid
     nlohmann::json traceData = nlohmann::json::parse(content);
@@ -131,6 +138,39 @@ TEST_F(GoogleEventTraceListenerTest, TaskExpiredEventsAreHandled)
     
     // Check that no incomplete task event was added (since it was properly expired)
     EXPECT_TRUE(content.find("Task 1 (Incomplete)") == std::string::npos);
+}
+
+TEST_F(GoogleEventTraceListenerTest, SystemQueryEventsAreHandled)
+{
+    auto listener = std::make_unique<GoogleEventTraceListener>(testTracePath);
+    
+    // Simulate system-level query events
+    listener->onEvent(SubmitQuerySystemEvent{QueryId(1), "SELECT * FROM test"});
+    listener->onEvent(StartQuerySystemEvent{QueryId(1)});
+    
+    // Don't send StopQuerySystemEvent - this should result in an incomplete query
+    
+    listener->gracefulShutdown();
+    
+    // Verify the trace file exists
+    ASSERT_TRUE(std::filesystem::exists(testTracePath));
+    
+    std::ifstream file(testTracePath);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string content = buffer.str();
+    
+    // Check that system events are present
+    EXPECT_TRUE(content.find("Submit Query 1") != std::string::npos);
+    EXPECT_TRUE(content.find("Start Query 1") != std::string::npos);
+    
+    // Check that incomplete query event was added
+    EXPECT_TRUE(content.find("Query 1 (Forced Complete)") != std::string::npos);
+    EXPECT_TRUE(content.find("\"incomplete\": true") != std::string::npos);
+    EXPECT_TRUE(content.find("\"forced_complete\": true") != std::string::npos);
+    EXPECT_TRUE(content.find("\"reason\": \"system_shutdown\"") != std::string::npos);
+    EXPECT_TRUE(content.find("\"query_id\": 1") != std::string::npos);
+    EXPECT_TRUE(content.find("\"ph\": \"E\"") != std::string::npos);
 }
 
 } // namespace NES 

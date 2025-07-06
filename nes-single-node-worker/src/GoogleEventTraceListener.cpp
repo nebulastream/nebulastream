@@ -148,8 +148,30 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     file << "    " << traceEvent.dump();
                     eventWritten = true;
                 },
-                [&](const StartQuerySystemEvent&)
+                [&](const StartQuerySystemEvent& startEvent)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
+                    auto traceEvent = createTraceEvent(
+                        fmt::format("Start Query {}", startEvent.queryId),
+                        std::string(CATEGORY_SYSTEM),
+                        std::string(EVENT_INSTANT),
+                        timestampToMicroseconds(startEvent.timestamp)
+                    );
+                    traceEvent["tid"] = 0; // System thread
+                    
+                    file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Track active query (system-level start)
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activeQueries.insert(startEvent.queryId);
+                    NES_DEBUG("Tracking system query start: {}", startEvent.queryId);
                 },
                 [&](const StopQuerySystemEvent& stopEvent)
                 {
@@ -174,6 +196,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     /// Remove from active queries
                     std::scoped_lock stateLock(activeStateMutex);
                     activeQueries.erase(stopEvent.queryId);
+                    NES_DEBUG("Removing system query from tracking: {}", stopEvent.queryId);
                 },
                 [&](const QueryStart& queryStart)
                 {
@@ -198,6 +221,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     /// Track active query
                     std::scoped_lock stateLock(activeStateMutex);
                     activeQueries.insert(queryStart.queryId);
+                    NES_DEBUG("Tracking query start: {}", queryStart.queryId);
                 },
                 [&](const QueryStop& queryStop)
                 {
@@ -222,6 +246,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     /// Remove from active queries
                     std::scoped_lock stateLock(activeStateMutex);
                     activeQueries.erase(queryStop.queryId);
+                    NES_DEBUG("Removing query from tracking: {}", queryStop.queryId);
                 },
                 [&](const PipelineStart& pipelineStart)
                 {
@@ -310,7 +335,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     
                     // Track this task for duration calculation
                     std::scoped_lock taskLock(activeTasksMutex);
-                    activeTasks[taskStart.taskId] = taskStart.timestamp;
+                    activeTasks.emplace(taskStart.taskId, taskStart.timestamp);
                 },
                 [&](const TaskExecutionComplete& taskComplete)
                 {
@@ -410,6 +435,12 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
             event);
     }
     
+    // Give a small window for any remaining events to be processed
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // Clean up any incomplete events before writing the footer
+    cleanupIncompleteEvents();
+    
     writeTraceFooter();
 }
 
@@ -432,83 +463,111 @@ GoogleEventTraceListener::GoogleEventTraceListener(const std::filesystem::path& 
 
 GoogleEventTraceListener::~GoogleEventTraceListener()
 {
-    // Clean up any incomplete events before flushing
-    cleanupIncompleteEvents();
-    flush();
+    // Use graceful shutdown to avoid calling cleanup twice
+    gracefulShutdown();
 }
 
 void GoogleEventTraceListener::cleanupIncompleteEvents()
 {
     std::scoped_lock lock(fileMutex);
     
-    // Close any active tasks that haven't completed
+    // Check if footer has already been written
+    if (footerWritten) {
+        NES_WARNING("Footer already written, skipping incomplete events cleanup");
+        return;
+    }
+    
+    size_t totalIncomplete = 0;
+    
+    NES_INFO("Starting cleanup of incomplete events...");
+    
     {
         std::scoped_lock taskLock(activeTasksMutex);
+        NES_INFO("Cleaning up {} incomplete tasks", activeTasks.size());
+        totalIncomplete += activeTasks.size();
         for (const auto& [taskId, startTime] : activeTasks) {
+            NES_INFO("Cleaning up incomplete task: {}", taskId);
             auto args = nlohmann::json::object();
             args["task_id"] = taskId.getRawValue();
             args["incomplete"] = true;
+            args["forced_complete"] = true;
             args["reason"] = "system_shutdown";
             
             auto traceEvent = createTraceEvent(
-                fmt::format("Task {} (Incomplete)", taskId),
+                fmt::format("Task {} (Forced Complete)", taskId),
                 std::string(CATEGORY_TASK),
                 std::string(EVENT_END),
                 timestampToMicroseconds(std::chrono::system_clock::now()),
                 0,
                 args
             );
-            traceEvent["tid"] = 1; // Default thread ID
+            traceEvent["tid"] = 0; // Use system thread ID for incomplete events
             
             file << ",\n    " << traceEvent.dump();
         }
         activeTasks.clear();
     }
     
-    // Close any active pipelines that haven't stopped
     {
         std::scoped_lock stateLock(activeStateMutex);
+        NES_INFO("Cleaning up {} incomplete pipelines", activePipelines.size());
+        totalIncomplete += activePipelines.size();
         for (const auto& [pipelineId, pipelineInfo] : activePipelines) {
             const auto& [queryId, startTime] = pipelineInfo;
+            NES_INFO("Cleaning up incomplete pipeline: {} (Query: {})", pipelineId, queryId);
             auto args = nlohmann::json::object();
             args["pipeline_id"] = pipelineId.getRawValue();
+            args["query_id"] = queryId.getRawValue();
             args["incomplete"] = true;
+            args["forced_complete"] = true;
             args["reason"] = "system_shutdown";
             
             auto traceEvent = createTraceEvent(
-                fmt::format("Pipeline {} (Query {}) (Incomplete)", pipelineId, queryId),
+                fmt::format("Pipeline {} (Query {}) (Forced Complete)", pipelineId, queryId),
                 std::string(CATEGORY_PIPELINE),
                 std::string(EVENT_END),
                 timestampToMicroseconds(std::chrono::system_clock::now()),
                 0,
                 args
             );
-            traceEvent["tid"] = 1; // Default thread ID
+            traceEvent["tid"] = 0; // Use system thread ID for incomplete events
             
             file << ",\n    " << traceEvent.dump();
         }
         activePipelines.clear();
         
         // Close any active queries that haven't stopped
+        NES_INFO("Cleaning up {} incomplete queries", activeQueries.size());
+        totalIncomplete += activeQueries.size();
         for (const auto& queryId : activeQueries) {
+            NES_INFO("Cleaning up incomplete query: {}", queryId);
             auto args = nlohmann::json::object();
+            args["query_id"] = queryId.getRawValue();
             args["incomplete"] = true;
+            args["forced_complete"] = true;
             args["reason"] = "system_shutdown";
             
             auto traceEvent = createTraceEvent(
-                fmt::format("Query {} (Incomplete)", queryId),
+                fmt::format("Query {} (Forced Complete)", queryId),
                 std::string(CATEGORY_QUERY),
                 std::string(EVENT_END),
                 timestampToMicroseconds(std::chrono::system_clock::now()),
                 0,
                 args
             );
-            traceEvent["tid"] = 1; // Default thread ID
+            traceEvent["tid"] = 0; // Use system thread ID for incomplete events
             
             file << ",\n    " << traceEvent.dump();
         }
         activeQueries.clear();
     }
+    
+    NES_INFO("Total incomplete events cleaned up: {}", totalIncomplete);
+    
+    // Ensure incomplete events are written to disk
+    file.flush();
+    
+    NES_INFO("Incomplete events cleanup completed successfully");
 }
 
 void GoogleEventTraceListener::flush()
@@ -530,9 +589,6 @@ void GoogleEventTraceListener::gracefulShutdown()
         traceThread.request_stop();
         traceThread.join();
     }
-    
-    // Clean up incomplete events before flushing
-    cleanupIncompleteEvents();
     
     if (file.is_open()) {
         file.flush();
