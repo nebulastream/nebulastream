@@ -144,18 +144,6 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     
                     file << "    " << traceEvent.dump();
                 },
-                [&](const StartQuerySystemEvent& startEvent)
-                {
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Start Query {}", startEvent.queryId),
-                        std::string(CATEGORY_QUERY),
-                        std::string(EVENT_BEGIN),
-                        timestampToMicroseconds(startEvent.timestamp)
-                    );
-                    traceEvent["tid"] = 0; // System thread
-                    
-                    file << "    " << traceEvent.dump();
-                },
                 [&](const StopQuerySystemEvent& stopEvent)
                 {
                     auto traceEvent = createTraceEvent(
