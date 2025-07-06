@@ -19,6 +19,7 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
@@ -28,6 +29,8 @@
 
 namespace NES
 {
+/// This listener generates Chrome DevTools trace files that can be opened in Chrome's
+/// chrome://tracing/ interface for performance analysis (or any other event trace visualizer)
 struct GoogleEventTraceListener final : QueryEngineStatisticListener, SystemEventListener
 {
     using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
@@ -39,6 +42,9 @@ struct GoogleEventTraceListener final : QueryEngineStatisticListener, SystemEven
 
     /// Flushes the trace file and closes it
     void flush();
+    
+    /// Gracefully shuts down the trace listener, cleaning up incomplete events
+    void gracefulShutdown();
 
 private:
     static uint64_t timestampToMicroseconds(const std::chrono::system_clock::time_point& timestamp);
@@ -54,6 +60,9 @@ private:
     void threadRoutine(const std::stop_token& token);
     void writeTraceHeader();
     void writeTraceFooter();
+    
+    /// Clean up any incomplete events when shutting down
+    void cleanupIncompleteEvents();
 
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{1000};
@@ -65,5 +74,10 @@ private:
     /// Track active tasks for duration calculation
     std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
     std::mutex activeTasksMutex;
+    
+    /// Track active queries and pipelines for cleanup
+    std::unordered_set<QueryId> activeQueries;
+    std::unordered_map<PipelineId, std::pair<QueryId, std::chrono::system_clock::time_point>> activePipelines;
+    std::mutex activeStateMutex;
 };
 } 

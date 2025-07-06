@@ -118,17 +118,20 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
         
         std::scoped_lock lock(fileMutex);
         
-        // Add comma separator for all events except the first
-        if (!firstEvent) {
-            file << ",\n";
-        } else {
-            firstEvent = false;
-        }
+        // Track if we actually write an event to handle commas properly
+        bool eventWritten = false;
         
         std::visit(
             Overloaded{
                 [&](const SubmitQuerySystemEvent& submitEvent)
                 {
+                    // Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["query"] = submitEvent.query;
                     
@@ -143,21 +146,44 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = 0; // System thread
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                },
+                [&](const StartQuerySystemEvent&)
+                {
                 },
                 [&](const StopQuerySystemEvent& stopEvent)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto traceEvent = createTraceEvent(
                         fmt::format("Stop Query {}", stopEvent.queryId),
                         std::string(CATEGORY_QUERY),
                         std::string(EVENT_END),
                         timestampToMicroseconds(stopEvent.timestamp)
                     );
-                    traceEvent["tid"] = 0; // System thread
+                    traceEvent["tid"] = 0;
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Remove from active queries
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activeQueries.erase(stopEvent.queryId);
                 },
                 [&](const QueryStart& queryStart)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto traceEvent = createTraceEvent(
                         fmt::format("Query {}", queryStart.queryId),
                         std::string(CATEGORY_QUERY),
@@ -167,9 +193,21 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = queryStart.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Track active query
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activeQueries.insert(queryStart.queryId);
                 },
                 [&](const QueryStop& queryStop)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto traceEvent = createTraceEvent(
                         fmt::format("Query {}", queryStop.queryId),
                         std::string(CATEGORY_QUERY),
@@ -179,9 +217,21 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = queryStop.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Remove from active queries
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activeQueries.erase(queryStop.queryId);
                 },
                 [&](const PipelineStart& pipelineStart)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = pipelineStart.pipelineId.getRawValue();
                     
@@ -196,9 +246,21 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = pipelineStart.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Track active pipeline
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activePipelines.emplace(pipelineStart.pipelineId, std::make_pair(pipelineStart.queryId, pipelineStart.timestamp));
                 },
                 [&](const PipelineStop& pipelineStop)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = pipelineStop.pipelineId.getRawValue();
                     
@@ -213,9 +275,21 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = pipelineStop.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
+                    
+                    /// Remove from active pipelines
+                    std::scoped_lock stateLock(activeStateMutex);
+                    activePipelines.erase(pipelineStop.pipelineId);
                 },
                 [&](const TaskExecutionStart& taskStart)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = taskStart.pipelineId.getRawValue();
                     args["task_id"] = taskStart.taskId.getRawValue();
@@ -232,6 +306,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = taskStart.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
                     
                     // Track this task for duration calculation
                     std::scoped_lock taskLock(activeTasksMutex);
@@ -239,6 +314,13 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                 },
                 [&](const TaskExecutionComplete& taskComplete)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     uint64_t duration = 0;
                     {
                         std::scoped_lock taskLock(activeTasksMutex);
@@ -264,9 +346,17 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = taskComplete.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
                 },
                 [&](const TaskEmit& taskEmit)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["from_pipeline"] = taskEmit.fromPipeline.getRawValue();
                     args["to_pipeline"] = taskEmit.toPipeline.getRawValue();
@@ -284,9 +374,17 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = taskEmit.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
                 },
                 [&](const TaskExpired& taskExpired)
                 {
+                    /// Add comma separator for all events except the first
+                    if (!firstEvent) {
+                        file << ",\n";
+                    } else {
+                        firstEvent = false;
+                    }
+                    
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = taskExpired.pipelineId.getRawValue();
                     args["task_id"] = taskExpired.taskId.getRawValue();
@@ -302,6 +400,7 @@ void GoogleEventTraceListener::threadRoutine(const std::stop_token& token)
                     traceEvent["tid"] = taskExpired.threadId.getRawValue();
                     
                     file << "    " << traceEvent.dump();
+                    eventWritten = true;
                     
                     // Remove from active tasks if present
                     std::scoped_lock taskLock(activeTasksMutex);
@@ -333,7 +432,83 @@ GoogleEventTraceListener::GoogleEventTraceListener(const std::filesystem::path& 
 
 GoogleEventTraceListener::~GoogleEventTraceListener()
 {
+    // Clean up any incomplete events before flushing
+    cleanupIncompleteEvents();
     flush();
+}
+
+void GoogleEventTraceListener::cleanupIncompleteEvents()
+{
+    std::scoped_lock lock(fileMutex);
+    
+    // Close any active tasks that haven't completed
+    {
+        std::scoped_lock taskLock(activeTasksMutex);
+        for (const auto& [taskId, startTime] : activeTasks) {
+            auto args = nlohmann::json::object();
+            args["task_id"] = taskId.getRawValue();
+            args["incomplete"] = true;
+            args["reason"] = "system_shutdown";
+            
+            auto traceEvent = createTraceEvent(
+                fmt::format("Task {} (Incomplete)", taskId),
+                std::string(CATEGORY_TASK),
+                std::string(EVENT_END),
+                timestampToMicroseconds(std::chrono::system_clock::now()),
+                0,
+                args
+            );
+            traceEvent["tid"] = 1; // Default thread ID
+            
+            file << ",\n    " << traceEvent.dump();
+        }
+        activeTasks.clear();
+    }
+    
+    // Close any active pipelines that haven't stopped
+    {
+        std::scoped_lock stateLock(activeStateMutex);
+        for (const auto& [pipelineId, pipelineInfo] : activePipelines) {
+            const auto& [queryId, startTime] = pipelineInfo;
+            auto args = nlohmann::json::object();
+            args["pipeline_id"] = pipelineId.getRawValue();
+            args["incomplete"] = true;
+            args["reason"] = "system_shutdown";
+            
+            auto traceEvent = createTraceEvent(
+                fmt::format("Pipeline {} (Query {}) (Incomplete)", pipelineId, queryId),
+                std::string(CATEGORY_PIPELINE),
+                std::string(EVENT_END),
+                timestampToMicroseconds(std::chrono::system_clock::now()),
+                0,
+                args
+            );
+            traceEvent["tid"] = 1; // Default thread ID
+            
+            file << ",\n    " << traceEvent.dump();
+        }
+        activePipelines.clear();
+        
+        // Close any active queries that haven't stopped
+        for (const auto& queryId : activeQueries) {
+            auto args = nlohmann::json::object();
+            args["incomplete"] = true;
+            args["reason"] = "system_shutdown";
+            
+            auto traceEvent = createTraceEvent(
+                fmt::format("Query {} (Incomplete)", queryId),
+                std::string(CATEGORY_QUERY),
+                std::string(EVENT_END),
+                timestampToMicroseconds(std::chrono::system_clock::now()),
+                0,
+                args
+            );
+            traceEvent["tid"] = 1; // Default thread ID
+            
+            file << ",\n    " << traceEvent.dump();
+        }
+        activeQueries.clear();
+    }
 }
 
 void GoogleEventTraceListener::flush()
@@ -342,6 +517,22 @@ void GoogleEventTraceListener::flush()
         traceThread.request_stop();
         traceThread.join();
     }
+    
+    if (file.is_open()) {
+        file.flush();
+        file.close();
+    }
+}
+
+void GoogleEventTraceListener::gracefulShutdown()
+{
+    if (traceThread.joinable()) {
+        traceThread.request_stop();
+        traceThread.join();
+    }
+    
+    // Clean up incomplete events before flushing
+    cleanupIncompleteEvents();
     
     if (file.is_open()) {
         file.flush();

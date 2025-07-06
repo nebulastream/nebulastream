@@ -300,6 +300,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     if (program.is_used("--google-trace"))
     {
         config.enableGoogleEventTrace = true;
+        std::cout << "Google Event Trace enabled. Trace files will be created at: file://" << std::filesystem::current_path() << "/GoogleEventTrace_YYYY-MM-DD_HH-MM-SS_PID.json" << std::endl;
     }
 
     if (program.is_used("--list"))
