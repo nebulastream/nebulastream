@@ -115,8 +115,11 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             const auto boolValue = static_cast<int>(static_cast<bool>(std::stoi(stringValue))) == 1;
             return ConstantBooleanValueFunction(boolValue);
         };
-        case DataType::Type::CHAR:
-            break;
+        case DataType::Type::CHAR: {
+            INV_CHECK(stringValue.size() == 1, "CHAR constant fn expects one char (duh)");
+            const auto charValue = stringValue.at(0);
+            return ConstantCharValueFunction(charValue);
+        }
         case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());

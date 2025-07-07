@@ -47,5 +47,6 @@ using ConstantUInt64ValueFunction = ConstantValuePhysicalFunction<uint64_t>;
 using ConstantFloatValueFunction = ConstantValuePhysicalFunction<float>;
 using ConstantDoubleValueFunction = ConstantValuePhysicalFunction<double>;
 using ConstantBooleanValueFunction = ConstantValuePhysicalFunction<bool>;
+using ConstantCharValueFunction = ConstantValuePhysicalFunction<char>;
 
 }
