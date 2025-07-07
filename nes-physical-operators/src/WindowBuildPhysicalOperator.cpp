@@ -13,8 +13,6 @@
 */
 #include <WindowBuildPhysicalOperator.hpp>
 
-#include <WindowBuildPhysicalOperator.hpp>
-
 #include <memory>
 #include <optional>
 #include <utility>
