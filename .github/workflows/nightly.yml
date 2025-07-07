@@ -129,7 +129,7 @@ jobs:
         run: |
           cd nes-corpora
 
-          cat << EOF > msg.txt
+          cat << EOF > /msg.txt
           ci run ${{ inputs.fuzzer }} ${{ inputs.duration_in_min }}min
 
           sut_sha: ${{ github.sha }}
@@ -145,7 +145,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add ${{ inputs.fuzzer }}
-          if ! git commit -F msg.txt
+          if ! git commit -F /msg.txt
           then
             exit
           fi
@@ -214,7 +214,7 @@ jobs:
         run: |
           cd nes-corpora
 
-          cat << EOF > msg.txt
+          cat << EOF > /msg.txt
           ci run ${{ inputs.fuzzer }} ${{ inputs.duration_in_min }}min merge
 
           sut_sha: ${{ github.sha }}
@@ -230,7 +230,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add ${{ inputs.fuzzer }}
-          if ! git commit -F msg.txt
+          if ! git commit -F /msg.txt
           then
             exit
           fi
