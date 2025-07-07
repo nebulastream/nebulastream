@@ -116,13 +116,16 @@ void Pipeline::prependOperator(const PhysicalOperator& newOp)
     setRootOperator(newOp.withChild(getRootOperator()));
 }
 
-static PhysicalOperator appendOperatorHelper(const PhysicalOperator& op, const PhysicalOperator& newOp)
+namespace
 {
-    if (not op.getChild())
+PhysicalOperator appendOperatorHelper(const PhysicalOperator& op, const PhysicalOperator& newOp)
+{
+    if (const auto child = op.getChild())
     {
-        return op.withChild(newOp);
+        return op.withChild(appendOperatorHelper(*child, newOp));
     }
-    return op.withChild(appendOperatorHelper(op.getChild().value(), newOp));
+    return op.withChild(newOp);
+}
 }
 
 void Pipeline::appendOperator(const PhysicalOperator& newOp)
