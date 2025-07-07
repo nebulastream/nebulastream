@@ -7,6 +7,7 @@ name: NES PR CI
 on:
   pull_request:
     types: [ synchronize, opened, reopened ]
+  merge_group:
 
 # cancel previous runs of same PR / branch.
 concurrency:
