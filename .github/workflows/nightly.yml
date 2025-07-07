@@ -113,7 +113,7 @@ jobs:
         continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          $fuzzer -jobs=100000000000 /corpus_wip > /dev/null 2> /dev/null
+          $fuzzer -jobs=100000000000 /corpus_wip ../../corpus > /dev/null 2> /dev/null
       - name: stop fuzzers
         run: |
           pkill -f ${{ inputs.fuzzer }}
