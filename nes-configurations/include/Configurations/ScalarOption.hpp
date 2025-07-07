@@ -17,6 +17,7 @@
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
@@ -61,33 +62,14 @@ private:
     ScalarOption() : TypedBaseOption<T>() { }
 
     template <typename Type>
+    requires requires(std::string_view sv) { NES::Util::from_chars<Type>(sv); }
     static Type convertFromString(const std::string& strValue)
     {
-        if constexpr (std::is_same<Type, std::string>::value)
+        if (auto value = NES::Util::from_chars<T>(strValue))
         {
-            return strValue; /// No conversion needed
+            return *value;
         }
-        else if constexpr (std::is_same<Type, float>::value)
-        {
-            return std::stof(strValue);
-        }
-        else if constexpr (std::is_same<Type, uint64_t>::value)
-        {
-            return std::stoull(strValue);
-        }
-        else if constexpr (std::is_same<Type, bool>::value)
-        {
-            /// Simple boolean conversion (true for "true", false otherwise)
-            return strValue == "true";
-        }
-        else if constexpr (NESIdentifier<Type>)
-        {
-            return Type(convertFromString<typename Type::Underlying>(strValue));
-        }
-        else
-        {
-            throw std::logic_error("Unsupported type for ScalarOption");
-        }
+        throw InvalidConfigParameter("Could not convert {} to {}", strValue, typeid(T).name());
     }
 };
 
@@ -187,6 +169,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
 using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
+using IntOption = ScalarOption<int64_t>;
 using BoolOption = ScalarOption<bool>;
 
 }
