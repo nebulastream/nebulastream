@@ -271,6 +271,11 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnDifferentialQueryCallback(DifferentialQueryCallback callback)
+{
+    this->onDifferentialQueryCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -315,7 +320,8 @@ void SystestParser::parse()
             }
             case TokenType::RESULT_DELIMITER: {
                 /// Look ahead for error expectation
-                if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
+                const auto optionalToken = peekToken();
+                if (optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
                     auto expectation = expectError();
@@ -323,6 +329,12 @@ void SystestParser::parse()
                     {
                         onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
                     }
+                }
+                else if (optionalToken == TokenType::QUERY)
+                {
+                    ++currentLine;
+                    queryIdAssigner.getNextQueryResultNumber();
+                    onDifferentialQueryCallback(expectQuery());
                 }
                 else
                 {

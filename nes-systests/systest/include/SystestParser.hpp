@@ -147,6 +147,7 @@ public:
     using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
+    using DifferentialQueryCallback = std::function<void(std::string)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -155,6 +156,7 @@ public:
     void registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback);
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
+    void registerOnDifferentialQueryCallback(DifferentialQueryCallback callback);
 
     void parse();
     void parseResultLines();
@@ -187,6 +189,7 @@ private:
     SystestAttachSourceCallback onAttachSourceCallback;
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
+    DifferentialQueryCallback onDifferentialQueryCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;

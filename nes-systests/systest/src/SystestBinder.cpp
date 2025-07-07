@@ -269,7 +269,8 @@ public:
             .queryDefinition = std::move(queryDefinition.value()),
             .planInfoOrException = createPlanInfoOrException(),
             .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value())};
+            .additionalSourceThreads = std::move(additionalSourceThreads.value()),
+            .differentialQueryPlan = std::move(differentialQueryPlan)};
     }
     /// NOLINTEND(bugprone-unchecked-optional-access)
 
@@ -287,6 +288,7 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::optional<LogicalPlan> differentialQueryPlan;
     bool built = false;
 };
 

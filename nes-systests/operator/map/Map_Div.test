@@ -60,3 +60,7 @@ SELECT id, value / id AS value, timestamp FROM (
 5,3,19000
 6,3,20000
 7,3,21000
+
+SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink
+----
+SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink

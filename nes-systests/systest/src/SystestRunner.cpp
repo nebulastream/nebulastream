@@ -213,6 +213,21 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
                     });
             }
             active.erase(it);
+
+            if (runningQuery->systestQuery.differentialQueryPlan)
+            {
+                if (auto regDiff = querySubmitter.registerQuery(*runningQuery->systestQuery.differentialQueryPlan))
+                {
+                    querySubmitter.startQuery(*regDiff);
+                    for (const auto& diffSummary : querySubmitter.finishedQueries())
+                    {
+                        if (diffSummary.queryId == *regDiff)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
