@@ -41,52 +41,6 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
 {
 }
 
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other)
-    : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfActiveOrigins(other.numberOfActiveOrigins)
-{
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
-    *slicesWriteLocked = *otherSlicesReadLocked;
-    *windowsWriteLocked = *otherWindowsReadLocked;
-}
-
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept
-    : sliceAssigner(std::move(other.sliceAssigner))
-    , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
-{
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
-    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
-    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
-}
-
-DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultTimeBasedSliceStore& other)
-{
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
-    *slicesWriteLocked = *otherSlicesReadLocked;
-    *windowsWriteLocked = *otherWindowsReadLocked;
-
-    sliceAssigner = other.sliceAssigner;
-    sequenceNumber = other.sequenceNumber.load();
-    numberOfActiveOrigins = other.numberOfActiveOrigins;
-    return *this;
-}
-
-DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBasedSliceStore&& other) noexcept
-{
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
-    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
-    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
-
-    sliceAssigner = std::move(other.sliceAssigner);
-    sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
-    return *this;
-}
-
 DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 {
     deleteState();
