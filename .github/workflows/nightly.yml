@@ -145,7 +145,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add ${{ inputs.fuzzer }}
-          git commit -F msg.txt
+          if ! git commit -F msg.txt
+          then
+            exit
+          fi
 
           exp_backoff=1
           for try in $(seq 5)
@@ -227,7 +230,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add ${{ inputs.fuzzer }}
-          git commit -F msg.txt
+          if ! git commit -F msg.txt
+          then
+            exit
+          fi
 
           exp_backoff=1
           for try in $(seq 5)
