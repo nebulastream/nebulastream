@@ -19,7 +19,7 @@ jobs:
   build-and-profile:
     runs-on: ubuntu-latest
     container:
-      image: nebulastream/nes-development:local
+      image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
@@ -62,4 +62,4 @@ jobs:
           done
       - name: upload svgs and metadata to conbench via curl
         run: |
-          echo "Not yet Implemented :("
+          python3 ./scripts/benchmarking/benchmark.py --flamegraphs
