@@ -66,6 +66,7 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
     auto source = builder.addSource();
     auto pipeline = builder.addSink({source});
     auto query = test.addNewQuery(std::move(builder));
+    auto queryId = query->queryId;
     auto ctrl = test.sourceControls[source];
 
     /// Statistics. Note: No Pipeline Terminate and no QueryStop because engine shutdown does not gracefully terminate any query.
@@ -75,7 +76,7 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
         ExpectStats::TaskExecutionStart(4),
         ExpectStats::TaskExecutionComplete(4));
 
-    test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Started, QueryStatus::Running});
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running});
 
     test.start();
     {
@@ -88,6 +89,10 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sinkControls[pipeline]->waitForNumberOfReceivedBuffersOrMore(4);
+
+        /// The tests asserts that a query reaches the running state, to prevent flakey tests. Even if the query already produced 4 buffers
+        /// shutting down the engine races the shutdown of the query and the is running report.
+        ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 
