@@ -122,7 +122,7 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 
     for (const auto& rootOperator : newRoots)
     {
-        INVARIANT(
+        INV_CHECK(
             rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),
             "Expects SourceOperators as roots after flip but got {}",
             rootOperator->getPhysicalOperator());

@@ -139,6 +139,16 @@ private:
             } \
         } while (false)
 
+    /// hacky alternative to not-established invariants
+    #define INV_CHECK(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                throw UnknownException(formatString __VA_OPT__(, ) __VA_ARGS__); \
+            } \
+        } while (false)
+
 #endif
 
 /// @brief This function is used to log the current exception.
