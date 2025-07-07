@@ -24,7 +24,7 @@ jobs:
 
   check-format:
     needs: [ get-dev-images ]
-    name: "Run build and test"
+    name: "run clang format"
     uses: ./.github/workflows/format.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
