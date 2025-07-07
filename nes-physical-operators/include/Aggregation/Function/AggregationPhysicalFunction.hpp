@@ -47,20 +47,27 @@ public:
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
-    virtual void
-    lift(const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
+    virtual void lift(
+        const nautilus::val<AggregationState*>& aggregationState,
+        ExecutionContext& executionContext,
+        const Record& record)
         = 0;
 
-    /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
+    /// Combines two aggregation states into one.
+    /// After calling this method, aggregationState1 contains the combined state
     virtual void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider)
         = 0;
 
-    /// Returns the aggregation state as a nautilus record. The record will contain the aggregation state in the field specified by resultFieldIdentifier
+    /// Returns the aggregation state as a nautilus record.
+    /// The record will contain the aggregation state in the field specified by resultFieldIdentifier
     /// It will NOT contain any other metadata fields, e.g., window start and end fields
-    virtual Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) = 0;
+    virtual Record lower(
+        nautilus::val<AggregationState*> aggregationState,
+        PipelineMemoryProvider& pipelineMemoryProvider)
+        = 0;
 
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
     virtual void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) = 0;

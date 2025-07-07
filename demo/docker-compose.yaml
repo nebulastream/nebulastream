@@ -1,0 +1,40 @@
+services:
+  generator:
+    image: audio
+    network_mode: host
+    volumes:
+      - ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+    environment:
+      - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+      - BINARY_NAME=server
+
+  worker:
+    image: nes-worker
+    network_mode: host
+    volumes:
+      - /home/yanniks/dev/nes/nebulastream/output:/app/output
+    depends_on:
+      - generator
+
+  coordinator:
+    image: nes-nebuli
+    command: register -s 127.0.0.1:8080 -i ${YAML_FILE} -x
+    network_mode: host
+    volumes:
+      - /home/yanniks/dev/nes/nebulastream:/nebulastream
+    depends_on:
+      - worker
+
+  playback:
+    image: audio
+    network_mode: host
+    volumes:
+      - ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+      - /home/yanniks/dev/nes/nebulastream/output:/usr/src/output
+    environment:
+      - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+      - BINARY_NAME=file
+    profiles:
+      - postprocessing

@@ -1,0 +1,49 @@
+query: |
+  SELECT *
+  FROM (
+    SELECT start, SpeechRecognitionLabel(label_index) as label, COUNT(start) as freq
+    FROM (
+      SELECT start, end, ArgMax(output) as label_index 
+      FROM ( 
+        SELECT INFER_MODEL(speech_recognition, (chunked)) 
+        FROM (
+          SELECT start, end, ARRAY_AGG(value) as chunked
+          FROM audio_stream
+          WINDOW SLIDING(timestamp, size 1000000 sec, advance by 20000000 ms)
+        )
+      )
+    ) WINDOW TUMBLING(start, size 1000000 sec)
+    GROUP BY label_index
+  )
+  WHERE freq > UINT64(10)
+  INTO sink
+sink:
+  name: sink
+  type: Print
+  config:
+    inputFormat: CSV
+logical:
+  - name: audio_stream
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: value
+        type: FLOAT32
+physical:
+  - logical: audio_stream
+    parserConfig:
+      type: Raw
+    sourceConfig:
+      type: Audio
+      socketHost: 127.0.0.1
+      socketPort: 50500
+      sampleRate: 16000
+      sampleWidth: 2
+models:
+  - path: nebulastream/demo/audio_model.onnx
+    name: speech_recognition
+    inputs:
+      - VARSIZED
+    outputs:
+      - name: output
+        type: VARSIZED

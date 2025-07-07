@@ -1,0 +1,31 @@
+query: |
+  SELECT start, end, samples, ImageManipToBase64(audio_section) as chunk
+  FROM (
+      SELECT start, end, COUNT(value) as samples, ARRAY_AGG(value) AS audio_section
+      FROM tcp_audio_stream 
+      WINDOW TUMBLING(timestamp, SIZE 1000000 sec)
+  )
+  INTO audio_chunk_sink
+sink:
+  name: audio_chunk_sink
+  type: Print
+  config:
+    inputFormat: CSV
+logical:
+  - name: tcp_audio_stream
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: value
+        type: FLOAT32
+physical:
+  - logical: tcp_audio_stream
+    parserConfig:
+      type: Raw
+    sourceConfig:
+      type: Audio
+      socketHost: 127.0.0.1
+      socketPort: 50500
+      sampleRate: 16000
+      sampleWidth: 2
+      realTimestamp: true

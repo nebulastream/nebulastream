@@ -26,4 +26,5 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.13 && \
     chmod +x /bin/grpc_health_probe
 
 COPY --from=build /tmp/bin /usr/bin
+WORKDIR /app/
 ENTRYPOINT ["nes-single-node-worker"]

@@ -1,28 +1,19 @@
 query: |
-  SELECT *
-  FROM (
-    SELECT start, SpeechRecognitionLabel(label_index) as label, COUNT(start) as freq
+  SELECT start, end, SpeechRecognitionLabel(ArgMax(output)) as label
+  FROM ( 
+    SELECT INFER_MODEL(speech_recognition, (chunked)) 
     FROM (
-      SELECT start, end, ArgMax(output) as label_index 
-      FROM ( 
-        SELECT INFER_MODEL(speech_recognition, (chunked)) 
-        FROM (
-          SELECT start, end, ARRAY_AGG(value) as chunked
-          FROM audio_stream
-          WINDOW SLIDING(timestamp, size 1000000 sec, advance by 20000000 ms)
-        )
-      )
-    ) WINDOW TUMBLING(start, size 1000000 sec)
-    GROUP BY label_index
+      SELECT start, end, ARRAY_AGG(value) as chunked
+      FROM audio_stream
+      WINDOW TUMBLING(timestamp, SIZE 1000000 sec)
+    )
   )
-  WHERE freq > UINT64(5)
-  INTO file_sink
+  INTO sink
 sink:
-  name: file_sink
-  type: File
+  name: sink
+  type: Print
   config:
     inputFormat: CSV
-    filePath: word_detection_2.csv
 logical:
   - name: audio_stream
     schema:
@@ -37,11 +28,11 @@ physical:
     sourceConfig:
       type: Audio
       socketHost: localhost
-      socketPort: 1234
+      socketPort: 50500
       sampleRate: 16000
       sampleWidth: 2
 models:
-  - path: cmake-build-debug-docker/nes-systests/testdata/model/audio_model.onnx
+  - path: nebulastream/demo/audio_model.onnx
     name: speech_recognition
     inputs:
       - VARSIZED
