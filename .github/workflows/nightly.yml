@@ -96,6 +96,17 @@ jobs:
           mkdir -p ${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           mkdir -p ${{ inputs.fuzzer }}/corpus
           mkdir /corpus_wip
+      - name: check for fixed inputs
+        shell: bash
+        run: |
+          cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
+          for input in $(find -type f)
+          do
+            if $fuzzer $input
+            then
+              mv $input /corpus_wip/$(echo $input | cut -d - -f 2)
+            fi
+          done
       - name: fuzz ${{ inputs.duration_in_min }} min
         shell: bash
         timeout-minutes: ${{ fromJson(inputs.duration_in_min) }}
