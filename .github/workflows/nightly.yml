@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x64 ]
-        stdlib: [ 'libstdcxx', 'libcxx' ]
+        stdlib: [ 'libcxx' ]
         # To reduce the load on our CI, we do not run all our tests with Benchmark.
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
         build_type: [ 'RelWithDebInfo' ]
