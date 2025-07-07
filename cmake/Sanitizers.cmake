@@ -45,7 +45,4 @@ option(USE_LIBFUZZER "" OFF)
 if (USE_LIBFUZZER)
     add_compile_options(-fsanitize=fuzzer-no-link)
     add_link_options(-fsanitize=fuzzer-no-link)
-
-    add_compile_options(--coverage)
-    add_link_options(--coverage)
 endif ()
