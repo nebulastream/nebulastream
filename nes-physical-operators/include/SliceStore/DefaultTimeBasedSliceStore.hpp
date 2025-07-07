@@ -43,10 +43,6 @@ class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
-    DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept;
-    DefaultTimeBasedSliceStore& operator=(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore& operator=(DefaultTimeBasedSliceStore&& other) noexcept;
 
     ~DefaultTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
