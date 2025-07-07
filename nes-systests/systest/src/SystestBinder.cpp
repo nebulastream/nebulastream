@@ -204,6 +204,8 @@ public:
         }
     }
 
+    void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
+
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
     SystestQuery build() &&
     {
@@ -213,7 +215,7 @@ public:
         INVARIANT(testFilePath.has_value(), "Test file path has not been set");
         INVARIANT(workingDir.has_value(), "Working directory has not been set");
         INVARIANT(queryDefinition.has_value(), "Query definition has not been set");
-        INVARIANT(expectedResultsOrError.has_value(), "Expected results or error has not been set");
+        INVARIANT(expectedResultsOrError.has_value() || differentialQueryPlan.has_value(), "Expected results or error has not been set");
         const auto createPlanInfoOrException = [this]() -> std::expected<SystestQuery::PlanInfo, Exception>
         {
             if (not exception.has_value())
@@ -238,9 +240,12 @@ public:
             .queryDefinition = std::move(queryDefinition.value()),
             .planInfoOrException = createPlanInfoOrException(),
             .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value())};
+            .additionalSourceThreads = std::move(additionalSourceThreads.value()),
+            .differentialQueryPlan = std::move(differentialQueryPlan)};
     }
     /// NOLINTEND(bugprone-unchecked-optional-access)
+
+    std::optional<LogicalPlan> getDifferentialQueryPlan() const { return differentialQueryPlan; }
 
 private:
     /// We could make all the fields just public and set them, but since some setters contain more complex logic, I wanted to keep access uniform.
@@ -256,6 +261,7 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::optional<LogicalPlan> differentialQueryPlan;
     bool built = false;
 };
 
@@ -316,6 +322,11 @@ struct SystestBinder::Impl
                                          try
                                          {
                                              systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
+                                             if (systest.getDifferentialQueryPlan().has_value())
+                                             {
+                                                 auto optimizedDiff = optimizer.optimize(systest.getDifferentialQueryPlan().value());
+                                                 systest.setDifferentialQueryPlan(optimizedDiff);
+                                             }
                                          }
                                          catch (const Exception& exception)
                                          {
@@ -550,6 +561,7 @@ struct SystestBinder::Impl
             });
 
         /// We create a new query plan from our config when finding a query
+        SystestQueryId lastParsedQueryId = INVALID_SYSTEST_QUERY_ID;
         parser.registerOnQueryCallback(
             [&](std::string query, const SystestQueryId currentQueryNumberInTest)
             {
@@ -586,6 +598,7 @@ struct SystestBinder::Impl
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, currentQueryNumberInTest).first->second;
                 currentTest.setQueryDefinition(query);
+                lastParsedQueryId = currentQueryNumberInTest;
                 if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
                 {
                     currentTest.setException(sinkExpected.error());
@@ -602,6 +615,7 @@ struct SystestBinder::Impl
                         currentTest.setException(e);
                     }
                 }
+                currentTest.setExpectedResult(std::vector<std::string>{});
             });
 
         parser.registerOnErrorExpectationCallback(
@@ -615,6 +629,84 @@ struct SystestBinder::Impl
         parser.registerOnResultTuplesCallback(
             [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
             { plans.emplace(correspondingQueryId, correspondingQueryId).first->second.setExpectedResult(std::move(resultTuples)); });
+
+        parser.registerOnDifferentialQueryCallback(
+            [&](std::string differentialQuery)
+            {
+                if (lastParsedQueryId == INVALID_SYSTEST_QUERY_ID)
+                {
+                    throw std::runtime_error("No main query parsed before second part of differential query");
+                }
+                auto it = plans.find(lastParsedQueryId);
+                if (it == plans.end())
+                {
+                    throw std::runtime_error("No plan found for last parsed query id");
+                }
+                auto& currentPlan = it->second;
+                /// We have to get all sink names from the query and then create custom paths for each sink.
+                /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
+                /// We assume:
+                /// - the INTO keyword is the last keyword in the query
+                /// - the sink name is the last word in the INTO clause
+                const auto sinkName = [&differentialQuery]() -> std::string
+                {
+                    const auto intoClause = differentialQuery.find("INTO");
+                    if (intoClause == std::string::npos)
+                    {
+                        NES_ERROR("INTO clause not found in second part of differential query: {}", differentialQuery);
+                        return "";
+                    }
+                    const auto intoLength = std::string("INTO").length();
+                    auto trimmedSinkName = std::string(Util::trimWhiteSpaces(differentialQuery.substr(intoClause + intoLength)));
+
+                    /// As the sink name might have a semicolon at the end, we remove it
+                    if (trimmedSinkName.back() == ';')
+                    {
+                        trimmedSinkName.pop_back();
+                    }
+                    return trimmedSinkName;
+                }();
+
+                /// Replacing the sinkName with the created unique sink name
+                const auto sinkForQuery = sinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
+                differentialQuery = std::regex_replace(differentialQuery, std::regex(sinkName), sinkForQuery);
+
+                std::string differentialTestResultFileName = std::string(testFileName) + "differential";
+                /// Adding the sink to the sink config, such that we can create a fully specified query plan
+                const auto resultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
+
+                if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
+                {
+                    currentPlan.setException(sinkExpected.error());
+                }
+                else
+                {
+                    try
+                    {
+                        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(differentialQuery);
+                        auto sinkOperator = [](const LogicalPlan& queryPlan)
+                        {
+                            const auto rootOperators = queryPlan.rootOperators;
+                            if (rootOperators.size() != 1)
+                            {
+                                throw QueryInvalid(
+                                    "NebulaStream currently only supports a single sink per query, but the query contains: {}",
+                                    rootOperators.size());
+                            }
+                            const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+                            INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
+                            return sinkOp.value();
+                        }(plan);
+                        sinkOperator.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sinkExpected.value());
+                        plan.rootOperators.at(0) = sinkOperator;
+                        currentPlan.setDifferentialQueryPlan(plan);
+                    }
+                    catch (Exception& e)
+                    {
+                        currentPlan.setException(e);
+                    }
+                }
+            });
         try
         {
             parser.parse();

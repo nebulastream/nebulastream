@@ -179,26 +179,67 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
             }
             else
             {
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
+                if (runningQuery->systestQuery.differentialQueryPlan)
+                {
+                    NES_INFO(
+                        "[DIFF RUNNER] Registering and starting differential query for main query id {}. Expected result file: {}",
+                        runningQuery->systestQuery.queryIdInFile,
+                        runningQuery->systestQuery.resultFileForDifferentialQuery());
+                    if (auto regDiff = querySubmitter.registerQuery(*runningQuery->systestQuery.differentialQueryPlan))
                     {
-                        if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                        querySubmitter.startQuery(*regDiff);
+                        for (const auto& diffSummary : querySubmitter.finishedQueries())
                         {
-                            return fmt::format(
-                                "expected error {} but query succeeded",
-                                std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            if (diffSummary.queryId == *regDiff)
+                            {
+                                break;
+                            }
                         }
-                        runningQuery->querySummary = summary;
-                        if (auto err = checkResult(*runningQuery))
+                    }
+                    reportResult(
+                        runningQuery,
+                        finished,
+                        queries.size(),
+                        failed,
+                        [&]
                         {
-                            return *err;
-                        }
-                        return std::string{};
-                    });
+                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                            {
+                                return fmt::format(
+                                    "expected error {} but query succeeded",
+                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            }
+                            runningQuery->querySummary = summary;
+                            if (auto err = checkResult(*runningQuery))
+                            {
+                                return *err;
+                            }
+                            return std::string{};
+                        });
+                }
+                else
+                {
+                    reportResult(
+                        runningQuery,
+                        finished,
+                        queries.size(),
+                        failed,
+                        [&]
+                        {
+                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                            {
+                                return fmt::format(
+                                    "expected error {} but query succeeded",
+                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            }
+                            runningQuery->querySummary = summary;
+                            if (auto err = checkResult(*runningQuery))
+                            {
+                                return *err;
+                            }
+                            return std::string{};
+                        });
+                }
             }
             active.erase(it);
         }

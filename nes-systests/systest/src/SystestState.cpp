@@ -98,6 +98,11 @@ std::filesystem::path SystestQuery::resultFile() const
     return resultFile(workingDir, testName, queryIdInFile);
 }
 
+std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
+{
+    return resultFile(workingDir, testName + "differential", queryIdInFile);
+}
+
 
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {

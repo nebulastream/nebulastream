@@ -258,13 +258,13 @@ struct QueryResult
     NES::Schema schema;
     std::vector<std::string> result;
 };
-std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
+std::optional<QueryResult> loadQueryResult(const std::filesystem::path& resultFilePath)
 {
-    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
-    std::ifstream resultFile(query.resultFile());
+    NES_DEBUG("Loading query result from: {}", resultFilePath);
+    std::ifstream resultFile(resultFilePath);
     if (!resultFile)
     {
-        throw NES::UnknownException("Failed to open result file: {}", query.resultFile());
+        throw NES::UnknownException("Failed to open result file: {}", resultFilePath);
     }
 
     QueryResult result;
@@ -628,7 +628,7 @@ private:
 QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 {
     /// Get result for running query
-    const auto queryResult = loadQueryResult(runningQuery.systestQuery);
+    const auto queryResult = loadQueryResult(runningQuery.systestQuery.resultFile());
     if (not queryResult.has_value())
     {
         return QueryCheckResult{fmt::format("Failed to load query result for query: {}", runningQuery.systestQuery.queryDefinition)};
@@ -657,6 +657,33 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 
     return QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
 }
+
+std::optional<std::string> checkDifferentialResult(const NES::Systest::RunningQuery& runningQuery)
+{
+    auto result1 = loadQueryResult(runningQuery.systestQuery.resultFile());
+    auto result2 = loadQueryResult(runningQuery.systestQuery.resultFileForDifferentialQuery());
+
+    if (!result1 || !result2)
+    {
+        return "Failed to load result files for differential query comparison.";
+    }
+
+    if (result1->schema != result2->schema)
+    {
+        return fmt::format("Differential query schemas do not match.\nOriginal: {}\nDifferential: {}", result1->schema, result2->schema);
+    }
+
+    if (result1->result != result2->result)
+    {
+        return fmt::format(
+            "Differential query results do not match.\nOriginal results:\n{}\nDifferential results:\n{}",
+            fmt::join(result1->result, "\n"),
+            fmt::join(result2->result, "\n"));
+    }
+
+    return std::nullopt;
+}
+
 }
 
 namespace NES::Systest
@@ -664,6 +691,11 @@ namespace NES::Systest
 
 std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 {
+    if (runningQuery.systestQuery.differentialQueryPlan.has_value())
+    {
+        return checkDifferentialResult(runningQuery);
+    }
+
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
                                                               "---------------";
