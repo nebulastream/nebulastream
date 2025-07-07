@@ -100,7 +100,7 @@ jobs:
         shell: bash
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in *
+          for input in $(find -type f)
           do
             if $fuzzer $input
             then
