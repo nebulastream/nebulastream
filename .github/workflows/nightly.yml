@@ -18,7 +18,13 @@ on:
           - snw-strict-fuzz
           - snw-text-fuzz
           - sql-parser-simple-fuzz
-        description: "which branch/ref to use for running the nightly job"
+      stdlib:
+        required: true
+        default: 'libcxx'
+        type: choice
+        options:
+          - libcxx
+          - libstdcxx
       duration_in_min:
         default: 10
         type: number
@@ -34,10 +40,10 @@ jobs:
       branch-name: ${{ github.ref_name }}
 
   run-fuzzer:
-    name: "Fuzz: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
+    name: "Fuzz: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
     needs: [ get-dev-images ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-${{matrix.sanitizer}}
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
@@ -136,7 +142,7 @@ jobs:
           fuzzer: ${{ inputs.fuzzer}}
           duration: ${{ inputs.duration_in_min }}
           arch: ${{ matrix.arch }}
-          stdlib: ${{ matrix.stdlib }}
+          stdlib: ${{ inputs.stdlib }}
           build_type: ${{ matrix.build_type }}
           sanitizer: ${{ matrix.sanitizer }}
           EOF
@@ -169,7 +175,7 @@ jobs:
     name: "Merge corpora"
     needs: [ get-dev-images, run-fuzzer ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-libcxx-none
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-none
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
@@ -221,7 +227,7 @@ jobs:
           fuzzer: ${{ inputs.fuzzer}}
           duration: ${{ inputs.duration_in_min }}
           arch: x64
-          stdlib: libcxx
+          stdlib: ${{ inputs.stdlib }}
           build_type: RelWithDebInfo
           sanitizer: none
           EOF
