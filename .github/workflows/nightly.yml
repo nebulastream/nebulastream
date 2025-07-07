@@ -97,6 +97,7 @@ jobs:
           mkdir -p ${{ inputs.fuzzer }}/corpus
           mkdir /corpus_wip
       - name: check for fixed inputs
+        shell: bash
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           for input in *
