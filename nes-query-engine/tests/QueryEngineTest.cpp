@@ -305,11 +305,12 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
     auto source2 = builder.addSource();
     auto sink = builder.addSink({builder.addPipeline({source1, source2})});
     auto query = test.addNewQuery(std::move(builder));
+    auto queryId = query->queryId;
 
     auto ctrl1 = test.sourceControls[source1];
     auto ctrl2 = test.sourceControls[source2];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Started, QueryStatus::Running});
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running});
 
     /// Statistics.
     ///     Note: Pipelines are not terminated, due to system shutdown
@@ -338,6 +339,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
         ctrl2->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER);
         ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
+        test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT);
     }
 
 
