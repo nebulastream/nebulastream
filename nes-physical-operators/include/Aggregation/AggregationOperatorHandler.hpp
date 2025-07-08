@@ -51,9 +51,6 @@ public:
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
-    /// shared_ptr as multiple slices need access to it
-    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
-    std::shared_ptr<NautilusCleanupExec> cleanupStateNautilusFunction;
 
 protected:
     void triggerSlices(
