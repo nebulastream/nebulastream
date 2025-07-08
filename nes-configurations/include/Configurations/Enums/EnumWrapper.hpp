@@ -15,6 +15,8 @@
 #pragma once
 
 #include <string>
+
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/std.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -41,6 +43,7 @@ public:
         return magic_enum::enum_cast<EnumType>(value);
     }
 
+
     const std::string& getValue() const { return value; }
 
     friend bool operator==(const EnumWrapper& lhs, const EnumWrapper& rhs) = default;
@@ -52,10 +55,4 @@ private:
 };
 
 }
-namespace fmt
-{
-template <>
-struct formatter<NES::Configurations::EnumWrapper> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Configurations::EnumWrapper);
