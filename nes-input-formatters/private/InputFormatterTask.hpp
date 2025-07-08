@@ -167,6 +167,8 @@ public:
         FieldIndexFunctionType rawBufferFIF;
     };
 
+    /// accumulates all data produced during the indexing phase, which the parsing phase requires
+    /// on calling 'createSpanningTuplePOD()' it returns this data
     class SpanningTupleData
     {
     public:
@@ -194,9 +196,20 @@ public:
         FieldIndexFunctionType& getTrailingSpanningTupleFIF() { return trailingSpanningTupleFIF; }
         FieldIndexFunctionType& getRawBufferFIF() { return rawBufferFIF; }
 
-        FieldIndexFunctionType takeLeadingSpanningTupleFIF() { return std::move(leadingSpanningTupleFIF); }
-        FieldIndexFunctionType takeTrailingSpanningTupleFIF() { return std::move(trailingSpanningTupleFIF); }
-        FieldIndexFunctionType takeRawBufferFIF() { return std::move(rawBufferFIF); }
+        /// returns the accumulated data of the indexing phase (to the parsing phase)
+        /// don't continue to use a SpanningTupleData object after calling this function (todo: enforce comment somehow)
+        SpanningTuplePOD createSpanningTuplePOD()
+        {
+            return SpanningTuplePOD{
+                .leadingSpanningTuplePtr = this->getLeadingSpanningTuplePointer(),
+                .trailingSpanningTuplePtr = this->getTrailingTuplePointer(),
+                .hasLeadingSpanningTupleBool = this->hasLeadingSpanningTuple(),
+                .hasTrailingSpanningTupleBool = this->hasTrailingSpanningTuple(),
+                .totalNumberOfTuples = this->getRawBufferFIF().getTotalNumberOfTuples(),
+                .leadingSpanningTupleFIF = std::move(this->leadingSpanningTupleFIF),
+                .trailingSpanningTupleFIF = std::move(this->trailingSpanningTupleFIF),
+                .rawBufferFIF = std::move(this->rawBufferFIF)};
+        }
 
     private:
         int8_t* spanningTuplePtr = nullptr;
@@ -211,19 +224,6 @@ public:
         bool hasTrailingSpanningTupleBool = false;
         uint64_t totalNumberOfTuples = 0;
     };
-
-    static SpanningTuplePOD createSpanningTuplePOD(SpanningTupleData& spanningTupleData)
-    {
-        return SpanningTuplePOD{
-            .leadingSpanningTuplePtr = spanningTupleData.getLeadingSpanningTuplePointer(),
-            .trailingSpanningTuplePtr = spanningTupleData.getTrailingTuplePointer(),
-            .hasLeadingSpanningTupleBool = spanningTupleData.hasLeadingSpanningTuple(),
-            .hasTrailingSpanningTupleBool = spanningTupleData.hasTrailingSpanningTuple(),
-            .totalNumberOfTuples = spanningTupleData.getRawBufferFIF().getTotalNumberOfTuples(),
-            .leadingSpanningTupleFIF = spanningTupleData.takeLeadingSpanningTupleFIF(),
-            .trailingSpanningTupleFIF = spanningTupleData.takeTrailingSpanningTupleFIF(),
-            .rawBufferFIF = spanningTupleData.takeRawBufferFIF()};
-    }
 
     static void calculateSizeOfSpanningTuples(
         SpanningTupleData& spanningTupleData,
@@ -312,13 +312,14 @@ public:
         const size_t configuredBufferSize,
         Arena* arenaRef)
     {
-        /// We need to copy assign a 'new' SpanningTupleData, since it is thread_local and not (re)constructed on all iterations but the first
+        /// each thread sets up a static address for a POD struct that contains all relevent data that the indexing phase produces
+        /// this allows this proxy function to return a, guaranteed to be valid, reference to the POD tho the compiled query pipeline
         thread_local SpanningTuplePOD spanningTuplePOD{};
         SpanningTupleData spanningTupleData{};
         if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
             pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-            spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+            spanningTuplePOD = spanningTupleData.createSpanningTuplePOD();
             return &spanningTuplePOD;
         }
 
@@ -338,7 +339,7 @@ public:
 
             if (stagedBuffers.size() <= 1)
             {
-                spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+                spanningTuplePOD = spanningTupleData.createSpanningTuplePOD();
                 return &spanningTuplePOD;
             }
 
@@ -390,7 +391,7 @@ public:
 
             if (stagedBuffers.size() < 3)
             {
-                spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+                spanningTuplePOD = spanningTupleData.createSpanningTuplePOD();
                 return &spanningTuplePOD;
             }
 
@@ -413,7 +414,7 @@ public:
                     inputFormatterTask->indexerMetaData);
             }
         }
-        spanningTuplePOD = createSpanningTuplePOD(spanningTupleData);
+        spanningTuplePOD = spanningTupleData.createSpanningTuplePOD();
         return &spanningTuplePOD;
     }
 
