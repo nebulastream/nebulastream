@@ -35,9 +35,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -177,11 +177,11 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType, const std::string& fieldDelimiter)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
-    auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", fieldDelimiter}};
+    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }
@@ -199,8 +199,6 @@ void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, c
 
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
 {
-    std::cout << fmt::format("File sizes do not match: {} vs. {}.", file1.c_str(), file2.c_str());
-
     if (file_size(file1) != file_size(file2))
     {
         std::cout << fmt::format(
@@ -218,7 +216,7 @@ TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     return TestPipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));

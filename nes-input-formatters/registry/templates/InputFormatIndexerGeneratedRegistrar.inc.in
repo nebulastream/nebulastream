@@ -15,30 +15,30 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#    error "This file should not be included directly! Include instead include InputFormatterRegistry.hpp"
+#ifndef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
+#    error "This file should not be included directly! Include instead include InputFormatIndexerRegistry.hpp"
 #endif
 
 #include <memory>
 #include <string>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatIndexer.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
+namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar
 {
 
-/// declarations of register functions for 'InputFormatters'
+/// declarations of register functions for 'InputFormatIndexers'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<InputFormatters::InputFormatterRegistry, std::string, InputFormatters::InputFormatterRegistryReturnType, InputFormatters::InputFormatterRegistryArguments>::registerAll(
+inline void Registrar<InputFormatters::InputFormatIndexerRegistry, std::string, InputFormatters::InputFormatIndexerRegistryReturnType, InputFormatters::InputFormatIndexerRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::InputFormatters::InputFormatterGeneratedRegistrar;
+    using namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

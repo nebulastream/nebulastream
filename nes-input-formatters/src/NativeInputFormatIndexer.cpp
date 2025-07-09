@@ -12,18 +12,22 @@
     limitations under the License.
 */
 
-#pragma once
+#include <NativeInputFormatIndexer.hpp>
 
 #include <memory>
+#include <utility>
 
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <InputFormatIndexerRegistry.hpp>
 
-namespace NES::InputFormatters::InputFormatterProvider
+namespace NES::InputFormatters
 {
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(OriginId originId, const Schema& schema, const ParserConfig& config);
 
-bool contains(const std::string& parserType);
+InputFormatIndexerRegistryReturnType
+InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
+{
+    auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false>(
+        std::move(inputFormatter));
+}
+
 }

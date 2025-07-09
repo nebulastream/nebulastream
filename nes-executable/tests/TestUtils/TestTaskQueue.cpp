@@ -182,7 +182,7 @@ void MultiThreadedTestTaskQueue::waitForCompletion()
     const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
     eps->stop(*pipelineExecutionContext);
     timer.pause();
-    NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
+    fmt::println("Final time to process all tasks: {}ms", timer.getPrintTime());
 }
 
 void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)

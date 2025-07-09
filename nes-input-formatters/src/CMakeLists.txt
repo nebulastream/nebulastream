@@ -11,13 +11,12 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        InputFormatterTask.cpp
-        CSVInputFormatter.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp
-        RawInputDataParser.cpp
+        RawValueParser.cpp
         FieldOffsets.cpp
 )
 
 # Register plugins
-add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)
+add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+add_plugin(Native InputFormatIndexer nes-input-formatters NativeInputFormatIndexer.cpp)
