@@ -43,8 +43,8 @@ namespace detail
 /// -----------------------------------------------------------------------------
 
 
-BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
-    : data(inMemorySegment), owningBufferRecycler(recycler)
+BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, std::shared_ptr<BufferRecycler> recycler)
+    : data(inMemorySegment), owningBufferRecycler(std::move(recycler))
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer and track which function obtained the buffer
@@ -103,10 +103,10 @@ DataSegment<DataLocation> BufferControlBlock::getData() const
     return data;
 }
 
-void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
+void BufferControlBlock::resetBufferRecycler(const std::shared_ptr<BufferRecycler>& recycler)
 {
     PRECONDITION(recycler, "invalid recycler");
-    auto* oldRecycler = owningBufferRecycler.exchange(recycler);
+    const auto oldRecycler = owningBufferRecycler.exchange(recycler);
     INVARIANT(recycler != oldRecycler, "invalid recycler");
 }
 
@@ -262,7 +262,7 @@ bool BufferControlBlock::dataRelease()
     {
         std::unique_lock childLock{segmentMutex};
         numberOfTuples = 0;
-        auto* bufferRecycler = owningBufferRecycler.load();
+        const auto bufferRecycler = owningBufferRecycler.load();
         const auto emptySegment = DataSegment<DataLocation>{};
         for (auto& child : children)
         {

@@ -159,12 +159,6 @@ public:
     { \
         return Exception(fmt::format("{}; {}\n", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
     } \
-    namespace ErrorCode \
-    { \
-    enum \
-    { \
-        name = code \
-    }; \
     template <> \
     class ExceptionRegistration<code> \
     { \
@@ -182,6 +176,12 @@ public:
         { \
             return message; \
         } \
+    }; \
+    namespace ErrorCodes \
+    { \
+    enum \
+    { \
+        name = code \
     }; \
     }
 
@@ -303,7 +303,7 @@ static const std::unordered_map<uint64_t, ExceptionType> EXCEPTIONS_BY_ERROR_COD
     auto found = EXCEPTIONS_BY_ERROR_CODES.find(code);
     if (found == EXCEPTIONS_BY_ERROR_CODES.end())
     {
-        return EXCEPTIONS_BY_ERROR_CODES.at(UnknownException);
+        return EXCEPTIONS_BY_ERROR_CODES.at(ErrorCodes::UnknownException);
     }
     return found->second;
 }

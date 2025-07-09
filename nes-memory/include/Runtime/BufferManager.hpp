@@ -53,7 +53,7 @@ class FloatingBuffer;
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
-constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
+constexpr size_t alignBufferSize(size_t bufferSize, size_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {

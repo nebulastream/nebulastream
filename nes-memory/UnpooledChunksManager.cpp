@@ -24,12 +24,14 @@
 #include <ranges>
 #include <thread>
 #include <utility>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+#include "Runtime/BufferManager.hpp"
 
 namespace NES
 {
@@ -43,7 +45,7 @@ UnpooledChunksManager::UnpooledChunk::UnpooledChunk(const uint64_t windowSize) :
 }
 
 void UnpooledChunksManager::UnpooledChunk::emplaceChunkControlBlock(
-    uint8_t* chunkKey, std::unique_ptr<Memory::detail::MemorySegment> newMemorySegment)
+    uint8_t* chunkKey, Memory::detail::DataSegment<Memory::detail::InMemoryLocation> newMemorySegment)
 {
     auto& curUnpooledChunk = chunks.at(chunkKey);
     curUnpooledChunk.unpooledMemorySegments.emplace_back(std::move(newMemorySegment));
@@ -132,50 +134,28 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
+
 Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
     const size_t neededSize, size_t alignment, const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler)
 {
     const auto threadId = std::this_thread::get_id();
 
-    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
-    const auto alignedBufferSizePlusControlBlock
-        = Memory::alignBufferSize(neededSize + sizeof(Memory::detail::BufferControlBlock), alignment);
 
     /// Getting space from the unpooled chunks manager
+    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
+    const auto alignedBufferSize = Memory::alignBufferSize(neededSize, alignment);
     const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
-        = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, alignment);
+        = this->allocateSpace(threadId, alignedBufferSize, alignment);
 
     /// Creating a new memory segment, and adding it to the unpooledMemorySegments
-    const auto alignedBufferSize = Memory::alignBufferSize(neededSize, alignment);
     const auto controlBlockSize = Memory::alignBufferSize(sizeof(Memory::detail::BufferControlBlock), alignment);
-    const auto chunk = this->getChunk(threadId);
-    auto memSegment = std::make_unique<Memory::detail::MemorySegment>(
-        localMemoryForNewTupleBuffer + controlBlockSize,
-        alignedBufferSize,
-        [copyOfMemoryResource = this->memoryResource,
-         copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
-         copyOfChunk = chunk,
-         copyOfAlignment = alignment](Memory::detail::MemorySegment* memorySegment, Memory::BufferRecycler*)
-        {
-            auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
-            auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
-            INVARIANT(
-                curUnpooledChunk.activeMemorySegments > 0,
-                "curUnpooledChunk.activeMemorySegments must be larger than 0 but is {}",
-                curUnpooledChunk.activeMemorySegments);
-            curUnpooledChunk.activeMemorySegments -= 1;
-            memorySegment->size = 0;
-            if (curUnpooledChunk.activeMemorySegments == 0)
-            {
-                /// All memory segments have been removed, therefore, we can deallocate the unpooled chunk
-                const auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(copyOLastChunkPtr);
-                auto& extractedChunkControlBlock = extractedChunk.mapped();
-                lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
-                lockedLocalUnpooledBufferData.unlock();
-                copyOfMemoryResource->deallocate(
-                    extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
-            }
-        });
+    const std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk = this->getChunk(threadId);
+    const Memory::detail::DataSegment<Memory::detail::InMemoryLocation> newMemorySegment{
+        Memory::detail::InMemoryLocation{localMemoryForNewTupleBuffer, true}, alignedBufferSize};
+
+    auto recycler = std::make_shared<UnpooledChunkRecycler>(memoryResource, localKeyForUnpooledBufferChunk, chunk, alignment);
+
+    auto bcb = std::make_unique<Memory::detail::BufferControlBlock>(newMemorySegment, recycler);
 
     auto* leakedMemSegment = memSegment.get();
     {
@@ -191,4 +171,36 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
+UnpooledChunksManager::UnpooledChunkRecycler::UnpooledChunkRecycler(
+    std::shared_ptr<std::pmr::memory_resource> memoryResource,
+    unsigned char* chunkPtr,
+    std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk,
+    size_t alignment)
+    : memoryResource(memoryResource), chunkPtr(chunkPtr), chunk(chunk), alignment(alignment)
+{
+}
+
+void UnpooledChunksManager::UnpooledChunkRecycler::recycleSegment(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer)
+{
+    auto lockedLocalUnpooledBufferData = chunk->wlock();
+    auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[chunkPtr];
+    INVARIANT(
+        curUnpooledChunk.activeMemorySegments > 0,
+        "curUnpooledChunk.activeMemorySegments must be larger than 0 but is {}",
+        curUnpooledChunk.activeMemorySegments);
+    curUnpooledChunk.activeMemorySegments -= 1;
+    if (curUnpooledChunk.activeMemorySegments == 0)
+    {
+        /// All memory segments have been removed, therefore, we can deallocate the unpooled chunk
+        const auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(chunkPtr);
+        auto& extractedChunkControlBlock = extractedChunk.mapped();
+        lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
+        lockedLocalUnpooledBufferData.unlock();
+        memoryResource->deallocate(extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, alignment);
+    }
+}
+bool UnpooledChunksManager::UnpooledChunkRecycler::recycleSegment(Memory::detail::DataSegment<Memory::detail::OnDiskLocation>&& buffer)
+{
+    throw NotImplemented("Recycling unpooled disk data segments is not supported currently");
+}
 }

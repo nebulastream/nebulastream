@@ -77,12 +77,13 @@ class alignas(64) BufferControlBlock
     friend RepinBCBLock;
     friend UniqueMutexBCBLock;
     friend SharedMutexBCBLock;
+    friend UnpooledChunksManager;
 
 public:
     ///Creates a BufferControlBlock around a raw memory address
     explicit BufferControlBlock(
         const DataSegment<InMemoryLocation>&,
-        BufferRecycler* recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
+        std::shared_ptr<BufferRecycler> recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
 
 
     BufferControlBlock(const BufferControlBlock&) = delete;
@@ -90,7 +91,7 @@ public:
     BufferControlBlock& operator=(const BufferControlBlock&) = delete;
 
     [[nodiscard]] DataSegment<DataLocation> getData() const;
-    void resetBufferRecycler(BufferRecycler* recycler);
+    void resetBufferRecycler(const std::shared_ptr<BufferRecycler>& recycler);
 
     /// Increase the pinned reference counter by one.
     BufferControlBlock* pinnedRetain();
@@ -225,7 +226,7 @@ private:
     std::atomic<ChildOrMainDataKey> isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
 
     std::atomic<DataSegment<DataLocation>> data{};
-    std::atomic<BufferRecycler*> owningBufferRecycler{};
+    std::atomic<std::shared_ptr<BufferRecycler>> owningBufferRecycler;
     //std::function<void(DataSegment<InMemoryLocation>&, BufferRecycler*)> recycleCallback;
 
     //False means second chance was not at the buffer yet, true means it was seen already and gets evicted next time its seen.

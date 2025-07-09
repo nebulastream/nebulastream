@@ -53,7 +53,7 @@ class UnpooledChunksManager
             size_t totalSize = 0;
             size_t usedSize = 0;
             uint8_t* startOfChunk = nullptr;
-            std::vector<std::unique_ptr<Memory::detail::MemorySegment>> unpooledMemorySegments;
+            std::vector<Memory::detail::DataSegment<Memory::detail::InMemoryLocation>> unpooledMemorySegments;
             uint64_t activeMemorySegments = 0;
 
             friend std::ostream& operator<<(std::ostream& os, const ChunkControlBlock& chunkControlBlock)
@@ -68,7 +68,7 @@ class UnpooledChunksManager
         };
 
         explicit UnpooledChunk(uint64_t windowSize);
-        void emplaceChunkControlBlock(uint8_t* chunkKey, std::unique_ptr<Memory::detail::MemorySegment> newMemorySegment);
+        void emplaceChunkControlBlock(uint8_t* chunkKey, Memory::detail::DataSegment<Memory::detail::InMemoryLocation> newMemorySegment);
         std::unordered_map<uint8_t*, ChunkControlBlock> chunks;
         uint8_t* lastAllocateChunkKey;
         RollingAverage<size_t> rollingAverage;
@@ -83,6 +83,24 @@ class UnpooledChunksManager
     std::pair<uint8_t*, uint8_t*> allocateSpace(std::thread::id threadId, size_t neededSize, size_t alignment);
 
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
+
+    class UnpooledChunkRecycler : public Memory::BufferRecycler
+    {
+    public:
+        explicit UnpooledChunkRecycler(
+            std::shared_ptr<std::pmr::memory_resource> memoryResource,
+            unsigned char* chunkPtr,
+            std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk,
+            size_t alignment);
+        void recycleSegment(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer) override;
+        bool recycleSegment(Memory::detail::DataSegment<Memory::detail::OnDiskLocation>&& buffer) override;
+
+    private:
+        std::shared_ptr<std::pmr::memory_resource> memoryResource;
+        unsigned char* chunkPtr;
+        std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk;
+        size_t alignment;
+    };
 
 public:
     explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource);
