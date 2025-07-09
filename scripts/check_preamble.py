@@ -71,6 +71,7 @@ INGORED_ENDINGS = {
     "xml",
     "yaml",
     "zip",
+    "bin"
 }
 
 VENDORED_FILES = {
