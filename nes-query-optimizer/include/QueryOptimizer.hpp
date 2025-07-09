@@ -29,7 +29,7 @@ public:
         : defaultQueryExecution(std::move(defaultQueryExecution)) { };
     /// Takes the query plan as a logical plan and returns a fully physical plan
     [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan);
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan, QueryExecutionConfiguration queryExecutionConfiguration);
+    [[nodiscard]] static PhysicalPlan optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution);
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;

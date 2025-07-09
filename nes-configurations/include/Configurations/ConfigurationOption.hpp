@@ -68,7 +68,7 @@ public:
     /// @brief converts the value of this object into a string
     [[nodiscard]] std::string getValueAsString() const { return std::to_string(value); };
 
-    std::string getName() const { return name; }
+    [[nodiscard]] const std::string& getName() const { return name; }
     [[nodiscard]] T getValue() const { return value; };
     void setValue(T value) { this->value = value; }
 
