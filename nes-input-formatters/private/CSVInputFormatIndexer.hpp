@@ -49,6 +49,8 @@ public:
 private:
     ParserConfig config;
     size_t numberOfFieldsInSchema;
+    char tupleDelimiter;
+    char fieldDelimiter;
 };
 
 }

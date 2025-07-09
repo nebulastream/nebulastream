@@ -133,11 +133,32 @@ if (NES_BUILD_NATIVE)
         message(STATUS "CMAKE detects native arch support")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
         # AVX detection
-        find_package(AVX)
-        if (${AVX2_FOUND})
-            message(STATUS "CMAKE detects AVX2 support")
-            add_compile_definitions(HAS_AVX)
+        check_cxx_source_compiles("
+    #include <immintrin.h>
+    int main() {
+        __m256 a = _mm256_setzero_ps();
+        return 0;
+    }
+" HAS_AVX)
+
+        # Check for AVX2 support
+        check_cxx_source_compiles("
+    #include <immintrin.h>
+    int main() {
+        __m256i a = _mm256_setzero_si256();
+        __m256i b = _mm256_add_epi32(a, a);
+        return 0;
+    }
+" HAS_AVX2)
+
+        if (HAS_AVX2)
+            message(STATUS "AVX2 support detected")
+            add_compile_definitions(HAS_AVX2)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+        elseif (HAS_AVX)
+            message(STATUS "AVX support detected")
+            add_compile_definitions(HAS_AVX)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
         endif ()
     else ()
         message(FATAL_ERROR "NES_BUILD_NATIVE was true but the compiler does not support it on this architecture.")

@@ -310,7 +310,7 @@ TEST_F(SmallFilesTest, ysbBenchmark)
         .formatterType = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
-        .numberOfThreads = 8,
+        .numberOfThreads = 46,
         .sizeOfRawBuffers = 4096,
         .sizeOfFormattedBuffers = 4096,
         .fieldDelimiter = ",",
