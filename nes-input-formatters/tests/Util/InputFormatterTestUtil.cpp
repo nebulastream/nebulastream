@@ -177,10 +177,10 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType, const std::string& fieldDelimiter)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", fieldDelimiter}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);

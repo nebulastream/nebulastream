@@ -166,7 +166,7 @@ public:
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    [[nodiscard]] std::string toString(const Schema& schema) const;
+    [[nodiscard]] std::string toString(const Schema& schema, std::string_view fieldDelimiter = "|") const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different
@@ -290,7 +290,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
     [[nodiscard]] std::string toString(const Schema& schema) const;
-    [[nodiscard]] std::string toString(const Schema& schema, PrintMode printMode) const;
+    [[nodiscard]] std::string toString(const Schema& schema, PrintMode printMode, std::string_view fieldDelimiter = "|") const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  

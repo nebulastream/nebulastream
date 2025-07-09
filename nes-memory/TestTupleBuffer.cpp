@@ -122,12 +122,12 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const Schema& schema) const
+std::string DynamicTuple::toString(const Schema& schema, const std::string_view fieldDelimiter) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto* const fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
+        const auto* const fieldEnding = (i < schema.getNumberOfFields() - 1) ? fieldDelimiter.data() : "";
         const auto dataType = schema.getFieldAt(i).dataType;
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
@@ -273,7 +273,7 @@ std::string TestTupleBuffer::toString(const Schema& schema) const
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode, std::string_view fieldDelimiter) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -294,23 +294,23 @@ std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode prin
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)
     {
         str << "+----------------------------------------------------+" << std::endl;
-        str << "|";
+        str << fieldDelimiter;
         for (const auto& field : schema.getFields())
         {
-            str << field.name << ":" << magic_enum::enum_name(field.dataType.type) << "|";
+            str << field.name << ":" << magic_enum::enum_name(field.dataType.type) << fieldDelimiter;
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;
     }
 
     auto tupleIterator = this->begin();
-    str << (*tupleIterator).toString(schema);
+    str << (*tupleIterator).toString(schema, fieldDelimiter);
     ++tupleIterator;
     while (tupleIterator != this->end())
     {
         str << std::endl;
         const DynamicTuple dynamicTuple = (*tupleIterator);
-        str << dynamicTuple.toString(schema);
+        str << dynamicTuple.toString(schema, fieldDelimiter);
         ++tupleIterator;
     }
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::NO_HEADER_END_IN_NEWLINE)

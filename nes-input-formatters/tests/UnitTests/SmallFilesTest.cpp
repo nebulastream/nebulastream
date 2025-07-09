@@ -57,6 +57,8 @@ class SmallFilesTest : public Testing::BaseUnitTest
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
+        // UINT64 user_id UINT64 page_id UINT64 campaign_id UINT64 ad_type UINT64 event_type UINT64 current_ms UINT64 ip UINT64 d1 UINT64 d2 UINT32 d3 UINT16 d4 FILE
+        {"YSB10K", TestFile{.fileName = "ysb_10k_data.csv", .schemaFieldTypes = {UINT64, UINT64, UINT64, UINT64, UINT64, UINT64, UINT64, UINT64, UINT64, UINT32, UINT16}}},
         {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .schemaFieldTypes = {INT32, INT32}}},
         {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
@@ -121,6 +123,8 @@ public:
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
         size_t sizeOfFormattedBuffers;
+        std::string fieldDelimiter = "|";
+        bool validate = true;
     };
 
     struct SetupResult
@@ -173,7 +177,8 @@ public:
             rawBuffers.size());
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * 2);
+        const auto multiplier = (testConfig.sizeOfRawBuffers * 2) >= testConfig.sizeOfFormattedBuffers ? 2 : 1;
+        const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * multiplier);
 
         return SetupResult{
             .schema = std::move(schema),
@@ -225,13 +230,13 @@ public:
                 auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, setupResult.schema);
                 actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
                 const auto currentBufferAsString = actualResultTestBuffer.toString(
-                    setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                    setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE, testConfig.fieldDelimiter);
                 writeBinaryToFile(currentBufferAsString, resultFilePath, append);
                 append = true;
             }
             const auto lastBufferAsString
                 = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), setupResult.schema)
-                      .toString(setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                      .toString(setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE, testConfig.fieldDelimiter);
             writeBinaryToFile(lastBufferAsString, resultFilePath, append);
         }
         else
@@ -249,7 +254,7 @@ public:
         InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer> rawBuffers;
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
-        const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
+        const auto numberOfRequiredSourceBuffers = static_cast<uint32_t>(numberOfExpectedRawBuffers + 1);
 
         const auto setupResult = setupTest(testConfig, rawBuffers, numberOfExpectedRawBuffers, numberOfRequiredSourceBuffers);
 
@@ -258,7 +263,7 @@ public:
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
                 = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType, testConfig.fieldDelimiter);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
@@ -284,8 +289,11 @@ public:
             taskQueue->waitForCompletion();
 
             /// Check results
-            const auto isCorrectResult = compareResults(*resultBuffers, testConfig, setupResult);
-            ASSERT_TRUE(isCorrectResult);
+            if (testConfig.validate)
+            {
+                const auto isCorrectResult = compareResults(*resultBuffers, testConfig, setupResult);
+                ASSERT_TRUE(isCorrectResult);
+            }
 
             /// Cleanup
             resultBuffers->clear();
@@ -293,6 +301,21 @@ public:
         }
     }
 };
+
+TEST_F(SmallFilesTest, ysbBenchmark)
+{
+    /// Checked that the YSB10K produces the original/correct data with raw buffer sizes of 128 bytes
+    runTest(TestConfig{
+        .testFileName = "YSB10K",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096,
+        .sizeOfFormattedBuffers = 4096,
+        .fieldDelimiter = ",",
+        .validate = false});
+}
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
