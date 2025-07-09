@@ -15,11 +15,27 @@ add_subdirectory(checksum)
 
 # Include necessary modules
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
+
+# This uses ExternalData to manage test data for the system tests.
+# Files can either be stored directly in the testdata/small folder, but this is only permitted for small files or
+# referenced via a hash an fetched from a remote server on demand. Large files have to be uploaded to bench.nebula.stream/data (ask a maintainer)!
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES
         "https://bench.nebula.stream/data/md5sums/%(algo)_%(hash)"
 )
+if (ENABLE_LARGE_TESTS)
+    set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:.*})
+else ()
+    # By default this only includes small files located in testdata/small
+    set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:small.*})
+endif ()
 set(ExternalData_TIMEOUT_ABSOLUTE 1200)
+ExternalData_Expand_Arguments(
+        test-data
+        EXPANDED_TEST_DATA_PATH
+        ${TEST_DATA_PATH}
+)
+message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
@@ -30,7 +46,7 @@ target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
         SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata/"
-        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata/"
+        SYSTEST_EXTERNAL_DATA_DIR="${EXPANDED_TEST_DATA_PATH}"
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
@@ -43,35 +59,26 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
-set(SMALL_DATA DATA{../testdata/,RECURSE:,REGEX:small.*})
-set(LARGE_DATA DATA{../testdata/,RECURSE:,REGEX:large.*})
-
 # Add code coverage if enabled
 if (CODE_COVERAGE)
-    # Can't use ExternalData_Add_Test here. This code manually expands the DATA{...} to the real path.
-    ExternalData_Expand_Arguments(
-            TEST_DATA
-            TEST_DATA_PATH
-            ${SMALL_DATA}
-    )
-    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${TEST_DATA_PATH} -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.queryEngine.taskQueueSize=100000)
+    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.queryEngine.taskQueueSize=100000)
     # Make sure to fetch ExternalData before running the ccov targets
-    add_dependencies(ccov-run-systest_interpreter_coverage TEST_DATA)
+    add_dependencies(ccov-run-systest_interpreter_coverage test-data)
 endif (CODE_COVERAGE)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-ExternalData_Add_Test(TEST_DATA
+ExternalData_Add_Test(test-data
         NAME systest_interpreter
-        COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter --exclude-groups large --data ${SMALL_DATA} -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.queryEngine.taskQueueSize=100000)
+        COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter --exclude-groups large --data ${TEST_DATA_PATH} -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.queryEngine.taskQueueSize=100000)
 if (NOT CODE_COVERAGE)
-    ExternalData_Add_Test(TEST_DATA
+    ExternalData_Add_Test(test-data
             NAME systest_compiler
-            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data ${SMALL_DATA} -- --worker.queryOptimizer.executionMode=COMPILER --worker.queryEngine.taskQueueSize=100000)
+            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data ${TEST_DATA_PATH} -- --worker.queryOptimizer.executionMode=COMPILER --worker.queryEngine.taskQueueSize=100000)
 endif (NOT CODE_COVERAGE)
 
 
 if (ENABLE_LARGE_TESTS)
-    ExternalData_Add_Test(TEST_DATA_LARGE
+    ExternalData_Add_Test(test-data
             NAME systest_large
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryOptimizer.executionMode=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=200000)
@@ -84,48 +91,43 @@ if (NOT CODE_COVERAGE)
     # We set the number of worker threads to 8, to further stress the task queue
     set(taskQueueSize 100 10000)
     foreach (taskQueueSize IN LISTS taskQueueSize)
-        ExternalData_Add_Test(TEST_DATA
+        ExternalData_Add_Test(test-data
                 NAME systest_task_queue_size_${taskQueueSize}_interpreter
-                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
-        ExternalData_Add_Test(TEST_DATA
+                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data ${TEST_DATA_PATH} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
+        ExternalData_Add_Test(test-data
                 NAME systest_task_queue_size_${taskQueueSize}_compiler
-                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
+                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${TEST_DATA_PATH} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
     endforeach ()
 
     ## We run all join and aggregation tests with different no. worker threads
     set(workerThreads 1 2 4 8)
     foreach (workerThreads IN LISTS workerThreads)
-        ExternalData_Add_Test(TEST_DATA
+        ExternalData_Add_Test(test-data
                 NAME systest_join_${workerThreads}_interpreter
-                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join --data ${SMALL_DATA}
+                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join --data ${TEST_DATA_PATH}
                 --
                 --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
-        ExternalData_Add_Test(TEST_DATA
+        ExternalData_Add_Test(test-data
                 NAME systest_join_${workerThreads}_compiler
-                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_join --data ${SMALL_DATA}
+                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_join --data ${TEST_DATA_PATH}
                 --
                 --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
-        ExternalData_Add_Test(TEST_DATA
+        ExternalData_Add_Test(test-data
                 NAME systest_agg_${workerThreads}_interpreter
-                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation --data ${SMALL_DATA}
+                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation --data ${TEST_DATA_PATH}
                 --
                 --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
-        ExternalData_Add_Test(TEST_DATA
+        ExternalData_Add_Test(test-data
                 NAME systest_agg_${workerThreads}_compiler
-                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${SMALL_DATA}
+                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${TEST_DATA_PATH}
                 --
                 --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
     endforeach ()
 endif (NOT CODE_COVERAGE)
 
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
-add_dependencies(nes-systest-lib TEST_DATA)
-ExternalData_Add_Target(TEST_DATA SHOW_PROGRESS ON)
-if (ENABLE_LARGE_TESTS)
-    add_dependencies(nes-systest-lib TEST_DATA_LARGE)
-    ExternalData_Add_Target(TEST_DATA_LARGE SHOW_PROGRESS ON)
-endif ()
-
+ExternalData_Add_Target(test-data)
+add_dependencies(nes-systest-lib test-data)
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})
