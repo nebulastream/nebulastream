@@ -51,7 +51,7 @@ elseif (USE_CPP_STDLIB STREQUAL "libstdcxx")
     " LIBSTDCXX_VERSION_CHECK)
 
     if (NOT LIBSTDCXX_VERSION_CHECK)
-        message(FATAL_ERROR "Requires Libstdc++ >= 14. On ubuntu systems this can be installed via g++-14")
+        message(FATAL_ERROR "Requires Libstdc++ >= 14. On ubuntu systems this can be installed via 'apt install g++-14'")
     endif ()
 
     message(STATUS "Libstdc++ >= 14")
