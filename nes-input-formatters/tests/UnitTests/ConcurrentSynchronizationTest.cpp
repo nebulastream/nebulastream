@@ -26,6 +26,11 @@
 #include <gtest/gtest.h>
 #include <SequenceShredder.hpp>
 
+/// Tests whether the SequenceShredder correctly finds spanning tuples given random orders of sequence numbers and random occurrences of
+/// tuple delimiters in the buffers that belong to the sequence numbers.
+/// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current
+/// request has a tuple delimiter or not, calls the 'processSequenceNumber' function of the SequenceShredder and tracks the resulting spanning tuples.
+/// We check whether the range of all produces sequence numbers matches the expected range.
 class StreamingMultiThreaderAutomatedSequenceShredderTest : public ::testing::Test
 {
 private:
@@ -116,7 +121,7 @@ public:
                 {
                 }
 
-                const auto dummyStagedBuffer = SequenceShredder::StagedBuffer{
+                const auto dummyStagedBuffer = NES::InputFormatters::StagedBuffer{
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = threadLocalSequenceNumber,
                     .offsetOfFirstTupleDelimiter = 0,
