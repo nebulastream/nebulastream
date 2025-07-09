@@ -34,8 +34,8 @@ NodeEngineBuilder::NodeEngineBuilder(
     std::shared_ptr<SystemEventListener> systemEventListener,
     std::shared_ptr<QueryEngineStatisticListener> statisticEventListener)
     : workerConfiguration(workerConfiguration)
-    , systemEventListener(std::move(std::move(systemEventListener)))
-    , statisticEventListener(std::move(std::move(statisticEventListener)))
+    , systemEventListener(std::move(systemEventListener))
+    , statisticEventListener(std::move(statisticEventListener))
 {
 }
 
