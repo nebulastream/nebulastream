@@ -28,10 +28,10 @@ target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-work
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
-        TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata/"
-        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata/"
-        TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
+        TEST_DISCOVER_DIR="${CMAKE_SOURCE_DIR}/nes-systests"
+        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata"
+        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_BINARY_DIR}/nes-systests/testdata"
+        TEST_CONFIGURATION_DIR="${CMAKE_SOURCE_DIR}/nes-systests/configs"
 )
 
 # Find required packages
