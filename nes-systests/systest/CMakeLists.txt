@@ -45,7 +45,6 @@ target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURR
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata/"
         SYSTEST_EXTERNAL_DATA_DIR="${EXPANDED_TEST_DATA_PATH}"
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
@@ -128,13 +127,5 @@ endif (NOT CODE_COVERAGE)
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
 ExternalData_Add_Target(test-data)
 add_dependencies(nes-systest-lib test-data)
-
-function(add_nes_test_systest)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-systest-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
-endfunction()
 
 add_tests_if_enabled(tests)
