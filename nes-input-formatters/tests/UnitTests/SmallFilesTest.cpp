@@ -177,8 +177,15 @@ public:
             rawBuffers.size());
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto multiplier = (testConfig.sizeOfRawBuffers * 2) >= testConfig.sizeOfFormattedBuffers ? 2 : 1;
+        // const auto multiplier = (testConfig.sizeOfRawBuffers * 2) >= testConfig.sizeOfFormattedBuffers ? 2 : 1;
+        double multiplier = 2.0;
+        if (testConfig.sizeOfRawBuffers > testConfig.sizeOfFormattedBuffers)
+        {
+            multiplier += (static_cast<double>(testConfig.sizeOfRawBuffers) / testConfig.sizeOfFormattedBuffers);
+        }
+        fmt::print("Multiplier {}\n", multiplier);
         const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * multiplier);
+        fmt::print("Number of formatter buffers: {}\n", numberOfRequiredFormattedBuffers);
 
         return SetupResult{
             .schema = std::move(schema),
@@ -309,9 +316,9 @@ TEST_F(SmallFilesTest, ysbBenchmark)
         .testFileName = "YSB10K",
         .formatterType = "CSV",
         .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 46,
-        .sizeOfRawBuffers = 4096,
+        .numberOfIterations = 3,
+        .numberOfThreads = 16,
+        .sizeOfRawBuffers = static_cast<uint64_t>(std::pow(2, 16)), /// (on ThreadRipper) size of 256 bytes and 46 threads leads to ~50% spent in 'processSequenceNumber' (without range check!!)
         .sizeOfFormattedBuffers = 4096,
         .fieldDelimiter = ",",
         .validate = false});

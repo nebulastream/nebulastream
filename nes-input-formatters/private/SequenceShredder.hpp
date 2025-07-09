@@ -112,7 +112,7 @@ public:
     using BitmapType = uint64_t;
     using SequenceNumberType = SequenceNumber::Underlying;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 8;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 64;
     using BitmapVectorType = std::vector<BitmapType>;
 
     struct SpanningTupleBuffers
