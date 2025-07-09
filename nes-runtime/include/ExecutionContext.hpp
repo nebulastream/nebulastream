@@ -53,47 +53,13 @@ struct Arena
     /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
     /// 2. The required size is larger than the last buffer size. In this case, we allocate a new buffer of fixed size.
     /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
-    int8_t* allocateMemory(const size_t sizeInBytes)
-    {
-        /// Case 1
-        if (bufferProvider->getBufferSize() < sizeInBytes)
-        {
-            const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
-            if (not unpooledBufferOpt.has_value())
-            {
-                throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
-            }
-            unpooledBuffers.emplace_back(unpooledBufferOpt.value());
-            lastAllocationSize = sizeInBytes;
-            return unpooledBuffers.back().getBuffer();
-        }
-
-
-        if (fixedSizeBuffers.empty())
-        {
-            fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
-            lastAllocationSize = bufferProvider->getBufferSize();
-            return fixedSizeBuffers.back().getBuffer();
-        }
-
-        /// Case 2
-        if (lastAllocationSize < currentOffset + sizeInBytes)
-        {
-            fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
-        }
-
-        /// Case 3
-        auto& lastBuffer = fixedSizeBuffers.back();
-        lastAllocationSize = lastBuffer.getBufferSize();
-        auto* const result = lastBuffer.getBuffer() + currentOffset;
-        currentOffset += sizeInBytes;
-        return result;
-    }
+    int8_t* allocateMemory(size_t sizeInBytes);
 
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::vector<Memory::TupleBuffer> fixedSizeBuffers;
     std::vector<Memory::TupleBuffer> unpooledBuffers;
     size_t lastAllocationSize{0};
+    bool lastAllocationOwnsBuffer = false;
     size_t currentOffset{0};
 };
 
@@ -103,25 +69,9 @@ struct ArenaRef
     explicit ArenaRef(const nautilus::val<Arena*>& arenaRef) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr) { }
 
     /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
-    nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes)
-    {
-        /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
-        /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
-        /// Further, we set the space pointer to the beginning of the new buffer.
-        if (availableSpaceForPointer < sizeInBytes)
-        {
-            spacePointer = nautilus::invoke(
-                +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); },
-                arenaRef,
-                sizeInBytes);
-            availableSpaceForPointer
-                = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::lastAllocationSize));
-        }
-        availableSpaceForPointer -= sizeInBytes;
-        auto result = spacePointer;
-        spacePointer += sizeInBytes;
-        return result;
-    }
+    std::pair<nautilus::val<int8_t*>, nautilus::val<bool>> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
+
+    VariableSizedData allocateVariableSizedData(const nautilus::val<size_t>& sizeInBytes);
 
 private:
     nautilus::val<Arena*> arenaRef;

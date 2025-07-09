@@ -49,13 +49,19 @@ endfunction()
 
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
 # adds the name of plugin to the list of plugin names for the plugin registry
-function(add_plugin plugin_name plugin_registry plugin_registry_component)
+macro(add_plugin plugin_name plugin_registry plugin_registry_component)
     set(sources ${ARGN})
-    add_source_files(${plugin_registry_component}
-            ${sources}
-    )
+    if (TARGET ${plugin_registry_component})
+        foreach (source ${sources})
+            set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source})
+        endforeach ()
+    else ()
+        add_source_files(${plugin_registry_component}
+                ${sources}
+        )
+    endif ()
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-endfunction()
+endmacro()
 
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
 function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
@@ -117,6 +123,6 @@ function(create_registries_for_component)
     get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
     set(registries_library ${COMPONENT_NAME}-registry)
     create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
-    target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
+    target_link_libraries(${COMPONENT_NAME} PUBLIC ${registries_library})
     generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
 endfunction()

@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <SinksParsing/Format.hpp>
+
 #include <cstddef>
 #include <ostream>
 #include <string>
@@ -28,7 +30,7 @@
 namespace NES::Sinks
 {
 
-class CSVFormat
+class CSVFormat : public Format
 {
 public:
     /// Stores precalculated offsets based on the input schema.
@@ -41,28 +43,22 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(const Schema& schema);
+    CSVFormat(const Schema& schema);
     explicit CSVFormat(const Schema& schema, bool escapeStrings);
-    virtual ~CSVFormat() noexcept = default;
-
-    /// Returns the schema of formatted according to the specific SinkFormat represented as string.
-    [[nodiscard]] std::string getFormattedSchema() const;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
-    [[nodiscard]] std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const;
+    [[nodiscard]] std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const override;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
     [[nodiscard]] std::string
     tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
 
+    std::ostream& toString(std::ostream& os) const override { return os << *this; }
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
 private:
     FormattingContext formattingContext;
-    Schema schema;
     bool escapeStrings;
 };
 
 }
-
-FMT_OSTREAM(NES::Sinks::CSVFormat);

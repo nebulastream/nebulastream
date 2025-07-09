@@ -94,7 +94,6 @@ std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
     return std::dynamic_pointer_cast<Out>(obj);
 }
 
-
 template <typename T, typename S>
 std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
 {
@@ -105,4 +104,25 @@ std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
     }
     return nullptr;
 }
+
+/// Creates new unique temporary directory with a custom prefix
+std::filesystem::path createTempDir(std::string_view prefix);
+
+class TempDirectoryCleanup
+{
+    std::optional<std::filesystem::path> deleteOnExit;
+    void cleanup() noexcept;
+
+public:
+    explicit TempDirectoryCleanup(std::filesystem::path delete_on_exit);
+    ~TempDirectoryCleanup();
+    TempDirectoryCleanup(const TempDirectoryCleanup& other) = delete;
+    TempDirectoryCleanup(TempDirectoryCleanup&& other) noexcept;
+    TempDirectoryCleanup& operator=(const TempDirectoryCleanup& other) = delete;
+    TempDirectoryCleanup& operator=(TempDirectoryCleanup&& other) noexcept;
+};
+
+/// Convert an errno value into an error message string
+std::string errnoString(int error);
+
 }

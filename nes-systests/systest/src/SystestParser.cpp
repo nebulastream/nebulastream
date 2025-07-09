@@ -148,7 +148,8 @@ NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::stri
         return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
     }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
 
-    if (not NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx)))
+    if (not(NES::Util::toLowerCase(attachSourceTokens.at(nextTokenIdx)) == "raw"
+            || NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx))))
     {
         throw NES::SLTUnexpectedToken(
             "Expected token after source config to be a valid input formatter, but was: {}", attachSourceTokens.at(nextTokenIdx));
@@ -199,6 +200,7 @@ namespace NES::Systest
 
 static constexpr auto SystestLogicalSourceToken = "Source"s;
 static constexpr auto AttachSourceToken = "Attach"s;
+static constexpr auto ModelToken = "MODEL"sv;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
@@ -209,6 +211,7 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {AttachSourceToken, TokenType::ATTACH_SOURCE},
      {QueryToken, TokenType::QUERY},
      {SinkToken, TokenType::SINK},
+     {ModelToken, TokenType::MODEL},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
      {ErrorToken, TokenType::ERROR_EXPECTATION}});
 
@@ -280,6 +283,11 @@ void SystestParser::registerOnSystestAttachSourceCallback(SystestAttachSourceCal
     this->onAttachSourceCallback = std::move(callback);
 }
 
+void SystestParser::registerOnModelCallback(ModelCallback callback)
+{
+    this->onModelCallback = std::move(callback);
+}
+
 void SystestParser::registerOnSystestSinkCallback(SystestSinkCallback callback)
 {
     this->onSystestSinkCallback = std::move(callback);
@@ -302,6 +310,14 @@ void SystestParser::parse()
                 if (onAttachSourceCallback)
                 {
                     onAttachSourceCallback(expectAttachSource());
+                }
+                break;
+            }
+            case TokenType::MODEL: {
+                auto model = expectModel();
+                if (onModelCallback)
+                {
+                    onModelCallback(std::move(model));
                 }
                 break;
             }
@@ -496,6 +512,61 @@ SystestParser::SystestSink SystestParser::expectSink() const
     sink.fields = parseSchemaFields(arguments);
 
     return sink;
+}
+
+Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
+{
+    try
+    {
+        if (lines.size() < currentLine + 2)
+        {
+            throw SLTUnexpectedToken("expected at least three lines for model definition.");
+        }
+
+        Nebuli::Inference::ModelDescriptor model;
+        auto& modelNameLine = lines[currentLine];
+        auto _ = moveToNextToken();
+        auto& inputLine = lines[currentLine];
+        _ = moveToNextToken();
+        auto& outputLine = lines[currentLine];
+
+        std::istringstream stream(modelNameLine);
+        std::string discard;
+        if (!(stream >> discard))
+        {
+            throw SLTUnexpectedToken("failed to read the first word in: {}", modelNameLine);
+        }
+        if (!(stream >> model.name))
+        {
+            throw SLTUnexpectedToken("failed to read model name in {}", modelNameLine);
+        }
+
+        if (!(stream >> model.path))
+        {
+            throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
+        }
+
+        auto inputTypeNames = NES::Util::splitWithStringDelimiter<std::string>(inputLine, " ");
+        auto types = std::views::transform(inputTypeNames, [](const auto& typeName) { return DataTypeProvider::provideDataType(typeName); })
+            | std::ranges::to<std::vector>();
+        model.inputs = types;
+
+        auto outputSchema = NES::Util::splitWithStringDelimiter<std::string>(outputLine, " ");
+
+        for (auto [type, name] : parseSchemaFields(outputSchema))
+        {
+            model.outputs.addField(name, type);
+        }
+        return model;
+    }
+    catch (Exception& e)
+    {
+        auto modelParserSchema = "MODEL <model_name> <model_path>"
+                                 "<type-0> ... <type-N>"
+                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
+        e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
+        throw;
+    }
 }
 
 std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource>> SystestParser::expectSystestLogicalSource()

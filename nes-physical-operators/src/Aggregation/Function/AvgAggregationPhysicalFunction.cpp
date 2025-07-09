@@ -40,9 +40,7 @@ AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
 }
 
 void AvgAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
 {
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -51,7 +49,7 @@ void AvgAggregationPhysicalFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType.type);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
     const auto newCount = count + nautilus::val<uint64_t>(1);
 

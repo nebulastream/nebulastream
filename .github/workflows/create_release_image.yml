@@ -16,17 +16,14 @@ on:
         description: 'tag to tag the image on dockerhub with'
         required: true
         type: string
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ inputs.ref }}
-
   build-image:
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
-    needs: [ get-dev-images ]
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +45,7 @@ jobs:
           push: true
           tags: nebulastream/nebuli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            TAG=${{inputs.dev_image_tag}}
           context: .
           file: ${{ github.workspace }}/docker/nebuli/Nebuli.dockerfile
       - name: Build single-node worker
@@ -57,7 +54,7 @@ jobs:
           push: true
           tags: nebulastream/worker:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            TAG=${{inputs.dev_image_tag}}
           context: .
           file: ${{ github.workspace }}/docker/single-node-worker/SingleNodeWorker.dockerfile
 
