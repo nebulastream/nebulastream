@@ -45,8 +45,7 @@ namespace NES::Nautilus::Interface
 {
 class ChainedHashMapCustomValueTest
     : public Testing::BaseUnitTest,
-      public testing::WithParamInterface<
-          std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, Nautilus::Configurations::ExecutionMode>>,
+      public testing::WithParamInterface<std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionMode>>,
       public TestUtils::ChainedHashMapCustomValueTestUtils
 {
 public:
@@ -54,7 +53,7 @@ public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 2000};
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 1, .max = 2048};
     static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 512, .max = 10240};
-    Configurations::ExecutionMode backend;
+    ExecutionMode backend;
 
     static void SetUpTestSuite()
     {
@@ -236,7 +235,7 @@ INSTANTIATE_TEST_CASE_P(
               DataType::Type::UINT16,
               DataType::Type::UINT8,
               DataType::Type::FLOAT64}}),
-        ::testing::Values(Nautilus::Configurations::ExecutionMode::COMPILER, Nautilus::Configurations::ExecutionMode::INTERPRETER)),
+        ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapCustomValueTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

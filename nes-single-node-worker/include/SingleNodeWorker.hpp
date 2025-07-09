@@ -40,12 +40,11 @@ class SingleNodeWorker
 {
     std::shared_ptr<PrintingStatisticListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
-    size_t bufferSize;
     std::unique_ptr<QueryOptimizer> optimizer;
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
-    explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);
+    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&);
     ~SingleNodeWorker();
     /// Non-Copyable
     SingleNodeWorker(const SingleNodeWorker& other) = delete;

@@ -15,10 +15,11 @@
 #pragma once
 
 #include <string>
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/std.h>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 /// The EnumWrapper allows to represent an arbitrary Enum as a string, which is beneficial for variants. When defining a variant, all possible
@@ -52,10 +53,4 @@ private:
 };
 
 }
-namespace fmt
-{
-template <>
-struct formatter<NES::Configurations::EnumWrapper> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::EnumWrapper);

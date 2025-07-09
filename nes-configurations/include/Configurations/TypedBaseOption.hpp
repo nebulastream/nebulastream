@@ -21,7 +21,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Configurations
+namespace NES
 {
 
 

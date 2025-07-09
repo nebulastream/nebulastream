@@ -16,7 +16,7 @@
 
 #include <regex>
 #include <string>
-namespace NES::Configurations
+namespace NES
 {
 
 bool NonZeroValidation::isValid(const std::string& parameter) const

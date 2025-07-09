@@ -25,9 +25,9 @@
 
 namespace NES
 {
-std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
 {
-    struct Validator : Configurations::ConfigurationValidation
+    struct Validator : ConfigurationValidation
     {
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {
@@ -64,9 +64,9 @@ std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfigu
     return std::make_shared<Validator>();
 }
 
-std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::taskQueueSizeValidator()
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::taskQueueSizeValidator()
 {
-    struct Validator : Configurations::ConfigurationValidation
+    struct Validator : ConfigurationValidation
     {
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {

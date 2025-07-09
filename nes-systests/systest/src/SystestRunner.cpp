@@ -243,7 +243,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
     const QueryResultMap& queryResultMap)
 {
@@ -355,7 +355,7 @@ void printQueryResultToStdOut(
 std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
-    const Configuration::SingleNodeWorkerConfiguration& configuration,
+    const SingleNodeWorkerConfiguration& configuration,
     const NES::Systest::QueryResultMap& queryResultMap)
 {
     LocalWorkerQuerySubmitter submitter(configuration);

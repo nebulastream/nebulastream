@@ -48,7 +48,7 @@ FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersFile::INPUT_FORMAT))
     {
-        case Configurations::InputFormat::CSV:
+        case InputFormat::CSV:
             formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
             break;
         default:
@@ -122,9 +122,9 @@ void FileSink::stop(PipelineExecutionContext&)
     stream->close();
 }
 
-Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Phases/LowerToPhysicalOperators.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -18,7 +19,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -26,6 +26,7 @@
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES::LowerToPhysicalOperators
@@ -84,7 +85,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     return root;
 }
 
-PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf) /// NOLINT
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;

@@ -55,7 +55,7 @@ using namespace std::literals;
 
 namespace NES
 {
-Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
+SystestConfiguration readConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
@@ -129,7 +129,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         std::exit(1); ///NOLINT(concurrency-mt-unsafe)
     }
 
-    auto config = Configuration::SystestConfiguration();
+    auto config = SystestConfiguration();
 
     if (program.is_used("-b"))
     {
@@ -279,8 +279,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
             argv.push_back(const_cast<char*>(arg.c_str()));
         }
 
-        config.singleNodeWorkerConfig
-            = NES::Configurations::loadConfiguration<Configuration::SingleNodeWorkerConfiguration>(argc, argv.data());
+        config.singleNodeWorkerConfig = loadConfiguration<SingleNodeWorkerConfiguration>(argc, argv.data());
     }
 
     /// Setup Working Directory
@@ -307,14 +306,13 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     return config;
 }
 
-void runEndlessMode(
-    std::vector<Systest::SystestQuery> queries, Configuration::SystestConfiguration& config, const Systest::QueryResultMap& queryResultMap)
+void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfiguration& config, const Systest::QueryResultMap& queryResultMap)
 {
     std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
 
     const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
 
-    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(Configuration::SingleNodeWorkerConfiguration{});
+    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
     if (not config.workerConfig.getValue().empty())
     {
         singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
@@ -416,7 +414,7 @@ void setupLogging()
     createSymlink(absoluteLogPath, symlinkPath);
 }
 
-SystestExecutorResult executeSystests(Configuration::SystestConfiguration config)
+SystestExecutorResult executeSystests(SystestConfiguration config)
 {
     setupLogging();
 
@@ -461,7 +459,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
         }
         else
         {
-            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(Configuration::SingleNodeWorkerConfiguration{});
+            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
             if (not config.workerConfig.getValue().empty())
             {
                 singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
