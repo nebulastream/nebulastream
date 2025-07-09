@@ -34,6 +34,12 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_SOURCE_DIR}/nes-systests/configs"
 )
 
+# Creates symlink for small data directory
+set(SMALL_TEST_DATA_SRC_DIR "${CMAKE_SOURCE_DIR}/nes-systests/testdata/small")
+set(LINK_DIR "${CMAKE_BINARY_DIR}/nes-systests/testdata")
+file(MAKE_DIRECTORY "${LINK_DIR}")
+file(CREATE_LINK "${SMALL_TEST_DATA_SRC_DIR}" "${LINK_DIR}/small" SYMBOLIC)
+
 # Find required packages
 find_package(argparse CONFIG REQUIRED)
 
