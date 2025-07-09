@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <thread>
 #include <type_traits>
 
 
@@ -79,14 +80,19 @@ private:
     //We store flags in the most significant byte.
     //48 bytes allow to address 256 TB,
     uint64_t data;
+    /// we should be able to compress the chunk offset as well, maybe by combining it with the segment size
+    size_t chunkOffset;
+    std::thread::id allocatedBy;
 
 public:
     explicit InMemoryLocation(const uint8_t* ptr) noexcept;
-    explicit InMemoryLocation(const uint8_t* ptr, bool notPreAllocated) noexcept;
+    explicit InMemoryLocation(const uint8_t* ptr, size_t chunkOffset, std::thread::id allocatedBy) noexcept;
     explicit InMemoryLocation() noexcept;
 
     [[nodiscard]] uint8_t* getPtr() const noexcept;
     [[nodiscard]] bool isNotPreAllocated() const noexcept;
+    [[nodiscard]] std::optional<size_t> getChunkOffset() const noexcept;
+    [[nodiscard]] std::thread::id getAllocatedBy() const noexcept;
 
     friend bool operator<(const InMemoryLocation& lhs, const InMemoryLocation& rhs) { return lhs.data < rhs.data; }
     friend bool operator<=(const InMemoryLocation& lhs, const InMemoryLocation& rhs) { return !(rhs < lhs); }
@@ -124,7 +130,7 @@ public:
 
 };
 
-static_assert(sizeof(DataLocation) == 8);
+static_assert(sizeof(DataLocation) == 24);
 static_assert(std::is_trivially_copyable_v<DataLocation>);
 
 template <typename T>
@@ -205,8 +211,10 @@ public:
     [[nodiscard]] uint32_t getSize() const;
     [[nodiscard]] bool isSpilled() const;
     [[nodiscard]] bool isNotPreAllocated() const;
+
+
 };
-static_assert(sizeof(DataSegment<DataLocation>) == 16);
+static_assert(sizeof(DataSegment<DataLocation>) == 32);
 static_assert(std::is_trivially_copyable_v<DataSegment<DataLocation>>);
 
 }

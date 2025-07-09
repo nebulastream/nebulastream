@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <any>
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>
@@ -42,6 +43,9 @@ class UnpooledChunksManager
 
     /// Needed for allocating and deallocating memory
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
+
+    size_t alignment;
+    std::weak_ptr<Memory::BufferRecycler> owningBufferRecycler;
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -84,31 +88,16 @@ class UnpooledChunksManager
 
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
-    class UnpooledChunkRecycler : public Memory::BufferRecycler
-    {
-    public:
-        explicit UnpooledChunkRecycler(
-            std::shared_ptr<std::pmr::memory_resource> memoryResource,
-            unsigned char* chunkPtr,
-            std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk,
-            size_t alignment);
-        void recycleSegment(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer) override;
-        bool recycleSegment(Memory::detail::DataSegment<Memory::detail::OnDiskLocation>&& buffer) override;
-
-    private:
-        std::shared_ptr<std::pmr::memory_resource> memoryResource;
-        unsigned char* chunkPtr;
-        std::shared_ptr<folly::Synchronized<UnpooledChunk>> chunk;
-        size_t alignment;
-    };
+    void recycle(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer);
 
 public:
-    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource);
+    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t alignment, std::weak_ptr<Memory::BufferRecycler> bufferRecycler);
     size_t getNumberOfUnpooledBuffers() const;
     Memory::TupleBuffer
-    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<Memory::BufferRecycler>& bufferRecycler);
+    getUnpooledBuffer(size_t neededSize, size_t alignment);
 };
 
 }
+static_assert(sizeof(std::any) == 16);
 
 FMT_OSTREAM(NES::UnpooledChunksManager::UnpooledChunk::ChunkControlBlock);

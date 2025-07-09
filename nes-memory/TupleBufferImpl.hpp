@@ -83,7 +83,7 @@ public:
     ///Creates a BufferControlBlock around a raw memory address
     explicit BufferControlBlock(
         const DataSegment<InMemoryLocation>&,
-        std::shared_ptr<BufferRecycler> recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
+        BufferRecycler* recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
 
 
     BufferControlBlock(const BufferControlBlock&) = delete;
@@ -91,7 +91,7 @@ public:
     BufferControlBlock& operator=(const BufferControlBlock&) = delete;
 
     [[nodiscard]] DataSegment<DataLocation> getData() const;
-    void resetBufferRecycler(const std::shared_ptr<BufferRecycler>& recycler);
+    void resetBufferRecycler(BufferRecycler* recycler);
 
     /// Increase the pinned reference counter by one.
     BufferControlBlock* pinnedRetain();
@@ -226,7 +226,7 @@ private:
     std::atomic<ChildOrMainDataKey> isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
 
     std::atomic<DataSegment<DataLocation>> data{};
-    std::atomic<std::shared_ptr<BufferRecycler>> owningBufferRecycler;
+    std::atomic<BufferRecycler*> owningBufferRecycler;
     //std::function<void(DataSegment<InMemoryLocation>&, BufferRecycler*)> recycleCallback;
 
     //False means second chance was not at the buffer yet, true means it was seen already and gets evicted next time its seen.

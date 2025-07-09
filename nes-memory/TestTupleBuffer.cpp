@@ -185,9 +185,9 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
             if (field.dataType.isType(DataType::Type::VARSIZED))
             {
-                const auto thisString = readVarSizedData(buffer, thisDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
+                const auto thisString = readVarSizedData(buffer, thisDynamicField.template read<uint32_t>());
                 const auto otherString
-                    = readVarSizedData(other.buffer, otherDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
+                    = readVarSizedData(other.buffer, otherDynamicField.template read<uint32_t>());
                 return thisString == otherString;
             }
             return thisDynamicField == otherDynamicField;

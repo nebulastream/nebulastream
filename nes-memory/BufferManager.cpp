@@ -47,7 +47,6 @@
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <fmt/core.h>
 #include <folly/Synchronized.h>
-#include "../nes-sources/include/Sources/SourceReturnType.hpp"
 
 namespace NES::Memory
 {
@@ -73,7 +72,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
         Private{},
         bufferSize,
         numOfBuffers,
-        memoryResource,
+        std::move(memoryResource),
         withAlignment,
         checksAddedPerNewBuffer,
         bufferChecksThreshold,
@@ -110,8 +109,8 @@ BufferManager::BufferManager(
     , newBuffers((bufferChecksThreshold / checksAddedPerNewBuffer) * 16)
     , checksAddedPerNewBuffer(checksAddedPerNewBuffer)
     , bufferChecksThreshold(bufferChecksThreshold)
+    , unpooledChunksManager(memoryResource, withAlignment, weak_from_this())
     , availableBuffers(numOfBuffers)
-    , unpooledChunksManager(memoryResource)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , memoryResource(memoryResource)
@@ -441,7 +440,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
             if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
             {
                 NES_DEBUG(
-                    "Failed to get memory segments for repinning with error message", ErrorCode::typeFromCode(*error).getErrorMessage());
+                    "Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
                 // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
                 // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
                 // co_await *aepSwitchBackAwaiter;
@@ -548,7 +547,7 @@ TupleBuffer BufferManager::pinBuffer(FloatingBuffer&& floating)
     auto repinResult = repinBuffer(std::move(floating)).waitUntilDone();
     if (const auto error = getOptional<detail::CoroutineError>(repinResult))
     {
-        throw ErrorCode::typeFromCode(*error).create();
+        throw typeFromCode(*error).create();
     }
     return std::get<TupleBuffer>(repinResult);
 }
@@ -1153,7 +1152,7 @@ TupleBuffer BufferManager::getBufferBlocking()
         }
         else
         {
-            errorMessage = ErrorCode::typeFromCode(std::get<detail::CoroutineError>(retSegment)).getErrorMessage();
+            errorMessage = typeFromCode(std::get<detail::CoroutineError>(retSegment)).getErrorMessage();
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         NES_INFO("Failed to get in get new in memory segments with error message {}", errorMessage);
@@ -1185,27 +1184,30 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager.getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
-    std::unique_lock lock(unpooledBuffersMutex);
-
-    auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto* bufferPtr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize, DEFAULT_ALIGNMENT));
-    INVARIANT(bufferPtr, "Unpooled memory allocation for buffer failed");
-    auto dataSegment = detail::DataSegment{detail::InMemoryLocation{bufferPtr, true}, bufferSize};
-    auto* controlBlock = new detail::BufferControlBlock{dataSegment, this};
-    INVARIANT(controlBlock, "Unpooled memory allocation for buffer control block failed");
-
-    NES_TRACE(
-        "BCB Ptr: {}, Buffer Ptr: {} alignedBufferSize: {}",
-        reinterpret_cast<uintptr_t>(controlBlock),
-        reinterpret_cast<uintptr_t>(bufferPtr),
-        alignedBufferSize);
-    auto pin = controlBlock->getCounter<true>();
+    auto unpooledBuffer = unpooledChunksManager.getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT);
     std::unique_lock allBuffersLock{allBuffersMutex};
-    allBuffers.push_back(controlBlock);
-    TupleBuffer pinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
-
-    return pinnedBuffer;
+    allBuffers.push_back(unpooledBuffer.controlBlock);
+    return unpooledBuffer;
+    // std::unique_lock lock(unpooledBuffersMutex);
+    //
+    // auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
+    // auto* bufferPtr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize, DEFAULT_ALIGNMENT));
+    // INVARIANT(bufferPtr, "Unpooled memory allocation for buffer failed");
+    // auto dataSegment = detail::DataSegment{detail::InMemoryLocation{bufferPtr, true}, bufferSize};
+    // auto* controlBlock = new detail::BufferControlBlock{dataSegment, shared_from_this()};
+    // INVARIANT(controlBlock, "Unpooled memory allocation for buffer control block failed");
+    //
+    // NES_TRACE(
+    //     "BCB Ptr: {}, Buffer Ptr: {} alignedBufferSize: {}",
+    //     reinterpret_cast<uintptr_t>(controlBlock),
+    //     reinterpret_cast<uintptr_t>(bufferPtr),
+    //     alignedBufferSize);
+    // auto pin = controlBlock->getCounter<true>();
+    // std::unique_lock allBuffersLock{allBuffersMutex};
+    // allBuffers.push_back(controlBlock);
+    // TupleBuffer pinnedBuffer(controlBlock, dataSegment, detail::ChildOrMainDataKey::MAIN());
+    //
+    // return pinnedBuffer;
 }
 
 void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& segment)
@@ -1286,7 +1288,7 @@ PunchHoleFuture BufferManager::punchHoleSegment(detail::DataSegment<detail::OnDi
                                 "Failed to delete on disk segment in file {}, offset {} with error message \"{}\"",
                                 future.getTarget().getLocation().getFileID(),
                                 future.getTarget().getLocation().getOffset(),
-                                ErrorCode::typeFromCode(*internalError).getErrorMessage());
+                                typeFromCode(*internalError).getErrorMessage());
                             failedToHolePunch.insert(future.getTarget());
                         }
                     }

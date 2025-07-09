@@ -142,7 +142,7 @@ public:
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-        const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
+        std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
         uint32_t withAlignment = DEFAULT_ALIGNMENT,
         uint32_t checksAddedPerNewBuffer = DEFAULT_CHECKS_ADDED_PER_NEW_BUFFER,
         uint64_t bufferChecksThreshold = DEFAULT_BUFFER_CHECKS_THRESHOLD,

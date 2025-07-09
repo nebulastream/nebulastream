@@ -32,10 +32,9 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, const nautilus::val<Memory::TupleBuffer*>& pointerToPinnedBuffer)
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
     : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
 {
-    ptrToPinnedBuffer = pointerToPinnedBuffer;
 }
 
 VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
@@ -128,10 +127,6 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
 {
     return ptrToVarSized;
-}
-nautilus::val<int8_t*> VariableSizedData::getPinnedBuffer() const
-{
-    return ptrToPinnedBuffer;
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)

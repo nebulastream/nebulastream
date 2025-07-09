@@ -77,12 +77,14 @@ InMemoryLocation::InMemoryLocation(const uint8_t* ptr) noexcept
     data = reinterpret_cast<uintptr_t>(ptr) & mask;
 }
 
-InMemoryLocation::InMemoryLocation(const uint8_t* ptr, bool notPreAllocated) noexcept
+InMemoryLocation::InMemoryLocation(const uint8_t* ptr, const size_t chunkOffset, const std::thread::id allocatedBy) noexcept
 {
     constexpr auto mask = (static_cast<uint64_t>(1) << static_cast<uint64_t>(62)) - 1;
-    data = notPreAllocated ? 1 : 0;
+    data = 1;
     data <<= 62;
     data |= reinterpret_cast<uintptr_t>(ptr) & mask;
+    this->chunkOffset = chunkOffset;
+    this->allocatedBy = allocatedBy;
 }
 InMemoryLocation::InMemoryLocation() noexcept
 {
@@ -102,6 +104,19 @@ bool DataLocation::isNotPreAllocated() const noexcept
 {
     constexpr uint64_t mask = static_cast<uint64_t>(1) << 62;
     return (inMemory.data & mask) > 0;
+}
+std::optional<size_t> InMemoryLocation::getChunkOffset() const noexcept
+{
+    if (isNotPreAllocated())
+    {
+        return chunkOffset;
+    }
+    return std::nullopt;
+}
+
+std::thread::id InMemoryLocation::getAllocatedBy() const noexcept
+{
+    return allocatedBy;
 }
 
 DataLocation::DataLocation() noexcept : inMemory(InMemoryLocation{})
@@ -281,6 +296,7 @@ bool DataSegment<T>::isNotPreAllocated() const
 {
     return location.isNotPreAllocated();
 }
+
 template class DataSegment<InMemoryLocation>;
 template class DataSegment<OnDiskLocation>;
 template class DataSegment<DataLocation>;

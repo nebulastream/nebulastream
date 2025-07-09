@@ -43,8 +43,8 @@ namespace detail
 /// -----------------------------------------------------------------------------
 
 
-BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, std::shared_ptr<BufferRecycler> recycler)
-    : data(inMemorySegment), owningBufferRecycler(std::move(recycler))
+BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
+    : data(inMemorySegment), owningBufferRecycler(recycler)
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer and track which function obtained the buffer
@@ -103,7 +103,7 @@ DataSegment<DataLocation> BufferControlBlock::getData() const
     return data;
 }
 
-void BufferControlBlock::resetBufferRecycler(const std::shared_ptr<BufferRecycler>& recycler)
+void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
 {
     PRECONDITION(recycler, "invalid recycler");
     const auto oldRecycler = owningBufferRecycler.exchange(recycler);
