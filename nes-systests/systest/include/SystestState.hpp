@@ -47,6 +47,29 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
+struct ConfigurationOverride
+{
+    std::unordered_map<std::string, std::string> overrideParameters;
+    bool operator==(const ConfigurationOverride& other) const = default;
+    bool operator!=(const ConfigurationOverride& other) const = default;
+};
+
+namespace std
+{
+template <>
+struct hash<ConfigurationOverride>
+{
+    std::size_t operator()(const ConfigurationOverride& co) const noexcept
+    {
+        std::string repr;
+        for (const auto& [key, value] : co.overrideParameters)
+        {
+            repr += key + ":" + value + ";";
+        }
+        return std::hash<std::string>{}(repr);
+    }
+};
+}
 
 namespace NES::Systest
 {
@@ -111,7 +134,8 @@ struct SystestQuery
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
         std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
-        std::optional<ExpectedError> expectedError);
+        std::optional<ExpectedError> expectedError,
+        std::optional<ConfigurationOverride> configOverride);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
 
@@ -124,6 +148,7 @@ struct SystestQuery
     Schema expectedSinkSchema;
     std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount;
     std::optional<ExpectedError> expectedError;
+    std::optional<ConfigurationOverride> configOverride;
 };
 
 
@@ -136,6 +161,7 @@ struct RunningQuery
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;
     std::optional<Exception> exception;
+    std::optional<ConfigurationOverride> configOverride;
 
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;
@@ -197,7 +223,7 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
+    std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queriesWithConfig;
 };
 
 /// intermediate representation storing all considered test files
@@ -215,7 +241,7 @@ class SystestStarterGlobals
     public:
         SystestBinder() = default; /// Load query plan objects by parsing an SLT file for queries and lowering it
         /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-        static std::vector<LoadedQueryPlan> loadFromSLTFile(
+        static std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> loadFromSLTFile(
             SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
 
     private:
@@ -244,7 +270,7 @@ public:
 
 private:
     friend void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals);
-    friend std::vector<LoadedQueryPlan>
+    friend std::unordered_map<Configuration::SingleNodeWorkerConfiguration, std::vector<LoadedQueryPlan>>
     loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
 
 
@@ -264,20 +290,25 @@ private:
         std::filesystem::path workingDir,
         const Schema& sinkSchema,
         std::unordered_map<std::string, std::pair<std::optional<SourceInputFile>, uint64_t>> sourceNamesToFilepathAndCount,
+        std::optional<ConfigurationOverride> configurationOverride,
         std::optional<ExpectedError> expectedError)
     {
         if (const auto it = testFileMap.find(sqlLogicTestFile); it != testFileMap.end())
         {
-            it->second.queries.emplace_back(
-                std::move(testName),
-                std::move(queryDefinition),
-                std::move(sqlLogicTestFile),
-                std::move(queryPlan),
-                queryIdInFile,
-                std::move(workingDir),
-                sinkSchema,
-                std::move(sourceNamesToFilepathAndCount),
-                std::move(expectedError));
+            if (configurationOverride.has_value())
+            {
+                it->second.queriesWithConfig[configurationOverride.value()].emplace_back(
+                    std::move(testName),
+                    std::move(queryDefinition),
+                    std::move(sqlLogicTestFile),
+                    std::move(queryPlan),
+                    queryIdInFile,
+                    std::move(workingDir),
+                    sinkSchema,
+                    std::move(sourceNamesToFilepathAndCount),
+                    std::move(expectedError),
+                    configurationOverride);
+            }
             return;
         }
         throw TestException("Tried to add query to testFile {}, which does not exist.", sqlLogicTestFile.string());
@@ -297,7 +328,7 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
-std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals);
+std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> loadQueries(SystestStarterGlobals& systestStarterGlobals);
 }
 
 FMT_OSTREAM(NES::Systest::SystestField);
