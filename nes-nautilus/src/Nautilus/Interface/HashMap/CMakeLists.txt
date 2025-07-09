@@ -11,4 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(ChainedHashMap)
-add_subdirectory(Cost)

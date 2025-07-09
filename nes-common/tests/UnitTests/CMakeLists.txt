@@ -11,3 +11,5 @@
 # limitations under the License.
 
 add_subdirectory(Util)
+
+add_nes_common_test(nes-traitset-test "TraitsetsTests.cpp")

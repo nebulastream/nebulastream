@@ -16,4 +16,4 @@ function(add_nes_logical_operators_test)
     target_link_libraries(${TARGET_NAME} nes-logical-operators)
 endfunction()
 
-add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
+add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp" "LogicalOperatorTSTest.cpp")

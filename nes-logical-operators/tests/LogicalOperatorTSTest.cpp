@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
-#include <Optimizer/Cost/CostFunctions.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
+#include <Operators/LogicalOperatorTS.hpp>
+#include <gtest/gtest.h>
 
-namespace NES::Optimizer
+namespace NES::Traitsets
 {
+class LogicalPlanTest : public ::testing::Test
+{
+protected:
+    void SetUp() override { }
+};
+
+TEST_F(LogicalPlanTest, DummyTest)
+{
+}
 
 }
