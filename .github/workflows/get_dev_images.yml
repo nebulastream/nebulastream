@@ -86,34 +86,28 @@ jobs:
           echo "tag=$HASH" >> "$GITHUB_OUTPUT"
           echo "hash=$HASH" >> "$GITHUB_OUTPUT"
           
-          if docker manifest inspect nebulastream/nes-ci:$HASH; then
-            echo "build-dependency=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          
-          # Check if jq is installed
-          if ! command -v jq &> /dev/null; then
-            echo "jq is not installed."
+          # check if tag exists on dockerhub
+          DOCKERHUB_RESPONSE_CODE=$(curl --silent --output respose.txt --write-out '%{http_code}\n' "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags/$HASH")
+          echo dockerhub response code: $DOCKERHUB_RESPONSE_CODE
+
+          if [ "$DOCKERHUB_RESPONSE_CODE" -ge 500 ]; then
+            echo "dockerhub internal server error"
+            cat response.txt
             exit 1
-          fi
-          
-          # fetch all available tags for the nes-development image
-          DOCKERHUB_RESPONSE=$(curl -s "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags?page_size=1000")
-          if [ $? -ne 0 ]; then
-            echo "could not fetch tags from the docker repository"
-            exit 1
-          fi
-          
-          TAGS=$(echo $DOCKERHUB_RESPONSE | jq ".results[].name")
-          TAG_FOUND=$(echo $TAGS | jq -r "select (. == \"${HASH}\")")
-          # Check if the Docker manifest exists for the computed hash
-          if [[ "$TAG_FOUND" == "$HASH" ]]; then
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 403 ]; then
+            echo "dockerhub responded with 403: Forbidden?!"
+            exit 2
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 404 ]; then
+            echo "Development image with $HASH does not exist in the docker registry"
+            echo "build-dependency=true" >> "$GITHUB_OUTPUT"
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 200 ]; then
+            echo "found image $HASH"
             echo "build-dependency=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          else
+            echo unexpected docker response! HTTP Status $DOCKERHUB_RESPONSE_CODE
+            cat reponse.txt
           fi
 
-          echo "Development image with $HASH does not exist in the docker registry"
-          echo "build-dependency=true" >> "$GITHUB_OUTPUT"
   build-dev-images:
     # We run the docker image build on separate machines and combine them into a single
     # multi-arch docker image in the docker-development-images job.

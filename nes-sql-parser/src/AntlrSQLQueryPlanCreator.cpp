@@ -47,6 +47,7 @@
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/TemporalIntersectsFunction.hpp>
 #include <Operators/Windows/Aggregations/ArrayAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
@@ -54,6 +55,8 @@
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/VarAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -963,6 +966,29 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             helpers.top().windowAggs.push_back(
                 ArrayAggregationLogicalFunction::create(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
+        case AntlrSQLLexer::VAR:
+            if (helpers.top().functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
+            }
+            helpers.top().windowAggs.push_back(
+                VarAggregationLogicalFunction::create(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            break;
+        case AntlrSQLLexer::TEMPORAL_SEQUENCE:
+            INVARIANT(helpers.top().functionBuilder.size() == 3, "TEMPORAL_SEQUENCE requires three arguments (longitude, latitude, timestamp), but got {}", helpers.top().functionBuilder.size());
+            {
+                const auto timestampFunction = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                const auto latitudeFunction = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                const auto longitudeFunction = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                helpers.top().windowAggs.push_back(
+                    TemporalSequenceAggregationLogicalFunction::create(longitudeFunction.get<FieldAccessLogicalFunction>(),
+                                                                      latitudeFunction.get<FieldAccessLogicalFunction>(),
+                                                                      timestampFunction.get<FieldAccessLogicalFunction>()));
+            }
+            break;
         default:
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
@@ -976,6 +1002,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
+            }
+            else if (funcName == "TEMPORAL_INTERSECTS")
+            {
+                INVARIANT(helpers.top().functionBuilder.size() == 3, "TEMPORAL_INTERSECTS requires three arguments (lon, lat, timestamp), but got {}", helpers.top().functionBuilder.size());
+                const auto ts = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                const auto lat = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                const auto lon = helpers.top().functionBuilder.back();
+                helpers.top().functionBuilder.pop_back();
+                helpers.top().functionBuilder.emplace_back(TemporalIntersectsFunction(lon, lat, ts));
             }
             else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(helpers.top().functionBuilder)))
             {

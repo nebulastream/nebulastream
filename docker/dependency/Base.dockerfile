@@ -31,6 +31,28 @@ RUN apt update -y && apt install \
     pipx \
     -y
 
+# Install MEOS dependencies
+RUN apt update -y && apt install \
+    git \
+    curl \
+    gnupg \
+    build-essential \
+    tree \
+    vim \
+    cmake \
+    postgresql-server-dev-all \
+    postgresql-common \
+    postgresql-client \
+    postgis \
+    libproj-dev \
+    libjson-c-dev \
+    libgsl-dev \
+    libgeos-dev \
+    libgeos++-dev \
+    libgeos-c1v5 \
+    libxml2-dev \
+    -y
+
 # install llvm based toolchain
 RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
     && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
@@ -54,6 +76,15 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
     && cd .. \
     && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
     && cmake --version
+
+# Build MobilityDB with MEOS
+RUN git clone https://github.com/MobilityDB/MobilityDB.git -b stable-1.2 /usr/local/src/MobilityDB \
+    && mkdir -p /usr/local/src/MobilityDB/build \
+    && cd /usr/local/src/MobilityDB/build \
+    && cmake -DMEOS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ .. \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig
 
 # default cmake generator is ninja
 ENV CMAKE_GENERATOR=Ninja

@@ -78,6 +78,8 @@ Nautilus::Record MedianAggregationPhysicalFunction::lower(
     const auto pagedVectorPtr = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState);
     const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector);
     const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
+
+
     const auto numberOfEntries = invoke(
         +[](const Interface::PagedVector* pagedVector)
         {

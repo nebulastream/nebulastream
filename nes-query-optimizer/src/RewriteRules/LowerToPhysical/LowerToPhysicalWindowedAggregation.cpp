@@ -23,6 +23,9 @@
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/TemporalSequenceAggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/VarAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/TemporalSequenceAggregationLogicalFunction.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -130,6 +133,43 @@ std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysical
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {
             aggregationPhysicalFunctions.push_back(aggregationPhysicalFunction.value());
+        }
+        else if (name == "TemporalSequence")
+        {
+            // Cast to get access to the specific TemporalSequence fields
+            auto* temporalSeqDescriptor = dynamic_cast<const TemporalSequenceAggregationLogicalFunction*>(descriptor.get());
+            PRECONDITION(temporalSeqDescriptor, "Expected TemporalSequenceAggregationLogicalFunction but got different type");
+            
+            // Create physical functions for all three input fields
+            auto lonPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getLonField());
+            auto latPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getLatField());
+            auto timestampPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(temporalSeqDescriptor->getTimestampField());
+            
+            // TEMPORAL_SEQUENCE outputs VARSIZED trajectory data
+            auto varsizedType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+            
+            // Create memory layout and provider for PagedVector
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+                NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE, logicalOperator.getInputSchemas()[0]);
+            auto memoryProvider = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+            
+            aggregationPhysicalFunctions.emplace_back(std::make_shared<TemporalSequenceAggregationPhysicalFunction>(
+                std::move(varsizedType),       // Input type (VARSIZED for trajectory state)
+                std::move(physicalFinalType), // Result type (will be VARSIZED)
+                std::move(aggregationInputFunction), // Primary input function
+                resultFieldIdentifier,
+                std::move(memoryProvider)));
+        }
+        else if (name == "Var")
+        {
+            /// We assume that the count is a u64
+            auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+            aggregationPhysicalFunctions.emplace_back(std::make_shared<VarAggregationFunction>(
+                std::move(physicalInputType),
+                std::move(physicalFinalType),
+                std::move(aggregationInputFunction),
+                resultFieldIdentifier,
+                std::move(countType)));
         }
         else
         {

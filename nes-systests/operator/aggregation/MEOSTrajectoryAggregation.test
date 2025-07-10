@@ -1,0 +1,61 @@
+# name: operator/aggregation/MEOSTrajectoryAggregation.test
+# description: Test MEOS trajectory collection aggregation with spatio-temporal data
+# groups: [Aggregation, MEOS, SpatioTemporal, WindowOperators]
+
+# GPS tracking data from multiple devices (NYC taxi-like coordinates)
+Source gps_stream UINT64 device_id FLOAT64 longitude FLOAT64 latitude UINT64 timestamp FLOAT64 speed
+1,-73.9857,40.7484,1609459200000,25.5
+1,-73.9787,40.7505,1609459260000,30.2
+1,-73.9715,40.7589,1609459320000,28.1
+2,-74.0060,40.7128,1609459200000,22.0
+2,-74.0020,40.7140,1609459260000,26.5
+2,-73.9980,40.7155,1609459320000,24.3
+1,-73.9650,40.7620,1609459380000,32.0
+3,-73.9900,40.7300,1609459200000,20.5
+3,-73.9880,40.7315,1609459260000,23.8
+
+# Define sinks for different test scenarios
+SINK trajectory_sink UINT64 gps_stream$start UINT64 gps_stream$end UINT64 gps_stream$device_id VARSIZED trajectory
+SINK single_device_sink UINT64 gps_stream$start UINT64 gps_stream$end UINT64 gps_stream$device_id VARSIZED trajectory  
+SINK sliding_trajectory_sink UINT64 gps_stream$start UINT64 gps_stream$end UINT64 gps_stream$device_id VARSIZED trajectory
+
+# Test 1: Basic trajectory collection with tumbling windows
+# Collect GPS points into MEOS trajectories for each device over 2-minute windows
+SELECT device_id, TEMPORAL_SEQUENCE(longitude, latitude, timestamp) AS trajectory
+FROM gps_stream 
+GROUP BY device_id
+WINDOW TUMBLING(timestamp, size 120000 ms) 
+INTO trajectory_sink
+----
+1609459200000,1609459320000,3,BINARY(56)
+1609459200000,1609459320000,2,BINARY(56)
+1609459200000,1609459320000,1,BINARY(56)
+1609459320000,1609459440000,2,BINARY(56)
+1609459320000,1609459440000,1,BINARY(56)
+
+# Test 2: Single device trajectory collection
+# Focus on device 1 only to verify single-device trajectories
+SELECT device_id, TEMPORAL_SEQUENCE(longitude, latitude, timestamp) AS trajectory
+FROM gps_stream 
+WHERE device_id == UINT64(1)
+GROUP BY device_id
+WINDOW TUMBLING(timestamp, size 180000 ms) 
+INTO single_device_sink
+----
+1609459200000,1609459380000,1,BINARY(56)
+1609459380000,1609459560000,1,BINARY(56)
+
+# Test 3: Sliding window trajectory collection
+# Use sliding windows to create overlapping trajectory segments
+SELECT device_id, TEMPORAL_SEQUENCE(longitude, latitude, timestamp) AS trajectory
+FROM gps_stream 
+WHERE device_id == UINT64(1)
+GROUP BY device_id
+WINDOW SLIDING(timestamp, size 120000 ms, advance by 60000 ms) 
+INTO sliding_trajectory_sink
+----
+1609459200000,1609459320000,1,BINARY(56)
+1609459140000,1609459260000,1,BINARY(56)
+1609459260000,1609459380000,1,BINARY(56)
+1609459320000,1609459440000,1,BINARY(56)
+1609459380000,1609459500000,1,BINARY(56)
