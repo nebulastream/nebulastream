@@ -72,10 +72,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
-        if (!request)
-        {
-            return INVALID_QUERY_ID;
-        }
+        INVARIANT(request, "expecting successfull construction of simple-ish object.");
         auto result = compiler->compileQuery(std::move(request));
         if (!result)
         {
