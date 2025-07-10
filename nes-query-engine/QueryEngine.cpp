@@ -254,7 +254,7 @@ public:
             qid,
             node->id,
             node,
-            Memory::RepinBufferFuture::fromPinnedBuffer(buffer),
+            Memory::FloatingBuffer{std::move(buffer)},
             injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
             injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
@@ -274,8 +274,7 @@ public:
 
             case PipelineExecutionContext::ContinuationPolicy::REPEAT:
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
-                if (not internalTaskQueue.tryWriteUntil(
-                        std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
+                if (not taskQueueTail.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
                 {
                     node->pendingTasks.fetch_sub(1);
                     ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
@@ -303,24 +302,26 @@ public:
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            StopSourceTask{
+                id,
+                std::move(source),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void emitPendingPipelineStop(
@@ -342,7 +343,7 @@ public:
         // , taskQueueHead(taskQueueSize * 0.1)
         , taskQueueHead(internalTaskQueueSize * 0.1)
         , taskQueueTail(internalTaskQueueSize * 0.9)
-    , admissionQueue(admissionQueueSize)
+        , admissionQueue(admissionQueueSize)
     {
     }
 
@@ -358,7 +359,7 @@ private:
         static thread_local WorkerThreadId id;
         /// Handler for different Pipeline Tasks
         /// Boolean return value indicates if the onComplete should be called
-        bool operator()(const WorkTask& task) const;
+        bool operator()(WorkTask& task) const;
         bool operator()(const StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
@@ -374,29 +375,27 @@ private:
         bool terminating{};
     };
 
-    void doTaskInPlace(Task&& task)
-    {
-        WorkerThread worker{*this, false};
-        try
-        {
-            if (std::visit(worker, task))
-            {
-                completeTask(task);
-            }
-        }
-        catch (const Exception& exception)
-        {
-            failTask(task, exception);
-        }
-    }
+    // void doTaskInPlace(Task&& task)
+    // {
+    //     WorkerThread worker{*this, false};
+    //     try
+    //     {
+    //         if (std::visit(worker, task))
+    //         {
+    //             completeTask(task);
+    //         }
+    //     }
+    //     catch (const Exception& exception)
+    //     {
+    //         failTask(task, exception);
+    //     }
+    // }
 
     void addTaskOrDoItInPlace(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (not internalTaskQueue.write(std::move(task))) /// NOLINT no move will happen if tryWriteUntil has failed
-        {
-            doTaskInPlace(std::move(task)); /// NOLINT no move will happen
-        }
+        auto writtenToTail = taskQueueTail.writeIfNotFull(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+        INVARIANT(writtenToTail, "TaskQueueTail overflowed");
     }
 
     void addTaskOrDoNextTask(Task&& task, uint64_t stackLevel = 0)
@@ -411,18 +410,20 @@ private:
             throw TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel);
         }
 
+        auto writtenToTail = taskQueueTail.writeIfNotFull(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+        INVARIANT(writtenToTail, "TaskQueueTail overflowed");
 
-        if (not internalTaskQueue.writeIfNotFull(std::move(task))) /// NOLINT no move will happen if writeIfNotFull has failed
-        {
-            /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
-            Task nextTask;
-            const auto hasNextTask = internalTaskQueue.read(nextTask);
-            addTaskOrDoNextTask(std::move(task), stackLevel + 1); /// NOLINT no move will happen if tryWriteUntil has failed
-            if (hasNextTask)
-            {
-                addTaskOrDoItInPlace(std::move(nextTask));
-            }
-        }
+        // if (not internalTaskQueue.writeIfNotFull(std::move(task))) /// NOLINT no move will happen if writeIfNotFull has failed
+        // {
+        //     /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
+        //     Task nextTask;
+        //     const auto hasNextTask = internalTaskQueue.read(nextTask);
+        //     addTaskOrDoNextTask(std::move(task), stackLevel + 1); /// NOLINT no move will happen if tryWriteUntil has failed
+        //     if (hasNextTask)
+        //     {
+        //         addTaskOrDoItInPlace(std::move(nextTask));
+        //     }
+        // }
     }
 
     /// Order of destruction matters: TaskQueue has to outlive the pool
@@ -442,7 +443,7 @@ private:
 /// Marks every Thread which has not explicitly been created by the ThreadPool as a non-worker thread
 thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadId>;
 
-bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
+bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
     if (terminating)
     {
@@ -490,8 +491,27 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
         // }
         // const auto buffer = std::get<Memory::TupleBuffer>(repinResult);
 
-        pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
-        pipeline->stage->execute(task.buf, pec);
+        const auto repinFuture = [&]
+        {
+            if (std::holds_alternative<Memory::RepinBufferFuture>(task.buf))
+            {
+                return std::get<Memory::RepinBufferFuture>(task.buf);
+            }
+            else if (std::holds_alternative<Memory::FloatingBuffer>(task.buf))
+            {
+                return pool.bufferProvider->repinBuffer(std::get<Memory::FloatingBuffer>(std::move(task.buf)));
+            }
+            std::unreachable();
+        }();
+        auto pinnedBufferRes = repinFuture.waitUntilDone();
+        if (std::holds_alternative<Memory::detail::CoroutineError>(pinnedBufferRes))
+        {
+            ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);
+            return false;
+        }
+        auto pinnedBuffer = std::get<Memory::TupleBuffer>(pinnedBufferRes);
+        pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, pinnedBuffer.getNumberOfTuples()});
+        pipeline->stage->execute(pinnedBuffer, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
@@ -671,42 +691,35 @@ void ThreadPool::addThread()
             WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
-                // {
-                //     Task toMoveTask;
-                //     if (taskQueueTail.read(toMoveTask))
-                //     {
-                //         if (std::holds_alternative<WorkTask>(toMoveTask))
-                //         {
-                //             std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
-                //                 std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
-                //         }
-                //         if (!taskQueueHead.tryWriteUntil(
-                //                 std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50), std::move(toMoveTask)))
-                //         {
-                //             ENGINE_LOG_ERROR("Could not enqueue repinned worker task into task queue head");
-                //         }
-                //     }
-                // }
-                // Task task;
-                // /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
-                // if (!taskQueueHead.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), task))
-                // {
-                //     continue;
-                // }
-
-                Task task;
-                /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
-                const auto shallPickTaskFromAdmissionQueue = internalTaskQueue.size() < ((static_cast<ssize_t>(numberOfThreads())) * 3);
-                if (shallPickTaskFromAdmissionQueue)
+                if (const ssize_t tailSize = taskQueueTail.size(); tailSize < 0
+                    || static_cast<size_t>(tailSize)
+                        < std::max(static_cast<size_t>(taskQueueTail.capacity() * 0.01), numberOfThreads() * 3))
                 {
-                    if (admissionQueue.read(task))
+                    Task toMoveTask;
+                    if (admissionQueue.read(toMoveTask))
                     {
-                        ENGINE_LOG_TRACE(
-                            "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
-                        addTaskOrDoItInPlace(std::move(task));
+                        const auto written = taskQueueTail.writeIfNotFull(std::move(toMoveTask));
+                        INVARIANT(written, "TaskQueueTail overflowed while moving admission task, are there too many worker threads?");
                     }
                 }
-                if (not internalTaskQueue.read(task))
+
+
+                {
+                    Task toMoveTask;
+                    if (taskQueueTail.read(toMoveTask))
+                    {
+                        if (std::holds_alternative<WorkTask>(toMoveTask))
+                        {
+                            std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
+                                std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
+                        }
+                        const auto written = taskQueueHead.writeIfNotFull(std::move(toMoveTask));
+                        INVARIANT(written, "TaskQueueHead overflowed, are there too many worker threads?");
+                    }
+                }
+                Task task;
+                /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
+                if (!taskQueueHead.read(task))
                 {
                     continue;
                 }
@@ -728,9 +741,7 @@ void ThreadPool::addThread()
             WorkerThread terminatingWorker{*this, true};
             while (true)
             {
-
-                // {
-                //     Task toMoveTask;
+                // { //     Task toMoveTask;
                 //     if (taskQueueTail.readIfNotEmpty(toMoveTask))
                 //     {
                 //         std::visit(
@@ -770,15 +781,28 @@ void ThreadPool::addThread()
                 // {
                 //     break;
                 // }
+                {
+                    Task toMoveTask;
+                    if (taskQueueTail.read(toMoveTask))
+                    {
+                        if (std::holds_alternative<WorkTask>(toMoveTask))
+                        {
+                            std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
+                                std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
+                        }
+                        const auto written = taskQueueHead.writeIfNotFull(std::move(toMoveTask));
+                        INVARIANT(written, "TaskQueueHead overflowed, are there too many worker threads?");
+                    }
+                }
                 Task task;
-                if (!internalTaskQueue.readIfNotEmpty(task))
+                /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
+                if (!taskQueueHead.readIfNotEmpty(task))
                 {
                     break;
                 }
-
                 try
                 {
-                    if (std::visit(terminatingWorker, task))
+                    if (std::visit(worker, task))
                     {
                         completeTask(task);
                     }
@@ -800,8 +824,9 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(
-          statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
+    , threadPool(
+          std::make_unique<ThreadPool>(
+              statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {

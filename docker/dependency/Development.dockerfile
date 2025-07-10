@@ -10,7 +10,8 @@ RUN apt-get update -y && apt-get install -y \
         lldb-${LLVM_TOOLCHAIN_VERSION} \
         gdb \
         python3-venv \
-        python3-bs4
+        python3-bs4 \
+        valgrind
 
 # install alternative more recent JRE until 21.0.7 is packaged for Noble 24.04
 # then it should be replaced with openjdk-21-jre-headless

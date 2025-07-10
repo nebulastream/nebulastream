@@ -106,10 +106,10 @@ BufferManager::BufferManager(
     const std::filesystem::path& spillDirectory,
     const std::chrono::duration<float> waitForUringMutexSeconds)
     : waitForUringMutexSeconds(waitForUringMutexSeconds)
-    , newBuffers((bufferChecksThreshold / checksAddedPerNewBuffer) * 16)
+    , newBuffers((bufferChecksThreshold / checksAddedPerNewBuffer) * 64)
     , checksAddedPerNewBuffer(checksAddedPerNewBuffer)
     , bufferChecksThreshold(bufferChecksThreshold)
-    , unpooledChunksManager(memoryResource, withAlignment, weak_from_this())
+    , unpooledChunksManager(memoryResource, withAlignment, this)
     , availableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
@@ -1102,7 +1102,7 @@ TupleBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<detai
     auto pin = controlBlock->getCounter<true>();
     {
         const auto savedNewBuffer = newBuffers.writeIfNotFull(controlBlock);
-        INVARIANT(savedNewBuffer, "Could not save newly created buffer");
+        INVARIANT(savedNewBuffer, "Could not save newly created buffer, new buffers size is {}, buffers to check is {}", newBuffers.size(), buffersToCheck.load());
         size_t checks = buffersToCheck.fetch_add(checksAddedPerNewBuffer);
         //If checksAddedPerBuffer > 1, then 2nd chance might make checks == bufferChecksThreshold miss.
         //But, we only want one thread at maximum trying to flush and cleanup
@@ -1214,7 +1214,7 @@ void BufferManager::recycleSegment(detail::DataSegment<detail::InMemoryLocation>
 {
     if (segment.isNotPreAllocated())
     {
-        memoryResource->deallocate(segment.getLocation().getPtr(), segment.getSize());
+        unpooledChunksManager.recycle(std::move(segment));
     }
     else
     {

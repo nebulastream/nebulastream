@@ -35,8 +35,8 @@
 
 namespace NES
 {
-UnpooledChunksManager::UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, const size_t alignment, std::weak_ptr<Memory::BufferRecycler> bufferRecycler)
-    : memoryResource(std::move(memoryResource)), alignment(alignment), owningBufferRecycler(std::move(bufferRecycler))
+UnpooledChunksManager::UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, const size_t alignment, Memory::BufferRecycler* bufferRecycler)
+    : memoryResource(std::move(memoryResource)), alignment(alignment), owningBufferRecycler(bufferRecycler)
 {
 }
 
@@ -140,8 +140,6 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
 {
     const auto threadId = std::this_thread::get_id();
 
-    const auto bufferRecyclerPtr = owningBufferRecycler.lock();
-    INVARIANT(bufferRecyclerPtr, "Buffer recycler is not set or expired");
 
     /// Getting space from the unpooled chunks manager
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
@@ -160,7 +158,7 @@ Memory::TupleBuffer UnpooledChunksManager::getUnpooledBuffer(
         alignedBufferSize};
 
 
-    auto bcb = new Memory::detail::BufferControlBlock{newMemorySegment, bufferRecyclerPtr.get()};
+    auto bcb = new Memory::detail::BufferControlBlock{newMemorySegment, owningBufferRecycler};
     {
         /// Inserting the memory segment into the unpooled buffer storage
         const auto lockedLocalUnpooledBufferData = chunk->wlock();

@@ -27,7 +27,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <boost/asio/detail/descriptor_ops.hpp>
 #include <fmt/format.h>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include "TupleBufferImpl.hpp"
 namespace NES::Memory
@@ -62,8 +61,11 @@ TupleBuffer::TupleBuffer(
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept
     : controlBlock(other.controlBlock), dataSegment(other.dataSegment), childOrMainData(other.childOrMainData)
 {
-    controlBlock->pinnedRetain();
-    controlBlock->dataRetain();
+    if (controlBlock != nullptr)
+    {
+        controlBlock->pinnedRetain();
+        controlBlock->dataRetain();
+    }
 }
 
 

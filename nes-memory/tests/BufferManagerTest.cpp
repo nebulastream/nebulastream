@@ -848,7 +848,7 @@ TEST_F(BufferManagerTest, RepinUnpinContentionBench)
                         for (auto [errorCode, counter] : errorCounter)
                         {
                             NES_INFO(
-                                "Error \"{}\" was encountered {} times", ErrorCode::typeFromCode(errorCode).getErrorMessage(), counter);
+                                "Error \"{}\" was encountered {} times", typeFromCode(errorCode).getErrorMessage(), counter);
                             sum += counter;
                         }
                         NES_INFO("{} out of {} attempts to repin failed", sum, maxRepinnings * numThreads);
@@ -987,7 +987,7 @@ TEST_F(BufferManagerTest, RepinUnpinContention)
         unsigned int sum = 0;
         for (auto [errorCode, counter] : errorCounter)
         {
-            NES_INFO("Error \"{}\" was encountered {} times", ErrorCode::typeFromCode(errorCode).getErrorMessage(), counter);
+            NES_INFO("Error \"{}\" was encountered {} times", typeFromCode(errorCode).getErrorMessage(), counter);
             sum += counter;
         }
         NES_INFO("{} out of {} attempts to repin failed", sum, maxRepinnings * numThreads);
@@ -1024,7 +1024,7 @@ TEST_F(BufferManagerTest, NotPreAllocatedSegment)
 {
     uint8_t someData = 12349;
     constexpr unsigned long size = 16 * 1024;
-    const auto inMemorySegment = detail::DataSegment{detail::InMemoryLocation{&someData, true}, size};
+    const auto inMemorySegment = detail::DataSegment{detail::InMemoryLocation{&someData, 0, std::this_thread::get_id()}, size};
     const auto unionSegment = Memory::detail::DataSegment<detail::DataLocation>{inMemorySegment};
     const auto segment = unionSegment.get<detail::InMemoryLocation>();
     ASSERT_TRUE(segment.has_value());

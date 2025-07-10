@@ -45,7 +45,7 @@ class UnpooledChunksManager
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
 
     size_t alignment;
-    std::weak_ptr<Memory::BufferRecycler> owningBufferRecycler;
+    Memory::BufferRecycler* owningBufferRecycler;
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -88,13 +88,13 @@ class UnpooledChunksManager
 
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
-    void recycle(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer);
 
 public:
-    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t alignment, std::weak_ptr<Memory::BufferRecycler> bufferRecycler);
+    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t alignment, Memory::BufferRecycler* bufferRecycler);
     size_t getNumberOfUnpooledBuffers() const;
     Memory::TupleBuffer
     getUnpooledBuffer(size_t neededSize, size_t alignment);
+    void recycle(Memory::detail::DataSegment<Memory::detail::InMemoryLocation>&& buffer);
 };
 
 }
