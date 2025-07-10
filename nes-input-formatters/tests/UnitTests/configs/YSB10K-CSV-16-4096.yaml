@@ -1,0 +1,9 @@
+testFileName: YSB10K
+formatterType: CSV
+hasSpanningTuples: true
+numberOfIterations: 3
+numberOfThreads: 16
+sizeOfRawBuffers: 4096
+sizeOfFormattedBuffers: 4096
+fieldDelimiter: ','
+validate: false

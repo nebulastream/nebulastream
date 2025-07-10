@@ -39,10 +39,50 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <yaml-cpp/node/parse.h>
+#include "Runtime/NodeEngine.hpp"
+
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
+
+struct TestConfig
+{
+    std::string testFileName;
+    std::string formatterType;
+    bool hasSpanningTuples;
+    size_t numberOfIterations;
+    size_t numberOfThreads;
+    size_t sizeOfRawBuffers;
+    size_t sizeOfFormattedBuffers;
+    std::string fieldDelimiter = "|";
+    bool validate = true;
+};
+
+
+namespace YAML
+{
+
+template <>
+struct convert<TestConfig>
+{
+    static bool decode(const Node& node, TestConfig& testConfig)
+    {
+        testConfig.testFileName = node["testFileName"].as<std::string>();
+        testConfig.formatterType = node["formatterType"].as<std::string>();
+        testConfig.hasSpanningTuples = node["hasSpanningTuples"].as<bool>();
+        testConfig.numberOfIterations = node["numberOfIterations"].as<size_t>();
+        testConfig.numberOfThreads = node["numberOfThreads"].as<size_t>();
+        testConfig.sizeOfRawBuffers = node["sizeOfRawBuffers"].as<size_t>();
+        testConfig.sizeOfFormattedBuffers = node["sizeOfFormattedBuffers"].as<size_t>();
+        testConfig.fieldDelimiter = node["fieldDelimiter"].as<std::string>();
+        testConfig.validate = node["validate"].as<bool>();
+        return true;
+    }
+};
+
+}
 
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
@@ -113,20 +153,6 @@ public:
 
         return true;
     }
-
-    struct TestConfig
-    {
-        std::string testFileName;
-        std::string formatterType;
-        bool hasSpanningTuples;
-        size_t numberOfIterations;
-        size_t numberOfThreads;
-        size_t sizeOfRawBuffers;
-        size_t sizeOfFormattedBuffers;
-        std::string fieldDelimiter = "|";
-        bool validate = true;
-    };
-
     struct SetupResult
     {
         NES::Schema schema;
@@ -307,23 +333,20 @@ public:
             testBufferManager->destroy();
         }
     }
+
+
+    void runTestFromYamlConfig(const std::filesystem::path& configPath)
+    {
+        // Todo: load yaml config into 'TestConfig'
+        // call runTest with config
+        const auto testConfig = YAML::LoadFile(configPath.string()).as<TestConfig>();
+        runTest(testConfig);
+    }
 };
 
 TEST_F(SmallFilesTest, ysbBenchmark)
 {
-    /// Checked that the YSB10K produces the original/correct data with raw buffer sizes of 128 bytes
-    runTest(TestConfig{
-        .testFileName = "YSB10K",
-        .formatterType = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 3,
-        .numberOfThreads = 16,
-        /// (on ThreadRipper) size of 256 bytes and 46 threads leads to ~50% spent in 'processSequenceNumber' (without range check!!)
-        /// 16 threads and 1KB already clearly shows the sync overhead (~30%)
-        .sizeOfRawBuffers = static_cast<uint64_t>(std::pow(2, 10)),
-        .sizeOfFormattedBuffers = 4096,
-        .fieldDelimiter = ",",
-        .validate = false});
+    runTestFromYamlConfig(std::filesystem::path(INPUT_FORMATTER_TEST_CONFIG) / "YSB10K-CSV-16-4096.yaml");
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
