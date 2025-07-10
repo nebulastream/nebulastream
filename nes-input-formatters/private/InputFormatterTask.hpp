@@ -151,7 +151,7 @@ void processSpanningTuple(
     const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * indexerMetaData.getTupleDelimitingBytes().size();
     if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
     {
-        auto fieldIndexFunction = FieldIndexFunctionType(bufferProvider);
+        auto fieldIndexFunction = FieldIndexFunctionType();
         lastBuffer.setSpanningTuple(completeSpanningTuple);
         inputFormatIndexer.indexRawBuffer(fieldIndexFunction, lastBuffer.getRawTupleBuffer(), indexerMetaData);
         processTuple<FieldIndexFunctionType>(
@@ -264,7 +264,7 @@ public:
         // }
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
-        auto fieldIndexFunction = FieldIndexFunctionType(*pec.getBufferManager());
+        auto fieldIndexFunction = FieldIndexFunctionType();
         inputFormatIndexer->indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
 
         /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter

@@ -44,18 +44,19 @@ void initializeIndexFunctionForTuple(
 {
     /// The start of the tuple is the offset of the first field of the tuple
     size_t fieldIdx = 0;
-    fieldOffsets.writeOffsetAt(startIdxOfTuple, fieldIdx++);
+    fieldOffsets.writeOffsetAt(startIdxOfTuple);
+    ++fieldIdx;
     /// Find field delimiters, until reaching the end of the tuple
     /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
     for (size_t nextFieldOffset = tuple.find(fieldDelimiter, 0); nextFieldOffset != std::string_view::npos;
          nextFieldOffset = tuple.find(fieldDelimiter, nextFieldOffset))
     {
         nextFieldOffset += 1;
-        fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset, fieldIdx); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         ++fieldIdx;
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
-    fieldOffsets.writeOffsetAt(startIdxOfTuple + tuple.size(), numberOfFieldsInSchema);
+    fieldOffsets.writeOffsetAt(startIdxOfTuple + tuple.size());
     if (fieldIdx != numberOfFieldsInSchema)
     {
         throw NES::CannotFormatSourceData(
@@ -100,7 +101,6 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
         initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->fieldDelimiter, this->numberOfFieldsInSchema);
-        fieldOffsets.writeOffsetsOfNextTuple(); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;

@@ -73,7 +73,7 @@ protected:
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
         /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
-        static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
+        static_assert(std::is_constructible_v<Derived>, "Derived class must have a default constructor");
     };
     ~FieldIndexFunction() = default;
 
