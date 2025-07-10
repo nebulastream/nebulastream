@@ -21,10 +21,10 @@ target_include_directories(nes-meos
 
 # Link with MEOS library using the imported target
 if(TARGET meos::meos)
-    target_link_libraries(nes-meos PRIVATE meos::meos)
+    target_link_libraries(nes-meos PUBLIC meos::meos)
 else()
-    target_link_libraries(nes-meos PRIVATE ${meos})
-    target_include_directories(nes-meos PRIVATE ${meos_INCLUDE_DIR})
+    target_link_libraries(nes-meos PUBLIC ${meos})
+    target_include_directories(nes-meos PUBLIC ${meos_INCLUDE_DIR})
 endif()
 
 # Link with NebulaStream dependencies  

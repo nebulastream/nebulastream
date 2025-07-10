@@ -17,7 +17,9 @@
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -43,7 +45,7 @@ VarAggregationFunction::VarAggregationFunction(
 
 void VarAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
+    ExecutionContext& executionContext,
     const Nautilus::Record& record)
 {
     /// Reading old sum, sum of squares, and count from the aggregation state.
@@ -57,7 +59,7 @@ void VarAggregationFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType.type);
 
     /// Getting the new value and updating the aggregates
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
     const auto newSumSq = sumSq + (value * value);
     const auto newCount = count + nautilus::val<uint64_t>(1);
@@ -119,9 +121,12 @@ Nautilus::Record VarAggregationFunction::lower(const nautilus::val<AggregationSt
     const auto sumFloat = sum.castToType(resultType.type);
     const auto sumSqFloat = sumSq.castToType(resultType.type);
     
-    // Calculate mean and then variance
+    // Calculate sample variance using Bessel's correction
+    // Sample variance = (sum(x^2) - (sum(x))^2/n) / (n-1)
     const auto mean = sumFloat / countFloat;
-    const auto variance = (sumSqFloat / countFloat) - (mean * mean);
+    const auto one = Nautilus::VarVal(uint64_t(1)).castToType(resultType.type);
+    const auto n_minus_1 = countFloat - one;
+    const auto variance = ((sumSqFloat - (sumFloat * sumFloat) / countFloat) / n_minus_1);
     
     return Nautilus::Record({{resultFieldIdentifier, variance}});
 }
@@ -144,6 +149,15 @@ size_t VarAggregationFunction::getSizeOfStateInBytes() const
     const auto inputSize = inputType.getSizeInBytes();
     const auto countTypeSize = countType.getSizeInBytes();
     return 2 * inputSize + countTypeSize; // sum + sumSq + count
+}
+
+AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterVarAggregationPhysicalFunction(
+    AggregationPhysicalFunctionRegistryArguments arguments)
+{
+    /// Variance aggregation expects INT64 as count type
+    DataType countType = DataTypeProvider::provideDataType(DataType::Type::INT64);
+    return std::make_shared<VarAggregationFunction>(
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier, std::move(countType));
 }
 
 }
