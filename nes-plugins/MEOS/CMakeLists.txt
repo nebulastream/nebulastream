@@ -16,7 +16,7 @@ add_library(nes-meos STATIC MEOSWrapper.cpp)
 # Set include directories
 target_include_directories(nes-meos
         PUBLIC include
-        PRIVATE .
+        PUBLIC .
 )
 
 # Link with MEOS library using the imported target

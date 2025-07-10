@@ -17,13 +17,14 @@
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/Function/VarAggregationFunction.hpp>
-#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <nautilus/DataTypes/VarVal.hpp>
+#include <nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
+#include <nautilus/Util.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
@@ -48,25 +49,33 @@ void VarAggregationFunction::lift(
     ExecutionContext& executionContext,
     const Nautilus::Record& record)
 {
-    /// Reading old sum, sum of squares, and count from the aggregation state.
-    /// Memory layout: [sum] [sum_of_squares] [count]
-    const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaSumSq = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
+    /// Reading old min, max, and count from the aggregation state.
+    /// Memory layout: [min] [max] [count]
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(2 * inputType.getSizeInBytes());
     
-    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType.type);
-    const auto sumSq = Nautilus::VarVal::readVarValFromMemory(memAreaSumSq, inputType.type);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType.type);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType.type);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType.type);
 
     /// Getting the new value and updating the aggregates
     const auto value = inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena);
-    const auto newSum = sum + value;
-    const auto newSumSq = sumSq + (value * value);
+    
+    /// Update min if value is smaller
+    if (value < min)
+    {
+        value.writeToMemory(memAreaMin);
+    }
+    
+    /// Update max if value is larger
+    if (value > max)
+    {
+        value.writeToMemory(memAreaMax);
+    }
+    
+    /// Increment count
     const auto newCount = count + nautilus::val<uint64_t>(1);
-
-    /// Writing the new aggregates back to the aggregation state
-    newSum.writeToMemory(memAreaSum);
-    newSumSq.writeToMemory(memAreaSumSq);
     newCount.writeToMemory(memAreaCount);
 }
 
@@ -76,66 +85,78 @@ void VarAggregationFunction::combine(
     PipelineMemoryProvider&)
 {
     /// Reading the aggregates from the first aggregation state
-    const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto memAreaSumSq1 = static_cast<nautilus::val<int8_t*>>(aggregationState1) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
+    const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+    const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1) + nautilus::val<uint64_t>(2 * inputType.getSizeInBytes());
     
-    const auto sum1 = Nautilus::VarVal::readVarValFromMemory(memAreaSum1, inputType.type);
-    const auto sumSq1 = Nautilus::VarVal::readVarValFromMemory(memAreaSumSq1, inputType.type);
+    const auto min1 = Nautilus::VarVal::readVarValFromMemory(memAreaMin1, inputType.type);
+    const auto max1 = Nautilus::VarVal::readVarValFromMemory(memAreaMax1, inputType.type);
     const auto count1 = Nautilus::VarVal::readVarValFromMemory(memAreaCount1, countType.type);
 
     /// Reading the aggregates from the second aggregation state
-    const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto memAreaSumSq2 = static_cast<nautilus::val<int8_t*>>(aggregationState2) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
+    const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+    const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
     const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2) + nautilus::val<uint64_t>(2 * inputType.getSizeInBytes());
     
-    const auto sum2 = Nautilus::VarVal::readVarValFromMemory(memAreaSum2, inputType.type);
-    const auto sumSq2 = Nautilus::VarVal::readVarValFromMemory(memAreaSumSq2, inputType.type);
+    const auto min2 = Nautilus::VarVal::readVarValFromMemory(memAreaMin2, inputType.type);
+    const auto max2 = Nautilus::VarVal::readVarValFromMemory(memAreaMax2, inputType.type);
     const auto count2 = Nautilus::VarVal::readVarValFromMemory(memAreaCount2, countType.type);
 
     /// Combining the aggregates
-    const auto newSum = sum1 + sum2;
-    const auto newSumSq = sumSq1 + sumSq2;
+    /// Update min if min2 is smaller
+    if (min2 < min1)
+    {
+        min2.writeToMemory(memAreaMin1);
+    }
+    
+    /// Update max if max2 is larger
+    if (max2 > max1)
+    {
+        max2.writeToMemory(memAreaMax1);
+    }
+    
+    /// Combine counts
     const auto newCount = count1 + count2;
-
-    /// Writing the new aggregates back to the first aggregation state
-    newSum.writeToMemory(memAreaSum1);
-    newSumSq.writeToMemory(memAreaSumSq1);
     newCount.writeToMemory(memAreaCount1);
 }
 
 Nautilus::Record VarAggregationFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the aggregates from the aggregation state
-    const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaSumSq = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(2 * inputType.getSizeInBytes());
     
-    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType.type);
-    const auto sumSq = Nautilus::VarVal::readVarValFromMemory(memAreaSumSq, inputType.type);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType.type);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType.type);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType.type);
 
-    /// Calculating the variance using the formula: Var = (SumSq - (Sum^2 / N)) / N
-    /// Cast to result type for precision
-    const auto countFloat = count.castToType(resultType.type);
-    const auto sumFloat = sum.castToType(resultType.type);
-    const auto sumSqFloat = sumSq.castToType(resultType.type);
-    
-    // Calculate sample variance using Bessel's correction
-    // Sample variance = (sum(x^2) - (sum(x))^2/n) / (n-1)
-    const auto mean = sumFloat / countFloat;
-    const auto one = Nautilus::VarVal(uint64_t(1)).castToType(resultType.type);
-    const auto n_minus_1 = countFloat - one;
-    const auto variance = ((sumSqFloat - (sumFloat * sumFloat) / countFloat) / n_minus_1);
+    /// Calculate variance as max - min
+    /// Cast to result type for consistency
+    const auto minFloat = min.castToType(resultType.type);
+    const auto maxFloat = max.castToType(resultType.type);
+    const auto variance = maxFloat - minFloat;
     
     return Nautilus::Record({{resultFieldIdentifier, variance}});
 }
 
 void VarAggregationFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
-    /// Resetting all aggregates to 0
-    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    nautilus::memset(memArea, 0, getSizeOfStateInBytes());
+    /// Reset min to maximum value, max to minimum value, and count to 0
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
+    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(2 * inputType.getSizeInBytes());
+    
+    /// Initialize min with max value
+    const auto minInit = Nautilus::Util::createNautilusMaxValue(inputType.type);
+    minInit.writeToMemory(memAreaMin);
+    
+    /// Initialize max with min value
+    const auto maxInit = Nautilus::Util::createNautilusMinValue(inputType.type);
+    maxInit.writeToMemory(memAreaMax);
+    
+    /// Initialize count to 0 using memset
+    nautilus::memset(memAreaCount, 0, countType.getSizeInBytes());
 }
 
 void VarAggregationFunction::cleanup(nautilus::val<AggregationState*>)
@@ -144,20 +165,24 @@ void VarAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t VarAggregationFunction::getSizeOfStateInBytes() const
 {
-    /// Size of sum + size of sum of squares + size of count
-    /// We need to store sum and sum_of_squares as the same type as input, and count as countType
+    /// Size of min + size of max + size of count
+    /// We need to store min and max as the same type as input, and count as countType
     const auto inputSize = inputType.getSizeInBytes();
     const auto countTypeSize = countType.getSizeInBytes();
-    return 2 * inputSize + countTypeSize; // sum + sumSq + count
+    return 2 * inputSize + countTypeSize; // min + max + count
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterVarAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    /// Variance aggregation expects INT64 as count type
-    DataType countType = DataTypeProvider::provideDataType(DataType::Type::INT64);
+    /// VAR requires a count type (UINT64) for tracking the number of elements
+    auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
     return std::make_shared<VarAggregationFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier, std::move(countType));
+        std::move(arguments.inputType), 
+        std::move(arguments.resultType), 
+        arguments.inputFunction, 
+        arguments.resultFieldIdentifier,
+        std::move(countType));
 }
 
 }
