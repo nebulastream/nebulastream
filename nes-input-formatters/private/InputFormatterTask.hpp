@@ -257,11 +257,11 @@ public:
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
         /// After enough out-of-range requests, the SequenceShredder increases the size of its ring buffer.
-        // if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
-        // {
-        //     rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-        //     return;
-        // }
+        if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
+        {
+            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return;
+        }
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
         auto fieldIndexFunction = FieldIndexFunctionType();
