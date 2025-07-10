@@ -135,7 +135,7 @@ LogicalOperator toOp(const FOp& op)
 {
     if (op.has_source())
     {
-        auto src = OperatorSerializationUtil::deserializeSourceDescriptor(op.source());
+        auto src = toSd(op.source());
         auto srcOp = SourceDescriptorLogicalOperator{std::move(src)};
         return srcOp.withOutputOriginIds({OriginId{op.outputoriginid()}});
     }
