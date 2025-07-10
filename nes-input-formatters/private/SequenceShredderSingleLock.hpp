@@ -28,6 +28,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <SequenceShredder.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -35,31 +36,7 @@
 namespace NES::InputFormatters
 {
 
-/// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).
-/// A spanning tuple is a tuple that spans over at least two raw input buffers.
-/// Given an input buffer without a delimiter, the SequenceShredder may find one spanning tuple at most (the raw input buffer connects
-/// two raw input buffers with tuple delimiters).
-/// Given an input buffer with a tuple delimiter, the SequenceShredder may find up to two spanning tuples. A first, starting in a raw input
-/// buffer with a lower sequence number, ending in the raw input buffer. A second, starting in the raw input buffer, ending in a raw
-/// input buffer with a higher sequence number.
-struct SpanningTuple
-{
-    SequenceNumber::Underlying spanStart = 0;
-    SequenceNumber::Underlying spanEnd = 0;
-    bool isStartValid = false;
-    bool isEndValid = false;
-};
-
-
-struct SpanningTupleBuffers
-{
-    size_t indexOfProcessedSequenceNumber;
-    std::vector<StagedBuffer> stagedBuffers;
-};
-
-struct CriticalSequenceNumberEntry;
-
-class SequenceShredder
+class SequenceShredderSingleLock
 {
 public:
     using BitmapType = uint64_t;
@@ -81,9 +58,9 @@ private:
     static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
 
 public:
-    explicit SequenceShredder(size_t sizeOfTupleDelimiter);
-    explicit SequenceShredder(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
-    ~SequenceShredder();
+    explicit SequenceShredderSingleLock(size_t sizeOfTupleDelimiter);
+    explicit SequenceShredderSingleLock(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
+    ~SequenceShredderSingleLock();
 
     /// Return
     [[nodiscard]] size_t getTail() const { return this->tail; }
@@ -92,8 +69,8 @@ public:
     /// Example: 4 bitmaps, tail is 4, then the allowed range for sequence numbers is 256-511: [256,319][320,383][384,447][448,511]
     [[nodiscard]] bool isInRange(SequenceNumberType sequenceNumber);
 
-    /// Logs the sequence number range of the SequenceShredder. Additionally, iterates over all bitmaps and detects whether the
-    /// SequenceShredder is in a valid state for sequence number (each bit represents a sequence number). Logs all invalid sequence numbers.
+    /// Logs the sequence number range of the SequenceShredderSingleLock. Additionally, iterates over all bitmaps and detects whether the
+    /// SequenceShredderSingleLock is in a valid state for sequence number (each bit represents a sequence number). Logs all invalid sequence numbers.
     bool validateState() noexcept;
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
@@ -102,7 +79,7 @@ public:
     template <bool HasTupleDelimiter>
     SpanningTupleBuffers processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, SequenceNumberType sequenceNumber);
 
-    friend std::ostream& operator<<(std::ostream& os, SequenceShredder& sequenceShredder);
+    friend std::ostream& operator<<(std::ostream& os, SequenceShredderSingleLock& SequenceShredderSingleLock);
 
 private:
     std::mutex readWriteMutex; /// protects all member variable below, except for 'stagedBuffers' and 'stagedBufferUses'
@@ -112,7 +89,7 @@ private:
     size_t numberOfBitmaps;
     size_t numberOfBitmapsModulo;
     size_t resizeRequestCount;
-    /// The SequenceShredder owns staged buffers that must still become part of spanning tuples.
+    /// The SequenceShredderSingleLock owns staged buffers that must still become part of spanning tuples.
     std::vector<StagedBuffer> stagedBuffers;
     /// Keeps track of how often a specific buffer was used in spanning tuples
     /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
@@ -194,5 +171,4 @@ private:
 
 }
 
-FMT_OSTREAM(NES::InputFormatters::SequenceShredder);
-FMT_OSTREAM(NES::InputFormatters::CriticalSequenceNumberEntry);
+FMT_OSTREAM(NES::InputFormatters::SequenceShredderSingleLock);

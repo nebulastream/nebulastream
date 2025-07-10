@@ -36,26 +36,7 @@
 namespace NES::InputFormatters
 {
 
-using FieldOffsetsType = uint32_t;
 
-/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
-template <typename T>
-concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
-    T(config, schema);
-    /// Assumes a fixed set of symbols that separate tuples
-    /// InputFormatIndexers without tuple delimiters should return an empty string
-    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-};
-
-/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
-template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType MetaData, bool HasSpanningTuple>
-requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
-class InputFormatterTask;
-template <typename T>
-concept InputFormatterTaskType = requires {
-    []<typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>(
-        InputFormatterTask<FormatterType, FieldIndexFunctionType, IndexerMetaData, HasSpanningTuple>&) { }(std::declval<T&>());
-};
 
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a would TupleBuffer require)
@@ -65,9 +46,6 @@ concept InputFormatterTaskType = requires {
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 class RawTupleBuffer
 {
-    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
-    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
-    friend class InputFormatterTask;
     friend struct StagedBuffer;
 
 public:
@@ -88,7 +66,6 @@ public:
     [[nodiscard]] OriginId getOriginId() const noexcept { return rawBuffer.getOriginId(); }
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
-private:
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return rawBuffer.getNumberOfTuples(); }
     void setNumberOfTuples(const uint64_t numberOfTuples) const noexcept { rawBuffer.setNumberOfTuples(numberOfTuples); }
     /// Allows to emit the underlying buffer without exposing it to the outside
@@ -102,6 +79,95 @@ private:
 
     Memory::TupleBuffer rawBuffer;
     std::string_view bufferView;
+};
+
+
+/// A staged buffer represents a raw buffer together with the locations of the first and last tuple delimiter.
+/// Thus, the SequenceShredder can determine the spanning tuple(s) starting/ending in or containing the StagedBuffer.
+struct StagedBuffer
+{
+private:
+    friend class SequenceShredder;
+
+public:
+    StagedBuffer() = default;
+    StagedBuffer(
+        RawTupleBuffer rawTupleBuffer,
+        const size_t sizeOfBufferInBytes,
+        const uint32_t offsetOfFirstTupleDelimiter,
+        const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawTupleBuffer))
+        , sizeOfBufferInBytes(sizeOfBufferInBytes)
+        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
+
+    StagedBuffer(StagedBuffer&& other) noexcept = default;
+    StagedBuffer& operator=(StagedBuffer&& other) noexcept = default;
+    StagedBuffer(const StagedBuffer& other) = default;
+    StagedBuffer& operator=(const StagedBuffer& other) = default;
+
+    [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
+    /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of a spanning tuple that _ends_ in the staged buffer.
+    [[nodiscard]] std::string_view getLeadingBytes() const { return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter); }
+
+    /// Returns the _last_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
+    [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
+    {
+        const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
+        const auto startOfTrailingSpanningTuple = offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
+        return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
+    }
+
+    [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
+
+    [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
+
+    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }
+
+    void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
+
+
+protected:
+    RawTupleBuffer rawBuffer;
+    size_t sizeOfBufferInBytes{};
+    uint32_t offsetOfFirstTupleDelimiter{};
+    uint32_t offsetOfLastTupleDelimiter{};
+};
+
+using FieldOffsetsType = uint32_t;
+
+/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
+template <typename T>
+concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
+    T(config, schema);
+    /// Assumes a fixed set of symbols that separate tuples
+    /// InputFormatIndexers without tuple delimiters should return an empty string
+    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+};
+
+struct SpanningTupleBuffers;
+
+/// 'Interface' for SequenceShredder
+template <typename T>
+concept SequenceShredderType = requires(size_t tupleDelimiterSize, T sequenceShredder, SequenceNumber::Underlying sequenceNumber, StagedBuffer stagedBuffer) {
+    T(tupleDelimiterSize);
+    { sequenceShredder.template processSequenceNumber<true>(stagedBuffer, sequenceNumber) } -> std::same_as<SpanningTupleBuffers>;
+    { sequenceShredder.template processSequenceNumber<false>(stagedBuffer, sequenceNumber) } -> std::same_as<SpanningTupleBuffers>;
+    { sequenceShredder.isInRange(sequenceNumber) } -> std::same_as<bool>;
+    { sequenceShredder.validateState() } -> std::same_as<bool>;
+};
+
+
+/// Forward declaring 'InputFormatterTask' to constrain the template parameter of 'InputFormatterTaskPipeline'
+template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType MetaData, bool HasSpanningTuple, SequenceShredderType SequenceShredderImpl>
+requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+class InputFormatterTask;
+template <typename T>
+concept InputFormatterTaskType = requires {
+    []<typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple, SequenceShredderType SequenceShredderImpl>(
+        InputFormatterTask<FormatterType, FieldIndexFunctionType, IndexerMetaData, HasSpanningTuple, SequenceShredderImpl>&) { }(std::declval<T&>());
 };
 
 /// Type-erased wrapper around InputFormatterTask

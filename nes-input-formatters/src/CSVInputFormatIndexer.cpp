@@ -24,6 +24,7 @@
 #include <utility>
 
 #include <InputFormatters/InputFormatIndexer.hpp>
+#include <SequenceShredderSingleLock.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -122,7 +123,7 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
 {
     auto inputFormatter
         = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true, SequenceShredderSingleLock>(std::move(inputFormatter));
 }
 
 }

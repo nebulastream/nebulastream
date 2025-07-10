@@ -43,10 +43,10 @@ struct InputFormatIndexerRegistryArguments
     /// @tparam: FormatterType: the concrete formatter implementation, e.g., CSVInputFormatter
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
-    template <typename FormatterType, typename FieldAccessType, typename IndexerMetaData, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldAccessType, typename IndexerMetaData, bool HasSpanningTuple, SequenceShredderType SequenceShredderImpl>
     InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter)
     {
-        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, IndexerMetaData, HasSpanningTuple>(
+        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, IndexerMetaData, HasSpanningTuple, SequenceShredderImpl>(
             originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }

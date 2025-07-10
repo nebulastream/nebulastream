@@ -53,7 +53,7 @@ template <typename Derived>
 class FieldIndexFunction
 {
     /// Expose the FieldIndexFunction interface functions only to the InputFormatterTask
-    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
+    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple, SequenceShredderType SequenceShredderImpl>
     requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
     friend class InputFormatterTask;
 

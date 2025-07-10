@@ -26,7 +26,7 @@ InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false>(
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer<false>, NoopFormatter, NativeMetaData, false, SequenceShredder>(
         std::move(inputFormatter));
 }
 

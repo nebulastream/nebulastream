@@ -168,7 +168,7 @@ void processSpanningTuple(
 /// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
+template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple, SequenceShredderType SequenceShredderImpl>
 requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
 class InputFormatterTask
 {
@@ -185,7 +185,7 @@ public:
         , schemaInfo(schema)
         , indexerMetaData(IndexerMetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        , sequenceShredder((HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
+        , sequenceShredder((HasSpanningTuple) ? std::make_unique<SequenceShredderImpl>(parserConfig.tupleDelimiter.size()) : nullptr)
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
@@ -297,7 +297,7 @@ private:
         inputFormatIndexer; /// unique_ptr, because InputFormatIndexer is abstract class
     SchemaInfo schemaInfo;
     IndexerMetaData indexerMetaData;
-    std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
+    std::unique_ptr<SequenceShredderImpl> sequenceShredder; /// unique_ptr, because mutex is not copiable
     std::vector<RawValueParser::ParseFunctionSignature> parseFunctions;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
@@ -367,7 +367,7 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<true>(
+        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<true>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
@@ -440,7 +440,7 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<false>(
+        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<false>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
