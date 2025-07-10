@@ -104,7 +104,7 @@ SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
     const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), std::make_shared<Schema>(schema)};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
-    const auto physicalSourceId = sourceDescriptor.physicalsourceid();
+    const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
     const auto& sourceType = "File"s;
     const auto workerIdInt = sourceDescriptor.workerid();
     const auto workerId = WorkerId{workerIdInt};
