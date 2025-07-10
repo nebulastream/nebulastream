@@ -70,6 +70,7 @@ size_t GeneratorSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, c
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - generatorStartTime).count();
         if (maxRuntime >= 0 && elapsedTime >= maxRuntime)
         {
+            std::cout << "Reached max runtime! Stopping Source" << std::endl;
             NES_INFO("Reached max runtime! Stopping Source");
             return 0;
         }
@@ -97,11 +98,13 @@ size_t GeneratorSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, c
         tuplesStream.read(tupleBuffer.getBuffer<char>(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
+        std::cout << "Wrote: " << writtenBytes << std::endl;
         NES_INFO("Wrote {} bytes", writtenBytes);
         return writtenBytes;
     }
     catch (const std::exception& e)
     {
+        std::cout <<"Failed to fille the TupleBuffer. Error:\n" << e.what() << std::endl;
         NES_ERROR("Failed to fill the TupleBuffer. Error: {}", e.what());
         throw e;
     }
