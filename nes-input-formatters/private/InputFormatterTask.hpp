@@ -106,7 +106,7 @@ void processTuple(
         parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
 
         /// Add the size of the current field to the running offset to get the offset of the next field
-        const auto sizeOfCurrentFieldInBytes = schemaInfo.getFieldSizesInBytes().at(fieldIndex);
+        const auto sizeOfCurrentFieldInBytes = schemaInfo.getFieldSizesInBytes()[fieldIndex];
         offsetOfCurrentFieldInBytes += sizeOfCurrentFieldInBytes;
     }
 }
