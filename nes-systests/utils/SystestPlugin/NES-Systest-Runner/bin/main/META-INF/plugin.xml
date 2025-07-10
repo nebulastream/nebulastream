@@ -1,0 +1,42 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>nebula.stream.NES-Systest-Runner</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>NES-Systest-Runner</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="nebulastream@dima.tu-berlin.de" url="https://nebula.stream/">NebulaStream</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    Plugin that adds an Action performing the systest command on '.test' files.<br>
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.xdebugger</depends>
+    <depends>com.intellij.modules.clion.ide</depends>
+    <depends>com.intellij.modules.cidr.ide</depends>
+    <depends>com.intellij.cidr.base</depends>
+    <depends>com.intellij.clion</depends>
+    <depends>com.intellij.modules.clion.cmake</depends>
+    <depends>com.intellij.modules.cmake</depends>
+    <depends>com.intellij.modules.cmake</depends>
+    <depends>com.intellij.modules.json</depends>
+    <depends>com.intellij.modules.clion</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable id="SysTestRunnerSettings" instance="nebula.stream.nessystestrunner.PluginSettingsConfigurable" displayName="NES-Systest-Runner" groupId="tools"/>
+        <applicationService serviceImplementation="nebula.stream.nessystestrunner.PluginSettings"/>
+        <codeInsight.lineMarkerProvider language="SysTestLanguage" implementationClass="nebula.stream.nessystestrunner.SysTestLineMarkerProvider"/>
+        <fileType name="System Test File" language="SysTestLanguage" implementationClass="nebula.stream.nessystestrunner.SysTestFileType" extensions="test;test_disabled;test.disabled"/>
+    </extensions>
+</idea-plugin>
