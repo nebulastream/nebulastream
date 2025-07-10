@@ -316,9 +316,11 @@ TEST_F(SmallFilesTest, ysbBenchmark)
         .testFileName = "YSB10K",
         .formatterType = "CSV",
         .hasSpanningTuples = true,
-        .numberOfIterations = 3,
+        .numberOfIterations = 5,
         .numberOfThreads = 16,
-        .sizeOfRawBuffers = static_cast<uint64_t>(std::pow(2, 16)), /// (on ThreadRipper) size of 256 bytes and 46 threads leads to ~50% spent in 'processSequenceNumber' (without range check!!)
+        /// (on ThreadRipper) size of 256 bytes and 46 threads leads to ~50% spent in 'processSequenceNumber' (without range check!!)
+        /// 16 threads and 1KB already clearly shows the sync overhead (~30%)
+        .sizeOfRawBuffers = static_cast<uint64_t>(std::pow(2, 15)),
         .sizeOfFormattedBuffers = 4096,
         .fieldDelimiter = ",",
         .validate = false});
