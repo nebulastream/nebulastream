@@ -24,7 +24,6 @@
 #include <utility>
 
 #include <InputFormatters/InputFormatIndexer.hpp>
-#include <SequenceShredderSingleLock.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,6 +32,7 @@
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterTask.hpp>
+#include <SequenceShredderSingleLock.hpp>
 
 namespace
 {
@@ -70,7 +70,10 @@ namespace NES::InputFormatters
 {
 
 CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t numberOfFieldsInSchema)
-    : config(std::move(config)), numberOfFieldsInSchema(numberOfFieldsInSchema), tupleDelimiter(this->config.tupleDelimiter.at(0)), fieldDelimiter(this->config.fieldDelimiter.at(0))
+    : config(std::move(config))
+    , numberOfFieldsInSchema(numberOfFieldsInSchema)
+    , tupleDelimiter(this->config.tupleDelimiter.at(0))
+    , fieldDelimiter(this->config.fieldDelimiter.at(0))
 {
 }
 
@@ -123,7 +126,19 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
 {
     auto inputFormatter
         = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true, SequenceShredderSingleLock>(std::move(inputFormatter));
+    if (arguments.inputFormatIndexerConfig.sequenceShredderImpl == "SequenceShredder")
+    {
+        return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true, SequenceShredder>(
+            std::move(inputFormatter));
+    }
+    if (arguments.inputFormatIndexerConfig.sequenceShredderImpl == "SequenceShredderSingleLock")
+    {
+        return arguments
+            .createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true, SequenceShredderSingleLock>(
+                std::move(inputFormatter));
+    }
+    throw UnknownSourceFormat(
+        "Can't assign sequence shredder implementation with string: {}", arguments.inputFormatIndexerConfig.sequenceShredderImpl);
 }
 
 }

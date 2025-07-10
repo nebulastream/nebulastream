@@ -152,6 +152,15 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
     }
+    if (const auto sequenceShredderImpl = parserConfig.find("sequenceShredderImpl"); sequenceShredderImpl != parserConfig.end())
+    {
+        validParserConfig.sequenceShredderImpl = sequenceShredderImpl->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: sequenceShredderImpl, using default: SequenceShredder");
+        validParserConfig.sequenceShredderImpl = "SequenceShredder";
+    }
     return validParserConfig;
 }
 
@@ -177,10 +186,10 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType, const std::string& fieldDelimiter)
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType, const std::string& fieldDelimiter, const std::string& sequenceShredderImpl)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", fieldDelimiter}};
+        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", fieldDelimiter}, {"sequenceShredderImpl", sequenceShredderImpl}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);

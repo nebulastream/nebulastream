@@ -58,6 +58,7 @@ struct TestConfig
     size_t sizeOfFormattedBuffers;
     std::string fieldDelimiter = "|";
     bool validate = true;
+    std::string sequenceShredderImpl = "SequenceShredder";
 };
 
 
@@ -78,6 +79,7 @@ struct convert<TestConfig>
         testConfig.sizeOfFormattedBuffers = node["sizeOfFormattedBuffers"].as<size_t>();
         testConfig.fieldDelimiter = node["fieldDelimiter"].as<std::string>();
         testConfig.validate = node["validate"].as<bool>();
+        testConfig.sequenceShredderImpl = node["sequenceShredderImpl"].as<std::string>();
         return true;
     }
 };
@@ -296,7 +298,7 @@ public:
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
                 = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType, testConfig.fieldDelimiter);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType, testConfig.fieldDelimiter, testConfig.sequenceShredderImpl);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
@@ -337,8 +339,6 @@ public:
 
     void runTestFromYamlConfig(const std::filesystem::path& configPath)
     {
-        // Todo: load yaml config into 'TestConfig'
-        // call runTest with config
         const auto testConfig = YAML::LoadFile(configPath.string()).as<TestConfig>();
         runTest(testConfig);
     }

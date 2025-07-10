@@ -44,6 +44,7 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    std::string sequenceShredderImpl;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };

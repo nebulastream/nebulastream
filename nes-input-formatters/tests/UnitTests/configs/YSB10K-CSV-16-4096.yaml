@@ -7,3 +7,4 @@ sizeOfRawBuffers: 4096
 sizeOfFormattedBuffers: 4096
 fieldDelimiter: ','
 validate: false
+sequenceShredderImpl: SequenceShredderSingleLock
