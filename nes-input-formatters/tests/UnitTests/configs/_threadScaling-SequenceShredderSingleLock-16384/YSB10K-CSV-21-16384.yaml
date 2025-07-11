@@ -1,0 +1,12 @@
+resultFileName:
+testFileName: YSB10K
+formatterType: CSV
+hasSpanningTuples: true
+numberOfIterations: 5
+numberOfThreads: 21
+sizeOfRawBuffers: 16384
+sizeOfFormattedBuffers: 4096
+fieldDelimiter: ','
+validate: false
+#sequenceShredderImpl: SequenceShredder
+sequenceShredderImpl: SequenceShredderSingleLock

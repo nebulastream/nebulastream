@@ -59,6 +59,7 @@ struct TestConfig
     std::string fieldDelimiter = "|";
     bool validate = true;
     std::string sequenceShredderImpl = "SequenceShredder";
+    std::string experimentName = "PLACEHOLDER";
 };
 
 
@@ -310,11 +311,13 @@ public:
     /// You can then query the table like any other table (e.g., SELECT * FROM sequenceShredderResults;)
     void writeToFileWithHeader(std::vector<double>& finalProcessingTimes, const TestConfig& testConfig)
     {
-        constexpr std::string_view header = "Dataset | Format | SequenceShredderImpl | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize "
-                                            "| MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime";
+        constexpr std::string_view header
+            = "Dataset | Format | SequenceShredderImpl | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize "
+              "| MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime";
 
-        const auto outputFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_RESULTS)
-            / fmt::format("{}-{}.csv", testConfig.testFileName, testConfig.formatterType);
+        // const auto outputFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_RESULTS)
+        //     / fmt::format("{}-{}.csv", testConfig.testFileName, testConfig.formatterType);
+        const auto outputFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_RESULTS) / fmt::format("{}.csv", testConfig.experimentName);
         fmt::println("Wrote results to:\n{}", outputFilePath.string());
 
         std::ranges::sort(finalProcessingTimes);
@@ -430,49 +433,77 @@ public:
     }
 
 
-    void runTestFromYamlConfig(const std::filesystem::path& configPath)
+    void runTestFromYamlConfig(const std::string_view experimentName, const std::filesystem::path& configPath)
     {
-        const auto testConfig = YAML::LoadFile(configPath.string()).as<TestConfig>();
+        auto testConfig = YAML::LoadFile(configPath.string()).as<TestConfig>();
+        testConfig.experimentName = experimentName;
         runTest(testConfig);
     }
 };
 
-std::vector<std::filesystem::path> collectYAMLTestConfigFiles()
+std::unordered_map<std::string, std::vector<std::filesystem::path>> collectYAMLTestConfigFiles()
 {
-    const auto configDir = std::filesystem::path(INPUT_FORMATTER_TEST_CONFIG) / "threadScaling";
+    const auto configDir = std::filesystem::path(INPUT_FORMATTER_TEST_CONFIG);
 
     // Check if directory exists
-    if (not std::filesystem::exists(configDir) or not std::filesystem::is_directory(configDir)) {
-        std::cerr << "Config directory does not exist: " << configDir;
+    if (not std::filesystem::exists(configDir) or not std::filesystem::is_directory(configDir))
+    {
+        std::cerr << "Config directory does not exist: " << configDir << std::endl;
+        return {};
     }
 
-    // Collect all yaml files and sort them for consistent test order
-    std::vector<std::filesystem::path> yamlTestConfigFiles;
-    for (const auto& entry : std::filesystem::directory_iterator(configDir)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
-            yamlTestConfigFiles.push_back(entry.path());
+    std::unordered_map<std::string, std::vector<std::filesystem::path>> yamlFilesByDirectory;
+
+    // Iterate through all entries in the config directory
+    for (const auto& entry : std::filesystem::directory_iterator(configDir))
+    {
+        // Skip if not a directory or if directory name starts with '*'
+        if (not entry.is_directory() || entry.path().filename().string().starts_with("_"))
+        {
+            continue;
+        }
+
+        const auto subdirName = entry.path().filename().string();
+        std::vector<std::filesystem::path> yamlFiles;
+
+        // Collect all YAML files in this subdirectory
+        for (const auto& fileEntry : std::filesystem::directory_iterator(entry.path()))
+        {
+            if (fileEntry.is_regular_file() && fileEntry.path().extension() == ".yaml")
+            {
+                yamlFiles.push_back(fileEntry.path());
+            }
+        }
+
+        // Sort files for deterministic test execution
+        if (not yamlFiles.empty())
+        {
+            std::ranges::sort(yamlFiles);
+            yamlFilesByDirectory[subdirName] = std::move(yamlFiles);
         }
     }
 
-    if (yamlTestConfigFiles.empty())
+    if (yamlFilesByDirectory.empty())
     {
-        std::cerr << fmt::format("No YAML test config files found in directory: {}", INPUT_FORMATTER_TEST_CONFIG) << std::endl;
-        return yamlTestConfigFiles;
+        std::cerr << fmt::format("No YAML test config files found in subdirectories of: {}", INPUT_FORMATTER_TEST_CONFIG) << std::endl;
     }
 
-    // Sort files for deterministic test execution
-    std::ranges::sort(yamlTestConfigFiles);
-    return yamlTestConfigFiles;
+    return yamlFilesByDirectory;
 }
 
 TEST_F(SmallFilesTest, ysbBenchmark)
 {
     const auto yamlTestConfigFiles = collectYAMLTestConfigFiles();
-    std::ranges::for_each(yamlTestConfigFiles, [&](const auto& yamlTestConfig)
+    for (const auto& [experiment, configFileList] : yamlTestConfigFiles)
     {
-        std::cout << "Running test for: " << yamlTestConfig.filename() << std::endl;
-        runTestFromYamlConfig(yamlTestConfig);
-    });
+        std::ranges::for_each(
+            configFileList,
+            [&](const auto& yamlTestConfig)
+            {
+                std::cout << "Running test for: " << yamlTestConfig.filename() << std::endl;
+                runTestFromYamlConfig(experiment, yamlTestConfig);
+            });
+    }
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
