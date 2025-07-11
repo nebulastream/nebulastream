@@ -208,7 +208,7 @@ public:
     void startProcessing();
 
     /// Wait for all threads to complete all WorkTasks in the MPMC queue.
-    void waitForCompletion();
+    double waitForCompletion();
 
 private:
     folly::MPMCQueue<WorkTask> threadTasks;

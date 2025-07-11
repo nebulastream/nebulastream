@@ -176,13 +176,14 @@ void MultiThreadedTestTaskQueue::startProcessing()
     }
 }
 
-void MultiThreadedTestTaskQueue::waitForCompletion()
+double MultiThreadedTestTaskQueue::waitForCompletion()
 {
     completionLatch.wait();
     const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
     eps->stop(*pipelineExecutionContext);
     timer.pause();
     fmt::println("Final time to process all tasks: {}ms", timer.getPrintTime());
+    return timer.getPrintTime();
 }
 
 void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
