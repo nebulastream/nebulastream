@@ -29,7 +29,7 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
 
     model.functionName = grpcModel.functionname();
     model.dims = grpcModel.dims();
-    model.shape.assign(grpcModel.shape().begin(), grpcModel.shape().end());
+    model.inputShape.assign(grpcModel.shape().begin(), grpcModel.shape().end());
 
     model.outputDims = grpcModel.outputdims();
     model.outputShape.assign(grpcModel.outputshape().begin(), grpcModel.outputshape().end());
@@ -58,7 +58,7 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableMode
     auto modelBytes = model.getByteCode() | std::views::transform([](const std::byte& byte) { return static_cast<const char>(byte); });
     target.mutable_bytecode()->assign(modelBytes.begin(), modelBytes.end());
     target.set_dims(model.dims);
-    for (int shape : model.shape)
+    for (int shape : model.inputShape)
     {
         target.add_shape(shape);
     }
