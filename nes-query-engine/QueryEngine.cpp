@@ -335,14 +335,14 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-        const size_t internalTaskQueueSize,
+        const size_t,
         const size_t admissionQueueSize)
         : listener(std::move(listener))
         , statistic(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
         // , taskQueueHead(taskQueueSize * 0.1)
-        , taskQueueHead(internalTaskQueueSize * 0.1)
-        , taskQueueTail(internalTaskQueueSize * 0.9)
+        , taskQueueHead(50)
+        , taskQueueTail(5000000)
         , admissionQueue(admissionQueueSize)
     {
     }

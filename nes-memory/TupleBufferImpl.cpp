@@ -258,9 +258,10 @@ BufferControlBlock* BufferControlBlock::dataRetain()
 }
 bool BufferControlBlock::dataRelease()
 {
-    if (const uint32_t prevRefCnt = dataCounter.fetch_sub(1); prevRefCnt == 1)
+    std::shared_lock lock{segmentMutex};
+    if (const int32_t prevRefCnt = dataCounter.fetch_sub(1); prevRefCnt == 1)
     {
-        std::unique_lock childLock{segmentMutex};
+        // std::unique_lock childLock{segmentMutex};
         numberOfTuples = 0;
         const auto bufferRecycler = owningBufferRecycler.load();
         const auto emptySegment = DataSegment<DataLocation>{};

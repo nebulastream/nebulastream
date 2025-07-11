@@ -14,6 +14,7 @@
 #include <Runtime/BufferManager.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -50,6 +51,10 @@
 
 namespace NES::Memory
 {
+
+static inline std::atomic<size_t> spilled = 0;
+static inline std::atomic<size_t> repinned = 0;
+
 
 std::shared_ptr<BufferManager> BufferManager::create(
     uint32_t bufferSize,
@@ -302,6 +307,7 @@ void BufferManager::destroy()
             const std::filesystem::path filePath = spillDirectory / std::to_string(file.second.getId());
             std::remove(filePath.c_str());
         }
+        NES_INFO("Spilled {}, and repinned {} buffers", spilled.load(), repinned.load());
     }
     else
     {
@@ -312,7 +318,7 @@ void BufferManager::destroy()
 void BufferManager::flushNewBuffers() noexcept
 {
     auto toFlush = newBuffers.size();
-    // NES_DEBUG("Flushing {} new buffers to allBuffers", toFlush);
+    NES_DEBUG("Flushing {} new buffers to allBuffers", toFlush);
     allBuffers.reserve(allBuffers.size() + toFlush);
     detail::BufferControlBlock* bcb;
     while (toFlush-- > 0 && newBuffers.read(bcb))
@@ -323,11 +329,11 @@ void BufferManager::flushNewBuffers() noexcept
 
 void BufferManager::cleanupAllBuffers(size_t maxIter)
 {
-    //Instead of implementing the logic for updating indices while erasing while iterating over an intervall, I just use the
+    //Instead of implementing the logic for updating indices while erasing while iterating over an interval, I just use the
     //remove-erase idiom that's common in c++ two times.
-    //This makes this a "wrapping" iteration, that goes back to the beginning once the end has been reached but we want to process more entries.
+    //This makes this a "wrapping" iteration that goes back to the beginning once the end has been reached, but we want to process more entries.
     //First interval: current position up until the maximum number of BCBs to be checked or the end, whichever comes first
-    //Second intervall if first intervall goes to end: Beginning till maxiter BCBs have been checked, or all BCBs have been checked.
+    //Second interval if the first interval goes to end: Beginning till maxiter BCBs have been checked, or all BCBs have been checked.
     //Then, we can use the normal remove-erase idiom to remove elements from the container
 
     auto begin = allBuffers.begin() + clockAt;
@@ -359,10 +365,14 @@ void BufferManager::cleanupAllBuffers(size_t maxIter)
 
     auto check = [&](detail::BufferControlBlock* bcb)
     {
-        if (bcb->getDataReferenceCount() == 0)
+        if (bcb->segmentMutex.try_lock())
         {
-            delete bcb;
-            return true;
+            if (bcb->getDataReferenceCount() == 0)
+            {
+                delete bcb;
+                return true;
+            }
+            bcb->segmentMutex.unlock();
         }
         return false;
     };
@@ -439,8 +449,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
             auto memorySegmentsOrError = co_await *awaitMemorySegments;
             if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
             {
-                NES_DEBUG(
-                    "Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
+                NES_DEBUG("Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
                 // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
                 // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
                 // co_await *aepSwitchBackAwaiter;
@@ -538,6 +547,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
     floating.controlBlock = nullptr;
     floating.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
     result.controlBlock->dataRelease();
+    repinned.fetch_add(1);
     co_return result;
 }
 
@@ -759,7 +769,7 @@ int64_t BufferManager::secondChancePass() noexcept
             //std::remove would swap them towards the end, but because we do not have a hard end bound swapping to the clock start seems more reasonable
             //This does mess up the order of the buffers a bit, but the effect on second chance should be small, because we are only swapping
             //with positions that we have seen at least once.
-            std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
+            // std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
         }
         else if (
             currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
@@ -851,15 +861,15 @@ int64_t BufferManager::secondChancePass() noexcept
     }
 
     const int uringSubmitted = io_uring_submit(&uringWriteRing);
-    // NES_DEBUG(
-    //     "Did second chance pass to try spill buffers, send requests for {} buffers, and deleted {} empty BCB. "
-    //     "Clock was at {}, is now at {}, iterated over {} BCBs, while allBuffers size was {}",
-    //     uringSubmitted,
-    //     deleted,
-    //     clockStart,
-    //     clockAt,
-    //     i,
-    //     allBuffers.size());
+    NES_DEBUG(
+        "Did second chance pass to try spill buffers, send requests for {} buffers, and deleted {} empty BCB. "
+        "Clock was at {}, is now at {}, iterated over {} BCBs, while allBuffers size was {}",
+        uringSubmitted,
+        deleted,
+        clockStart,
+        clockAt,
+        i,
+        allBuffers.size());
 
     return uringSubmitted;
 }
@@ -971,6 +981,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
         }
         // NES_DEBUG("Flushed out {} segment awaiters for which there weren't enough requests in flight anymore", flushed);
     }
+    spilled.fetch_add(counter);
     return counter;
 }
 
@@ -1102,17 +1113,22 @@ TupleBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<detai
     auto pin = controlBlock->getCounter<true>();
     {
         const auto savedNewBuffer = newBuffers.writeIfNotFull(controlBlock);
-        INVARIANT(savedNewBuffer, "Could not save newly created buffer, new buffers size is {}, buffers to check is {}", newBuffers.size(), buffersToCheck.load());
+        INVARIANT(
+            savedNewBuffer,
+            "Could not save newly created buffer, new buffers size is {}, buffers to check is {}",
+            newBuffers.size(),
+            buffersToCheck.load());
         size_t checks = buffersToCheck.fetch_add(checksAddedPerNewBuffer);
+        NES_DEBUG("Checks at {}", checks);
         //If checksAddedPerBuffer > 1, then 2nd chance might make checks == bufferChecksThreshold miss.
         //But, we only want one thread at maximum trying to flush and cleanup
         if (checks >= bufferChecksThreshold && checks < bufferChecksThreshold + checksAddedPerNewBuffer)
         {
+            buffersToCheck.fetch_sub(bufferChecksThreshold);
             std::unique_lock lock{allBuffersMutex};
             //TODO verify that no underflow happens
             flushNewBuffers();
             cleanupAllBuffers(bufferChecksThreshold);
-            buffersToCheck.fetch_sub(bufferChecksThreshold);
         }
     }
     TupleBuffer newBuffer{controlBlock, segment, detail::ChildOrMainDataKey::MAIN()};
