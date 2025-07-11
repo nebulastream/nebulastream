@@ -15,26 +15,96 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Model.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
+
 class IREEAdapter;
-class IREEInferenceOperatorHandler : public OperatorHandler
+class Batch;
+
+class IREEInferenceOperatorHandler final : public WindowBasedOperatorHandler
 {
 public:
-    IREEInferenceOperatorHandler(Nebuli::Inference::Model model);
+    IREEInferenceOperatorHandler(
+        const std::vector<OriginId>& inputOrigins,
+        OriginId outputOriginId,
+        const uint64_t batchSize,
+        Nebuli::Inference::Model model);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
+    [[nodiscard]] Batch* getOrCreateNewBatch() const;
+    void emitBatchesToProbe(Batch& batch, const BufferMetaData& bufferMetadata, PipelineExecutionContext* pipelineCtx) const;
+
+    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+    void triggerSlices(
+        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& ,
+        PipelineExecutionContext*) override { /*noop*/ };
+
+    uint64_t batchSize;
+    mutable uint64_t tuplesSeen = 0;
+    mutable std::vector<std::shared_ptr<Batch>> batches;
 
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
+};
+
+class Batch
+{
+public:
+    Batch(uint64_t batchId, uint64_t numberOfWorkerThreads) : batchId(batchId)
+    {
+        for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+        {
+            pagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        }
+    }
+
+    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId) const
+    {
+        const auto pos = workerThreadId % pagedVectors.size();
+        return pagedVectors[pos].get();
+    }
+
+    void combinePagedVectors()
+    {
+        const std::scoped_lock lock(combinePagedVectorsMutex);
+        if (pagedVectors.size() > 1)
+        {
+            for (uint64_t i = 1; i < pagedVectors.size(); ++i)
+            {
+                pagedVectors[0]->moveAllPages(*pagedVectors[i]);
+            }
+            pagedVectors.erase(pagedVectors.begin() + 1, pagedVectors.end());
+        }
+    }
+
+    uint64_t getNumberOfTuples() const
+    {
+        return std::accumulate(
+                pagedVectors.begin(),
+                pagedVectors.end(),
+                0,
+                [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+    }
+
+    uint64_t batchId;
+private:
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> pagedVectors;
+    std::mutex combinePagedVectorsMutex;
+};
+
+struct EmittedBatch
+{
+    uint64_t batchId;
 };
 
 }

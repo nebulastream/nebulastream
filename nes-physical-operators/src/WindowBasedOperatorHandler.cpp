@@ -42,6 +42,15 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 {
 }
 
+WindowBasedOperatorHandler::WindowBasedOperatorHandler(
+    const std::vector<OriginId>& inputOrigins,
+    const OriginId outputOriginId)
+    : numberOfWorkerThreads(0)
+    , outputOriginId(outputOriginId)
+    , inputOrigins(inputOrigins)
+{
+}
+
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;

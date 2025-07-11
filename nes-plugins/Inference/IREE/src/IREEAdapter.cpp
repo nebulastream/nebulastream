@@ -41,15 +41,22 @@ void IREEAdapter::initializeModel(Nebuli::Inference::Model& model)
     this->runtimeWrapper = IREERuntimeWrapper();
     runtimeWrapper.setup(asIREESpan(model.getByteCode()));
 
-    runtimeWrapper.setInputShape(model.getInputShape());
+    // runtimeWrapper.setInputShape(model.getInputShape());
+    runtimeWrapper.setInputShape({4, 4});
     runtimeWrapper.setNDim(model.getNDim());
     this->functionName = model.getFunctionName();
 
-    this->inputData = std::make_unique<std::byte[]>(model.inputSize());
-    this->inputSize = model.inputSize();
+    // this->inputData = std::make_unique<std::byte[]>(model.inputSize());
+    // this->inputSize = model.inputSize();
+    //
+    // this->outputData = std::make_unique<std::byte[]>(model.outputSize());
+    // this->outputSize = model.outputSize();
 
-    this->outputData = std::make_unique<std::byte[]>(model.outputSize());
-    this->outputSize = model.outputSize();
+    this->inputData = std::make_unique<std::byte[]>(4*4*4);
+    this->inputSize = 4*4*4;
+
+    this->outputData = std::make_unique<std::byte[]>(4*4*4);
+    this->outputSize = 4*4*4;
 }
 
 void IREEAdapter::infer()

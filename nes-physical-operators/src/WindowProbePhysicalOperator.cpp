@@ -74,6 +74,11 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
+WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId)
+    : operatorHandlerId(operatorHandlerId)
+{
+}
+
 void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     /// Giving child operators the change to setup
