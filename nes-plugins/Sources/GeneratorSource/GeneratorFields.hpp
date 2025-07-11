@@ -20,7 +20,10 @@
 #include <ostream>
 #include <random>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
+
+#include <DataTypes/DataType.hpp>
 
 namespace NES::Sources::GeneratorFields
 {
@@ -94,5 +97,14 @@ static const std::array<FieldValidator, 2> Validators
     = {{{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
         {.identifier = NORMAL_DISTRIBUTION_IDENTIFIER, .validator = NormalDistributionField::validate}}};
 
-
+/// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
+/// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
+static const std::unordered_multimap<std::string_view, DataType::Type> FieldNameToAcceptedTypes
+    = {{SEQUENCE_IDENTIFIER, DataType::Type::UINT64},
+       {SEQUENCE_IDENTIFIER, DataType::Type::INT64},
+       {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT64},
+       {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT32},
+       {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT64},
+       {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT32}};
 }
+/// NOLINTEND(cert-err58-cpp)
