@@ -17,27 +17,20 @@
 #include <cstddef>
 #include <Functions/PhysicalFunction.hpp>
 #include <PhysicalOperator.hpp>
-#include <Windowing/WindowMetaData.hpp>
-#include <WindowProbePhysicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
 namespace NES
 {
 
-class IREEInferenceOperator : public WindowProbePhysicalOperator
+class IREEInferenceOperator : public PhysicalOperatorConcept
 {
 public:
     IREEInferenceOperator(
-        const OperatorHandlerId operatorHandlerId,
-        std::vector<PhysicalFunction> inputs,
-        std::vector<std::string> outputFieldNames,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+        const OperatorHandlerId inferModelHandlerIndex, std::vector<PhysicalFunction> inputs, std::vector<std::string> outputFieldNames)
+        : inferModelHandlerIndex(inferModelHandlerIndex), inputs(std::move(inputs)), outputFieldNames(std::move(outputFieldNames)) { }
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-    [[nodiscard]] Record createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const;
+    void execute(ExecutionContext& ctx, Record& record) const override;
+    void setup(ExecutionContext& executionCtx) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
@@ -48,17 +41,10 @@ public:
     size_t inputSize = 0;
 
 private:
+    const OperatorHandlerId inferModelHandlerIndex;
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-
-protected:
-    void performInference(
-        const Interface::PagedVectorRef& pagedVectorRef,
-        Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
-        ExecutionContext& executionCtx,
-        nautilus::val<OperatorHandler*> operatorHandler) const;
 };
 
 }

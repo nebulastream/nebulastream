@@ -17,10 +17,10 @@
 
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <ExecutionContext.hpp>
-#include <WindowBasedOperatorHandler.hpp>
-#include <IREEInferenceOperatorHandler.hpp>
 #include <BatchingPhysicalOperator.hpp>
+#include <ExecutionContext.hpp>
+#include <IREEBatchInferenceOperatorHandler.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -37,7 +37,7 @@ void emitBatchesProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
-    auto* opHandler = dynamic_cast<IREEInferenceOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
     for (auto batchIt = opHandler->batches.begin(); batchIt != opHandler->batches.end(); ++batchIt)
     {
@@ -63,7 +63,7 @@ void BatchingPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         +[](OperatorHandler* ptrOpHandler)
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-            const auto* opHandler = dynamic_cast<IREEInferenceOperatorHandler*>(ptrOpHandler);
+            const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
             return opHandler->getOrCreateNewBatch();
         }, operatorHandler);
 

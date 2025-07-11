@@ -10,7 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(InferenceModel RewriteRule nes-query-optimizer iree_inference_plugin_library LowerToPhysicalIreeInference.cpp
+add_plugin_as_library(InferenceModel RewriteRule nes-query-optimizer iree_inference_plugin_library
+        LowerToPhysicalIreeInference.cpp
+        IREEBatchInferenceOperator.cpp
+        IREEBatchInferenceOperatorHandler.cpp
         IREEInferenceOperator.cpp
         IREEInferenceOperatorHandler.cpp
         IREEAdapter.cpp
