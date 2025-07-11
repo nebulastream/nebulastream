@@ -1,3 +1,5 @@
-Dataset | Format | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize | MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime
-YSB10K | CSV | 3 | 16 | 4096 | 4096 | 585.31 | 585.6899999999999 | 583.595 | 588.165
-YSB10K | CSV | 3 | 24 | 32768 | 4096 | 374.8 | 374.90433333333334 | 374.598 | 375.315
+Dataset | Format | SequenceShredderImpl | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize | MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime
+YSB10K | CSV | SequenceShredderSingleLock | 3 | 16 | 4096 | 4096 | 657.137 | 658.4776666666667 | 656.755 | 661.541
+YSB10K | CSV | SequenceShredderSingleLock | 3 | 24 | 32768 | 4096 | 421.3 | 421.09799999999996 | 420.567 | 421.427
+YSB10K | CSV | SequenceShredderSingleLock | 3 | 16 | 4096 | 4096 | 590.311 | 591.112 | 589.374 | 593.651
+YSB10K | CSV | SequenceShredderSingleLock | 3 | 24 | 32768 | 4096 | 377.713 | 377.586 | 375.622 | 379.423

@@ -295,6 +295,7 @@ public:
         CREATE TABLE sequenceShredderResults (
             Dataset VARCHAR,
             Format VARCHAR,
+            SequenceShredderImpl VARCHAR,
             NumberOfIterations INT64,
             NumberOfThreads INT64,
             RawBufferSize INT64,
@@ -309,7 +310,7 @@ public:
     /// You can then query the table like any other table (e.g., SELECT * FROM sequenceShredderResults;)
     void writeToFileWithHeader(std::vector<double>& finalProcessingTimes, const TestConfig& testConfig)
     {
-        constexpr std::string_view header = "Dataset | Format | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize "
+        constexpr std::string_view header = "Dataset | Format | SequenceShredderImpl | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize "
                                             "| MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime";
 
         const auto outputFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_RESULTS)
@@ -323,9 +324,10 @@ public:
         const auto minProcessingTime = finalProcessingTimes.front();
         const auto maxProcessingTime = finalProcessingTimes.back();
         const auto resultLine = fmt::format(
-            "{} | {} | {} | {} | {} | {} | {} | {} | {} | {}",
+            "{} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {}",
             testConfig.testFileName,
             testConfig.formatterType,
+            testConfig.sequenceShredderImpl,
             testConfig.numberOfIterations,
             testConfig.numberOfThreads,
             testConfig.sizeOfRawBuffers,
@@ -335,7 +337,7 @@ public:
             minProcessingTime,
             maxProcessingTime);
 
-        bool hasContent = [&outputFilePath]()
+        const bool hasContent = [&outputFilePath]()
         {
             if (std::filesystem::exists(outputFilePath))
             {
@@ -353,7 +355,7 @@ public:
         std::ofstream file(outputFilePath, std::ios::app);
         if (!file.is_open())
         {
-            throw std::runtime_error("Could not open file: " + outputFilePath.string());
+            throw InvalidConfigParameter("Could not open file: {}", outputFilePath.string());
         }
 
         // Write header if file doesn't exist or has no content
