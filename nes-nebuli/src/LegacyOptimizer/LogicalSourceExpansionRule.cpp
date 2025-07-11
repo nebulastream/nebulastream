@@ -38,19 +38,19 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
         const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp.getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
-            throw UnknownSource("{}", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("{}", sourceOp.getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
         const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
 
         if (not entriesOpt.has_value())
         {
-            throw UnknownSource("Source \"{}\" was removed concurrently", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp.getLogicalSourceName());
         }
         const auto& entries = entriesOpt.value();
         if (entries.empty())
         {
-            throw UnknownSource("No physical sources present for logical source \"{}\"", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp.getLogicalSourceName());
         }
 
         auto sourceDescriptorOperators = entries | std::ranges::to<std::vector>();

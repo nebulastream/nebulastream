@@ -13,33 +13,30 @@
 */
 
 #pragma once
-
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Pointers.hpp>
+
 #include <experimental/propagate_const>
-#include <GRPCClient.hpp>
 
-namespace NES::CLI
+namespace NES
 {
 
-class Nebuli
+template <typename T>
+using SharedPtr = std::experimental::propagate_const<std::shared_ptr<T>>;
+
+template <typename T>
+using UniquePtr = std::experimental::propagate_const<std::unique_ptr<T>>;
+
+template <typename T>
+std::shared_ptr<const T> copyPtr(const SharedPtr<T>& ptr)
 {
-    SharedPtr<GRPCClient> grpcClient;
+    return std::shared_ptr<const T>{std::experimental::get_underlying(ptr)};
+}
 
-public:
-    explicit Nebuli(const std::shared_ptr<GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
+template <typename T>
+std::shared_ptr<T> copyPtr(SharedPtr<T>& ptr)
+{
+    return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
+}
 
-    QueryId registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId queryId);
-    void stopQuery(QueryId queryId);
-    void unregisterQuery(QueryId queryId);
-};
 }

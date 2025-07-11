@@ -103,7 +103,7 @@ std::optional<std::filesystem::path> validateYamlConfigPath(const std::string_vi
     return (ext == ".yaml" or ext == ".yml") ? std::optional{path} : std::nullopt;
 }
 
-NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::string>& seenLogicalSourceNames, const std::string& line)
+NES::SystestAttachSource parseAttachSource(const std::string& line)
 {
     const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
     /// Attach SourceType (SourceConfig) IFormatter (IFormatterConfig) LogicalSourceName DataIngestionType
@@ -128,14 +128,8 @@ NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::stri
     /// Validate and parse tokens
     size_t nextTokenIdx = 1;
     NES::SystestAttachSource attachSource{};
-    if (not NES::Sources::SourceProvider::contains(attachSourceTokens.at(nextTokenIdx)))
-    {
-        throw NES::SLTUnexpectedToken(
-            "Expected second token of attach source to be valid source type, but was: {}", attachSourceTokens.at(1));
-    }
 
     attachSource.sourceType = std::string(attachSourceTokens.at(nextTokenIdx++));
-
     attachSource.sourceConfigurationPath
         = [](const std::vector<std::string>& attachSourceTokens, const std::string_view sourceType, size_t& nextTokenIdx)
     {
@@ -148,14 +142,7 @@ NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::stri
         return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
     }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
 
-    if (not NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx)))
-    {
-        throw NES::SLTUnexpectedToken(
-            "Expected token after source config to be a valid input formatter, but was: {}", attachSourceTokens.at(nextTokenIdx));
-    }
-
     attachSource.inputFormatterType = attachSourceTokens.at(nextTokenIdx++);
-
     attachSource.inputFormatterConfigurationPath
         = [](const std::vector<std::string>& attachSourceTokens, const std::string_view inputFormatterType, size_t& nextTokenIdx)
     {
@@ -169,12 +156,6 @@ NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::stri
             / fmt::format("inputFormatters/{}_default.yaml", NES::Util::toLowerCase(inputFormatterType));
     }(attachSourceTokens, attachSource.inputFormatterType, nextTokenIdx);
 
-    if (not seenLogicalSourceNames.contains(attachSourceTokens.at(nextTokenIdx)))
-    {
-        throw NES::SLTUnexpectedToken(
-            "Expected second to last token of attach source to be an existing logical source name, but was: {}",
-            attachSourceTokens.at(nextTokenIdx));
-    }
     attachSource.logicalSourceName = attachSourceTokens.at(nextTokenIdx++);
 
     if (not magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.at(nextTokenIdx))))
@@ -337,11 +318,10 @@ void SystestParser::parse()
                 if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
-                    queryIdAssigner.skipQueryResultOfQueryWithExpectedError();
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
-                        onErrorExpectationCallback(std::move(expectation));
+                        onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
                     }
                 }
                 else
@@ -485,7 +465,26 @@ SystestParser::SystestSink SystestParser::expectSink() const
         throw SLTUnexpectedToken("failed to read sink name in {}", line);
     }
 
+    std::string sinkTypeTokenOrFieldType;
     std::vector<std::string> arguments;
+    if (!(lineAsStream >> sinkTypeTokenOrFieldType))
+    {
+        throw SLTUnexpectedToken("failed to read sink name or type token in {}", line);
+    }
+    if (sinkTypeTokenOrFieldType == "TYPE")
+    {
+        /// Read the sink type and check if successful
+        if (!(lineAsStream >> sink.type))
+        {
+            throw SLTUnexpectedToken("failed to read sink type in {}", line);
+        }
+    }
+    else
+    {
+        sink.type = "File";
+        arguments.push_back(sinkTypeTokenOrFieldType);
+    }
+
     std::string argument;
     while (lineAsStream >> argument)
     {
@@ -526,7 +525,6 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
         /// After the source definition line we expect schema fields
         source.fields = parseSchemaFields(arguments);
-        seenLogicalSourceNames.emplace(source.name);
 
         const auto attachSource = [&]()
         {
@@ -581,7 +579,6 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
     /// After the source definition line we expect schema fields
     source.fields = parseSchemaFields(arguments);
-    seenLogicalSourceNames.emplace(source.name);
 
     return std::make_pair(source, std::nullopt);
 }
@@ -592,7 +589,7 @@ SystestAttachSource SystestParser::expectAttachSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
-    switch (auto attachSource = validateAttachSource(seenLogicalSourceNames, lines[currentLine]); attachSource.testDataIngestionType)
+    switch (auto attachSource = parseAttachSource(lines[currentLine]); attachSource.testDataIngestionType)
     {
         case TestDataIngestionType::INLINE: {
             attachSource.tuples = {expectTuples(true)};

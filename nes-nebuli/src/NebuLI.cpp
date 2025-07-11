@@ -42,22 +42,6 @@
 namespace NES::CLI
 {
 
-LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
-{
-    auto newPlan = LogicalPlan{plan};
-    const auto sourceInference = NES::LegacyOptimizer::SourceInferencePhase{sourceCatalog};
-    const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule(sourceCatalog);
-    constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
-    constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
-
-    sourceInference.apply(newPlan);
-    logicalSourceExpansionRule.apply(newPlan);
-    typeInference.apply(newPlan);
-
-    originIdInferencePhase.apply(newPlan);
-    typeInference.apply(newPlan);
-    return newPlan;
-}
 QueryId Nebuli::registerQuery(const LogicalPlan& plan)
 {
     return QueryId{grpcClient->registerQuery(plan)};
