@@ -262,17 +262,12 @@ watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE 
 /// Adding Threshold Windows
 windowSpec:
     timeWindow #timeBasedWindow
-    | countWindow #countBasedWindow
     | conditionWindow #thresholdBasedWindow
     ;
 
 timeWindow
     : TUMBLING '(' (timestampParameter ',')?  sizeParameter ')'                       #tumblingWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
-    ;
-
-countWindow:
-    TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
 
 conditionWindow

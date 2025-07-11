@@ -527,6 +527,8 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         auto& inputLine = lines[currentLine];
         _ = moveToNextToken();
         auto& outputLine = lines[currentLine];
+        _ = moveToNextToken();
+        auto& batchSizeLine = lines[currentLine];
 
         std::istringstream stream(modelNameLine);
         std::string discard;
@@ -538,7 +540,6 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         {
             throw SLTUnexpectedToken("failed to read model name in {}", modelNameLine);
         }
-
         if (!(stream >> model.path))
         {
             throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
@@ -555,13 +556,18 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         {
             model.outputs.addField(name, type);
         }
+
+        auto batchSize = NES::Util::splitWithStringDelimiter<std::string>(batchSizeLine, " ");
+        model.batchSize = static_cast<size_t>(std::stoull(batchSize[1]));
+
         return model;
     }
     catch (Exception& e)
     {
         auto modelParserSchema = "MODEL <model_name> <model_path>"
                                  "<type-0> ... <type-N>"
-                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
+                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"
+                                 "BATCH_SIZE <batch_size>"sv;
         e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
         throw;
     }

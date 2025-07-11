@@ -15,9 +15,7 @@
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/Windows/BatchingLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <WindowTypes/Types/CountBasedWindow.hpp>
 #include <InferModelLogicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include "../include/IREEInferenceOperator.hpp"
@@ -35,17 +33,12 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
         auto outputOriginId = inferModelOperator.getOutputOriginIds()[0];
         const auto pageSize = conf.pageSize.getValue();
 
-        auto countBasedWindow = std::make_shared<NES::Windowing::CountBasedWindow>(4);
-        auto batching = NES::BatchingLogicalOperator(countBasedWindow);
-        auto windowType = batching.getWindowType();
-
         auto nested = logicalOperator.getInputOriginIds();
         auto flatView = nested | std::views::join;
         const std::vector inputOriginIds(flatView.begin(), flatView.end());
 
         const auto& model = inferModelOperator.getModel();
         auto handlerId = NES::getNextOperatorHandlerId();
-
 
         auto inputSchema = logicalOperator.getInputSchemas().at(0);
         auto memoryProvider = NES::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
@@ -60,7 +53,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 
         auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
 
-        auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(inputOriginIds, outputOriginId, countBasedWindow->getSize(), model);
+        auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
 
         if (inferModelOperator.getInputFields().size() == 1
             && inferModelOperator.getInputFields().at(0).getDataType().type != NES::DataType::Type::VARSIZED)
