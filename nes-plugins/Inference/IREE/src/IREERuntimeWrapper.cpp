@@ -85,7 +85,6 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
         device,
         deviceAllocator,
         // Shape rank and dimensions:
-        // this->inputShapeSize, inputBufferShape,
         this->nDim,
         this->inputShape.data(),
         // Element type:

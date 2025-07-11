@@ -59,8 +59,8 @@ public:
 
 private:
     std::unique_ptr<std::byte[]> inputData{};
-    size_t inputSize;
     std::unique_ptr<std::byte[]> outputData{};
+    size_t inputSize;
     size_t outputSize;
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;

@@ -42,7 +42,7 @@ class Model
     };
 
     RefCountedByteBuffer byteCode;
-    std::vector<size_t> shape;
+    std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
     std::string functionName;
     size_t dims = 0;
@@ -61,7 +61,7 @@ public:
 
     bool operator==(const Model&) const = default;
 
-    const std::vector<size_t>& getInputShape() { return shape; }
+    const std::vector<size_t>& getInputShape() { return inputShape; }
     const std::vector<size_t>& getOutputShape() { return outputShape; }
 
     size_t getNDim() { return dims; }
