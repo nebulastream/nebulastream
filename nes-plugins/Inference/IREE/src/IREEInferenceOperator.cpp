@@ -21,8 +21,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <nautilus/function.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+
 #include <ExecutionContext.hpp>
 
 #include "IREEAdapter.hpp"
@@ -76,135 +75,67 @@ nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
     return lhs < rhs ? lhs : rhs;
 }
 
-IREEInferenceOperator::IREEInferenceOperator(
-    const OperatorHandlerId operatorHandlerId,
-    std::vector<PhysicalFunction> inputs,
-    std::vector<std::string> outputFieldNames,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : WindowProbePhysicalOperator(operatorHandlerId)
-    , inputs(std::move(inputs))
-    , outputFieldNames(std::move(outputFieldNames))
-    , memoryProvider(std::move(memoryProvider))
+void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const
 {
-}
+    auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
-void IREEInferenceOperator::performInference(
-    const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
-    ExecutionContext& executionCtx,
-    nautilus::val<OperatorHandler*> operatorHandler) const
-{
-    const auto fields = memoryProvider.getMemoryLayout()->getSchema().getFieldNames();
-
-    nautilus::val<int> rowIdx(0);
-    for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
+    if (!this->isVarSizedInput)
     {
-        auto record = createRecord(*it, fields);
-
-        if (!this->isVarSizedInput)
+        for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
         {
-            for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
-            {
-                nautilus::invoke(
-                    addValueToModel<float>,
-                    rowIdx,
-                    inputs.at(i).execute(record, executionCtx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
-                    operatorHandler,
-                    executionCtx.workerThreadId);
-                ++rowIdx;
-            }
-        }
-        else
-        {
-            VarVal value = inputs.at(0).execute(record, executionCtx.pipelineMemoryProvider.arena);
-            auto varSizedValue = value.cast<VariableSizedData>();
             nautilus::invoke(
-                copyVarSizedToModel,
-                varSizedValue.getContent(),
-                min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
-                operatorHandler,
-                executionCtx.workerThreadId);
-            ++rowIdx;
+                addValueToModel<float>,
+                nautilus::val<int>(i),
+                inputs.at(i).execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
+                inferModelHandler,
+                ctx.workerThreadId);
         }
     }
-
-    nautilus::invoke(applyModel, operatorHandler, executionCtx.workerThreadId);
-
-    rowIdx = nautilus::val<int>(0);
-    for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
+    else
     {
-        auto record = createRecord(*it, fields);
-
-        if (!this->isVarSizedOutput)
-        {
-            for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
-            {
-                VarVal result = VarVal(nautilus::invoke(getValueFromModel, rowIdx, operatorHandler, executionCtx.workerThreadId));
-                record.write(outputFieldNames.at(i), result);
-                ++rowIdx;
-            }
-        }
-        else
-        {
-            auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-            nautilus::invoke(copyVarSizedFromModel, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
-            record.write(outputFieldNames.at(0), output);
-            ++rowIdx;
-        }
-        executeChild(executionCtx, record);
+        VarVal value = inputs.at(0).execute(record, ctx.pipelineMemoryProvider.arena);
+        auto varSizedValue = value.cast<VariableSizedData>();
+        nautilus::invoke(
+            copyVarSizedToModel,
+            varSizedValue.getContent(),
+            min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
+            inferModelHandler,
+            ctx.workerThreadId);
     }
-}
 
-void IREEInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    /// As this operator functions as a scan, we have to set the execution context for this pipeline
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    openChild(executionCtx, recordBuffer);
+    nautilus::invoke(applyModel, inferModelHandler, ctx.workerThreadId);
 
-    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getBuffer());
-
-    const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-
-    const auto batchMemRef = nautilus::invoke(
-            +[](OperatorHandler* ptrOpHandler, const EmittedBatch* batch)
-            {
-                PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-                const auto* opHandler = dynamic_cast<IREEInferenceOperatorHandler*>(ptrOpHandler);
-                return opHandler->batches[batch->batchId].get();
-            }, operatorHandler, emittedBatch);
-
-    const auto batchPagedVectorMemRef = nautilus::invoke(
-        +[](Batch* batch, const WorkerThreadId workerThreadId)
-        {
-            PRECONDITION(batch != nullptr, "batch context should not be null!");
-            return batch->getPagedVectorRef(workerThreadId);
-        },
-        batchMemRef,
-        workerThreadIdForPages);
-
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
-    performInference(batchPagedVectorRef, *memoryProvider, executionCtx, operatorHandler);
-}
-
-void IREEInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
-}
-
-Record IREEInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
-{
-    Record record;
-    for (const auto& fieldName : nautilus::static_iterable(projections))
+    if (!this->isVarSizedOutput)
     {
-        record.write(fieldName, featureRecord.read(fieldName));
+        for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
+        {
+            VarVal result = VarVal(nautilus::invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
+            record.write(outputFieldNames.at(i), result);
+        }
     }
-    return record;
+    else
+    {
+        auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
+        nautilus::invoke(copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
+        record.write(outputFieldNames.at(0), output);
+    }
+
+    child->execute(ctx, record);
 }
 
+void IREEInferenceOperator::setup(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(
+        +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->start(*pec, 0); },
+        executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex),
+        executionCtx.pipelineContext);
+}
+
+void IREEInferenceOperator::terminate(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(
+        +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->stop(QueryTerminationType::Graceful, *pec); },
+        executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex),
+        executionCtx.pipelineContext);
+}
 }

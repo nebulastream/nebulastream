@@ -8,7 +8,7 @@
 Source streamFloat FLOAT32 p1 FLOAT32 p2 FLOAT32 p3 FLOAT32 p4 FILE
 TESTDATA/small/iris.csv
 
-MODEL iris4 TESTDATA/model/model.onnx
+MODEL iris4 TESTDATA/model/iris.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 BATCH_SIZE 4
