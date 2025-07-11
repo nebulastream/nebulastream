@@ -63,6 +63,10 @@ public:
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         bool sequentialProcessing);
 
+    WindowBasedOperatorHandler(
+        const std::vector<OriginId>& inputOrigins,
+        OriginId outputOriginId);
+
     ~WindowBasedOperatorHandler() override = default;
 
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild

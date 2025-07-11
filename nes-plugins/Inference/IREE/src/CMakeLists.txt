@@ -15,6 +15,7 @@ add_plugin_as_library(InferenceModel RewriteRule nes-query-optimizer iree_infere
         IREEInferenceOperatorHandler.cpp
         IREEAdapter.cpp
         IREERuntimeWrapper.cpp
+        BatchingPhysicalOperator.cpp
 )
 find_package(IREERuntime CONFIG REQUIRED)
 target_include_directories(iree_inference_plugin_library PRIVATE ../include)

@@ -16,23 +16,36 @@
 #include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
 #include "IREEAdapter.hpp"
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
 
-IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Nebuli::Inference::Model model) : model(std::move(model))
+IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(
+    const std::vector<OriginId>& inputOrigins,
+    OriginId outputOriginId,
+    const uint64_t batchSize,
+    Nebuli::Inference::Model model)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId)
+    , batchSize(batchSize)
+    , model(std::move(model))
 {
 }
 
-void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pec, uint32_t)
+void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
-    threadLocalAdapters.reserve(pec.getNumberOfWorkerThreads());
-    for (size_t threadId = 0; threadId < pec.getNumberOfWorkerThreads(); ++threadId)
+    numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    watermarkProcessorBuild = std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins);
+    watermarkProcessorProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
+
+    threadLocalAdapters.reserve(numberOfWorkerThreads);
+    for (size_t threadId = 0; threadId < numberOfWorkerThreads; ++threadId)
     {
         threadLocalAdapters.emplace_back(IREEAdapter::create());
         threadLocalAdapters.back()->initializeModel(model);
     }
 }
+
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
 }
@@ -42,9 +55,51 @@ const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
     return model;
 }
 
-const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter(WorkerThreadId threadId) const
+const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter(WorkerThreadId workerThreadId) const
 {
-    return threadLocalAdapters[threadId % threadLocalAdapters.size()];
+    return threadLocalAdapters[workerThreadId % threadLocalAdapters.size()];
+}
+
+void IREEInferenceOperatorHandler::emitBatchesToProbe(
+    Batch& batch,
+    const BufferMetaData& bufferMetadata,
+    PipelineExecutionContext* pipelineCtx) const
+{
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+    const auto sequenceData = bufferMetadata.seqNumber;
+
+    tupleBuffer.setOriginId(outputOriginId);
+    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
+    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
+    tupleBuffer.setLastChunk(sequenceData.lastChunk);
+    tupleBuffer.setWatermark(bufferMetadata.watermarkTs);
+    tupleBuffer.setNumberOfTuples(batchSize);
+
+    auto* bufferMemory = tupleBuffer.getBuffer<EmittedBatch>();
+    bufferMemory->batchId = batch.batchId;
+
+    pipelineCtx->emitBuffer(tupleBuffer);
+}
+
+Batch* IREEInferenceOperatorHandler::getOrCreateNewBatch() const
+{
+    tuplesSeen++;
+    if (batches.empty() || tuplesSeen == batchSize)
+    {
+        tuplesSeen = 0;
+        auto batch = std::make_shared<Batch>(batches.size(), numberOfWorkerThreads);
+        batches.emplace_back(batch);
+        return batch.get();
+    }
+    return batches.back().get();
+}
+
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> IREEInferenceOperatorHandler::getCreateNewSlicesFunction() const
+{
+    return [](SliceStart, SliceEnd)
+    {
+        return std::vector<std::shared_ptr<Slice>>{};
+    };
 }
 
 }

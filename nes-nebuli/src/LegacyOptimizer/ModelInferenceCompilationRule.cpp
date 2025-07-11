@@ -37,21 +37,12 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan)
 
     for (auto modelNameOperator : NES::getOperatorByType<InferModel::InferModelNameLogicalOperator>(queryPlan))
     {
-        auto countBasedWindow = std::make_shared<Windowing::CountBasedWindow>(1);
-        auto batching = BatchingLogicalOperator(countBasedWindow);
-
         auto name = modelNameOperator.getModelName();
         auto model = catalog->load(name);
         auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields());
-        // USED_IN_DEBUG auto shouldReplace = replaceOperator(
-        //     queryPlan, modelNameOperator, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
-        // queryPlan = std::move(shouldReplace.value());
-
-        queryPlan = replaceSubtree(
-                                queryPlan,
-                                modelNameOperator,
-                                inferModel.withChildren({batching.withChildren(modelNameOperator.getChildren())}))
-                                .value();
+        USED_IN_DEBUG auto shouldReplace = replaceOperator(
+            queryPlan, modelNameOperator, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
+        queryPlan = std::move(shouldReplace.value());
     }
 
     NES_DEBUG("ModelInferenceCompilationRule: Plan after\n{}", queryPlan);
