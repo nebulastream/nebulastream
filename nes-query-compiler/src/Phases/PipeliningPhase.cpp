@@ -147,7 +147,23 @@ void buildPipelineRecursively(
     /// it should close the pipeline without adding a default emit
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
-        if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        if (prevOpWrapper == nullptr)
+        {
+            /// Batching operator serves as a custom emit but it may not have any previous operators
+            auto newPipeline = createNewPiplineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+            if (opWrapper->getHandler().has_value())
+            {
+                /// Create an operator handler for the custom emit operator
+                const OperatorHandlerId operatorHandlerIndex = opWrapper->getHandlerId().value();
+                newPipeline->getOperatorHandlers().emplace(operatorHandlerIndex, opWrapper->getHandler().value());
+            }
+
+            for (auto& child : opWrapper->getChildren())
+            {
+                buildPipelineRecursively(child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            }
+        }
+        else if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
             /// current operator to create a new pipeline
