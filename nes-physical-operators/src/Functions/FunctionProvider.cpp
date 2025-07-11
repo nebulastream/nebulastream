@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <Functions/CastFieldPhysicalFunction.hpp>
@@ -26,6 +27,7 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
@@ -66,60 +68,52 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
 
+namespace
+{
+template <typename T>
+requires requires(std::string_view input) { NES::Util::from_chars<T>(input); }
+T parseConstantValue(std::string_view input)
+{
+    if (auto value = NES::Util::from_chars<T>(input))
+    {
+        return *value;
+    }
+    throw QueryCompilerError("Can not parse constant value \"{}\" into {}", input, typeid(T).name());
+}
+}
+
 PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
     const auto stringValue = constantFunction.getConstantValue();
     switch (constantFunction.getDataType().type)
     {
-        case DataType::Type::UINT8: {
-            const auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-            return ConstantUInt8ValueFunction(intValue);
-        };
-        case DataType::Type::UINT16: {
-            const auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-            return ConstantUInt16ValueFunction(intValue);
-        };
-        case DataType::Type::UINT32: {
-            const auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-            return ConstantUInt32ValueFunction(intValue);
-        };
-        case DataType::Type::UINT64: {
-            const auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-            return ConstantUInt64ValueFunction(intValue);
-        };
-        case DataType::Type::INT8: {
-            const auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-            return ConstantInt8ValueFunction(intValue);
-        };
-        case DataType::Type::INT16: {
-            const auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-            return ConstantInt16ValueFunction(intValue);
-        };
-        case DataType::Type::INT32: {
-            const auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-            return ConstantInt32ValueFunction(intValue);
-        };
-        case DataType::Type::INT64: {
-            const auto intValue = static_cast<int64_t>(std::stol(stringValue));
-            return ConstantInt64ValueFunction(intValue);
-        };
-        case DataType::Type::FLOAT32: {
-            const auto floatValue = std::stof(stringValue);
-            return ConstantFloatValueFunction(floatValue);
-        };
-        case DataType::Type::FLOAT64: {
-            const auto doubleValue = std::stod(stringValue);
-            return ConstantDoubleValueFunction(doubleValue);
-        };
-        case DataType::Type::BOOLEAN: {
-            const auto boolValue = static_cast<int>(static_cast<bool>(std::stoi(stringValue))) == 1;
-            return ConstantBooleanValueFunction(boolValue);
-        };
+        case DataType::Type::UINT8:
+            return ConstantUInt8ValueFunction(parseConstantValue<int8_t>(stringValue));
+        case DataType::Type::UINT16:
+            return ConstantUInt16ValueFunction(parseConstantValue<int16_t>(stringValue));
+        case DataType::Type::UINT32:
+            return ConstantUInt32ValueFunction(parseConstantValue<uint32_t>(stringValue));
+        case DataType::Type::UINT64:
+            return ConstantUInt64ValueFunction(parseConstantValue<uint64_t>(stringValue));
+        case DataType::Type::INT8:
+            return ConstantInt8ValueFunction(parseConstantValue<int8_t>(stringValue));
+        case DataType::Type::INT16:
+            return ConstantInt16ValueFunction(parseConstantValue<int16_t>(stringValue));
+        case DataType::Type::INT32:
+            return ConstantInt32ValueFunction(parseConstantValue<int32_t>(stringValue));
+        case DataType::Type::INT64:
+            return ConstantInt64ValueFunction(parseConstantValue<int64_t>(stringValue));
+        case DataType::Type::FLOAT32:
+            return ConstantFloatValueFunction(parseConstantValue<float>(stringValue));
+        case DataType::Type::FLOAT64:
+            return ConstantDoubleValueFunction(parseConstantValue<double>(stringValue));
+        case DataType::Type::BOOLEAN:
+            return ConstantBooleanValueFunction(parseConstantValue<bool>(stringValue));
         case DataType::Type::CHAR:
-            break;
+            return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
         case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::VARSIZED: {
-            return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+            return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };
         case DataType::Type::UNDEFINED: {
             throw UnknownPhysicalType("the UNKNOWN type is not supported");

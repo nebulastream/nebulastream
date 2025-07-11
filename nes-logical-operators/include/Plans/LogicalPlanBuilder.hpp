@@ -20,6 +20,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -38,21 +39,17 @@ public:
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
+    /// @param asterisk project everything in addition to the projections
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
-    static LogicalPlan addProjection(std::vector<LogicalFunction> functions, const LogicalPlan& queryPlan);
+    static LogicalPlan
+    addProjection(std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan);
 
     /// @brief: this call adds the selection operator to the queryPlan; the operator selects records according to the predicate.
     /// @param selectionFunction a function node containing the predicate
     /// @param LogicalPlan the queryPlan the selection node is added to
     /// @return the updated queryPlan
     static LogicalPlan addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan);
-
-    /// @brief: Map records according to a map function.
-    /// @param mapFunction as function node
-    /// @param queryPlan the queryPlan the map is added to
-    /// @return the updated LogicalPlan
-    static LogicalPlan addMap(const LogicalFunction& mapFunction, const LogicalPlan& queryPlan);
 
     static LogicalPlan addWindowAggregation(
         LogicalPlan queryPlan,

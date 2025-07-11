@@ -6,6 +6,9 @@
 Source solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp FILE
 TESTDATA/large/debs/SOLAR_PANELS_TOPIC_1G.csv
 
+Source windTurbines INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp FILE
+TESTDATA/large/debs/WIND_TURBINES_TOPIC_5M.csv
+
 Source consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp FILE
 TESTDATA/large/debs/CONSUMERS_TOPIC_1G.csv
 
@@ -40,6 +43,43 @@ SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO CHECKS
 ----
 42700000, 15336467257
 
+# Query 5 - Union Queries
+# Results are verified using: https://gist.github.com/ls-1801/d03e4cfbe2957efdace1efe075c5fb95
+SELECT
+    producerId,
+    groupId,
+    producedPower,
+    timestamp as ts
+FROM windTurbines
+UNION
+SELECT
+    producerId,
+    groupId,
+    producedPower,
+    timestamp as ts
+FROM solarPanels
+INTO CHECKSUM;
+----
+42900001,75003740240
+
+# Query 6 - More union with additional projection to distinguish between union streams
+# Results are verified using: https://gist.github.com/ls-1801/d03e4cfbe2957efdace1efe075c5fb95
+SELECT
+    source,
+    producerId,
+    groupId,
+    producedPower,
+    timestamp as ts
+FROM (
+    SELECT *, UINT64(1) AS source
+    FROM windTurbines
+        UNION
+    SELECT *, UINT64(2) AS source
+    FROM solarPanels
+)
+INTO CHECKSUM
+----
+42900001,79036140333
 
 # Query 7 - Window aggregations with tumbling windows
 SELECT start, end, groupId, SUM(producedPower) AS producedPower

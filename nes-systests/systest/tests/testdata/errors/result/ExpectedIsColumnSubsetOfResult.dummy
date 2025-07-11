@@ -1,7 +1,7 @@
 Source stream UINT64 id UINT64 value INLINE
 1,1
 
-SINK CORRECT_SINK UINT64 stream$id UINT64 stream$otherId
+SINK CORRECT_SINK UINT64 stream$id UINT64 otherId
 SELECT id, id AS otherId FROM stream INTO CORRECT_SINK
 ----
 1 1

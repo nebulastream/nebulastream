@@ -7,8 +7,8 @@
 Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 INLINE
 1,1,1,1,2,2,2,2,3,3
 
-SINK sink4Booleans BOOLEAN stream$a BOOLEAN stream$b BOOLEAN stream$c BOOLEAN stream$d
-SINK sink8Booleans BOOLEAN stream$a BOOLEAN stream$b BOOLEAN stream$c BOOLEAN stream$d BOOLEAN stream$e BOOLEAN stream$f BOOLEAN stream$g BOOLEAN stream$h
+SINK sink4Booleans BOOLEAN a BOOLEAN b BOOLEAN c BOOLEAN d
+SINK sink8Booleans BOOLEAN a BOOLEAN b BOOLEAN c BOOLEAN d BOOLEAN e BOOLEAN f BOOLEAN g BOOLEAN h
 
 
 # Check if the and operator works for no nested functions

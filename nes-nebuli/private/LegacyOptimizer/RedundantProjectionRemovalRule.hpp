@@ -14,21 +14,17 @@
 
 #pragma once
 
-#include <utility>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Plans/LogicalPlan.hpp>
 
-namespace NES
+namespace NES::LegacyOptimizer
 {
 
-struct LowerToPhysicalMap : AbstractRewriteRule
+/**
+ * @brief This rule removes redundant projection, which project everything
+ */
+class RedundantProjectionRemovalRule
 {
-    explicit LowerToPhysicalMap(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
-
-private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
+public:
+    void apply(LogicalPlan& queryPlan) const;
 };
-
 }

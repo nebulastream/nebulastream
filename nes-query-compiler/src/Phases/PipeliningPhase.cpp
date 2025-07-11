@@ -113,6 +113,10 @@ void buildPipelineRecursively(
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        {
+            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+        }
         currentPipeline->addSuccessor(it->second, currentPipeline);
         return;
     }
@@ -167,7 +171,6 @@ void buildPipelineRecursively(
             {
                 currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
             }
-            pipelineMap.emplace(opId, currentPipeline);
             for (auto& child : opWrapper->getChildren())
             {
                 buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
@@ -263,11 +266,10 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
         for (const auto& child : rootWrapper->getChildren())
         {
             buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
-            NES_DEBUG("Constructed pipelines: {}", *pipelinedPlan);
         }
     }
 
-    NES_DEBUG("Constructed pipeline plan with {} root pipelines.", pipelinedPlan->getPipelines().size());
+    NES_DEBUG("Constructed pipeline plan with {} root pipelines.\n{}", pipelinedPlan->getPipelines().size(), *pipelinedPlan);
     return pipelinedPlan;
 }
 }

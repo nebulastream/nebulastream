@@ -331,4 +331,32 @@ TEST_F(SchemaTest, copyTest)
     }
 }
 
+
+TEST_F(SchemaTest, withoutSourceQualifierTest)
+{
+    {
+        const auto schema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                                .addField("source1$id", DataType::Type::INT64)
+                                .addField("source1$source2$test", DataType::Type::INT32);
+        const auto expected = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                                  .addField("id", DataType::Type::INT64)
+                                  .addField("test", DataType::Type::INT32);
+        EXPECT_NE(schema, expected);
+        EXPECT_EQ(withoutSourceQualifier(schema), expected);
+    }
+    {
+        const auto schema1 = Schema{}.addField("source1$id", DataType::Type::INT64).addField("test", DataType::Type::INT32);
+        const auto schema2 = Schema{}.addField("source2$id", DataType::Type::INT64).addField("source2$test", DataType::Type::INT32);
+        EXPECT_NE(schema1, schema2);
+        EXPECT_EQ(withoutSourceQualifier(schema1), withoutSourceQualifier(schema2));
+    }
+    {
+        const auto schema = Schema{}
+                                .addField("source1$id", DataType::Type::INT64)
+                                .addField("source2$id", DataType::Type::INT64)
+                                .addField("source1$source2$test", DataType::Type::INT32);
+        EXPECT_ANY_THROW(auto _ = withoutSourceQualifier(schema));
+    }
+}
+
 }

@@ -193,14 +193,19 @@ public:
     {
         return [failure, node = std::move(node)](Exception exception)
         {
+            const auto strongReference = node.lock();
+            if (!strongReference)
+            {
+                ENGINE_LOG_ERROR(
+                    "Query Failure could not be reported as query has already been terminated. Original Error: {}", exception.what());
+                return;
+            }
+
             if (failure)
             {
                 failure(exception);
             }
-            if (auto strongReference = node.lock())
-            {
-                strongReference->fail(exception);
-            }
+            strongReference->fail(exception);
         };
     }
 
