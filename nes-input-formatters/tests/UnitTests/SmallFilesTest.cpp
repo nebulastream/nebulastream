@@ -439,7 +439,7 @@ public:
 
 std::vector<std::filesystem::path> collectYAMLTestConfigFiles()
 {
-    std::filesystem::path configDir(INPUT_FORMATTER_TEST_CONFIG);
+    const auto configDir = std::filesystem::path(INPUT_FORMATTER_TEST_CONFIG) / "threadScaling";
 
     // Check if directory exists
     if (not std::filesystem::exists(configDir) or not std::filesystem::is_directory(configDir)) {
