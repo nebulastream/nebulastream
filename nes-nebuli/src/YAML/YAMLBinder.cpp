@@ -231,7 +231,8 @@ std::vector<Nebuli::Inference::ModelDescriptor> YAMLBinder::bindRegisterModels(c
                                {
                                    schema.addField(name, type);
                                }
-                               return Nebuli::Inference::ModelDescriptor{model.name, model.path, model.inputs, schema};
+                               return Nebuli::Inference::ModelDescriptor{
+                               model.name, model.path, model.inputs, schema, model.batchSize};
                            })
         | std::ranges::to<std::vector>();
     std::ranges::for_each(boundModels, [&](const auto& model) { modelCatalog->registerModel(model); });

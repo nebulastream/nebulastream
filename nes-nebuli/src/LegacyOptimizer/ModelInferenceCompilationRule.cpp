@@ -14,11 +14,7 @@
 
 #include <memory>
 #include <utility>
-
 #include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
-#include "Operators/Windows/BatchingLogicalOperator.hpp"
-#include "WindowTypes/Types/CountBasedWindow.hpp"
-
 #include <InferModelLogicalOperator.hpp>
 #include <InferModelNameLogicalOperator.hpp>
 #include <ModelCatalog.hpp>

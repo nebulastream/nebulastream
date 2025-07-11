@@ -99,7 +99,7 @@ struct ModelMetadataGraph
             {
                 if (dim == "?")
                 {
-                    result.push_back(1);
+                    result.push_back(0);
                 }
                 else
                 {
@@ -341,12 +341,7 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             Model model = Model{std::move(modelVmfb1), modelVmfb.size()};
             model.functionName = "module." + metadata.functionName;
             model.inputShape = metadata.inputShape;
-            model.dims = metadata.inputShape.size();
-            model.inputSizeInBytes = 4 * std::accumulate(model.inputShape.begin(), model.inputShape.end(), 1, std::multiplies<int>());
-
             model.outputShape = metadata.outputShape;
-            model.outputDims = metadata.outputShape.size();
-            model.outputSizeInBytes = 4 * std::accumulate(model.outputShape.begin(), model.outputShape.end(), 1, std::multiplies<int>());
 
             return model;
         }

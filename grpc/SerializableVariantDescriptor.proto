@@ -36,15 +36,10 @@ message WindowInfos {
         uint64 slide = 2;
     }
 
-    message CountBasedWindow {
-            uint64 size = 1;
-        }
-
     TimeCharacteristic time_characteristic = 1;
     oneof window_type {
         TumblingWindow tumbling_window = 2;
         SlidingWindow sliding_window = 3;
-        CountBasedWindow count_based_window = 4;
     }
 }
 
