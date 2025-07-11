@@ -435,9 +435,42 @@ public:
     }
 };
 
+std::vector<std::filesystem::path> collectYAMLTestConfigFiles()
+{
+    std::filesystem::path configDir(INPUT_FORMATTER_TEST_CONFIG);
+
+    // Check if directory exists
+    if (not std::filesystem::exists(configDir) or not std::filesystem::is_directory(configDir)) {
+        std::cerr << "Config directory does not exist: " << configDir;
+    }
+
+    // Collect all yaml files and sort them for consistent test order
+    std::vector<std::filesystem::path> yamlTestConfigFiles;
+    for (const auto& entry : std::filesystem::directory_iterator(configDir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".yaml") {
+            yamlTestConfigFiles.push_back(entry.path());
+        }
+    }
+
+    if (yamlTestConfigFiles.empty())
+    {
+        std::cerr << fmt::format("No YAML test config files found in directory: {}", INPUT_FORMATTER_TEST_CONFIG) << std::endl;
+        return yamlTestConfigFiles;
+    }
+
+    // Sort files for deterministic test execution
+    std::ranges::sort(yamlTestConfigFiles);
+    return yamlTestConfigFiles;
+}
+
 TEST_F(SmallFilesTest, ysbBenchmark)
 {
-    runTestFromYamlConfig(std::filesystem::path(INPUT_FORMATTER_TEST_CONFIG) / "YSB10K-CSV-16-4096.yaml");
+    const auto yamlTestConfigFiles = collectYAMLTestConfigFiles();
+    std::ranges::for_each(yamlTestConfigFiles, [&](const auto& yamlTestConfig)
+    {
+        std::cout << "Running test for: " << yamlTestConfig.filename() << std::endl;
+        runTestFromYamlConfig(yamlTestConfig);
+    });
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)

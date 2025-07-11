@@ -1,6 +1,3 @@
 Dataset | Format | NumberOfIterations | NumberOfThreads | RawBufferSize | FormattedBufferSize | MedianProcessingTime | AvgProcessingTime | MinProcessingTime | MaxProcessingTime
-YSB10K | CSV | 3 | 24 | 4096 | 4096 | 468.94 | 470.856 | 466.258 | 477.37
-YSB10K | CSV | 3 | 24 | 4096 | 4096 | 466.64 | 466.03866666666664 | 463.212 | 468.264
-YSB10K | CSV | 3 | 24 | 4096 | 4096 | 478.813 | 480.21566666666666 | 477.955 | 483.879
-YSB10K | CSV | 3 | 24 | 4096 | 4096 | 443.402 | 445.701 | 432.017 | 461.684
-YSB10K | CSV | 3 | 24 | 4096 | 4096 | 426.346 | 425.9303333333334 | 420.43 | 431.015
+YSB10K | CSV | 3 | 16 | 4096 | 4096 | 585.31 | 585.6899999999999 | 583.595 | 588.165
+YSB10K | CSV | 3 | 24 | 32768 | 4096 | 374.8 | 374.90433333333334 | 374.598 | 375.315

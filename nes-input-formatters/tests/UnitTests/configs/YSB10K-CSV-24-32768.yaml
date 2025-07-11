@@ -3,14 +3,14 @@ testFileName: YSB10K
 formatterType: CSV
 hasSpanningTuples: true
 numberOfIterations: 3
-numberOfThreads: 16
+numberOfThreads: 24
 #sizeOfRawBuffers: 512
 #sizeOfRawBuffers: 1024
 #sizeOfRawBuffers: 2048
-sizeOfRawBuffers: 4096
+#sizeOfRawBuffers: 4096
 #sizeOfRawBuffers: 8192
 #sizeOfRawBuffers: 16384
-#sizeOfRawBuffers: 32768
+sizeOfRawBuffers: 32768
 #sizeOfRawBuffers: 65536
 #sizeOfRawBuffers: 131072
 #sizeOfRawBuffers: 262144

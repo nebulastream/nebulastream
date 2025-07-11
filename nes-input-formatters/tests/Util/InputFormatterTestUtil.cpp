@@ -173,7 +173,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
-    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
+    const auto logicalSource = (sourceCatalog.containsLogicalSource("TestSource")) ? sourceCatalog.getLogicalSource("TestSource") : sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
         logicalSource.value(),
