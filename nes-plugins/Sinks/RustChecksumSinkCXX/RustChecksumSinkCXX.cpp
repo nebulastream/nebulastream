@@ -12,9 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "RustChecksumSink.hpp"
-
-#include <iostream>
+#include "RustChecksumSinkCXX.hpp"
 #include <memory>
 #include <string>
 #include <Configurations/Descriptor.hpp>
@@ -33,29 +31,29 @@ namespace NES::Sinks
         return Rust::new_rust_checksum_sink(rust::Str(path.data(), path.size()));
     }
 
-    RustChecksumSink::RustChecksumSink(const SinkDescriptor& sinkDescriptor)
+    RustChecksumSinkCXX::RustChecksumSinkCXX(const SinkDescriptor& sinkDescriptor)
         : impl(createRustImpl(sinkDescriptor)),
         formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema))
     {
     }
 
-    void RustChecksumSink::start(Runtime::Execution::PipelineExecutionContext&)
+    void RustChecksumSinkCXX::start(PipelineExecutionContext&)
     {
         this->impl->start();
     }
 
-    void RustChecksumSink::stop(Runtime::Execution::PipelineExecutionContext&)
+    void RustChecksumSinkCXX::stop(PipelineExecutionContext&)
     {
         this->impl->stop();
     }
 
-    void RustChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+    void RustChecksumSinkCXX::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
     {
         const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
         this->impl->execute(rust::Str(formatted.data(), formatted.size()));
     }
 
-    Configurations::DescriptorConfig::Config RustChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+    Configurations::DescriptorConfig::Config RustChecksumSinkCXX::validateAndFormat(std::unordered_map<std::string, std::string> config)
     {
         return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersRustChecksum>(std::move(config), NAME);
     }
@@ -63,12 +61,12 @@ namespace NES::Sinks
     SinkValidationRegistryReturnType
     SinkValidationGeneratedRegistrar::RegisterRustChecksumCXXSinkValidation(SinkValidationRegistryArguments sinkConfig)
     {
-        return RustChecksumSink::validateAndFormat(std::move(sinkConfig.config));
+        return RustChecksumSinkCXX::validateAndFormat(std::move(sinkConfig.config));
     }
 
     SinkRegistryReturnType SinkGeneratedRegistrar::RegisterRustChecksumCXXSink(SinkRegistryArguments sinkRegistryArguments)
     {
-        return std::make_unique<RustChecksumSink>(sinkRegistryArguments.sinkDescriptor);
+        return std::make_unique<RustChecksumSinkCXX>(sinkRegistryArguments.sinkDescriptor);
     }
 
 }

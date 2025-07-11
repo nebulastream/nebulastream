@@ -26,7 +26,7 @@ impl ChecksumSink {
         if self.output_file.is_some() {
             return Err(anyhow!("RustFileSourceImpl already open."));
         }
-        self.output_file = Some(File::open(self.path.as_str())?);
+        self.output_file = Some(File::create(self.path.as_str())?);
         Ok(())
     }
 

@@ -11,8 +11,8 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(RustChecksumCXX Sink nes-sinks-registry rust_checksum_sink_cxx_plugin RustChecksumSink.cpp)
-add_plugin_as_library(RustChecksumCXX SinkValidation nes-sinks-registry rust_checksum_sink_cxx_validation_plugin RustChecksumSink.cpp)
+add_plugin_as_library(RustChecksumCXX Sink nes-sinks-registry rust_checksum_sink_cxx_plugin RustChecksumSinkCXX.cpp)
+add_plugin_as_library(RustChecksumCXX SinkValidation nes-sinks-registry rust_checksum_sink_cxx_validation_plugin RustChecksumSinkCXX.cpp)
 
 add_dependencies(rust_checksum_sink_cxx_plugin rust_build_cxx)
 add_dependencies(rust_checksum_sink_cxx_validation_plugin rust_build_cxx)

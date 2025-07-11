@@ -39,20 +39,20 @@ namespace NES::Sinks
     /// Example output of the sink:
     /// S$Count:UINT64,S$Checksum:UINT64
     /// 1042, 12390478290
-    class RustChecksumSink : public Sink
+    class RustChecksumSinkCXX : public Sink
     {
     public:
-        static constexpr std::string_view NAME = "RustChecksum";
-        explicit RustChecksumSink(const SinkDescriptor& sinkDescriptor);
+        static constexpr std::string_view NAME = "RustChecksumCXX";
+        explicit RustChecksumSinkCXX(const SinkDescriptor& sinkDescriptor);
 
         /// Opens file and writes schema to file, if the file is empty.
-        void start(Runtime::Execution::PipelineExecutionContext&) override;
-        void stop(Runtime::Execution::PipelineExecutionContext&) override;
-        void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
+        void start(PipelineExecutionContext&) override;
+        void stop(PipelineExecutionContext&) override;
+        void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
         static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     protected:
-        std::ostream& toString(std::ostream& os) const override { return os << "RustChecksumSink"; }
+        std::ostream& toString(std::ostream& os) const override { return os << "RustChecksumSinkCXX"; }
 
     private:
         rust::Box<Rust::ChecksumSinkImpl> impl;
