@@ -11,6 +11,7 @@ TESTDATA/small/iris.csv
 MODEL iris4 TESTDATA/model/model.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 4
 
 SINK classificationThreeSeparate FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 
@@ -368,6 +369,7 @@ Sink classificationVarsized VARSIZED streamVarsized$data VARSIZED streamVarsized
 MODEL iris TESTDATA/model/iris.onnx
 VARSIZED
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 1
 
 SELECT data, iris_label(setosa, versicolor, virginica) as flower
 FROM (SELECT INFER_MODEL(iris, (data)) FROM streamVarsized)
@@ -382,6 +384,7 @@ Sink classificationVarsizedArgMax UINT64 streamVarsized$index
 MODEL iris_varsized TESTDATA/model/iris.onnx
 VARSIZED
 VARSIZED species_vector
+BATCH_SIZE 1
 
 SELECT ArgMax(species_vector) as index
 FROM (SELECT INFER_MODEL(iris_varsized, (data)) FROM streamVarsized)

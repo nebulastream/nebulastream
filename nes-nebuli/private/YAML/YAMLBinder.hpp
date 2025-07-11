@@ -74,6 +74,7 @@ struct Model
     std::filesystem::path path;
     std::vector<NES::DataType> inputs;
     std::vector<SchemaField> outputs;
+    size_t batchSize;
 };
 
 struct QueryConfig

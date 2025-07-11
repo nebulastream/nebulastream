@@ -42,10 +42,10 @@ class Model
     };
 
     RefCountedByteBuffer byteCode;
-    std::vector<size_t> inputShape;
+    mutable std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
     std::string functionName;
-    size_t dims = 0;
+    size_t inputDims = 0;
     size_t outputDims = 0;
     size_t inputSizeInBytes = 0;
     size_t outputSizeInBytes = 0;
@@ -64,7 +64,7 @@ public:
     const std::vector<size_t>& getInputShape() { return inputShape; }
     const std::vector<size_t>& getOutputShape() { return outputShape; }
 
-    size_t getNDim() { return dims; }
+    size_t getNDim() { return inputDims; }
     size_t getOutputDims() { return outputDims; }
 
     size_t inputSize() const { return inputSizeInBytes; }
