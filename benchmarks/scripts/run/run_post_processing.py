@@ -18,6 +18,7 @@ import PostProcessing
 
 
 # Compilation for misc.
+SERVER_NAME = "amd"
 DATETIME = "2025-06-02_20-08-46"
 RESULTS_DIR = f"benchmarks/data/{DATETIME}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME}"
@@ -51,10 +52,17 @@ if __name__ == "__main__":
     measurement_time = MEASURE_INTERVAL * 1000
     startup_time = WAIT_BETWEEN_COMMANDS * 1000
     engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
-    post_processing = PostProcessing.PostProcessing(output_folders, measurement_time, startup_time,
-                                                    BENCHMARK_CONFIG_FILE, ENGINE_STATS_FILE, BENCHMARK_STATS_FILE,
-                                                    COMBINED_ENGINE_STATISTICS_FILE, COMBINED_BENCHMARK_STATISTICS_FILE,
-                                                    engine_stats_csv_path, benchmark_stats_csv_path)
+    post_processing = PostProcessing.PostProcessing(output_folders,
+                                                    measurement_time,
+                                                    startup_time,
+                                                    BENCHMARK_CONFIG_FILE,
+                                                    ENGINE_STATS_FILE,
+                                                    BENCHMARK_STATS_FILE,
+                                                    COMBINED_ENGINE_STATISTICS_FILE,
+                                                    COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                    engine_stats_csv_path,
+                                                    benchmark_stats_csv_path,
+                                                    SERVER_NAME)
     failed_run_folders = post_processing.main()
 
     if not failed_run_folders:
