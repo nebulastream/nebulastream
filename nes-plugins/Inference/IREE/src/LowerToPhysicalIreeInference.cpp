@@ -18,32 +18,24 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <InferModelLogicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include "../include/IREEInferenceOperator.hpp"
-#include "../include/IREEInferenceOperatorHandler.hpp"
-#include "../include/BatchingPhysicalOperator.hpp"
+#include <BatchingPhysicalOperator.hpp>
+#include <IREEBatchInferenceOperator.hpp>
+#include <IREEBatchInferenceOperatorHandler.hpp>
+#include <IREEInferenceOperator.hpp>
+#include <IREEInferenceOperatorHandler.hpp>
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 {
     explicit LowerToPhysicalIREEInferenceOperator(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
-        NES_INFO("Lower infer model operator to IREE operator");
 
         auto inferModelOperator = logicalOperator.get<NES::InferModel::InferModelLogicalOperator>();
-        auto outputOriginId = inferModelOperator.getOutputOriginIds()[0];
-        const auto pageSize = conf.pageSize.getValue();
-
-        auto nested = logicalOperator.getInputOriginIds();
-        auto flatView = nested | std::views::join;
-        const std::vector inputOriginIds(flatView.begin(), flatView.end());
 
         const auto& model = inferModelOperator.getModel();
         auto handlerId = NES::getNextOperatorHandlerId();
 
         auto inputSchema = logicalOperator.getInputSchemas().at(0);
-        auto memoryProvider = NES::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            pageSize, inputSchema);
-        auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
 
         auto inputFunctions = std::views::transform(
                                   inferModelOperator.getInputFields(),
@@ -51,41 +43,81 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             | std::ranges::to<std::vector>();
         auto outputNames = model.getOutputs() | std::views::keys | std::ranges::to<std::vector>();
 
-        auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
-
-        auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
-
-        if (inferModelOperator.getInputFields().size() == 1
-            && inferModelOperator.getInputFields().at(0).getDataType().type != NES::DataType::Type::VARSIZED)
+        /// if the batch size is 1, then we simply use the inference operator with PipelineLocation::INTERMEDIATE
+        /// else, add the batching operator (custom emit) and batch inference operator (custom scan)
+        if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
         {
-            ireeOperator.isVarSizedInput = true;
-        }
+            NES_INFO("Lower InferModel operator to IREEInferenceOperator");
+            auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames);
 
-        if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+            if (inferModelOperator.getInputFields().size() == 1
+                && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+            {
+                ireeOperator.isVarSizedInput = true;
+            }
+
+            if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+            {
+                ireeOperator.isVarSizedOutput = true;
+            }
+            ireeOperator.outputSize = model.outputSize();
+            ireeOperator.inputSize = model.inputSize();
+
+            auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(model);
+
+            auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                ireeOperator,
+                logicalOperator.getInputSchemas().at(0),
+                logicalOperator.getOutputSchema(),
+                handlerId,
+                std::move(handler),
+                NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+
+            return {wrapper, {wrapper}};
+        }
+        else
         {
-            ireeOperator.isVarSizedOutput = true;
+            NES_INFO("Lower InferModel operator to IREEBatchInferenceOperator");
+            auto nested = logicalOperator.getInputOriginIds();
+            auto flatView = nested | std::views::join;
+            const std::vector inputOriginIds(flatView.begin(), flatView.end());
+            auto outputOriginId = inferModelOperator.getOutputOriginIds()[0];
+            const auto pageSize = conf.pageSize.getValue();
+
+            auto memoryProvider = NES::Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, inputSchema);
+            auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
+
+            auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
+
+            auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
+
+            if (inferModelOperator.getInputFields().size() == 1
+                && inferModelOperator.getInputFields().at(0).getDataType().type != NES::DataType::Type::VARSIZED)
+            {
+                ireeOperator.isVarSizedInput = true;
+            }
+
+            if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+            {
+                ireeOperator.isVarSizedOutput = true;
+            }
+            ireeOperator.outputSize = model.outputSize();
+            ireeOperator.inputSize = model.inputSize();
+
+            auto batchingWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                batchingOperator, inputSchema, inputSchema, handlerId, handler, NES::PhysicalOperatorWrapper::PipelineLocation::EMIT);
+
+            auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                ireeOperator,
+                inputSchema,
+                logicalOperator.getOutputSchema(),
+                handlerId,
+                handler,
+                NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
+                std::vector{batchingWrapper});
+
+            return {ireeWrapper, {batchingWrapper}};
         }
-        ireeOperator.outputSize = model.outputSize();
-        ireeOperator.inputSize = model.inputSize();
-
-        auto batchingWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
-            batchingOperator,
-            inputSchema,
-            inputSchema,
-            handlerId,
-            handler,
-            NES::PhysicalOperatorWrapper::PipelineLocation::EMIT);
-
-        auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
-            ireeOperator,
-            inputSchema,
-            logicalOperator.getOutputSchema(),
-            handlerId,
-            handler,
-            NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
-            std::vector{batchingWrapper});
-
-        return {ireeWrapper, {batchingWrapper}};
     }
 
 private:

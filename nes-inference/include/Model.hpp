@@ -61,8 +61,8 @@ public:
 
     bool operator==(const Model&) const = default;
 
-    const std::vector<size_t>& getInputShape() { return inputShape; }
-    const std::vector<size_t>& getOutputShape() { return outputShape; }
+    const std::vector<size_t>& getInputShape() const { return inputShape; }
+    const std::vector<size_t>& getOutputShape() const { return outputShape; }
 
     size_t getNDim() { return inputDims; }
     size_t getOutputDims() { return outputDims; }
