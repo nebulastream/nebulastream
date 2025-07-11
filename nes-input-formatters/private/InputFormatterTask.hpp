@@ -367,13 +367,19 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<true>(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<true>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
                 fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
             rawBuffer.getSequenceNumber().getRawValue());
+
+        if (not isInRange)
+        {
+            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return;
+        }
 
         /// 1. process leading spanning tuple if required
         auto formattedBuffer = bufferProvider->getBufferBlocking();
@@ -440,13 +446,20 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<false>(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->template processSequenceNumber<false>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
                 fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
             rawBuffer.getSequenceNumber().getRawValue());
+
+        if (not isInRange)
+        {
+            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return;
+        }
+
         if (stagedBuffers.size() < 3)
         {
             return;

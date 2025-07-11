@@ -211,9 +211,9 @@ public:
         {
             multiplier += (static_cast<double>(testConfig.sizeOfRawBuffers) / testConfig.sizeOfFormattedBuffers);
         }
-        fmt::print("Multiplier {}\n", multiplier);
+        // fmt::print("Multiplier {}\n", multiplier);
         const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * multiplier);
-        fmt::print("Number of formatter buffers: {}\n", numberOfRequiredFormattedBuffers);
+        // fmt::print("Number of formatter buffers: {}\n", numberOfRequiredFormattedBuffers);
 
         return SetupResult{
             .schema = std::move(schema),

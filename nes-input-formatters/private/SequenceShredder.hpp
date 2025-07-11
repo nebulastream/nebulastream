@@ -53,6 +53,7 @@ struct SpanningTuple
 
 struct SpanningTupleBuffers
 {
+    bool isInRange = true;
     size_t indexOfProcessedSequenceNumber;
     std::vector<StagedBuffer> stagedBuffers;
 };
