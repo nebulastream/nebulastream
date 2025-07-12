@@ -128,7 +128,7 @@ jobs:
         # Upload all log and stats files if any of the tests has failed.
         if: ${{ failure() && !github.event.act }}
         with:
-          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}
           path: |
             build/**/*.log
             build/**/*.stats
