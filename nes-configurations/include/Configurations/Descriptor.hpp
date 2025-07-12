@@ -15,18 +15,23 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Expected.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -81,7 +86,7 @@ public:
     {
         using Type = T;
         using EnumType = U;
-        using ValidateFunc = std::function<std::optional<T>(const std::unordered_map<std::string, std::string>& config)>;
+        using ValidateFunc = std::function<Expected<T>(const std::unordered_map<std::string, std::string>& config)>;
 
         ConfigParameter(std::string name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
             : name(std::move(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
@@ -95,9 +100,10 @@ public:
         const ValidateFunc validateFunc;
         const std::optional<T> defaultValue;
 
+        ///NOLINTNEXTLINE(google-explicit-constructor) Explicit conversion allows lookup in maps
         operator const std::string&() const { return name; }
 
-        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
+        [[nodiscard]] Expected<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
         {
             return this->validateFunc(config);
         }
@@ -118,7 +124,7 @@ public:
         {
         }
 
-        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
+        [[nodiscard]] Expected<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
         {
             return configParameter->validate(config);
         }
@@ -129,16 +135,16 @@ public:
         struct ConfigParameterConcept
         {
             virtual ~ConfigParameterConcept() = default;
-            virtual std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const = 0;
-            virtual std::optional<ConfigType> getDefaultValue() const = 0;
+            [[nodiscard]] virtual Expected<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const = 0;
+            [[nodiscard]] virtual std::optional<ConfigType> getDefaultValue() const = 0;
         };
 
         /// Defines the concrete behavior of the ConfigParameterConcept, i.e., which specific functions from T to call.
         template <typename T>
         struct ConfigParameterModel : ConfigParameterConcept
         {
-            ConfigParameterModel(const T& configParameter) : configParameter(configParameter) { }
-            std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
+            explicit ConfigParameterModel(const T& configParameter) : configParameter(configParameter) { }
+            [[nodiscard]] Expected<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
             {
                 return configParameter.validate(config);
             }
@@ -170,6 +176,8 @@ public:
                 throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
             }
         }
+
+        std::unordered_map<std::string, std::string> errors;
         /// Next, try to validate all config parameters.
         for (const auto& [key, configParameter] : SpecificConfiguration::parameterMap)
         {
@@ -177,73 +185,54 @@ public:
             {
                 NES_DEBUG("key: {}, value: {}", keyString, configParameterString);
             }
-            const auto validatedParameter = configParameter.validate(config);
-            if (validatedParameter.has_value())
-            {
-                validatedConfig.emplace(key, validatedParameter.value());
-                continue;
-            }
             /// If the user did not specify a parameter that is optional, use the default value.
             if (not config.contains(key) and configParameter.getDefaultValue().has_value())
             {
                 validatedConfig.emplace(key, configParameter.getDefaultValue().value());
                 continue;
             }
-            throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
+
+            if (not config.contains(key))
+            {
+                errors.try_emplace(key, fmt::format("Missing config parameter: {}, in: {}", key, implementationName));
+                continue;
+            }
+
+            const auto validatedParameter = configParameter.validate(config);
+            if (!validatedParameter)
+            {
+                errors.try_emplace(
+                    key,
+                    fmt::format(
+                        "Validation for config parameter: {}, in: {} failed: {}", key, implementationName, validatedParameter.error()));
+                continue;
+            }
+
+            validatedConfig.emplace(key, validatedParameter.value());
         }
+
+        if (!errors.empty())
+        {
+            std::stringstream msgBuilder;
+            fmt::println(msgBuilder, "Validation of {} configuration parameters failed with errors", implementationName);
+            for (const auto& [key, errorMessage] : errors)
+            {
+                fmt::println(msgBuilder, "\t{}: {}", key, errorMessage);
+            }
+
+            throw InvalidConfigParameter(msgBuilder.str());
+        }
+
         return validatedConfig;
     }
 
 private:
     template <typename T, typename EnumType>
-    static std::optional<T> stringParameterAs(std::string stringParameter)
+    static Expected<T> stringParameterAs(std::string stringParameter)
     {
-        if constexpr (std::is_same_v<T, int32_t>)
+        if constexpr (requires { NES::Util::from_chars<T>(stringParameter); })
         {
-            return std::stoi(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            return std::stoul(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, bool>)
-        {
-            using namespace std::literals::string_view_literals;
-            auto caseInsensitiveEqual = [](const unsigned char leftChar, const unsigned char rightChar)
-            { return std::tolower(leftChar) == std::tolower(rightChar); };
-
-            if (std::ranges::equal(stringParameter, "true"sv, caseInsensitiveEqual))
-            {
-                return true;
-            }
-            if (std::ranges::equal(stringParameter, "false"sv, caseInsensitiveEqual))
-            {
-                return false;
-            }
-            return std::nullopt;
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            if (stringParameter.length() != 1)
-            {
-                throw InvalidConfigParameter(fmt::format(
-                    "Char Descriptor config paramater must be of length one, but got: {}, which is of size: {}.",
-                    stringParameter,
-                    stringParameter.length()));
-            }
-            return stringParameter[0];
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            return std::stof(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            return std::stod(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, std::string>)
-        {
-            return stringParameter;
+            return NES::Util::from_chars<T>(stringParameter).value();
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
@@ -253,24 +242,22 @@ private:
                 {
                     return enumWrapperValue;
                 }
-                NES_ERROR(
+                return unexpected(
                     "Could not match the enum string: {}, to any enum of the existing enum values of the supplied enum type.",
                     stringParameter);
-                return std::nullopt;
             }
-            NES_ERROR(
+            return unexpected(
                 "Failed to convert EnumWrapper with value: {}, to InputFormat enum, because the enum had the wrong type.", stringParameter);
-            return std::nullopt;
         }
         else
         {
-            return std::nullopt;
+            return unexpected("{} is not supported", typeid(T).name());
         }
     }
 
 public:
     template <typename ConfigParameter>
-    static std::optional<typename ConfigParameter::Type>
+    static Expected<typename ConfigParameter::Type>
     tryGet(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
     {
         /// No specific validation and formatting function defined, using default formatter.
@@ -278,13 +265,13 @@ public:
         {
             return stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(config.at(configParameter));
         }
+
         /// The user did not specify the parameter, if a default value is available, return the default value.
         if (configParameter.defaultValue.has_value())
         {
-            return configParameter.defaultValue;
+            return *configParameter.defaultValue;
         }
-        NES_ERROR("ConfigParameter: {}, is not available in config and there is no default value.", configParameter.name);
-        return std::nullopt;
+        return unexpected("ConfigParameter: {}, is not available in config and there is no default value.", configParameter.name);
     };
 
     /// Takes ConfigParameters as inputs and creates an unordered map using the 'key' form the ConfigParameter as key and the ConfigParameter as value.

@@ -19,6 +19,7 @@ add_nes_common_test(nes-common-tests
         "LogLevelTest.cpp"
         "BFSIteratorTest.cpp"
         "RollingAverageTest.cpp"
+        "ExpectedTest.cpp"
 )
 
 add_nes_test(chunk-collector-test
