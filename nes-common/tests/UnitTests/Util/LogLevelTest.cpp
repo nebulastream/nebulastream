@@ -42,7 +42,6 @@ TEST_F(LogLevelTest, testLogLevel)
     NES_INFO("{}", magic_enum::enum_name(LogLevel::LOG_INFO));
     NES_WARNING("{}", magic_enum::enum_name(LogLevel::LOG_WARNING));
     NES_ERROR("{}", magic_enum::enum_name(LogLevel::LOG_ERROR));
-    NES_FATAL_ERROR("{}", magic_enum::enum_name(LogLevel::LOG_FATAL_ERROR));
 
     /// We need to call shutdown, otherwise, the logger might not have written the data to the file
     Logger::getInstance()->shutdown();
@@ -72,10 +71,18 @@ TEST_F(LogLevelTest, testLogLevel)
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_ERROR)));
     }
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_FATAL_ERROR))
-    {
-        EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_FATAL_ERROR)));
-    }
+}
+
+
+TEST_F(LogLevelTest, testLogFatal)
+{
+    constexpr auto filePath = "LogLevelTest.log";
+    Logger::setupLogging(filePath, NES::LogLevel::LOG_TRACE);
+
+    auto logFatal = []() { NES_FATAL_ERROR(""); };
+
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_DEATH(logFatal(), "");
 }
 
 }
