@@ -113,6 +113,45 @@ jobs:
               mv $input /corpus_wip/$(echo $input | cut -d - -f 2)
             fi
           done
+      - name: check for broken inputs
+        shell: bash
+        run: |
+          cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
+          for input in $(find ../../corpus -type f)
+          do
+            if ! $fuzzer $input
+            then
+              git mv $input crash-$(basename $input)
+            fi
+          done
+      - name: cull garbage files
+        run: |
+          find nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }} -name "*.log"   -delete
+          find nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }} -name "Engine*" -delete
+      - name: commit corpus
+        run: |
+          cd nes-corpora
+
+          cat << EOF > /msg.txt
+          ci run ${{ inputs.fuzzer }} ${{ inputs.duration_in_min }}min pre-check
+
+          sut_sha: ${{ github.sha }}
+          fuzzer: ${{ inputs.fuzzer}}
+          duration: ${{ inputs.duration_in_min }}
+          arch: ${{ matrix.arch }}
+          stdlib: ${{ inputs.stdlib }}
+          build_type: ${{ matrix.build_type }}
+          sanitizer: ${{ matrix.sanitizer }}
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ${{ inputs.fuzzer }}
+          if ! git commit -F /msg.txt
+          then
+            exit
+          fi
       - name: fuzz ${{ inputs.duration_in_min }} min
         shell: bash
         timeout-minutes: ${{ fromJson(inputs.duration_in_min) }}
