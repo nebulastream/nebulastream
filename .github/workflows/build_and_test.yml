@@ -14,28 +14,22 @@ on:
 
 jobs:
   build-and-test-linux:
-    name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-      volumes:
-        - ccache:/ccache
-        - test-file-cache:/test-file-cache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
-    timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }} Test"
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x64, arm64 ]
+        arch: [ arm64, x64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         # To reduce the load on our CI, we do not run all our tests with Benchmark.
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release' ]
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
+        include:
+          - arch: arm64
+            runner: [ "ubuntu-24.04-arm" ]
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
         exclude:
           # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
           - arch: arm64
@@ -53,31 +47,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - name: Choose a number of concurrent jobs
-        id: number-of-jobs
-        shell: bash
-        run: |
-          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
-          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
-          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
-      - name: Configure NebulaStream
-        run: |
-          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
-      - name: Build NebulaStream
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
-      - name: Run Tests
-        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            cmake --build build -j  -- -k 0
+      - uses: ./.github/steps/run-in-container
+        name: Run Tests
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
+            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
-        if: ${{ failure() && !github.event.act }}
+        if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}
           path: |
@@ -90,28 +83,13 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
           file: /junit.xml
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && !cancelled() && !github.event.act }}
-        with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
-          path: /junit.xml
 
   # We want to test if our cmake log level flag works correctly. Therefore, we need to build and run the tests with different log levels.
   # As we can not do this in a unit test (because the log level is set at compile time), we need to run the tests in a separate job.
   build-and-test-log-level:
-    name: "Build and test log level: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-log-level"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-none
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
+    name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} Log Test"
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -119,26 +97,38 @@ jobs:
         # We only want to run the tests with libcxx, as the log level tests are not standard library dependent, and we want to reduce the number of jobs
         arch: [ x64 ]
         stdlib: [ 'libcxx' ]
+        sanitizer: [ 'none' ]
         build_type: [ 'Debug', 'RelWithDebInfo', 'Release', 'Benchmark' ]
+        include:
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
-      - name: Build and Run Log Level Tests
-        run: |
-          for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
-            echo "Running tests with log level: $LOG_LEVEL"
-            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
-            cmake --build build --target nes-common-tests -j -- -k 0
-            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 -R "testLogLevel"
-            cmake --build build --target clean
-          done
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && !cancelled() && !github.event.act }}
+      - uses: ./.github/steps/prepare-github
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
-          path: /junit.xml
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        name: Run Log Level Test
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
+              echo "Running tests with log level: $LOG_LEVEL"
+              cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
+              cmake --build build --target nes-common-tests -j -- -k 0
+              ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 -R "testLogLevel"
+              cmake --build build --target clean
+            done
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }},log-test
+          file: /junit.xml
 
   clean-build-and-test-linux:
     # Ensures that the build works from a clean build directory.
@@ -161,13 +151,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - name: Choose a number of concurrent jobs
-        id: number-of-jobs
-        shell: bash
-        run: |
-          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
-          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
-          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
       - name: Configure NebulaStream
         run: |
           rm -rf build || true
@@ -176,15 +159,10 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} -- -k 0
-      - name: Verify basic functionality of systest tool
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.query_engine.number_of_worker_threads=${{steps.number-of-jobs.outputs.number_of_jobs}}
+          cmake --build build -j -- -k 0
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
       - uses: actions/upload-artifact@v4
         # Upload all log and stat files if any of the tests has failed.
         name: Upload Test Logs on Failure
@@ -196,46 +174,44 @@ jobs:
             build/**/*.stats
 
   build-without-tests:
-    name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-none
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
+    name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} No Test"
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x64, arm64 ]
-        stdlib: [ 'libcxx' ]
+        arch: [ arm64, x64 ]
+        stdlib: [ 'libcxx', 'libstdcxx' ]
+        sanitizer: [ 'none' ]
         build_type: [ 'Debug', 'Benchmark' ]
+        include:
+          - arch: arm64
+            runner: [ "ubuntu-24.04-arm" ]
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
+        exclude:
+          - arch: 'arm64'
+            stdlib: 'libstdcxx'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DNES_ENABLES_TESTS=0
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            cmake -GNinja -B build -DNES_ENABLES_TESTS=0
+            cmake --build build -j -- -k 0
 
   build-test-with-flags:
     name: "Test with ${{ matrix.additional_build_flags.name }}"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
-    timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -243,23 +219,39 @@ jobs:
         stdlib: [ 'libcxx' ]
         build_type: [ 'Debug' ]
         sanitizer: [ 'none' ]
+        include:
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
         additional_build_flags:
           - flags: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
             name: tuple-buffer-leak
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: actions/checkout@v4
+        with:
           ref: ${{ inputs.ref }}
-      - name: Configure NebulaStream
-        run: cmake -GNinja -B build ${{ matrix.additional_build_flags.flags }}
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
-      - name: Run Tests
-        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
+            cmake --build build -j  -- -k 0
+      - uses: ./.github/steps/run-in-container
+        name: Run Tests
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
+            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
