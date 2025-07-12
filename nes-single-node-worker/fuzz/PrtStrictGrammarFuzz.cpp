@@ -173,12 +173,12 @@ LogicalPlan toPlan(const FQueryPlan& plan)
 {
     const auto& root = plan.rootoperator();
 
-    auto s = SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
-    auto c = toOp(plan.rootoperator().child());
+    auto schema = SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
+    auto child = toOp(plan.rootoperator().child());
 
     auto sink = SinkLogicalOperator("foo");
     sink.sinkDescriptor = toSn(root.sinkdescriptor());
-    return LogicalPlan{sink.withChildren({c})};
+    return LogicalPlan{sink.withChildren({child})};
 }
 
 DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
