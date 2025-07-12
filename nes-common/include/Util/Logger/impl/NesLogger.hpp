@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <exception>
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
