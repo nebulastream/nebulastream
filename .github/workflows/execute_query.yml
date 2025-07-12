@@ -52,71 +52,69 @@ on:
 jobs:
   execute-query:
     name: "E2E Test"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
-      volumes:
-        - ccache:/ccache
-        - test-file-cache:/test-file-cache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 1440 # 24 hours
-    runs-on: [ self-hosted, linux, Build]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        arch: [ arm64, x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug' ]
+        sanitizer: [ 'none' ]
+        include:
+          - arch: arm64
+            runner: [ "ubuntu-24.04-arm" ]
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
     steps:
       - name: checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-
-      - name: Configure NebulaStream
-        run: |
-          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
-
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
-
-      - name: Create Nebuli Query file
-        run: |
-          cat << 'EOF' > query.yml
-          ${{ inputs.query_config }}
-          EOF
-
-      - name: Start single node Worker
-        run: |
-          build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
-          echo "WORKER_PID=$!" >> $GITHUB_ENV
-
-      - name: Register and Start Query
-        run: |
-          build/nes-nebuli/nes-nebuli -d -s localhost:8080 register -x -i query.yml
-
-      - name: Wait and monitor
-        shell: bash
-        run: |
-          SECONDS=0
-          MAX_SECONDS=${{ inputs.runtime_seconds}}
-          echo "Stress test runtime set to $MAX_SECONDS seconds"
-          
-          while [ $SECONDS -lt $MAX_SECONDS ]; do
-            if ! kill -0 $WORKER_PID 2>/dev/null; then
-              echo "Worker has exited unexpectedly!"
-              tail -n 50 worker.log
-              exit 1
-            fi
-            sleep 60
-          done
-
-      - name: Stop Query
-        run: |
-          build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
-
-      - name: Stop Worker
-        run: |
-          kill $WORKER_PID
-          wait $WORKER_PID || true
-          tail -n 50 worker.log
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        name: build and test
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}
+          run: |
+            cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+            
+            cmake --build build -j -- -k 0
+            
+            # prepare query
+            cat << 'EOF' > query.yml
+            ${{ inputs.query_config }}
+            EOF
+            
+            build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
+            WORKER_PID=$!
+            
+            sleep 5
+            build/nes-nebuli/nes-nebuli -d -s localhost:8080 register -x -i query.yml
+            
+            # wait and monitor
+            SECONDS=0
+            MAX_SECONDS=${{ inputs.runtime_seconds}}
+            echo "Stress test runtime set to $MAX_SECONDS seconds"
+            
+            while [ $SECONDS -lt $MAX_SECONDS ]; do
+              if ! kill -0 $WORKER_PID 2>/dev/null; then
+                echo "Worker has exited unexpectedly!"
+                tail -n 50 worker.log
+                exit 1
+              fi
+              sleep 60
+            done
+            
+            # stop query
+            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
+            
+            # stop worker
+            kill $WORKER_PID
+            wait $WORKER_PID || true
+            tail -n 50 worker.log
 
       - name: Output Logs on failure
         if: failure()

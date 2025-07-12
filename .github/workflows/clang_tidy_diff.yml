@@ -76,20 +76,19 @@ jobs:
     timeout-minutes: 90
     name: Clang-Tidy Diff
     needs: [setup, get-dev-images]
-    # Due to limited ARM server capacity we only run on x64
-    runs-on: [ self-hosted, linux, Build, x64]
+    runs-on: ${{ matrix.runner }}
     if: >
       (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true) ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
-    container:
-      image: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}
-      options: --user root
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-        GH_TOKEN: ${{ github.token }}
+    strategy:
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        sanitizer: [ 'none' ]
+        build_type: [ 'Debug' ]
+        include:
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
     steps:
       - name: Include base commit
         id: increment
@@ -99,18 +98,33 @@ jobs:
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
           ref: ${{ needs.setup.outputs.head_sha }}
-      - name: Configure NebulaStream for Clang-Tidy
-        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      # We need to build the project, as some headers are only created during the build.
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            # We need to build the project, as some headers are only created during the build.
+            cmake --build build -j  -- -k 0
       - name: Create results directory
         run: mkdir clang-tidy-result
-      - name: Clang-Tidy Precheck
-        # quickly check for compile errors
-        run: git diff -U0 ${{ needs.setup.outputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml  -checks='-*,readability-duplicate-include' -j $(nproc)
-      - name: Analyze by running Clang-Tidy
-        run: git diff -U0 ${{ needs.setup.outputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
+      - uses: ./.github/steps/run-in-container
+        name: Run Clang Tidy Pre-check
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            git diff -U0 ${{ needs.setup.outputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml  -checks='-*,readability-duplicate-include' -j $(nproc)
+      - uses: ./.github/steps/run-in-container
+        name: Run Clang Tidy with all Checks
+        with:
+          image_name: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            git diff -U0 ${{ needs.setup.outputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
       - name: Upload Clang-Tidy Results
         if: ${{ !cancelled() && !github.event.act }}
         uses: actions/upload-artifact@v4
@@ -129,7 +143,4 @@ jobs:
           # Optionally set the number of comments per review to avoid GitHub API timeouts for heavily loaded pull requests
           suggestions_per_comment: 100
           auto_resolve_conversations: true
-          # As we are running it in a docker, we need to set the repo path prefix to /__w
-          # This is mentioned in https://github.com/platisd/clang-tidy-pr-comments/blob/master/action.yml
-          repo_path_prefix: /__w
           python_path: /usr/bin/python3
