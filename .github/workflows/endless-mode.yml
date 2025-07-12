@@ -13,23 +13,13 @@ on:
 
 jobs:
   run-endless-mode:
-    name: "Run tests in endless mode: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-      volumes:
-        - ccache:/ccache
-        - test-file-cache:/test-file-cache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
+    name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }} Endless"
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x64, arm64 ]
+        arch: [ arm64, x64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         build_type: [ 'Debug', 'RelWithDebInfo' ]
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
@@ -41,39 +31,55 @@ jobs:
           - arch: arm64
           - build_type: 'RelWithDebInfo'
           - stdlib: 'libstdcxx'
+        include:
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - name: Configure NebulaStream
-        run: |
-          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
-      - name: Run Tests
-        shell: bash
-        timeout-minutes: 6
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          printenv
-          
-          rm -f early_exit_marker
-          (
-            build/nes-systests/systest/systest --endless --exclude-groups large 
-            touch early_exit_marker
-          ) &
-          
-          PROGRAM_PID=$!
-          sleep 300
-          kill $PROGRAM_PID || true
-          
-          # Wait briefly to ensure the touch command runs if program terminated early
-          sleep 1
-          
-          # Check if the program exited early by looking for marker file
-          if [ -f early_exit_marker ]; then
-            echo "Program terminated before the 5-minute mark!"
-            exit 1  # Fail the job
-          else
-            echo "Success: Program ran for the full 5 minutes"
-          fi
+      - uses: ./.github/steps/prepare-github
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - uses: ./.github/steps/run-in-container
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+
+      - uses: ./.github/steps/run-in-container
+        name: CMake Build
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            cmake --build build --target systest -j -- -k 0
+
+      - uses: ./.github/steps/run-in-container
+        name: Run Endless Mode
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            printenv
+            
+            rm -f early_exit_marker
+            (
+              build/nes-systests/systest/systest --endless --exclude-groups large 
+              touch early_exit_marker
+            ) &
+            
+            PROGRAM_PID=$!
+            sleep 300
+            kill $PROGRAM_PID || true
+            
+            # Wait briefly to ensure the touch command runs if program terminated early
+            sleep 1
+            
+            # Check if the program exited early by looking for marker file
+            if [ -f early_exit_marker ]; then
+              echo "Program terminated before the 5-minute mark!"
+              exit 1  # Fail the job
+            else
+              echo "Success: Program ran for the full 5 minutes"
+            fi
