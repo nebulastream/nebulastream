@@ -82,7 +82,6 @@ void Generator::parseRawSchemaLine(std::string_view line)
     }
     else
     {
-        NES_FATAL_ERROR("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
         throw NES::InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
     }
 }

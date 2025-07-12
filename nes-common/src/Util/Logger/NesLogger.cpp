@@ -63,10 +63,6 @@ auto toSpdlogLevel(const LogLevel level)
             spdlogLevel = spdlog::level::err;
             break;
         }
-        case LogLevel::LOG_FATAL_ERROR: {
-            spdlogLevel = spdlog::level::critical;
-            break;
-        }
         case LogLevel::LOG_NONE: {
             spdlogLevel = spdlog::level::off;
             break;

@@ -155,8 +155,7 @@ int main(int argc, char** argv)
                 file = std::ofstream(outputPath);
                 if (!file)
                 {
-                    NES_FATAL_ERROR("Could not open output file: {}", outputPath);
-                    return 1;
+                    throw NES::UnknownException("Could not open output file: {}", outputPath);
                 }
                 output = &file;
             }

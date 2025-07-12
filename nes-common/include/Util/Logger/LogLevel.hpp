@@ -27,18 +27,16 @@ enum class LogLevel : uint8_t
 {
     /// Indicates that no information will be logged.
     LOG_NONE = 1,
-    /// Indicates that only information about fatal errors will be logged.
-    LOG_FATAL_ERROR = 2,
     /// Indicates that all kinds of error messages will be logged.
-    LOG_ERROR = 3,
+    LOG_ERROR = 2,
     /// Indicates that all warnings and error messages will be logged.
-    LOG_WARNING = 4,
+    LOG_WARNING = 3,
     /// Indicates that additional debug messages will be logged.
-    LOG_INFO = 5,
+    LOG_INFO = 4,
     /// Indicates that additional information will be logged.
-    LOG_DEBUG = 6,
+    LOG_DEBUG = 5,
     /// Indicates that all available information will be logged (can result in massive output).
-    LOG_TRACE = 7
+    LOG_TRACE = 6
 };
 
 /**
