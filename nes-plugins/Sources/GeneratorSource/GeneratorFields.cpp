@@ -42,7 +42,6 @@ void SequenceField::validate(std::string_view rawSchemaLine)
         const auto opt = Util::from_chars<T>(parameter);
         if (!opt)
         {
-            NES_FATAL_ERROR("Could not parse {} as SequenceField {}!", parameter, name);
             throw NES::InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
@@ -52,7 +51,6 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
-        NES_FATAL_ERROR("Number of SequenceField parameters does not match! {}", rawSchemaLine);
         throw NES::InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
     }
     const auto type = parameters[1];
@@ -62,7 +60,6 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 
     if (type != "FLOAT64" && type != "FLOAT32" && type != "INT64" && type != "UINT64")
     {
-        NES_FATAL_ERROR("Invalid SequenceField type of {}!", type);
         throw NES::InvalidConfigParameter("Invalid SequenceField type of {}!", type);
     }
     if (type == "FLOAT64")
@@ -195,7 +192,6 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     const std::vector parameters(view.begin(), view.end());
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
-        NES_FATAL_ERROR("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
         throw NES::InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
     }
 
@@ -205,19 +201,16 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
 
     if (type != "FLOAT64" || type == "FLOAT32")
     {
-        NES_FATAL_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
         throw NES::InvalidConfigParameter("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
     }
     const auto parsedMean = Util::from_chars<double>(mean);
     const auto parsedStdDev = Util::from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
     {
-        NES_FATAL_ERROR("Can not parse mean or stddev in {}", rawSchemaLine);
         throw NES::InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
     }
     if (parsedStdDev < 0.0)
     {
-        NES_FATAL_ERROR("Stddev must be non-negative");
         throw NES::InvalidConfigParameter("Stddev must be non-negative");
     }
 }

@@ -32,9 +32,6 @@ void logProxy(const char* message, const LogLevel logLevel)
     {
         case LogLevel::LOG_NONE:
             break;
-        case LogLevel::LOG_FATAL_ERROR:
-            NES_FATAL_ERROR("{}", message);
-            break;
         case LogLevel::LOG_ERROR:
             NES_ERROR("{}", message);
             break;

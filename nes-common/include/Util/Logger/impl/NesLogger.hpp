@@ -62,13 +62,6 @@ public:
         impl->log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
     }
 
-    /// Logs a fatal error message using a format, a source location, and a set of arguments to display
-    template <typename... arguments>
-    constexpr inline void fatal(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
-    {
-        impl->log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
-    }
-
     /// Logs an info message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
     constexpr inline void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
