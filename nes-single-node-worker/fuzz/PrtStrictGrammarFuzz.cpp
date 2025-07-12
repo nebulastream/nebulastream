@@ -38,14 +38,14 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <Fuzz.pb.h>
 #include <SerializableDataType.pb.h>
+#include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include "SerializableOperator.pb.h"
-#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
