@@ -296,3 +296,71 @@ jobs:
 
           git checkout -b branch-$RANDOM
           git push --set-upstream origin
+
+  gen-cov:
+    name: "generate coverage"
+    needs: [ get-dev-images, final-merge ]
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-none
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    runs-on: [ self-hosted, linux, Build, "x64" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: nes
+      - name: clone corpus
+        run: |
+          rm -rf nes-corpora
+          git clone https://fwc:${{ secrets.FWC_NES_CORPORA }}@github.com/fwc/nes-corpora.git
+      - name: configure
+        run: |
+          cd nes
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=RelWithDebug -DNES_LOG_LEVEL=WARN -DUSE_LIBFUZZER=ON -DUSE_GCOV=ON
+      - name: build
+        shell: bash
+        run: |
+          cd nes
+          cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
+      - name: setup
+        run: |
+          cd nes/build
+          echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
+      - name: run on corpus and broken
+        run: |
+          for input in $(find nes-corpora/${{ inputs.fuzzer }} -type f)
+          do
+            if ! $fuzzer $input
+            then
+              # because '|| true' doesn't work in github ci afaik
+              true
+            fi
+          done
+      - name: install gcovr
+        run: |
+          apt install -y gcovr graphviz
+      - name: garbage files around?
+        run: |
+          find -name "*.gcda"
+      - name: collect coverage
+        run: |
+          gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --root nes
+      - name: generate callgraph .dot
+        run: |
+          python3 nes/gen_callgraph.py nes/build/compile_commands.json gcovr.json
+      - name: generate callgraph .svg
+        run: |
+          neato -Tsvg cov.dot > cov.svg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            cov/
+            cov.dot
+            cov.svg
