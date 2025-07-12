@@ -79,20 +79,20 @@ LogicalFunction toFn(const FPredicate& pred)
 {
     auto left = toLv(pred.left());
     auto right = toLv(pred.right());
-    const auto& t = pred.type();
-    if (t == FPredicate_Type::FPredicate_Type_LT)
+    const auto& type = pred.type();
+    if (type == FPredicate_Type::FPredicate_Type_LT)
     {
         return LessLogicalFunction(left, right);
     }
-    if (t == FPredicate_Type::FPredicate_Type_LE)
+    if (type == FPredicate_Type::FPredicate_Type_LE)
     {
         return LessEqualsLogicalFunction(left, right);
     }
-    if (t == FPredicate_Type::FPredicate_Type_GE)
+    if (type == FPredicate_Type::FPredicate_Type_GE)
     {
         return GreaterEqualsLogicalFunction(left, right);
     }
-    if (t == FPredicate_Type::FPredicate_Type_GT)
+    if (type == FPredicate_Type::FPredicate_Type_GT)
     {
         return GreaterLogicalFunction(left, right);
     }
