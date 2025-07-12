@@ -62,6 +62,12 @@ struct LogicalOperatorConcept
     /// Creates a new operator with the given children
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator>) const = 0;
 
+    /// Creates a new operator with the given traits
+    [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet) const = 0;
+
+    /// Creates a new operator with the given traits added to the traits that are already present
+    [[nodiscard]] virtual LogicalOperator withAdditionalTraits(TraitSet) const = 0;
+
     /// Compares this operator with another for equality
     [[nodiscard]] virtual bool operator==(const LogicalOperatorConcept& rhs) const = 0;
 
@@ -152,6 +158,9 @@ struct LogicalOperator
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    /// Static traits defined as member variables will be present in the new operator nonetheless
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] LogicalOperator withAdditionalTraits(TraitSet traitSet) const;
 
     [[nodiscard]] OperatorId getId() const;
 
@@ -194,6 +203,16 @@ private:
         [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
         {
             return data.withChildren(children);
+        }
+
+        [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override
+        {
+            return data.withTraitSet(traitSet);
+        }
+
+        [[nodiscard]] LogicalOperator withAdditionalTraits(TraitSet traitSet) const override
+        {
+            return data.withAdditionalTraits(traitSet);
         }
 
         [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }

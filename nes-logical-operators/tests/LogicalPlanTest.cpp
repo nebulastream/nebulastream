@@ -62,15 +62,15 @@ protected:
 TEST_F(LogicalPlanTest, DefaultConstructor)
 {
     const LogicalPlan plan;
-    EXPECT_TRUE(plan.rootOperators.empty());
+    EXPECT_TRUE(plan.getRootOperators().empty());
     EXPECT_EQ(plan.getQueryId(), INVALID_QUERY_ID);
 }
 
 TEST_F(LogicalPlanTest, SingleRootConstructor)
 {
     LogicalPlan plan(sourceOp);
-    EXPECT_EQ(plan.rootOperators.size(), 1);
-    EXPECT_EQ(plan.rootOperators[0], sourceOp);
+    EXPECT_EQ(plan.getRootOperators().size(), 1);
+    EXPECT_EQ(plan.getRootOperators()[0], sourceOp);
 }
 
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
@@ -78,18 +78,18 @@ TEST_F(LogicalPlanTest, MultipleRootsConstructor)
     const std::vector roots = {sourceOp, selectionOp};
     const auto queryId = QueryId(1);
     LogicalPlan plan(queryId, roots);
-    EXPECT_EQ(plan.rootOperators.size(), 2);
+    EXPECT_EQ(plan.getRootOperators().size(), 2);
     EXPECT_EQ(plan.getQueryId(), queryId);
-    EXPECT_EQ(plan.rootOperators[0], sourceOp);
-    EXPECT_EQ(plan.rootOperators[1], selectionOp);
+    EXPECT_EQ(plan.getRootOperators()[0], sourceOp);
+    EXPECT_EQ(plan.getRootOperators()[1], selectionOp);
 }
 
 TEST_F(LogicalPlanTest, CopyConstructor)
 {
     const LogicalPlan original(sourceOp);
     const LogicalPlan& copy(original);
-    EXPECT_EQ(copy.rootOperators.size(), 1);
-    EXPECT_EQ(copy.rootOperators[0], sourceOp);
+    EXPECT_EQ(copy.getRootOperators().size(), 1);
+    EXPECT_EQ(copy.getRootOperators()[0], sourceOp);
 }
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
@@ -98,8 +98,8 @@ TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
     auto selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("field"));
     auto plan = LogicalPlan(sourceOp);
     auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
-    EXPECT_EQ(promoteResultPlan.rootOperators[0].getId(), selectionOp.id);
-    EXPECT_EQ(promoteResultPlan.rootOperators[0].getChildren()[0].getId(), sourceOp.id);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getId(), selectionOp.id);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getChildren()[0].getId(), sourceOp.id);
 }
 
 TEST_F(LogicalPlanTest, ReplaceOperator)
@@ -107,9 +107,9 @@ TEST_F(LogicalPlanTest, ReplaceOperator)
     auto sourceOp = SourceNameLogicalOperator("source");
     auto sourceOp2 = SourceNameLogicalOperator("source2");
     auto plan = LogicalPlan(sourceOp);
-    auto result = replaceOperator(plan, sourceOp, sourceOp2);
+    auto result = replaceOperator(plan, sourceOp.id, sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->rootOperators[0].getId(), sourceOp2.id);
+    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.id);
 }
 
 TEST_F(LogicalPlanTest, replaceSubtree)
@@ -117,9 +117,9 @@ TEST_F(LogicalPlanTest, replaceSubtree)
     auto sourceOp = SourceNameLogicalOperator("source");
     auto sourceOp2 = SourceNameLogicalOperator("source2");
     auto plan = LogicalPlan(sourceOp);
-    auto result = replaceSubtree(plan, sourceOp, sourceOp2);
+    auto result = replaceSubtree(plan, sourceOp.id, sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->rootOperators[0].getId(), sourceOp2.id);
+    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.id);
 }
 
 TEST_F(LogicalPlanTest, GetParents)
