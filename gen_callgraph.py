@@ -89,7 +89,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
             if fun["name"] not in elgnamed:
-                continue # TODO check if we miss anything important here
+                continue # check if we miss anything important here
             demngld_name = fun["name"]
             mangled_name = elgnamed[demngld_name]
             drawn_fns.add(mangled_name)
