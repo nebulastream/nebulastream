@@ -13,6 +13,7 @@
 */
 
 #include <chrono>
+#include <memory>
 #include <thread>
 
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
@@ -38,6 +39,7 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <Fuzz.pb.h>
@@ -129,6 +131,26 @@ SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
         deserializedParserConfig};
 }
 
+std::unique_ptr<Sinks::SinkDescriptor> toSn(const FSinkDscrtr& serializableSinkDescriptor)
+{
+    /// Declaring variables outside of DescriptorSource for readability/debuggability.
+    auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
+    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
+    auto sinkType = "File"s;
+
+    /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
+    NES::Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
+    for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
+    {
+        sinkDescriptorConfig[key] = ::NES::Configurations::protoToDescriptorConfigType(desciptor);
+    }
+
+    auto sinkDescriptor
+        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
+    sinkDescriptor->schema = schema;
+    return sinkDescriptor;
+}
+
 LogicalOperator toOp(const FOp& op)
 {
     if (op.has_source())
@@ -161,7 +183,7 @@ LogicalPlan toPlan(const FQueryPlan& plan)
     auto c = toOp(plan.rootoperator().child());
 
     auto sink = SinkLogicalOperator("foo");
-    sink.sinkDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(root.sinkdescriptor());
+    sink.sinkDescriptor = toSn(root.sinkdescriptor());
     return LogicalPlan{sink.withChildren({c})};
 }
 
