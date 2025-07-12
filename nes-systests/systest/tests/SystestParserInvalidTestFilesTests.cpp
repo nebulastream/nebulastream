@@ -40,7 +40,7 @@ public:
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
+    const std::string filename = SYSTEST_DATA_DIR "/invalid.dummy";
     SystestParser parser{};
     parser.registerOnSystestAttachSourceCallback(
         [&](const SystestAttachSource&)
@@ -53,7 +53,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_error.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "/invalid_error.dummy";
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
@@ -73,7 +73,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_error_message.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "/invalid_error_message.dummy";
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
@@ -93,7 +93,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "/invalid_token.dummy";
 
     SystestParser parser{};
     parser.registerOnSystestLogicalSourceCallback(

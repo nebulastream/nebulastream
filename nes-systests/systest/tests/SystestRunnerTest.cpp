@@ -59,7 +59,7 @@ NES::Systest::SystestQuery makeQuery(const NES::LogicalPlan& plan, std::optional
     return NES::Systest::SystestQuery{
         "test_query",
         "SELECT * FROM test",
-        SYSTEST_DATA_DIR "filter.dummy",
+        SYSTEST_DATA_DIR "/filter.dummy",
         plan,
         NES::Systest::INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,
@@ -73,7 +73,7 @@ NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Excepti
     return NES::Systest::SystestQuery{
         "test_query",
         "SELECT * FROM test",
-        SYSTEST_DATA_DIR "filter.dummy",
+        SYSTEST_DATA_DIR "/filter.dummy",
         parseErr, /// invalid plan
         NES::Systest::INITIAL_SYSTEST_QUERY_ID,
         PATH_TO_BINARY_DIR,

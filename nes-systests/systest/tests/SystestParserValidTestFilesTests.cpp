@@ -76,7 +76,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
         { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
 
-    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "valid.dummy";
+    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "/valid.dummy";
     ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
     EXPECT_NO_THROW(parser.parse());
 
@@ -94,7 +94,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "comments.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "/comments.dummy";
     SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
@@ -211,7 +211,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "/filter.dummy";
     SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
@@ -358,7 +358,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
             errorCallbackCalled = true;
         });
 
-    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "error_expectation.dummy";
+    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "/error_expectation.dummy";
     ASSERT_TRUE(parser.loadFile(Filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);

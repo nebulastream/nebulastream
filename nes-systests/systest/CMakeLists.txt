@@ -28,11 +28,17 @@ target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-work
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
-        TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata/"
-        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata/"
-        TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
+        TEST_DISCOVER_DIR="${CMAKE_SOURCE_DIR}/nes-systests"
+        SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/systest/tests/testdata"
+        SYSTEST_EXTERNAL_DATA_DIR="${CMAKE_BINARY_DIR}/nes-systests/testdata"
+        TEST_CONFIGURATION_DIR="${CMAKE_SOURCE_DIR}/nes-systests/configs"
 )
+
+# Creates symlink for small data directory
+set(SMALL_TEST_DATA_SRC_DIR "${CMAKE_SOURCE_DIR}/nes-systests/testdata/small")
+set(LINK_DIR "${CMAKE_BINARY_DIR}/nes-systests/testdata")
+file(MAKE_DIRECTORY "${LINK_DIR}")
+file(CREATE_LINK "${SMALL_TEST_DATA_SRC_DIR}" "${LINK_DIR}/small" SYMBOLIC)
 
 # Find required packages
 find_package(argparse CONFIG REQUIRED)
