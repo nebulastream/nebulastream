@@ -131,7 +131,7 @@ jobs:
       - name: minimize corpus
         run: |
           $fuzzer -merge=1 nes-corpora/${{ inputs.fuzzer }}/corpus /corpus_wip
-      - name: push corpus
+      - name: commit corpus
         run: |
           cd nes-corpora
 
@@ -155,7 +155,9 @@ jobs:
           then
             exit
           fi
-
+      - name: push corpus
+        run: |
+          cd nes-corpora
           exp_backoff=1
           for try in $(seq 5)
           do
