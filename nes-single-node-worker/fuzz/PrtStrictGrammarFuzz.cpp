@@ -15,6 +15,7 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include <libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h>
 #include <from_current.hpp>
