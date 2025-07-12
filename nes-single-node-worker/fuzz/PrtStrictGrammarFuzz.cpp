@@ -50,10 +50,8 @@
 namespace NES
 {
 
-Schema toSm(const SerializableSchema& schema)
+namespace
 {
-    return SchemaSerializationUtil::deserializeSchema(schema);
-}
 
 DataType toDt(const SerializableDataType& type)
 {
@@ -192,6 +190,8 @@ DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
     {
         return;
     }
+}
+
 }
 
 }
