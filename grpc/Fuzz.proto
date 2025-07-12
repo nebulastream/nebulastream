@@ -92,9 +92,16 @@ message FOp {
     uint64 outputOriginId = 4;
 }
 
+message FSinkDscrtr
+{
+  SerializableSchema sinkSchema = 1;
+  bool addTimestamp = 3;
+  map<string, SerializableVariantDescriptor> config = 4;
+}
+
 message FSinkOp{
     FOp child = 1;
-    SerializableSinkDescriptor sinkDescriptor = 2;
+    FSinkDscrtr sinkDescriptor = 2;
 }
 
 message FQueryPlan{
