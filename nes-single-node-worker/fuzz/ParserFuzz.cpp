@@ -16,9 +16,9 @@
 
 #include <Runtime/QueryTerminationType.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include "ErrorHandling.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
