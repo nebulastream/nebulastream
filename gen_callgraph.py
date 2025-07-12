@@ -86,6 +86,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     ret = []
 
     ret.append("digraph G {")
+    ret.append("overlap = false;")
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
             if fun["name"] not in elgnamed:
