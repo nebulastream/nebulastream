@@ -51,7 +51,11 @@ def parse_callgraph_text(cg):
 
 def compute_callgraph(args):
     cmd_arr, cwd, out = args
-    subprocess.run(cmd_arr, check=True, cwd=cwd)
+    try:
+        subprocess.run(cmd_arr, check=True, cwd=cwd)
+    except:
+        print("error running:" " ".join(cmd_arr))
+        return None
 
     out = cwd + "/" + out.replace(".o", ".bc")
 
@@ -134,7 +138,8 @@ def main():
     with multiprocessing.Pool(32) as p:
         callers = {}
         for callgraph in p.map(compute_callgraph, jobs):
-            callers |= parse_callgraph_text(callgraph)
+            if callgraph:
+                callers |= parse_callgraph_text(callgraph)
 
     mangled_callers = "\n".join(callers.keys())
     demngld_callers = subprocess.run("c++filt", input=mangled_callers, capture_output=True, text=True, check=True).stdout
