@@ -56,7 +56,7 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
                     throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
                 }
             });
-        auto result = replaceOperator(queryPlan, source, source.withSchema(schema));
+        auto result = replaceOperator(queryPlan, source.id, source.withSchema(schema));
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);
     }

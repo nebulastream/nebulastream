@@ -64,7 +64,7 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
         return *getWindowType() == *rhsOperator->getWindowType() and getJoinFunction() == rhsOperator->getJoinFunction()
             and getOutputSchema() == rhsOperator->outputSchema and getRightSchema() == rhsOperator->getRightSchema()
             and getLeftSchema() == rhsOperator->getLeftSchema() and getInputOriginIds() == rhsOperator->getInputOriginIds()
-            and getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            and getOutputOriginIds() == rhsOperator->getOutputOriginIds() and getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -127,9 +127,25 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     return copy;
 }
 
+LogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
+LogicalOperator JoinLogicalOperator::withAdditionalTraits(TraitSet traitSet) const
+{
+    auto copy = *this;
+    std::ranges::copy(traitSet, std::back_inserter(copy.traitSet));
+    return copy;
+}
+
 TraitSet JoinLogicalOperator::getTraitSet() const
 {
-    return {originIdTrait};
+    TraitSet result = traitSet;
+    result.emplace_back(originIdTrait);
+    return result;
 }
 
 LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

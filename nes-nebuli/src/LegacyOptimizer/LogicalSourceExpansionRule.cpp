@@ -74,7 +74,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
                 children.emplace_back(SourceDescriptorLogicalOperator{entry});
             }
             auto newParent = parent.withChildren(std::move(children));
-            auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
+            auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
             INVARIANT(
                 replaceResult.has_value(),
                 "Failed to replace operator {} with {}",

@@ -685,10 +685,10 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             try
             {
                 auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                auto sinkOperators = plan.rootOperators;
+                auto sinkOperators = plan.getRootOperators();
                 auto sinkOperator = [](const LogicalPlan& queryPlan)
                 {
-                    const auto rootOperators = queryPlan.rootOperators;
+                    const auto rootOperators = queryPlan.getRootOperators();
                     if (rootOperators.size() != 1)
                     {
                         throw QueryInvalid(
@@ -709,9 +709,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                         fmt::join(std::views::keys(sinks), ","));
                 }
                 sinkOperator.sinkDescriptor = sink;
-                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
-                plan.rootOperators.at(0) = sinkOperator;
-                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+                INVARIANT(!plan.getRootOperators().empty(), "Plan has no root operators");
+                plans.emplace_back(plan.withRootOperators({sinkOperator}), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
             }
             catch (Exception& e)
             {
