@@ -205,6 +205,7 @@ jobs:
             then
               exit
             fi
+            echo push failed, sleeping for $exp_backoff
             sleep $exp_backoff
             exp_backoff=$(( exp_backoff * 2 ))
           done
@@ -290,6 +291,7 @@ jobs:
             then
               exit
             fi
+            echo push failed, sleeping for $exp_backoff
             sleep $exp_backoff
             exp_backoff=$(( exp_backoff * 2 ))
           done
