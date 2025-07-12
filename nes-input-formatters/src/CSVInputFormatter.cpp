@@ -377,9 +377,6 @@ void addBasicTypeParseFunction(
                         if ((static_cast<int>(strcasecmp(inputString.c_str(), "false") != 0) != 0)
                             && (strcasecmp(inputString.c_str(), "0") != 0))
                         {
-                            NES_FATAL_ERROR(
-                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                inputString.c_str());
                             throw CannotFormatMalformedStringValue("Value: {} is not a boolean", inputString);
                         }
                     }
@@ -389,11 +386,10 @@ void addBasicTypeParseFunction(
             break;
         }
         case NES::DataType::Type::UNDEFINED: {
-            NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
-            break;
+            throw UnknownDataType("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
         }
         default:
-            NES_FATAL_ERROR("Unknown physical type: {}", magic_enum::enum_name(physicalType));
+            throw UnknownDataType("Unknown physical type: {}", magic_enum::enum_name(physicalType));
     }
 }
 

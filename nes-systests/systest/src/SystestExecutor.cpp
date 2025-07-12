@@ -139,7 +139,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries"))
             && (program.get<int>("--numberConcurrentQueries") > 1 || program.get<int>("-n") > 1))
         {
-            NES_FATAL_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
+            NES_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
             std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
             exit(-1); ///NOLINT(concurrency-mt-unsafe)
         }

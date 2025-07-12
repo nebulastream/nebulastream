@@ -264,8 +264,7 @@ std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& que
     std::ifstream resultFile(query.resultFile());
     if (!resultFile)
     {
-        NES_FATAL_ERROR("Failed to open result file: {}", query.resultFile());
-        return std::nullopt;
+        throw NES::UnknownException("Failed to open result file: {}", query.resultFile());
     }
 
     QueryResult result;
