@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <exception>
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
@@ -67,6 +68,8 @@ public:
     constexpr inline void fatal(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
+        shutdown();
+        std::terminate();
     }
 
     /// Logs an info message using a format, a source location, and a set of arguments to display
