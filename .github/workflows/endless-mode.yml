@@ -16,16 +16,12 @@ jobs:
     name: "Run tests in endless mode: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-      volumes:
-        - ccache:/ccache
-        - test-file-cache:/test-file-cache
       env:
-        CCACHE_DIR: /ccache
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,23 +29,24 @@ jobs:
         stdlib: [ 'libstdcxx', 'libcxx' ]
         build_type: [ 'Debug', 'RelWithDebInfo' ]
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
-        exclude:
-          # Limit the endless mode tests to unsanitized x64 libc++ debug builds
-          - sanitizer: 'address'
-          - sanitizer: 'undefined'
-          - sanitizer: 'thread'
+        include:
           - arch: arm64
-          - build_type: 'RelWithDebInfo'
-          - stdlib: 'libstdcxx'
+            runner: [ "ubuntu-24.04-arm" ]
+          - arch: x64
+            runner: [ "ubuntu-24.04" ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.18
+        with:
+          key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - name: Configure NebulaStream
         run: |
-          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
+        run: cmake --build build --target systest -j -- -k 0
       - name: Run Tests
         shell: bash
         timeout-minutes: 6
