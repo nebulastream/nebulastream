@@ -39,7 +39,7 @@ public:
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
 
     /// Retrieve the reference to the underling memory area from the record buffer.
-    nautilus::val<int8_t*> getBuffer() const;
+    [[nodiscard]] nautilus::val<int8_t*> getBuffer() const;
 
     /// Get the reference to the underlying TupleBuffer
     const nautilus::val<TupleBuffer*>& getReference() const;

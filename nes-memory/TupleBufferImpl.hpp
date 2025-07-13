@@ -16,10 +16,13 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -48,7 +51,7 @@ static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
-constexpr uint32_t alignBufferSize(const uint32_t bufferSize, const uint32_t withAlignment)
+constexpr size_t alignBufferSize(const size_t bufferSize, const uint32_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {
@@ -108,8 +111,8 @@ public:
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
-    [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
-    [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(BufferControlBlock* control);
+    [[nodiscard]] bool loadChildBuffer(VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

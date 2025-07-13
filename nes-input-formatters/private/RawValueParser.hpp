@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <functional>
 #include <string_view>
-
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>

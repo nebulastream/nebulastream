@@ -21,6 +21,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -28,18 +29,6 @@
 
 namespace NES
 {
-
-TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
-{
-    PRECONDITION(bufferPointer != nullptr, "Buffer pointer must not be nullptr");
-    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
-    auto* const buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
-    auto* const memorySegment = block->getOwner();
-    auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
-    tb.retain();
-    return tb;
-}
 
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
 {
@@ -190,20 +179,20 @@ void TupleBuffer::setOriginId(const OriginId id) noexcept
     controlBlock->setOriginId(id);
 }
 
-uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
+VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
     INVARIANT(controlBlock != control, "Cannot attach buffer to self");
-    auto index = controlBlock->storeChildBuffer(control);
+    const auto index = controlBlock->storeChildBuffer(control);
     std::swap(empty, buffer);
     return index;
 }
 
-TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept
+TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
-    auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
+    const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
     INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
     return childBuffer;
 }
@@ -214,15 +203,6 @@ bool recycleTupleBuffer(void* bufferPointer)
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
-}
-
-bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
-{
-    if (used + needed <= this->size)
-    {
-        return true;
-    }
-    return false;
 }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
