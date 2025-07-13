@@ -58,7 +58,7 @@ jobs:
             perf script > "${SYSTEST_NAME}.perf"
             ./Flamegraph/stackcollapse-perf.pl "${SYSTEST_NAME}.perf" > "${SYSTEST_NAME}.folded"
             grep -v 'systest' "./${SYSTEST_NAME}.folded" | grep -v 'StatPrinter' > "${SYSTEST_NAME}.filtered.folded"
-            ./Flamegraph/flamegraph.pl "${SYSTEST_NAME}.filtered.folded" > "${SYSTEST_NAME}.svg"
+            ./Flamegraph/flamegraph.pl --title=" " "${SYSTEST_NAME}.filtered.folded" > "${SYSTEST_NAME}.svg"
           done
       - name: upload svgs and metadata to conbench via curl
         run: |
