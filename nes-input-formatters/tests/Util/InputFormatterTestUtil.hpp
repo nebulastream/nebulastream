@@ -429,7 +429,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
     std::shared_ptr<BufferManager> formattedBufferManager
         = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
-    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
+    auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,

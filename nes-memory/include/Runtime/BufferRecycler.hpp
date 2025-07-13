@@ -13,6 +13,9 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <thread>
+#include <utility>
 
 namespace NES
 {
@@ -20,6 +23,17 @@ namespace detail
 {
 class MemorySegment;
 }
+
+/// Stores necessary information for the recycle unpooled buffer callback
+struct AllocationThreadInfo
+{
+    AllocationThreadInfo(std::thread::id threadId, uint8_t* lastChunkPtr) : threadId(std::move(threadId)), lastChunkPtr(lastChunkPtr) { }
+
+    bool operator==(const AllocationThreadInfo& other) const = default;
+
+    std::thread::id threadId;
+    uint8_t* lastChunkPtr;
+};
 
 ///@brief Interface for buffer recycling mechanism
 class BufferRecycler
@@ -31,7 +45,8 @@ public:
 
     /// @brief Interface method for unpooled buffer recycling
     /// @param buffer the buffer to recycle
-    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
+    /// @param threadCopyLastChunkPtr stores the thread id and last chunk ptr
+    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer, const AllocationThreadInfo& threadCopyLastChunkPtr) = 0;
 };
 
 }
