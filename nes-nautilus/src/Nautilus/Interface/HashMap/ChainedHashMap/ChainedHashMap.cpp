@@ -128,13 +128,21 @@ ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::ra
 
 int8_t* ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
-    auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize);
-    if (not varSizedBuffer)
+    if (varSizedSpace.empty() or varSizedSpace.back().getNumberOfTuples() + neededSize >= varSizedSpace.back().getBufferSize())
     {
-        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
+        static constexpr auto numberOfPreAllocatedSpaces = 100;
+        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * numberOfPreAllocatedSpaces);
+        if (not varSizedBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize * numberOfPreAllocatedSpaces));
+        }
+        varSizedSpace.emplace_back(varSizedBuffer.value());
     }
-    varSizedSpace.emplace_back(varSizedBuffer.value());
-    return varSizedBuffer.value().getBuffer<int8_t>();
+
+    auto& varSizedBuffer = varSizedSpace.back();
+    varSizedBuffer.setNumberOfTuples(varSizedBuffer.getNumberOfTuples() + neededSize);
+    return varSizedBuffer.getMemArea<int8_t>() + varSizedBuffer.getNumberOfTuples() - neededSize;
 }
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
@@ -182,7 +190,9 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         "Invalid page index {} as it is greater than the number of pages {}",
         pageIndex,
         storageSpace.size());
-    auto* page = storageSpace[pageIndex].getBuffer();
+    auto& bufferStorage = storageSpace[pageIndex];
+    bufferStorage.setNumberOfTuples(bufferStorage.getNumberOfTuples() + 1);
+    auto* page = bufferStorage.getMemArea();
     const auto entryOffsetInBuffer = numberOfTuples - (pageIndex * entriesPerPage);
     auto* const newEntry = reinterpret_cast<ChainedHashMapEntry*>(page + (entryOffsetInBuffer * entrySize));
 
@@ -200,10 +210,15 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return newEntry;
 }
 
-const ChainedHashMapEntry* ChainedHashMap::getPage(const uint64_t pageIndex) const
+const TupleBuffer& ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     PRECONDITION(pageIndex < storageSpace.size(), "Page index {} is greater than the number of pages {}", pageIndex, storageSpace.size());
-    return storageSpace[pageIndex].getBuffer<ChainedHashMapEntry>();
+    return storageSpace[pageIndex];
+}
+
+uint64_t ChainedHashMap::getNumberOfPages() const
+{
+    return storageSpace.size();
 }
 
 ChainedHashMapEntry* ChainedHashMap::getStartOfChain(const uint64_t entryIdx) const

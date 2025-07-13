@@ -242,8 +242,7 @@ public:
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
         std::vector<TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
-            resultBufferVec.begin(),
-            resultBufferVec.end(),
+            resultBufferVec,
             [](const TupleBuffer& left, const TupleBuffer& right)
             {
                 if (left.getSequenceNumber() == right.getSequenceNumber())

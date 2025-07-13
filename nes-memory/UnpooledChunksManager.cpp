@@ -99,6 +99,11 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
             const auto localKeyForUnpooledBufferChunk = localLastAllocatedChunkKey;
             currentAllocatedChunk.activeMemorySegments += 1;
             currentAllocatedChunk.usedSize += neededSize;
+            NES_TRACE(
+                "Added tuple buffer {} of {}B to: {}",
+                fmt::ptr(localMemoryForNewTupleBuffer),
+                neededSize,
+                fmt::format("{}", currentAllocatedChunk));
             return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
         }
     }
@@ -124,11 +129,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     currentAllocatedChunk.totalSize = newAllocationSize;
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
-    NES_TRACE(
-        "Added tuple buffer {} of {}B to: {}",
-        fmt::ptr(localMemoryForNewTupleBuffer),
-        neededSize,
-        fmt::format("{}", currentAllocatedChunk));
+    NES_TRACE("Created new chunk {} for tuple buffer {} of {}B", currentAllocatedChunk, fmt::ptr(localMemoryForNewTupleBuffer), neededSize);
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
@@ -168,7 +169,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
             {
                 /// All memory segments have been removed, therefore, we can deallocate the unpooled chunk
                 const auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(copyOLastChunkPtr);
-                auto& extractedChunkControlBlock = extractedChunk.mapped();
+                const auto& extractedChunkControlBlock = extractedChunk.mapped();
                 lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
                 lockedLocalUnpooledBufferData.unlock();
                 copyOfMemoryResource->deallocate(

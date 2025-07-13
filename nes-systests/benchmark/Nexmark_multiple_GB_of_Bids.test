@@ -1,4 +1,4 @@
-# name: milestone/Nexmark_more_data.test
+# name: milestone/Nexmark_multiple_GB_of_Bids.test
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
 # We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
 # groups: [milestone, benchmark, large, Aggregation, Join]
