@@ -131,7 +131,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     }
 }
 
-void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
+void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*, const ThreadIdCopyLastChunkPtr&)
 {
     throw UnknownOperation("This function is not supported here");
 }

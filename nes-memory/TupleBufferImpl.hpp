@@ -49,7 +49,7 @@ static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
-constexpr uint32_t alignBufferSize(const uint32_t bufferSize, const uint32_t withAlignment)
+constexpr size_t alignBufferSize(const size_t bufferSize, const uint32_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {

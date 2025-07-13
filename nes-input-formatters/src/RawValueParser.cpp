@@ -34,7 +34,7 @@ ParseFunctionSignature getBasicStringParseFunction()
         auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        const auto indexToChildBuffer = Memory::MemoryLayouts::writeVarSizedData(tupleBufferFormatted, inputString, bufferProvider);
+        const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBufferFormatted, inputString, bufferProvider);
         *childBufferIndexPointer = indexToChildBuffer;
     };
 }

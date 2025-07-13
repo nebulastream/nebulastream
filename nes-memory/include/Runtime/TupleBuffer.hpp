@@ -195,8 +195,6 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
-    bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
-
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!

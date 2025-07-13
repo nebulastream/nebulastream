@@ -75,7 +75,8 @@ public:
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
     [[nodiscard]] Type& read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        if (not physicalType.isSameDataType<Type>() and physicalType.isSameDataType<Type>()
+            and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>)
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -163,7 +164,7 @@ public:
 
     void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
 
-    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+    std::string readVarSized(std::variant<const uint64_t, const std::string> field) const;
 
     [[nodiscard]] std::string toString(const Schema& schema) const;
 
@@ -415,8 +416,8 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
-                std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
+                auto childBufferIdx = *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[recordIndex][I].getAddressPointer()));
+                std::get<I>(record) = MemoryLayout::readVarSizedDataAsString(this->buffer, childBufferIdx);
             }
             else
             {

@@ -191,7 +191,7 @@ void TupleBuffer::setOriginId(const OriginId id) const noexcept
     controlBlock->setOriginId(id);
 }
 
-uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
+TupleBuffer::NestedTupleBufferKey TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
@@ -215,15 +215,6 @@ bool recycleTupleBuffer(void* bufferPointer)
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
-}
-
-bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
-{
-    if (used + needed <= this->size)
-    {
-        return true;
-    }
-    return false;
 }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
