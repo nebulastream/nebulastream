@@ -155,44 +155,42 @@ public:
     [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
 
     /// @brief sets the used memory in bytes
-    void setUsedMemorySize(uint64_t) const noexcept;
+    void setUsedMemorySize(uint64_t) noexcept;
 
     /// @brief get the watermark as a timestamp
     [[nodiscard]] Timestamp getWatermark() const noexcept;
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(Timestamp value) const noexcept;
+    void setWatermark(Timestamp value) noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
-    void setSequenceNumber(SequenceNumber sequenceNumber) const noexcept;
+    void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
-    void setChunkNumber(ChunkNumber chunkNumber) const noexcept;
+    void setChunkNumber(ChunkNumber chunkNumber) noexcept;
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
     /// @brief set if this is the last chunk of a sequence number
-    void setLastChunk(bool isLastChunk) const noexcept;
+    void setLastChunk(bool isLastChunk) noexcept;
 
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
-    void setCreationTimestampInMS(Timestamp value) const noexcept;
+    void setCreationTimestampInMS(Timestamp value) noexcept;
 
     [[nodiscard]] OriginId getOriginId() const noexcept;
-    void setOriginId(OriginId id) const noexcept;
+    void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;
+    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
-
-    bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
 private:
     /**

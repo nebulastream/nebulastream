@@ -60,14 +60,14 @@ ParseFunctionSignature getBasicStringParseFunction()
     return [](const std::string_view inputString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider& bufferProvider,
-              const RawTupleBuffer& tupleBufferFormatted)
+              const RawTupleBuffer& rawTupleBufferFormatted)
     {
+        auto tupleBuffer = rawTupleBufferFormatted.getUnformattedBuffer();
         auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            const_cast<signed char*>(tupleBufferFormatted.getRawBuffer().getBuffer())
-            + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            tupleBuffer.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        const auto indexToChildBuffer = Memory::MemoryLayouts::writeVarSizedData(tupleBufferFormatted.getRawBuffer(), inputString, bufferProvider);
-        *childBufferIndexPointer = indexToChildBuffer;
+        const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBuffer, inputString, bufferProvider);
+        *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();
     };
 }
 

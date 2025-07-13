@@ -132,9 +132,10 @@ uint32_t DataType::getSizeInBytes() const
         case Type::INT32:
         case Type::UINT32:
         case Type::FLOAT32:
-        case Type::VARSIZED:
-            /// Returning '4' for VARSIZED, because we represent variable sized data with a 'uint32' index to a nested buffer, containing the varsized data
             return 4;
+        case Type::VARSIZED:
+            /// Returning '8' for VARSIZED, because we represent variable sized data with a 'uint64_t' index to a nested buffer, containing the varsized data
+            return 8;
         case Type::VARSIZED_POINTER_REP:
             return sizeof(int8_t*);
         case Type::INT64:

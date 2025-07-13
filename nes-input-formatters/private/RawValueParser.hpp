@@ -33,7 +33,10 @@ enum class QuotationType : uint8_t
 };
 
 using ParseFunctionSignature = std::function<void(
-    std::string_view inputString, size_t writeOffsetInBytes, AbstractBufferProvider& bufferProvider, RawTupleBuffer& tupleBufferFormatted)>;
+    std::string_view inputString,
+    size_t writeOffsetInBytes,
+    AbstractBufferProvider& bufferProvider,
+    RawTupleBuffer& rawTupleBufferFormatted)>;
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -44,11 +47,11 @@ auto parseFieldString()
     return [](const std::string_view fieldValueString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider&,
-              const RawTupleBuffer& tupleBufferFormatted)
+              RawTupleBuffer& rawTupleBufferFormatted)
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            const_cast<signed char*>(tupleBufferFormatted.getRawBuffer().getBuffer())
+            rawTupleBufferFormatted.getUnformattedBuffer().getBuffer()
             + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
     };

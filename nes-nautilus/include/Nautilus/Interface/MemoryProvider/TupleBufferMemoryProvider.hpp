@@ -28,9 +28,10 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-
 /// This class takes care of reading and writing data from/to a TupleBuffer.
-/// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
+/// A TupleBufferMemoryProvider is closely coupled with a memory layout, and we support row and column layouts, currently.
+/// We store multiple variable sized datas in one pooled buffer. If the pooled buffer is not large enough or there are no pooled buffer
+/// available, we fall back to an unpooled buffer.
 class TupleBufferMemoryProvider
 {
 public:
@@ -54,7 +55,6 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    /// @param context: ExecutionContext to be used for the write operation
     virtual void writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
@@ -64,7 +64,7 @@ public:
 
     /// Calculates the number of tuples in the record buffer
     [[nodiscard]] virtual nautilus::val<uint64_t> getNumberOfTuples(const RecordBuffer& recordBuffer) const;
-    [[nodiscard]] virtual nautilus::val<size_t> getTupleSize() const;
+    [[nodiscard]] virtual size_t getTupleSize() const;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

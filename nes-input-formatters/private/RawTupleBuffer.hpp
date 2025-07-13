@@ -68,7 +68,7 @@ public:
 
     void setNumberOfTuples(const uint64_t numberOfTuples) noexcept { this->numberOfTuples = numberOfTuples; }
 
-    void setUsedMemorySize(const uint64_t usedMemorySize) const noexcept { rawBuffer.setUsedMemorySize(usedMemorySize); }
+    void setUsedMemorySize(const uint64_t usedMemorySize) noexcept { rawBuffer.setUsedMemorySize(usedMemorySize); }
 
     /// Allows to emit the underlying buffer without exposing it to the outside
     void emit(PipelineExecutionContext& pec, const PipelineExecutionContext::ContinuationPolicy continuationPolicy) const
@@ -76,7 +76,9 @@ public:
         pec.emitBuffer(rawBuffer, continuationPolicy);
     }
 
-    [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+    [[nodiscard]] const TupleBuffer& getUnformattedBuffer() const noexcept { return rawBuffer; }
+
+    [[nodiscard]] TupleBuffer& getUnformattedBuffer() noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 };

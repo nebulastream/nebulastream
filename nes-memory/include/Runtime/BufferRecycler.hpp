@@ -25,20 +25,11 @@ class MemorySegment;
 }
 
 /// Stores necessary information for the recycle unpooled buffer callback
-struct ThreadIdCopyLastChunkPtr
+struct AllocationThreadInfo
 {
-    ThreadIdCopyLastChunkPtr(std::thread::id threadId, uint8_t* lastChunkPtr)
-        : threadId(std::move(threadId)), lastChunkPtr(lastChunkPtr) { }
+    AllocationThreadInfo(std::thread::id threadId, uint8_t* lastChunkPtr) : threadId(std::move(threadId)), lastChunkPtr(lastChunkPtr) { }
 
-    ThreadIdCopyLastChunkPtr(ThreadIdCopyLastChunkPtr&& other) = default;
-    ThreadIdCopyLastChunkPtr(const ThreadIdCopyLastChunkPtr& other) = default;
-
-    ThreadIdCopyLastChunkPtr& operator=(const ThreadIdCopyLastChunkPtr& other) = default;
-
-    bool operator==(const ThreadIdCopyLastChunkPtr& other) const
-    {
-        return threadId == other.threadId && lastChunkPtr == other.lastChunkPtr;
-    }
+    bool operator==(const AllocationThreadInfo& other) const = default;
 
     std::thread::id threadId;
     uint8_t* lastChunkPtr;
@@ -55,7 +46,7 @@ public:
     /// @brief Interface method for unpooled buffer recycling
     /// @param buffer the buffer to recycle
     /// @param threadCopyLastChunkPtr stores the thread id and last chunk ptr
-    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer, const ThreadIdCopyLastChunkPtr& threadCopyLastChunkPtr) = 0;
+    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer, const AllocationThreadInfo& threadCopyLastChunkPtr) = 0;
 };
 
 }

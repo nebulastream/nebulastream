@@ -231,9 +231,6 @@ public:
             "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
             rawBuffer.getNumberOfBytes(),
             this->schemaInfo.getSizeOfTupleInBytes());
-        /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
-        const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->schemaInfo.getSizeOfTupleInBytes();
-        rawBuffer.setUsedMemorySize(numberOfTuplesInFormattedBuffer * this->schemaInfo.getSizeOfTupleInBytes());
         /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
         rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -317,8 +314,8 @@ private:
                 /// The current raw buffer produces more than one formatted buffer.
                 /// Each formatted buffer has the sequence number of the raw buffer and a chunk number that uniquely identifies it.
                 /// Only the last formatted buffer sets the 'isLastChunk' member to true.
-                auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
-                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, false);
+                auto formattedTupleBuffer = formattedBuffer.getUnformattedBuffer();
+                setMetadataOfFormattedBuffer(rawBuffer.getUnformattedBuffer(), formattedTupleBuffer, runningChunkNumber, false);
                 pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 /// The 'isLastChunk' member of a new buffer is true pre default. If we don't require another buffer, the flag stays true.
                 formattedBuffer = RawTupleBuffer{bufferProvider->getBufferBlocking()};
@@ -389,8 +386,8 @@ private:
             const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes();
             if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->schemaInfo.getSizeOfTupleInBytes())
             {
-                auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
-                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, false);
+                auto formattedTupleBuffer = formattedBuffer.getUnformattedBuffer();
+                setMetadataOfFormattedBuffer(rawBuffer.getUnformattedBuffer(), formattedTupleBuffer, runningChunkNumber, false);
                 pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 formattedBuffer = RawTupleBuffer{bufferProvider->getBufferBlocking()};
             }
@@ -410,8 +407,8 @@ private:
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
         if (formattedBuffer.getNumberOfTuples() != 0)
         {
-            auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
-            setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, true);
+            auto formattedTupleBuffer = formattedBuffer.getUnformattedBuffer();
+            setMetadataOfFormattedBuffer(rawBuffer.getUnformattedBuffer(), formattedTupleBuffer, runningChunkNumber, true);
             pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         }
     }
@@ -447,10 +444,10 @@ private:
             this->inputFormatIndexer,
             this->parseFunctions);
 
-        formattedBuffer.getRawBuffer().setSequenceNumber(rawBuffer.getSequenceNumber());
-        formattedBuffer.getRawBuffer().setChunkNumber(ChunkNumber(runningChunkNumber++));
-        formattedBuffer.getRawBuffer().setOriginId(rawBuffer.getOriginId());
-        pec.emitBuffer(formattedBuffer.getRawBuffer(), PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        formattedBuffer.getUnformattedBuffer().setSequenceNumber(rawBuffer.getSequenceNumber());
+        formattedBuffer.getUnformattedBuffer().setChunkNumber(ChunkNumber(runningChunkNumber++));
+        formattedBuffer.getUnformattedBuffer().setOriginId(rawBuffer.getOriginId());
+        pec.emitBuffer(formattedBuffer.getUnformattedBuffer(), PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 };
 

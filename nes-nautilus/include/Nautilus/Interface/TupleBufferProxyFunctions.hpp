@@ -36,7 +36,7 @@ inline OriginId NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffe
     return tupleBuffer->getOriginId();
 };
 
-inline void NES_Memory_TupleBuffer_setOriginId(const TupleBuffer* tupleBuffer, const OriginId value)
+inline void NES_Memory_TupleBuffer_setOriginId(TupleBuffer* tupleBuffer, const OriginId value)
 {
     tupleBuffer->setOriginId(OriginId(value));
 };
@@ -46,7 +46,7 @@ inline Timestamp NES_Memory_TupleBuffer_getWatermark(const TupleBuffer* tupleBuf
     return tupleBuffer->getWatermark();
 };
 
-inline void NES_Memory_TupleBuffer_setWatermark(const TupleBuffer* tupleBuffer, const Timestamp value)
+inline void NES_Memory_TupleBuffer_setWatermark(TupleBuffer* tupleBuffer, const Timestamp value)
 {
     tupleBuffer->setWatermark(Timestamp(value));
 };
@@ -56,7 +56,7 @@ inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const TupleBuff
     return tupleBuffer->getCreationTimestampInMS();
 };
 
-inline void NES_Memory_TupleBuffer_setSequenceNumber(const TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
+inline void NES_Memory_TupleBuffer_setSequenceNumber(TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
 {
     tupleBuffer->setSequenceNumber(sequenceNumber);
 };
@@ -66,7 +66,7 @@ inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer
     return tupleBuffer->getSequenceNumber();
 }
 
-inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(const TupleBuffer* tupleBuffer, const Timestamp value)
+inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(TupleBuffer* tupleBuffer, const Timestamp value)
 {
     tupleBuffer->setCreationTimestampInMS(Timestamp(value));
 }
@@ -76,17 +76,17 @@ inline uint64_t NES_Memory_TupleBuffer_getUsedMemoryInBytes(const TupleBuffer* t
     return tupleBuffer->getUsedMemorySize();
 }
 
-inline void NES_Memory_TupleBuffer_setUsedMemoryInBytes(const TupleBuffer* tupleBuffer, const uint64_t usedMemory)
+inline void NES_Memory_TupleBuffer_setUsedMemoryInBytes(TupleBuffer* tupleBuffer, const uint64_t usedMemory)
 {
     tupleBuffer->setUsedMemorySize(usedMemory);
 }
 
-inline void NES_Memory_TupleBuffer_setChunkNumber(const TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)
+inline void NES_Memory_TupleBuffer_setChunkNumber(TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)
 {
     tupleBuffer->setChunkNumber(ChunkNumber(chunkNumber));
 };
 
-inline void NES_Memory_TupleBuffer_setLastChunk(const TupleBuffer* tupleBuffer, const bool isLastChunk)
+inline void NES_Memory_TupleBuffer_setLastChunk(TupleBuffer* tupleBuffer, const bool isLastChunk)
 {
     tupleBuffer->setLastChunk(isLastChunk);
 };

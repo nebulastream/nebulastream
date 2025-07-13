@@ -129,14 +129,14 @@ uint64_t TupleBuffer::getUsedMemorySize() const noexcept
     return controlBlock->getUsedMemorySize();
 }
 
-void TupleBuffer::setUsedMemorySize(uint64_t usedMemorySize) const noexcept
+void TupleBuffer::setUsedMemorySize(uint64_t usedMemorySize) noexcept
 {
     INVARIANT(controlBlock != nullptr, "Control block must NOT be null!");
     INVARIANT(usedMemorySize <= size, "Total size of tuple buffer {} must be larger than the usedMemorySize {}", size, usedMemorySize);
     controlBlock->setUsedMemorySize(usedMemorySize);
 }
 
-void TupleBuffer::setWatermark(const Timestamp value) const noexcept
+void TupleBuffer::setWatermark(const Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
@@ -146,7 +146,7 @@ Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
     return controlBlock->getCreationTimestamp();
 }
 
-void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) const noexcept
+void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
@@ -161,12 +161,12 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
     return controlBlock->getSequenceNumber();
 }
 
-void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) const noexcept
+void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
 
-void TupleBuffer::setLastChunk(const bool isLastChunk) const noexcept
+void TupleBuffer::setLastChunk(const bool isLastChunk) noexcept
 {
     controlBlock->setLastChunk(isLastChunk);
 }
@@ -176,17 +176,17 @@ bool TupleBuffer::isLastChunk() const noexcept
     return controlBlock->isLastChunk();
 }
 
-void TupleBuffer::setCreationTimestampInMS(const Timestamp value) const noexcept
+void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
 
-void TupleBuffer::setOriginId(const OriginId id) const noexcept
+void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
 }
 
-uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
+TupleBuffer::NestedTupleBufferKey TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
@@ -210,15 +210,6 @@ bool recycleTupleBuffer(void* bufferPointer)
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
-}
-
-bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
-{
-    if (used + needed <= this->size)
-    {
-        return true;
-    }
-    return false;
 }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
