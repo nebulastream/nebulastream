@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <istream>
 #include <span>
 #include <string>
 #include <utility>
@@ -26,6 +27,8 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -157,11 +160,10 @@ inline void writePagedSizeTupleBufferChunkToFile(
                 {
                     const auto currentTupleOffset = tupleIdx * sizeOfSchemaInBytes;
                     const auto currentTupleVarSizedFieldOffset = currentTupleOffset + varSizedFieldOffset;
-                    const auto childBufferIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + currentTupleVarSizedFieldOffset);
-                    const auto childBufferSize = buffer.loadChildBuffer(childBufferIdx).getBuffer<uint32_t>()[0] + sizeof(uint32_t);
-
-                    const auto childBufferSpan = std::span(buffer.loadChildBuffer(childBufferIdx).getBuffer<const char>(), childBufferSize);
-                    appendFile.write(childBufferSpan.data(), static_cast<std::streamsize>(childBufferSpan.size_bytes()));
+                    const VariableSizedAccess varSizedAccess{
+                        *reinterpret_cast<uint64_t*>(buffer.getMemArea() + currentTupleVarSizedFieldOffset)};
+                    const auto variableSizedData = MemoryLayout::readVarSizedDataAsString(buffer, varSizedAccess);
+                    appendFile.write(variableSizedData.data(), static_cast<std::streamsize>(variableSizedData.size()));
                 }
             }
         }
@@ -238,16 +240,17 @@ inline void writeTupleBuffersToFile(
 
 inline void updateChildBufferIdx(
     TupleBuffer& parentBuffer,
-    const size_t newChildBufferIdx,
+    const VariableSizedAccess::Index newChildBufferIdx,
     const std::vector<size_t>& varSizedFieldOffsets,
     const size_t sizeOfSchemaInBytes)
 {
     /// Write index of child buffer that 'parentBuffer' returned to the corresponding place in the parent buffer
-    const auto tupleIdx = newChildBufferIdx / varSizedFieldOffsets.size();
+    const auto tupleIdx = newChildBufferIdx.getRawIndex() / varSizedFieldOffsets.size();
     const auto tupleByteOffset = tupleIdx * sizeOfSchemaInBytes;
-    const size_t varSizedOffsetIdx = newChildBufferIdx % varSizedFieldOffsets.size();
+    const size_t varSizedOffsetIdx = newChildBufferIdx.getRawIndex() % varSizedFieldOffsets.size();
     const auto varSizedOffset = varSizedFieldOffsets.at(varSizedOffsetIdx) + tupleByteOffset;
-    *reinterpret_cast<uint32_t*>(parentBuffer.getBuffer() + varSizedOffset) = newChildBufferIdx;
+    *reinterpret_cast<uint64_t*>(parentBuffer.getMemArea() + varSizedOffset)
+        = VariableSizedAccess{newChildBufferIdx}.getCombinedIdxOffset();
 }
 
 inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
@@ -281,7 +284,7 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
 
             auto parentBuffer = bufferProvider.getBufferBlocking();
             const auto numBytesInBuffer = bufferHeader.numberOfTuples * sizeOfSchemaInBytes;
-            file.read(parentBuffer.getBuffer<char>(), static_cast<std::streamsize>(numBytesInBuffer));
+            file.read(parentBuffer.getMemArea<char>(), static_cast<std::streamsize>(numBytesInBuffer));
 
 
             for (size_t childBufferIdx = 0; childBufferIdx < bufferHeader.numberChildBuffers; ++childBufferIdx)

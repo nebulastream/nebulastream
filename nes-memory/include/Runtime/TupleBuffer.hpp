@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Time/Timestamp.hpp>
 
@@ -78,20 +79,8 @@ class TupleBuffer
     }
 
 public:
-    ///@brief This is the logical identifier of a child tuple buffer
-    using NestedTupleBufferKey = uint32_t;
-
-
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
-
-    /**
-     * @brief Interprets the void* as a pointer to the content of tuple buffer
-     * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
-     * @param bufferPointer
-     * @return TupleBuffer
-     */
-    [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
@@ -187,14 +176,12 @@ public:
     void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;
+    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(TupleBuffer& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
-    [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
+    [[nodiscard]] TupleBuffer loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
-
-    bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
 private:
     /**
@@ -212,20 +199,4 @@ private:
  * @param bufferPointer pointer to the data region of an buffer.
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
-
-/**
- * @brief Allocates an object of T in the tuple buffer.
- * Set the number of tuples to one.
- * @tparam T
- * @param buffer
- * @return T+
- */
-template <typename T>
-T* allocateWithin(TupleBuffer& buffer)
-{
-    auto ptr = new (buffer.getBuffer()) T();
-    buffer.setNumberOfTuples(1);
-    return ptr;
-};
-
 }

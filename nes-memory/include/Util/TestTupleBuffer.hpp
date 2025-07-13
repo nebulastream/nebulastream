@@ -25,7 +25,9 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -72,10 +74,12 @@ public:
     /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
-    requires(IsNesType<Type> && not std::is_pointer<Type>::value)
+    requires(IsNesType<Type> && not std::is_pointer_v<Type>)
     [[nodiscard]] Type& read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
+        if (not physicalType.isSameDataType<Type>()
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -87,10 +91,12 @@ public:
     /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
-    requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
+    requires(NESIdentifier<Type> && not std::is_pointer_v<Type>)
     inline Type read() const
     {
-        if (not physicalType.isSameDataType<typename Type::Underlying>())
+        /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
+        if (not physicalType.isSameDataType<Type>()
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -161,9 +167,10 @@ public:
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::string fieldName) const;
 
-    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
+    void
+    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider);
 
-    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+    [[nodiscard]] std::string readVarSized(std::variant<const uint64_t, const std::string> field) const;
 
     [[nodiscard]] std::string toString(const Schema& schema) const;
 
@@ -414,8 +421,9 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
-                std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
+                const VariableSizedAccess childBufferIdx{
+                    *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[recordIndex][I].getAddressPointer()))};
+                std::get<I>(record) = MemoryLayout::readVarSizedDataAsString(this->buffer, childBufferIdx);
             }
             else
             {

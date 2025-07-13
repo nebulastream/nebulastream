@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <span>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -46,11 +47,12 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {
-        auto childBuffer = buffer.loadChildBuffer(childIdx);
+        const VariableSizedAccess::Index varSizedIndex{childIdx};
+        auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
         INVARIANT(
-            ret == childIdx,
+            ret == varSizedIndex,
             "Child buffer index: {}, does not match index: {}",
             childIdx,
             copiedBuffer.storeChildBuffer(copiedChildBuffer));

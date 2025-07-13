@@ -65,7 +65,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
-    constexpr auto maxSizeVarSizedData = 20;
+    const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
@@ -196,8 +196,9 @@ void NautilusTestUtils::compileFillBufferFunction(
                 else if (field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
-                        +[](const TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
+                        +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
                         {
+                            INVARIANT(inputBuffer != nullptr, "InputTuplebuffer MUST NOT be null at this point");
                             /// Creating a random string of the given size
                             auto randchar = []() -> char
                             {
@@ -209,9 +210,9 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto varSizedPosition = writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal).value();
-                            const auto varSizedDataBuffer = inputBuffer->loadChildBuffer(varSizedPosition);
-                            return varSizedDataBuffer.getBuffer();
+                            const auto combinedIdxOffset
+                                = MemoryLayout::writeVarSizedDataAndPrependLength(*inputBuffer, *bufferProviderVal, randomString);
+                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset);
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
