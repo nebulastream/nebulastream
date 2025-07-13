@@ -54,6 +54,7 @@ class FlamegraphUploader():
             resp = FlamegraphUploader.client.post("/flamegraphs/", upload_dict)
             # Absolutely hacky way to upload a files using conbench internals
             # _make_request() uses pythons Session.make_request use we can use the files={}
+            # to upload files. Additionally, auth cookie has already been set by the client on login
             with open(svg_file, "rb") as f:
                 files = {"file": (svg_file, f)}
 
