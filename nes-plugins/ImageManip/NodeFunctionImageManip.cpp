@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -27,6 +28,7 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -97,7 +99,16 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
        {"ImageManipToBase64",
         ImageManipFunction(
             DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
-            std::vector{DataTypeProvider::provideDataType(DataType::Type::VARSIZED)})}};
+            std::vector{DataTypeProvider::provideDataType(DataType::Type::VARSIZED)})},
+
+        {"ImageManipFromBase64ToTensor",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
+            std::vector{
+            DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
+            DataTypeProvider::provideDataType(DataType::Type::UINT64),
+            DataTypeProvider::provideDataType(DataType::Type::UINT64)})}};
+
 
 ImageManipLogicalFunction::ImageManipLogicalFunction(DataType stamp, std::string type, std::vector<LogicalFunction> children)
     : functionName(std::move(type)), children(std::move(children)), dataType(std::move(stamp))
@@ -186,5 +197,6 @@ namespace LogicalFunctionGeneratedRegistrar
 
 ImageManipFunction(ToBase64);
 ImageManipFunction(FromBase64);
+ImageManipFunction(FromBase64ToTensor);
 }
 }
