@@ -38,6 +38,7 @@ public:
         = {"testDataDir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     StringOption configDir
         = {"configDir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
+    StringOption logFilePath = {"logFilePath", "Path to the log file"};
     StringOption directlySpecifiedTestFiles
         = {"directlySpecifiedTestFiles",
            "",
