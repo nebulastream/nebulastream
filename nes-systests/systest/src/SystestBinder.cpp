@@ -484,12 +484,12 @@ struct SystestBinder::Impl
                     {
                         return;
                     }
-                    throw UnknownSource(
+                    throw UnknownSourceName(
                         "Failed to attach physical source with type {} to logical source {}",
                         attachSource.sourceType,
                         attachSource.logicalSourceName);
                 }
-                throw UnknownSource("Failed to attach physical source to logical source: {}", attachSource.logicalSourceName);
+                throw UnknownSourceName("Failed to attach physical source to logical source: {}", attachSource.logicalSourceName);
             });
 
         /// We create a new query plan from our config when finding a query
