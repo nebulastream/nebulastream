@@ -309,7 +309,6 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
         printQueryResultToStdOut(
             *ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
-        ranQueries.emplace_back(ranQueries.back());
 
         queryFinishedCounter += 1;
     }
