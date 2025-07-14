@@ -165,7 +165,7 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         if (not logicalSource.has_value())
         {
-            throw UnknownSource("{}", logicalSourceName);
+            throw UnknownSourceName("{}", logicalSourceName);
         }
         PRECONDITION(
             sourceConfig.contains(std::string{Configurations::SOURCE_TYPE_CONFIG}),
@@ -194,7 +194,7 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
             validInputFormatterConfig);
         if (not sourceDescriptorOpt.has_value())
         {
-            throw UnknownSource("{}", logicalSource.value().getLogicalSourceName());
+            throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());
         }
         boundSources.push_back(sourceDescriptorOpt.value());
     }
