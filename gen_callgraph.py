@@ -29,8 +29,7 @@ def parse_callgraph_text(cg):
 
     for line in cg.split("\n"):
         if line == "":
-            if cur_callees and cur_caller.startswith("_ZN3NES"):
-                callers[cur_caller] = cur_callees
+            callers[cur_caller] = cur_callees
         elif line.startswith("Call graph node <<null function>>"):
             pass
         elif line.startswith("Call graph node for function"):
