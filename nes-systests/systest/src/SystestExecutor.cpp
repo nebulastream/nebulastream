@@ -73,6 +73,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     /// list queries
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
 
+    /// log path
+    program.add_argument("--log-path").help("set the logging path");
+
     /// debug mode
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
 
@@ -154,6 +157,11 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     if (program.is_used("--data"))
     {
         config.testDataDir = program.get<std::string>("--data");
+    }
+
+    if (program.is_used("--log-path"))
+    {
+        config.logFilePath = program.get<std::string>("--log-path");
     }
 
     if (program.is_used("--testLocation"))
@@ -382,42 +390,63 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
     }
 }
 
-void setupLogging()
+void setupLogging(const SystestConfiguration& config)
 {
     const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
 
-    std::error_code errorCode;
-    std::filesystem::create_directories(logDir, errorCode);
-    if (errorCode)
+    std::filesystem::path absoluteLogPath;
+    if (config.logFilePath.getValue().empty())
     {
-        std::cerr << "Error creating log directory during logger setup: " << errorCode.message() << "\n";
-        return;
-    }
+        std::error_code errorCode;
+        create_directories(logDir, errorCode);
+        if (errorCode)
+        {
+            std::cerr << "Error creating log directory during logger setup: " << errorCode.message() << "\n";
+            return;
+        }
 
-    const auto now = std::chrono::system_clock::now();
-    const auto pid = ::getpid();
-    const auto logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
+        const auto now = std::chrono::system_clock::now();
+        const auto pid = ::getpid();
+        std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
 
-    const auto absoluteLogPath = logDir / logFileName;
-    NES::Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
-    if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
-    {
-        /// Set the correct logging path when using docker
-        fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", std::filesystem::path(hostLoggingPath).string(), logFileName);
+        absoluteLogPath = logDir / logFileName;
+
+        if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
+        {
+            /// Set the correct logging path when using docker
+            fmt::println(
+                std::cout, "Find the log at: file://{}/nes-systests/{}", std::filesystem::path(hostLoggingPath).string(), logFileName);
+        }
+        else
+        {
+            /// Set the correct logging path without docker
+            fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", PATH_TO_BINARY_DIR, logFileName);
+        }
+
+        Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
+
+        const auto symlinkPath = logDir / "latest.log";
+        createSymlink(absoluteLogPath, symlinkPath);
     }
     else
     {
-        /// Set the correct logging path without docker
-        fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", PATH_TO_BINARY_DIR, logFileName);
-    }
+        const std::filesystem::path absoluteLogPath = config.logFilePath.getValue();
+        const std::filesystem::path parentDir = absoluteLogPath.parent_path();
 
-    const auto symlinkPath = logDir / "latest.log";
-    createSymlink(absoluteLogPath, symlinkPath);
+        if (not exists(parentDir) or not is_directory(parentDir))
+        {
+            fmt::println(std::cerr, "Error creating log file during logger setup: directory does not exist: file://{}", parentDir.string());
+            std::exit(1); /// NOLINT(concurrency-mt-unsafe)
+        }
+        fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
+
+        Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
+    }
 }
 
 SystestExecutorResult executeSystests(SystestConfiguration config)
 {
-    setupLogging();
+    setupLogging(config);
 
     CPPTRACE_TRY
     {
