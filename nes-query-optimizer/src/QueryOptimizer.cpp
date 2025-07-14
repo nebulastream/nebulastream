@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <QueryOptimizer.hpp>
 
 #include <QueryOptimizer.hpp>
 
@@ -20,11 +21,12 @@
 
 namespace NES
 {
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
+PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just lower to physical operators in a pure function.
-    return LowerToPhysicalOperators::apply(plan, conf);
+    LowerToPhysicalOperators lowerToPhysicalOperators(conf);
+    return lowerToPhysicalOperators.apply(plan);
 }
 
 }

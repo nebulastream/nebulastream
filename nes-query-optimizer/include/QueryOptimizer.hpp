@@ -27,7 +27,7 @@ class QueryOptimizer final
 public:
     explicit QueryOptimizer(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { };
     /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan);
+    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan) const;
 
 private:
     NES::Configurations::QueryOptimizerConfiguration conf;
