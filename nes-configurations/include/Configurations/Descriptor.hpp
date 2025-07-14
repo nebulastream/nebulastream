@@ -22,10 +22,12 @@
 #include <unordered_map>
 #include <utility>
 #include <variant>
+
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
@@ -298,6 +300,18 @@ struct Descriptor
             return std::get<typename ConfigParameter::Type>(value);
         }
         NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        return std::nullopt;
+    }
+
+    template <typename ConfigParameterType>
+    std::optional<ConfigParameterType> tryGetFromConfig(const std::string& configParameter) const
+    {
+        if (config.contains(configParameter) && std::holds_alternative<ConfigParameterType>(config.at(configParameter)))
+        {
+            const auto& value = config.at(configParameter);
+            return std::get<ConfigParameterType>(value);
+        }
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameterType).name());
         return std::nullopt;
     }
 

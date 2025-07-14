@@ -33,7 +33,7 @@ namespace NES::Systest
 {
 
 /// Returns an error message or an empty optional if the query result is correct
-std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap);
+std::optional<std::string> checkResult(const RunningQuery& runningQuery);
 
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right)

@@ -61,13 +61,12 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
     parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
-        [&](const SystestParser::ErrorExpectation&)
+        [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
         {
             /// nop, ensure parsing
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -81,12 +80,11 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
-        [&](const SystestParser::ErrorExpectation&)
+        [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
         {
             /// nop, ensure parsing
         });
 
-    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
@@ -103,8 +101,6 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
 
-
-    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }

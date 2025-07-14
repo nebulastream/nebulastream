@@ -27,6 +27,7 @@
 #include <string_view>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -628,13 +629,13 @@ private:
     ActualResultTuples actualResults;
 };
 
-QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery, const NES::Systest::QueryResultMap& queryResultMap)
+QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 {
     /// Get result for running query
-    const auto queryResult = loadQueryResult(runningQuery.query);
+    const auto queryResult = loadQueryResult(runningQuery.systestQuery);
     if (not queryResult.has_value())
     {
-        return QueryCheckResult{fmt::format("Failed to load query result for query: ", runningQuery.query.queryDefinition)};
+        return QueryCheckResult{fmt::format("Failed to load query result for query: ", runningQuery.systestQuery.queryDefinition)};
     }
 
     const QuerySchemasAndResults querySchemasAndResults = [&]()
@@ -642,21 +643,13 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery, cons
         auto [actualSchemaResult, actualQueryResult] = queryResult.value();
 
         /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-        auto expectedQueryResult = [](const NES::Systest::RunningQuery& query, const NES::Systest::QueryResultMap& resultMap)
-        {
-            const auto currentQuery = resultMap.find(query.query.resultFile());
-            INVARIANT(
-                currentQuery != resultMap.end(),
-                "Could not find query {}:{} in result map.",
-                query.query.sqlLogicTestFile,
-                query.query.queryIdInFile);
-            return currentQuery->second;
-        }(runningQuery, queryResultMap);
+        auto expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
+        INVARIANT(std::holds_alternative<std::vector<std::string>>(expectedQueryResult), "Systest was expected to have an expected result");
 
         return QuerySchemasAndResults(
-            ExpectedResultSchema(runningQuery.query.expectedSinkSchema),
+            ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchema),
             ActualResultSchema(actualSchemaResult),
-            std::move(expectedQueryResult),
+            std::get<std::vector<std::string>>(expectedQueryResult),
             std::move(actualQueryResult));
     }();
 
@@ -673,14 +666,8 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery, cons
 namespace NES::Systest
 {
 
-std::optional<std::string> checkResult(const RunningQuery& runningQuery, const QueryResultMap& queryResultMap)
+std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 {
-    PRECONDITION(
-        runningQuery.query.queryIdInFile.getRawValue() <= queryResultMap.size(),
-        "No results for query with id {}. Only {} results available.",
-        runningQuery.query.queryIdInFile,
-        queryResultMap.size());
-
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
                                                               "---------------";
@@ -688,7 +675,7 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery, const Q
                                                               "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
                                                               "-------------------------------------------------";
 
-    switch (const auto checkQueryResult = checkQuery(runningQuery, queryResultMap); checkQueryResult.type)
+    switch (const auto checkQueryResult = checkQuery(runningQuery); checkQueryResult.type)
     {
         case QueryCheckResult::Type::QUERY_NOT_FOUND: {
             return checkQueryResult.queryError;

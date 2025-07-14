@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Functions/FieldAccessLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +22,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -81,7 +83,10 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     const auto existingField = schema.getFieldByName(fieldName);
-    INVARIANT(existingField, "field is not part of the schema");
+    if (!existingField)
+    {
+        throw CannotInferSchema("field {} is not part of the schema {}", fieldName, schema);
+    }
 
     auto copy = *this;
     copy.dataType = existingField.value().dataType;

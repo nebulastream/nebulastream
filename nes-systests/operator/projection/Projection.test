@@ -183,3 +183,14 @@ SELECT id AS new_id, value FROM stream INTO sinkRenamedIdValue;
 5,19
 6,20
 7,21
+
+
+# Negative test, mismatch sink schema and input
+SELECT id, value FROM stream INTO sinkId
+----
+ERROR 2003
+
+
+SELECT doesnotexist FROM stream INTO sinkId
+----
+ERROR 2003
