@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <LegacyOptimizer/SourceInferencePhase.hpp>
+
 #include <algorithm>
 #include <ranges>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -39,7 +40,7 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
         auto logicalSourceOpt = sourceCatalog->getLogicalSource(source.getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
-            throw UnknownSource("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
+            throw UnknownSourceName("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
         schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
