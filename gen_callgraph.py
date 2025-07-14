@@ -48,21 +48,42 @@ def parse_callgraph_text(cg):
     return callers
 
 
+def shitty_make_caching(source, result):
+    src_stat = Path(source).stat()
+    try:
+        res_stat = Path(result).stat()
+    except FileNotFoundError:
+        return None
+
+    assert src_stat.st_mtime >= src_stat.st_ctime
+    assert res_stat.st_mtime >= res_stat.st_ctime
+
+    # result is older than source
+    if res_stat.st_mtime < src_stat.st_mtime:
+        return None
+
+    with open(result, encoding="utf-8") as f:
+        return f.read()
+
+
 def compute_callgraph(args):
-    cmd_arr, cwd, out = args
+    cmd_arr, cwd, out, in_cpp = args
+
+    out_cg = cwd + "/" + out.replace(".bc", ".cg")
+    if callgraph := shitty_make_caching(in_cpp, out_cg):
+        return callgraph
+
     try:
         subprocess.run(cmd_arr, check=True, cwd=cwd)
     except:
         print("error running:" " ".join(cmd_arr))
         return None
 
-    out = cwd + "/" + out.replace(".o", ".bc")
-
-    if not Path(out).exists():
-        print(out)
+    out = cwd + "/" + out
+    assert Path(out).exists()
 
     callgraph = subprocess.run(["opt-19", "-passes=print-callgraph", "-disable-output", out], capture_output=True, text=True, check=True).stderr
-    with open(out.replace(".bc", ".cg"), "w") as f:
+    with open(out.replace(".bc", ".cg"), "w", encoding="utf-8") as f:
         f.write(callgraph)
     
     return callgraph
@@ -132,7 +153,7 @@ def main():
 
     jobs = []
 
-    output_regex = re.compile(" -o (.*) -c ")
+    output_regex = re.compile(" -o (.*) -c (.*)")
 
     for cmd in compile_cmds:
         if "_generated_src" in cmd["output"]:
@@ -140,10 +161,10 @@ def main():
 
         c = cmd["command"].replace(".o ", ".bc ")
         c = c.replace('\\"', '"')
-        out_file = output_regex.findall(c)[0]
+        out_file, in_file = output_regex.findall(c)[0]
         cmd_arr = c.split(" ")
         cmd_arr += ["-emit-llvm", "-O0"]
-        jobs.append((cmd_arr, cmd["directory"], out_file))
+        jobs.append((cmd_arr, cmd["directory"], out_file, in_file))
 
     with multiprocessing.Pool(32) as p:
         callers = {}
