@@ -85,7 +85,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
         return f'#{red:02x}{green:02x}{blue:02x}'
 
-    drawn_fns = set()
+    drawn_fns = {}
 
     ret = []
 
@@ -97,14 +97,25 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
                 continue # check if we miss anything important here
             demngld_name = fun["name"]
             mangled_name = elgnamed[demngld_name]
-            drawn_fns.add(mangled_name)
-            ret.append(f'{mangled_name} [label="{demngld_name[:10]}", tooltip="{demngld_name}", color="{cov_percent_to_color(fun["blocks_percent"])}"];')
+            drawn_fns[mangled_name] = f'{mangled_name} [label="{demngld_name[:10]}", tooltip="{demngld_name}", color="{cov_percent_to_color(fun["blocks_percent"])}"];'
+
+    act_drawn_fn = {}
     
     for drawn_fn in drawn_fns:
+        act_drawn_fn[drawn_fn] = []
         if drawn_fn in callers:
             for callee in callers[drawn_fn]:
                 if callee in drawn_fns:
-                    ret.append(f"{drawn_fn} -> {callee};")
+                    act_drawn_fn[drawn_fn].append(callee)
+
+    for fn in act_drawn_fn:
+        if act_drawn_fn[fn]:
+            ret.append(drawn_fns[fn])
+
+    for fn in act_drawn_fn:
+        for callee in act_drawn_fn[fn]:
+            ret.append(f"{fn} -> {callee};")
+
     ret.append("}")
 
     return "\n".join(ret).replace("$", "_")
