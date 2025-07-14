@@ -59,7 +59,8 @@ public:
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool sequentialProcessing);
 
     ~WindowBasedOperatorHandler() override = default;
 
@@ -96,6 +97,7 @@ protected:
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;
+    bool sequentialProcessing = false;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
 };

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
+
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -22,11 +24,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Strings.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -83,6 +85,55 @@ Successor processSuccessor(
     return processOperatorPipeline(pipeline, pipelineQueryPlan, loweringContext);
 }
 
+/// This functions injects a formatter in between sources and its successor pipelines.
+/// The formatter is chosen based on the SourceDescriptor ParserConfig.
+/// If the `raw` input formatter is used, no additional pipelines are injected.
+/// The Return values of this function is the list of successors which the source should emit to.
+std::vector<std::weak_ptr<ExecutablePipeline>> injectFormatter(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const SourcePhysicalOperator& sourceOperator,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
+{
+    const auto descriptor = sourceOperator.getDescriptor();
+    if (NES::Util::toLowerCase(descriptor.getParserConfig().parserType) == "raw")
+    {
+        std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+        for (const auto& successor : pipeline->getSuccessors())
+        {
+            if (auto executableSuccessor = processSuccessor(sourceOperator.getOriginId(), successor, pipelineQueryPlan, loweringContext))
+            {
+                executableSuccessorPipelines.emplace_back(*executableSuccessor);
+            }
+        }
+        return executableSuccessorPipelines;
+    }
+
+    /// Inject a formatter
+    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+        descriptor.getParserConfig().parserType,
+        *descriptor.getLogicalSource().getSchema(),
+        descriptor.getParserConfig().tupleDelimiter,
+        descriptor.getParserConfig().fieldDelimiter);
+
+    auto inputFormatterTask
+        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
+    auto executableInputFormatterPipeline = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTask), {});
+
+    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+    for (const auto& successor : pipeline->getSuccessors())
+    {
+        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor, pipelineQueryPlan, loweringContext))
+        {
+            executableSuccessorPipelines.emplace_back(*executableSuccessor);
+        }
+    }
+    executableInputFormatterPipeline->successors = std::move(executableSuccessorPipelines);
+    loweringContext.pipelineToExecutableMap.emplace(executableInputFormatterPipeline->id, executableInputFormatterPipeline);
+
+    return {executableInputFormatterPipeline};
+}
+
 void processSource(
     const std::shared_ptr<Pipeline>& pipeline,
     const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
@@ -93,35 +144,10 @@ void processSource(
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
-    const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceOperator.getDescriptor().getParserConfig().parserType,
-        *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
-        sourceOperator.getDescriptor().getParserConfig().tupleDelimiter,
-        sourceOperator.getDescriptor().getParserConfig().fieldDelimiter);
-    auto inputFormatterTask
-        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
-
-    auto executableInputFormatterPipeline
-        = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
-
-    for (const auto& successor : pipeline->getSuccessors())
-    {
-        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor, pipelineQueryPlan, loweringContext))
-        {
-            executableInputFormatterPipeline->successors.emplace_back(*executableSuccessor);
-        }
-    }
-
-    /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
-    pipelineQueryPlan->removePipeline(*pipeline);
-
-    std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
-
-    loweringContext.pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
-    inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
-
-    loweringContext.sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
+    loweringContext.sources.emplace_back(
+        sourceOperator.getOriginId(),
+        sourceOperator.getDescriptor(),
+        injectFormatter(pipeline, sourceOperator, pipelineQueryPlan, loweringContext));
 }
 
 void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)

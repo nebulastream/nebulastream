@@ -68,6 +68,24 @@ message SerializableEnumWrapper {
     string value = 1;
 }
 
+message ModelOutputParameter {
+  string name = 1;
+  SerializableDataType type = 2;
+}
+
+message SerializableModel {
+  bytes bytecode = 1;
+  int32 dims = 2;
+  repeated int32 shape = 3;
+  int32 outputDims = 4;
+  repeated int32 outputShape = 5;
+  int32 inputSizeInBytes = 6;
+  int32 outputSizeInBytes = 7;
+  string functionName = 8;
+  repeated SerializableDataType inputs = 9;
+  repeated ModelOutputParameter outputs = 10;
+}
+
 message SerializableVariantDescriptor {
   oneof value {
     int32 int_value = 1;
@@ -83,5 +101,6 @@ message SerializableVariantDescriptor {
     FunctionList function_list = 11;
     AggregationFunctionList aggregation_function_list = 12;
     WindowInfos window_infos = 13;
+    SerializableModel model = 14;
   }
 }

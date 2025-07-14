@@ -133,30 +133,34 @@ public:
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-private:
-    class ThreadOwnershipInfo
+    class Retain
     {
         friend class BufferControlBlock;
 
-    private:
         std::string threadName;
         cpptrace::raw_trace callstack;
 
     public:
-        ThreadOwnershipInfo();
-
-        ThreadOwnershipInfo(std::string&& threadName, cpptrace::raw_trace&& callstack);
-
-        ThreadOwnershipInfo(const ThreadOwnershipInfo&) = default;
-
-        ThreadOwnershipInfo& operator=(const ThreadOwnershipInfo&) = default;
-
-        friend std::ostream& operator<<(std::ostream& os, const ThreadOwnershipInfo& info)
+        Retain(std::string thread_name, cpptrace::raw_trace callstack) : threadName(std::move(thread_name)), callstack(std::move(callstack))
         {
-            os << info.threadName << " buffer is used in " << info.callstack.resolve();
-            return os;
         }
     };
+
+    class Release
+    {
+        friend class BufferControlBlock;
+
+        std::string threadName;
+        cpptrace::raw_trace callstack;
+
+    public:
+        Release(std::string thread_name, cpptrace::raw_trace callstack)
+            : threadName(std::move(thread_name)), callstack(std::move(callstack))
+        {
+        }
+    };
+
+    using ThreadOwnershipInfo = std::variant<Retain, Release>;
     std::mutex owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif

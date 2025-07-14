@@ -48,6 +48,10 @@ public:
     void exitFunctionCall(AntlrSQLParser::FunctionCallContext* context) override;
     void enterHavingClause(AntlrSQLParser::HavingClauseContext* context) override;
     void exitHavingClause(AntlrSQLParser::HavingClauseContext* context) override;
+    void enterInference(AntlrSQLParser::InferenceContext* context) override;
+    void exitInference(AntlrSQLParser::InferenceContext* context) override;
+    void enterInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context) override;
+    void exitInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context) override;
     void enterJoinRelation(AntlrSQLParser::JoinRelationContext* context) override;
     void exitJoinRelation(AntlrSQLParser::JoinRelationContext* context) override;
     void enterWindowClause(AntlrSQLParser::WindowClauseContext* context) override;

@@ -113,8 +113,9 @@ int main(int argc, char** argv)
         }
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog};
-        auto optimizer = NES::CLI::LegacyOptimizer{sourceCatalog};
+        auto modelCatalog = std::make_shared<NES::Nebuli::Inference::ModelCatalog>();
+        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, modelCatalog};
+        auto optimizer = NES::CLI::LegacyOptimizer{sourceCatalog, modelCatalog};
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
