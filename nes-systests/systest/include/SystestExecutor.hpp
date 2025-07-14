@@ -45,7 +45,7 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
 void loadConfig(const argparse::ArgumentParser& program, SystestConfiguration& config);
 SystestConfiguration readConfiguration(int argc, const char** argv);
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath);
-void setupLogging();
+void setupLogging(const SystestConfiguration& config);
 
 SystestExecutorResult executeSystests(SystestConfiguration config);
 
