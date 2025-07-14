@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  nebulastream:
+    build:
+      context: .
+      dockerfile: Benchmark.dockerfile
+    privileged: true
+    environment:
+      CCACHE_DIR: /ccache
+      MOLD_JOBS: 1
+      CONBENCH_PROJECT_COMMIT: "3a45af1c3d64baf53319d2d384b4e6431d05c8c5"
+      CONBENCH_URL: "http://127.0.0.1:5000"
+      CONBENCH_EMAIL: "user@example.com"
+      CONBENCH_PASSWORD: "string"
+      CONBENCH_PROJECT_REPOSITORY: "https://github.com/CatchACode/conbench-nebulastream"
+      CONBENCH_RUN_REASON: "Testing the script"
+      CONBENCH_MACHINE_INFO_NAME: "Github Runner"
+    volumes:
+      - ccache:/ccache
+      - test-file-cache:/test-file-cache
+      - /home/klaas/CLionProjects/nebulastream:/tmp/nebulastream
+volumes:
+  ccache:
+  test-file-cache:
