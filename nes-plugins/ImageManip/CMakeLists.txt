@@ -13,9 +13,14 @@
 
 add_plugin("ImageManipToBase64" LogicalFunction nes-logical-operators NodeFunctionImageManip.cpp)
 add_plugin("ImageManipFromBase64" LogicalFunction nes-logical-operators NodeFunctionImageManip.cpp)
+add_plugin("ImageManipFromBase64ToTensor" LogicalFunction nes-logical-operators NodeFunctionImageManip.cpp)
 
 add_plugin_as_library("ImageManipToBase64" PhysicalFunction nes-physical-operators image-manip-functions ExecutableFunctionImageManip.cpp)
 add_plugin("ImageManipFromBase64" PhysicalFunction image-manip-functions ExecutableFunctionImageManip.cpp)
+add_plugin("ImageManipFromBase64ToTensor" PhysicalFunction image-manip-functions ExecutableFunctionImageManip.cpp)
 
 find_package(OpenSSL CONFIG REQUIRED)
-target_link_libraries(image-manip-functions PRIVATE OpenSSL::SSL)
+find_package(OpenCV CONFIG REQUIRED)
+
+target_link_libraries(image-manip-functions PRIVATE OpenSSL::SSL opencv_imgproc opencv_objdetect opencv_imgcodecs)
+target_include_directories(image-manip-functions PRIVATE ${OpenCV_INCLUDE_DIRS})

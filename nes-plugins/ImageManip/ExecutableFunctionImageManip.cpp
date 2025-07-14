@@ -15,7 +15,9 @@
 #include <cstdint>
 #include <numeric>
 #include <ranges>
-
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -79,6 +81,26 @@ VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
     return output;
 }
 
+VariableSizedData
+fromBase64ToTensor(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
+{
+    auto imageTensor = arena.allocateVariableSizedData(width * height * 3);
+    nautilus::invoke(
+        +[](int8_t* inputData, uint32_t inputSize, int8_t* dest, const uint64_t width, const uint64_t height)
+        {
+            const cv::Mat input(1, inputSize, CV_8UC1, inputData);
+            cv::Mat output(height, width, CV_8UC1, dest);
+            cv::imdecode(input, cv::IMREAD_UNCHANGED, &output);
+        },
+        input.getContent(),
+        input.getContentSize(),
+        imageTensor.getContent(),
+        width,
+        height);
+
+    return imageTensor;
+}
+
 VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena) const
 {
     if (functionName == "ToBase64")
@@ -88,6 +110,13 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
     else if (functionName == "FromBase64")
     {
         return fromBase64(childFunctions[0].execute(record, arena).cast<VariableSizedData>(), arena);
+    }
+    else if (functionName == "FromBase64ToTensor")
+    {
+        auto image = childFunctions[0].execute(record, arena).cast<VariableSizedData>();
+        auto width = childFunctions[1].execute(record, arena).cast<nautilus::val<uint64>>();
+        auto height = childFunctions[2].execute(record, arena).cast<nautilus::val<uint64>>();
+        return fromBase64ToTensor(fromBase64(image, arena), width, height, arena);
     }
     throw NotImplemented("ImageManip{} is not implemented!", functionName);
 }
@@ -106,4 +135,5 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
 
 ImageManipFunction(ToBase64);
 ImageManipFunction(FromBase64);
+ImageManipFunction(FromBase64ToTensor);
 }
