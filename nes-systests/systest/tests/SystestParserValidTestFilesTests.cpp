@@ -18,6 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -68,13 +69,12 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool attachSourceCallbackCalled = false;
 
     SystestParser parser{};
-    QueryResultMap queryResultMap;
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
     parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { logicalSourceCallbackCalled = true; });
     parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { attachSourceCallbackCalled = true; });
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "valid.dummy";
     ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
@@ -164,7 +164,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     bool attachSourceCallbackCalled = false;
 
     SystestParser parser{};
-    QueryResultMap queryResultMap;
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnSystestLogicalSourceCallback(
         [&logicalSourceCallbackCalled, &expectedLogicalSource](const SystestParser::SystestLogicalSource& source)
         {
@@ -193,9 +193,10 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
                 and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
@@ -286,7 +287,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     bool attachSourceCallbackCalled = false;
 
     SystestParser parser{};
-    QueryResultMap queryResultMap;
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnSystestLogicalSourceCallback(
         [&](const SystestParser::SystestLogicalSource& source)
         {
@@ -315,9 +316,10 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
                 and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
@@ -351,7 +353,8 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
     parser.registerOnSystestAttachSourceCallback([](const SystestAttachSource&) { /* parses input tuples */ });
 
     parser.registerOnErrorExpectationCallback(
-        [&errorCallbackCalled, &expectErrorMessage, &expectErrorCode](const SystestParser::ErrorExpectation& expectation)
+        [&errorCallbackCalled, &expectErrorMessage, &expectErrorCode](
+            const SystestParser::ErrorExpectation& expectation, const SystestQueryId)
         {
             ASSERT_EQ(expectation.code, expectErrorCode);
             ASSERT_EQ(expectation.message, expectErrorMessage);

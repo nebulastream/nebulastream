@@ -95,7 +95,6 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 TEST_F(SystestParserTest, testCallbackQuery)
 {
     SystestParser parser{};
-    QueryResultMap queryResultMap;
 
     static constexpr std::string_view TestFileName = "testCallbackQuery";
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
@@ -106,6 +105,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     bool queryCallbackCalled = false;
 
     const std::string testFileString = fmt::format("{}\n{}\n{}\n{}\n", queryIn, delimiter, tpl1, tpl2);
+    std::vector<std::string> receivedResultTuples;
 
     parser.registerOnQueryCallback(
         [&](const std::string& queryOut, SystestQueryId)
@@ -115,18 +115,16 @@ TEST_F(SystestParserTest, testCallbackQuery)
         });
     parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
     parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", TestFileName, correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
+                                          { receivedResultTuples = std::move(resultTuples); });
 
     ASSERT_TRUE(parser.loadString(testFileString));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     /// Check that the queryResult map contains the expected two results for the query defined above
-    ASSERT_TRUE(queryResultMap.contains("results/testCallbackQuery_1.csv"));
-    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").size(), 2);
-    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").at(0), tpl1);
-    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").at(1), tpl2);
+    ASSERT_EQ(receivedResultTuples.size(), 2);
+    ASSERT_EQ(receivedResultTuples.at(0), tpl1);
+    ASSERT_EQ(receivedResultTuples.at(1), tpl2);
 }
 
 TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
@@ -178,7 +176,6 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
     parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
-    const SystestStarterGlobals systestStarterGlobals{};
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 

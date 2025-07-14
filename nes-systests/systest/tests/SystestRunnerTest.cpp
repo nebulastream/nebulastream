@@ -18,9 +18,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -30,6 +33,8 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <Identifiers/NESStrongType.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -54,32 +59,19 @@ NES::QuerySummary makeSummary(const NES::QueryId id, const NES::QueryStatus stat
     return querySummary;
 }
 
-NES::Systest::SystestQuery makeQuery(const NES::LogicalPlan& plan, std::optional<NES::Systest::ExpectedError> expected)
+NES::Systest::SystestQuery makeQuery(
+    const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
+    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected)
 {
     return NES::Systest::SystestQuery{
         "test_query",
-        "SELECT * FROM test",
+        NES::INVALID<NES::Systest::SystestQueryId>,
         SYSTEST_DATA_DIR "filter.dummy",
-        plan,
-        NES::Systest::INITIAL_SYSTEST_QUERY_ID,
-        PATH_TO_BINARY_DIR,
-        NES::Schema{},
-        {},
-        std::move(expected)};
-}
-/// Overload for parse‑time error
-NES::Systest::SystestQuery createSystestQuery(const std::unexpected<NES::Exception>& parseErr, const NES::Systest::ExpectedError& expected)
-{
-    return NES::Systest::SystestQuery{
-        "test_query",
+        NES::Configuration::SystestConfiguration{}.workingDir.getValue(),
         "SELECT * FROM test",
-        SYSTEST_DATA_DIR "filter.dummy",
-        parseErr, /// invalid plan
-        NES::Systest::INITIAL_SYSTEST_QUERY_ID,
-        PATH_TO_BINARY_DIR,
-        NES::Schema{},
-        {},
-        expected};
+        planInfoOrException,
+        std::move(expected),
+        std::make_shared<std::vector<std::jthread>>()};
 }
 }
 
@@ -116,9 +108,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
-    auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries(
-        {createSystestQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, dummyQueryResultMap);
+    const auto result = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -140,8 +130,10 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     const LogicalPlan plan{};
 
-    auto dummyQueryResultMap = QueryResultMap{};
-    const auto result = runQueries({makeQuery(plan, std::nullopt)}, 1, submitter, dummyQueryResultMap);
+    const auto result = runQueries(
+        {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
+        1,
+        submitter);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -163,12 +155,12 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const LogicalPlan plan{};
 
-    auto dummyQueryResultMap = QueryResultMap{};
     const auto result = runQueries(
-        {makeQuery(plan, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
+        {makeQuery(
+            SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
+            ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
-        submitter,
-        dummyQueryResultMap);
+        submitter);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);

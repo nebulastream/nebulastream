@@ -50,6 +50,8 @@
 #include <SystestState.hpp>
 #include <from_current.hpp>
 
+#include <SystestBinder.hpp>
+
 
 using namespace std::literals;
 
@@ -307,8 +309,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     return config;
 }
 
-void runEndlessMode(
-    std::vector<Systest::SystestQuery> queries, Configuration::SystestConfiguration& config, const Systest::QueryResultMap& queryResultMap)
+void runEndlessMode(std::vector<Systest::SystestQuery> queries, Configuration::SystestConfiguration& config)
 {
     std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
 
@@ -342,7 +343,7 @@ void runEndlessMode(
     while (true)
     {
         std::ranges::shuffle(queries, rng);
-        const auto failedQueries = runQueries(queries, numberConcurrentQueries, *submitter, queryResultMap);
+        const auto failedQueries = runQueries(queries, numberConcurrentQueries, *submitter);
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
@@ -426,22 +427,28 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
         std::filesystem::remove_all(config.workingDir.getValue());
         std::filesystem::create_directory(config.workingDir.getValue());
 
-        Systest::SystestStarterGlobals systestStarterGlobals{
-            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), Systest::loadTestFileMap(config)};
-        auto queries = loadQueries(systestStarterGlobals);
-        if (queries.empty())
+        auto discoveredTestFiles = Systest::loadTestFileMap(config);
+        Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
+        auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
+        if (loadedFiles != discoveredTestFiles.size())
         {
-            std::stringstream outputMessage;
-            outputMessage << "No queries were run.";
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
-                .outputMessage = outputMessage.str(),
+                .outputMessage = "Could not load all test files. Terminating.",
+                .errorCode = ErrorCode::TestException};
+        }
+
+        if (queries.empty())
+        {
+            return {
+                .returnType = SystestExecutorResult::ReturnType::FAILED,
+                .outputMessage = "No queries were run.",
                 .errorCode = ErrorCode::TestException};
         }
 
         if (config.endlessMode)
         {
-            runEndlessMode(queries, config, systestStarterGlobals.getQueryResultMap());
+            runEndlessMode(queries, config);
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = "Endless mode should not stop.",
@@ -457,7 +464,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, systestStarterGlobals.getQueryResultMap());
+            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
         }
         else
         {
@@ -473,8 +480,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(
-                    queries, singleNodeWorkerConfiguration, benchmarkResults, systestStarterGlobals.getQueryResultMap());
+                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -483,8 +489,7 @@ SystestExecutorResult executeSystests(Configuration::SystestConfiguration config
             }
             else
             {
-                failedQueries = runQueriesAtLocalWorker(
-                    queries, numberConcurrentQueries, singleNodeWorkerConfiguration, systestStarterGlobals.getQueryResultMap());
+                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
             }
         }
         if (not failedQueries.empty())
