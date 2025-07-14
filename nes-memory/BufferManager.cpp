@@ -769,7 +769,7 @@ int64_t BufferManager::secondChancePass() noexcept
             //std::remove would swap them towards the end, but because we do not have a hard end bound swapping to the clock start seems more reasonable
             //This does mess up the order of the buffers a bit, but the effect on second chance should be small, because we are only swapping
             //with positions that we have seen at least once.
-            // std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
+            std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
         }
         else if (
             currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
@@ -1119,7 +1119,7 @@ TupleBuffer BufferManager::makeBufferAndRegister(const detail::DataSegment<detai
             newBuffers.size(),
             buffersToCheck.load());
         size_t checks = buffersToCheck.fetch_add(checksAddedPerNewBuffer);
-        NES_DEBUG("Checks at {}", checks);
+        NES_TRACE("Checks at {}", checks);
         //If checksAddedPerBuffer > 1, then 2nd chance might make checks == bufferChecksThreshold miss.
         //But, we only want one thread at maximum trying to flush and cleanup
         if (checks >= bufferChecksThreshold && checks < bufferChecksThreshold + checksAddedPerNewBuffer)
@@ -1418,7 +1418,7 @@ size_t BufferManager::processPunchHoleSubmissionEntries() noexcept
             nextRequest->getTarget().getSize());
         io_uring_sqe_set_data(sqe, punchHoleAwaiterW);
     }
-    int processed = io_uring_submit(&uringReadRing);
+    int processed = io_uring_submit(&uringPunchHoleRing);
     for (auto toResume : awaitersToResume)
     {
         toResume->setResultAndContinue();
@@ -1443,7 +1443,7 @@ size_t BufferManager::processPunchHoleCompletionEntriesOnce() noexcept
     using Promise = PunchHolePromise<PunchHoleFuture>;
     size_t counter = 0;
     io_uring_cqe* completion = nullptr;
-    while (io_uring_peek_cqe(&uringReadRing, &completion) == 0)
+    while (io_uring_peek_cqe(&uringPunchHoleRing, &completion) == 0)
     {
         auto* awaiterW = reinterpret_cast<std::weak_ptr<detail::PunchHoleSegmentAwaiter<Promise>>*>(completion->user_data);
         //We do error handling in the coroutine/the caller of the coroutine.
@@ -1453,7 +1453,7 @@ size_t BufferManager::processPunchHoleCompletionEntriesOnce() noexcept
             awaiter->setResultAndContinue(completion->res);
         }
         delete awaiterW;
-        io_uring_cqe_seen(&uringReadRing, completion);
+        io_uring_cqe_seen(&uringPunchHoleRing, completion);
         ++counter;
     }
     return counter;
