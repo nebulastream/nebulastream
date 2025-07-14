@@ -107,7 +107,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
                     ret.append(f"{drawn_fn} -> {callee};")
     ret.append("}")
 
-    return "\n".join(ret)
+    return "\n".join(ret).replace("$", "_")
 
 
 
