@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <CSVInputFormatter.hpp>
+
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
@@ -40,7 +42,6 @@
 #include <boost/tokenizer.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-#include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
 #include <PipelineExecutionContext.hpp>
