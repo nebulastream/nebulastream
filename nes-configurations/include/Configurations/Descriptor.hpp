@@ -198,52 +198,9 @@ private:
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
-        if constexpr (std::is_same_v<T, int32_t>)
+        if constexpr (requires(std::string string) { NES::Util::from_chars<T>(string); })
         {
-            return std::stoi(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            return std::stoul(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, bool>)
-        {
-            using namespace std::literals::string_view_literals;
-            auto caseInsensitiveEqual = [](const unsigned char leftChar, const unsigned char rightChar)
-            { return std::tolower(leftChar) == std::tolower(rightChar); };
-
-            if (std::ranges::equal(stringParameter, "true"sv, caseInsensitiveEqual))
-            {
-                return true;
-            }
-            if (std::ranges::equal(stringParameter, "false"sv, caseInsensitiveEqual))
-            {
-                return false;
-            }
-            return std::nullopt;
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            if (stringParameter.length() != 1)
-            {
-                throw InvalidConfigParameter(fmt::format(
-                    "Char Descriptor config paramater must be of length one, but got: {}, which is of size: {}.",
-                    stringParameter,
-                    stringParameter.length()));
-            }
-            return stringParameter[0];
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            return std::stof(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            return std::stod(stringParameter);
-        }
-        else if constexpr (std::is_same_v<T, std::string>)
-        {
-            return stringParameter;
+            return NES::Util::from_chars<T>(stringParameter);
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
