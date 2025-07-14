@@ -40,7 +40,7 @@ jobs:
       branch-name: ${{ github.ref_name }}
 
   run-fuzzer:
-    name: "Fuzz: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
+    name: "${{inputs.fuzzer}}: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
     needs: [ get-dev-images ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-${{matrix.sanitizer}}
