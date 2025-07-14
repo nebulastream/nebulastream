@@ -1,6 +1,6 @@
 ARG TAG=latest
 ARG BUILD_TYPE=RelWithDebInfo
-FROM nebulastream/nes-development:${TAG} AS build
+FROM ghcr.io/nebulastream/nes-development:${TAG} AS build
 
 USER root
 ADD . /home/ubuntu/src

@@ -25,7 +25,7 @@ on:
 jobs:
   build-code-coverage-pr-branch:
     container:
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      image: ghcr.io/nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
       env:

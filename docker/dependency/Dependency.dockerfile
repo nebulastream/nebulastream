@@ -16,7 +16,7 @@ RUN apk update && apk add wget zstd
 ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLVM_VERSION}/nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd .
 RUN  zstd --decompress nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd --stdout | tar -xf - && rm nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd
 
-FROM nebulastream/nes-development-base:${TAG}
+FROM ghcr.io/nebulastream/nes-development-base:${TAG}
 ARG STDLIB=libcxx
 
 COPY --from=llvm-download /clang /clang
@@ -39,7 +39,8 @@ RUN \
     && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" \
     && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" --raw --output-dir / --output vcpkg \
     && rm -rf /vcpkg_input \
-    && chmod -R g=u,o=u /vcpkg
+    && chmod -R g=u,o=u /vcpkg \
+    && rm -rf /root/.cache
 
 # This hash is used to determine if a development/dependency image is compatible with the current checked out branch
 ARG VCPKG_DEPENDENCY_HASH

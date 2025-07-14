@@ -22,7 +22,7 @@ jobs:
     container:
       # TODO #401 Investigate rootless docker containers
       options: --user root
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      image: ghcr.io/nebulastream/nes-ci:${{ inputs.dev_image_tag }}
     steps:
       - uses: actions/checkout@v4
         with:

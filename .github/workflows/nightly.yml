@@ -86,7 +86,7 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     name: "Build and tests: ${{matrix.cmake_args.name}}"
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: ghcr.io/nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
       env:

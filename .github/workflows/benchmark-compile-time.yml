@@ -20,7 +20,7 @@ jobs:
   benchmark-compile-time:
     runs-on: bc58-nes-public
     container:
-      image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
+      image: ghcr.io/nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
     timeout-minutes: 40
     env:
       CONBENCH_PROJECT_COMMIT: ${{ inputs.ref }}

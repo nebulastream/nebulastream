@@ -30,7 +30,7 @@ jobs:
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
     container:
       options: --user root
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      image: ghcr.io/nebulastream/nes-ci:${{ inputs.dev_image_tag }}
     strategy:
       fail-fast: false
       matrix:

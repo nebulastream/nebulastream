@@ -32,7 +32,7 @@ jobs:
   build-and-test-linux:
     name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}} in ${{ matrix.build_type }}"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: ghcr.io/nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache

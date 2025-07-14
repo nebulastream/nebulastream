@@ -1,7 +1,7 @@
 # This image is build locally on a developers machine. It installs the current user into the container instead of
 # relying on the root user. Ubuntu 24 by default installs the ubuntu user which is replaced.
 ARG TAG=latest
-FROM nebulastream/nes-development:${TAG}
+FROM ghcr.io/nebulastream/nes-development:${TAG}
 
 USER root
 ARG UID=1000

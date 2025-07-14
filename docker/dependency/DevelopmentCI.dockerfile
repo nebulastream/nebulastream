@@ -1,6 +1,6 @@
 # The Development CI image installs a github runner specific user
 ARG TAG=latest
-FROM nebulastream/nes-development:${TAG}
+FROM ghcr.io/nebulastream/nes-development:${TAG}
 
 # The UID env var should be used in child Containerfile.
 ENV UID=1001
