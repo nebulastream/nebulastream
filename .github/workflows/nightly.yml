@@ -111,7 +111,7 @@ jobs:
             if $fuzzer $input
             then
               # no git mv or -f since we mv into just-created /corpus_wip
-              mv f $input /corpus_wip/$(echo $input | cut -d - -f 2)
+              mv -f $input /corpus_wip/$(echo $input | awk -F- '{ print $NF }')
             fi
           done
       - name: check for broken inputs
