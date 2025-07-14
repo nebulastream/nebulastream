@@ -110,7 +110,8 @@ jobs:
           do
             if $fuzzer $input
             then
-              mv $input /corpus_wip/$(echo $input | cut -d - -f 2)
+              # no git mv or -f since we mv into just-created /corpus_wip
+              mv f $input /corpus_wip/$(echo $input | cut -d - -f 2)
             fi
           done
       - name: check for broken inputs
@@ -121,7 +122,7 @@ jobs:
           do
             if ! $fuzzer $input
             then
-              git mv $input crash-$(basename $input)
+              git mv -f $input crash-$(basename $input)
             fi
           done
       - name: cull garbage files
