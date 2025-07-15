@@ -92,7 +92,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
 
             if (inferModelOperator.getInputFields().size() == 1
-                && inferModelOperator.getInputFields().at(0).getDataType().type != NES::DataType::Type::VARSIZED)
+                && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
             {
                 ireeOperator.isVarSizedInput = true;
             }
