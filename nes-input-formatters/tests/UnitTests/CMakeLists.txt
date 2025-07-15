@@ -20,3 +20,6 @@ file(MAKE_DIRECTORY ${TEMP_RESULTS_PATH})
 add_nes_input_formatter_test(input-formatter-test-specific-sequence "SpecificSequenceTest.cpp")
 add_nes_input_formatter_test(input-formatter-test-small-files "SmallFilesTest.cpp")
 add_nes_input_formatter_test(input-formatter-test-concurrent-synchronization "ConcurrentSynchronizationTest.cpp")
+
+add_executable(contention-test ContentionTest.cpp)
+target_link_libraries(contention-test PUBLIC nes-input-formatters-test-utils)
