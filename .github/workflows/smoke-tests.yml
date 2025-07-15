@@ -3,13 +3,13 @@ name: smoke-tests
 on:
   workflow_call:
     inputs:
+      dev_image_tag:
+        required: true
+        type: string
       head_sha:
         required: true
         type: string
-      branch_name:
-        required: true
-        type: string
-      commit_count:
+      number_of_commits:
         required: true
         type: number
 
@@ -18,26 +18,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      branch-name: ${{ inputs.branch_name }}
-      ref:         ${{ inputs.head_sha }}
-
   check-format:
-    needs: get-dev-images
     uses: ./.github/workflows/format.yml
     with:
       head_sha:          ${{ inputs.head_sha }}
-      dev_image_tag:     ${{ needs.get-dev-images.outputs.image-tag }}
-      number_of_commits: ${{ inputs.commit_count }}
+      dev_image_tag:     ${{ inputs.dev_image_tag }}
+      number_of_commits: ${{ inputs.number_of_commits }}
 
   clean-build-and-test-linux:
     # Ensures that the build works from a clean build directory.
     name: "Clean build and tests"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
         MOLD_JOBS: 1
       options: --user root
@@ -53,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash
@@ -74,7 +66,7 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
+          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
       - name: Run Tests
         run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
       - uses: actions/upload-artifact@v4
