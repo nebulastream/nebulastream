@@ -23,3 +23,5 @@ add_nes_input_formatter_test(input-formatter-test-concurrent-synchronization "Co
 
 add_executable(contention-test ContentionTest.cpp)
 target_link_libraries(contention-test PUBLIC nes-input-formatters-test-utils)
+add_executable(tail-calculation-test TailCalculationTest.cpp)
+target_link_libraries(tail-calculation-test PUBLIC nes-input-formatters-test-utils)
