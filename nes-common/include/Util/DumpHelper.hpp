@@ -30,11 +30,8 @@ public:
     /// @param outputPath if supplied, the DumpHelper dumps all logs to 'outputPath'
     explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, std::string outputPath);
 
-    /**
-     * @brief Function to dump a specific entity using this context.
-     * @param name identifier of this entry.
-     * @param output the content that should be dumped.
-     */
+    /// @param name identifier of this entry.
+    /// @param output the content that should be dumped.
     void dump(std::string_view name, std::string_view output) const;
 
 private:
