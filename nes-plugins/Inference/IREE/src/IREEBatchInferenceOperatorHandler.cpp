@@ -72,12 +72,20 @@ void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(bufferMetadata.watermarkTs);
-    tupleBuffer.setNumberOfTuples(batchSize);
+    tupleBuffer.setNumberOfTuples(batch.getNumberOfTuples());
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedBatch>();
     bufferMemory->batchId = batch.batchId;
 
     pipelineCtx->emitBuffer(tupleBuffer);
+
+    NES_DEBUG(
+        "Emitted batch #{} with watermarkTs {} sequenceNumber {} originId {} of size {} tuples ",
+        bufferMemory->batchId+1,
+        tupleBuffer.getWatermark(),
+        tupleBuffer.getSequenceDataAsString(),
+        tupleBuffer.getOriginId(),
+        tupleBuffer.getNumberOfTuples());
 }
 
 Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
