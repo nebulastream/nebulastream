@@ -143,6 +143,8 @@ jobs:
           stdlib: ${{ inputs.stdlib }}
           build_type: ${{ matrix.build_type }}
           sanitizer: ${{ matrix.sanitizer }}
+          run_id: ${{ github.run_id }}
+          attempt: ${{ github.run_attempt}}
           EOF
 
           git config user.name "github-actions[bot]"
@@ -185,6 +187,8 @@ jobs:
           stdlib: ${{ inputs.stdlib }}
           build_type: ${{ matrix.build_type }}
           sanitizer: ${{ matrix.sanitizer }}
+          run_id: ${{ github.run_id }}
+          attempt: ${{ github.run_attempt}}
           EOF
 
           git config user.name "github-actions[bot]"
@@ -273,6 +277,8 @@ jobs:
           stdlib: ${{ inputs.stdlib }}
           build_type: RelWithDebInfo
           sanitizer: none
+          run_id: ${{ github.run_id }}
+          attempt: ${{ github.run_attempt}}
           EOF
 
           git config user.name "github-actions[bot]"
