@@ -13,12 +13,14 @@
 */
 #pragma once
 
+#include <cstdint>
 #include <ostream>
+#include <string_view>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <yaml-cpp/yaml.h>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -61,33 +63,14 @@ private:
     ScalarOption() : TypedBaseOption<T>() { }
 
     template <typename Type>
+    requires requires(std::string_view sv) { NES::Util::from_chars<Type>(sv); }
     static Type convertFromString(const std::string& strValue)
     {
-        if constexpr (std::is_same<Type, std::string>::value)
+        if (auto value = NES::Util::from_chars<T>(strValue))
         {
-            return strValue; /// No conversion needed
+            return *value;
         }
-        else if constexpr (std::is_same<Type, float>::value)
-        {
-            return std::stof(strValue);
-        }
-        else if constexpr (std::is_same<Type, uint64_t>::value)
-        {
-            return std::stoull(strValue);
-        }
-        else if constexpr (std::is_same<Type, bool>::value)
-        {
-            /// Simple boolean conversion (true for "true", false otherwise)
-            return strValue == "true";
-        }
-        else if constexpr (NESIdentifier<Type>)
-        {
-            return Type(convertFromString<typename Type::Underlying>(strValue));
-        }
-        else
-        {
-            throw std::logic_error("Unsupported type for ScalarOption");
-        }
+        throw InvalidConfigParameter("Could not convert {} to {}", strValue, NAMEOF_TYPE(T));
     }
 };
 
@@ -174,14 +157,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
         throw InvalidConfigParameter("Identifier {} is not known.", identifier);
     }
     this->isValid(value);
-    try
-    {
-        this->value = YAML::Load(value).as<T>();
-    }
-    catch (const std::exception& e)
-    {
-        throw InvalidConfigParameter("Conversion failed for {} with value: {}. Exception: {}", identifier, value, e.what());
-    }
+    this->value = convertFromString<T>(value);
 }
 
 using StringOption = ScalarOption<std::string>;
