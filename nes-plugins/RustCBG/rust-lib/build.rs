@@ -19,7 +19,7 @@ fn main() {
             panic!("Unable to generate cpp header: {e}")
         },
         |bindings| {
-            bindings.write_to_file("include/RustFileSourceImpl.hpp")
+            bindings.write_to_file("include/RustCBG.hpp")
         });
 
     println!("Successfully generated cpp header from rust.");

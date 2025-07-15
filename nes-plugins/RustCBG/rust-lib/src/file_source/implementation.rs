@@ -1,8 +1,8 @@
+use io::Read;
 use std::fs::File;
 use std::io;
-use io::Read;
 use std::path::Path;
-use crate::implementation::Error::IoError;
+use Error::IoError;
 
 pub struct RustFileSourceImpl {
     path: String,
@@ -40,7 +40,9 @@ impl RustFileSourceImpl {
         let mut read_bytes: usize = 0;
         while read_bytes < tuple_buffer.len() {
             let just_read = file.read(&mut tuple_buffer[read_bytes..])?;
-            if just_read == 0 { break; }
+            if just_read == 0 {
+                break;
+            }
             read_bytes += just_read;
         }
         Ok(read_bytes as u64)

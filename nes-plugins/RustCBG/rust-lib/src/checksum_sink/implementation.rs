@@ -1,30 +1,30 @@
-use anyhow::anyhow;
 use std::{
     fs::File,
+    io,
     io::Write,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-pub struct ChecksumSink {
+pub struct RustChecksumSinkImpl {
     path: String,
     output_file: Option<File>,
     checksum: AtomicUsize,
     tuple_count: AtomicUsize,
 }
 
-pub fn new_checksum_sink(path: &str) -> Box<ChecksumSink> {
-    Box::new(ChecksumSink {
-        path: path.to_string(),
-        output_file: None,
-        checksum: AtomicUsize::new(0),
-        tuple_count: AtomicUsize::new(0),
-    })
-}
+impl RustChecksumSinkImpl {
+    pub fn new(path: String) -> RustChecksumSinkImpl {
+        Self {
+            path,
+            output_file: None,
+            checksum: AtomicUsize::new(0),
+            tuple_count: AtomicUsize::new(0),
+        }
+    }
 
-impl ChecksumSink {
-    pub fn start(&mut self) -> anyhow::Result<()> {
+    pub fn start(&mut self) -> Result<(), Error> {
         if self.output_file.is_some() {
-            return Err(anyhow!("RustFileSourceImpl already open."));
+            return Err(Error::AlreadyOpen);
         }
         self.output_file = Some(File::create(self.path.as_str())?);
         Ok(())
@@ -37,13 +37,11 @@ impl ChecksumSink {
         self.tuple_count.fetch_add(tupel_count, Ordering::Relaxed);
     }
 
-    pub fn stop(&mut self) -> anyhow::Result<()> {
+    pub fn stop(&mut self) -> Result<(), Error> {
         let file = if let Some(ref mut f) = self.output_file {
             f
         } else {
-            return Err(anyhow!(
-                "stop() was called on RustChecksumSink, that has not been started."
-            ));
+            return Err(Error::StopWithoutStarted);
         };
         writeln!(file, "S$Count:UINT64,S$Checksum:UINT64")?;
         writeln!(
@@ -57,6 +55,14 @@ impl ChecksumSink {
     }
 }
 
-pub fn free_checksum_sink(_: Box<ChecksumSink>) {
-    // Gets freed automatically here
+pub enum Error {
+    AlreadyOpen,
+    IoError,
+    StopWithoutStarted,
+}
+
+impl From<io::Error> for Error {
+    fn from(_: io::Error) -> Self {
+        Self::IoError
+    }
 }

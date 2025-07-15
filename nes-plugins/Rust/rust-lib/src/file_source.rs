@@ -66,7 +66,7 @@ impl FileSource {
     }
 }
 
-pub fn new_rust_file_source(path: &str) -> Box<FileSource> {
+pub fn new_file_source(path: &str) -> Box<FileSource> {
     Box::new(FileSource {
         path: path.to_string(),
         file: None,
@@ -74,7 +74,7 @@ pub fn new_rust_file_source(path: &str) -> Box<FileSource> {
     })
 }
 
-pub fn free_rust_file_source(_: Box<FileSource>) {
+pub fn free_file_source(_: Box<FileSource>) {
     // Gets freed automatically when going out of scope
 }
 

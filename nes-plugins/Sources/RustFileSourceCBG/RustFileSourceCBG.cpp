@@ -41,7 +41,7 @@ namespace NES::Sources
 
     RustFileSourceCBG::~RustFileSourceCBG()
     {
-        rust::free_rust_file_source(this->impl);
+        rust::free_file_source(this->impl);
     }
 
     void RustFileSourceCBG::open()

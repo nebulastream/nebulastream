@@ -6,7 +6,6 @@ set(RUST_LIB_PATH_COMMON "${CMAKE_CURRENT_BINARY_DIR}/${RUST_LIB_NAME}")
 set(FFI_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/Rust/cxx.hpp")
 set(RUST_LIB_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/Rust/lib.rs.hpp")
 set(RUST_LIB_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/lib.rs.cpp")
-# set(VCPKG_INCLUDE_DIR "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
 add_custom_command(
         OUTPUT ${RUST_LIB_PATH_COMMON} ${FFI_HEADER} ${RUST_LIB_HEADER} ${RUST_LIB_CPP}
         # Build the rust code
@@ -33,4 +32,3 @@ target_include_directories(rust-lib-cxx INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
 )
-# add_dependencies(rust-lib-cxx rust_build_cxx)

@@ -32,7 +32,7 @@ namespace NES::Sources
     static rust::Box<Rust::FileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
     {
         std::string path = static_cast<std::string>(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH));
-        return Rust::new_rust_file_source(rust::Str(path.data(), path.size()));
+        return Rust::new_file_source(rust::Str(path.data(), path.size()));
     }
 
     RustFileSourceCXX::RustFileSourceCXX(const SourceDescriptor& sourceDescriptor)

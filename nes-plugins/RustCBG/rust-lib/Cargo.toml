@@ -1,5 +1,5 @@
 [package]
-name = "rust-example-cbg"
+name = "rust-lib-cbg"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,3 +8,9 @@ crate-type = ["staticlib"]
 
 [build-dependencies]
 cbindgen = "0.29.0"
+
+[features]
+default = ["file-source", "checksum-sink"]
+file-source = []
+checksum-sink = []
+

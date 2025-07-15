@@ -503,6 +503,9 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
     auto [rustChecksumSinkPair, rcspSuccess] = sinkNamesToSchema.emplace("RUSTCHECKSUMCXX", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
     rustChecksumSinkPair->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
     rustChecksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    auto [rustChecksumSinkPairCbg, rcscbgSuccess] = sinkNamesToSchema.emplace("RUSTCHECKSUMCBG", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
+    rustChecksumSinkPairCbg->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    rustChecksumSinkPairCbg->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
@@ -681,6 +684,12 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                 auto validatedSinkConfig
                     = Sinks::SinkDescriptor::validateAndFormatConfig("RustChecksumCXX", {std::make_pair("filePath", resultFile)});
                 sink = std::make_shared<Sinks::SinkDescriptor>("RustChecksumCXX", std::move(validatedSinkConfig), false);
+            }
+            else if (sinkName == "RUSTCHECKSUMCBG")
+            {
+                auto validatedSinkConfig
+                    = Sinks::SinkDescriptor::validateAndFormatConfig("RustChecksumCBG", {std::make_pair("filePath", resultFile)});
+                sink = std::make_shared<Sinks::SinkDescriptor>("RustChecksumCBG", std::move(validatedSinkConfig), false);
             }
             else
             {

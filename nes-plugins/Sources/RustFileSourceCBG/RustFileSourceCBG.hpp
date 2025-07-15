@@ -19,7 +19,7 @@ limitations under the License.
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ostream>
-#include "RustFileSourceImpl.hpp"
+#include <RustCBG/RustCBG.hpp>
 
 namespace NES::Sources
 {
