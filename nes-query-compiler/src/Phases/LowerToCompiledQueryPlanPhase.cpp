@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
@@ -23,11 +22,13 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/DumpMode.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -48,6 +49,8 @@ struct LoweringContext
     std::vector<Sink> sinks;
     std::vector<Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
+
+    DumpMode dumpCompilationResults;
 };
 
 /// forward declaring processOperatorPipeline() and processSink() to avoid a cyclic dependency between processSuccessor() and processOperatorPipeline()
@@ -137,7 +140,8 @@ void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>
     it->predecessor.emplace_back(predecessor);
 }
 
-std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline>& pipeline, ExecutionMode executionMode)
+std::unique_ptr<ExecutablePipelineStage>
+getStage(const std::shared_ptr<Pipeline>& pipeline, ExecutionMode executionMode, DumpMode dumpQueryCompilationIntermediateRepresentations)
 {
     nautilus::engine::Options options;
     switch (executionMode)
@@ -154,9 +158,30 @@ std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline
             INVARIANT(false, "Invalid backend");
         }
     }
-    options.setOption("toConsole", true);
-    options.setOption("toFile", true);
-
+    /// See: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
+    switch (dumpQueryCompilationIntermediateRepresentations)
+    {
+        case DumpMode::NONE:
+            options.setOption("dump.all", false);
+            options.setOption("dump.console", false);
+            options.setOption("dump.file", false);
+            break;
+        case DumpMode::CONSOLE:
+            options.setOption("dump.all", true);
+            options.setOption("dump.console", true);
+            options.setOption("dump.file", false);
+            break;
+        case DumpMode::FILE:
+            options.setOption("dump.all", true);
+            options.setOption("dump.console", false);
+            options.setOption("dump.file", true);
+            break;
+        case DumpMode::FILE_AND_CONSOLE:
+            options.setOption("dump.all", true);
+            options.setOption("dump.console", true);
+            options.setOption("dump.file", true);
+            break;
+    }
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
@@ -171,8 +196,10 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
     {
         return executable->second;
     }
-    auto executablePipeline
-        = ExecutablePipeline::create(PipelineId(pipeline->getPipelineId()), getStage(pipeline, pipelineQueryPlan->getExecutionMode()), {});
+    auto executablePipeline = ExecutablePipeline::create(
+        PipelineId(pipeline->getPipelineId()),
+        getStage(pipeline, pipelineQueryPlan->getExecutionMode(), loweringContext.dumpCompilationResults),
+        {});
 
     for (const auto& successor : pipeline->getSuccessors())
     {
@@ -187,9 +214,11 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
 }
 }
 
-std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
+std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan, DumpMode dumpCompilationResult)
 {
     LoweringContext loweringContext;
+    loweringContext.dumpCompilationResults = dumpCompilationResult;
+
     ///Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines)

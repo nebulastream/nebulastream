@@ -42,6 +42,7 @@ class SingleNodeWorker
     std::shared_ptr<NodeEngine> nodeEngine;
     std::unique_ptr<QueryOptimizer> optimizer;
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
+    SingleNodeWorkerConfiguration configuration;
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&);
