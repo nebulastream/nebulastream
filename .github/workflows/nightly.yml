@@ -38,10 +38,120 @@ jobs:
     with:
       ref: ${{ github.sha }}
       branch-name: ${{ github.ref_name }}
+  
+  update-corpus:
+    name: "update corpus ${{inputs.fuzzer}}"
+    needs: [ get-dev-images ]
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-none
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ 'RelWithDebInfo' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: nes
+      - name: clone corpus
+        run: |
+          rm -rf nes-corpora
+          git clone https://fwc:${{ secrets.FWC_NES_CORPORA }}@github.com/fwc/nes-corpora.git
+      - name: configure
+        run: |
+          cd nes
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=WARN -DUSE_LIBFUZZER=ON
+      - name: build
+        shell: bash
+        run: |
+          cd nes
+          cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
+      - name: setup
+        run: |
+          echo in_pwd="$(pwd)" >> $GITHUB_ENV
+          cd nes/build
+          echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
+      - name: mkdir
+        run: |
+          cd nes-corpora
+          mkdir -p ${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
+          mkdir -p ${{ inputs.fuzzer }}/corpus
+          mkdir /corpus_wip
+          mkdir /work_dir
+      - name: check for non-sanitizer specific errors
+        shell: bash
+        timeout-minutes: 120
+        continue-on-error: true
+        run: |
+          cd /work_dir
+          for sanitizer in asan ubsan tsan
+          do
+            for input in $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f)
+            do
+              if $fuzzer $input
+              then
+                # no git mv or -f since we mv into just-created /corpus_wip
+                mv -f $input $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none
+              fi
+            done
+          done
+      - name: commit corpus
+        run: |
+          cd nes-corpora
+
+          cat << EOF > /msg.txt
+          ci run ${{ inputs.fuzzer }} min non-sanit specififc
+
+          sut_sha: ${{ github.sha }}
+          fuzzer: ${{ inputs.fuzzer}}
+          duration: ${{ inputs.duration_in_min }}
+          arch: x64
+          stdlib: ${{ inputs.stdlib }}
+          build_type: ${{ matrix.build_type }}
+          sanitizer: ${{ matrix.sanitizer }}
+          run_id: ${{ github.run_id }}
+          attempt: ${{ github.run_attempt}}
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ${{ inputs.fuzzer }}
+          if ! git commit -F /msg.txt
+          then
+            exit
+          fi
+      - name: push corpus
+        run: |
+          cd nes-corpora
+          exp_backoff=1
+          for try in $(seq 5)
+          do
+            git pull --rebase
+            if git push
+            then
+              exit
+            fi
+            echo push failed, sleeping for $exp_backoff
+            sleep $exp_backoff
+            exp_backoff=$(( exp_backoff * 2 ))
+          done
+
+          git checkout -b branch-$RANDOM
+          git push --set-upstream origin
 
   run-fuzzer:
     name: "${{inputs.fuzzer}}: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, update-corpus ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-${{matrix.sanitizer}}
       volumes:
