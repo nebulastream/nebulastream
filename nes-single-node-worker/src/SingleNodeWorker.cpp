@@ -26,6 +26,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/DumpMode.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -47,6 +48,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
+    , configuration(configuration)
 {
     if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
         < configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue())
@@ -70,6 +72,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
+        request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();
         auto result = compiler->compileQuery(std::move(request));
         return nodeEngine->registerCompiledQueryPlan(std::move(result));
     }
