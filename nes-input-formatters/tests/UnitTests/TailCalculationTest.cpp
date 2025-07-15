@@ -45,8 +45,8 @@
 #include "Runtime/NodeEngine.hpp"
 
 // #include <BaseUnitTest.hpp>
-#include <ErrorHandling.hpp>
 #include <optional>
+#include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -251,10 +251,10 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
 {
     std::vector<uint64_t> atomicIntervals(largestHi + 1);
 
-    Interval largestMergeInterval{0,0};
+    Interval largestMergeInterval{0, 0};
     for (const auto& interval : intervals)
     {
-        largestMergeInterval = Interval{0,0};
+        largestMergeInterval = Interval{0, 0};
         // determine whether to chase to lowest
         const auto lo = atomicIntervals.at(interval.lo);
         /// If true, the current entry for low is obselete. Chase to lowest lo and then continue with hi, at the end set val of lowest lo
@@ -262,7 +262,7 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
         {
             largestMergeInterval.lo = lo;
             auto lowestIndex = lo;
-            while (atomicIntervals.at(largestMergeInterval.lo) < largestMergeInterval.lo)
+            if (atomicIntervals.at(largestMergeInterval.lo) < largestMergeInterval.lo)
             {
                 lowestIndex = largestMergeInterval.lo;
                 largestMergeInterval.lo = atomicIntervals.at(largestMergeInterval.lo);
@@ -270,7 +270,7 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
             // Don't set value for lowestIndex yet, since we haven't determined highest yet
             /// We found lowest lo, now chase to hi
             largestMergeInterval.hi = interval.hi;
-            while (atomicIntervals.at(largestMergeInterval.hi) > largestMergeInterval.hi)
+            if (atomicIntervals.at(largestMergeInterval.hi) > largestMergeInterval.hi)
             {
                 largestMergeInterval.hi = atomicIntervals.at(largestMergeInterval.hi);
             }
@@ -278,23 +278,26 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
             atomicIntervals.at(largestMergeInterval.hi) = largestMergeInterval.lo;
             continue;
         }
-        atomicIntervals[interval.lo] = interval.hi;
         /// We know that we can't find a lower 'lo' than interval.low' (otherwise we would have taken first if condition)
         const auto hi = atomicIntervals.at(interval.hi);
         if (hi != 0 and hi > interval.hi)
         {
             largestMergeInterval.hi = hi;
             auto highestIndex = hi;
-            while (atomicIntervals.at(largestMergeInterval.hi) > largestMergeInterval.hi)
+            if (atomicIntervals.at(largestMergeInterval.hi) > largestMergeInterval.hi)
             {
                 highestIndex = largestMergeInterval.hi;
                 largestMergeInterval.hi = atomicIntervals.at(largestMergeInterval.hi);
             }
-            atomicIntervals.at(highestIndex) = interval.lo;
-        } else
+            atomicIntervals[highestIndex] = interval.lo;
+            atomicIntervals[interval.lo] = largestMergeInterval.hi;
+
+        }
+        else
         {
             atomicIntervals[interval.hi] = interval.lo;
-         }
+            atomicIntervals[interval.lo] = interval.hi;
+        }
     }
     return largestMergeInterval;
 }
@@ -303,8 +306,8 @@ int main()
 {
     using namespace NES;
 
-    constexpr uint64_t seed = 3;
-    const auto [intervals, maxInterval] = generateIntervals(20, seed);
+    constexpr uint64_t seed = 2;
+    const auto [intervals, maxInterval] = generateIntervals(200, seed);
     for (const auto& [lo, hi] : intervals)
     {
         fmt::println("[{},{}]", lo, hi);
