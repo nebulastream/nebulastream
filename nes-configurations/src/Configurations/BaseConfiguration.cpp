@@ -92,7 +92,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
         }
         catch (const Exception& e)
         {
-            NES_ERROR("Configuration error: ", e.what());
+            NES_ERROR("Configuration error: {}", e.what());
             throw;
         }
     }
