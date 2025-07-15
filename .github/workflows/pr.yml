@@ -21,8 +21,26 @@ jobs:
       branch-name: ${{ github.head_ref }}
       ref: ${{ github.event.pull_request.head.sha }}
 
-  large-tests:
+  smoke-tests:
     needs: [ get-dev-images ]
+    uses: ./.github/workflows/smoke-tests.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
+    secrets: inherit
+
+  build-and-test:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run build and test"
+    uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+
+  large-tests:
+    needs: [ get-dev-images, smoke-tests ]
     name: "Run large scale tests"
     uses: ./.github/workflows/large_test.yml
     with:
@@ -30,7 +48,7 @@ jobs:
       ref: ${{ github.event.pull_request.head.ref }}
 
   clang-tidy-report:
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, smoke-tests ]
     name: "Run clang tidy report"
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
@@ -40,7 +58,7 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits }}
 
   run_code_coverage:
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, smoke-tests ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
     with:
@@ -50,7 +68,7 @@ jobs:
     secrets: inherit
 
   run_endless_mode:
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, smoke-tests ]
     name: "Run Endless Mode"
     uses: ./.github/workflows/endless-mode.yml
     with:
