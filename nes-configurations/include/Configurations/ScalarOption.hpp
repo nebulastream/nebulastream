@@ -163,6 +163,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
 using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
+using IntOption = ScalarOption<int64_t>;
 using BoolOption = ScalarOption<bool>;
 
 }
