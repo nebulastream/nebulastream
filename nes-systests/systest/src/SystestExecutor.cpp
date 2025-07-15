@@ -62,7 +62,8 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., /path/to/Filter.test or a directory to discover test files in. You can also specify just the "
+        .help("directly specified test file, e.g., /path/to/Filter.test or a directory to discover test files in. You can also specify "
+              "just the "
               "filename (e.g., filter.test) and systest will search for it recursively in the discovery directory. Use "
               "'path/to/Filter.test:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
@@ -380,8 +381,7 @@ void runEndlessMode(
             std::vector<NES::Systest::SystestQuery> queries = queriesOrig;
             std::ranges::shuffle(queries, rng);
             auto& submitter = *submitters[overrideConfig];
-            const auto failedQueries
-                = NES::Systest::runQueries(queries, numberConcurrentQueries, submitter, queryResultMap, context);
+            const auto failedQueries = NES::Systest::runQueries(queries, numberConcurrentQueries, submitter, queryResultMap, context);
             if (!failedQueries.empty())
             {
                 std::stringstream outputMessage;
@@ -513,11 +513,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                     query.configOverride = overrideConfig;
                 }
                 auto failed = runQueriesAtRemoteWorker(
-                    queriesForConfig,
-                    numberConcurrentQueries,
-                    grpcURI,
-                    systestStarterGlobals.getQueryResultMap(),
-                    context);
+                    queriesForConfig, numberConcurrentQueries, grpcURI, systestStarterGlobals.getQueryResultMap(), context);
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
             }
         }
@@ -541,11 +537,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
                     auto failed = Systest::runQueriesAndBenchmark(
-                        queriesForConfig,
-                        configCopy,
-                        benchmarkResults,
-                        systestStarterGlobals.getQueryResultMap(),
-                        context);
+                        queriesForConfig, configCopy, benchmarkResults, systestStarterGlobals.getQueryResultMap(), context);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
                 std::cout << benchmarkResults.dump(4);
@@ -568,8 +560,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                     {
                         query.configOverride = override;
                     }
-                    auto singleNodeWorkerConfiguration
-                        = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
+                    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
                     if (!config.workerConfig.getValue().empty())
                     {
                         singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
@@ -597,11 +588,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                     }
 
                     auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig,
-                        numberConcurrentQueries,
-                        configCopy,
-                        systestStarterGlobals.getQueryResultMap(),
-                        context);
+                        queriesForConfig, numberConcurrentQueries, configCopy, systestStarterGlobals.getQueryResultMap(), context);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

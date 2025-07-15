@@ -186,32 +186,27 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
 TEST_F(SystestRunnerTest, SystestProgressTrackerProgressTracking)
 {
-    NES::Systest::SystestProgressTracker context(10);
-    
-    // Initial state
+    SystestProgressTracker context(10);
+
     EXPECT_EQ(context.getQueryCounter(), 0);
     EXPECT_EQ(context.getTotalQueries(), 10);
     EXPECT_DOUBLE_EQ(context.getProgress(), 0.0);
-    
-    // Increment counter
+
     context.incrementQueryCounter();
     EXPECT_EQ(context.getQueryCounter(), 1);
     EXPECT_DOUBLE_EQ(context.getProgress(), 0.1);
-    
-    // Increment more
+
     context.incrementQueryCounter();
     context.incrementQueryCounter();
     EXPECT_EQ(context.getQueryCounter(), 3);
     EXPECT_DOUBLE_EQ(context.getProgress(), 0.3);
-    
-    // Reset
+
     context.reset(5);
     EXPECT_EQ(context.getQueryCounter(), 0);
     EXPECT_EQ(context.getTotalQueries(), 5);
     EXPECT_DOUBLE_EQ(context.getProgress(), 0.0);
-    
-    // Test edge case with zero total queries
-    NES::Systest::SystestProgressTracker emptyContext(0);
+
+    SystestProgressTracker emptyContext(0);
     EXPECT_DOUBLE_EQ(emptyContext.getProgress(), 0.0);
 }
 }

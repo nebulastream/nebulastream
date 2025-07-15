@@ -35,6 +35,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SystestSources/SourceTypes.hpp>
@@ -44,7 +45,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-#include <Identifiers/NESStrongType.hpp>
 
 struct ConfigurationOverride
 {
@@ -338,11 +338,11 @@ public:
     void incrementQueryCounter();
     [[nodiscard]] size_t getQueryCounter() const;
     void setTotalQueries(size_t total);
-    
+
     [[nodiscard]] size_t getTotalQueries() const;
-    
+
     [[nodiscard]] double getProgress() const;
-    
+
     void reset();
     void reset(size_t newTotalQueries);
 

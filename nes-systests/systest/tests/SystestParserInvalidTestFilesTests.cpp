@@ -127,7 +127,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideTest)
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingColonTest)
 {
-    /// Test: Configuration worker.queryOptimizer.pageSize [8] (missing colon)
+    /// Test: Configuration worker.defaultQueryExecution.pageSize [8] (missing colon)
     SystestParser parser{};
     parser.registerOnSystestLogicalSourceCallback(
         [](const SystestParser::SystestLogicalSource&)
@@ -136,13 +136,13 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingColonTest)
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
 
-    ASSERT_TRUE(parser.loadString("Configuration worker.queryOptimizer.pageSize [8]\n"));
+    ASSERT_TRUE(parser.loadString("Configuration worker.defaultQueryExecution.pageSize [8]\n"));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingBracketsTest)
 {
-    /// Test: Configuration worker.queryOptimizer.pageSize: 8, 1024 (missing brackets for multiple values)
+    /// Test: Configuration worker.defaultQueryExecution.pageSize: 8, 1024 (missing brackets for multiple values)
     SystestParser parser{};
     parser.registerOnSystestLogicalSourceCallback(
         [](const SystestParser::SystestLogicalSource&)
@@ -151,13 +151,13 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingBracketsTe
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
 
-    ASSERT_TRUE(parser.loadString("Configuration worker.queryOptimizer.pageSize: 8, 1024\n"));
+    ASSERT_TRUE(parser.loadString("Configuration worker.defaultQueryExecution.pageSize: 8, 1024\n"));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideEmptyBracketsTest)
 {
-    /// Test: Configuration worker.queryOptimizer.pageSize: [] (empty value list)
+    /// Test: Configuration worker.defaultQueryExecution.pageSize: [] (empty value list)
     SystestParser parser{};
     parser.registerOnSystestLogicalSourceCallback(
         [](const SystestParser::SystestLogicalSource&)
@@ -166,7 +166,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideEmptyBracketsTest
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
 
-    ASSERT_TRUE(parser.loadString("Configuration worker.queryOptimizer.pageSize: []\n"));
+    ASSERT_TRUE(parser.loadString("Configuration worker.defaultQueryExecution.pageSize: []\n"));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 

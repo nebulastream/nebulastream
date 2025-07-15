@@ -722,15 +722,15 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
     }
 
     std::getline(stream >> std::ws, valueList);
-    
+
     /// Validate that we have a value
     if (valueList.empty())
     {
         throw SLTUnexpectedToken("Expected configuration value after key '{}', but got empty value", key);
     }
-    
+
     std::vector<std::string> values;
-    
+
     /// Check if the value is wrapped in square brackets (multiple values)
     if (valueList.front() == '[' && valueList.back() == ']')
     {
@@ -747,15 +747,19 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
         /// Single value without brackets - validate no brackets are present
         if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
         {
-            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
+            throw SLTUnexpectedToken(
+                "Invalid configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets",
+                key,
+                valueList);
         }
-        
+
         /// Check if there are commas in the value, which indicates multiple values without brackets
         if (valueList.find(',') != std::string::npos)
         {
-            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
+            throw SLTUnexpectedToken(
+                "Invalid configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
         }
-        
+
         values = {valueList};
     }
 
@@ -800,15 +804,15 @@ std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
     }
 
     std::getline(stream >> std::ws, valueList);
-    
+
     /// Validate that we have a value
     if (valueList.empty())
     {
         throw SLTUnexpectedToken("Expected global configuration value after key '{}', but got empty value", key);
     }
-    
+
     std::vector<std::string> values;
-    
+
     /// Check if the value is wrapped in square brackets (multiple values)
     if (valueList.front() == '[' && valueList.back() == ']')
     {
@@ -825,15 +829,22 @@ std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
         /// Single value without brackets - validate no brackets are present
         if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
         {
-            throw SLTUnexpectedToken("Invalid global configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
+            throw SLTUnexpectedToken(
+                "Invalid global configuration format for key '{}': '{}'. Use either single value or properly formatted list in square "
+                "brackets",
+                key,
+                valueList);
         }
-        
+
         /// Check if there are commas in the value, which indicates multiple values without brackets
         if (valueList.find(',') != std::string::npos)
         {
-            throw SLTUnexpectedToken("Invalid global configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
+            throw SLTUnexpectedToken(
+                "Invalid global configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets",
+                key,
+                valueList);
         }
-        
+
         values = {valueList};
     }
 

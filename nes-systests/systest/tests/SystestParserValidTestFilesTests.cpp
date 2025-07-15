@@ -368,20 +368,19 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "config_override.dummy";
-    
+
     /// Expected configuration overrides
-    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides = {
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}},
-         {.overrideParameters = {{"worker.queryOptimizer.pageSize", "1024"}}}}
-    };
+    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
+        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "8"}}}},
+           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "8"}}},
+            {.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "1024"}}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "stream",
-        .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
-                   {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"}}
-    };
+        .fields
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"}}};
 
     /// Expected attach source
     const SystestAttachSource expectedAttachSource{
@@ -393,20 +392,14 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
         .testDataIngestionType = TestDataIngestionType::INLINE,
         .tuples = std::vector<std::string>{"1,2"},
         .fileDataPath = "null",
-        .serverThreads = nullptr
-    };
+        .serverThreads = nullptr};
 
     /// Expected queries
-    const std::vector<std::string> expectedQueries = {
-        "SELECT id, value FROM stream INTO ID_VALUE_SINK",
-        "SELECT id, value FROM stream INTO ID_VALUE_SINK"
-    };
+    const std::vector<std::string> expectedQueries
+        = {"SELECT id, value FROM stream INTO ID_VALUE_SINK", "SELECT id, value FROM stream INTO ID_VALUE_SINK"};
 
     /// Expected results
-    const std::vector<std::vector<std::string>> expectedResults = {
-        {"1 2"},
-        {"1 2"}
-    };
+    const std::vector<std::vector<std::string>> expectedResults = {{"1 2"}, {"1 2"}};
 
     bool configurationCallbackCalled = false;
     bool logicalSourceCallbackCalled = false;
@@ -419,7 +412,8 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
     QueryResultMap queryResultMap;
 
     parser.registerOnConfigurationCallback(
-        [&configurationCallbackCalled, &expectedConfigOverrides, &configOverrideIndex](const std::vector<ConfigurationOverride>& configOverrides)
+        [&configurationCallbackCalled, &expectedConfigOverrides, &configOverrideIndex](
+            const std::vector<ConfigurationOverride>& configOverrides)
         {
             configurationCallbackCalled = true;
             ASSERT_LT(configOverrideIndex, expectedConfigOverrides.size());
@@ -441,8 +435,9 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
             attachSourceCallbackCalled = true;
             ASSERT_EQ(attachSource.sourceType, expectedAttachSource.sourceType);
             ASSERT_EQ(attachSource.inputFormatterType, expectedAttachSource.inputFormatterType);
-            ASSERT_TRUE(attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
-                       and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
+            ASSERT_TRUE(
+                attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
+                and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
         });
 
     parser.registerOnQueryCallback(
@@ -480,27 +475,24 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
 TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "global_config_override.dummy";
-    
+
     /// Expected global configuration overrides - now merged together
-    std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides = {
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}}},
-         {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}}}},
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}, {"worker.queryOptimizer.pageSize2", "64"}}},
-         {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}, {"worker.queryOptimizer.pageSize2", "64"}}}}
-    };
+    std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides
+        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "8"}}}},
+           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "16"}}},
+            {.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "32"}}}},
+           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize2", "64"}}}}};
 
     /// Expected regular configuration overrides
-    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides = {
-        {{.overrideParameters = {{"worker.queryOptimizer.pageSize3", "128"}}}}
-    };
+    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
+        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize3", "128"}}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "stream",
-        .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
-                   {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"}}
-    };
+        .fields
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"}}};
 
     /// Expected attach source
     const SystestAttachSource expectedAttachSource{
@@ -512,8 +504,7 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
         .testDataIngestionType = TestDataIngestionType::INLINE,
         .tuples = std::vector<std::string>{"1,2"},
         .fileDataPath = "null",
-        .serverThreads = nullptr
-    };
+        .serverThreads = nullptr};
 
     /// Expected queries
     const std::vector<std::string> expectedQueries = {
@@ -542,7 +533,8 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
     QueryResultMap queryResultMap;
 
     parser.registerOnGlobalConfigurationCallback(
-        [&globalConfigurationCallbackCalled, &expectedGlobalConfigOverrides, &globalConfigOverrideIndex](const std::vector<ConfigurationOverride>& globalConfigOverrides)
+        [&globalConfigurationCallbackCalled, &expectedGlobalConfigOverrides, &globalConfigOverrideIndex](
+            const std::vector<ConfigurationOverride>& globalConfigOverrides)
         {
             globalConfigurationCallbackCalled = true;
             ASSERT_LT(globalConfigOverrideIndex, expectedGlobalConfigOverrides.size());
@@ -551,7 +543,8 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
         });
 
     parser.registerOnConfigurationCallback(
-        [&configurationCallbackCalled, &expectedConfigOverrides, &configOverrideIndex](const std::vector<ConfigurationOverride>& configOverrides)
+        [&configurationCallbackCalled, &expectedConfigOverrides, &configOverrideIndex](
+            const std::vector<ConfigurationOverride>& configOverrides)
         {
             configurationCallbackCalled = true;
             ASSERT_LT(configOverrideIndex, expectedConfigOverrides.size());
@@ -573,8 +566,9 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
             attachSourceCallbackCalled = true;
             ASSERT_EQ(attachSource.sourceType, expectedAttachSource.sourceType);
             ASSERT_EQ(attachSource.inputFormatterType, expectedAttachSource.inputFormatterType);
-            ASSERT_TRUE(attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
-                       and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
+            ASSERT_TRUE(
+                attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
+                and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
         });
 
     parser.registerOnQueryCallback(

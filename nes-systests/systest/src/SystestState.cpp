@@ -35,26 +35,26 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDataProvider.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <SystestSources/SystestSourceYAMLBinder.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
-#include <DataTypes/DataType.hpp>
-#include <Identifiers/NESStrongType.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SystestParser.hpp>
@@ -152,28 +152,46 @@ std::filesystem::path SystestQuery::resultFile() const
     return resultFile(workingDir, testName, queryIdInFile);
 }
 
-// SystestProgressTracker implementation
 SystestProgressTracker::SystestProgressTracker() = default;
 
-SystestProgressTracker::SystestProgressTracker(size_t totalQueries) : totalQueries(totalQueries) {}
-
-void SystestProgressTracker::incrementQueryCounter() { ++queryCounter; }
-
-size_t SystestProgressTracker::getQueryCounter() const { return queryCounter.load(); }
-
-void SystestProgressTracker::setTotalQueries(size_t total) { totalQueries = total; }
-
-size_t SystestProgressTracker::getTotalQueries() const { return totalQueries; }
-
-double SystestProgressTracker::getProgress() const { 
-    return totalQueries > 0 ? static_cast<double>(queryCounter.load()) / totalQueries : 0.0; 
+SystestProgressTracker::SystestProgressTracker(size_t totalQueries) : totalQueries(totalQueries)
+{
 }
 
-void SystestProgressTracker::reset() { queryCounter = 0; }
+void SystestProgressTracker::incrementQueryCounter()
+{
+    ++queryCounter;
+}
 
-void SystestProgressTracker::reset(size_t newTotalQueries) { 
-    queryCounter = 0; 
-    totalQueries = newTotalQueries; 
+size_t SystestProgressTracker::getQueryCounter() const
+{
+    return queryCounter.load();
+}
+
+void SystestProgressTracker::setTotalQueries(size_t total)
+{
+    totalQueries = total;
+}
+
+size_t SystestProgressTracker::getTotalQueries() const
+{
+    return totalQueries;
+}
+
+double SystestProgressTracker::getProgress() const
+{
+    return totalQueries > 0 ? static_cast<double>(queryCounter.load()) / totalQueries : 0.0;
+}
+
+void SystestProgressTracker::reset()
+{
+    queryCounter = 0;
+}
+
+void SystestProgressTracker::reset(size_t newTotalQueries)
+{
+    queryCounter = 0;
+    totalQueries = newTotalQueries;
 }
 
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
@@ -745,13 +763,14 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                     plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
 
                 /// Helper function to merge global configuration with regular configuration
-                auto mergeConfigurations = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
+                auto mergeConfigurations
+                    = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
                 {
                     if (globalConfigOverrides.empty())
                     {
                         return regularOverrides;
                     }
-                    
+
                     std::vector<ConfigurationOverride> mergedOverrides;
                     if (regularOverrides.empty())
                     {
@@ -791,7 +810,7 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
                 }
-                
+
                 /// Reset currentConfigOverrides after applying it to this query
                 /// This ensures that Configuration tokens only apply to the next query
                 currentConfigOverrides = {ConfigurationOverride{}};
@@ -800,15 +819,16 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
             {
                 auto loadedQueryPlan = LoadedQueryPlan(
                     std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
-                
+
                 /// Helper function to merge global configuration with regular configuration
-                auto mergeConfigurations = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
+                auto mergeConfigurations
+                    = [&](const std::vector<ConfigurationOverride>& regularOverrides) -> std::vector<ConfigurationOverride>
                 {
                     if (globalConfigOverrides.empty())
                     {
                         return regularOverrides;
                     }
-                    
+
                     std::vector<ConfigurationOverride> mergedOverrides;
                     if (regularOverrides.empty())
                     {
@@ -848,39 +868,42 @@ std::unordered_map<ConfigurationOverride, std::vector<LoadedQueryPlan>> SystestS
                         plansWithOverrides[override].emplace_back(loadedQueryPlan);
                     }
                 }
-                
+
                 /// Reset currentConfigOverrides after applying it to this query
                 /// This ensures that Configuration tokens only apply to the next query
                 currentConfigOverrides = {ConfigurationOverride{}};
             }
         });
-    parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { currentConfigOverrides = overrides; });
-    parser.registerOnGlobalConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { 
-        /// Merge global configurations instead of replacing them
-        if (globalConfigOverrides.empty())
+    parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides)
+                                           { currentConfigOverrides = overrides; });
+    parser.registerOnGlobalConfigurationCallback(
+        [&](const std::vector<ConfigurationOverride>& overrides)
         {
-            globalConfigOverrides = overrides;
-        }
-        else
-        {
-            /// Merge the new overrides with existing global overrides
-            std::vector<ConfigurationOverride> mergedOverrides;
-            for (const auto& existingOverride : globalConfigOverrides)
+            /// Merge global configurations instead of replacing them
+            if (globalConfigOverrides.empty())
             {
-                for (const auto& newOverride : overrides)
-                {
-                    ConfigurationOverride mergedOverride = existingOverride;
-                    /// Merge new override parameters into the merged override
-                    for (const auto& [key, value] : newOverride.overrideParameters)
-                    {
-                        mergedOverride.overrideParameters[key] = value;
-                    }
-                    mergedOverrides.emplace_back(std::move(mergedOverride));
-                }
+                globalConfigOverrides = overrides;
             }
-            globalConfigOverrides = std::move(mergedOverrides);
-        }
-    });
+            else
+            {
+                /// Merge the new overrides with existing global overrides
+                std::vector<ConfigurationOverride> mergedOverrides;
+                for (const auto& existingOverride : globalConfigOverrides)
+                {
+                    for (const auto& newOverride : overrides)
+                    {
+                        ConfigurationOverride mergedOverride = existingOverride;
+                        /// Merge new override parameters into the merged override
+                        for (const auto& [key, value] : newOverride.overrideParameters)
+                        {
+                            mergedOverride.overrideParameters[key] = value;
+                        }
+                        mergedOverrides.emplace_back(std::move(mergedOverride));
+                    }
+                }
+                globalConfigOverrides = std::move(mergedOverrides);
+            }
+        });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation& errorExpectation)
