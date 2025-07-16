@@ -15,7 +15,6 @@
 #include <chrono>
 #include <csignal>
 #include <cstring>
-#include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
@@ -30,15 +29,25 @@ public:
     ClientHandler(
         const int clientSocket,
         const sockaddr_in address,
-        const int countLimit,
-        const int timeStep,
+        const uint64_t timeoutSeconds,
+        const uint64_t countLimit,
+        const uint64_t batchSize,
         const double ingestionRate,
+        const uint64_t timeStep,
+        const uint64_t idUpperBound,
+        const uint64_t generatorSeed,
+        const bool deterministicIds,
         const bool varSized)
         : clientSocket(clientSocket)
         , address(address)
+        , timeoutSeconds(timeoutSeconds)
         , countLimit(countLimit)
-        , timeStep(timeStep)
+        , batchSize(batchSize)
         , ingestionRate(ingestionRate)
+        , timeStep(timeStep)
+        , idUpperBound(idUpperBound)
+        , generatorSeed(generatorSeed)
+        , deterministicIds(deterministicIds)
         , varSized(varSized)
     {
     }
@@ -46,33 +55,62 @@ public:
     void handle()
     {
         std::cout << "New connection from " << inet_ntoa(address.sin_addr) << '\n';
+        if (timeoutSeconds > 0)
+        {
+            std::cout << "Shutting down client in " << std::to_string(timeoutSeconds) << "s...\n";
+        }
+
         try
         {
             //std::random_device rd;
-            std::mt19937 gen(42);
+            std::mt19937 gen(generatorSeed);
+            std::uniform_int_distribution idDistrib(0UL, idUpperBound);
             std::uniform_int_distribution valueDistrib(0, 10000);
 
             const auto interval
-                = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 / ingestionRate : 0)));
+                = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 * batchSize / ingestionRate : 0)));
             std::cout << "Ingestion interval: " << static_cast<uint64_t>(interval.count()) << '\n';
             auto nextSendTime = std::chrono::high_resolution_clock::now();
+            const auto startTime = nextSendTime;
 
             while (running && (countLimit == 0 || counter < countLimit))
             {
+                if (timeoutSeconds > 0)
+                {
+                    if (static_cast<uint64_t>(
+                            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - startTime).count())
+                        >= timeoutSeconds)
+                    {
+                        std::cout << "Shutting down client...\n";
+                        break;
+                    }
+                }
+
                 if (ingestionRate > 0)
                 {
                     std::this_thread::sleep_until(nextSendTime);
                     nextSendTime += interval;
                 }
 
-                const auto value = valueDistrib(gen);
-                std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(timestamp)
-                    + (varSized ? ",str:" + std::to_string(value) : "") + '\n';
+                uint64_t allMessagesSize = 0;
+                std::vector<char> messages;
+                constexpr auto maxMessageSizeInBytes = 88;
+                messages.reserve(batchSize * maxMessageSizeInBytes);
+                for (auto idx = 0UL; idx < batchSize; ++idx)
+                {
+                    const auto value = valueDistrib(gen);
+                    const auto id = deterministicIds ? counter : idDistrib(gen);
+                    std::string message = std::to_string(id) + "," + std::to_string(value) + "," + std::to_string(timestamp)
+                        + (varSized ? ",str:" + std::to_string(value) : "") + '\n';
+                    std::memcpy(&messages[allMessagesSize], message.c_str(), message.size());
+                    allMessagesSize += message.size();
+                }
 
                 //std::cout << "Sending message: " << message;
-                send(clientSocket, message.c_str(), message.size(), 0);
+                send(clientSocket, messages.data(), allMessagesSize, 0);
 
                 timestamp += timeStep;
+                ++counter;
 
                 if (countLimit != 0 && counter >= countLimit)
                 {
@@ -105,12 +143,17 @@ public:
 private:
     int clientSocket;
     sockaddr_in address;
+    uint64_t timeoutSeconds;
     uint64_t countLimit;
-    int timeStep;
+    uint64_t batchSize;
     double ingestionRate;
+    uint64_t timeStep;
+    uint64_t idUpperBound;
+    uint64_t generatorSeed;
+    bool deterministicIds;
     bool varSized;
     uint64_t counter = 0;
-    int timestamp = 0;
+    uint64_t timestamp = 0;
     bool running = true;
 };
 
@@ -120,17 +163,25 @@ public:
     CounterServer(
         const std::string& host,
         const int port,
-        const int timeoutSeconds,
+        const uint64_t timeoutSeconds,
         const uint64_t countLimit,
-        const int timeStep,
+        const uint64_t batchSize,
         const double ingestionRate,
+        const uint64_t timeStep,
+        const uint64_t idUpperBound,
+        const uint64_t generatorSeed,
+        const bool deterministicIds,
         const bool varSized)
         : host(host)
         , port(port)
         , timeoutSeconds(timeoutSeconds)
         , countLimit(countLimit)
-        , timeStep(timeStep)
+        , batchSize(batchSize)
         , ingestionRate(ingestionRate)
+        , timeStep(timeStep)
+        , idUpperBound(idUpperBound)
+        , generatorSeed(generatorSeed)
+        , deterministicIds(deterministicIds)
         , varSized(varSized)
     {
     }
@@ -161,25 +212,15 @@ public:
             cleanup(-1);
         }
         std::cout << "Server listening on " << host << ":" << port << '\n';
-        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit))
-                  << " Ingestion rate: " << (ingestionRate == 0 ? "unlimited" : std::to_string(ingestionRate)) << '\n';
+        std::cout << "Count limit: " << (countLimit == 0 ? "unlimited" : std::to_string(countLimit)) << '\n';
+        std::cout << "Batch size: " << std::to_string(batchSize) << '\n';
+        std::cout << "Ingestion rate: " << (ingestionRate == 0 ? "unlimited" : std::to_string(ingestionRate)) << '\n';
 
-        std::cout << "Shutting down server in " << std::to_string(timeoutSeconds) << "seconds...\n";
         const auto startTime = std::chrono::high_resolution_clock::now();
         try
         {
             while (running)
             {
-                if (timeoutSeconds > 0)
-                {
-                    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
-                    if (std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() >= timeoutSeconds)
-                    {
-                        std::cout << "Timeout reached. Shutting down server...\n";
-                        break;
-                    }
-                }
-
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
                 const int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
@@ -187,7 +228,20 @@ public:
                 {
                     std::cout << "\nShutting down server because it failed to accept client on socket " << clientSocket << "...\n";
                 }
-                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep, ingestionRate, varSized);
+                const auto elapsed = static_cast<uint64_t>(
+                    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - startTime).count());
+                ClientHandler client(
+                    clientSocket,
+                    clientAddress,
+                    timeoutSeconds - elapsed,
+                    countLimit,
+                    batchSize,
+                    ingestionRate,
+                    timeStep,
+                    idUpperBound,
+                    generatorSeed,
+                    deterministicIds,
+                    varSized);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
                 clients.push_back(std::move(client));
@@ -237,10 +291,14 @@ public:
 private:
     std::string host = "0.0.0.0";
     int port = 5020;
-    int timeoutSeconds = 0;
+    uint64_t timeoutSeconds = 0;
     uint64_t countLimit = 0;
-    int timeStep = 1;
+    uint64_t batchSize = 1;
     double ingestionRate = 0;
+    uint64_t timeStep = 1;
+    uint64_t idUpperBound = 0;
+    uint64_t generatorSeed = 0;
+    bool deterministicIds = false;
     bool varSized = false;
     int serverSocket;
     sockaddr_in serverAddress;
@@ -252,10 +310,14 @@ int main(const int argc, char* argv[])
 {
     std::string host = "0.0.0.0";
     int port = 5020;
-    int timeoutSeconds = 0;
+    uint64_t timeoutSeconds = 0;
     uint64_t countLimit = 0;
-    int timeStep = 1;
+    uint64_t batchSize = 1;
     double ingestionRate = 0;
+    uint64_t timeStep = 1;
+    uint64_t idUpperBound = 0;
+    uint64_t generatorSeed = 0;
+    bool deterministicIds = false;
     bool varSized = false;
 
     for (int i = 1; i < argc; ++i)
@@ -268,21 +330,37 @@ int main(const int argc, char* argv[])
         {
             port = std::stoi(argv[++i]);
         }
-        else if (std::strcmp(argv[i], "-k") == 0 || std::strcmp(argv[i], "--kill") == 0)
+        else if (std::strcmp(argv[i], "-t") == 0 || std::strcmp(argv[i], "--timeout") == 0)
         {
-            timeoutSeconds = std::stoi(argv[++i]);
+            timeoutSeconds = std::stoull(argv[++i]);
         }
         else if (std::strcmp(argv[i], "-n") == 0 || std::strcmp(argv[i], "--count-limit") == 0)
         {
             countLimit = std::stoull(argv[++i]);
         }
-        else if (std::strcmp(argv[i], "-t") == 0 || std::strcmp(argv[i], "--time-step") == 0)
+        else if (std::strcmp(argv[i], "-b") == 0 || std::strcmp(argv[i], "--batch-size") == 0)
         {
-            timeStep = std::stoi(argv[++i]);
+            batchSize = std::stoull(argv[++i]);
         }
         else if (std::strcmp(argv[i], "-i") == 0 || std::strcmp(argv[i], "--ingestion-rate") == 0)
         {
             ingestionRate = std::stod(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--time-step") == 0)
+        {
+            timeStep = std::stoull(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "-u") == 0 || std::strcmp(argv[i], "--id-upper-bound") == 0)
+        {
+            idUpperBound = std::stoull(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "-g") == 0 || std::strcmp(argv[i], "--generator-seed") == 0)
+        {
+            generatorSeed = std::stoull(argv[++i]);
+        }
+        else if (std::strcmp(argv[i], "-d") == 0 || std::strcmp(argv[i], "--deterministic-ids") == 0)
+        {
+            deterministicIds = true;
         }
         else if (std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--var-sized") == 0)
         {
@@ -292,7 +370,18 @@ int main(const int argc, char* argv[])
 
     try
     {
-        CounterServer server(host, port, timeoutSeconds, countLimit, timeStep, ingestionRate, varSized);
+        CounterServer server(
+            host,
+            port,
+            timeoutSeconds,
+            countLimit,
+            batchSize,
+            ingestionRate,
+            timeStep,
+            idUpperBound,
+            generatorSeed,
+            deterministicIds,
+            varSized);
         server.start();
     }
     catch (const std::exception& e)

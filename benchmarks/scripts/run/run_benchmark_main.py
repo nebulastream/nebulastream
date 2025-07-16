@@ -13,34 +13,47 @@
 # limitations under the License.
 
 
+import re
 import os
 import shutil
 import subprocess
 import time
+import math
 import random
 import datetime
 import yaml
 import pathlib
 import copy
+import numpy as np
 import pandas as pd
 import BenchmarkConfig
 
 
-# Configuration for execution
-BUILD_DIR = "cmake-build-relnologging"
-SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-1"
-# SOURCE_DIR = "/home/ntantow/Documents/NebulaStream/nebulastream-public_1"
+# Configuration for compilation
+BUILD_PROJECT = False
+BUILD_DIR = "build"
+SOURCE_DIR = "/home/ubuntu/Documents/nebulastream"
+CMAKE_TOOLCHAIN_FILE = "/home/ubuntu/Documents/vcpkg/scripts/buildsystems/vcpkg.cmake"
+LOG_LEVEL = "LEVEL_NONE"
+CMAKE_BUILD_TYPE = "Release"
+USE_LIBCXX_IF_AVAILABLE = "False"  # False for using libstdcxx, True for libcxx
 NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
 SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/nes-single-node-worker")
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
-WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+NUM_RUNS_PER_CONFIG = 3
+MEASURE_INTERVAL = 8
+WAIT_BEFORE_QUERY_STOP = 5
 WAIT_BETWEEN_COMMANDS = 2
+WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
-WORKING_DIR = f".cache/benchmarks/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}"
+DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
+BENCHMARK_STATS_FILE = "BenchmarkStats_"
+ENGINE_STATS_FILE = "EngineStats_"
+PIPELINE_TXT = "pipelines.txt"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -52,11 +65,25 @@ CONFIG_FILES = {
 }
 
 
-def create_working_dir():
-    folder_name = os.path.join(WORKING_DIR, "working_dir")
-    os.makedirs(folder_name, exist_ok=True)
-    # print(f"Created working dir {folder_name}...")
-    return folder_name
+# Helper functions
+def clear_build_dir():
+    if os.path.exists(BUILD_DIR):
+        shutil.rmtree(BUILD_DIR)
+    os.mkdir(BUILD_DIR)
+
+
+def compile_project():
+    cmd_cmake = ["cmake",
+                 f"-DCMAKE_BUILD_TYPE={CMAKE_BUILD_TYPE}",
+                 f"-DNES_LOG_LEVEL={LOG_LEVEL}",
+                 f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_FILE}",
+                 f"-DUSE_LIBCXX_IF_AVAILABLE:BOOL={USE_LIBCXX_IF_AVAILABLE}",
+                 f"-S {SOURCE_DIR}",
+                 f"-B {BUILD_DIR}",
+                 "-G Ninja"]
+    cmd_build = f"cmake --build {BUILD_DIR} -j -- -k 0".split(" ")
+    subprocess.run(cmd_cmake, check=True)
+    subprocess.run(cmd_build, check=True)
 
 
 def create_output_folder():
@@ -67,7 +94,24 @@ def create_output_folder():
     return folder_name
 
 
-def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports, iteration):
+def calculate_id_upper_bound_for_match_rate(current_benchmark_config):
+    window_pattern = r"WINDOW SLIDING \(timestamp, size (\d+) ms, advance by (\d+) ms\)"
+    size_and_slide = re.search(window_pattern, current_benchmark_config.query)
+    window_size = int(size_and_slide.group(1))
+    timestamp_increment = current_benchmark_config.timestamp_increment
+    match_rate = current_benchmark_config.match_rate
+
+    if match_rate <= 0:
+        return int(np.iinfo(np.int64).max)  # Practically infinite, no matches expected
+    elif match_rate >= 100:
+        return 1  # Smallest useful range which ensures very high collisions
+
+    num_tuples = window_size / timestamp_increment
+    upper_bound = (num_tuples / (match_rate / 100)) - 1
+    return max(1, math.ceil(upper_bound))  # Prevent upper_bound < 1
+
+
+def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports):
     # Creating a dest path for the worker and query config yaml file
     dest_path_worker = os.path.join(output_folder, WORKER_CONFIG_FILE_NAME)
     dest_path_query = os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)
@@ -78,19 +122,20 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"][
         "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
     worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
-    worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
     worker_config_yaml["worker"][
-        "throughputListenerTimeInterval"] = current_benchmark_config.throughput_listener_time_interval
+        "numberOfBuffersInSourceLocalPools"] = current_benchmark_config.buffers_in_source_local_buffer_pool
+    worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
 
     # Query Optimizer Configuration
     worker_config_yaml["worker"]["queryOptimizer"]["executionMode"] = current_benchmark_config.execution_mode
+    worker_config_yaml["worker"]["queryOptimizer"]["pipelinesTxtFilePath"] = os.path.abspath(
+        os.path.join(output_folder, PIPELINE_TXT))
     worker_config_yaml["worker"]["queryOptimizer"]["pageSize"] = current_benchmark_config.page_size
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
         "numberOfWorkerThreads"] = current_benchmark_config.number_of_worker_threads
     worker_config_yaml["worker"]["queryEngine"]["taskQueueSize"] = current_benchmark_config.task_queue_size
-    # TODO worker_config_yaml["worker"]["queryEngine"]["statisticsDir"] = os.path.abspath(output_folder)
 
     # Dumping the updated worker config yaml to the dest path
     with open(dest_path_worker, 'w') as output_file:
@@ -101,15 +146,12 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
         query_config_yaml = yaml.safe_load(input_file)
     query_config_yaml["query"] = current_benchmark_config.query
 
-    # Change the csv sink file and delete current contents
-    csv_file = f"/tmp/csv_sink_{iteration}.csv"
-    query_config_yaml["sink"]["config"]["filePath"] = csv_file
-    if os.path.exists(csv_file):
-        os.remove(csv_file)
+    # Change the csv sink file
+    query_config_yaml["sink"]["config"]["filePath"] = os.path.abspath(os.path.join(output_folder, "csv_sink.csv"))
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
-    assert len(tcp_server_ports) % len(query_config_yaml[
-                                           "physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
+    assert len(tcp_server_ports) % len(query_config_yaml["physical"]) == 0, \
+        "The number of physical sources must be a multiple of the number of TCP server ports."
 
     # Iterating over the physical sources and writing as many in a separate list as we have configured in the benchmark config
     new_physical_sources = []
@@ -138,16 +180,23 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     processes = []
     ports = []
     max_retries = 10
+    generator_seed = 42
     for j, port in enumerate(starting_ports):
-        for i in range(benchmark_config.no_physical_sources_per_logical_source):
+        for i in range(current_benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
                 remainingServers = len(starting_ports) - j
                 cmd = f"{TCP_SERVER} -p {port} " \
-                      f"-k {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS} " \
+                      f"-t {MEASURE_INTERVAL + remainingServers * WAIT_BETWEEN_COMMANDS + 2 * WAIT_BETWEEN_COMMANDS} " \
                       f"-n {current_benchmark_config.num_tuples_to_generate} " \
-                      f"-t {current_benchmark_config.timestamp_increment} " \
-                      f"-i {current_benchmark_config.ingestion_rate}"
-                # Add variable sized data flag to last tcp server
+                      f"-s {current_benchmark_config.timestamp_increment} " \
+                      f"-b {current_benchmark_config.batch_size} " \
+                      f"-i {current_benchmark_config.ingestion_rate} " \
+                      f"-u {calculate_id_upper_bound_for_match_rate(current_benchmark_config)} " \
+                      f"-g {generator_seed + j}"
+                # Disregard uniform int distribution and achieve true 100% match rate
+                if current_benchmark_config.match_rate > 100:
+                    cmd += " -d"
+                # Add variable sized data flag to last two tcp servers
                 if port == starting_ports[-1] or port == starting_ports[-2]:
                     cmd += " -v"
                 # print(f"Trying to start tcp server with {cmd}")
@@ -180,12 +229,12 @@ def submitting_query(query_file):
         cmd,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
         text=True
     )
 
     # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
-    stdout, stderr = process.communicate()
+    stdout, _ = process.communicate()
     query_id = stdout.strip()
     print(f"Submitted the query with id {query_id}")
     return query_id
@@ -194,7 +243,7 @@ def submitting_query(query_file):
 def start_single_node_worker(worker_config_file):
     cmd = f"{SINGLE_NODE_PATH} --configPath={worker_config_file}"
     # print(f"Starting the single node worker with {cmd}")
-    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd.split(" "))
     pid = process.pid
     print(f"Started single node worker with pid {pid}")
     return process
@@ -203,7 +252,7 @@ def start_single_node_worker(worker_config_file):
 def stop_query(query_id):
     cmd = f"{NEBULI_PATH} stop {query_id} -s localhost:8080"
     # print(f"Stopping the query via {cmd}...")
-    process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd.split(" "))
     return process
 
 
@@ -234,10 +283,9 @@ def get_start_ports():
 
 
 # Benchmark loop
-def run_benchmark(current_benchmark_config, iteration):
+def run_benchmark(current_benchmark_config):
     # Defining here two empty lists so that we can use it in the finally
     output_folder = ""
-    working_dir = ""
     source_processes = []
     single_node_process = []
     stop_process = []
@@ -245,11 +293,9 @@ def run_benchmark(current_benchmark_config, iteration):
         # Starting the TCP servers
         [source_processes, tcp_server_ports] = start_tcp_servers(get_start_ports(), current_benchmark_config)
 
-        # Creating a new output folder and updating the configs with the current benchmark configs
+        # Creating new output and working directories and updating the configs with the current benchmark configs
         output_folder = create_output_folder()
-        working_dir = create_working_dir()
-        copy_and_modify_configs(output_folder, working_dir, current_benchmark_config, tcp_server_ports,
-                                iteration)
+        copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_ports)
 
         # Waiting before starting the single node worker
         time.sleep(WAIT_BETWEEN_COMMANDS)
@@ -264,9 +310,14 @@ def run_benchmark(current_benchmark_config, iteration):
         # Submitting the query and waiting couple of seconds before stopping the query
         query_id = submitting_query(os.path.abspath(os.path.join(output_folder, QUERY_CONFIG_FILE_NAME)))
 
-        print(f"Waiting for {MEASURE_INTERVAL}s before stopping the query...")
-        time.sleep(MEASURE_INTERVAL)  # Allow query engine stats to be printed
+        print(f"Waiting for {MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP}s before stopping the query...")
+        time.sleep(MEASURE_INTERVAL + WAIT_BEFORE_QUERY_STOP)  # Allow query engine stats to be printed
         stop_process = stop_query(query_id)
+        print(f"Query {query_id} was stopped")
+
+        _, stderr = single_node_process.communicate(timeout=WAIT_BEFORE_SIGKILL)
+        if stderr != '':
+            print(output_folder + ": " + stderr + "\n")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
         all_processes = source_processes + [single_node_process] + [stop_process]
@@ -275,14 +326,10 @@ def run_benchmark(current_benchmark_config, iteration):
 
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
-            if file_name.startswith("EngineStats_") or file_name.startswith("BenchmarkStats_") or file_name.endswith(
-                    ".log"):
+            if file_name.startswith(ENGINE_STATS_FILE) or file_name.startswith(
+                    BENCHMARK_STATS_FILE) or file_name.endswith(".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
-
-        # Delete working directory
-        print("Deleting working directory...\n")
-        shutil.rmtree(working_dir)
 
         return output_folder
 
@@ -293,104 +340,71 @@ def load_csv(file_path):
     return pd.read_csv(file_path)
 
 
-if __name__ == "__main__":
+def get_directory_size(directory):
+    total_size = 0
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        if os.path.isfile(filepath):
+            total_size += os.path.getsize(filepath)
+    return total_size
+
+
+def format_data_size(size_in_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_in_bytes < 1024:
+            return f"{size_in_bytes:.2f} {unit}"
+        size_in_bytes /= 1024
+
+
+def main():
+    if BUILD_PROJECT:
+        # Removing the build folder and compiling the project
+        clear_build_dir()
+        compile_project()
+
+    # Remove tmp directory as benchmarks will fail if another user created this
+    if subprocess.Popen("rm -rf /tmp/dump", shell=True).returncode is not None:
+        print("Could not remove /tmp/dump. Restart after executing\nsudo rm -rf /tmp/dump")
+        return
+
+    print("################################################################")
+    print("Running benchmark main")
+    print("################################################################\n")
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_configs()
+
     # Running all benchmarks
     output_folders = []
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
-    total_iterations = len(ALL_BENCHMARK_CONFIGS)
     iteration_times = []
+    num_configs = len(ALL_BENCHMARK_CONFIGS)
+    total_iterations = num_configs * NUM_RUNS_PER_CONFIG
+    print(f"Running each of the {num_configs} experiments {NUM_RUNS_PER_CONFIG} times, totaling {total_iterations} runs...\n")
 
-    for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=1):
-        start_time = time.time()
+    for j in range(NUM_RUNS_PER_CONFIG):
+        for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=(j * num_configs + 1)):
+            start_time = time.time()
 
-        output_folders.append(run_benchmark(benchmark_config, i))
-        time.sleep(1)  # Sleep for a second to allow the system to clean up
+            output_folders.append(run_benchmark(benchmark_config))
+            time.sleep(1)  # Sleep for a second to allow the system to clean up
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        iteration_times.append(elapsed_time)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            iteration_times.append(elapsed_time)
 
-        # Calculate average time per iteration
-        avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
+            # Calculate average time per iteration
+            avg_time_per_iteration = sum(iteration_times) / len(iteration_times)
 
-        # Estimate remaining time
-        remaining_iterations = total_iterations - i
-        remaining_time = remaining_iterations * avg_time_per_iteration
-        eta = datetime.timedelta(seconds=int(remaining_time))
+            # Estimate remaining time
+            remaining_iterations = total_iterations - i
+            remaining_time = remaining_iterations * avg_time_per_iteration
+            eta = datetime.timedelta(seconds=int(remaining_time))
 
-        # Calculate estimated finish time
-        finish_time = datetime.datetime.now() + eta
+            # Calculate estimated finish time
+            finish_time = datetime.datetime.now() + eta
 
-        # Print ETA and finish time in cyan
-        print(
-            f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
+            # Print ETA and finish time in cyan
+            print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, "
+                  f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
-    print("\nStarting post processing...\n")
-    # Compare the results of default slice store and file backed variant
-    file1 = f"/tmp/csv_sink_{1}.csv"
-    file2 = f"/tmp/csv_sink_{2}.csv"
 
-    df1 = load_csv(file1)
-    df2 = load_csv(file2)
-
-    # Check if either DataFrame is empty
-    if df1.empty and df2.empty:
-        print("Both files are empty.")
-    elif df1.empty:
-        print("File1 is empty.")
-        print(f"File2 has {len(df2)} rows with keys: {list(df2['tcp_source4$id4:UINT64'])}")
-    elif df2.empty:
-        print("File2 is empty.")
-        print(f"File1 has {len(df1)} rows with keys: {list(df1['tcp_source4$id4:UINT64'])}")
-    else:
-        # Set the key column as the index
-        key_column = "tcp_source4$id4:UINT64"
-        df1.set_index(key_column, inplace=True)
-        df2.set_index(key_column, inplace=True)
-
-        # Align rows based on the key column
-        common_keys = df1.index.intersection(df2.index)
-        df1_aligned = df1.loc[common_keys]
-        df2_aligned = df2.loc[common_keys]
-
-        # Compare rows and find differences
-        differences = []
-        for key in common_keys:
-            if not df1_aligned.loc[key].equals(df2_aligned.loc[key]):
-                differences.append((key, df1_aligned.loc[key].to_dict(), df2_aligned.loc[key].to_dict()))
-
-        # Print the differences
-        if not differences:
-            print("The rows with common keys are identical.")
-        else:
-            print("Differences found:")
-            for diff in differences:
-                print(f"Key {diff[0]} differs:")
-                print(f"File1: {diff[1]}")
-                print(f"File2: {diff[2]}")
-
-        # Identify additional keys in each file
-        extra_keys_file1 = df1.index.difference(df2.index)
-        extra_keys_file2 = df2.index.difference(df1.index)
-
-        if not extra_keys_file1.empty:
-            print(f"File1 has {len(extra_keys_file1)} additional keys: {list(extra_keys_file1)}")
-        if not extra_keys_file2.empty:
-            print(f"File2 has {len(extra_keys_file2)} additional keys: {list(extra_keys_file2)}")
-
-    # Calling the postprocessing main
-    # post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
-    #                                                WORKER_STATISTICS_CSV_PATH,
-    #                                                CACHE_STATISTICS_CSV_PATH, PIPELINE_TXT)
-    # post_processing.main()
-
-    # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
-    # copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
-    # print(f"Copy command: \n\"{copy_command}\"")
-
-    # output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
-    # print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
-    # print(
-    #     f"Created worker statistics CSV file at {WORKER_STATISTICS_CSV_PATH} and cache statistics CSV file at {CACHE_STATISTICS_CSV_PATH}")
-    # copy_command = f"rsync -avz --progress tower-en717:{WORKER_STATISTICS_CSV_PATH} tower-en717:{CACHE_STATISTICS_CSV_PATH} /home/nils/Downloads/"
-    # print(f"Copy command: \n\"{copy_command}\"")
+if __name__ == "__main__":
+    main()
