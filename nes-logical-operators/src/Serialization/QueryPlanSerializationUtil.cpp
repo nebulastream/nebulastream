@@ -14,6 +14,7 @@
 
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
+#include <exception>
 #include <functional>
 #include <unordered_map>
 #include <utility>
@@ -59,11 +60,30 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 
 LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
 {
+    std::vector<std::exception> deserializeExceptions;
+
     /// 1) Deserialize all operators into a map
     std::unordered_map<OperatorId::Underlying, LogicalOperator> baseOps;
     for (const auto& [_, serializedOp] : serializedQueryPlan.operatormap())
     {
-        baseOps.emplace(serializedOp.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOp));
+        try
+        {
+            baseOps.emplace(serializedOp.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOp));
+        }
+        catch (const Exception& e)
+        {
+            deserializeExceptions.push_back(e);
+        }
+        catch (const std::exception& e)
+        {
+            deserializeExceptions.push_back(e);
+        }
+    }
+
+    if (deserializeExceptions.size() != 0U)
+    {
+        throw CannotDeserialize(
+            "Deserialization of {} out of {} operators failed!", deserializeExceptions.size(), serializedQueryPlan.operatormap_size());
     }
 
     /// 2) Recursive builder to attach all children
