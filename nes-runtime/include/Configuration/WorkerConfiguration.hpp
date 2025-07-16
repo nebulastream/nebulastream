@@ -36,8 +36,8 @@ public:
     QueryExecutionConfiguration defaultQueryExecution = {"defaultQueryExecution", "Default configuration for query executions"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
-    UIntOption numberOfBuffersInGlobalBufferManager
-        = {"numberOfBuffersInGlobalBufferManager", "1024", "Number buffers in global buffer pool.", {std::make_shared<NumberValidation>()}};
+    UIntOption numberOfBuffersInGlobalBufferManager = {
+        "numberOfBuffersInGlobalBufferManager", "32768", "Number buffers in global buffer pool.", {std::make_shared<NumberValidation>()}};
 
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
