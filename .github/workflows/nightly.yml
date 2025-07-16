@@ -136,7 +136,23 @@ jobs:
           exp_backoff=1
           for try in $(seq 5)
           do
-            git pull --rebase
+            if ! git pull --rebase
+            then
+              while git status | grep interactive rebase in progress > /dev/null
+              do
+                echo "git pull --rebase has conflict, trying to resolve"
+                git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                if git status | grep "added by" | grep none > /dev/null
+                then
+                  git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by"  |             awk '{ system("git rm " $NF ) }'
+                else
+                  git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
+                fi
+                git rebase --continue
+              done
+            fi
             if git push
             then
               exit
@@ -319,7 +335,23 @@ jobs:
           exp_backoff=1
           for try in $(seq 5)
           do
-            git pull --rebase
+            if ! git pull --rebase
+            then
+              while git status | grep interactive rebase in progress > /dev/null
+              do
+                echo "git pull --rebase has conflict, trying to resolve"
+                git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                if git status | grep "added by" | grep none > /dev/null
+                then
+                  git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by"  |             awk '{ system("git rm " $NF ) }'
+                else
+                  git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
+                fi
+                git rebase --continue
+              done
+            fi
             if git push
             then
               exit
@@ -407,7 +439,23 @@ jobs:
           exp_backoff=1
           for try in $(seq 5)
           do
-            git pull --rebase
+            if ! git pull --rebase
+            then
+              while git status | grep interactive rebase in progress > /dev/null
+              do
+                echo "git pull --rebase has conflict, trying to resolve"
+                git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                if git status | grep "added by" | grep none > /dev/null
+                then
+                  git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by"  |             awk '{ system("git rm " $NF ) }'
+                else
+                  git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
+                fi
+                git rebase --continue
+              done
+            fi
             if git push
             then
               exit
