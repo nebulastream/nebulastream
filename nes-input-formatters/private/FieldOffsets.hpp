@@ -68,9 +68,10 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     [[nodiscard]] FieldOffsetsType applyGetOffsetOfLastTupleDelimiter() const { return this->offsetOfLastTuple; }
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const { return this->totalNumberOfTuples; }
 
-    const typename FieldOffsetTypeSelector<NumOffsetsPerField>::type* getBufferByWithRecordIndex() const { return indexValues.data(); }
-    static const typename FieldOffsetTypeSelector<NumOffsetsPerField>::type*
-    getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets)
+    // const typename FieldOffsetTypeSelector<NumOffsetsPerField>::type* getBufferByWithRecordIndex() const { return indexValues.data(); }
+    // static const typename FieldOffsetTypeSelector<NumOffsetsPerField>::type*
+    const FieldOffsetsType* getBufferByWithRecordIndex() const { return reinterpret_cast<const FieldOffsetsType*>(indexValues.data()); }
+    static const FieldOffsetsType* getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets)
     {
         // Todo: determine which buffer to access first
         return fieldOffsets->getBufferByWithRecordIndex();
@@ -125,18 +126,12 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                     INVARIANT(
                         sizeof(typename FieldOffsetTypeSelector<NumOffsetsPerField>::type) == (2 * (sizeof(FieldOffsetsType))),
                         "Violated memory layout assumption");
-                    const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
-                    const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
+                    const auto recordOffsetAddress = indexBufferPtr + ((numPriorFields * 2) + i);
+                    const auto recordOffsetEndAddress = indexBufferPtr + ((numPriorFields * 2) + i + nautilus::static_val<uint64_t>(1));
                     const auto fieldOffsetStart = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetAddress);
                     const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldOffsetsType>(recordOffsetEndAddress);
 
                     auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
-                    // Todo: find better way to only deduct size of field delimiter if field is last field
-                    if (i < metaData.getSchema().getNumberOfFields() - 1)
-                    {
-                        fieldSize -= nautilus::static_val<uint64_t>(
-                            metaData.getTupleDelimitingBytes().size()); //Todo: should be 'getFieldDelimitingBytes'
-                    }
                     const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
                     const auto& currentField = metaData.getSchema().getFieldAt(i);
                     RawValueParser::parseRawValueIntoRecord(

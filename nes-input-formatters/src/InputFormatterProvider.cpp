@@ -40,6 +40,6 @@ provideInputFormatterTask(const OriginId originId, const Schema& schema, const P
 }
 bool contains(const std::string& parserType)
 {
-    return InputFormatterRegistry::instance().contains(parserType);
+    return InputFormatIndexerRegistry::instance().contains(parserType);
 }
 }

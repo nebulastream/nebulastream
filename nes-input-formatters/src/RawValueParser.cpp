@@ -134,6 +134,8 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
         }
         case DataType::Type::VARSIZED:
             return getBasicStringParseFunction();
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented("Cannot parse undefined type.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }
@@ -169,43 +171,43 @@ void parseRawValueIntoRecord(
     switch (physicalType)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::CHAR: {
@@ -213,13 +215,15 @@ void parseRawValueIntoRecord(
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize, QuotationType::NONE));
             return;
         }
         case DataType::Type::VARSIZED: {
             record.write(fieldName, parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize, quotationType));
             return;
         }
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented("Cannot parse undefined type.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }

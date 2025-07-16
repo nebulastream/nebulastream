@@ -366,13 +366,13 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
+    if (NES::Util::toLowerCase(potentialToken).starts_with(NES::Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
     /// Lookup in map
     const auto* it = std::ranges::find_if(
-        stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
+        stringToToken, [&potentialToken](const auto& pair) { return NES::Util::toLowerCase(pair.first) == NES::Util::toLowerCase(potentialToken); });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -455,7 +455,7 @@ SystestParser::SystestSink SystestParser::expectSink() const
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
     INVARIANT(
-        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken),
+        NES::Util::toLowerCase(discard) == NES::Util::toLowerCase(SinkToken),
         "Expected first word to be `{}` for sink statement",
         SystestLogicalSourceToken);
 
@@ -624,7 +624,7 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))
+    if (currentLine < lines.size() && (NES::Util::toLowerCase(lines[currentLine]) == NES::Util::toLowerCase(ResultDelimiter) || ignoreFirst))
     {
         currentLine++;
     }
@@ -647,7 +647,7 @@ std::string SystestParser::expectQuery()
         if (!emptyOrComment(lines[currentLine]))
         {
             /// Query definition ends with result delimiter.
-            if (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter))
+            if (NES::Util::toLowerCase(lines[currentLine]) == NES::Util::toLowerCase(ResultDelimiter))
             {
                 --currentLine;
                 break;
@@ -678,7 +678,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     /// Skip the ERROR token
     std::string token;
     stream >> token;
-    INVARIANT(Util::toLowerCase(token) == Util::toLowerCase(ErrorToken), "Expected ERROR token");
+    INVARIANT(NES::Util::toLowerCase(token) == NES::Util::toLowerCase(ErrorToken), "Expected ERROR token");
 
     /// Read the error code
     std::string errorStr;

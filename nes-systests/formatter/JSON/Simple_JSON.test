@@ -1,0 +1,24 @@
+# name: sources/Default_Attach_Mix.test
+# description: Mixes a default-inline-specified source with a file source that has a non-default csv field delimiter
+# groups: [Sources]
+
+# To read data from a file (schema of source and sink must be correct!):
+# Attach File JSON CONFIG/inputFormatters/json_default.yaml stream FILE
+# TESTDATA/path/to/file
+
+Source stream UINT64 id UINT64 value
+
+Attach File JSON CONFIG/inputFormatters/json_default.yaml stream INLINE
+{"id":1,"value":10}
+{"id":2,"value":20}
+{"id":3,"value":30}
+{"id":4,"value":40}
+
+SINK file_sink UINT64 stream$id
+
+SELECT id FROM stream INTO file_sink
+----
+1
+2
+3
+4
