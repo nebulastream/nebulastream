@@ -19,6 +19,8 @@
 
 #include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <cpptrace/from_current.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -27,7 +29,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
 {
     NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
 
-    try
+    CPPTRACE_TRY
     {
         auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
         NES::SingleNodeWorker snw{NES::SingleNodeWorkerConfiguration{}};
@@ -39,7 +41,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
         snw.startQuery(*res);
         snw.stopQuery(*res, NES::QueryTerminationType::Graceful);
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         return;
     }
