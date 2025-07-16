@@ -41,10 +41,5 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEve
 
     explicit PrintingStatisticListener(const std::filesystem::path& path);
     static_assert(std::is_default_constructible_v<CombinedEventType>);
-
-private:
-    std::ofstream file;
-    folly::MPMCQueue<CombinedEventType> events{100};
-    std::jthread printThread;
 };
 }
