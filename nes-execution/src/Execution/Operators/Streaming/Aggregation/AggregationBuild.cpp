@@ -74,7 +74,7 @@ Interface::HashMap* getAggHashMapProxy(
     const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets, buildOperator->varSizedPageSize, buildOperator->varSizedStorageMethod};
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs);
 }
 

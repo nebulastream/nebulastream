@@ -54,41 +54,41 @@ void threadRoutine(
                     file << fmt::format(
                         "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
                 },
-                [&](StartQuerySystemEvent startQuery)
-                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
-                [&](TaskExecutionStart taskStartEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {} Bytes in TupleBuffer: {}\n",
-                        taskStartEvent.timestamp,
-                        taskStartEvent.taskId,
-                        taskStartEvent.pipelineId,
-                        taskStartEvent.queryId,
-                        taskStartEvent.numberOfTuples,
-                        taskStartEvent.bytesInTupleBuffer);
-                },
-                [&](TaskEmit emitEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {} Bytes in "
-                        "TupleBuffer: {}\n",
-                        emitEvent.timestamp,
-                        emitEvent.taskId,
-                        emitEvent.fromPipeline,
-                        emitEvent.toPipeline,
-                        emitEvent.queryId,
-                        emitEvent.numberOfTuples,
-                        emitEvent.bytesInTupleBuffer);
-                },
-                [&](TaskExecutionComplete taskStopEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
-                        taskStopEvent.timestamp,
-                        taskStopEvent.taskId,
-                        taskStopEvent.pipelineId,
-                        taskStopEvent.queryId);
-                },
+                // [&](StartQuerySystemEvent startQuery)
+                // { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
+                // [&](TaskExecutionStart taskStartEvent)
+                // {
+                //     file << fmt::format(
+                //         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {} Bytes in TupleBuffer: {}\n",
+                //         taskStartEvent.timestamp,
+                //         taskStartEvent.taskId,
+                //         taskStartEvent.pipelineId,
+                //         taskStartEvent.queryId,
+                //         taskStartEvent.numberOfTuples,
+                //         taskStartEvent.bytesInTupleBuffer);
+                // },
+                // [&](TaskEmit emitEvent)
+                // {
+                //     file << fmt::format(
+                //         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {} Bytes in "
+                //         "TupleBuffer: {}\n",
+                //         emitEvent.timestamp,
+                //         emitEvent.taskId,
+                //         emitEvent.fromPipeline,
+                //         emitEvent.toPipeline,
+                //         emitEvent.queryId,
+                //         emitEvent.numberOfTuples,
+                //         emitEvent.bytesInTupleBuffer);
+                // },
+                // [&](TaskExecutionComplete taskStopEvent)
+                // {
+                //     file << fmt::format(
+                //         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
+                //         taskStopEvent.timestamp,
+                //         taskStopEvent.taskId,
+                //         taskStopEvent.pipelineId,
+                //         taskStopEvent.queryId);
+                // },
                 [](auto) {}},
             event);
     }

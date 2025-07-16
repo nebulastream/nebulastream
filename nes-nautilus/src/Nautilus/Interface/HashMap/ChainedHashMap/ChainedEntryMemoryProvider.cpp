@@ -80,16 +80,12 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto memoryAddress = castedEntryAddress + fieldOffset;
             if (PhysicalTypes::isVariableSizedData(type))
             {
-                const auto varSizedDataPtr
-                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
-                VariableSizedData varSizedData(varSizedDataPtr);
-                return varSizedData;
+                auto pointerToVarSized
+                    = nautilus::invoke(+[](int8_t** pointerToReadPositionOnPage) { return *pointerToReadPositionOnPage; }, memoryAddress);
+                return VariableSizedData(pointerToVarSized);
             }
-            else
-            {
-                const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
-                return varVal;
-            }
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+            return varVal;
         }
     }
     throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
@@ -105,36 +101,6 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
     }
 
     return record;
-}
-
-namespace
-{
-void storeVarSized(
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProviderRef,
-    const nautilus::val<WorkerThreadId> workerThreadId,
-    const nautilus::val<int8_t*>& memoryAddress,
-    const VariableSizedData& variableSizedData)
-{
-    nautilus::invoke(
-        +[](ChainedHashMap* hashMap,
-            Memory::AbstractBufferProvider* bufferProvider,
-            const WorkerThreadId workerThreadIdVal,
-            const int8_t** memoryAddressInEntry,
-            const int8_t* varSizedData,
-            const uint64_t varSizedDataSize)
-        {
-            const auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize, workerThreadIdVal);
-            std::memcpy(spaceForVarSizedData, varSizedData, varSizedDataSize);
-            *memoryAddressInEntry = spaceForVarSizedData;
-        },
-        hashMapRef,
-        bufferProviderRef,
-        workerThreadId,
-        memoryAddress,
-        variableSizedData.getReference(),
-        variableSizedData.getTotalSize());
-}
 }
 
 void ChainedEntryMemoryProvider::writeRecord(
@@ -153,13 +119,49 @@ void ChainedEntryMemoryProvider::writeRecord(
         if (PhysicalTypes::isVariableSizedData(type))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            // storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            // storeCopyOfVarSizedData(
+            //     varSizedValue,
+            //     bufferProvider,
+            //     hashMapRef,
+            //     memoryAddress,
+            //     const nautilus::val<uint32_t> size);
+            auto size = varSizedValue.getTotalSize();
+            storeCopyOfVarSizedData(varSizedValue.getReference(), bufferProvider, hashMapRef, workerThreadId, memoryAddress, size);
         }
         else
         {
             value.writeToMemory(memoryAddress);
         }
     }
+}
+
+void ChainedEntryMemoryProvider::storeCopyOfVarSizedData(
+    const nautilus::val<int8_t*>& pointerToVarsized,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<HashMap*>& hashMapRef,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
+    const nautilus::val<int8_t**>& pointerWritePositionOnPage,
+    const nautilus::val<uint32_t> size)
+{
+    invoke(
+        +[](HashMap* hashMap,
+            int32_t size,
+            Memory::AbstractBufferProvider* bufferProviderVal,
+            int8_t* pointerToVarSized,
+            int8_t** pointerToWritePositionOnPage,
+            WorkerThreadId workerThreadId
+            )
+        {
+            return dynamic_cast<ChainedHashMap*>(hashMap)->storeCopyOfVarSizedData(
+                bufferProviderVal, workerThreadId, pointerToVarSized, pointerToWritePositionOnPage, size);
+        },
+        hashMapRef,
+        size,
+        bufferProvider,
+        pointerToVarsized,
+        pointerWritePositionOnPage,
+        workerThreadId);
 }
 
 void ChainedEntryMemoryProvider::writeEntryRef(
@@ -176,7 +178,9 @@ void ChainedEntryMemoryProvider::writeEntryRef(
         if (PhysicalTypes::isVariableSizedData(type))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            //storeCopyOfVarSizedData(hashMapRef, bufferProvider, workerThreadId, memoryAddress, varSizedValue);
+            auto size = varSizedValue.getTotalSize();
+            storeCopyOfVarSizedData(varSizedValue.getReference(), bufferProvider, hashMapRef, workerThreadId, memoryAddress, size);
         }
         else
         {

@@ -202,6 +202,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
+        const auto varSizedPageSize = queryCompilerConfig.varSizedPageSize.getValue();
+        const auto varSizedStorageMethod = queryCompilerConfig.varSizedStorageMethod.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
         const auto entriesPerPage = pageSize / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = buildOperator->getKeyAndValueFields();
@@ -218,6 +220,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize,
             valueSize,
             pageSize,
+            varSizedPageSize,
+            varSizedStorageMethod,
             numberOfBuckets);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
@@ -288,6 +292,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize += physicalType->size();
         }
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
+        const auto varSizedPageSize = queryCompilerConfig.varSizedPageSize.getValue();
+        const auto varSizedStorageMethod = queryCompilerConfig.varSizedStorageMethod.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto entriesPerPage = pageSize / entrySize;
@@ -305,6 +311,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize,
             valueSize,
             pageSize,
+            varSizedPageSize,
+            varSizedStorageMethod,
             numberOfBuckets);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
@@ -377,6 +385,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         keySize += physicalType->size();
                     }
                     const auto pageSize = queryCompilerConfig.pageSize.getValue();
+                    const auto varSizedPageSize = queryCompilerConfig.varSizedPageSize.getValue();
+                    const auto varSizedStorageMethod = queryCompilerConfig.varSizedStorageMethod.getValue();
                     const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
                     const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
                     const auto entriesPerPage = pageSize / entrySize;
@@ -396,6 +406,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         keySize,
                         valueSize,
                         pageSize,
+                        varSizedPageSize,
+                        varSizedStorageMethod,
                         numberOfBuckets);
                     return hashMapOptions;
                 };
@@ -488,6 +500,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         keySize += physicalType->size();
                     }
                     const auto pageSize = queryCompilerConfig.pageSize.getValue();
+                    const auto varSizedPageSize = queryCompilerConfig.varSizedPageSize.getValue();
+                    const auto varSizedStorageMethod = queryCompilerConfig.varSizedStorageMethod.getValue();
                     const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
                     const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
                     const auto entriesPerPage = pageSize / entrySize;
@@ -507,6 +521,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                         keySize,
                         valueSize,
                         pageSize,
+                        varSizedPageSize,
+                        varSizedStorageMethod,
                         numberOfBuckets);
                     return hashMapOptions;
                 };

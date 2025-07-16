@@ -19,9 +19,11 @@
 #include <map>
 #include <memory>
 #include <vector>
+
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include "QueryCompiler/Configurations/Enums/HashMapVarSizedStorageMethod.hpp"
 
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -40,8 +42,8 @@ struct CreateNewSlicesArguments
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
     CreateNewHashMapSliceArgs() = default;
-    CreateNewHashMapSliceArgs(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets)
-        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets)
+    CreateNewHashMapSliceArgs(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets, uint64_t varSizedPageSize, QueryCompilation::Configurations::HashMapVarSizedStorageMethod varSizedStorageMethod)
+        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), varSizedPageSize(varSizedPageSize), varSizedStorageMethod(varSizedStorageMethod)
     {
     }
     ~CreateNewHashMapSliceArgs() override = default;
@@ -49,6 +51,8 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
     std::optional<uint64_t> valueSize;
     std::optional<uint64_t> pageSize;
     std::optional<uint64_t> numberOfBuckets;
+    std::optional<uint64_t> varSizedPageSize;
+    std::optional<QueryCompilation::Configurations::HashMapVarSizedStorageMethod> varSizedStorageMethod;
 };
 
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
