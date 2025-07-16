@@ -301,20 +301,64 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
     }
     return largestMergeInterval;
 }
+do:
+
+Interval calculateTailBitmap(const std::vector<Interval>& intervals, const uint32_t largestHi)
+{
+
+    //Todo:
+    // - same as calculateTailArray, bit set bits in bitmap
+    // - check if bitmap is MAX (or 0 if 1->0) to check if tail can be advanced by 64/2=32
+    return {0,0};
+}
+
+/// Should be thread safe (even if it is ring-buffer, since out of range intervals could never be produced by tail production)
+Interval calculateTailArray(const std::vector<Interval>& intervals, const uint32_t largestHi) {
+    // Todo: is a vector<bool> threadsafe?
+    std::vector<int8_t> seenIntervals(largestHi * 2);
+    seenIntervals[0] = 1;
+
+    for (const auto& interval : intervals)
+    {
+        const auto firstIndex = (2 * interval.lo) - 1;
+        seenIntervals[firstIndex] = 1;
+        auto currentIndex = firstIndex + 1;
+        for (size_t i = interval.lo + 1; i < interval.hi; ++i)
+        {
+            seenIntervals[currentIndex] = 1;
+            ++currentIndex;
+            seenIntervals[currentIndex] = 1;
+            ++currentIndex;
+        }
+        seenIntervals[currentIndex] = 1;
+
+    }
+    const auto intervalSum = std::accumulate(seenIntervals.begin(), seenIntervals.end(), 0);
+    const auto hi = (intervalSum + 1) / 2;
+
+    return Interval{1, static_cast<uint32_t>(hi)};
+}
+
+std::pair<std::vector<Interval>, Interval> generateSpecificIntervalSequence()
+{
+    const std::vector<Interval> intervals{{9, 17}, {1,2}, {2,4}, {5,8}, {8,9}, {4,5}};
+    return std::make_pair(intervals, Interval{1, 17});
+}
 
 int main()
 {
     using namespace NES;
 
-    constexpr uint64_t seed = 2;
-    const auto [intervals, maxInterval] = generateIntervals(200, seed);
+    const auto [intervals, maxInterval] = generateIntervals(200, /*seed*/ 1);
+    // const auto [intervals, maxInterval] = generateSpecificIntervalSequence();
     for (const auto& [lo, hi] : intervals)
     {
         fmt::println("[{},{}]", lo, hi);
     }
     fmt::println("max interval: [{}-{}]", maxInterval.lo, maxInterval.hi);
 
-    const auto finalInterval = calculateTail(intervals, maxInterval.hi);
+    const auto finalInterval = calculateTailArray(intervals, maxInterval.hi);
+    // const auto finalInterval = calculateTail(intervals, maxInterval.hi);
     fmt::println("Final interval: [{}-{}]", finalInterval.lo, finalInterval.hi);
 
     return 0;
