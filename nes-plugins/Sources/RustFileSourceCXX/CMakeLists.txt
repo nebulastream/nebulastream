@@ -13,9 +13,7 @@ add_plugin_as_library(RustFileCXX Source nes-sources-registry rust_file_cxx_sour
 add_plugin_as_library(RustFileCXX SourceValidation nes-sources-registry rust_file_cxx_validation_plugin_library RustFileSourceCXX.cpp)
 add_plugin_as_library(RustFileCXX InlineData nes-sources-registry rust_file_cxx_inline_data_plugin_library RustFileSourceCXX.cpp)
 add_plugin_as_library(RustFileCXX FileData nes-sources-registry rust_file_cxx_file_data_plugin_library RustFileSourceCXX.cpp)
-target_include_directories(rust_file_cxx_validation_plugin_library
-        PRIVATE .
-)
+target_include_directories(rust_file_cxx_validation_plugin_library PRIVATE .)
 
 add_dependencies(rust_file_cxx_source_plugin_library rust_build_cxx)
 add_dependencies(rust_file_cxx_validation_plugin_library rust_build_cxx)
