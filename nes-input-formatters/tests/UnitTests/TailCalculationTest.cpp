@@ -301,15 +301,64 @@ Interval calculateTail(const std::vector<Interval>& intervals, const uint32_t la
     }
     return largestMergeInterval;
 }
-do:
+
+// returns pairs of bitmap index and bitmap
+std::vector<std::pair<size_t, int64_t>> calculateBitmaps(const Interval& interval)
+{
+    constexpr uint64_t NUM_BITMAPS = 8;
+    constexpr uint64_t NUM_SNS_IN_BITMAP = 32;
+    std::vector<std::pair<size_t, int64_t>> indexBitmapPairs;
+
+    const auto sizeOfInterval = interval.hi + 1 - interval.lo;
+    const size_t numBitsToSet = (sizeOfInterval - 1) * 2;
+    const size_t firstBitTmp = (2 * interval.lo - 1) % 64;
+    const size_t firstBitIndex = firstBitTmp;
+    const auto numBitmapsToFill = 1 + (numBitsToSet + firstBitIndex) / 64;
+    INVARIANT(numBitmapsToFill > 0, "An interval should fill bits in at least one bitmap");
+
+
+    const size_t indexOfBitmap = ((interval.lo - 1) / NUM_SNS_IN_BITMAP) % NUM_BITMAPS;
+
+    const auto bitsInFirstBitmap = std::min(numBitsToSet, 64 - firstBitIndex);
+    const uint64_t bits = (1ULL << bitsInFirstBitmap) - 1;
+    const auto firstBitmap = (bits << (firstBitIndex));
+    indexBitmapPairs.emplace_back(firstBitmap, indexOfBitmap);
+    if (numBitmapsToFill == 1)
+    {
+        return indexBitmapPairs;
+    }
+    if (numBitmapsToFill == 2)
+    {
+        const auto numLastBits = numBitsToSet - bitsInFirstBitmap;
+        const auto finalBitmap = (1ULL << numLastBits) - 1;
+        indexBitmapPairs.emplace_back(finalBitmap, indexOfBitmap + 1);
+        return indexBitmapPairs;
+    }
+    for (size_t i = 1; i < numBitmapsToFill - 1; ++i)
+    {
+        indexBitmapPairs.emplace_back(std::numeric_limits<uint64_t>::max(), indexOfBitmap + i);
+    }
+    const auto numLastBits = numBitsToSet - bitsInFirstBitmap - ((numBitmapsToFill - 2) * 64);
+    const auto finalBitmap = (1ULL << numLastBits) - 1;
+    indexBitmapPairs.emplace_back(finalBitmap, indexOfBitmap + (numBitmapsToFill - 1));
+    return indexBitmapPairs;
+}
 
 Interval calculateTailBitmap(const std::vector<Interval>& intervals, const uint32_t largestHi)
 {
+    const auto numRequiredBitmaps = 1 + ((largestHi - 1) / 32);
+    std::vector<uint64_t> bitmaps(numRequiredBitmaps);
+    bitmaps.front() |= 1;
+    for (const auto& interval : intervals)
+    {
+        for (const auto& [bitmap, bitmapIndex] : calculateBitmaps(interval))
+        {
+            bitmaps.at(bitmapIndex) |= bitmap;
+        }
+    }
 
-    //Todo:
-    // - same as calculateTailArray, bit set bits in bitmap
-    // - check if bitmap is MAX (or 0 if 1->0) to check if tail can be advanced by 64/2=32
-    return {0,0};
+    const uint32_t highestHi = (bitmaps.size() - 1) * 32 + ((std::countr_one(bitmaps.back()) + 1) / 2);
+    return {1,highestHi};
 }
 
 /// Should be thread safe (even if it is ring-buffer, since out of range intervals could never be produced by tail production)
@@ -341,23 +390,26 @@ Interval calculateTailArray(const std::vector<Interval>& intervals, const uint32
 
 std::pair<std::vector<Interval>, Interval> generateSpecificIntervalSequence()
 {
-    const std::vector<Interval> intervals{{9, 17}, {1,2}, {2,4}, {5,8}, {8,9}, {4,5}};
-    return std::make_pair(intervals, Interval{1, 17});
+    const std::vector<Interval> intervals{{31,32}, {1,31}, {32,33}, {33, 98}};
+    return std::make_pair(intervals, Interval{1, 98});
+    // const std::vector<Interval> intervals{{9, 17}, {1,2}, {2,4}, {5,8}, {8,9}, {4,5}};
+    // return std::make_pair(intervals, Interval{1, 17});
 }
 
 int main()
 {
     using namespace NES;
 
-    const auto [intervals, maxInterval] = generateIntervals(200, /*seed*/ 1);
-    // const auto [intervals, maxInterval] = generateSpecificIntervalSequence();
+    // const auto [intervals, maxInterval] = generateIntervals(200, /*seed*/ 1);
+    const auto [intervals, maxInterval] = generateSpecificIntervalSequence();
     for (const auto& [lo, hi] : intervals)
     {
         fmt::println("[{},{}]", lo, hi);
     }
     fmt::println("max interval: [{}-{}]", maxInterval.lo, maxInterval.hi);
 
-    const auto finalInterval = calculateTailArray(intervals, maxInterval.hi);
+    const auto finalInterval = calculateTailBitmap(intervals, maxInterval.hi);
+    // const auto finalInterval = calculateTailArray(intervals, maxInterval.hi);
     // const auto finalInterval = calculateTail(intervals, maxInterval.hi);
     fmt::println("Final interval: [{}-{}]", finalInterval.lo, finalInterval.hi);
 
