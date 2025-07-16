@@ -27,7 +27,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     FileDescriptorManagerInfo fileDescriptorManagerInfo,
     const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
-    : DefaultTimeBasedSliceStore(windowSize, windowSlide, inputOrigins.size())
+    : DefaultTimeBasedSliceStore(windowSize, windowSlide)
     , watermarkProcessor(std::make_shared<MultiOriginWatermarkProcessor>(inputOrigins))
     , sliceStoreInfo(std::move(sliceStoreInfo))
     , fileDescriptorManagerInfo(std::move(fileDescriptorManagerInfo))
@@ -57,76 +57,6 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
             }
         }
     }
-}
-
-FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
-    : DefaultTimeBasedSliceStore(other)
-    , watermarkProcessor(other.watermarkProcessor)
-    , watermarkPredictors(other.watermarkPredictors)
-    , writeExecTimeFunction(other.writeExecTimeFunction)
-    , readExecTimeFunction(other.readExecTimeFunction)
-    , fileDescriptorManager(other.fileDescriptorManager)
-    , alteredSlicesPerThread(other.alteredSlicesPerThread)
-    , sliceStoreInfo(other.sliceStoreInfo)
-    , fileDescriptorManagerInfo(other.fileDescriptorManagerInfo)
-    , numberOfWorkerThreads(other.numberOfWorkerThreads)
-{
-    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
-    {
-        watermarkPredictorUpdateCnt.emplace(origin, count.load());
-    }
-}
-
-FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
-    : DefaultTimeBasedSliceStore(std::move(other))
-    , watermarkProcessor(std::move(other.watermarkProcessor))
-    , watermarkPredictors(std::move(other.watermarkPredictors))
-    , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
-    , readExecTimeFunction(std::move(other.readExecTimeFunction))
-    , fileDescriptorManager(std::move(other.fileDescriptorManager))
-    , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
-    , sliceStoreInfo(std::move(other.sliceStoreInfo))
-    , fileDescriptorManagerInfo(std::move(other.fileDescriptorManagerInfo))
-    , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
-    , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
-{
-}
-
-FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore& other)
-{
-    watermarkProcessor = other.watermarkProcessor;
-    watermarkPredictors = other.watermarkPredictors;
-    writeExecTimeFunction = other.writeExecTimeFunction;
-    readExecTimeFunction = other.readExecTimeFunction;
-    fileDescriptorManager = other.fileDescriptorManager;
-    alteredSlicesPerThread = other.alteredSlicesPerThread;
-    sliceStoreInfo = other.sliceStoreInfo;
-    fileDescriptorManagerInfo = other.fileDescriptorManagerInfo;
-    numberOfWorkerThreads = other.numberOfWorkerThreads;
-
-    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
-    {
-        watermarkPredictorUpdateCnt.emplace(origin, count.load());
-    }
-    DefaultTimeBasedSliceStore::operator=(other);
-    return *this;
-}
-
-FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
-{
-    watermarkProcessor = std::move(other.watermarkProcessor);
-    watermarkPredictors = std::move(other.watermarkPredictors);
-    writeExecTimeFunction = std::move(other.writeExecTimeFunction);
-    readExecTimeFunction = std::move(other.readExecTimeFunction);
-    fileDescriptorManager = std::move(other.fileDescriptorManager);
-    alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
-    sliceStoreInfo = std::move(other.sliceStoreInfo);
-    fileDescriptorManagerInfo = std::move(other.fileDescriptorManagerInfo);
-    watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
-    numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
-
-    DefaultTimeBasedSliceStore::operator=(std::move(other));
-    return *this;
 }
 
 std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCreate(
@@ -447,13 +377,16 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (const auto threadToRead : threadsToRead)
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
-        if (auto fileReader = fileDescriptorManager->getFileReader(nljSlice->getSliceEnd(), threadToRead, workerThreadId, joinBuildSide);
+        if (auto fileReader = fileDescriptorManager->getFileReader(
+                nljSlice->getSliceEnd(), threadToRead, workerThreadId, joinBuildSide, sliceStoreInfo.cleanup);
             fileReader.has_value())
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
             nljSlice->releaseCombinePagedVectorsLock();
+
+            //fileReader.value()->deleteAllFiles();
         }
     }
 }
@@ -490,11 +423,19 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto sizeRead
-            = fileDescriptorManager
-                  ->getFileReader(SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(0), WorkerThreadId(0), JoinBuildSideType::Left)
-                  .value()
-                  ->read(data.data(), dataSize);
+        const auto fileReader = fileDescriptorManager
+                                    ->getFileReader(
+                                        SliceEnd(SliceEnd::INVALID_VALUE),
+                                        WorkerThreadId(0),
+                                        WorkerThreadId(0),
+                                        JoinBuildSideType::Left,
+                                        sliceStoreInfo.cleanup)
+                                    .value();
+        const auto sizeRead = fileReader->read(data.data(), dataSize);
+        if (sliceStoreInfo.cleanup)
+        {
+            //fileReader->deleteAllFiles();
+        }
         const auto read = std::chrono::high_resolution_clock::now();
 
         if (sizeRead != dataSize)

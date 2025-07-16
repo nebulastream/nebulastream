@@ -89,7 +89,7 @@ std::shared_ptr<MemoryLayout> MemoryLayout::createMemoryLayout(const Schema& sch
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
             return ColumnLayout::create(bufferSize, schema);
         default: {
-            NES_FATAL_ERROR("Unknown memory layout type");
+            NES_ERROR("Unknown memory layout type");
             return nullptr;
         }
     }

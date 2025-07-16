@@ -76,7 +76,7 @@ private:
 class FileReader
 {
 public:
-    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize);
+    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool cleanup);
     ~FileReader();
 
     size_t read(void* dest, size_t size);
@@ -98,7 +98,22 @@ private:
     size_t readKeyBufferEnd;
     size_t bufferSize;
 
+    bool cleanup;
     std::string filePath;
+};
+
+class AsyncFileRemover
+{
+public:
+    explicit AsyncFileRemover(boost::asio::io_context& ioCtx) : ioCtx(ioCtx) { }
+
+    void remove(const std::string& path) const
+    {
+        boost::asio::post(ioCtx, [path] { std::filesystem::remove(path); });
+    }
+
+private:
+    boost::asio::io_context& ioCtx;
 };
 
 }

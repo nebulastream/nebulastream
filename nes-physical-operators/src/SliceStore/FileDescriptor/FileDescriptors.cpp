@@ -216,7 +216,7 @@ boost::asio::awaitable<void> FileWriter::writeToFile(const char* buffer, size_t&
     size = 0;
 }
 
-FileReader::FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize)
+FileReader::FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool cleanup)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
     , readBuffer(readBuffer)
@@ -226,6 +226,7 @@ FileReader::FileReader(const std::string& filePath, char* readBuffer, char* read
     , readBufferEnd(0)
     , readKeyBufferEnd(0)
     , bufferSize(bufferSize)
+    , cleanup(cleanup)
     , filePath(filePath)
 {
     if (not file.is_open() or not keyFile.is_open())
@@ -244,10 +245,13 @@ FileReader::FileReader(const std::string& filePath, char* readBuffer, char* read
 FileReader::~FileReader()
 {
     file.close();
-    std::filesystem::remove(filePath + ".dat");
-
     keyFile.close();
-    std::filesystem::remove(filePath + "_key.dat");
+
+    if (cleanup)
+    {
+        std::filesystem::remove(filePath + ".dat");
+        std::filesystem::remove(filePath + "_key.dat");
+    }
 }
 
 size_t FileReader::read(void* dest, const size_t size)
@@ -286,7 +290,10 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
         }
 
         varSizedFile.close();
-        std::filesystem::remove(filePathStr);
+        if (cleanup)
+        {
+            std::filesystem::remove(filePathStr);
+        }
 
         return buffer.value();
     }

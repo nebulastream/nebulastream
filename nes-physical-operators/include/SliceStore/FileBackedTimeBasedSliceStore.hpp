@@ -41,6 +41,7 @@ struct SliceStoreInfo
     uint64_t fileOperationTimeDelta;
     FileLayout fileLayout;
     bool withPrediction;
+    bool cleanup;
 };
 
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
@@ -56,10 +57,6 @@ public:
         FileDescriptorManagerInfo fileDescriptorManagerInfo,
         WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
-    FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
-    FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
-    FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
-    FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore&& other) noexcept;
 
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp,
