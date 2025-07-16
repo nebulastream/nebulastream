@@ -13,7 +13,6 @@
 
 import json
 import sys
-import os
 import subprocess
 import multiprocessing
 from pathlib import Path
@@ -50,7 +49,7 @@ def parse_callgraph_text(cg):
     return callers
 
 
-def foo(args):
+def compute_callgraph(args):
     cmd_arr, cwd, out = args
     subprocess.run(cmd_arr, check=True, cwd=cwd)
 
@@ -66,10 +65,55 @@ def foo(args):
     return callgraph
 
 
+def to_graph(callers, elgnamed, gcovr_json) -> str:
+    
+    def cov_percent_to_color(value):
+        value = max(0, min(100, value))  # Clamp value between 0 and 100
+
+        if value <= 50:
+            red = 255
+            green = int(255 * (value / 50))
+            blue = 0
+        else:
+            red = int(255 * (1 - (value - 50) / 50))
+            green = 255
+            blue = 0
+
+        return f'#{red:02x}{green:02x}{blue:02x}'
+
+    drawn_fns = set()
+
+    ret = []
+
+    ret.append("digraph G {")
+    for f in gcovr_json["files"]:
+        for fun in f["functions"]:
+            if fun["name"] not in elgnamed:
+                continue # check if we miss anything important here
+            demngld_name = fun["name"]
+            mangled_name = elgnamed[demngld_name]
+            drawn_fns.add(mangled_name)
+            ret.append(f'{mangled_name} [label="{demngld_name[:10]}", tooltip="{demngld_name}", color="{cov_percent_to_color(fun["blocks_percent"])}"];')
+    
+    for drawn_fn in drawn_fns:
+        if drawn_fn in callers:
+            for callee in callers[drawn_fn]:
+                if callee in drawn_fns:
+                    ret.append(f"{drawn_fn} -> {callee};")
+    ret.append("}")
+
+    return "\n".join(ret)
+
+
+
 def main():
     compile_cmds_file = sys.argv[1]
     with open(compile_cmds_file) as f:
         compile_cmds = json.load(f)
+
+    gcovr_json_file = sys.argv[2]
+    with open(gcovr_json_file) as f:
+        gcovr_json = json.load(f)
 
     jobs = []
 
@@ -87,25 +131,9 @@ def main():
         jobs.append((cmd_arr, cmd["directory"], out_file))
 
     with multiprocessing.Pool(32) as p:
-        for res in p.map(foo, jobs):
-            pass
-
-
-if __name__ == "__main__":
-    gcovr_json_file = sys.argv[1]
-
-    with open(gcovr_json_file) as f:
-        gcovr_json = json.load(f)
-
-    for f in gcovr_json["files"]:
-        for fun in f["functions"]:
-            if fun["blocks_percent"] > 0:
-                print(fun)
-
-    callers = {}
-    for cg_file in sys.argv[2:]:
-        with open(cg_file) as f:
-            callers = callers | parse_callgraph_text(f.read())
+        callers = {}
+        for callgraph in p.map(compute_callgraph, jobs):
+            callers |= parse_callgraph_text(callgraph)
 
     mangled_callers = "\n".join(callers.keys())
     demngld_callers = subprocess.run("c++filt", input=mangled_callers, capture_output=True, text=True, check=True).stdout
@@ -113,5 +141,15 @@ if __name__ == "__main__":
     mangled_callers = mangled_callers.split("\n")
     demngld_callers = demngld_callers.split("\n")
 
-    print(mangled_callers[9])
-    print(demngld_callers[9])
+    elgnamed = dict(zip(demngld_callers, mangled_callers))
+
+    graph = to_graph(callers, elgnamed, gcovr_json)
+
+    with open("cov.dot", "w") as f:
+        f.write(graph)
+
+    print("cov.dot written")
+
+
+if __name__ == "__main__":
+    main()
