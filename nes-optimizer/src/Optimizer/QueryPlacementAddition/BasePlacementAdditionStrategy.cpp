@@ -509,6 +509,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     // }
     //
 
+//Container for storing newly computed decomposed query plans
+    std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> mapOfNewlyComputedDecomposedQueryPlans;
+
     // Iterate over all computed decomposed query plans and add network source and sink operators.
     for (const auto& [workerId, decomposedQueryPlans] : computedDecomposedQueryPlans) {
         auto downstreamTopologyNode = getTopologyNode(workerId);
@@ -551,8 +554,6 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                 // 5. For each candidate operator not in the state "Placed" find the topology node hosting the immediate
                 // upstream logical operators.
                 for (const auto& upstreamOperator : originalCopiedOperator->getChildren()) {
-
-                    NES_DEBUG("Connected upstream operator {}", upstreamOperator->toString())
 
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperator>();
@@ -701,10 +702,10 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                 SysPlanMetadata(newDecomposedQueryPlan->getDecomposedQueryId(), currentWorkerId));
 
                             // 20. add the new query plan
-                            if (computedDecomposedQueryPlans.contains(currentWorkerId)) {
-                                computedDecomposedQueryPlans[currentWorkerId].emplace_back(newDecomposedQueryPlan);
+                            if (mapOfNewlyComputedDecomposedQueryPlans.contains(currentWorkerId)) {
+                                mapOfNewlyComputedDecomposedQueryPlans[currentWorkerId].emplace_back(newDecomposedQueryPlan);
                             } else {
-                                computedDecomposedQueryPlans[currentWorkerId] = {newDecomposedQueryPlan};
+                                mapOfNewlyComputedDecomposedQueryPlans[currentWorkerId] = {newDecomposedQueryPlan};
                             }
                             networkSourceOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
                             networkSourceOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
@@ -724,6 +725,18 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                                                 downStreamOperatorToConnectedSysPlansMetaDataMap);
                 }
             }
+        }
+    }
+
+    //Add all newly computed plans into the computedDecomposedQueryPlans for further processing
+    for (auto [workerId, newlyComputedDecomposedQueryPlans] : mapOfNewlyComputedDecomposedQueryPlans) {
+        auto it = computedDecomposedQueryPlans.find(workerId);
+        if (it != computedDecomposedQueryPlans.end()) {
+            for (auto newDQP : newlyComputedDecomposedQueryPlans) {
+                it->second.emplace_back();
+            }
+        } else {
+            computedDecomposedQueryPlans.emplace(workerId, newlyComputedDecomposedQueryPlans);
         }
     }
 }
