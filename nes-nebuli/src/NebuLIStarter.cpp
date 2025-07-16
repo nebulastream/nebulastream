@@ -44,7 +44,7 @@
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 
-__asm__(".symver realpath,realpath@GLIBC_2.35");
+//__asm__(".symver realpath,realpath@GLIBC_2.35");
 int main(int argc, char** argv)
 {
     CPPTRACE_TRY
