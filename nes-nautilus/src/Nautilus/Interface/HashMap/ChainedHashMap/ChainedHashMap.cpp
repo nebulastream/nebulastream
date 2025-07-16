@@ -268,7 +268,7 @@ void ChainedHashMap::storeCopyOfVarSizedData(
         }
         case QueryCompilation::Configurations::HashMapVarSizedStorageMethod::JOINT_PAGES: {
             /// 1. Check if we need to allocate a new page
-            if (storageSpace.empty() ||pageSize - sizeOfDataOnVarsizedPage - sizeOfEntriesOnCurrentPage < size)
+            if (storageSpace.empty() || pageSize - sizeOfDataOnVarsizedPage - sizeOfEntriesOnCurrentPage < size)
             {
                 {
                     auto newPage = bufferProvider->getUnpooledBuffer(pageSize, workerThreadId);
@@ -287,7 +287,7 @@ void ChainedHashMap::storeCopyOfVarSizedData(
             /// 2. Finding the new entry
             const auto page = storageSpace.back().getBuffer();
             dataPtr = page + pageSize - sizeOfDataOnVarsizedPage - size;
-            sizeOfDataOnVarsizedPage += entrySize;
+            sizeOfDataOnVarsizedPage += size;
             break;
         }
     }
