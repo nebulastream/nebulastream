@@ -25,7 +25,7 @@
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator, QueryId)
+RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     const auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();

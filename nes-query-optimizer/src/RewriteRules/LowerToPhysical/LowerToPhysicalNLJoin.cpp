@@ -147,7 +147,7 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
         | std::ranges::to<std::vector<std::string>>();
 };
 
-RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator, QueryId)
+RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected two origin id vector");

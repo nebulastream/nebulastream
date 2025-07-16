@@ -66,6 +66,7 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
+
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
 {
