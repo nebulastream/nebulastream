@@ -76,8 +76,8 @@ public:
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-    std::optional<std::shared_ptr<FileReader>>
-    getFileReader(SliceEnd sliceEnd, WorkerThreadId threadToRead, WorkerThreadId workerThread, JoinBuildSideType joinBuildSide);
+    std::optional<std::shared_ptr<FileReader>> getFileReader(
+        SliceEnd sliceEnd, WorkerThreadId threadToRead, WorkerThreadId workerThread, JoinBuildSideType joinBuildSide, bool cleanup);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 

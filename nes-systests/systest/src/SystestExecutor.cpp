@@ -548,8 +548,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries =
-                    Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, timeoutInSeconds);
+                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, timeoutInSeconds);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);

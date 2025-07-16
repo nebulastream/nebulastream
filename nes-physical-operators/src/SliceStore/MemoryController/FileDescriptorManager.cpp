@@ -119,7 +119,11 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
 }
 
 std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
-    const SliceEnd sliceEnd, const WorkerThreadId threadToRead, const WorkerThreadId workerThread, const JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd,
+    const WorkerThreadId threadToRead,
+    const WorkerThreadId workerThread,
+    const JoinBuildSideType joinBuildSide,
+    const bool cleanup)
 {
     auto& [writers, lruQueue, mutex] = threadWriters[threadToRead.getRawValue()];
     const auto key = std::make_pair(sliceEnd, joinBuildSide);
@@ -140,7 +144,8 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
             constructFilePath(sliceEnd, threadToRead, joinBuildSide),
             memoryPool.getReadBufferForThread(workerThread, false),
             memoryPool.getReadBufferForThread(workerThread, true),
-            fileDescriptorManagerInfo.fileDescriptorBufferSize);
+            fileDescriptorManagerInfo.fileDescriptorBufferSize,
+            cleanup);
     }
 
     return {};

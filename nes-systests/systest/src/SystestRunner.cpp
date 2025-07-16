@@ -184,8 +184,7 @@ std::vector<RunningQuery> runQueries(
                 while (not allQueriesStopped)
                 {
                     const auto now = std::chrono::steady_clock::now();
-                    if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count())
-                        >= timeoutInSeconds)
+                    if (static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count()) >= timeoutInSeconds)
                     {
                         allQueriesStopped = true;
                         std::queue<SystestQuery> emptyQueue;
@@ -215,36 +214,36 @@ std::vector<RunningQuery> runQueries(
 
                 auto& runningQuery = it->second;
 
-            if (summary.currentStatus == QueryStatus::Failed)
-            {
-                INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
-            }
-            else
-            {
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
-                    {
-                        if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                if (summary.currentStatus == QueryStatus::Failed)
+                {
+                    INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
+                    processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
+                }
+                else
+                {
+                    reportResult(
+                        runningQuery,
+                        finished,
+                        queries.size(),
+                        failed,
+                        [&]
                         {
-                            return fmt::format(
-                                "expected error {} but query succeeded",
-                                std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
-                        }
-                        runningQuery->querySummary = summary;
-                        if (auto err = checkResult(*runningQuery))
-                        {
-                            return *err;
-                        }
-                        return std::string{};
-                    });
+                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                            {
+                                return fmt::format(
+                                    "expected error {} but query succeeded",
+                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            }
+                            runningQuery->querySummary = summary;
+                            if (auto err = checkResult(*runningQuery))
+                            {
+                                return *err;
+                            }
+                            return std::string{};
+                        });
+                }
+                active.erase(it);
             }
-            active.erase(it);
-        }
         } while (allQueriesStopped and not active.empty());
     }
 
