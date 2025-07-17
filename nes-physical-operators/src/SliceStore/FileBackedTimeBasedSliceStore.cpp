@@ -312,7 +312,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         if (stateSizeOnDisk > sliceStoreInfo.minReadStateSize
             && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
                    watermarkPredictors,
-                   timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.fileOperationTimeDelta)
+                   timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
                 >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
@@ -324,7 +324,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                    watermarkPredictors,
                    timeNow + getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
                        + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk)
-                       + sliceStoreInfo.fileOperationTimeDelta)
+                       + sliceStoreInfo.predictionTimeDelta)
                 < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
@@ -378,7 +378,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     {
         /// Only read from file if the slice was written out earlier for this build side and not yet read back
         if (auto fileReader = fileDescriptorManager->getFileReader(
-                nljSlice->getSliceEnd(), threadToRead, workerThreadId, joinBuildSide, sliceStoreInfo.cleanup);
+                nljSlice->getSliceEnd(), threadToRead, workerThreadId, joinBuildSide, sliceStoreInfo.withCleanup);
             fileReader.has_value())
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
@@ -429,10 +429,10 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
                                         WorkerThreadId(0),
                                         WorkerThreadId(0),
                                         JoinBuildSideType::Left,
-                                        sliceStoreInfo.cleanup)
+                                        sliceStoreInfo.withCleanup)
                                     .value();
         const auto sizeRead = fileReader->read(data.data(), dataSize);
-        if (sliceStoreInfo.cleanup)
+        if (sliceStoreInfo.withCleanup)
         {
             //fileReader->deleteAllFiles();
         }

@@ -38,10 +38,10 @@ struct SliceStoreInfo
     uint64_t maxNumSequenceNumbers;
     uint64_t minReadStateSize;
     uint64_t minWriteStateSize;
-    uint64_t fileOperationTimeDelta;
+    uint64_t predictionTimeDelta;
     FileLayout fileLayout;
+    bool withCleanup;
     bool withPrediction;
-    bool cleanup;
 };
 
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore

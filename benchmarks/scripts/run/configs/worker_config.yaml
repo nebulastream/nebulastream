@@ -13,8 +13,9 @@ worker:
     maxNumSequenceNumbers: 0
     minReadStateSize: 0
     minWriteStateSize: 0
-    fileOperationTimeDelta: 0
+    predictionTimeDelta: 0
     fileLayout: NO_SEPARATION
+    withCleanup: true
     withPrediction: true
     watermarkPredictorType: KALMAN
     maxNumFileDescriptors: 1048576

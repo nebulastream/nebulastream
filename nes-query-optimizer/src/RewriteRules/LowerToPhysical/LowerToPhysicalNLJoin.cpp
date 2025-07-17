@@ -201,10 +201,10 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
                 conf.maxNumSequenceNumbers.getValue(),
                 conf.minReadStateSize.getValue(),
                 conf.minWriteStateSize.getValue(),
-                conf.fileOperationTimeDelta.getValue(),
+                conf.predictionTimeDelta.getValue(),
                 conf.fileLayout.getValue(),
-                conf.withPrediction.getValue(),
-                conf.cleanup.getValue()),
+                conf.withCleanup.getValue(),
+                conf.withPrediction.getValue()),
             FileDescriptorManagerInfo(
                 conf.maxNumFileDescriptors.getValue(),
                 conf.fileDescriptorBufferSize.getValue(),

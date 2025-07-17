@@ -100,8 +100,8 @@ public:
            {std::make_shared<NumberValidation>()}};
     UIntOption minWriteStateSize = {
         "minWriteStateSize", "0", "Minimum state size per slice and thread to be written to file.", {std::make_shared<NumberValidation>()}};
-    UIntOption fileOperationTimeDelta
-        = {"fileOperationTimeDelta",
+    UIntOption predictionTimeDelta
+        = {"predictionTimeDelta",
            "0",
            "Time delta added to watermark predictions to account for execution time.",
            {std::make_shared<NumberValidation>()}};
@@ -110,8 +110,8 @@ public:
            FileLayout::NO_SEPARATION,
            "File layout for file backed data structures "
            "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
+    BoolOption withCleanup = {"withCleanup", "true", "Delete state on external storage devices for file backed slice store."};
     BoolOption withPrediction = {"withPrediction", "false", "Predict watermarks for file backed slice store."};
-    BoolOption cleanup = {"cleanup", "true", "Delete state on external storage devices for file backed slice store."};
     EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
            WatermarkPredictorType::KALMAN,
@@ -129,7 +129,7 @@ public:
            {std::make_shared<NumberValidation>()}};
     UIntOption numberOfBuffersPerWorker
         = {"numberOfBuffersPerWorker",
-           "4096",
+           "1024",
            "Number of buffers per worker of file descriptors for file backed data structures.",
            {std::make_shared<NumberValidation>()}};
     StringOption fileBackedWorkingDir = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
@@ -150,10 +150,10 @@ private:
             &maxNumSequenceNumbers,
             &minReadStateSize,
             &minWriteStateSize,
-            &fileOperationTimeDelta,
+            &predictionTimeDelta,
             &fileLayout,
+            &withCleanup,
             &withPrediction,
-            &cleanup,
             &watermarkPredictorType,
             &maxNumFileDescriptors,
             &fileDescriptorBufferSize,

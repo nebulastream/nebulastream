@@ -133,8 +133,9 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.defaultQueryExecution.maxNumSequenceNumbers={current_benchmark_config.max_num_sequence_numbers} " \
           f"--worker.defaultQueryExecution.minReadStateSize={current_benchmark_config.min_read_state_size} " \
           f"--worker.defaultQueryExecution.minWriteStateSize={current_benchmark_config.min_write_state_size} " \
-          f"--worker.defaultQueryExecution.fileOperationTimeDelta={current_benchmark_config.file_operation_time_delta} " \
+          f"--worker.defaultQueryExecution.predictionTimeDelta={current_benchmark_config.prediction_time_delta} " \
           f"--worker.defaultQueryExecution.fileLayout={current_benchmark_config.file_layout} " \
+          f"--worker.defaultQueryExecution.withCleanup={current_benchmark_config.with_cleanup} " \
           f"--worker.defaultQueryExecution.withPrediction={current_benchmark_config.with_prediction} " \
           f"--worker.defaultQueryExecution.watermarkPredictorType={current_benchmark_config.watermark_predictor_type} " \
           f"--worker.defaultQueryExecution.maxNumFileDescriptors={current_benchmark_config.max_num_file_descriptors} " \
