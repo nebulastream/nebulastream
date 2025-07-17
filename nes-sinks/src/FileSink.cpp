@@ -42,7 +42,11 @@ namespace NES::Sinks
 
 FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
+#ifdef FUZZING
+    , outputFilePath(std::tmpnam(nullptr))
+#else
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
+#endif
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
@@ -66,6 +70,8 @@ void FileSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
     auto stream = outputFileStream.wlock();
+
+#ifndef FUZZING
     /// Remove an existing file unless the isAppend mode is isAppend.
     if (!isAppend)
     {
@@ -79,6 +85,7 @@ void FileSink::start(PipelineExecutionContext&)
             }
         }
     }
+#endif
 
     /// Open the file stream
     if (!stream->is_open())
