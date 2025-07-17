@@ -3,6 +3,11 @@ mod file_source;
 #[cfg(feature = "file-source")]
 pub use file_source::*;
 
+#[cfg(feature = "file-sink")]
+mod file_sink;
+#[cfg(feature = "file-sink")]
+pub use file_sink::*;
+
 #[cfg(feature = "checksum-sink")]
 mod checksum_sink;
 #[cfg(feature = "checksum-sink")]

@@ -11,8 +11,6 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_subdirectory(Rust)
-add_subdirectory(RustCBG)
 
 # NOTE: Since these plugins are part of the main NebulaStream repo,
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
@@ -20,13 +18,10 @@ add_subdirectory(RustCBG)
 # activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
 activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
-activate_optional_plugin("Sources/RustFileSourceCXX" ON)
-activate_optional_plugin("Sources/RustFileSourceCBG" ON)
+activate_optional_plugin("RustCXX" ON)
+activate_optional_plugin("RustCBG" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   activate_optional_plugin("Sinks/ChecksumSink" ON)
-  activate_optional_plugin("Sinks/RustChecksumSinkCXX" ON)
-  activate_optional_plugin("Sinks/RustChecksumSinkCBG" ON)
-  activate_optional_plugin("Sinks/RustFileSinkCXX" ON)
 endif()

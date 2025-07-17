@@ -30,8 +30,8 @@ limitations under the License.
 #include <SinksParsing/CSVFormat.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
-#include <Rust/cxx.hpp>
-#include <Rust/lib.rs.hpp>
+#include <cxx.hpp>
+#include <lib.rs.hpp>
 
 namespace NES::Sinks
 {

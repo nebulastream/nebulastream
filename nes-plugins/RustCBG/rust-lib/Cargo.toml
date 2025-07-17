@@ -10,7 +10,8 @@ crate-type = ["staticlib"]
 cbindgen = "0.29.0"
 
 [features]
-default = ["file-source", "checksum-sink"]
+default = ["file-source", "file-sink", "checksum-sink"]
 file-source = []
+file-sink = []
 checksum-sink = []
 

@@ -43,9 +43,8 @@ nes-asp/data/*.csv
 *.rs.hpp
 *.rs.cpp
 cxx.hpp
+RustCBG.hpp
 target/
 Cargo.lock
-nes-plugins/Sources/RustFileSourceCbindgen/RustFileSourceImpl.hpp
-nes-plugins/Sources/RustFileSourceCbindgen/rust-example-cbg/include/
 
 scripts/__pycache__

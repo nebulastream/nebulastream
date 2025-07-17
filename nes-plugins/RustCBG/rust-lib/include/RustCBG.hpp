@@ -9,6 +9,8 @@ namespace rust {
 
 struct RustChecksumSinkImpl;
 
+struct RustFileSinkImpl;
+
 struct RustFileSourceImpl;
 
 using ErrCode = int32_t;
@@ -42,6 +44,14 @@ void closee(RustFileSourceImpl *rfs);
 int64_t fill_tuple_bufferr(RustFileSourceImpl *rfs, uint8_t *tuple_buffer, uint64_t buf_len);
 
 void free_file_source(RustFileSourceImpl *rfs);
+
+RustFileSinkImpl *new_rust_file_sink(const char *path, bool append);
+
+ErrCode start_rust_file_source_cbg(RustFileSinkImpl *rfs, const char *formatted_schema);
+
+ErrCode execute_rust_file_source_cbg(RustFileSinkImpl *rfs, const char *tuple_buffer);
+
+ErrCode stop_rust_file_source_cbg(RustFileSinkImpl *rfs);
 
 RustChecksumSinkImpl *new_rust_checksum_sink(const char *path);
 

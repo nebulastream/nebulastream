@@ -21,7 +21,7 @@ limitations under the License.
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include "RustChecksumSinkCBG.hpp"
+#include <RustChecksumSinkCBG.hpp>
 
 namespace NES::Sinks
 {
@@ -68,5 +68,4 @@ namespace NES::Sinks
     {
         return std::make_unique<RustChecksumSinkCBG>(sinkRegistryArguments.sinkDescriptor);
     }
-
 }

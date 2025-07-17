@@ -12,78 +12,77 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <iostream>
 #include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
-#include "RustFileSourceCBG.hpp"
-#include <iostream>
+#include <SourceRegistry.hpp>
+#include <SourceValidationRegistry.hpp>
+#include "RustFileSourceCXX.hpp"
+#include <cxx.hpp>
+#include <lib.rs.hpp>
 
 namespace NES::Sources
 {
-    static rust::RustFileSourceImpl* createRustImpl(const SourceDescriptor& sourceDescriptor)
+    static rust::Box<Rust::FileSourceImpl> createRustImpl(const SourceDescriptor& sourceDescriptor)
     {
         std::string path = static_cast<std::string>(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH));
-
-        return rust::new_rust_file_source(path.data());
+        return Rust::new_file_source(rust::Str(path.data(), path.size()));
     }
 
-    RustFileSourceCBG::RustFileSourceCBG(const SourceDescriptor& sourceDescriptor)
+    RustFileSourceCXX::RustFileSourceCXX(const SourceDescriptor& sourceDescriptor)
     : impl(createRustImpl(sourceDescriptor))
     {
     }
 
-    RustFileSourceCBG::~RustFileSourceCBG()
+    void RustFileSourceCXX::open()
     {
-        rust::free_file_source(this->impl);
+        this->impl->open();
     }
 
-    void RustFileSourceCBG::open()
+    void RustFileSourceCXX::close()
     {
-        rust::openn(this->impl);
+        this->impl->close();
     }
 
-    void RustFileSourceCBG::close()
+    std::size_t RustFileSourceCXX::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
     {
-        rust::closee(this->impl);
+        return this->impl->fill_tuple_buffer(tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
     }
 
-    std::size_t RustFileSourceCBG::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
-    {
-        return rust::fill_tuple_bufferr(this->impl, tupleBuffer.getBuffer<uint8_t>(), tupleBuffer.getBufferSize());
-    }
-
-    NES::Configurations::DescriptorConfig::Config RustFileSourceCBG::validateAndFormat(
+    NES::Configurations::DescriptorConfig::Config RustFileSourceCXX::validateAndFormat(
         std::unordered_map<std::string, std::string> config
     )
     {
         return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
     }
 
-    std::ostream& RustFileSourceCBG::toString(std::ostream& str) const
+    std::ostream& RustFileSourceCXX::toString(std::ostream& str) const
     {
-        str << "RustFileSourceCBG";
+        rust::String rustString = this->impl->to_string();
+        std::string cpp_string(rustString.c_str(), rustString.length());
+        Rust::free_string(rustString);
+        str << cpp_string;
         return str;
     }
 
     SourceValidationRegistryReturnType
-    SourceValidationGeneratedRegistrar::RegisterRustFileCBGSourceValidation(SourceValidationRegistryArguments sourceConfig)
+    SourceValidationGeneratedRegistrar::RegisterRustFileCXXSourceValidation(SourceValidationRegistryArguments sourceConfig)
     {
-        return RustFileSourceCBG::validateAndFormat(std::move(sourceConfig.config));
+        return RustFileSourceCXX::validateAndFormat(std::move(sourceConfig.config));
     }
 
-    SourceRegistryReturnType SourceGeneratedRegistrar::RegisterRustFileCBGSource(SourceRegistryArguments sourceRegistryArguments)
+    SourceRegistryReturnType SourceGeneratedRegistrar::RegisterRustFileCXXSource(SourceRegistryArguments sourceRegistryArguments)
     {
-        return std::make_unique<RustFileSourceCBG>(sourceRegistryArguments.sourceDescriptor);
+        return std::make_unique<RustFileSourceCXX>(sourceRegistryArguments.sourceDescriptor);
     }
 
-    InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterRustFileCBGInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+    InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterRustFileCXXInlineData(InlineDataRegistryArguments systestAdaptorArguments)
     {
         if (systestAdaptorArguments.attachSource.tuples)
         {
@@ -103,12 +102,12 @@ namespace NES::Sources
                 }
                 throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
             }
-            throw InvalidConfigParameter("A RustFileSourceCBG config must contain filePath parameter");
+            throw InvalidConfigParameter("A RustFileSourceCXX config must contain filePath parameter");
         }
         throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
     }
 
-    FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterRustFileCBGFileData(FileDataRegistryArguments systestAdaptorArguments)
+    FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterRustFileCXXFileData(FileDataRegistryArguments systestAdaptorArguments)
     {
         /// Check that the test data dir is defined and that the 'filePath' parameter is set
         /// Replace the 'TESTDATA' placeholder in the filepath
@@ -120,7 +119,7 @@ namespace NES::Sources
                 filePath->second = attachSourceFilePath.value();
                 return systestAdaptorArguments.physicalSourceConfig;
             }
-            throw InvalidConfigParameter("A RustFileSourceCBG config must contain filePath parameter.");
+            throw InvalidConfigParameter("A RustFileSourceCXX config must contain filePath parameter.");
         }
         throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
     }

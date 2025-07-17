@@ -29,7 +29,8 @@ limitations under the License.
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <RustCBG/RustCBG.hpp>
+#include <cxx.hpp>
+#include <lib.rs.hpp>
 
 namespace NES::Sinks
 {
@@ -38,11 +39,11 @@ namespace NES::Sinks
     /// Example output of the sink:
     /// S$Count:UINT64,S$Checksum:UINT64
     /// 1042, 12390478290
-    class RustChecksumSinkCBG : public Sink
+    class RustChecksumSinkCXX : public Sink
     {
     public:
-        static constexpr std::string_view NAME = "RustChecksumCBG";
-        explicit RustChecksumSinkCBG(const SinkDescriptor& sinkDescriptor);
+        static constexpr std::string_view NAME = "RustChecksumCXX";
+        explicit RustChecksumSinkCXX(const SinkDescriptor& sinkDescriptor);
 
         /// Opens file and writes schema to file, if the file is empty.
         void start(PipelineExecutionContext&) override;
@@ -51,10 +52,10 @@ namespace NES::Sinks
         static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     protected:
-        std::ostream& toString(std::ostream& os) const override { return os << "RustChecksumSinkCBG"; }
+        std::ostream& toString(std::ostream& os) const override { return os << "RustChecksumSinkCXX"; }
 
     private:
-        rust::RustChecksumSinkImpl* impl;
+        rust::Box<Rust::ChecksumSinkImpl> impl;
         std::unique_ptr<CSVFormat> formatter;
     };
 

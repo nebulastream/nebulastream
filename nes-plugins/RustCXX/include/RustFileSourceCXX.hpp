@@ -19,23 +19,24 @@ limitations under the License.
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ostream>
-#include <RustCBG/RustCBG.hpp>
+#include <cxx.hpp>
+#include <lib.rs.hpp>
 
 namespace NES::Sources
 {
 
-class RustFileSourceCBG : public Source
+class RustFileSourceCXX : public Source
 {
 public:
-    static constexpr std::string_view NAME = "RustFileCBG";
+    static constexpr std::string_view NAME = "RustFileCXX";
 
-    explicit RustFileSourceCBG(const SourceDescriptor& sourceDescriptor);
-    ~RustFileSourceCBG();
+    explicit RustFileSourceCXX(const SourceDescriptor& sourceDescriptor);
+    ~RustFileSourceCXX() override = default;
 
-    RustFileSourceCBG(const RustFileSourceCBG&) = delete;
-    RustFileSourceCBG& operator=(const RustFileSourceCBG&) = delete;
-    RustFileSourceCBG(RustFileSourceCBG&&) = delete;
-    RustFileSourceCBG& operator=(RustFileSourceCBG&&) = delete;
+    RustFileSourceCXX(const RustFileSourceCXX&) = delete;
+    RustFileSourceCXX& operator=(const RustFileSourceCXX&) = delete;
+    RustFileSourceCXX(RustFileSourceCXX&&) = delete;
+    RustFileSourceCXX& operator=(RustFileSourceCXX&&) = delete;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
@@ -49,7 +50,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    rust::RustFileSourceImpl* impl;
+    rust::Box<Rust::FileSourceImpl> impl;
 };
 
 struct ConfigParametersCSV
