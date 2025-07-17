@@ -392,9 +392,9 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
 
 void setupLogging(const SystestConfiguration& config)
 {
+    std::filesystem::path absoluteLogPath;
     const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
 
-    std::filesystem::path absoluteLogPath;
     if (config.logFilePath.getValue().empty())
     {
         std::error_code errorCode;
@@ -410,38 +410,23 @@ void setupLogging(const SystestConfiguration& config)
         std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
 
         absoluteLogPath = logDir / logFileName;
-
-        if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
-        {
-            /// Set the correct logging path when using docker
-            fmt::println(
-                std::cout, "Find the log at: file://{}/nes-systests/{}", std::filesystem::path(hostLoggingPath).string(), logFileName);
-        }
-        else
-        {
-            /// Set the correct logging path without docker
-            fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", PATH_TO_BINARY_DIR, logFileName);
-        }
-
-        Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
-
-        const auto symlinkPath = logDir / "latest.log";
-        createSymlink(absoluteLogPath, symlinkPath);
     }
     else
     {
-        const std::filesystem::path absoluteLogPath = config.logFilePath.getValue();
+        absoluteLogPath = config.logFilePath.getValue();
         const std::filesystem::path parentDir = absoluteLogPath.parent_path();
-
         if (not exists(parentDir) or not is_directory(parentDir))
         {
             fmt::println(std::cerr, "Error creating log file during logger setup: directory does not exist: file://{}", parentDir.string());
             std::exit(1); /// NOLINT(concurrency-mt-unsafe)
         }
-        fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
-
-        Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
     }
+
+    fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
+    Logger::setupLogging(absoluteLogPath.string(), LogLevel::LOG_DEBUG, false);
+
+    const auto symlinkPath = logDir / "latest.log";
+    createSymlink(absoluteLogPath, symlinkPath);
 }
 
 SystestExecutorResult executeSystests(SystestConfiguration config)
