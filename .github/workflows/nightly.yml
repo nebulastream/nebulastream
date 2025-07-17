@@ -125,6 +125,15 @@ jobs:
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
           ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{matrix.cmake_args.name}}
+          path: |
+            build/**/*.log
+            build/**/*.stats
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
