@@ -142,6 +142,7 @@ jobs:
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                git status | grep "deleted by" | awk '{ system("git rm " $NF ) }'
                 if git status | grep "added by" | grep none > /dev/null
                 then
                   git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
@@ -341,6 +342,7 @@ jobs:
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                git status | grep "deleted by" | awk '{ system("git rm " $NF ) }'
                 if git status | grep "added by" | grep none > /dev/null
                 then
                   git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
@@ -445,6 +447,7 @@ jobs:
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                git status | grep "deleted by" | awk '{ system("git rm " $NF ) }'
                 if git status | grep "added by" | grep none > /dev/null
                 then
                   git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'

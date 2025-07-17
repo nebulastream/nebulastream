@@ -30,12 +30,18 @@ then
 
     git clone "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
     CORPUS=/nes-corpora
-    exit 0
+    if ! [ -d /out ]
+    then
+        echo pls mount /out for cov result
+        exit 1
+    fi
+    OUT_DIR=/out
 elif [ "$#" -eq 2 ]
 then
     BASE_DIR=$(pwd)
     BUILD_DIR=$1
     CORPUS=$2
+    OUT_DIR=$(pwd)
 else
     cat << EOF
 pls give
@@ -46,7 +52,6 @@ or run in docker
 EOF
     exit 1
 fi
-
 
 find . -name "*.gcno" -delete
 find . -name "*.gcda" -delete
@@ -63,3 +68,10 @@ do
     echo checking corpus for $fuzzer_exe
     find "$CORPUS/$fuzzer_exe" -type f -print0 | xargs -0 --max-args=1 --max-procs="$(nproc)" timeout 6m "$BASE_DIR/$BUILD_DIR/nes-single-node-worker/fuzz/$fuzzer_exe" -timeout=300 > $fuzzer_exe.log 2> $fuzzer_exe.err || true
 done
+
+cd "$BASE_DIR"
+
+gcovr --gcov-executable "llvm-19-cov gcov" --html-details --output "$OUT_DIR/cov/" --json "$OUT_DIR/gcov.json"
+
+python3 gen_callgraph.py compile_commands.json "$OUT_DIR/gcov.json"
+mv cov.dot "$OUT_DIR"
