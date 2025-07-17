@@ -162,8 +162,8 @@ jobs:
             exp_backoff=$(( exp_backoff * 2 ))
           done
 
-          git checkout -b branch-$RANDOM
-          git push --set-upstream origin
+          git checkout -b run-${{ github.run_id }}-${{ github.run_attempt }}
+          git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
 
   run-fuzzer:
     name: "${{inputs.fuzzer}}: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
@@ -361,8 +361,8 @@ jobs:
             exp_backoff=$(( exp_backoff * 2 ))
           done
 
-          git checkout -b branch-$RANDOM
-          git push --set-upstream origin
+          git checkout -b run-${{ github.run_id }}-${{ github.run_attempt }}
+          git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
 
   final-merge:
     name: "Merge corpora"
@@ -465,8 +465,8 @@ jobs:
             exp_backoff=$(( exp_backoff * 2 ))
           done
 
-          git checkout -b branch-$RANDOM
-          git push --set-upstream origin
+          git checkout -b run-${{ github.run_id }}-${{ github.run_attempt }}
+          git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
 
   gen-cov:
     name: "generate coverage"
