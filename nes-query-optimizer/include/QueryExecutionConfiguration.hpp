@@ -70,17 +70,14 @@ public:
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
            "joinStrategy"
-        "[NESTED_LOOP_JOIN]. "};
+           "[NESTED_LOOP_JOIN]. "};
     EnumOption<SliceStoreType> sliceStoreType
         = {"sliceStoreType",
            SliceStoreType::DEFAULT,
            "Type of slice store "
-        "[DEFAULT|FILE_BACKED]."};
+           "[DEFAULT|FILE_BACKED]."};
     UIntOption lowerMemoryBound
-        = {"lowerMemoryBound",
-           "0",
-           "Lower memory bound in bytes for file backed slice store.",
-           {std::make_shared<NumberValidation>()}};
+        = {"lowerMemoryBound", "0", "Lower memory bound in bytes for file backed slice store.", {std::make_shared<NumberValidation>()}};
     UIntOption upperMemoryBound
         = {"upperMemoryBound",
            std::to_string(UINT64_MAX),
@@ -101,11 +98,8 @@ public:
            "0",
            "Minimum state size per slice and thread to be read back to memory.",
            {std::make_shared<NumberValidation>()}};
-    UIntOption minWriteStateSize
-        = {"minWriteStateSize",
-           "0",
-           "Minimum state size per slice and thread to be written to file.",
-           {std::make_shared<NumberValidation>()}};
+    UIntOption minWriteStateSize = {
+        "minWriteStateSize", "0", "Minimum state size per slice and thread to be written to file.", {std::make_shared<NumberValidation>()}};
     UIntOption fileOperationTimeDelta
         = {"fileOperationTimeDelta",
            "0",
@@ -138,8 +132,7 @@ public:
            "4096",
            "Number of buffers per worker of file descriptors for file backed data structures.",
            {std::make_shared<NumberValidation>()}};
-    StringOption fileBackedWorkingDir
-        = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
+    StringOption fileBackedWorkingDir = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};
 
 private:
     std::vector<BaseOption*> getOptions() override

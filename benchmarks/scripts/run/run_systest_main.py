@@ -60,7 +60,6 @@ COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
-PIPELINE_TXT = "pipelines.txt"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 TEST_NAME = "Nexmark.test:05"
 TEST_FILE_PATH = os.path.join("$(pwd)", "nes-systests/benchmark", TEST_NAME)
@@ -123,26 +122,24 @@ def start_systest(output_folder, working_dir, current_benchmark_config):
           f"--worker.queryEngine.taskQueueSize={current_benchmark_config.task_queue_size} " \
           f"--worker.bufferSizeInBytes={current_benchmark_config.buffer_size_in_bytes} " \
           f"--worker.numberOfBuffersInGlobalBufferManager={current_benchmark_config.buffers_in_global_buffer_manager} " \
-          f"--worker.numberOfBuffersPerWorker={current_benchmark_config.buffers_per_worker} " \
           f"--worker.numberOfBuffersInSourceLocalPools={current_benchmark_config.buffers_in_source_local_buffer_pool} " \
           f"--worker.throughputListenerTimeInterval={current_benchmark_config.throughput_listener_time_interval} " \
-          f"--worker.queryOptimizer.executionMode={current_benchmark_config.execution_mode} " \
-          f"--worker.queryOptimizer.pipelinesTxtFilePath={os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))} " \
-          f"--worker.queryOptimizer.pageSize={current_benchmark_config.page_size} " \
-          f"--worker.queryOptimizer.sliceStoreType={current_benchmark_config.slice_store_type} " \
-          f"--worker.queryOptimizer.lowerMemoryBound={current_benchmark_config.lower_memory_bound} " \
-          f"--worker.queryOptimizer.upperMemoryBound={current_benchmark_config.upper_memory_bound} " \
-          f"--worker.queryOptimizer.maxNumWatermarkGaps={current_benchmark_config.max_num_watermark_gaps} " \
-          f"--worker.queryOptimizer.maxNumSequenceNumbers={current_benchmark_config.max_num_sequence_numbers} " \
-          f"--worker.queryOptimizer.minReadStateSize={current_benchmark_config.min_read_state_size} " \
-          f"--worker.queryOptimizer.minWriteStateSize={current_benchmark_config.min_write_state_size} " \
-          f"--worker.queryOptimizer.fileOperationTimeDelta={current_benchmark_config.file_operation_time_delta} " \
-          f"--worker.queryOptimizer.fileLayout={current_benchmark_config.file_layout} " \
-          f"--worker.queryOptimizer.withPrediction={current_benchmark_config.with_prediction} " \
-          f"--worker.queryOptimizer.watermarkPredictorType={current_benchmark_config.watermark_predictor_type} " \
-          f"--worker.queryOptimizer.maxNumFileDescriptors={current_benchmark_config.max_num_file_descriptors} " \
-          f"--worker.queryOptimizer.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
-          f"--worker.queryOptimizer.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
+          f"--worker.defaultQueryExecution.executionMode={current_benchmark_config.execution_mode} " \
+          f"--worker.defaultQueryExecution.pageSize={current_benchmark_config.page_size} " \
+          f"--worker.defaultQueryExecution.sliceStoreType={current_benchmark_config.slice_store_type} " \
+          f"--worker.defaultQueryExecution.lowerMemoryBound={current_benchmark_config.lower_memory_bound} " \
+          f"--worker.defaultQueryExecution.upperMemoryBound={current_benchmark_config.upper_memory_bound} " \
+          f"--worker.defaultQueryExecution.maxNumWatermarkGaps={current_benchmark_config.max_num_watermark_gaps} " \
+          f"--worker.defaultQueryExecution.maxNumSequenceNumbers={current_benchmark_config.max_num_sequence_numbers} " \
+          f"--worker.defaultQueryExecution.minReadStateSize={current_benchmark_config.min_read_state_size} " \
+          f"--worker.defaultQueryExecution.minWriteStateSize={current_benchmark_config.min_write_state_size} " \
+          f"--worker.defaultQueryExecution.fileOperationTimeDelta={current_benchmark_config.file_operation_time_delta} " \
+          f"--worker.defaultQueryExecution.fileLayout={current_benchmark_config.file_layout} " \
+          f"--worker.defaultQueryExecution.withPrediction={current_benchmark_config.with_prediction} " \
+          f"--worker.defaultQueryExecution.watermarkPredictorType={current_benchmark_config.watermark_predictor_type} " \
+          f"--worker.defaultQueryExecution.maxNumFileDescriptors={current_benchmark_config.max_num_file_descriptors} " \
+          f"--worker.defaultQueryExecution.fileDescriptorBufferSize={current_benchmark_config.file_descriptor_buffer_size} " \
+          f"--worker.defaultQueryExecution.numberOfBuffersPerWorker={current_benchmark_config.num_buffers_per_worker}"
     # print(f"Starting the systest with {cmd}")
     process = subprocess.Popen(cmd, shell=True, cwd=SOURCE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     pid = process.pid
@@ -237,7 +234,7 @@ def main():
         return
 
     # We use pwd to create file paths which will only work from nes root directory
-    process = subprocess.Popen(f"cat {TEST_FILE_PATH.split(":")[0]}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    process = subprocess.Popen(f"cat {TEST_FILE_PATH.split(":")[0]}", shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.PIPE, text=True)
     _, stderr = process.communicate()
     if stderr != '':
         print("Execute from nebulastream root directory")

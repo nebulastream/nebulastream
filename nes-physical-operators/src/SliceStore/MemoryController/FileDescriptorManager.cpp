@@ -13,8 +13,8 @@
 */
 
 #include <ranges>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <SliceStore/FileDescriptorManager/FileDescriptorManager.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
@@ -211,7 +211,7 @@ uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
     if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
     {
         std::cerr << "Failed to get the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
+        return QueryExecutionConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
     }
     limit = std::min(rlp.rlim_max, limit);
 
@@ -219,7 +219,7 @@ uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
     if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
     {
         std::cerr << "Failed to set the file descriptor limit.\n";
-        return NES::Configurations::QueryOptimizerConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
+        return QueryExecutionConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
     }
 
     return limit - numOpenDescriptors;

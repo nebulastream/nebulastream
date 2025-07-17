@@ -30,7 +30,7 @@ public:
     explicit NodeEngineBuilder(
         const WorkerConfiguration& workerConfiguration,
         std::shared_ptr<SystemEventListener> systemEventListener,
-        std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener);
+        std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticEventListener);
 
     std::unique_ptr<NodeEngine> build();
 

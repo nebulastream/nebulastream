@@ -340,7 +340,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     if (program.is_used("--workingDir"))
     {
         config.workingDir = program.get<std::string>("--workingDir");
-        config.singleNodeWorkerConfig.value().workerConfiguration.queryOptimizer.fileBackedWorkingDir = config.workingDir;
+        config.singleNodeWorkerConfig.value().workerConfiguration.defaultQueryExecution.fileBackedWorkingDir = config.workingDir;
     }
 
     if (program.is_used("--endless"))

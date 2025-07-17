@@ -61,7 +61,6 @@ COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
-PIPELINE_TXT = "pipelines.txt"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -141,47 +140,32 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     # Worker Configuration
     with open(CONFIG_FILES[WORKER_CONFIG], 'r') as input_file:
         worker_config_yaml = yaml.safe_load(input_file)
-    worker_config_yaml["worker"][
-        "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
-    worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
-    worker_config_yaml["worker"][
-        "numberOfBuffersInSourceLocalPools"] = current_benchmark_config.buffers_in_source_local_buffer_pool
+    worker_config_yaml["worker"]["numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
+    worker_config_yaml["worker"]["numberOfBuffersInSourceLocalPools"] = current_benchmark_config.buffers_in_source_local_buffer_pool
     worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
-    worker_config_yaml["worker"][
-        "throughputListenerTimeInterval"] = current_benchmark_config.throughput_listener_time_interval
+    worker_config_yaml["worker"]["throughputListenerTimeInterval"] = current_benchmark_config.throughput_listener_time_interval
 
-    # Query Optimizer Configuration
-    worker_config_yaml["worker"]["queryOptimizer"]["executionMode"] = current_benchmark_config.execution_mode
-    worker_config_yaml["worker"]["queryOptimizer"]["pipelinesTxtFilePath"] = os.path.abspath(
-        os.path.join(output_folder, PIPELINE_TXT))
-    worker_config_yaml["worker"]["queryOptimizer"]["pageSize"] = current_benchmark_config.page_size
-    worker_config_yaml["worker"]["queryOptimizer"]["sliceStoreType"] = current_benchmark_config.slice_store_type
-    worker_config_yaml["worker"]["queryOptimizer"]["lowerMemoryBound"] = current_benchmark_config.lower_memory_bound
-    worker_config_yaml["worker"]["queryOptimizer"]["upperMemoryBound"] = current_benchmark_config.upper_memory_bound
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "maxNumWatermarkGaps"] = current_benchmark_config.max_num_watermark_gaps
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
-    worker_config_yaml["worker"]["queryOptimizer"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "minWriteStateSize"] = current_benchmark_config.min_write_state_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
-    worker_config_yaml["worker"]["queryOptimizer"]["fileLayout"] = current_benchmark_config.file_layout
-    worker_config_yaml["worker"]["queryOptimizer"]["withPrediction"] = current_benchmark_config.with_prediction
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "maxNumFileDescriptors"] = current_benchmark_config.max_num_file_descriptors
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
-    worker_config_yaml["worker"]["queryOptimizer"][
-        "numberOfBuffersPerWorker"] = current_benchmark_config.num_buffers_per_worker
-    worker_config_yaml["worker"]["queryOptimizer"]["fileBackedWorkingDir"] = working_dir
+    # Query Execution Configuration
+    worker_config_yaml["worker"]["defaultQueryExecution"]["executionMode"] = current_benchmark_config.execution_mode
+    worker_config_yaml["worker"]["defaultQueryExecution"]["pageSize"] = current_benchmark_config.page_size
+    worker_config_yaml["worker"]["defaultQueryExecution"]["sliceStoreType"] = current_benchmark_config.slice_store_type
+    worker_config_yaml["worker"]["defaultQueryExecution"]["lowerMemoryBound"] = current_benchmark_config.lower_memory_bound
+    worker_config_yaml["worker"]["defaultQueryExecution"]["upperMemoryBound"] = current_benchmark_config.upper_memory_bound
+    worker_config_yaml["worker"]["defaultQueryExecution"]["maxNumWatermarkGaps"] = current_benchmark_config.max_num_watermark_gaps
+    worker_config_yaml["worker"]["defaultQueryExecution"]["maxNumSequenceNumbers"] = current_benchmark_config.max_num_sequence_numbers
+    worker_config_yaml["worker"]["defaultQueryExecution"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
+    worker_config_yaml["worker"]["defaultQueryExecution"]["minWriteStateSize"] = current_benchmark_config.min_write_state_size
+    worker_config_yaml["worker"]["defaultQueryExecution"]["fileOperationTimeDelta"] = current_benchmark_config.file_operation_time_delta
+    worker_config_yaml["worker"]["defaultQueryExecution"]["fileLayout"] = current_benchmark_config.file_layout
+    worker_config_yaml["worker"]["defaultQueryExecution"]["withPrediction"] = current_benchmark_config.with_prediction
+    worker_config_yaml["worker"]["defaultQueryExecution"]["watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
+    worker_config_yaml["worker"]["defaultQueryExecution"]["maxNumFileDescriptors"] = current_benchmark_config.max_num_file_descriptors
+    worker_config_yaml["worker"]["defaultQueryExecution"]["fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
+    worker_config_yaml["worker"]["defaultQueryExecution"]["numberOfBuffersPerWorker"] = current_benchmark_config.num_buffers_per_worker
+    worker_config_yaml["worker"]["defaultQueryExecution"]["fileBackedWorkingDir"] = working_dir
 
     # Query Engine Configuration
-    worker_config_yaml["worker"]["queryEngine"][
-        "numberOfWorkerThreads"] = current_benchmark_config.number_of_worker_threads
+    worker_config_yaml["worker"]["queryEngine"]["numberOfWorkerThreads"] = current_benchmark_config.number_of_worker_threads
     worker_config_yaml["worker"]["queryEngine"]["taskQueueSize"] = current_benchmark_config.task_queue_size
     # TODO worker_config_yaml["worker"]["queryEngine"]["statisticsDir"] = os.path.abspath(output_folder)
 
