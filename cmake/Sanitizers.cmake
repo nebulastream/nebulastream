@@ -43,6 +43,7 @@ endif ()
 option(USE_LIBFUZZER "" OFF)
 
 if (USE_LIBFUZZER)
+    add_compile_definitions(FUZZING)
     add_compile_options(-fsanitize=fuzzer-no-link)
     add_link_options(-fsanitize=fuzzer-no-link)
 endif ()
