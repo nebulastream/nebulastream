@@ -23,7 +23,6 @@
 
 namespace NES
 {
-
 class LowerToCompiledQueryPlanPhase
 {
 public:
