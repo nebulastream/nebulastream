@@ -25,7 +25,7 @@ namespace NES
 struct LowerToPhysicalProjection : AbstractRewriteRule
 {
     explicit LowerToPhysicalProjection(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator, QueryId queryId) override;
 
 private:
     QueryExecutionConfiguration conf;

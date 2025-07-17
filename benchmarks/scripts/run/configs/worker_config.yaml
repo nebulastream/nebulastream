@@ -1,12 +1,10 @@
 worker:
   throughputListenerTimeInterval: 1000
   numberOfBuffersInGlobalBufferManager: 2000000
-  numberOfBuffersPerWorker: 1000
   numberOfBuffersInSourceLocalPools: 1000
   bufferSizeInBytes: 4096
-  queryOptimizer:
+  defaultQueryExecution:
     executionMode: COMPILER
-    pipelinesTxtFilePath: ""
     pageSize: 4096
     sliceStoreType: DEFAULT
     lowerMemoryBound: 0
