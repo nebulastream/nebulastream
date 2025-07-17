@@ -33,8 +33,10 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
 {
     try
     {
+        auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
+
         auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
-        return LowerToCompiledQueryPlanPhase::apply(pipelinedQueryPlan, request->dumpCompilationResult);
+        return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
     }
     catch (...)
     {
