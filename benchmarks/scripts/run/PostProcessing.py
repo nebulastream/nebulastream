@@ -30,7 +30,7 @@ class PostProcessing:
 
     def __init__(self, input_folders, measure_interval, startup_time, benchmark_config_file, engine_statistics_file,
                  benchmark_statistics_file, combined_engine_file, combined_benchmark_file, engine_statistics_csv_path,
-                 benchmark_statistics_csv_path, server_name):
+                 benchmark_statistics_csv_path, server_name, test_name):
         self.input_folders = input_folders
         self.measure_interval = measure_interval
         self.startup_time = startup_time
@@ -42,6 +42,7 @@ class PostProcessing:
         self.engine_statistics_csv_path = engine_statistics_csv_path
         self.benchmark_statistics_csv_path = benchmark_statistics_csv_path
         self.server_name = server_name
+        self.test_name = test_name
 
     def main(self):
         print("Starting post processing...")
@@ -87,8 +88,10 @@ class PostProcessing:
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
-        # Adding a column to identify the used server later
-        combined_df['server'] = self.server_name
+        # Adding columns to identify the used server and test later
+        if not combined_df.empty:
+            combined_df['server'] = self.server_name
+            combined_df['test'] = self.test_name
 
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.engine_statistics_csv_path, index=False)
@@ -121,8 +124,10 @@ class PostProcessing:
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
-        # Adding a column to identify the used server later
-        combined_df['server'] = self.server_name
+        # Adding columns to identify the used server and test later
+        if not combined_df.empty:
+            combined_df['server'] = self.server_name
+            combined_df['test'] = self.test_name
 
         # Writing the combined DataFrame to a csv file
         combined_df.to_csv(self.benchmark_statistics_csv_path, index=False)
