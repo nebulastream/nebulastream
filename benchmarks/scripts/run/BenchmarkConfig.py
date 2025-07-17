@@ -248,6 +248,7 @@ class BenchmarkConfig:
 
 
 def create_systest_configs():
+    # TODO default config is created multiple times
     # Generate configurations where only one parameter varies from the default value
     configs = []
     default_params = get_default_params_dict()
@@ -305,6 +306,7 @@ def create_systest_configs():
 
 
 def create_benchmark_configs():
+    # TODO default config is created multiple times
     # Generate configurations where only one parameter varies from the default value
     configs = []
     default_params = get_default_params_dict()
