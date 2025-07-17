@@ -138,7 +138,7 @@ jobs:
           do
             if ! git pull --rebase
             then
-              while git status | grep interactive rebase in progress > /dev/null
+              while git status | grep "interactive rebase in progress" > /dev/null
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
@@ -337,7 +337,7 @@ jobs:
           do
             if ! git pull --rebase
             then
-              while git status | grep interactive rebase in progress > /dev/null
+              while git status | grep "interactive rebase in progress" > /dev/null
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
@@ -441,7 +441,7 @@ jobs:
           do
             if ! git pull --rebase
             then
-              while git status | grep interactive rebase in progress > /dev/null
+              while git status | grep "interactive rebase in progress" > /dev/null
               do
                 echo "git pull --rebase has conflict, trying to resolve"
                 git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
