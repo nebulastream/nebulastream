@@ -33,13 +33,25 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
     {
         auto dqp = NES::QueryPlanSerializationUtil::deserializeQueryPlan(sqp);
         NES::SingleNodeWorker snw{NES::SingleNodeWorkerConfiguration{}};
-        auto res = snw.registerQuery(dqp);
-        if (!res)
+        auto qid = snw.registerQuery(dqp);
+        if (!qid)
         {
-            throw res.error();
+            throw qid.error();
         }
-        snw.startQuery(*res);
-        snw.stopQuery(*res, NES::QueryTerminationType::Graceful);
+        snw.startQuery(*qid);
+        snw.stopQuery(*qid, NES::QueryTerminationType::Graceful);
+        while (true)
+        {
+            if (snw.getQuerySummary(*qid)->currentStatus <= NES::QueryStatus::Running)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+            else
+            {
+                return;
+            }
+        }
     }
     CPPTRACE_CATCH(...)
     {
