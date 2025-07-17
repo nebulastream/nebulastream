@@ -261,13 +261,7 @@ def submitting_query(query_file):
     cmd = f"cat {query_file} | {NEBULI_PATH} register -x -s localhost:8080"
     # print(f"Submitting the query via {cmd}...")
     # shell=True is needed to pipe the output of cat to the register command
-    process = subprocess.Popen(
-        cmd,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True
-    )
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
 
     # print(f"Submitted the query with the following output: {result.stdout.strip()} and error: {result.stderr.strip()}")
     stdout, _ = process.communicate()
@@ -489,7 +483,7 @@ def main():
             ALL_BENCHMARK_CONFIGS = []
             for failed_run in failed_run_folders:
                 config_dict = yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r'))
-                config_dict["batch_size"] = 1000
+                # TODO config_dict["batch_size"] = config_dict["batch_size"] * 1000
                 ALL_BENCHMARK_CONFIGS.append(BenchmarkConfig.BenchmarkConfig(**config_dict))
     else:
         with open(ERROR_FILE_PATH, "a") as f:
