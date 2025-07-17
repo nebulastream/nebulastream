@@ -76,7 +76,7 @@ private:
 class FileReader
 {
 public:
-    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool cleanup);
+    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
     ~FileReader();
 
     size_t read(void* dest, size_t size);
@@ -98,7 +98,7 @@ private:
     size_t readKeyBufferEnd;
     size_t bufferSize;
 
-    bool cleanup;
+    bool withCleanup;
     std::string filePath;
 };
 

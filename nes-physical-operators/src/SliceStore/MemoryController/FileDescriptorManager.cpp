@@ -123,7 +123,7 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
     const WorkerThreadId threadToRead,
     const WorkerThreadId workerThread,
     const JoinBuildSideType joinBuildSide,
-    const bool cleanup)
+    const bool withCleanup)
 {
     auto& [writers, lruQueue, mutex] = threadWriters[threadToRead.getRawValue()];
     const auto key = std::make_pair(sliceEnd, joinBuildSide);
@@ -145,7 +145,7 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
             memoryPool.getReadBufferForThread(workerThread, false),
             memoryPool.getReadBufferForThread(workerThread, true),
             fileDescriptorManagerInfo.fileDescriptorBufferSize,
-            cleanup);
+            withCleanup);
     }
 
     return {};

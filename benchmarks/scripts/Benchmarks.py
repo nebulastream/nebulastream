@@ -184,6 +184,7 @@ dtypes = {
     'lower_memory_bound': 'UInt64',
     'upper_memory_bound': 'UInt64',
     'max_num_sequence_numbers': 'UInt64',
+    'withCleanup': 'str',
     'with_prediction': 'str'
 }
 df = pd.read_csv(os.path.join('data', SERVER, DIRECTORY, FILE), dtype=dtypes)
@@ -194,9 +195,9 @@ shared_config_params = [
     'match_rate', 'batch_size'
 ]
 file_backed_config_params = [
-    'file_descriptor_buffer_size', 'file_operation_time_delta', 'max_num_sequence_numbers', 'watermark_predictor_type',
+    'file_descriptor_buffer_size', 'prediction_time_delta', 'max_num_sequence_numbers', 'watermark_predictor_type',
     'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'file_layout', 'max_num_file_descriptors',
-    'lower_memory_bound', 'upper_memory_bound', 'with_prediction', 'num_buffers_per_worker'
+    'lower_memory_bound', 'upper_memory_bound', 'with_cleanup', 'with_prediction', 'num_buffers_per_worker'
 ]
 all_config_params = shared_config_params + file_backed_config_params
 
@@ -396,7 +397,7 @@ specific_config = {
     'file_descriptor_buffer_size': 4096,
     'min_read_state_size': 0,
     'min_write_state_size': 0,
-    'file_operation_time_delta': 0,
+    'prediction_time_delta': 0,
     'file_layout': 'NO_SEPARATION',
     'watermark_predictor_type': 'KALMAN'
 }
@@ -477,7 +478,7 @@ for param in shared_config_params:
 def plot_file_backed_params(data, param, metric, hue, label, color):
     data = data[data['match_rate'] == 90]
     data = data[data['file_descriptor_buffer_size'] <= 131072]
-    data = data[data['file_operation_time_delta'] <= 100]
+    data = data[data['prediction_time_delta'] <= 100]
     data = data[data['max_num_watermark_gaps'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
     #    data = data[data['max_memory_consumption'] <= 4294967296]
