@@ -89,6 +89,17 @@ def compute_callgraph(args):
     return callgraph
 
 
+def dot_escapce(s: str):
+    escapes = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+    }
+    for cha, esc in escapes.items():
+        s = s.replace(cha, esc)
+    return s
+
+
 def to_graph(callers, elgnamed, gcovr_json) -> str:
     
     def cov_percent_to_color(value):
@@ -109,15 +120,26 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
     ret = []
 
+    ignored_fns = {
+        "Logger",
+        "LogCaller",
+        "_Test(",
+        "Schema::~Schema",
+    }
+
     ret.append("digraph G {")
     ret.append("overlap = false;")
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
+            for ignored_fn in ignored_fns:
+                if ignored_fn in fun["name"]:
+                    continue
             if fun["name"] not in elgnamed:
+                print("name not in elgnamed", fun["name"])
                 continue # check if we miss anything important here
             demngld_name = fun["name"]
             mangled_name = elgnamed[demngld_name]
-            drawn_fns[mangled_name] = f'{mangled_name} [label="{demngld_name[:10]}", tooltip="{demngld_name}", color="{cov_percent_to_color(fun["blocks_percent"])}"];'
+            drawn_fns[mangled_name] = f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
 
     act_drawn_fn = {}
     
@@ -128,9 +150,11 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
                 if callee in drawn_fns:
                     act_drawn_fn[drawn_fn].append(callee)
 
-    for fn in act_drawn_fn:
-        if act_drawn_fn[fn]:
-            ret.append(drawn_fns[fn])
+    drawn_fn_set = set(fn for fn in act_drawn_fn if act_drawn_fn[fn])
+    drawn_fn_set |= set(el for li in act_drawn_fn.values() for el in li)
+
+    for fn in drawn_fn_set:
+        ret.append(drawn_fns[fn])
 
     for fn in act_drawn_fn:
         for callee in act_drawn_fn[fn]:
@@ -141,14 +165,41 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     return "\n".join(ret).replace("$", "_")
 
 
+def short_name(name: str):
+    name = name.replace("(anonymous namespace)", "anon")
+
+    if name.startswith("_Z"):
+        return "mangled"
+
+    if "(" not in name and "::" not in name:
+        return name
+
+    if "TestOneProtoInput" in name:
+        return "TestOneProtoInput"
+
+    if "assertFutureStatus" in name:
+        return "assertFutureStatus"
+
+    if match := re.findall(r"(\w*)(?:<.*>)?::(operator[\^%<>=!|+-/&*\[ ][+=&|\]]?(?:bool)?)", name):
+        klass, meth = match[0]
+        return klass + "::" + meth
+
+    rx = re.compile(r"(\w*)(?:<.*>)?::(~?\w*)(?:<.*>)?\(")
+    if match := rx.findall(name):
+        klass, meth = match[0]
+        return klass + "::" + meth
+
+    print("could not shorten ", name)
+    return name
+
 
 def main():
     compile_cmds_file = sys.argv[1]
-    with open(compile_cmds_file) as f:
+    with open(compile_cmds_file, encoding="utf-8") as f:
         compile_cmds = json.load(f)
 
     gcovr_json_file = sys.argv[2]
-    with open(gcovr_json_file) as f:
+    with open(gcovr_json_file, encoding="utf-8") as f:
         gcovr_json = json.load(f)
 
     jobs = []
@@ -182,7 +233,7 @@ def main():
 
     graph = to_graph(callers, elgnamed, gcovr_json)
 
-    with open("cov.dot", "w") as f:
+    with open("cov.dot", "w", encoding="utf-8") as f:
         f.write(graph)
 
     print("cov.dot written")
