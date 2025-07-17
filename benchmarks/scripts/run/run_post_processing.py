@@ -27,6 +27,7 @@ COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
+TEST_NAME = "Benchmark"
 
 # Configuration for benchmark run
 MEASURE_INTERVAL = 8
@@ -62,7 +63,8 @@ if __name__ == "__main__":
                                                     COMBINED_BENCHMARK_STATISTICS_FILE,
                                                     engine_stats_csv_path,
                                                     benchmark_stats_csv_path,
-                                                    SERVER_NAME)
+                                                    SERVER_NAME,
+                                                    TEST_NAME)
     failed_run_folders = post_processing.main()
 
     if not failed_run_folders:

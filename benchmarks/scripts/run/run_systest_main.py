@@ -51,11 +51,13 @@ WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
+DELETE_ENGINE_STATS = True
 SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
 DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 RESULTS_DIR = f"benchmarks/data/{DATETIME_NOW}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
+ERROR_FILE_PATH = os.path.join(RESULTS_DIR, "failed_systests.txt")
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
@@ -112,10 +114,8 @@ def create_output_folder():
 def start_systest(output_folder, working_dir, current_benchmark_config):
     # Write the current benchmark config to the output folder in a way that it can be easily read
     # We use a dictionary representation of the configuration
-    current_benchmark_dict = current_benchmark_config.to_dict()
-    current_benchmark_dict["test"] = TEST_NAME
     with open(os.path.join(output_folder, BENCHMARK_CONFIG_FILE), 'w') as output_file:
-        yaml.dump(current_benchmark_dict, output_file)
+        yaml.dump(current_benchmark_config.to_dict(), output_file)
 
     cmd = f"{SYSTEST_PATH} -t {TEST_FILE_PATH} -b --workingDir={working_dir} --timeout={MEASURE_INTERVAL} --data {TEST_DATA} --groups large -- " \
           f"--worker.queryEngine.numberOfWorkerThreads={current_benchmark_config.number_of_worker_threads} " \
@@ -185,7 +185,7 @@ def run_benchmark(current_benchmark_config):
 
             _, stderr = systest_process.communicate(timeout=WAIT_BEFORE_SIGKILL)
             if stderr != '':
-                with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "a") as f:
+                with open(ERROR_FILE_PATH, "a") as f:
                     f.write(output_folder + ": " + stderr + "\n")
     finally:
         time.sleep(WAIT_BEFORE_SIGKILL)  # Wait additional time before cleanup
@@ -201,8 +201,15 @@ def run_benchmark(current_benchmark_config):
                 shutil.move(source_file, output_folder)
 
         # Delete working directory
-        print("Deleting working directory...\n")
+        print("Deleting working directory...")
         shutil.rmtree(working_dir)
+
+        if DELETE_ENGINE_STATS:
+            print("Deleting engine statistics...")
+            for file_name in os.listdir(output_folder):
+                if file_name.startswith(ENGINE_STATS_FILE):
+                    engine_stats_file_path = os.path.join(output_folder, file_name)
+                    os.remove(engine_stats_file_path)
 
         return output_folder
 
@@ -248,7 +255,9 @@ def main():
     print("Running systest main")
     print("################################################################\n")
     ALL_SYSTEST_CONFIGS = BenchmarkConfig.create_systest_configs()
-    with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "w") as f:
+
+    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
+    with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Systest: \n")
 
     for attempt in range(NUM_RETRIES_PER_RUN):
@@ -285,13 +294,12 @@ def main():
                 finish_time = datetime.datetime.now() + eta
 
                 # Print ETA and finish time in cyan
-                print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, "
+                print(f"\033[96mRun {i}/{total_iterations} in attempt {attempt + 1} completed. ETA: {eta}, "
                       f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
         # Calling the postprocessing main
         measurement_time = MEASURE_INTERVAL * 1000
         startup_time = 0
-        engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
         post_processing = PostProcessing.PostProcessing(output_folders,
                                                         measurement_time,
                                                         startup_time,
@@ -302,7 +310,8 @@ def main():
                                                         COMBINED_BENCHMARK_STATISTICS_FILE,
                                                         engine_stats_csv_path,
                                                         benchmark_stats_csv_path,
-                                                        SERVER_NAME)
+                                                        SERVER_NAME,
+                                                        TEST_NAME)
         failed_run_folders = post_processing.main()
 
         # Re-running all runs that failed
@@ -317,10 +326,9 @@ def main():
                 for failed_run in failed_run_folders
             ]
     else:
-        with open(os.path.join(SOURCE_DIR, "failed_systests.txt"), "a") as f:
-            f.write("\nNo measurements available:\n")
-            for failed_run in failed_run_folders:
-                f.write(f"{failed_run}, ")
+        with open(ERROR_FILE_PATH, "a") as f:
+            f.write("\nNo measurements available for the following runs:\n")
+            f.write(", ".join(failed_run_folders) + "\n")
         print(f"Maximum retries reached. Some runs still failed:\n{failed_run_folders}")
 
     results_path = os.path.join(SOURCE_DIR, RESULTS_DIR)
