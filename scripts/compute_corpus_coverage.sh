@@ -16,27 +16,40 @@ set -eo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-if [ "$#" -ne 2 ]
+if [ -v NES_PREBUILT_VCPKG_ROOT ]
 then
+    echo running inside docker
+    BASE_DIR=/nes
+    BUILD_DIR=build
+
+    if [ -z "$FWC_NES_CORPORA_TOKEN" ]
+    then
+        echo pls set FWC_NES_CORPORA_TOKEN
+        exit 1
+    fi
+
+    git clone "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
+    CORPUS=/nes-corpora
+    exit 0
+elif [ "$#" -eq 2 ]
+then
+    BASE_DIR=$(pwd)
+    BUILD_DIR=$1
+    CORPUS=$2
+else
     cat << EOF
 pls give
 - build dir   as 1st param
 - nes-corpora as 2nd param
+
+or run in docker
 EOF
     exit 1
 fi
 
-BASE_DIR=$(pwd)
-BUILD_DIR=$1
-CORPUS=$2
 
 find . -name "*.gcno" -delete
 find . -name "*.gcda" -delete
-
-
-
-# cmake --build "$BUILD_DIR"    --target clean
-# cmake --build "$BUILD_DIR" -j --target snw-text-fuzz snw-strict-fuzz snw-proto-fuzz
 
 TMP_DIR=$(mktemp -d)
 
@@ -47,5 +60,6 @@ cd "$TMP_DIR"
 
 for fuzzer_exe in snw-text-fuzz snw-strict-fuzz snw-proto-fuzz
 do
-    find "$CORPUS/$fuzzer_exe" -type f -print0 | xargs -0 --max-args=1 --max-procs=$(nproc) "$BASE_DIR/$BUILD_DIR/nes-single-node-worker/fuzz/$fuzzer_exe"
+    echo checking corpus for $fuzzer_exe
+    find "$CORPUS/$fuzzer_exe" -type f -print0 | xargs -0 --max-args=1 --max-procs="$(nproc)" timeout 6m "$BASE_DIR/$BUILD_DIR/nes-single-node-worker/fuzz/$fuzzer_exe" -timeout=300 > $fuzzer_exe.log 2> $fuzzer_exe.err || true
 done
