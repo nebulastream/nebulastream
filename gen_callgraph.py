@@ -221,7 +221,11 @@ def main():
         callers = {}
         for callgraph in p.map(compute_callgraph, jobs):
             if callgraph:
-                callers |= parse_callgraph_text(callgraph)
+                for caller, callees in parse_callgraph_text(callgraph).items():
+                    if caller not in callers:
+                        callers[caller] = callees
+                    else:
+                        callers[caller].update(callees)
 
     mangled_callers = "\n".join(callers.keys())
     demngld_callers = subprocess.run("c++filt", input=mangled_callers, capture_output=True, text=True, check=True).stdout
