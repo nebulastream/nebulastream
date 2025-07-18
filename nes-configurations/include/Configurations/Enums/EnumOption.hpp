@@ -17,6 +17,8 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
@@ -94,4 +96,11 @@ protected:
     };
 };
 
+/// Helper function to generate all enum option for configuration description in the form: [enum1|enum2|...]
+template <typename E>
+std::string_view enumPipeList()
+{
+    static const std::string text = fmt::format("[{}]", fmt::join(magic_enum::enum_names<E>(), "|"));
+    return text;
+}
 }
