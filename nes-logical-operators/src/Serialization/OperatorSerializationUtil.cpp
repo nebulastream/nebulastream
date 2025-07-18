@@ -19,6 +19,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -185,9 +186,9 @@ OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescr
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     DescriptorConfig::Config sinkDescriptorConfig{};
-    for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
+    for (const auto& [key, descriptor] : serializableSinkDescriptor.config())
     {
-        sinkDescriptorConfig[key] = protoToDescriptorConfigType(desciptor);
+        sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
     auto sinkDescriptor

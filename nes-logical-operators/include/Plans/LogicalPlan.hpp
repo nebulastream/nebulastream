@@ -38,44 +38,51 @@ public:
     LogicalPlan() = default;
     explicit LogicalPlan(LogicalOperator rootOperator);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);
+
+    LogicalPlan(const LogicalPlan& other) = default;
+    LogicalPlan& operator=(const LogicalPlan& other);
+    LogicalPlan(LogicalPlan&& other) noexcept;
+    LogicalPlan& operator=(LogicalPlan&& other) noexcept;
 
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
 
-    std::vector<LogicalOperator> rootOperators;
-
     [[nodiscard]] QueryId getQueryId() const;
-    [[nodiscard]] const std::string& getOriginalSql() const;
+    [[nodiscard]] std::string getOriginalSql() const;
+    [[nodiscard]] std::vector<LogicalOperator> getRootOperators() const;
+
+    [[nodiscard]] LogicalPlan withRootOperators(const std::vector<LogicalOperator>& operators) const;
 
     void setOriginalSql(const std::string& sql);
     void setQueryId(QueryId id);
 
 private:
-    /// Holds the original SQL string
-    std::string originalSql;
     QueryId queryId = INVALID_QUERY_ID;
+    std::vector<LogicalOperator> rootOperators;
+    std::string originalSql; /// Holds the original SQL string
 };
 
 /// Get all parent operators of the target operator
 [[nodiscard]] std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOperator& target);
 
 /// Replace `target` with `replacement`, keeping target's children
-[[nodiscard]] std::optional<LogicalPlan>
-replaceOperator(const LogicalPlan& plan, const LogicalOperator& target, LogicalOperator replacement);
+[[nodiscard]] std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, OperatorId target, LogicalOperator replacement);
 
 /// Replace `target` with `replacement`, keeping the children that are already inside `replacement`
-[[nodiscard]] std::optional<LogicalPlan>
-replaceSubtree(const LogicalPlan& plan, const LogicalOperator& target, const LogicalOperator& replacement);
+[[nodiscard]] std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, OperatorId target, const LogicalOperator& replacement);
 
 /// Adds a new operator to the plan and promotes it as new root by reparenting existing root operators and replacing the current roots
 [[nodiscard]] LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot);
+
+[[nodiscard]] LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd);
 
 template <class T>
 [[nodiscard]] std::vector<T> getOperatorByType(const LogicalPlan& plan)
 {
     std::vector<T> operators;
     std::ranges::for_each(
-        plan.rootOperators,
+        plan.getRootOperators(),
         [&operators](const auto& rootOperator)
         {
             auto typedOps = BFSRange(rootOperator)
@@ -86,12 +93,14 @@ template <class T>
     return operators;
 }
 
+[[nodiscard]] std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, OperatorId operatorId);
+
 template <typename... TraitTypes>
 [[nodiscard]] std::vector<LogicalOperator> getOperatorsByTraits(const LogicalPlan& plan)
 {
     std::vector<LogicalOperator> matchingOperators;
     std::ranges::for_each(
-        plan.rootOperators,
+        plan.getRootOperators(),
         [&matchingOperators](const auto& rootOperator)
         {
             auto ops = BFSRange(rootOperator);

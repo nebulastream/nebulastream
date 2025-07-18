@@ -14,19 +14,20 @@
 
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 
-#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -55,7 +56,7 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
         const bool descriptorsEqual = sourceDescriptor == rhsOperator->sourceDescriptor;
         return descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -70,9 +71,18 @@ std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity)
     return fmt::format("SOURCE({})", sourceDescriptor.explain(verbosity));
 }
 
+LogicalOperator SourceDescriptorLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
 TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
 {
-    return {originIdTrait};
+    TraitSet result = traitSet;
+    result.insert(originIdTrait);
+    return result;
 }
 
 LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

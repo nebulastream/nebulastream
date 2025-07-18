@@ -62,6 +62,9 @@ struct LogicalOperatorConcept
     /// Creates a new operator with the given children
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator>) const = 0;
 
+    /// Creates a new operator with the given traits
+    [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet) const = 0;
+
     /// Compares this operator with another for equality
     [[nodiscard]] virtual bool operator==(const LogicalOperatorConcept& rhs) const = 0;
 
@@ -152,6 +155,8 @@ struct LogicalOperator
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    /// Static traits defined as member variables will be present in the new operator nonetheless
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const;
 
     [[nodiscard]] OperatorId getId() const;
 
@@ -195,6 +200,8 @@ private:
         {
             return data.withChildren(children);
         }
+
+        [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override { return data.withTraitSet(traitSet); }
 
         [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }
 
@@ -251,6 +258,11 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
     return os << op.explain(ExplainVerbosity::Short);
 }
+
+/// Adds additional traits to the given operator, returning a new operator
+/// If the same trait (with the same data) is already present, the new trait will not be added.
+LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitSet& traitSet);
+
 }
 
 /// Hash is based solely on unique identifier (needed for e.g. unordered_set)
@@ -262,4 +274,5 @@ struct hash<NES::LogicalOperator>
     std::size_t operator()(const NES::LogicalOperator& op) const noexcept { return std::hash<NES::OperatorId>{}(op.getId()); }
 };
 }
+
 FMT_OSTREAM(NES::LogicalOperator);
