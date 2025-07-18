@@ -35,7 +35,7 @@ public:
     bool operator==(const QueryForSubtree&) const { return true; }
     static bool atNode() { return false; }
 
-    static std::string getName() { return "QueryForSubtree"; }
+    static std::string_view getTraitName() { return "QueryForSubtree"; }
 
     const std::string& getQuery() const { return str; }
 };
@@ -50,7 +50,7 @@ public:
     explicit Placement(int nodeID) : nodeID(nodeID) { }
     bool operator==(const Placement& other) const { return nodeID == other.nodeID; }
     static constexpr bool atNode() { return true; }
-    static std::string getName() { return "Placement"; }
+    static std::string_view getTraitName() { return "Placement"; }
 };
 
 static_assert(Trait<Placement>);
@@ -99,7 +99,7 @@ class Operator
 public:
     bool operator==(const Operator&) const { return true; }
     static constexpr bool atNode() { return true; }
-    static std::string getName() { return "Operator"; }
+    static std::string_view getTraitName() { return "Operator"; }
 };
 
 static_assert(Trait<Operator>);
@@ -302,6 +302,7 @@ TEST_F(CostTest, testHarcodedFunctions)
     const EdgeContainerTuple<TraitSetType, Children> children{std::vector{child}};
 
     const auto ts = TraitSetType{TraitSetType::EdgeTuple{std::vector{child}, std::vector<TraitSetType>{}}, QueryForSubtree{"test"}, Placement{5}};
+    static_assert(TraitSet<decltype(ts)>);
 
 
     auto cost = placementCost(ts);

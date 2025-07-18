@@ -18,9 +18,13 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include "Operators/LogicalOperator.hpp"
+#include <Traitsets/Traitsets.hpp>
+#include <Operators/LogicalOperatorTS.hpp>
 
 
 namespace NES::LegacyOptimizer
@@ -83,9 +87,14 @@ class LogicalSourceExpansionRule
 public:
     explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    void apply(LogicalPlan& queryPlan) const;
+    template <Traitsets::TraitSet<LogicalOperator, Traitsets::Children> TS>
+    void apply(std::vector<TS>& queryPlan) const;
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
+
+template
+void LogicalSourceExpansionRule::apply<LogicalOperator>(std::vector<LogicalOperator>& queryPlan) const;
+
 }

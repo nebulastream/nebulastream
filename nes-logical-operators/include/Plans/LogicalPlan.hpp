@@ -22,11 +22,13 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include "Traitsets/Traitsets.hpp"
 
 namespace NES
 {
@@ -76,6 +78,22 @@ template <class T>
     std::vector<T> operators;
     std::ranges::for_each(
         plan.rootOperators,
+        [&operators](const auto& rootOperator)
+        {
+            auto typedOps = BFSRange(rootOperator)
+                | std::views::filter([&](const LogicalOperator& op) { return op.tryGet<T>().has_value(); })
+                | std::views::transform([](const LogicalOperator& op) { return op.get<T>(); });
+            std::ranges::copy(typedOps, std::back_inserter(operators));
+        });
+    return operators;
+}
+
+template <class T, Traitsets::TraitSet<LogicalOperator> TS>
+[[nodiscard]] std::vector<T> getOperatorByType(const std::vector<LogicalPlan>& plan)
+{
+    std::vector<T> operators;
+    std::ranges::for_each(
+        plan,
         [&operators](const auto& rootOperator)
         {
             auto typedOps = BFSRange(rootOperator)

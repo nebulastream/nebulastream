@@ -20,21 +20,25 @@
 #include <iterator>
 #include <queue>
 #include <ranges>
+
+#include "Traitsets/Traitsets.hpp"
+
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 /// Requires a function getChildren() and ==operator
-template <typename T>
+template <typename EdgeTrait, typename T>
 concept HasChildren = requires(T t) {
     { t.getChildren() } -> std::ranges::range;
-} && std::equality_comparable<T>;
+} && std::equality_comparable<T>
+&& Traitsets::RecursiveTrait<EdgeTrait>;
 
 /// Defines a Breadth-first iterator on classes defining `getChildren()`
 /// Example usage:
 /// for (auto i : BFSRange(ClassWithChildren))
-template <HasChildren T>
+template <HasChildren<Traitsets::Children> T>
 class BFSIterator
 {
 public:

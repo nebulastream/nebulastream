@@ -15,6 +15,7 @@
 #pragma once
 
 
+#include <vector>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traitsets/Traitsets.hpp>
@@ -49,12 +50,12 @@ inline std::optional<OriginIdAssignerTrait> get<std::optional<OriginIdAssignerTr
 }
 
 template <>
-inline std::vector<LogicalOperator> getEdges<Children>(LogicalOperator traitset)
+inline std::vector<LogicalOperator> getEdges<Children, LogicalOperator, std::vector>(LogicalOperator traitset)
 {
     return traitset.getChildren();
 }
 
-static_assert(hasEdges<Children, LogicalOperator>);
+static_assert(hasEdges<Children, LogicalOperator, std::vector>);
 
 
 }

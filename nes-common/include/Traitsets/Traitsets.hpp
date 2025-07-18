@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <tuple>
@@ -46,13 +47,15 @@ struct is_std_hashable<T, std::void_t<decltype(std::declval<std::hash<T>>()(std:
 template <typename T>
 constexpr bool is_std_hashable_v = is_std_hashable<T>::value;
 
+
+template <typename R, typename V>
+concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value_t<R>, V>;
+
+
 template <typename T>
-concept Trait = requires(T trait, T other) {
-    //placeholder condition
-    { T::atNode() } -> std::same_as<bool>;
-    { trait == other };
-    { T::getName() } -> std::same_as<std::string>;
-};
+concept Trait = requires(T trait) {
+    { T::getTraitName() } -> std::same_as<std::string_view>;
+} && std::equality_comparable<T>;
 
 template <typename T>
 concept RecursiveTrait = std::is_same_v<typename T::recursive, std::true_type> && Trait<T>; //requires() {
@@ -102,8 +105,8 @@ template <typename T, typename TS>
 T get(TS) = delete;
 
 
-template <typename T, typename TS>
-std::vector<TS> getEdges(TS) = delete;
+template <typename T, typename TS, template <typename, typename...> typename C>
+C<TS> getEdges(TS) = delete;
 
 
 template <typename T, typename TS>
@@ -113,7 +116,7 @@ concept hasInternalGetter = requires(TS ts) {
 
 template <typename T, typename TS>
 concept hasEdgesInternal = requires(TS ts) {
-    { ts.template getEdges<T>() } -> std::same_as<std::vector<TS>>;
+    { ts.template getEdges<T>() } -> RangeOf<TS>;
 };
 
 
@@ -124,11 +127,17 @@ T get(TS ts)
     return ts.template get<T>();
 }
 
-template <typename T, typename TS>
+template <typename T, typename TS, template <typename, typename...> typename C>
 requires hasEdgesInternal<T, TS>
-std::vector<TS> getEdges(TS ts)
+C<TS> getEdges(TS ts)
 {
     return ts.template getEdges<T>();
+}
+
+template <typename T, typename TS>
+typename TS::template DefaultEdgeContainer<TS> getEdges(TS ts)
+{
+    return getEdges<T, TS, TS::template DefaultEdgeContainer>(ts);
 }
 
 template <typename T, typename TS>
@@ -137,13 +146,20 @@ concept hasGetter = requires(TS ts) {
 };
 
 
+
 template <typename T, typename TS>
 concept hasEdges = requires(TS ts) {
-    { getEdges<T, TS>(ts) } -> std::same_as<std::vector<TS>>;
+    { getEdges<T, TS>(ts) } -> RangeOf<TS>;
 };
 
+
 template <typename TS, typename... T>
-concept TraitSet = ((Trait<T> && (!RecursiveTrait<T> && hasGetter<T, TS>) != (hasEdges<T, TS> || hasEdgesInternal<T, TS>)) && ...);
+concept TraitSet
+    = ((Trait<T>
+        && (!RecursiveTrait<T> && hasGetter<T, TS>)
+            != (hasEdges<T, TS>
+                || hasEdgesInternal<T, TS>))
+       && ...);
 
 class Children
 {
@@ -153,7 +169,7 @@ public:
     bool operator==(const Children&) const { return true; }
     static constexpr bool atNode() { return true; }
 
-    static std::string getName() { return "Children"; }
+    static std::string_view getTraitName() { return "Children"; }
 };
 
 class Parents
@@ -164,7 +180,7 @@ public:
     bool operator==(const Parents&) const { return true; }
     static constexpr bool atNode() { return true; }
 
-    static std::string getName() { return "Parents"; }
+    static std::string_view getTraitName() { return "Parents"; }
 };
 
 
@@ -276,6 +292,8 @@ class RecursiveTupleTraitSet
 public:
     using EdgeTuple = EdgeContainerTuple<RecursiveTupleTraitSet, T...>;
 
+    template <typename S>
+    using DefaultEdgeContainer = std::vector<S>;
 private:
     NonRecursiveTraitTuple<T...> underlying;
     // std::unordered_map<std::type_index, std::vector<RecursiveTupleTraitSet>> edges;
@@ -371,7 +389,6 @@ concept OptionalCostFunction = requires(C function, TS ts) {
     { function(ts) } -> std::same_as<std::optional<SV>>;
 } && StatisticsValue<SV> && TraitSet<TS>;
 // && (Trait<T> && ...);
-
 
 
 }

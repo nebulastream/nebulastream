@@ -171,6 +171,11 @@ struct LogicalOperator
     [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
+    [[nodiscard]] static std::string_view getTraitName() { return "LogicalOperator"; }
+
+    template <typename T>
+    using DefaultEdgeContainer = std::vector<T>;
+
 private:
     struct Concept : LogicalOperatorConcept
     {

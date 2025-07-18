@@ -29,7 +29,8 @@
 namespace NES::LegacyOptimizer
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+template <Traitsets::TraitSet<LogicalOperator, Traitsets::Children> TS>
+void LogicalSourceExpansionRule::apply(std::vector<TS>& queryPlan) const
 {
     auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
 

@@ -25,6 +25,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/LogicalOperatorTS.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/PlanRenderer.hpp>
