@@ -44,7 +44,7 @@ TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 {
     QueryEngineConfiguration defaultConfig;
     defaultConfig.overwriteConfigWithCommandLineInput(
-        {{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "2"}, {"admissionQueueSize", "123"}});
+        {{"task_queue_size", "200"}, {"number_of_worker_threads", "2"}, {"admission_queue_size", "123"}});
 
     EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 200);
     EXPECT_EQ(defaultConfig.admissionQueueSize.getValue(), 123);
@@ -54,25 +54,26 @@ TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputNonString)
 {
     QueryEngineConfiguration defaultConfig;
-    EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "XX"}, {"numberOfWorkerThreads", "2"}}));
+    EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"task_queue_size", "XX"}, {"number_of_worker_threads", "2"}}));
 
     QueryEngineConfiguration defaultConfig1;
-    EXPECT_ANY_THROW(defaultConfig1.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "XX"}}));
+    EXPECT_ANY_THROW(defaultConfig1.overwriteConfigWithCommandLineInput({{"task_queue_size", "200"}, {"number_of_worker_threads", "XX"}}));
 
     QueryEngineConfiguration defaultConfig2;
-    EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "XX"}, {"numberOfWorkerThreads", "XX"}}));
+    EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"task_queue_size", "XX"}, {"number_of_worker_threads", "XX"}}));
 
     const QueryEngineConfiguration defaultConfig3;
-    EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "1.0"}, {"numberOfWorkerThreads", "1.5"}}));
+    EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"task_queue_size", "1.0"}, {"number_of_worker_threads", "1.5"}}));
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputBadNumberOfThreads)
 {
     QueryEngineConfiguration defaultConfig;
-    EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "0"}}));
+    EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"task_queue_size", "200"}, {"number_of_worker_threads", "0"}}));
 
     const QueryEngineConfiguration defaultConfig1;
-    EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "20000"}}));
+    EXPECT_ANY_THROW(
+        defaultConfig.overwriteConfigWithCommandLineInput({{"task_queue_size", "200"}, {"number_of_worker_threads", "20000"}}));
 }
 
 }

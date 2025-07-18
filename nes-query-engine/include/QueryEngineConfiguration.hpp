@@ -36,11 +36,11 @@ public:
     QueryEngineConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
 
     UIntOption numberOfWorkerThreads
-        = {"numberOfWorkerThreads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
+        = {"number_of_worker_threads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
     UIntOption taskQueueSize
-        = {"taskQueueSize", "10000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
+        = {"task_queue_size", "10000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
     UIntOption admissionQueueSize
-        = {"admissionQueueSize", "1000", "Size of the bounded admission queue used within the QueryEngine", {taskQueueSizeValidator()}};
+        = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {taskQueueSizeValidator()}};
 
 protected:
     std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &taskQueueSize, &admissionQueueSize}; }
