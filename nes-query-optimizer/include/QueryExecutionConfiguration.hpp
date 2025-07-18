@@ -47,34 +47,34 @@ public:
     QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     EnumOption<ExecutionMode> executionMode
-        = {"executionMode",
+        = {"execution_mode",
            ExecutionMode::COMPILER,
            "Execution mode for the query compiler"
            "[COMPILER|INTERPRETER]."};
     UIntOption numberOfPartitions
-        = {"numberOfPartitions",
+        = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
            {std::make_shared<NumberValidation>()}};
     UIntOption pageSize
-        = {"pageSize",
+        = {"page_size",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NumberValidation>()}};
     UIntOption numberOfRecordsPerKey
-        = {"numberOfRecordsPerKey",
+        = {"number_of_records_per_key",
            std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
            "Expected number of records per key, for example in a hash join. If set too low or high affects the performance.",
            {std::make_shared<NumberValidation>()}};
     UIntOption operatorBufferSize
-        = {"operatorBufferSize",
+        = {"operator_buffer_size",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
     EnumOption<StreamJoinStrategy> joinStrategy
-        = {"joinStrategy",
+        = {"join_strategy",
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
-           "JoinStrategy"
+           "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
 private:
