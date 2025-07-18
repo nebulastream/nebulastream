@@ -508,14 +508,10 @@ jobs:
           echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
       - name: run on corpus and broken
         run: |
-          for input in $(find nes-corpora/${{ inputs.fuzzer }} -type f)
-          do
-            if ! $fuzzer $input
-            then
-              # because '|| true' doesn't work in github ci afaik
-              true
-            fi
-          done
+          if ! find nes-corpora/${{ inputs.fuzzer }} -type f -print0 | xargs -0 --max-args=1 --max-procs="$(nproc)" timeout 6m "$fuzzer" -timeout=300
+          then
+            true
+          fi
       - name: install gcovr
         run: |
           apt install -y gcovr graphviz
