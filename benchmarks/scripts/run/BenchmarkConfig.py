@@ -410,6 +410,38 @@ def create_benchmark_configs():
     return configs
 
 
+def create_watermark_prediction_benchmark_configs():
+    # Generate configurations where only one parameter varies from the default value
+    configs = []
+    default_params = get_default_params_dict()
+    default_params["slice_store_type"] = "FILE_BACKED"
+    prediction_params = {
+        "min_read_state_size": MIN_READ_STATE_SIZES,
+        "min_write_state_size": MIN_WRITE_STATE_SIZES,
+        "prediction_time_delta": PREDICTION_TIME_DELTAS
+    }
+
+    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    default_timestamp_increments, default_queries = get_additional_default_values()
+    for timestamp_increment in default_timestamp_increments:
+        for query in default_queries:
+            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS:
+                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS:
+                    for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:
+                        for param, values in prediction_params.items():
+                            for value in values:
+                                config_params = default_params.copy()
+                                config_params[param] = value
+                                config_params["timestamp_increment"] = timestamp_increment
+                                config_params["query"] = query
+                                config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
+                                config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
+                                config_params["watermark_predictor_type"] = watermark_predictor_type
+                                configs.append(BenchmarkConfig(**config_params))
+
+    return configs
+
+
 def create_prediction_benchmark_configs():
     # Generate all possible configurations for prediction parameters
     default_params = get_default_params_dict()
@@ -420,9 +452,9 @@ def create_prediction_benchmark_configs():
     del default_params["watermark_predictor_type"]
     del default_params["max_num_watermark_gaps"]
     del default_params["max_num_sequence_numbers"]
-    # del default_params["min_read_state_size"]
-    # del default_params["min_write_state_size"]
-    # del default_params["prediction_time_delta"]
+    del default_params["min_read_state_size"]
+    del default_params["min_write_state_size"]
+    del default_params["prediction_time_delta"]
     del default_params["query"]
 
     default_timestamp_increments, default_queries = get_additional_default_values()
@@ -436,9 +468,9 @@ def create_prediction_benchmark_configs():
                         watermark_predictor_type=watermark_predictor_type,
                         max_num_watermark_gaps=max_num_watermark_gaps,
                         max_num_sequence_numbers=max_num_sequence_numbers,
-                        # min_read_state_size=min_read_state_size,
-                        # min_write_state_size=min_write_state_size,
-                        # prediction_time_delta=prediction_time_delta,
+                        min_read_state_size=min_read_state_size,
+                        min_write_state_size=min_write_state_size,
+                        prediction_time_delta=prediction_time_delta,
                         query=query)
         for timestamp_increment in default_timestamp_increments
         for slice_store_type in ["FILE_BACKED"]
@@ -448,9 +480,9 @@ def create_prediction_benchmark_configs():
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if with_prediction == "true" else [WATERMARK_PREDICTOR_TYPES[0]])
         for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if with_prediction == "true" else [MAX_NUM_WATERMARK_GAPS[0]])
         for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if with_prediction == "true" else [MAX_NUM_SEQUENCE_NUMBERS[0]])
-        # for min_read_state_size in (MIN_READ_STATE_SIZES if with_prediction == "true" else [MIN_READ_STATE_SIZES[0]])
-        # for min_write_state_size in (MIN_WRITE_STATE_SIZES if with_prediction == "true" else [MIN_WRITE_STATE_SIZES[0]])
-        # for prediction_time_delta in (PREDICTION_TIME_DELTAS if with_prediction == "true" else [PREDICTION_TIME_DELTAS[0]])
+        for min_read_state_size in (MIN_READ_STATE_SIZES if with_prediction == "true" else [MIN_READ_STATE_SIZES[0]])
+        for min_write_state_size in (MIN_WRITE_STATE_SIZES if with_prediction == "true" else [MIN_WRITE_STATE_SIZES[0]])
+        for prediction_time_delta in (PREDICTION_TIME_DELTAS if with_prediction == "true" else [PREDICTION_TIME_DELTAS[0]])
         for query in default_queries
         if lower_memory_bound <= upper_memory_bound
     ]
