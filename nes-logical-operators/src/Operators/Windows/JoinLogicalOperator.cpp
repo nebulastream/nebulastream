@@ -21,6 +21,9 @@
 #include <variant>
 #include <vector>
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
@@ -37,8 +40,6 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -64,7 +65,7 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
         return *getWindowType() == *rhsOperator->getWindowType() and getJoinFunction() == rhsOperator->getJoinFunction()
             and getOutputSchema() == rhsOperator->outputSchema and getRightSchema() == rhsOperator->getRightSchema()
             and getLeftSchema() == rhsOperator->getLeftSchema() and getInputOriginIds() == rhsOperator->getInputOriginIds()
-            and getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            and getOutputOriginIds() == rhsOperator->getOutputOriginIds() and getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -127,9 +128,18 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     return copy;
 }
 
+LogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
 TraitSet JoinLogicalOperator::getTraitSet() const
 {
-    return {originIdTrait};
+    TraitSet result = traitSet;
+    result.insert(originIdTrait);
+    return result;
 }
 
 LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

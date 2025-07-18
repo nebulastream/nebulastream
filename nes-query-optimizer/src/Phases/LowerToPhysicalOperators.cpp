@@ -89,8 +89,8 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
-    newRootOperators.reserve(queryPlan.rootOperators.size());
-    for (const auto& logicalRoot : queryPlan.rootOperators)
+    newRootOperators.reserve(queryPlan.getRootOperators().size());
+    for (const auto& logicalRoot : queryPlan.getRootOperators())
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }

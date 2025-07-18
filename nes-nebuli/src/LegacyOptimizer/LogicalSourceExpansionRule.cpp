@@ -61,7 +61,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             "Parent of source name operator must have exactly one child, the source itself");
 
         auto newParent = parent.withChildren({UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators))});
-        auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
+        auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
 
         INVARIANT(
             replaceResult.has_value(),
