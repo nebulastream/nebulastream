@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DIRECTORY = '2025-06-19_11-56-48'
+DATETIME = '2025-07-17_15-05-49'
 FILE = 'combined_benchmark_statistics.csv'
 
 
@@ -161,7 +161,7 @@ def add_min_max_labels_per_group(data, group, metric, ax, param):
         add_min_max_labels(sub, metric, ax, param, y_offset, color)
 
 
-def find_default_values_for_params(min_support_ratio=0.99):
+def find_default_values_for_params(min_support_ratio=1.0):
     likely_defaults = {}
 
     for param in all_config_params:
@@ -187,7 +187,7 @@ dtypes = {
     'withCleanup': 'str',
     'with_prediction': 'str'
 }
-df = pd.read_csv(os.path.join('data', SERVER, DIRECTORY, FILE), dtype=dtypes)
+df = pd.read_csv(os.path.join('data', SERVER, DATETIME, FILE), dtype=dtypes)
 
 # Define configuration parameters
 shared_config_params = [
@@ -211,8 +211,7 @@ common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_pa
 common_config_dicts = common_configs.to_dict(orient='records')
 
 # Map long queries to short codes and sort by hue column values
-unique_queries = df['query'].unique()
-query_mapping = {q: f'Q{i}' for i, q in enumerate(unique_queries, start=1)}
+query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
 df['query_id'] = df['query'].map(query_mapping)
 df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id'], ascending=[True, True, True])
 
@@ -427,6 +426,7 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     data = data[data['page_size'] <= 131072]
     data = data[data['ingestion_rate'] <= 10000]
     data = data[data['timestamp_increment'] <= 10000]
+    data = data[data['batch_size'] < 10000]
     #if param != 'match_rate':
      #   data = data[data['match_rate'] == 70]
 
