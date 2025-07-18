@@ -14,20 +14,14 @@
 
 #pragma once
 
-#include <string>
-#include <typeinfo>
 #include <Traits/Trait.hpp>
-#include <SerializableTrait.pb.h>
 
 namespace NES
 {
 
 /// Marks an operator as creator of new origin ids
-struct OriginIdAssignerTrait final : TraitConcept
+struct OriginIdAssignerTrait final : DefaultTrait<OriginIdAssignerTrait>
 {
-    bool operator==(const TraitConcept& other) const override;
-    [[nodiscard]] const std::type_info& getType() const override;
-    [[nodiscard]] SerializableTrait serialize() const override;
 };
 
 }
