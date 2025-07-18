@@ -207,7 +207,7 @@ BoundQueryConfig YAMLBinder::parseAndBind(std::istream& inputStream)
     {
         auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources] = YAML::Load(inputStream).as<QueryConfig>();
         plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryString);
-        const auto sinkOperators = plan.rootOperators;
+        const auto sinkOperators = plan.getRootOperators();
         if (sinkOperators.size() != 1)
         {
             throw QueryInvalid(
@@ -230,7 +230,7 @@ BoundQueryConfig YAMLBinder::parseAndBind(std::istream& inputStream)
                 sinkOperator->sinkName,
                 fmt::join(std::ranges::views::keys(sinks), ","));
         }
-        plan.rootOperators.at(0) = *sinkOperator;
+        plan = plan.withRootOperators({*sinkOperator});
         logicalSources = bindRegisterLogicalSources(unboundLogicalSources);
         physicalSources = bindRegisterPhysicalSources(unboundPhysicalSources);
         return config;

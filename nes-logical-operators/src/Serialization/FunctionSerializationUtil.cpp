@@ -11,10 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Serialization/FunctionSerializationUtil.hpp>
 
 #include <memory>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>

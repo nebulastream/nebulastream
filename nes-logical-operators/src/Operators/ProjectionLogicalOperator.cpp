@@ -23,6 +23,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -34,8 +38,6 @@
 #include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -99,7 +101,7 @@ bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     {
         return projections == rhsOperator->projections && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 };
@@ -183,7 +185,14 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
 
 TraitSet ProjectionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

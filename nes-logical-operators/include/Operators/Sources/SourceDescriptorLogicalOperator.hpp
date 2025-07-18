@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -45,6 +44,7 @@ public:
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
     [[nodiscard]] TraitSet getTraitSet() const override;
 
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
@@ -69,6 +69,7 @@ private:
     OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;
+    TraitSet traitSet;
     std::vector<OriginId> sourceOriginIds;
 };
 
