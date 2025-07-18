@@ -21,7 +21,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 # referenced via a hash an fetched from a remote server on demand. Large files have to be uploaded to bench.nebula.stream/data (ask a maintainer)!
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES
-        "https://bench.nebula.stream/data/md5sums/%(algo)_%(hash)"
+        "https://tubcloud.tu-berlin.de/s/28Tr2wTd73Ggeed/download?files=%(algo)_%(hash)"
 )
 if (ENABLE_LARGE_TESTS)
     set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:.*})
