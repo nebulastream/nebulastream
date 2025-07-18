@@ -37,6 +37,7 @@
     "gtest",
     "libcuckoo",
     "magic-enum",
+    "nameof",
     "nlohmann-json",
     "nautilus",
     "spdlog",
