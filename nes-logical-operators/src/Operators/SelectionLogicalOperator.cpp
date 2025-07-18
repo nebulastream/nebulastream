@@ -11,14 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Operators/SelectionLogicalOperator.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include <fmt/format.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -27,7 +32,6 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -56,7 +60,7 @@ bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) con
     {
         return predicate == rhsOperator->predicate && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 };
@@ -96,7 +100,14 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
 
 TraitSet SelectionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator SelectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

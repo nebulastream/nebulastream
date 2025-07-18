@@ -85,7 +85,7 @@ public:
 
     void dump(const Plan& plan)
     {
-        const std::vector<Operator> rootOperators = plan.rootOperators;
+        const std::vector<Operator> rootOperators = plan.getRootOperators();
         dump(rootOperators);
     }
     /// Prints a tree like graph of the queryplan to the stream this class was instatiated with.

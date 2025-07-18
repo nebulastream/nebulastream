@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <Operators/LogicalOperator.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
@@ -51,6 +52,11 @@ std::vector<LogicalOperator> LogicalOperator::getChildren() const
 LogicalOperator LogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     return self->withChildren(std::move(children));
+}
+
+LogicalOperator LogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    return self->withTraitSet(std::move(traitSet));
 }
 
 OperatorId LogicalOperator::getId() const
@@ -112,4 +118,12 @@ LogicalOperator LogicalOperator::withInferredSchema(std::vector<Schema> inputSch
 {
     return self->withInferredSchema(std::move(inputSchemas));
 }
+
+LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitSet& traitSet)
+{
+    auto result = op.getTraitSet();
+    result.insert(traitSet.cbegin(), traitSet.cend());
+    return op.withTraitSet(std::move(result));
+}
+
 }

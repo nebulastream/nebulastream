@@ -24,6 +24,9 @@
 #include <variant>
 #include <vector>
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -39,8 +42,6 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -116,7 +117,7 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
 
         return *windowType == *rhsOperator->getWindowType() && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -182,7 +183,16 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
 
 TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
-    return {originIdTrait};
+    TraitSet result = traitSet;
+    result.insert(originIdTrait);
+    return result;
+}
+
+LogicalOperator WindowedAggregationLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

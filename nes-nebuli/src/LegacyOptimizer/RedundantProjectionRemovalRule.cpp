@@ -38,7 +38,7 @@ void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLI
                  }))
     {
         auto child = projectionOp.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, projectionOp, child);
+        auto replaceResult = replaceSubtree(queryPlan, projectionOp.id, child);
         INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
         queryPlan = std::move(replaceResult.value());
     }
