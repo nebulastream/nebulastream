@@ -57,6 +57,7 @@ public:
         FileDescriptorManagerInfo fileDescriptorManagerInfo,
         WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
+    ~FileBackedTimeBasedSliceStore() override;
 
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp,
@@ -70,6 +71,7 @@ public:
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
+    void deleteState() override;
 
     /// Sets number of worker threads. Needs to be called before working with the slice store
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
@@ -137,21 +139,22 @@ private:
     /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
-
-    /// The pairs hold the slope and intercept needed to calculate execution times of write or read operations for certain data sizes
-    /// which is also used for predictions.
-    std::pair<double, double> writeExecTimeFunction;
-    std::pair<double, double> readExecTimeFunction;
+    std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
 
     /// The FileDescriptorManager manages the creation and destruction of FileReader and FileWriter objects and controls the internal memory
     /// pool used by them. The map keeps track of which slices were requested by the build operator since the last call to updateSlices.
     std::shared_ptr<FileDescriptorManager> fileDescriptorManager;
     std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
+    /// The pairs hold the slope and intercept needed to calculate execution times of write or read operations for certain data sizes
+    /// which is also used for predictions.
+    std::pair<double, double> writeExecTimeFunction;
+    std::pair<double, double> readExecTimeFunction;
+
+    uint64_t numberOfWorkerThreads;
+
     SliceStoreInfo sliceStoreInfo;
     FileDescriptorManagerInfo fileDescriptorManagerInfo;
-    std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
-    uint64_t numberOfWorkerThreads;
 };
 
 }

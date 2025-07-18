@@ -29,9 +29,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const std::vector<OriginId>& inputOrigins)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide)
     , watermarkProcessor(std::make_shared<MultiOriginWatermarkProcessor>(inputOrigins))
+    , numberOfWorkerThreads(0)
     , sliceStoreInfo(std::move(sliceStoreInfo))
     , fileDescriptorManagerInfo(std::move(fileDescriptorManagerInfo))
-    , numberOfWorkerThreads(0)
 {
     if (this->sliceStoreInfo.lowerMemoryBound > this->sliceStoreInfo.upperMemoryBound)
     {
@@ -57,6 +57,11 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
             }
         }
     }
+}
+
+ FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
+{
+    deleteState();
 }
 
 std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCreate(
@@ -92,7 +97,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
                 std::vector<WorkerThreadId> allThreadIds;
                 allThreadIds.reserve(numberOfWorkerThreads);
                 std::ranges::for_each(
-                    std::views::iota(0UL, numberOfWorkerThreads), [&allThreadIds](uint64_t i) { allThreadIds.emplace_back(i); });
+                    std::views::iota(0UL, numberOfWorkerThreads), [&allThreadIds](uint64_t id) { allThreadIds.emplace_back(id); });
                 return allThreadIds;
             }(),
             WorkerThreadId(threadId % numberOfWorkerThreads),
@@ -156,9 +161,18 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     /// Now we can remove/call destructor on every slice without still holding the lock
     for (const auto& slice : slicesToDelete)
     {
-        fileDescriptorManager->deleteSliceFiles(slice->getSliceEnd());
+        fileDescriptorManager->deleteFileWriters(slice->getSliceEnd(), sliceStoreInfo.withCleanup);
     }
     slicesToDelete.clear();
+}
+
+void FileBackedTimeBasedSliceStore::deleteState()
+{
+    DefaultTimeBasedSliceStore::deleteState();
+    if (sliceStoreInfo.withCleanup)
+    {
+        fileDescriptorManager->deleteAllSliceFiles();
+    }
 }
 
 void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWorkerThreads)
@@ -385,8 +399,6 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             nljSlice->acquireCombinePagedVectorsLock();
             pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
             nljSlice->releaseCombinePagedVectorsLock();
-
-            //fileReader.value()->deleteAllFiles();
         }
     }
 }
@@ -423,19 +435,15 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         }
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto fileReader = fileDescriptorManager
-                                    ->getFileReader(
-                                        SliceEnd(SliceEnd::INVALID_VALUE),
-                                        WorkerThreadId(0),
-                                        WorkerThreadId(0),
-                                        JoinBuildSideType::Left,
-                                        sliceStoreInfo.withCleanup)
-                                    .value();
-        const auto sizeRead = fileReader->read(data.data(), dataSize);
-        if (sliceStoreInfo.withCleanup)
-        {
-            //fileReader->deleteAllFiles();
-        }
+        const auto sizeRead = fileDescriptorManager
+                                  ->getFileReader(
+                                      SliceEnd(SliceEnd::INVALID_VALUE),
+                                      WorkerThreadId(0),
+                                      WorkerThreadId(0),
+                                      JoinBuildSideType::Left,
+                                      sliceStoreInfo.withCleanup)
+                                  .value()
+                                  ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 
         if (sizeRead != dataSize)
