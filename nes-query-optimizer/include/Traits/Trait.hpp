@@ -15,11 +15,15 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <type_traits>
+#include <typeindex>
 #include <typeinfo>
-#include <vector>
+#include <unordered_set>
+
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
 
@@ -45,6 +49,28 @@ struct TraitConcept
     /// @param other The trait to compare with.
     /// @return bool True if the traits are equal, false otherwise.
     virtual bool operator==(const TraitConcept& other) const = 0;
+
+    /// Computes the hash value for this trait.
+    /// @return size_t The hash value.
+    [[nodiscard]] virtual size_t hash() const = 0;
+};
+
+/// Base class providing default implementations for traits without custom data
+template <typename Derived>
+struct DefaultTrait : TraitConcept
+{
+    bool operator==(const TraitConcept& other) const final { return typeid(other) == typeid(Derived); }
+
+    [[nodiscard]] size_t hash() const final { return std::type_index(typeid(Derived)).hash_code(); }
+
+    [[nodiscard]] const std::type_info& getType() const final { return typeid(Derived); }
+
+    [[nodiscard]] SerializableTrait serialize() const final
+    {
+        SerializableTrait trait;
+        trait.set_trait_type(getType().name());
+        return trait;
+    }
 };
 
 /// A type-erased wrapper for traits.
@@ -69,6 +95,10 @@ struct Trait
 
     Trait(const Trait& other);
     Trait(Trait&&) noexcept;
+
+    bool operator==(const Trait& other) const { return self->equals(*other.self); }
+
+    [[nodiscard]] size_t hash() const { return self->hash(); }
 
     /// Attempts to get the underlying trait as type TraitType.
     /// @tparam TraitType The type to try to get the trait as.
@@ -136,6 +166,8 @@ private:
             return false;
         }
 
+        [[nodiscard]] size_t hash() const override { return data.hash(); }
+
         [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
         [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
     };
@@ -143,7 +175,27 @@ private:
     std::unique_ptr<Concept> self;
 };
 
-using TraitSet = std::vector<Trait>;
+using TraitSet = std::unordered_set<Trait>;
+
+}
+
+template <>
+struct std::hash<NES::Trait>
+{
+    size_t operator()(const NES::Trait& trait) const noexcept { return trait.hash(); }
+};
+
+template <typename T>
+std::optional<T> getTrait(const NES::TraitSet& traitSet)
+{
+    for (const auto& trait : traitSet)
+    {
+        if (trait.tryGet<T>())
+        {
+            return {trait.get<T>()};
+        }
+    }
+    return std::nullopt;
 }
 
 template <typename T>

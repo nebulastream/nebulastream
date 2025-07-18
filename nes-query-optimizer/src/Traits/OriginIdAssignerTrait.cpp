@@ -12,28 +12,9 @@
     limitations under the License.
 */
 
-#include <typeinfo>
 #include <Traits/OriginIdAssignerTrait.hpp>
-#include <Traits/Trait.hpp>
-#include <SerializableTrait.pb.h>
 
 namespace NES
 {
-
-bool OriginIdAssignerTrait::operator==(const TraitConcept& other) const
-{
-    return typeid(other) == typeid(*this);
-}
-
-const std::type_info& OriginIdAssignerTrait::getType() const
-{
-    return typeid(this);
-}
-
-SerializableTrait OriginIdAssignerTrait::serialize() const
-{
-    SerializableTrait trait;
-    trait.set_trait_type(getType().name());
-    return trait;
-}
+/// Required for plugin registration, no implementation necessary
 }
