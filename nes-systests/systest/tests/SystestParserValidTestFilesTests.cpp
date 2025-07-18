@@ -195,8 +195,6 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
@@ -316,8 +314,6 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
                 and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
         });
 
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 

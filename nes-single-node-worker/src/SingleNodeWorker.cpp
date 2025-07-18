@@ -20,6 +20,7 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -27,12 +28,14 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Pointers.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
+#include <Util/Common.hpp>
 
 namespace NES
 {
@@ -44,7 +47,7 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
     : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener), Util::copyPtr(listener)).build())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
@@ -62,7 +65,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) const
+std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     try
     {
@@ -80,19 +83,47 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     }
 }
 
-void SingleNodeWorker::startQuery(QueryId queryId)
+std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
 {
-    nodeEngine->startQuery(queryId);
+    try
+    {
+        nodeEngine->startQuery(queryId);
+    }
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected(e);
+    }
+    return {};
 }
 
-void SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type)
+std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
 {
-    nodeEngine->stopQuery(queryId, type);
+    try
+    {
+        nodeEngine->stopQuery(queryId, type);
+    }
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected{e};
+    }
+    return {};
 }
 
-void SingleNodeWorker::unregisterQuery(QueryId queryId)
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
 {
-    nodeEngine->unregisterQuery(queryId);
+    try
+    {
+        nodeEngine->unregisterQuery(queryId);
+    }
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return std::unexpected(e);
+    }
+
+    return {};
 }
 
 std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
