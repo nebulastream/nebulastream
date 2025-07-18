@@ -71,7 +71,7 @@ done
 
 cd "$BASE_DIR"
 
-gcovr --gcov-executable "llvm-19-cov gcov" --html-details --output "$OUT_DIR/cov/" --json "$OUT_DIR/gcov.json"
+gcovr --gcov-executable "llvm-cov-19 gcov" --html-details --output "$OUT_DIR/cov/" --json "$OUT_DIR/gcov.json"
 
-python3 gen_callgraph.py compile_commands.json "$OUT_DIR/gcov.json"
+python3 gen_callgraph.py "$BUILD_DIR/compile_commands.json" "$OUT_DIR/gcov.json"
 mv cov.dot "$OUT_DIR"
