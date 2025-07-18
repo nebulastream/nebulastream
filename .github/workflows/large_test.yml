@@ -71,13 +71,13 @@ jobs:
               --data build/nes-systests/testdata \
               --groups large \
               -- \
-              --worker.defaultQueryExecution.executionMode=COMPILER \
-              --worker.queryEngine.numberOfWorkerThreads=${{ inputs.number_of_worker_threads }} \
+              --worker.defaultQueryExecution.execution_mode=COMPILER \
+              --worker.queryEngine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
               --worker.defaultQueryExecution.operatorBufferSize=${{ inputs.buffer_size }} \
               --worker.bufferSizeInBytes=${{ inputs.buffer_size }} \
               --worker.defaultQueryExecution.pageSize=${{ inputs.page_size }} \
               --worker.defaultQueryExecution.numberOfPartitions=${{ inputs.number_of_partitions }} \
-              --worker.numberOfBuffersInGlobalBufferManager=200000
+              --worker.number_of_buffers_in_global_buffer_manager=200000
 
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
