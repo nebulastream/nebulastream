@@ -45,6 +45,6 @@ jobs:
           cmake --build build -j
       - name: run Benchmarks
         run: |
-          ./build/nes-systests/systest/systest -b -g benchmark -- --worker.numberOfBuffersInGlobalBufferManager=20000 
+          ./build/nes-systests/systest/systest -b -g benchmark -- --worker.number_of_buffers_in_global_buffer_manager=20000 
           python3 ./scripts/benchmarking/benchmark.py --systest
 
