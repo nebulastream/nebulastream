@@ -33,27 +33,27 @@ public:
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
     StringOption testsDiscoverDir
-        = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
+        = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     StringOption testDataDir
-        = {"testDataDir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
+        = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     StringOption configDir
-        = {"configDir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
+        = {"config_dir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
     StringOption logFilePath = {"logFilePath", "Path to the log file"};
     StringOption directlySpecifiedTestFiles
-        = {"directlySpecifiedTestFiles",
+        = {"directly_specified_test_files",
            "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     SequenceOption<UIntOption> testQueryNumbers
-        = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    StringOption testFileExtension = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
-    StringOption workingDir = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
-    BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
-    UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
-    BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
-    SequenceOption<StringOption> testGroups = {"testGroups", "test groups to run"};
-    SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
-    StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
-    StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
+        = {"test_query_numbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
+    StringOption testFileExtension = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
+    StringOption workingDir = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
+    BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
+    UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
+    BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
+    SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};
+    SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
+    StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
+    StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     StringOption grpcAddressUri
         = {"grpc",
            "",
@@ -62,7 +62,7 @@ the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
-    BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
+    BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 

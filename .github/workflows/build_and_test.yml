@@ -181,7 +181,7 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
+          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.query_engine.number_of_worker_threads=${{steps.number-of-jobs.outputs.number_of_jobs}}
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200
