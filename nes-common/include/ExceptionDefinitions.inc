@@ -66,7 +66,7 @@ EXCEPTION(UnknownDataType, 2123, "unknown data type")
 EXCEPTION(UnknownSourceName, 2124, "unknown source name")
 EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
-EXCEPTION(UnknownSinkName, 2127, "Unknown sink name")
+EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
 
 /// 22XX NebuLI
