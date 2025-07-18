@@ -280,6 +280,10 @@ class PostProcessing:
             df = df[(df['window_start_normalized'] >= self.startup_time) & (
                         df['window_start_normalized'] <= self.measure_interval)]
 
+            if df.empty:
+                print(f"WARNING: {stat_file} produced no data")
+                continue
+
             # Sort the DataFrame
             # df = df.sort_values(by=["query_id", "window_start"]).reset_index(drop=True)
 
