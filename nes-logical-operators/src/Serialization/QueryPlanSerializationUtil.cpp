@@ -12,15 +12,17 @@
     limitations under the License.
 */
 
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+
 #include <functional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
@@ -31,8 +33,8 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    INVARIANT(queryPlan.rootOperators.size() == 1, "Query plan should currently have only one root operator");
-    auto rootOperator = queryPlan.rootOperators.front();
+    INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
+    auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
     /// Serialize Query Plan operators

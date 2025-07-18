@@ -12,19 +12,23 @@
     limitations under the License.
 */
 
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+
+#include <algorithm>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -46,7 +50,8 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     {
         return this->getSchema() == rhsOperator->getSchema() && this->getName() == rhsOperator->getName()
             && getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
+            && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -86,6 +91,7 @@ Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
+
 LogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
 {
     auto copy = *this;
@@ -93,9 +99,16 @@ LogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) cons
     return copy;
 }
 
+LogicalOperator SourceNameLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
 TraitSet SourceNameLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
 }
 
 LogicalOperator SourceNameLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

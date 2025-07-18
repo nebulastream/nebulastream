@@ -21,14 +21,16 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -48,7 +50,8 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     if (const auto* const rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
     {
         return getInputSchemas() == rhsOperator->getInputSchemas() && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
+            && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -100,7 +103,14 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
 
 TraitSet UnionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator UnionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

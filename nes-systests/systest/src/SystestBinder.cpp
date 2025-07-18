@@ -220,7 +220,7 @@ public:
                 }
             });
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
-        const auto sinkOperatorOpt = this->optimizedPlan->rootOperators.at(0).tryGet<SinkLogicalOperator>();
+        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGet<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value().sinkDescriptor != nullptr, "The root sink should have a sink descriptor");
         if (sinkOperatorOpt.value().sinkDescriptor->sinkType == "Checksum")
@@ -229,7 +229,7 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->rootOperators.at(0).getOutputSchema();
+            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
             if (sinkOutputSchema != sinkProvider.getSinkSchema(sinkOperatorOpt.value().sinkName))
             {
                 this->exception = CannotInferSchema("The inferred sink schema does not match the schema declared in the systest");
@@ -627,10 +627,10 @@ struct SystestBinder::Impl
                     try
                     {
                         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                        auto sinkOperators = plan.rootOperators;
+                        auto sinkOperators = plan.getRootOperators();
                         auto sinkOperator = [](const LogicalPlan& queryPlan)
                         {
-                            const auto rootOperators = queryPlan.rootOperators;
+                            const auto rootOperators = queryPlan.getRootOperators();
                             if (rootOperators.size() != 1)
                             {
                                 throw QueryInvalid(
@@ -643,7 +643,7 @@ struct SystestBinder::Impl
                         }(plan);
 
                         sinkOperator.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sinkExpected.value());
-                        plan.rootOperators.at(0) = sinkOperator;
+                        plan = plan.withRootOperators({sinkOperator});
                         currentTest.setBoundPlan(std::move(plan));
                     }
                     catch (Exception& e)

@@ -11,14 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,8 +34,6 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -75,7 +79,7 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
     {
         return onField == rhsOperator->onField && unit == rhsOperator->unit && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -102,7 +106,14 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(s
 
 TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

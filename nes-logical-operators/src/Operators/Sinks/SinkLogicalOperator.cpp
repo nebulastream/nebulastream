@@ -43,7 +43,7 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
         return sinkName == rhsOperator->sinkName && descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -84,9 +84,16 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     return copy;
 }
 
+LogicalOperator SinkLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
 TraitSet SinkLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
 }
 
 LogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
