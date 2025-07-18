@@ -53,9 +53,6 @@ EOF
     exit 1
 fi
 
-find . -name "*.gcno" -delete
-find . -name "*.gcda" -delete
-
 TMP_DIR=$(mktemp -d)
 
 echo "working in $TMP_DIR"
