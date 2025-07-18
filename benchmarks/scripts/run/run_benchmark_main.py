@@ -476,10 +476,10 @@ def main():
 
         # Re-running all runs that failed
         if not failed_run_folders:
-            print(f"All benchmarks completed successfully in {attempt + 1} attempt(s).")
+            print(f"\nAll benchmarks completed successfully in {attempt + 1} attempt(s).")
             break
         else:
-            print(f"{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...")
+            print(f"\n{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...\n")
             ALL_BENCHMARK_CONFIGS = []
             for failed_run in failed_run_folders:
                 config_dict = yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r'))
