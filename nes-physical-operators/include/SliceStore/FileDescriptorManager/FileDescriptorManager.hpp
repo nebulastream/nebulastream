@@ -47,18 +47,17 @@ class MemoryPool
 public:
     MemoryPool(uint64_t bufferSize, uint64_t numBuffersPerWorker, uint64_t numWorkerThreads, uint64_t poolSizeMultiplier);
 
+    char* getReadBufferForThread(WorkerThreadId threadId, bool keyBuffer);
     char* allocateWriteBuffer(WorkerThreadId threadId, ThreadLocalWriters& threadWriters, const FileWriter* writer);
     void deallocateWriteBuffer(WorkerThreadId threadId, char* buffer);
-    char* getReadBufferForThread(WorkerThreadId threadId, bool keyBuffer);
 
     uint64_t getFileDescriptorBufferSize() const;
 
 private:
+    std::vector<char> readMemoryPool;
     std::vector<char> writeMemoryPool;
     std::vector<std::vector<char*>> freeWriteBuffers;
     std::vector<std::mutex> writeMemoryPoolMutexes;
-
-    std::vector<char> readMemoryPool;
 
     uint64_t fileDescriptorBufferSize;
     uint64_t poolSizeMultiplier;
@@ -68,18 +67,18 @@ class FileDescriptorManager
 {
 public:
     FileDescriptorManager(
-        FileDescriptorManagerInfo memoryControllerInfo,
+        FileDescriptorManagerInfo fileDescriptorManagerInfo,
         uint64_t numWorkerThreads,
         uint64_t minNumFileDescriptorsPerWorker,
         uint64_t memoryPoolSizeMultiplier);
-    ~FileDescriptorManager();
 
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
     std::optional<std::shared_ptr<FileReader>> getFileReader(
         SliceEnd sliceEnd, WorkerThreadId threadToRead, WorkerThreadId workerThread, JoinBuildSideType joinBuildSide, bool withCleanup);
 
-    void deleteSliceFiles(SliceEnd sliceEnd);
+    void deleteFileWriters(SliceEnd sliceEnd, bool withCleanup);
+    void deleteAllSliceFiles();
 
 private:
     [[nodiscard]] std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
@@ -90,9 +89,9 @@ private:
 
     /// Writers are grouped by thread thus reducing resource contention
     std::vector<ThreadLocalWriters> threadWriters;
+    MemoryPool memoryPool;
 
     FileDescriptorManagerInfo fileDescriptorManagerInfo;
-    MemoryPool memoryPool;
 };
 
 }
