@@ -132,6 +132,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         if (summary.has_value())
         {
             reply->set_status(::QueryStatus(summary->currentStatus));
+            reply->set_queryid(request->queryid());
             for (const auto& [start, running, stop, error] : summary->runs)
             {
                 auto* const replyRun = reply->add_runs();
