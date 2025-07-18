@@ -95,7 +95,7 @@ jobs:
           cd /work_dir
           for sanitizer in asan ubsan tsan
           do
-            for input in $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f)
+            for input in $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f | shuf)
             do
               if $fuzzer $input
               then
@@ -235,7 +235,7 @@ jobs:
         continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in $(find -type f)
+          for input in $(find -type f | shuf)
           do
             if $fuzzer $input
             then
@@ -249,7 +249,7 @@ jobs:
         continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in $(find ../../corpus -type f)
+          for input in $(find ../../corpus -type f | shuf)
           do
             if ! $fuzzer $input
             then
