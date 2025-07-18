@@ -19,6 +19,7 @@
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/DumpMode.hpp>
@@ -54,9 +55,10 @@ public:
            "Number buffers in source local buffer pool. May be overwritten by a source-specific configuration (see SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
-    EnumOption<DumpMode> dumpQueryCompilationIntermediateRepresentations = {
-    "dumpCompilationResult", DumpMode::NONE, "If and where to dump query compilation results: [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
-
+    EnumOption<DumpMode> dumpQueryCompilationIntermediateRepresentations
+        = {"dumpCompilationResult",
+           DumpMode::NONE,
+           fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
 
 private:
     std::vector<BaseOption*> getOptions() override
