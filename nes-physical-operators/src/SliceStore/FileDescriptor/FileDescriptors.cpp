@@ -13,7 +13,6 @@
 */
 
 #include <filesystem>
-#include <iostream>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <ErrorHandling.hpp>
 
@@ -22,7 +21,7 @@ namespace NES
 
 FileWriter::FileWriter(
     boost::asio::io_context& ioCtx,
-    const std::string& filePath,
+    std::string filePath,
     const std::function<char*(const FileWriter* writer)>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
@@ -35,26 +34,10 @@ FileWriter::FileWriter(
     , writeKeyBufferPos(0)
     , bufferSize(bufferSize)
     , varSizedCnt(0)
-    , filePath(filePath)
+    , filePath(std::move(filePath))
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
-    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
-    if (fd < 0 or fdKey < 0)
-    {
-        if (errno == EMFILE)
-        {
-            throw std::runtime_error("Failed to open file or key file for writing: Too many open files (EMFILE)");
-        }
-        else
-        {
-            throw std::runtime_error(fmt::format("Failed to open file or key file for writing: {}", std::strerror(errno)));
-        }
-    }
-
-    file.assign(fd);
-    keyFile.assign(fdKey);
 }
 
 FileWriter::~FileWriter()
@@ -66,11 +49,19 @@ FileWriter::~FileWriter()
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, const size_t size)
 {
+    if (not file.is_open())
+    {
+        openFile(file, filePath + ".dat");
+    }
     co_await write(data, size, file, writeBuffer, writeBufferPos);
 }
 
 boost::asio::awaitable<void> FileWriter::writeKey(const void* data, const size_t size)
 {
+    if (not keyFile.is_open())
+    {
+        openFile(keyFile, filePath + "_key.dat");
+    }
     co_await write(data, size, keyFile, writeKeyBuffer, writeKeyBufferPos);
 }
 
@@ -216,10 +207,25 @@ boost::asio::awaitable<void> FileWriter::writeToFile(const char* buffer, size_t&
     size = 0;
 }
 
-FileReader::FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool withCleanup)
-    : file(filePath + ".dat", std::ios::in | std::ios::binary)
-    , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
-    , readBuffer(readBuffer)
+void FileWriter::openFile(boost::asio::posix::stream_descriptor& stream, const std::string& filePath)
+{
+    const auto fd = open(filePath.c_str(), O_CREAT | O_WRONLY | O_APPEND, 0644);
+    if (fd < 0)
+    {
+        if (errno == EMFILE)
+        {
+            throw std::runtime_error("Failed to open file or key file for writing: Too many open files (EMFILE)");
+        }
+        else
+        {
+            throw std::runtime_error(fmt::format("Failed to open file or key file for writing: {}", std::strerror(errno)));
+        }
+    }
+    stream.assign(fd);
+}
+
+FileReader::FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool withCleanup)
+    : readBuffer(readBuffer)
     , readKeyBuffer(readKeyBuffer)
     , readBufferPos(0)
     , readKeyBufferPos(0)
@@ -227,19 +233,8 @@ FileReader::FileReader(const std::string& filePath, char* readBuffer, char* read
     , readKeyBufferEnd(0)
     , bufferSize(bufferSize)
     , withCleanup(withCleanup)
-    , filePath(filePath)
+    , filePath(std::move(filePath))
 {
-    if (not file.is_open() or not keyFile.is_open())
-    {
-        if (errno == EMFILE)
-        {
-            throw std::runtime_error("Failed to open file or key file for reading: Too many open files (EMFILE)");
-        }
-        else
-        {
-            throw std::runtime_error(fmt::format("Failed to open file or key file for reading: {}", std::strerror(errno)));
-        }
-    }
 }
 
 FileReader::~FileReader()
@@ -256,11 +251,19 @@ FileReader::~FileReader()
 
 size_t FileReader::read(void* dest, const size_t size)
 {
+    if (not file.is_open())
+    {
+        openFile(file, filePath + ".dat");
+    }
     return read(dest, size, file, readBuffer, readBufferPos, readBufferEnd);
 }
 
 size_t FileReader::readKey(void* dest, const size_t size)
 {
+    if (not keyFile.is_open())
+    {
+        openFile(keyFile, filePath + "_key.dat");
+    }
     return read(dest, size, keyFile, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd);
 }
 
@@ -343,6 +346,22 @@ size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstre
         throw std::ios_base::failure("Failed to read from file");
     }
     return stream.gcount();
+}
+
+void FileReader::openFile(std::ifstream& stream, const std::string& filePath)
+{
+    stream.open(filePath, std::ios::in | std::ios::binary);
+    if (not stream.is_open())
+    {
+        if (errno == EMFILE)
+        {
+            throw std::runtime_error("Failed to open file or key file for reading: Too many open files (EMFILE)");
+        }
+        else
+        {
+            throw std::runtime_error(fmt::format("Failed to open file or key file for reading: {}", std::strerror(errno)));
+        }
+    }
 }
 
 }

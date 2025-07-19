@@ -170,7 +170,6 @@ void FileDescriptorManager::deleteAllSliceFiles()
         for (auto& [writer, _] : writers | std::views::values)
         {
             writer->deleteAllFiles();
-            writer.reset();
         }
     }
 }
