@@ -15,7 +15,6 @@
 #pragma once
 
 #include <fstream>
-#include <functional>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <boost/asio.hpp>
 
@@ -35,7 +34,7 @@ class FileWriter
 public:
     FileWriter(
         boost::asio::io_context& ioCtx,
-        const std::string& filePath,
+        std::string filePath,
         const std::function<char*(const FileWriter* writer)>& allocate,
         const std::function<void(char*)>& deallocate,
         size_t bufferSize);
@@ -57,6 +56,8 @@ private:
     write(const void* data, size_t size, boost::asio::posix::stream_descriptor& stream, char*& buffer, size_t& bufferPos) const;
     static boost::asio::awaitable<void> writeToFile(const char* buffer, size_t& size, boost::asio::posix::stream_descriptor& stream);
 
+    static void openFile(boost::asio::posix::stream_descriptor& stream, const std::string& filePath);
+
     boost::asio::io_context& ioCtx;
     boost::asio::posix::stream_descriptor file;
     boost::asio::posix::stream_descriptor keyFile;
@@ -76,7 +77,7 @@ private:
 class FileReader
 {
 public:
-    FileReader(const std::string& filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
+    FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
     ~FileReader();
 
     size_t read(void* dest, size_t size);
@@ -86,6 +87,8 @@ public:
 private:
     size_t read(void* dest, size_t dataSize, std::ifstream& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const;
     static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& stream);
+
+    static void openFile(std::ifstream& stream, const std::string& filePath);
 
     std::ifstream file;
     std::ifstream keyFile;
