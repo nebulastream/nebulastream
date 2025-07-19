@@ -335,7 +335,7 @@ public:
     /// This allows the thread to access into the internalTaskQueue, which is prohibited for non-worker threads.
     /// The terminator thread does not count towards numberOfThreads
     constexpr static WorkerThreadId terminatorThreadId = INITIAL<WorkerThreadId>;
-    [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_.load(); }
+    [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_; }
 
 private:
     struct WorkerThread
@@ -414,7 +414,7 @@ private:
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::atomic<TaskId::Underlying> taskIdCounter;
+    TaskId::Underlying taskIdCounter = 1;
 
     detail::Queue admissionQueue;
     detail::Queue internalTaskQueue;
@@ -423,7 +423,7 @@ private:
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
     /// The number of threads is only available via the atomic.
     std::vector<std::jthread> pool;
-    std::atomic<int32_t> numberOfThreads_;
+    std::atomic<int32_t> numberOfThreads_ = 0;
 
     friend class QueryEngine;
 };
@@ -576,7 +576,8 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, [ref = successor] { }, {}, policy);
+                pool.emitWork(
+                    stopPipelineTask.queryId, successor, tupleBuffer, [ref = successor] {}, {}, policy);
             }
             return true;
         });

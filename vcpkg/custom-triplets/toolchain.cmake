@@ -36,10 +36,6 @@ if (NOT _NES_TOOLCHAIN_FILE)
         set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}")
     endif ()
 
-    # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE NAMES clang++ clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
-    find_program(CLANG_EXECUTABLE NAMES clang clang-$ENV{LLVM_TOOLCHAIN_VERSION})
-
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if (NOT _CMAKE_IN_TRY_COMPILE)
         string(APPEND CMAKE_C_FLAGS_INIT "-fPIC ${VCPKG_C_FLAGS} ")

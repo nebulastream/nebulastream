@@ -91,7 +91,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
                                   }
                                   return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
                               }
-                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets.at(index)]);
                           });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }

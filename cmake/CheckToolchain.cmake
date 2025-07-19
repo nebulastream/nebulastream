@@ -16,13 +16,15 @@
 
 include(CheckCXXSourceCompiles)
 
-option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
-SET(USING_LIBCXX OFF)
-SET(USING_LIBSTDCXX OFF)
+check_cxx_source_compiles("
+    #include <cstddef>
+        #ifndef _LIBCPP_VERSION
+        #error \"Not using libc++\"
+        #endif
+        int main() { return 0; }
+" USING_LIBCXX)
 
-if (USE_LIBCXX_IF_AVAILABLE)
-    # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
-    set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
+if (${USING_LIBCXX})
     check_cxx_source_compiles("
         #include <cstddef>
         #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
@@ -32,16 +34,18 @@ if (USE_LIBCXX_IF_AVAILABLE)
         #endif
     " LIBCXX_VERSION_CHECK)
 
-    if (LIBCXX_VERSION_CHECK)
-        message(STATUS "Using Libc++")
-        set(USING_LIBCXX ON)
-    else ()
-        message(STATUS "Not using Libc++")
-        set(USING_LIBCXX OFF)
-    endif ()
-endif ()
+    if(NOT ${LIBCXX_VERSION_CHECK}) 
+        message(FATAL_ERROR "Expected libc++ >= 19")
+    endif()
 
-if (NOT ${USING_LIBCXX})
+    message(STATUS "Libc++ >= 19")
+
+    # Currently C++20 threading features are hidden behind the feature flag
+    add_compile_options(-fexperimental-library)
+    # Enable Libc++ hardening mode
+    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
+    add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
+else()
     # Check if Libstdc++ version is 14 or above
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
@@ -59,14 +63,4 @@ if (NOT ${USING_LIBCXX})
     else ()
         message(FATAL_ERROR "Requires Libstdc++ >= 14. On ubuntu systems this can be installed via g++-14")
     endif ()
-endif ()
-
-if (${USING_LIBCXX})
-    add_compile_options(-stdlib=libc++)
-    # Currently C++20 threading features are hidden behind the feature flag
-    add_compile_options(-fexperimental-library)
-    # Enable Libc++ hardening mode
-    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
-    add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
-    add_link_options(-lc++)
-endif ()
+endif()

@@ -15,7 +15,6 @@ SET(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/vcpkg/vcpkg-registry/ports")
 SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
-option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 
 if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
@@ -50,11 +49,6 @@ if ($CACHE{DOCKER_DEV_IMAGE})
                 "./scripts/install-local-docker-environment.sh\n"
         )
     endif ()
-
-    # Overwriting stdlib and sanitizer option based on docker image
-    if ($ENV{VCPKG_STDLIB} STREQUAL "libstdcxx")
-        SET(USE_LIBCXX_IF_AVAILABLE OFF)
-    endif()
 
     SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
@@ -105,11 +99,6 @@ else ()
     SET(VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
 endif ()
 
-SET(VCPKG_STDLIB "libcxx")
-if (NOT USE_LIBCXX_IF_AVAILABLE)
-    SET(VCPKG_STDLIB "local")
-endif ()
-
 execute_process(COMMAND uname -m OUTPUT_VARIABLE VCPKG_HOST_PROCESSOR)
 if (VCPKG_HOST_PROCESSOR MATCHES "x86_64")
     set(VCPKG_HOST_PROCESSOR "x64")
@@ -124,8 +113,8 @@ if (NOT VCPKG_HOST_OS MATCHES "Linux")
     message(FATAL_ERROR "Only linux is supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
 endif ()
 
-SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
-SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-none-${VCPKG_STDLIB}")
+SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}")
+SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-none")
 
 message(STATUS "VPCKG target triplet: ${VCPKG_TARGET_TRIPLET}")
 message(STATUS "VPCKG host triplet: ${VCPKG_HOST_TRIPLET}")
