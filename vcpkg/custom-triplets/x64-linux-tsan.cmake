@@ -14,15 +14,20 @@ set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
 set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_CMAKE_SYSTEM_NAME Linux)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchain.cmake)
-set(VCPKG_CXX_FLAGS -fsanitize=undefined)
-set(VCPKG_C_FLAGS -fsanitize=undefined)
 
-# Building LLVM with the `-fsanitize=undefined` flag causes the sanitizer itself to be built sanitized which is not
+set(VCPKG_CXX_FLAGS -fsanitize=thread)
+set(VCPKG_C_FLAGS -fsanitize=thread)
+
+set(ENV{LD_LIBRARY_PATH} $ENV{SANITIZED_STDLIB}/lib)
+set(VCPKG_ENV_PASSTHROUGH_UNTRACKED
+    LD_LIBRARY_PATH
+)
+
+# Building LLVM with the `-fsanitize=thread` flag causes the sanitizer itself to be built sanitized which is not
 # possible. In general if the port supports sanitization via a CMake Option this should be the preferred way, to avoid
 # incompatibilities.
 if (PORT STREQUAL llvm)
     set(VCPKG_CXX_FLAGS "")
     set(VCPKG_C_FLAGS "")
-    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined" -DLLVM_REQUIRES_RTTI=ON)
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Thread")
 endif()

@@ -1,31 +1,15 @@
 {
-  "name": "nebulastream-dependencies",
-  "version-string": "latest",
-  "homepage": "https://nebula.stream",
-  "description": "Data Management for the Internet of Things.",
-
-  "builtin-baseline": "b02e341c927f16d991edbd915d8ea43eac52096c",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
-    "        supplied to cmake by the antlr4 dependency." ,
+    "        supplied to cmake by the antlr4 dependency.",
     "        This in turn requires changing the version of the antlr jar that",
     "        is fetched by cmake or baked into the dev docker image.",
     "        (c.f. nes-sql-parser/CMakeLists.txt)"
   ],
-
-  "features": {
-    "mlir": {
-      "description": "nautilus mlir backend",
-      "dependencies": [
-        {
-          "name": "nautilus",
-          "features": [
-            "mlir"
-          ]
-        }
-      ]
-    }
-  },
+  "builtin-baseline": "b02e341c927f16d991edbd915d8ea43eac52096c",
+  "default-features": [
+    "mlir"
+  ],
   "dependencies": [
     "antlr4",
     "argparse",
@@ -41,5 +25,22 @@
     "nautilus",
     "spdlog",
     "yaml-cpp"
-  ]
+  ],
+  "description": "Data Management for the Internet of Things.",
+  "features": {
+    "mlir": {
+      "dependencies": [
+        {
+          "features": [
+            "mlir"
+          ],
+          "name": "nautilus"
+        }
+      ],
+      "description": "nautilus mlir backend"
+    }
+  },
+  "homepage": "https://nebula.stream",
+  "name": "nebulastream-dependencies",
+  "version-string": "latest"
 }

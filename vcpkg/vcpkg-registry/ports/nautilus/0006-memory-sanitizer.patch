@@ -1,0 +1,88 @@
+Index: nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp	(revision 364c89c184430e1ccd0d9422fc73b1cc54c33ca8)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp	(date 1752764042069)
+@@ -6,7 +6,9 @@
+ #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+ #include <llvm/IR/Attributes.h>
+ #include <llvm/IRReader/IRReader.h>
++#include <llvm/Passes/PassBuilder.h>
+ #include <llvm/Support/FileCollector.h>
++#include <llvm/Transforms/Instrumentation/MemorySanitizer.h>
+ #include <mlir/ExecutionEngine/OptUtils.h>
+ 
+ namespace nautilus::compiler::mlir {
+@@ -15,6 +17,45 @@
+ 	return options.getOptionOrDefault("mlir.optimizationLevel", 3);
+ }
+ 
++// Enable memory sanitizer if nautilus is build with sanitizer.
++// A nautilus user can opt out of memory sanitizer by using mlir.memorySanitizer = false
++bool enableMemorySanitizer([[maybe_unused]] const engine::Options& options) {
++#if defined(__has_feature) && __has_feature(memory_sanitizer)
++	return options.getOptionOrDefault("mlir.memorySanitizer", true);
++#else
++	return false;
++#endif
++}
++
++static void addMemorySanitization(llvm::Module* module) {
++	using namespace ::llvm;
++
++	if (!module) {
++		return;
++	}
++
++	// Set up pass infrastructure
++	ModuleAnalysisManager MAM;
++	FunctionAnalysisManager FAM;
++	CGSCCAnalysisManager CGAM;
++	LoopAnalysisManager LAM;
++
++	PassBuilder PB;
++	PB.registerModuleAnalyses(MAM);
++	PB.registerFunctionAnalyses(FAM);
++	PB.registerCGSCCAnalyses(CGAM);
++	PB.registerLoopAnalyses(LAM);
++	PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
++
++	// Configure and apply MSan
++	ModulePassManager MPM;
++	MemorySanitizerOptions MSanOpts;
++	MPM.addPass(MemorySanitizerPass(MSanOpts));
++
++	// Run the pass
++	MPM.run(*module, MAM);
++}
++
+ LLVMIROptimizer::LLVMIROptimizer() = default;
+ LLVMIROptimizer::~LLVMIROptimizer() = default;
+ 
+@@ -27,6 +68,11 @@
+ 		constexpr int SIZE_LEVEL = 0;
+ 		// Create A target-specific target machine for the host
+ 		auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
++
++		auto targetOption = tmBuilderOrError->getOptions();
++		targetOption.EmulatedTLS = false;
++		tmBuilderOrError->setOptions(targetOption);
++
+ 		auto targetMachine = tmBuilderOrError->createTargetMachine();
+ 		llvm::TargetMachine* targetMachinePtr = targetMachine->get();
+ 		targetMachinePtr->setOptLevel(llvm::CodeGenOptLevel::Aggressive);
+@@ -45,6 +91,10 @@
+ 		    ::mlir::makeOptimizingTransformer(getOptimizationLevel(options), SIZE_LEVEL, targetMachinePtr);
+ 		auto optimizedModule = optPipeline(llvmIRModule);
+ 
++		if (enableMemorySanitizer(options)) {
++			addMemorySanitization(llvmIRModule);
++		}
++
+ 		handler.dump("after_llvm_generation", "ll", [&]() {
+ 			std::string llvmIRString;
+ 			llvm::raw_string_ostream llvmStringStream(llvmIRString);
+
