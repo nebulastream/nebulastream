@@ -50,8 +50,7 @@ SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unorde
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
-    fmt::println(
-        out,
+    out << fmt::format(
         "SinkDescriptor: (type: {}, add_timestamp: {}, Config: {})",
         sinkDescriptor.sinkType,
         sinkDescriptor.addTimestamp,

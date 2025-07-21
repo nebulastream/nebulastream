@@ -53,10 +53,11 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity) const
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "SINK(opId: {}, sinkName: {}, sinkDescriptor: {})",
+            "SINK(opId: {}, sinkName: {}, sinkDescriptor: {}, schema: {})",
             id,
             sinkName,
-            (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)");
+            (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)",
+            sinkDescriptor->schema);
     }
     return fmt::format("SINK({})", sinkName);
 }
