@@ -63,6 +63,11 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     const auto slice
         = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, workerThreadId, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
+    if (not slice.has_value())
+    {
+        NES_ERROR("Could not find a slice for slice end {}", sliceEnd);
+        return nullptr;
+    }
 
     return dynamic_cast<NLJSlice*>(slice.value().get());
 }
@@ -182,6 +187,11 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         executionCtx.workerThreadId,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right),
         sliceIdRight);
+    if (sliceRefLeft == nullptr or sliceRefRight == nullptr)
+    {
+        /// When stopping a query in SystestRunner prematurely slices might not be available in the slice store anymore
+        return;
+    }
 
     const auto leftPagedVectorRef = invoke(
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)

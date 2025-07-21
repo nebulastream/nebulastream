@@ -76,7 +76,7 @@ public:
     /// Sets number of worker threads. Needs to be called before working with the slice store
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
 
-    /// TODO
+    /// Updates the state of altered slices since the last call to this function by adaptively offloading it to files
     boost::asio::awaitable<void> updateSlices(
         boost::asio::io_context& ioCtx,
         Memory::AbstractBufferProvider* bufferProvider,

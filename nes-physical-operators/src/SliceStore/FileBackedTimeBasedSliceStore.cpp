@@ -59,7 +59,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     }
 }
 
- FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
+FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
 {
     deleteState();
 }
@@ -397,7 +397,10 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
-            pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
+            if (pagedVector->getNumberOfTuplesOnDisk() > 0)
+            {
+                pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
+            }
             nljSlice->releaseCombinePagedVectorsLock();
         }
     }

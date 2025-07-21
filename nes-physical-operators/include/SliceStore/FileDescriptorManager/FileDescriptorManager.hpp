@@ -81,6 +81,8 @@ public:
     void deleteAllSliceFiles();
 
 private:
+    static constexpr auto NUM_RESERVED_FILE_DESCRIPTORS = 10UL;
+
     [[nodiscard]] std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide) const;
 
     static std::optional<std::shared_ptr<FileWriter>> deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key);

@@ -93,6 +93,7 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
         }
     }
 
+    /// Create new file descriptor as the needed file is not currently open
     const auto writer = std::make_shared<FileWriter>(
         ioCtx,
         constructFilePath(sliceEnd, threadId, joinBuildSide),
@@ -117,7 +118,7 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
     const auto key = std::make_pair(sliceEnd, joinBuildSide);
     const std::scoped_lock lock(mutex);
 
-    /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
+    /// Erase matching fileWriter to be able to open the file for reading. If there is no fileWriter, nothing was written out
     if (const auto it = writers.find(key); it != writers.end())
     {
         if (auto& [writer, listIt] = it->second; writer != nullptr)
@@ -204,9 +205,10 @@ FileDescriptorManager::deleteFileWriter(ThreadLocalWriters& local, const std::pa
 
 uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
 {
-    /// Reserve descriptors for any file that was already opened and add a buffer as insurance for future descriptors that might be opened
+    /// Reserve descriptors that are already used by the system and add a buffer for future descriptors that might be used during runtime
     const auto numOpenDescriptors
-        = std::distance(std::filesystem::directory_iterator("/proc/self/fd"), std::filesystem::directory_iterator{}) + 10UL;
+        = std::distance(std::filesystem::directory_iterator("/proc/self/fd"), std::filesystem::directory_iterator{})
+        + NUM_RESERVED_FILE_DESCRIPTORS;
 
     rlimit rlp;
     if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
@@ -214,7 +216,7 @@ uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
         std::cerr << "Failed to get the file descriptor limit.\n";
         return QueryExecutionConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
     }
-    limit = std::min(rlp.rlim_max, limit);
+    limit = std::min(rlp.rlim_max - numOpenDescriptors, limit);
 
     rlp.rlim_cur = limit;
     if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
@@ -223,7 +225,7 @@ uint64_t FileDescriptorManager::setAndGetFileDescriptorLimit(uint64_t limit)
         return QueryExecutionConfiguration().maxNumFileDescriptors.getDefaultValue() - numOpenDescriptors;
     }
 
-    return limit - numOpenDescriptors;
+    return limit;
 }
 
 MemoryPool::MemoryPool(
