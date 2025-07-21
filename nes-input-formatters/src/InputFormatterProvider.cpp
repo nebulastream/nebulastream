@@ -19,8 +19,8 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 

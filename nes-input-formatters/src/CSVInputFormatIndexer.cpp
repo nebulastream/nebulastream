@@ -15,20 +15,14 @@
 #include <CSVInputFormatIndexer.hpp>
 
 #include <cstddef>
-#include <cstdint>
-#include <limits>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -52,7 +46,7 @@ void initializeIndexFunctionForTuple(
          nextFieldOffset = tuple.find(config.fieldDelimiter, nextFieldOffset))
     {
         nextFieldOffset += config.fieldDelimiter.size();
-        fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset, fieldIdx); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset, fieldIdx);
         ++fieldIdx;
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
@@ -112,18 +106,16 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
-std::ostream& CSVInputFormatIndexer::toString(std::ostream& os) const
-{
-    return os << fmt::format(
-               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
-}
-
 InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::RegisterCSVInputFormatIndexer(
     InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
-    auto inputFormatter
-        = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline(
+        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()));
 }
 
+std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)
+{
+    return os << fmt::format(
+               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", obj.config.tupleDelimiter, obj.config.fieldDelimiter);
+}
 }
