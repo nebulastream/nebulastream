@@ -39,9 +39,9 @@ struct SliceStoreInfo
     uint64_t minReadStateSize;
     uint64_t minWriteStateSize;
     uint64_t predictionTimeDelta;
-    FileLayout fileLayout;
     bool withCleanup;
     bool withPrediction;
+    FileLayout fileLayout;
 };
 
 class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore

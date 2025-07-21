@@ -52,9 +52,9 @@ MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 512, 4096, 16384]
 PREDICTION_TIME_DELTAS = [0, 1, 10, 100]
-FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
+FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WATERMARK_PREDICTOR_TYPES = ["KALMAN", "RLS", "REGRESSION"]
 MAX_NUM_FILE_DESCRIPTORS = [0, 512, 4096, 16384]  # 0 means no limit (will fail if system's hard limit is exceeded)
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 16384, 524288, 1024]
@@ -121,9 +121,9 @@ def get_default_params_dict():
         "min_read_state_size": MIN_READ_STATE_SIZES[0],
         "min_write_state_size": MIN_WRITE_STATE_SIZES[0],
         "prediction_time_delta": PREDICTION_TIME_DELTAS[0],
-        "file_layout": FILE_LAYOUTS[0],
         "with_cleanup": WITH_CLEANUPS[0],
         "with_prediction": WITH_PREDICTIONS[0],
+        "file_layout": FILE_LAYOUTS[0],
         "watermark_predictor_type": WATERMARK_PREDICTOR_TYPES[0],
         "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS[0],
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES[0],
@@ -164,9 +164,9 @@ class BenchmarkConfig:
                  min_read_state_size,
                  min_write_state_size,
                  prediction_time_delta,
-                 file_layout,
                  with_cleanup,
                  with_prediction,
+                 file_layout,
                  watermark_predictor_type,
                  max_num_file_descriptors,
                  file_descriptor_buffer_size,
@@ -192,9 +192,9 @@ class BenchmarkConfig:
         self.min_read_state_size = min_read_state_size
         self.min_write_state_size = min_write_state_size
         self.prediction_time_delta = prediction_time_delta
-        self.file_layout = file_layout
         self.with_cleanup = with_cleanup
         self.with_prediction = with_prediction
+        self.file_layout = file_layout
         self.watermark_predictor_type = watermark_predictor_type
         self.max_num_file_descriptors = max_num_file_descriptors
         self.file_descriptor_buffer_size = file_descriptor_buffer_size
@@ -231,9 +231,9 @@ class BenchmarkConfig:
             "min_read_state_size": self.min_read_state_size,
             "min_write_state_size": self.min_write_state_size,
             "prediction_time_delta": self.prediction_time_delta,
-            "file_layout": self.file_layout,
             "with_cleanup": self.with_cleanup,
             "with_prediction": self.with_prediction,
+            "file_layout": self.file_layout,
             "watermark_predictor_type": self.watermark_predictor_type,
             "max_num_file_descriptors": self.max_num_file_descriptors,
             "file_descriptor_buffer_size": self.file_descriptor_buffer_size,
@@ -261,8 +261,8 @@ def create_systest_configs():
         "min_read_state_size": MIN_READ_STATE_SIZES,
         "min_write_state_size": MIN_WRITE_STATE_SIZES,
         "prediction_time_delta": PREDICTION_TIME_DELTAS,
-        "file_layout": FILE_LAYOUTS,
         "with_cleanup": WITH_CLEANUPS,
+        "file_layout": FILE_LAYOUTS,
         "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS,
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
@@ -324,8 +324,8 @@ def create_benchmark_configs():
         "min_read_state_size": MIN_READ_STATE_SIZES,
         "min_write_state_size": MIN_WRITE_STATE_SIZES,
         "prediction_time_delta": PREDICTION_TIME_DELTAS,
-        "file_layout": FILE_LAYOUTS,
         "with_cleanup": WITH_CLEANUPS,
+        "file_layout": FILE_LAYOUTS,
         "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS,
         "file_descriptor_buffer_size": FILE_DESCRIPTOR_BUFFER_SIZES,
         "num_buffers_per_worker": NUM_BUFFERS_PER_WORKER
@@ -567,9 +567,9 @@ def create_all_benchmark_configs():
             min_read_state_size,
             min_write_state_size,
             prediction_time_delta,
-            file_layout,
             with_cleanup,
             with_prediction,
+            file_layout,
             watermark_predictor_type,
             max_num_file_descriptors,
             file_descriptor_buffer_size,
@@ -591,9 +591,9 @@ def create_all_benchmark_configs():
         for min_read_state_size in (MIN_READ_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_READ_STATE_SIZES[0]])
         for min_write_state_size in (MIN_WRITE_STATE_SIZES if slice_store_type == "FILE_BACKED" else [MIN_WRITE_STATE_SIZES[0]])
         for prediction_time_delta in (PREDICTION_TIME_DELTAS if slice_store_type == "FILE_BACKED" else [PREDICTION_TIME_DELTAS[0]])
-        for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
         for with_cleanup in (WITH_CLEANUPS if slice_store_type == "FILE_BACKED" else [WITH_CLEANUPS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" else [WITH_PREDICTIONS[0]])
+        for file_layout in (FILE_LAYOUTS if slice_store_type == "FILE_BACKED" else [FILE_LAYOUTS[0]])
         for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if slice_store_type == "FILE_BACKED" else [WATERMARK_PREDICTOR_TYPES[0]])
         for max_num_file_descriptors in (MAX_NUM_FILE_DESCRIPTORS if slice_store_type == "FILE_BACKED" else [MAX_NUM_FILE_DESCRIPTORS[0]])
         for file_descriptor_buffer_size in (FILE_DESCRIPTOR_BUFFER_SIZES if slice_store_type == "FILE_BACKED" else [FILE_DESCRIPTOR_BUFFER_SIZES[0]])

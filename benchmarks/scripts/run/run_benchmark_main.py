@@ -159,9 +159,9 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     worker_config_yaml["worker"]["defaultQueryExecution"]["minReadStateSize"] = current_benchmark_config.min_read_state_size
     worker_config_yaml["worker"]["defaultQueryExecution"]["minWriteStateSize"] = current_benchmark_config.min_write_state_size
     worker_config_yaml["worker"]["defaultQueryExecution"]["predictionTimeDelta"] = current_benchmark_config.prediction_time_delta
-    worker_config_yaml["worker"]["defaultQueryExecution"]["fileLayout"] = current_benchmark_config.file_layout
     worker_config_yaml["worker"]["defaultQueryExecution"]["withCleanup"] = current_benchmark_config.with_cleanup
     worker_config_yaml["worker"]["defaultQueryExecution"]["withPrediction"] = current_benchmark_config.with_prediction
+    worker_config_yaml["worker"]["defaultQueryExecution"]["fileLayout"] = current_benchmark_config.file_layout
     worker_config_yaml["worker"]["defaultQueryExecution"]["watermarkPredictorType"] = current_benchmark_config.watermark_predictor_type
     worker_config_yaml["worker"]["defaultQueryExecution"]["maxNumFileDescriptors"] = current_benchmark_config.max_num_file_descriptors
     worker_config_yaml["worker"]["defaultQueryExecution"]["fileDescriptorBufferSize"] = current_benchmark_config.file_descriptor_buffer_size
