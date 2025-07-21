@@ -78,12 +78,12 @@ protected:
     ~FieldIndexFunction() = default;
 
 private:
-    [[nodiscard]] FieldOffsetsType getOffsetOfFirstTupleDelimiter() const
+    [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const
     {
         return static_cast<const Derived*>(this)->applyGetOffsetOfFirstTupleDelimiter();
     }
 
-    [[nodiscard]] FieldOffsetsType getOffsetOfLastTupleDelimiter() const
+    [[nodiscard]] FieldIndex getOffsetOfLastTupleDelimiter() const
     {
         return static_cast<const Derived*>(this)->applyGetOffsetOfLastTupleDelimiter();
     }
