@@ -845,11 +845,6 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (funcName == "CONCAT")
             {
-                if (helpers.top().functionBuilder.size() != 2)
-                {
-                    throw InvalidQuerySyntax(
-                        "Concat requires two arguments, but got {} at {}", helpers.top().functionBuilder.size(), context->getText());
-                }
                 const auto rightFunction = helpers.top().functionBuilder.back();
                 helpers.top().functionBuilder.pop_back();
                 const auto leftFunction = helpers.top().functionBuilder.back();
