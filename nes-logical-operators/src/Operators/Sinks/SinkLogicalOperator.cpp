@@ -148,6 +148,20 @@ SerializableOperator SinkLogicalOperator::serialize() const
         proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
     }
 
+    for (const auto& originList : getInputOriginIds())
+    {
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originList)
+        {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds())
+    {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
     SerializableOperator serializableOperator;
     const DescriptorConfig::ConfigType timeVariant = sinkName;
     (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
