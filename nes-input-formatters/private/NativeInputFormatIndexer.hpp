@@ -16,10 +16,11 @@
 
 #include <ostream>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <fmt/format.h>
+#include <Concepts.hpp>
 #include <ErrorHandling.hpp>
+#include <FieldIndexFunction.hpp>
 
 namespace NES::InputFormatters
 {
@@ -33,19 +34,25 @@ public:
 
 /// The NativeInputFormatter formats buffers that contain data which all other 'Operators' can operate on.
 /// There is thus no need to parse the fields of the input data.
-template <bool HasSpanningTuple>
-class NativeInputFormatIndexer final : public InputFormatIndexer<struct NoopFormatter, NativeMetaData, /* IsFormattingRequired */ false>
+class NativeInputFormatIndexer
 {
 public:
-    NativeInputFormatIndexer() = default;
-    ~NativeInputFormatIndexer() override = default;
+    static constexpr bool IsFormattingRequired = false;
+    static constexpr bool HasSpanningTuple = false;
+    using IndexerMetaData = NativeMetaData;
+    using FieldIndexFunctionType = NoopFormatter;
 
-    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const NativeMetaData&) const override
+    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const NativeMetaData&) const
     {
-        INVARIANT(not HasSpanningTuple, "The Native input formatter currently does not support spanning tuples.");
+        ///Noop
     }
 
-    [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << fmt::format("NativeInputFormatter()"); }
+    friend std::ostream& operator<<(std::ostream& os, const NativeInputFormatIndexer&)
+    {
+        return os << fmt::format("NativeInputFormatter()");
+    }
 };
+
+static_assert(InputFormatIndexerType<NativeInputFormatIndexer>);
 
 }

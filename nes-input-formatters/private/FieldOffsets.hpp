@@ -95,4 +95,5 @@ private:
     /// (overfull, not overfull)
     inline void setNumberOfRawTuples(FieldIndex numberOfTuples);
 };
+static_assert(FieldIndexFunctionType<FieldOffsets>);
 }

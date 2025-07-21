@@ -23,7 +23,6 @@
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -112,18 +111,16 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
-std::ostream& CSVInputFormatIndexer::toString(std::ostream& os) const
-{
-    return os << fmt::format(
-               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
-}
-
 InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::RegisterCSVInputFormatIndexer(
     InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
-    auto inputFormatter
-        = std::make_unique<CSVInputFormatIndexer>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatIndexer, FieldOffsets, CSVMetaData, true>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline(
+        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()));
 }
 
+std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)
+{
+    return os << fmt::format(
+               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", obj.config.tupleDelimiter, obj.config.fieldDelimiter);
+}
 }

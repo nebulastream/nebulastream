@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <ostream>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <FieldOffsets.hpp>
@@ -36,19 +35,26 @@ private:
     std::string tupleDelimiter;
 };
 
-class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, CSVMetaData, /* IsFormattingRequired */ true>
+class CSVInputFormatIndexer
 {
 public:
+    static constexpr bool IsFormattingRequired = true;
+    static constexpr bool HasSpanningTuple = true;
+    using IndexerMetaData = CSVMetaData;
+    using FieldIndexFunctionType = FieldOffsets;
+
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
-    ~CSVInputFormatIndexer() override = default;
+    ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
+    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const;
 
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+    friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 
 private:
     ParserConfig config;
     size_t numberOfFieldsInSchema;
 };
+
+static_assert(InputFormatIndexerType<CSVInputFormatIndexer>);
 
 }

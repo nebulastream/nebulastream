@@ -30,7 +30,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -116,14 +115,14 @@ void processTuple(
 /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
 /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
 /// Lastly, formats the full spanning tuple.
-template <typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool IsFormattingRequired>
+template <InputFormatIndexerType FormatterType>
 void processSpanningTuple(
     const std::span<const StagedBuffer> stagedBuffersSpan,
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& formattedBuffer,
     const SchemaInfo& schemaInfo,
-    const IndexerMetaData& indexerMetaData,
-    const InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, IsFormattingRequired>& inputFormatIndexer,
+    const typename FormatterType::IndexerMetaData& indexerMetaData,
+    const FormatterType& inputFormatIndexer,
     const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
@@ -151,10 +150,10 @@ void processSpanningTuple(
     const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * indexerMetaData.getTupleDelimitingBytes().size();
     if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
     {
-        auto fieldIndexFunction = FieldIndexFunctionType(bufferProvider);
+        auto fieldIndexFunction = typename FormatterType::FieldIndexFunctionType(bufferProvider);
         lastBuffer.setSpanningTuple(completeSpanningTuple);
         inputFormatIndexer.indexRawBuffer(fieldIndexFunction, lastBuffer.getRawTupleBuffer(), indexerMetaData);
-        processTuple<FieldIndexFunctionType>(
+        processTuple<typename FormatterType::FieldIndexFunctionType>(
             completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
     }
@@ -168,24 +167,19 @@ void processSpanningTuple(
 /// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
-requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+template <InputFormatIndexerType FormatterType>
 class InputFormatterTask
 {
 public:
-    static constexpr bool hasSpanningTuple() { return HasSpanningTuple; }
+    static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
     explicit InputFormatterTask(
-        const OriginId originId,
-        std::unique_ptr<InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, FormatterType::IsFormattingRequired>>
-            inputFormatIndexer,
-        const Schema& schema,
-        const ParserConfig& parserConfig)
+        const OriginId originId, FormatterType inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
         : originId(originId)
         , inputFormatIndexer(std::move(inputFormatIndexer))
         , schemaInfo(schema)
-        , indexerMetaData(IndexerMetaData{parserConfig, schema})
+        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        , sequenceShredder((HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
+        , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
@@ -215,7 +209,7 @@ public:
         /// If the InputFormatterTask needs to handle spanning tuples, it uses the SequenceShredder.
         /// The logs of 'validateState()' allow us to detect whether something went wrong during formatting and specifically, whether the
         /// SequenceShredder still owns TupleBuffers, that it should have given back to its corresponding source.
-        if (HasSpanningTuple)
+        if constexpr (hasSpanningTuple())
         {
             INVARIANT(sequenceShredder != nullptr, "The SequenceShredder handles spanning tuples, thus it must not be null.");
             if (not sequenceShredder->validateState())
@@ -232,7 +226,7 @@ public:
     ///     - native format with spanning tuples, since it is hard to guarantee that we always read in full buffers and if we don't we need
     ///       a mechanism to determine the offsets of the fields in the individual buffers asynchronously
     void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
-    requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
+    requires(not(FormatterType::IsFormattingRequired) and not(hasSpanningTuple()))
     {
         /// If the format has fixed size tuple and no spanning tuples (give the assumption that tuples are aligned with the start of the buffers)
         /// the InputFormatterTask does not need to do anything.
@@ -252,7 +246,7 @@ public:
     }
 
     void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
-    requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
+    requires(FormatterType::IsFormattingRequired and hasSpanningTuple())
     {
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
@@ -264,8 +258,8 @@ public:
         }
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
-        auto fieldIndexFunction = FieldIndexFunctionType(*pec.getBufferManager());
-        inputFormatIndexer->indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
+        auto fieldIndexFunction = typename FormatterType::FieldIndexFunctionType(*pec.getBufferManager());
+        inputFormatIndexer.indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
 
         /// If the offset of the _first_ tuple delimiter is not within the rawBuffer, the InputFormatIndexer did not find any tuple delimiter
         ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
@@ -286,17 +280,16 @@ public:
     std::ostream& taskToString(std::ostream& os) const
     {
         /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "InputFormatterTask(originId: " << originId << ", inputFormatIndexer: " << *inputFormatIndexer
+        os << "InputFormatterTask(originId: " << originId << ", inputFormatIndexer: " << inputFormatIndexer
            << ", sequenceShredder: " << *sequenceShredder << ")\n";
         return os;
     }
 
 private:
     OriginId originId;
-    std::unique_ptr<InputFormatIndexer<FieldIndexFunctionType, IndexerMetaData, FormatterType::IsFormattingRequired>>
-        inputFormatIndexer; /// unique_ptr, because InputFormatIndexer is abstract class
+    FormatterType inputFormatIndexer;
     SchemaInfo schemaInfo;
-    IndexerMetaData indexerMetaData;
+    typename FormatterType::IndexerMetaData indexerMetaData;
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
     std::vector<RawValueParser::ParseFunctionSignature> parseFunctions;
 
@@ -305,7 +298,7 @@ private:
     void parseRawBuffer(
         const RawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
+        const FieldIndexFunction<typename FormatterType::FieldIndexFunctionType>& fieldIndexFunction,
         Memory::TupleBuffer& formattedBuffer,
         PipelineExecutionContext& pec) const
     {
@@ -341,7 +334,7 @@ private:
             /// Fill current buffer until either full, or we exhausted tuples in raw buffer
             while (formattedBuffer.getNumberOfTuples() < numberOfTuplesToRead)
             {
-                processTuple<FieldIndexFunctionType>(
+                processTuple<typename FormatterType::FieldIndexFunctionType>(
                     rawBuffer.getBufferView(),
                     fieldIndexFunction,
                     numTuplesReadFromRawBuffer,
@@ -363,7 +356,7 @@ private:
     void processRawBufferWithTupleDelimiter(
         const RawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
+        const FieldIndexFunction<typename FormatterType::FieldIndexFunctionType>& fieldIndexFunction,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
@@ -380,13 +373,13 @@ private:
         if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
         {
             const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
-            processSpanningTuple<FieldIndexFunctionType>(
+            processSpanningTuple<FormatterType>(
                 spanningTupleBuffers,
                 *bufferProvider,
                 formattedBuffer,
                 this->schemaInfo,
                 this->indexerMetaData,
-                *this->inputFormatIndexer,
+                this->inputFormatIndexer,
                 this->parseFunctions);
         }
 
@@ -412,13 +405,13 @@ private:
             const auto spanningTupleBuffers
                 = std::span(stagedBuffers)
                       .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
-            processSpanningTuple<FieldIndexFunctionType>(
+            processSpanningTuple<FormatterType>(
                 spanningTupleBuffers,
                 *bufferProvider,
                 formattedBuffer,
                 this->schemaInfo,
                 this->indexerMetaData,
-                *this->inputFormatIndexer,
+                this->inputFormatIndexer,
                 this->parseFunctions);
         }
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
@@ -436,7 +429,7 @@ private:
     void processRawBufferWithoutTupleDelimiter(
         const RawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
+        const FieldIndexFunction<typename FormatterType::FieldIndexFunctionType>& fieldIndexFunction,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
@@ -453,13 +446,13 @@ private:
         }
         /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
         auto formattedBuffer = bufferProvider->getBufferBlocking();
-        processSpanningTuple<FieldIndexFunctionType>(
+        processSpanningTuple<FormatterType>(
             stagedBuffers,
             *bufferProvider,
             formattedBuffer,
             this->schemaInfo,
             this->indexerMetaData,
-            *this->inputFormatIndexer,
+            this->inputFormatIndexer,
             this->parseFunctions);
 
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());

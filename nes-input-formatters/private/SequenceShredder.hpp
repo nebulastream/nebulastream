@@ -31,6 +31,7 @@
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <RawTupleBuffer.hpp>
 
 namespace NES::InputFormatters
 {
@@ -53,11 +54,6 @@ public:
         , sizeOfBufferInBytes(sizeOfBufferInBytes)
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
         , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
-
-    StagedBuffer(StagedBuffer&& other) noexcept = default;
-    StagedBuffer& operator=(StagedBuffer&& other) noexcept = default;
-    StagedBuffer(const StagedBuffer& other) = default;
-    StagedBuffer& operator=(const StagedBuffer& other) = default;
 
     [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
     /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.

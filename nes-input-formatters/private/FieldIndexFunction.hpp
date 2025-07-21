@@ -18,14 +18,16 @@
 #include <string_view>
 #include <vector>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp> /// FieldOffsetType
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Concepts.hpp>
 #include <RawValueParser.hpp>
 
 namespace NES::InputFormatters
 {
+
+using FieldIndex = uint32_t;
 
 class SchemaInfo
 {
@@ -52,9 +54,9 @@ private:
 template <typename Derived>
 class FieldIndexFunction
 {
+public:
     /// Expose the FieldIndexFunction interface functions only to the InputFormatterTask
-    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
-    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+    template <InputFormatIndexerType FormatterType>
     friend class InputFormatterTask;
 
     /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
@@ -68,7 +70,6 @@ class FieldIndexFunction
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 
-protected:
     FieldIndexFunction()
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
@@ -77,7 +78,6 @@ protected:
     };
     ~FieldIndexFunction() = default;
 
-private:
     [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const
     {
         return static_cast<const Derived*>(this)->applyGetOffsetOfFirstTupleDelimiter();
@@ -94,5 +94,16 @@ private:
     {
         return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
     }
+};
+
+struct NoopFormatter
+{
+    [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const { return 0; }
+
+    [[nodiscard]] FieldIndex getOffsetOfLastTupleDelimiter() const { return 0; }
+
+    [[nodiscard]] size_t getTotalNumberOfTuples() const { return 0; }
+
+    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t, size_t) const { return bufferView; }
 };
 }
