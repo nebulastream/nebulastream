@@ -62,6 +62,26 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         auto sinkOperator = SinkLogicalOperator();
         sinkOperator.id = OperatorId(serializedOperator.operator_id());
         sinkOperator.sinkName = std::get<std::string>(sinkName);
+
+        std::vector<std::vector<OriginId>> inputIdsVec;
+        for (const auto& originList : sink.input_origin_lists())
+        {
+            std::vector<OriginId> ids;
+            for (const auto& id : originList.origin_ids())
+            {
+                ids.emplace_back(id);
+            }
+            inputIdsVec.emplace_back(std::move(ids));
+        }
+        sinkOperator = sinkOperator.withInputOriginIds(inputIdsVec).get<SinkLogicalOperator>();
+
+        std::vector<OriginId> outputIds;
+        for (const auto& id : sink.output_origin_ids())
+        {
+            outputIds.emplace_back(id);
+        }
+        sinkOperator = sinkOperator.withOutputOriginIds(outputIds).get<SinkLogicalOperator>();
+
         sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
         return sinkOperator;
     }
