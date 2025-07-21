@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Sources/LogicalSource.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -19,7 +21,6 @@
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
-#include <Sources/LogicalSource.hpp>
 #include <fmt/format.h>
 
 namespace NES
@@ -56,5 +57,5 @@ uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& log
 }
 std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSource)
 {
-    return os << fmt::format("LogicalSource(name: {}, schema{})", logicalSource.getLogicalSourceName(), *logicalSource.getSchema());
+    return os << fmt::format("LogicalSource(name: {}, schema: {})", logicalSource.getLogicalSourceName(), *logicalSource.getSchema());
 }

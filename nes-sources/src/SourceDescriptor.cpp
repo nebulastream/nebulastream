@@ -152,6 +152,9 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     serializableSourceDescriptor.set_sourcetype(sourceType);
     serializableSourceDescriptor.set_numberofbuffersinlocalpool(numberOfBuffersInLocalPool);
 
+    serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
+    serializableSourceDescriptor.set_workerid(workerId.getRawValue());
+
     /// Serialize parser config.
     auto* const serializedParserConfig = NES::SerializableParserConfig().New();
     serializedParserConfig->set_type(parserConfig.parserType);
