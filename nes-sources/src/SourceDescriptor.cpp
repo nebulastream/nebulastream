@@ -125,7 +125,7 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        stringstream << this;
+        stringstream << *this;
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
