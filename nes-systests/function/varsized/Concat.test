@@ -20,3 +20,9 @@ SELECT CONCAT(CONCAT(firstName, VARSIZED(" ")), lastName) AS firstNameLastName F
 Edgar Codd
 Jim Grey
 Michael Stonebraker
+
+SELECT CONCAT(firstName, CONCAT(VARSIZED(" "), lastName)) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+----
+Edgar Codd
+Jim Grey
+Michael Stonebraker
