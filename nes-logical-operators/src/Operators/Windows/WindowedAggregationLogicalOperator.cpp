@@ -114,7 +114,7 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
             }
         }
 
-        return windowType.get() == rhsOperator->getWindowType().get() && getOutputSchema() == rhsOperator->getOutputSchema()
+        return *windowType == *rhsOperator->getWindowType() && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
             && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
