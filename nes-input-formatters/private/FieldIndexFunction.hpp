@@ -15,24 +15,27 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <ranges>
 #include <string_view>
 #include <vector>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp> /// FieldOffsetType
+#include <DataTypes/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Concepts.hpp>
 #include <RawValueParser.hpp>
 
 namespace NES::InputFormatters
 {
 
+using FieldIndex = uint32_t;
+
 class SchemaInfo
 {
 public:
-    explicit SchemaInfo(const Schema& schema)
+    explicit SchemaInfo(const Schema& schema) : sizeOfTupleInBytes(schema.getSizeOfSchemaInBytes())
     {
-        this->sizeOfTupleInBytes = schema.getSizeOfSchemaInBytes();
         this->fieldSizesInBytes = schema.getFields()
             | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytes()); })
             | std::ranges::to<std::vector>();
@@ -52,23 +55,22 @@ private:
 template <typename Derived>
 class FieldIndexFunction
 {
+public:
     /// Expose the FieldIndexFunction interface functions only to the InputFormatterTask
-    template <typename FormatterType, typename FieldIndexFunctionType, IndexerMetaDataType IndexerMetaData, bool HasSpanningTuple>
-    requires(HasSpanningTuple or not FormatterType::IsFormattingRequired)
+    template <InputFormatIndexerType FormatterType>
     friend class InputFormatterTask;
 
     /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
     template <typename FieldIndexFunctionType>
     friend void processTuple(
-        const std::string_view tupleView,
+        std::string_view tupleView,
         const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
-        const size_t numTuplesReadFromRawBuffer,
+        size_t numTuplesReadFromRawBuffer,
         Memory::TupleBuffer& formattedBuffer,
         const SchemaInfo& schemaInfo,
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 
-protected:
     FieldIndexFunction()
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
@@ -77,7 +79,6 @@ protected:
     };
     ~FieldIndexFunction() = default;
 
-private:
     [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const
     {
         return static_cast<const Derived*>(this)->applyGetOffsetOfFirstTupleDelimiter();
@@ -94,5 +95,16 @@ private:
     {
         return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
     }
+};
+
+struct NoopFieldIndexFunction
+{
+    [[nodiscard]] static FieldIndex getOffsetOfFirstTupleDelimiter() { return 0; }
+
+    [[nodiscard]] static FieldIndex getOffsetOfLastTupleDelimiter() { return 0; }
+
+    [[nodiscard]] static size_t getTotalNumberOfTuples() { return 0; }
+
+    [[nodiscard]] static std::string_view readFieldAt(const std::string_view bufferView, size_t, size_t) { return bufferView; }
 };
 }

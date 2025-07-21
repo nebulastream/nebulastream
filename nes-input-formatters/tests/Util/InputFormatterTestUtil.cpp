@@ -35,7 +35,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -214,7 +213,7 @@ TestPipelineTask createInputFormatterTask(
     std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    return TestPipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));
+    return TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
 }
 
 }

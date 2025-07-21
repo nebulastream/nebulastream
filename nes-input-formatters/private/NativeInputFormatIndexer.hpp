@@ -15,11 +15,14 @@
 #pragma once
 
 #include <ostream>
+#include <string_view>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
+#include <FieldIndexFunction.hpp>
+#include <InputFormatIndexer.hpp>
 
 namespace NES::InputFormatters
 {
@@ -27,25 +30,29 @@ namespace NES::InputFormatters
 class NativeMetaData
 {
 public:
-    NativeMetaData(ParserConfig, Schema) { /* noop */ }
+    NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
     static std::string_view getTupleDelimitingBytes() { return ""; }
 };
 
 /// The NativeInputFormatter formats buffers that contain data which all other 'Operators' can operate on.
 /// There is thus no need to parse the fields of the input data.
-template <bool HasSpanningTuple>
-class NativeInputFormatIndexer final : public InputFormatIndexer<struct NoopFormatter, NativeMetaData, /* IsFormattingRequired */ false>
+class NativeInputFormatIndexer : public InputFormatIndexer<NativeInputFormatIndexer>
 {
 public:
-    NativeInputFormatIndexer() = default;
-    ~NativeInputFormatIndexer() override = default;
+    static constexpr bool IsFormattingRequired = false;
+    static constexpr bool HasSpanningTuple = false;
+    using FieldIndexFunctionType = NoopFieldIndexFunction;
+    using IndexerMetaData = NativeMetaData;
 
-    void indexRawBuffer(NoopFormatter&, const RawTupleBuffer&, const NativeMetaData&) const override
+    void indexRawBuffer(NoopFieldIndexFunction&, const RawTupleBuffer&, const NativeMetaData&) const
     {
-        INVARIANT(not HasSpanningTuple, "The Native input formatter currently does not support spanning tuples.");
+        ///Noop
     }
 
-    [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << fmt::format("NativeInputFormatter()"); }
+    friend std::ostream& operator<<(std::ostream& os, const NativeInputFormatIndexer&)
+    {
+        return os << fmt::format("NativeInputFormatter()");
+    }
 };
 
 }
