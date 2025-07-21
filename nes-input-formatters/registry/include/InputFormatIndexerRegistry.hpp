@@ -17,12 +17,14 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include <Concepts.hpp>
 #include <InputFormatterTask.hpp>
 
 namespace NES::InputFormatters
@@ -35,19 +37,18 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskP
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, const OriginId originId, Schema schema)
-        : inputFormatIndexerConfig(std::move(config)), originId(originId), schema(std::move(schema))
+    InputFormatIndexerRegistryArguments(ParserConfig config, const OriginId originId, const Schema& schema)
+        : inputFormatIndexerConfig(std::move(config)), originId(originId), schema(schema)
     {
     }
 
     /// @tparam: FormatterType: the concrete formatter implementation, e.g., CSVInputFormatter
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
-    template <typename FormatterType, typename FieldAccessType, typename IndexerMetaData, bool HasSpanningTuple>
-    InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter)
+    template <InputFormatIndexerType FormatterType>
+    InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(FormatterType inputFormatter)
     {
-        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, IndexerMetaData, HasSpanningTuple>(
-            originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
+        auto inputFormatterTask = InputFormatterTask<FormatterType>(originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
 
