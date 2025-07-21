@@ -28,6 +28,7 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -40,7 +41,16 @@ std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const
 {
     /// Make sure the queryplan is passed through serialization logic.
     const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-    return worker.registerQuery(QueryPlanSerializationUtil::deserializeQueryPlan(serialized));
+    const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+    if (deserialized == plan)
+    {
+        return worker.registerQuery(deserialized);
+    }
+    const auto exception = CannotSerialize(
+        "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and deserialize(serialize(plan)):\n{}",
+        explain(plan, ExplainVerbosity::Debug),
+        explain(deserialized, ExplainVerbosity::Debug));
+    return std::unexpected(exception);
 }
 void LocalWorkerQuerySubmitter::startQuery(QueryId query)
 {
