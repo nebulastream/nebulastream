@@ -52,10 +52,10 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
     if (const auto* const rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
     {
         const bool descriptorsEqual = sourceDescriptor == rhsOperator->sourceDescriptor;
-
-        return descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
+        const bool i = descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
             && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+        return i;
     }
     return false;
 }
