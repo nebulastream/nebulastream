@@ -14,8 +14,6 @@
 
 #include <NativeInputFormatIndexer.hpp>
 
-#include <memory>
-#include <utility>
 
 #include <InputFormatIndexerRegistry.hpp>
 
@@ -25,12 +23,7 @@ namespace NES::InputFormatters
 InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
-    auto inputFormatter = std::make_unique<NativeInputFormatIndexer<false>>();
-    constexpr bool isFormattingRequired = false;
-    constexpr bool hasSpanningTuple = false;
-    return arguments
-        .createInputFormatterTaskPipeline<NativeInputFormatIndexer<isFormattingRequired>, NoopFormatter, NativeMetaData, hasSpanningTuple>(
-            std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>({});
 }
 
 }

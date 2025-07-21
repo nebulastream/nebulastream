@@ -16,35 +16,41 @@
 
 #include <cstddef>
 #include <ostream>
+#include <string_view>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
+#include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <FieldOffsets.hpp>
-#include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatIndexer.hpp>
 
 namespace NES::InputFormatters
 {
 
 struct CSVMetaData
 {
-    explicit CSVMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
 
-    std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
 private:
     std::string tupleDelimiter;
 };
 
-class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, CSVMetaData, /* IsFormattingRequired */ true>
+class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
 {
 public:
+    static constexpr bool IsFormattingRequired = true;
+    static constexpr bool HasSpanningTuple = true;
+    using IndexerMetaData = CSVMetaData;
+    using FieldIndexFunctionType = FieldOffsets;
+
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
-    ~CSVInputFormatIndexer() override = default;
+    ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const override;
+    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const;
 
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+    friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 
 private:
     ParserConfig config;

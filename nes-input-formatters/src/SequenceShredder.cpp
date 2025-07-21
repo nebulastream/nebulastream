@@ -517,7 +517,7 @@ std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFin
     const auto sequenceNumberOfClosestReachableTupleDelimiter
         = (sequenceNumberBitmapOffset - (bitmapIndexOffset << BITMAP_SIZE_BIT_SHIFT) + indexOfClosestReachableTupleDelimiter);
     const bool isTupleDelimiter
-        = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex);
+        = ((FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex)) != 0U;
     return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, isTupleDelimiter);
 }
 std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFindHigherWrappingSpanningTuple(
@@ -543,7 +543,7 @@ std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFin
     const auto onlySeenIsOne
         = bitmapSnapshot.seenAndUsedVectorSnapshot.at(bitmapIndex) & ~(bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex));
 
-    const auto indexOfClosestReachableTupleDelimiter = std::countr_one(onlySeenIsOne);
+    const auto indexOfClosestReachableTupleDelimiter = static_cast<uint64_t>(std::countr_one(onlySeenIsOne));
     const auto sequenceNumberOfClosestReachableTupleDelimiter
         = (sequenceNumberBitmapOffset + (bitmapIndexOffset << BITMAP_SIZE_BIT_SHIFT) + indexOfClosestReachableTupleDelimiter);
     const bool isTupleDelimiter = FIRST_BIT_MASK
@@ -659,7 +659,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
             const int8_t uses = (spanningTupleIndex != sequenceNumber)
                 ? static_cast<int8_t>(1)
                 : static_cast<int8_t>(1) + usingBufferForLeadingSpanningTuple + usingBufferForTrailingSpanningTuple;
-            this->stagedBufferUses.at(adjustedSpanningTupleIndex) -= uses;
+            this->stagedBufferUses.at(adjustedSpanningTupleIndex) -= uses; ///NOLINT(cppcoreguidelines-narrowing-conversions)
             const auto newUses = this->stagedBufferUses.at(adjustedSpanningTupleIndex);
             INVARIANT(newUses >= 0, "Uses can never be negative");
             auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers.at(adjustedSpanningTupleIndex))

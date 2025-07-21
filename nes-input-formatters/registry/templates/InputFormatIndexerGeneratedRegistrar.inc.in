@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar
