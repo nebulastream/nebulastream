@@ -46,7 +46,7 @@
 namespace NES::InputFormatters
 {
 /// The type that all formatters use to represent indexes to fields.
-using FieldOffsetsType = uint32_t;
+using FieldIndex = uint32_t;
 
 inline void setMetadataOfFormattedBuffer(
     const Memory::TupleBuffer& rawBuffer,
