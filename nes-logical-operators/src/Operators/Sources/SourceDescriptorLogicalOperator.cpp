@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -20,7 +22,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -52,10 +53,9 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
     if (const auto* const rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
     {
         const bool descriptorsEqual = sourceDescriptor == rhsOperator->sourceDescriptor;
-        const bool i = descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
+        return descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
             && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
-        return i;
     }
     return false;
 }
@@ -64,7 +64,8 @@ std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity)
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SOURCE(opId: {}, originid: {}, {})", id, fmt::join(outputOriginIds, ", "), sourceDescriptor.explain(verbosity));
+        return fmt::format(
+            "SOURCE(opId: {}, originids: {}, {})", id, fmt::join(sourceOriginIds, ", "), sourceDescriptor.explain(verbosity));
     }
     return fmt::format("SOURCE({})", sourceDescriptor.explain(verbosity));
 }
@@ -93,12 +94,12 @@ Schema SourceDescriptorLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> SourceDescriptorLogicalOperator::getInputOriginIds() const
 {
-    return {inputOriginIds};
+    return {sourceOriginIds};
 }
 
 std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
 {
-    return outputOriginIds;
+    return sourceOriginIds;
 }
 
 LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
@@ -106,14 +107,14 @@ LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<
     PRECONDITION(ids.size() == 1, "Source should have one input");
     PRECONDITION(ids[0].size() == 1, "Source should have one originId, but has {}", ids[0].size());
     auto copy = *this;
-    copy.inputOriginIds = ids[0];
+    copy.sourceOriginIds = ids[0];
     return copy;
 }
 
 LogicalOperator SourceDescriptorLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
-    copy.outputOriginIds = ids;
+    copy.sourceOriginIds = ids;
     return copy;
 }
 
@@ -130,8 +131,8 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
 {
     SerializableSourceDescriptorLogicalOperator proto;
-    INVARIANT(outputOriginIds.size() == 1, "Expected one output originId, got '{}' instead", outputOriginIds.size());
-    proto.set_sourceoriginid(outputOriginIds[0].getRawValue());
+    INVARIANT(sourceOriginIds.size() == 1, "Expected one originId, got '{}' instead", sourceOriginIds.size());
+    proto.set_sourceoriginid(sourceOriginIds[0].getRawValue());
     proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
 
     SerializableOperator serializableOperator;
