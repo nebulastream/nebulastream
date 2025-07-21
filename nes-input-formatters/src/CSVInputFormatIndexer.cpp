@@ -39,7 +39,7 @@ namespace
 void initializeIndexFunctionForTuple(
     NES::InputFormatters::FieldOffsets& fieldOffsets,
     const std::string_view tuple,
-    const NES::InputFormatters::FieldOffsetsType startIdxOfTuple,
+    const NES::InputFormatters::FieldIndex startIdxOfTuple,
     const NES::ParserConfig& config,
     size_t numberOfFieldsInSchema)
 {
@@ -78,11 +78,11 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
     const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(rawBuffer.getBufferView().find(this->config.tupleDelimiter));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(this->config.tupleDelimiter));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatIndexerTask that there was no tuple delimiter in the buffer and return
-    if (offsetOfFirstTupleDelimiter == static_cast<FieldOffsetsType>(std::string::npos))
+    if (offsetOfFirstTupleDelimiter == static_cast<FieldIndex>(std::string::npos))
     {
         fieldOffsets.markNoTupleDelimiters();
         return;
@@ -108,7 +108,7 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
         endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
-    const auto offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfNextTuple - sizeOfTupleDelimiter);
+    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - sizeOfTupleDelimiter);
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 

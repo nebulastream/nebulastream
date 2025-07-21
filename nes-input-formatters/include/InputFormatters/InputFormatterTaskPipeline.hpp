@@ -36,7 +36,7 @@
 namespace NES::InputFormatters
 {
 
-using FieldOffsetsType = uint32_t;
+using FieldIndex = uint32_t;
 
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
 template <typename T>
