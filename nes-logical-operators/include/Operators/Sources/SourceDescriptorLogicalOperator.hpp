@@ -69,8 +69,7 @@ private:
     OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
+    std::vector<OriginId> sourceOriginIds;
 };
 
 }
