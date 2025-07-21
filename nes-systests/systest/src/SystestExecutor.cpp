@@ -353,7 +353,11 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
-            outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
+            outputMessage << fmt::format(
+                "The following queries ({} of {}) failed:\n[Name, Command]\n- {}",
+                failedQueries.size(),
+                queries.size(),
+                fmt::join(failedQueries, "\n- "));
             NES_ERROR("{}", outputMessage.str());
             std::cout << '\n' << outputMessage.str() << '\n';
             std::exit(1); ///NOLINT(concurrency-mt-unsafe)
