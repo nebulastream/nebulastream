@@ -115,17 +115,18 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
-        ///    fillTupleBuffer will return false, however this is not a EndOfStream, the source simply could not produce a buffer.
         ///    The thread exits with `StopRequested`
-        /// 3. EndOfStream was signaled by the source implementation. It returned false, but the Stop Token was not triggered.
+        /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
         auto emptyBuffer = bufferProvider.getBufferBlocking();
-        auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
 
         if (numReadBytes != 0)
         {
+            /// The source read in raw bytes, thus we don't know the number of tuples yet.
+            /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer.setNumberOfTuples(numReadBytes);
             emit(emptyBuffer, true);
         }

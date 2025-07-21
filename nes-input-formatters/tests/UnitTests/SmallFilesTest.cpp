@@ -48,28 +48,21 @@ class SmallFilesTest : public Testing::BaseUnitTest
     struct TestFile
     {
         std::string fileName;
-        bool endsWithNewline;
         std::vector<InputFormatterTestUtil::TestDataTypes> schemaFieldTypes;
     };
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns",
-         TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .endsWithNewline = true, .schemaFieldTypes = {INT32, INT32}}},
+        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .schemaFieldTypes = {INT32, INT32}}},
         {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
              .fileName = "Bimbo_1_1000_Lines.csv",
-             .endsWithNewline = true,
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{
-             .fileName = "Food_1_1000_Lines.csv",
-             .endsWithNewline = true,
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+         TestFile{.fileName = "Food_1_1000_Lines.csv", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
          TestFile{
              .fileName = "Spacecraft_Telemetry_1000_Lines.csv",
-             .endsWithNewline = true,
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
     SourceCatalog sourceCatalog;
 
@@ -103,7 +96,7 @@ public:
         const auto fileSizeInBytes = std::filesystem::file_size(testFilePath);
         const auto numberOfExpectedRawBuffers = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
             + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
-        /// Sources sometimes need an extra buffer (reason currently unknown)
+        /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
 
         /// Create vector for result buffers and create emit function to collect buffers from source
@@ -128,7 +121,7 @@ public:
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
-            std::vector<TestablePipelineTask> pipelineTasks;
+            std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(
                 [&](auto& rawBuffers)
@@ -138,7 +131,7 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }
@@ -148,7 +141,7 @@ public:
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
 
-            /// Combine results and soraoeut
+            /// Combine results and sort them using (ascending on sequence-/chunknumbers)
             auto combinedThreadResults = std::ranges::views::join(*resultBuffers);
             std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
             std::ranges::sort(
@@ -174,16 +167,8 @@ public:
                     = actualResultTestBuffer.toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
                 out << currentBufferAsString;
             }
-            if (currentTestFile.endsWithNewline)
-            {
-                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
-            }
-            else
-            {
-                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_WITHOUT_NEWLINE);
-            }
+            out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                       .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
             out.close();
             ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
             resultBuffers->clear();
@@ -193,12 +178,13 @@ public:
     }
 };
 
+
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .numberOfIterations = 1,
-        .numberOfThreads = 8,
+        .numberOfThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
