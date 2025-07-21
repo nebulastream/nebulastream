@@ -1,0 +1,22 @@
+# name: Concat
+# description: Checks that concat in projections works as expected
+# groups: [Function, Text, Projection]
+
+Source nameStream VARSIZED firstName VARSIZED lastName INLINE
+Edgar,Codd
+Jim,Grey
+Michael,Stonebraker
+
+SINK firstNameLastNameSink VARSIZED firstNameLastName
+
+SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+----
+EdgarCodd
+JimGrey
+MichaelStonebraker
+
+SELECT CONCAT(CONCAT(firstName, VARSIZED(" ")), lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+----
+Edgar Codd
+Jim Grey
+Michael Stonebraker
