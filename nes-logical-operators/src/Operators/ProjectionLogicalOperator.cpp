@@ -310,6 +310,11 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
                 | std::ranges::to<std::vector>(),
             ProjectionLogicalOperator::Asterisk(asterisk));
 
+        if (auto& id = arguments.id)
+        {
+            logicalOperator.id = *id;
+        }
+
         return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
             .withOutputOriginIds(arguments.outputOriginIds);
