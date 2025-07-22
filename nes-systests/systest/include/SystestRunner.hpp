@@ -85,8 +85,7 @@ runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, uint64_t numC
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery,
     const std::string& errorMessage,
-    size_t queryCounter,
-    size_t totalQueries,
+    SystestProgressTracker& context,
     const std::string_view queryPerformanceMessage);
 
 }

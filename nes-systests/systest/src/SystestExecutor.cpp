@@ -25,6 +25,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <numeric>
 #include <random>
 #include <sstream>
 #include <stdexcept>
