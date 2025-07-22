@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/Strings.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
@@ -36,7 +37,7 @@ grpc::Status handleError(const std::exception& exception, grpc::ServerContext* c
 {
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", cpptrace::from_current_exception().to_string());
+    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
@@ -44,7 +45,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 {
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", exception.trace().to_string());
+    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
@@ -204,6 +205,55 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             return grpc::Status::OK;
         }
         return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
+}
+grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
+{
+    CPPTRACE_TRY
+    {
+        const auto status
+            = delegate.getWorkerStatus(std::chrono::system_clock::time_point(std::chrono::milliseconds(request->afterunixtimestampinms())));
+
+        for (const auto& activeQuery : status.activeQueries)
+        {
+            auto* activeQueryGRPC = response->add_activequeries();
+            activeQueryGRPC->set_queryid(activeQuery.queryId.getRawValue());
+            activeQueryGRPC->set_startedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(activeQuery.started.time_since_epoch()).count());
+        }
+
+        for (const auto& terminatedQuery : status.terminatedQueries)
+        {
+            auto* terminatedQueryGRPC = response->add_terminatedqueries();
+            terminatedQueryGRPC->set_queryid(terminatedQuery.queryId.getRawValue());
+            terminatedQueryGRPC->set_startedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.started.time_since_epoch()).count());
+            terminatedQueryGRPC->set_terminatedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.terminated.time_since_epoch()).count());
+            if (terminatedQuery.error)
+            {
+                const auto& exception = terminatedQuery.error.value();
+                auto* errorGRPC = terminatedQueryGRPC->mutable_error();
+                errorGRPC->set_message(exception.what());
+                errorGRPC->set_stacktrace(exception.trace().to_string());
+                errorGRPC->set_code(exception.code());
+                errorGRPC->set_location(
+                    std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
+            }
+        }
+        response->set_afterunixtimestampinms(
+            std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
+
+        return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
     {
