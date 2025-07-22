@@ -66,9 +66,12 @@
 
 namespace
 {
+NES::HostAddr hostAddr{"localhost:9090"};
+
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(std::string grpcAddr)
 {
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(std::move(grpcAddr)), .config = {}});
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(
+        NES::WorkerConfig{.host = hostAddr, .grpc = NES::GrpcAddr(std::move(grpcAddr)), .config = {}});
 }
 
 enum class OnExitBehavior : uint8_t
@@ -226,7 +229,8 @@ int main(int argc, char** argv)
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
             queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
-                NES::WorkerConfig{.grpc = NES::GrpcAddr("localhost:8080"), .config = {}}, singleNodeWorkerConfig));
+                NES::WorkerConfig{.host = NES::HostAddr(""), .grpc = NES::GrpcAddr("localhost:8080"), .config = {}},
+                singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nes-repl-embedded to start a "
                       "single node worker.")
