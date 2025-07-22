@@ -67,17 +67,17 @@ private:
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
         "ingestion",
         0,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(INGESTION, config); }};
+        { return DescriptorConfig::tryGet(INGESTION, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
         "inputFormat",
         std::nullopt,
         std::function(
-                [](const std::unordered_map<std::string, std::string>& config) -> Expected<Configurations::EnumWrapper>
+                [](const std::unordered_map<std::string, std::string>& config) -> Expected<EnumWrapper>
                 { return DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
