@@ -1,0 +1,22 @@
+# config_override.dummy
+# Demonstrates the ConfigOverride feature for system-level tests
+# Includes valid and invalid usages
+
+# --- Valid: Single value override ---
+Configuration worker.queryOptimizer.pageSize: 8
+
+Source stream UINT64 id UINT64 value INLINE
+1,2
+
+SINK ID_VALUE_SINK UINT64 stream$id UINT64 stream$value
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# --- Valid: Multiple value override ---
+Configuration worker.queryOptimizer.pageSize: [8, 1024]
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
