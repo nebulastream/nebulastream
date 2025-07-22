@@ -21,6 +21,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -29,6 +30,7 @@ namespace NES::Sources
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
+    Ingestion ingestion,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
     const int defaultNumberOfBuffersInLocalPool)
@@ -42,7 +44,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
         auto numberOfBuffersInLocalPool
             = (sourceDescriptor.getBuffersInLocalPool() < 0) ? defaultNumberOfBuffersInLocalPool : sourceDescriptor.getBuffersInLocalPool();
         return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(source.value()));
+            std::move(ingestion), std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

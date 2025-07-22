@@ -34,7 +34,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
@@ -49,6 +48,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -155,7 +155,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     return validParserConfig;
 }
 
-std::unique_ptr<Sources::SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<Sources::SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -167,15 +167,14 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(),
-        INITIAL<WorkerId>,
-        "File",
-        numberOfLocalBuffersInSource,
-        std::move(validatedSourceConfiguration),
-        ParserConfig{});
+        logicalSource.value(), "localhost", "File", numberOfLocalBuffersInSource, std::move(validatedSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    auto [valve, ingestion] = Backpressure();
+    return std::make_pair(
+        std::move(valve),
+        Sources::SourceProvider::lower(NES::OriginId(1), ingestion, sourceDescriptor.value(), std::move(sourceBufferPool), -1));
 }
+
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{

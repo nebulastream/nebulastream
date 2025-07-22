@@ -113,7 +113,7 @@ public:
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
         std::shared_ptr<Memory::BufferManager> sourceBufferPool
             = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
-        const auto fileSource = InputFormatterTestUtil::createFileSource(
+        const auto [value, fileSource] = InputFormatterTestUtil::createFileSource(
             sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);

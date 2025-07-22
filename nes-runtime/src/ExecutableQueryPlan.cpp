@@ -24,13 +24,14 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <BackpressureChannel.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sinks/SinkProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
-#include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 
 namespace NES
@@ -70,26 +71,29 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 
     std::unordered_map<OriginId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
-    for (auto& [pipelineId, descriptor, predecessors] : compiledQueryPlan.sinks)
+    INVARIANT(compiledQueryPlan.sinks.size() == 1, "Currently we only support a single sink");
+    auto [valve, ingestion] = Backpressure();
+
+    auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks[0];
+    auto sink = ExecutablePipeline::create(
+        pipelineId, Sinks::SinkProvider::lower(std::move(valve), *descriptor), {});
+    compiledQueryPlan.pipelines.push_back(sink);
+    for (const auto& predecessor : predecessors)
     {
-        auto sink = ExecutablePipeline::create(pipelineId, Sinks::SinkProvider::lower(*descriptor), {});
-        compiledQueryPlan.pipelines.push_back(sink);
-        for (const auto& predecessor : predecessors)
-        {
-            std::visit(
-                Overloaded{
-                    [&](const OriginId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
-                    [&](const std::weak_ptr<ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
-                },
-                predecessor);
-        }
+        std::visit(
+            Overloaded{
+                [&](const OriginId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
+                [&](const std::weak_ptr<ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
+            },
+            predecessor);
     }
 
     for (auto [id, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(
-            NES::Sources::SourceProvider::lower(id, descriptor, poolProvider, numberOfBuffersInSourceLocalPools), std::move(successors));
+            NES::Sources::SourceProvider::lower(id, ingestion, descriptor, poolProvider, numberOfBuffersInSourceLocalPools),
+            std::move(successors));
     }
 
 
