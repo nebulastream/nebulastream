@@ -14,321 +14,237 @@
 
 #include <SystestRunner.hpp>
 
-#include <atomic>
-#include <cerrno>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
-#include <expected> /// NOLINT(misc-include-cleaner)
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <limits>
 #include <memory>
 #include <optional>
-#include <ostream>
-#include <queue>
-#include <ranges>
-#include <regex>
 #include <string>
-#include <string_view>
-#include <unordered_map>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <fmt/base.h>
-#include <fmt/color.h>
 #include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
-#include <folly/MPMCQueue.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
-#include <nlohmann/json.hpp>
 
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <Util/Overloaded.hpp>
+#include <YAML/YamlLoader.hpp>
+
+#include <BenchmarkUtils.hpp>
 #include <ErrorHandling.hpp>
-#include <QuerySubmitter.hpp>
-#include <SingleNodeWorker.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestParser.hpp>
+#include <QueryConfig.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
+using namespace std::chrono_literals;
+
 namespace
 {
-template <typename ErrorCallable>
-void reportResult(
-    std::shared_ptr<RunningQuery>& runningQuery,
-    std::size_t& finishedCount,
-    const std::size_t total,
-    std::vector<std::shared_ptr<RunningQuery>>& failed,
-    ErrorCallable errorBuilder,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+UniquePtr<QuerySubmissionBackend> createSubmissionBackend(const SystestRunner::ExecutionMode& executionMode)
 {
-    const std::string errorMessage = errorBuilder();
-    runningQuery->passed = errorMessage.empty();
-    if (not errorMessage.empty())
-    {
-        failed.push_back(runningQuery);
-    }
-    printQueryResultToStdOut(*runningQuery, errorMessage, finishedCount, total, queryPerformanceMessage(*runningQuery));
-    ++finishedCount;
-}
-
-bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
-{
-    return runningQuery->passed;
-}
-
-void processQueryWithError(
-    std::shared_ptr<RunningQuery> runningQuery,
-    std::size_t& finished,
-    const size_t numQueries,
-    std::vector<std::shared_ptr<RunningQuery>>& failed,
-    const std::optional<Exception>& exception)
-{
-    runningQuery->exception = exception;
-    reportResult(
-        runningQuery,
-        finished,
-        numQueries,
-        failed,
-        [&]
-        {
-            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError)
-                and std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code
-                    == runningQuery->exception->code())
+    return std::visit(
+        Overloaded{
+            [](const SystestRunner::LocalExecution& local) -> UniquePtr<QuerySubmissionBackend>
             {
-                return std::string{};
-            }
-            return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
-        },
-        [](const auto&) { return ""; });
+                const auto topologyPath = local.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
+                auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
+                return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                    std::views::all(nodes)
+                        | std::views::transform(
+                            [](const CLI::WorkerConfig& worker) -> WorkerConfig
+                            { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
+                        | std::ranges::to<std::vector>(),
+                    local.singleNodeWorkerConfig);
+            },
+            [](const SystestRunner::DistributedExecution& distributed) -> UniquePtr<QuerySubmissionBackend>
+            {
+                const auto topologyPath = distributed.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
+                auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
+                return std::make_unique<GRPCQuerySubmissionBackend>(
+                    std::views::all(nodes)
+                    | std::views::transform(
+                        [](const CLI::WorkerConfig& worker) -> WorkerConfig
+                        { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
+                    | std::ranges::to<std::vector>());
+            }},
+        executionMode);
+}
 }
 
-}
-
-/// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<RunningQuery> runQueries(
-    const std::vector<SystestQuery>& queries,
-    uint64_t numConcurrentQueries,
-    QuerySubmitter& querySubmitter,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+SystestRunner::SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const uint64_t queryConcurrency)
+    : queryTracker{std::move(inputQueries), queryConcurrency}
+    , executionMode{executionMode}
+    , queryManager(createSubmissionBackend(executionMode))
+    , reporter{std::make_unique<QueryResultReporter>(queryTracker.getTotalQueries())}
 {
-    std::queue<SystestQuery> pending;
-    for (auto it = queries.rbegin(); it != queries.rend(); ++it)
+}
+
+SystestRunner SystestRunner::from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, const uint64_t queryConcurrency)
+{
+    return SystestRunner{std::move(queries), std::move(executionMode), queryConcurrency};
+}
+
+std::vector<FailedQuery> SystestRunner::run(nlohmann::json* _Nullable benchmarkResults) &&
+{
+    while (not queryTracker.done())
     {
-        pending.push(*it);
+        submit();
+        handle();
     }
 
-    std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
-    std::vector<std::shared_ptr<RunningQuery>> failed;
-    std::size_t finished = 0;
-
-    const auto startMoreQueries = [&] -> bool
+    if (benchmarkResults)
     {
-        bool hasOneMoreQueryToStart = false;
-        while (active.size() < numConcurrentQueries and not pending.empty())
-        {
-            SystestQuery nextQuery = std::move(pending.front());
-            pending.pop();
+        serializeBenchmarkResults(finishedQueries, *benchmarkResults);
+    }
 
-            if (nextQuery.planInfoOrException.has_value())
-            {
-                /// Registration
-                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan))
-                {
-                    hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
-                    active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
-                }
-                else
-                {
-                    processQueryWithError(std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {reg.error()});
-                }
-            }
-            else
-            {
-                /// There was an error during query parsing, report the result and don't register the query
-                processQueryWithError(
-                    std::make_shared<RunningQuery>(nextQuery), finished, queries.size(), failed, {nextQuery.planInfoOrException.error()});
-            }
-        }
-        return hasOneMoreQueryToStart;
-    };
+    return reportedFailures;
+}
 
-    while (startMoreQueries() or not(active.empty() and pending.empty()))
+/// Submit as many queries as possible to the execution backend until either the max concurrency level is reached
+/// or there are no more queries to submit.
+/// Queries that have failed during planning are marked as failed and ignored.
+/// Same thing applies to queries that fail during deployment.
+void SystestRunner::submit()
+{
+    while (auto planned = queryTracker.nextPending())
     {
-        for (const auto& summary : querySubmitter.finishedQueries())
-        {
-            auto it = active.find(summary.queryId);
-            if (it == active.end())
-            {
-                throw TestException("received unregistered queryId: {}", summary.queryId);
-            }
+        auto planningResult = planned->planInfoOrException;
+        planningResult
+            .and_then(
+                [this, &planned](const auto& planInfo) mutable
+                {
+                    return queryManager.registerQuery(planInfo.plan)
+                        .transform(
+                            [&planned](auto&& query) mutable
+                            {
+                                auto submitted = SubmittedQuery{std::forward<decltype(query)>(query), std::move(*planned)};
+                                if (auto metrics = calculateSourceMetrics(submitted.planInfo))
+                                {
+                                    const auto [bytesProcessed, tuplesProcessed] = *metrics;
+                                    submitted.bytesProcessed = bytesProcessed;
+                                    submitted.tuplesProcessed = tuplesProcessed;
+                                }
+                                return submitted;
+                            });
+                })
+            .and_then(
+                [this](auto&& submitted) -> std::expected<void, Exception>
+                {
+                    return queryManager.start(submitted.query)
+                        .transform([this, &submitted] { queryTracker.moveToSubmitted(std::forward<decltype(submitted)>(submitted)); });
+                })
+            .or_else(
+                [this, &planned](const Exception& exception)
+                {
+                    onFailure<PlannedQuery>(std::move(*planned), {exception});
+                    return std::expected<void, Exception>{};
+                });
+    }
+}
 
-            auto& runningQuery = it->second;
-
-            if (summary.currentStatus == QueryStatus::Failed)
-            {
-                INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
-            }
-            else
-            {
-                reportResult(
-                    runningQuery,
-                    finished,
-                    queries.size(),
-                    failed,
-                    [&]
+/// Consume from submitted queries and request their status from the execution backend.
+/// If failed/stopped, report/check result, otherwise put back into running and continue
+void SystestRunner::handle()
+{
+    while (auto submittedQuery = queryTracker.nextSubmitted())
+    {
+        queryManager
+            .status(submittedQuery->query) /// NOLINT(*-unused-return-value)
+            .and_then(
+                [this, &submittedQuery](auto&& status) -> std::expected<void, std::vector<Exception>>
+                {
+                    switch (status.getGlobalQueryState())
                     {
-                        if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
-                        {
-                            return fmt::format(
-                                "expected error {} but query succeeded",
-                                std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                        case QueryState::Failed: {
+                            /// Best effort error handling by terminating other local queries
+                            const auto stopResult = queryManager.stop(submittedQuery->query);
+                            if (!stopResult)
+                            {
+                                fmt::println(
+                                    std::cerr,
+                                    "Could not stop remaining queries after individual subquery failure: {}",
+                                    fmt::join(stopResult.error(), ", "));
+                            }
+                            onFailure<SubmittedQuery>(std::move(*submittedQuery), status.getExceptions());
+                            break;
                         }
-                        runningQuery->querySummary = summary;
-                        if (auto err = checkResult(*runningQuery))
-                        {
-                            return *err;
-                        }
-                        return std::string{};
-                    },
-                    queryPerformanceMessage);
-            }
-            active.erase(it);
-        }
+                        case QueryState::Stopped:
+                            onStopped(std::move(*submittedQuery), status);
+                            break;
+                        default:
+                            queryTracker.moveToSubmitted(std::move(*submittedQuery));
+                            std::this_thread::sleep_for(25ms);
+                            break;
+                    }
+                    return {};
+                })
+            .or_else(
+                [this, &submittedQuery](auto&& error) -> std::expected<void, std::vector<Exception>>
+                {
+                    onFailure<SubmittedQuery>(std::move(*submittedQuery), std::vector{error});
+                    return {};
+                });
     }
-
-    auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
-    return {failedViews.begin(), failedViews.end()};
 }
 
-/// NOLINTEND(readability-function-cognitive-complexity)
-
-namespace
+void SystestRunner::onStopped(SubmittedQuery&& submitted, const DistributedQueryStatus& queryStatus)
 {
-void serializeExecutionResults(const RunningQuery& queryRan, nlohmann::json& resultJson)
-{
-    if (not queryRan.passed)
+    /// Check if we expected an error but got success
+    if (std::holds_alternative<ExpectedError>(submitted.ctx.expectedResultsOrError))
     {
+        const auto& expectedError = std::get<ExpectedError>(submitted.ctx.expectedResultsOrError);
+        reporter->reportUnexpectedSuccess(submitted.ctx, expectedError);
+        auto failedQuery = FailedQuery{std::move(submitted.ctx), {}};
+        reportedFailures.push_back(failedQuery);
+        queryTracker.moveToFailed(std::move(failedQuery));
         return;
     }
-    const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
-    resultJson.push_back({
-        {"query name", queryRan.systestQuery.testName},
-        {"time", executionTimeInSeconds},
-        {"bytesPerSecond",
-         queryRan.bytesProcessed.has_value() ? static_cast<double>(queryRan.bytesProcessed.value()) / executionTimeInSeconds
-                                             : std::numeric_limits<double>::quiet_NaN()},
-        {"tuplesPerSecond",
-         queryRan.tuplesProcessed.has_value() ? static_cast<double>(queryRan.tuplesProcessed.value()) / executionTimeInSeconds
-                                              : std::numeric_limits<double>::quiet_NaN()},
-    });
-}
-}
 
-std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
-{
-    auto worker = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
-    QuerySubmitter submitter(std::move(worker));
-    constexpr auto numConcurrentQueries = 1;
-
-    auto queryPerformanceMessage = [&resultJson](RunningQuery& runningQuery)
+    /// Check query results
+    if (const auto errorMessage = checkResult(submitted))
     {
-        /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
-        size_t bytesProcessed = 0;
-        size_t tuplesProcessed = 0;
-        for (const auto& [sourcePath, sourceOccurrencesInQuery] :
-             runningQuery.systestQuery.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
-        {
-            if (not(std::filesystem::exists(sourcePath.getRawValue()) and sourcePath.getRawValue().has_filename()))
-            {
-                NES_ERROR("Source path is empty or does not exist.");
-                bytesProcessed = 0;
-                tuplesProcessed = 0;
-                break;
-            }
+        auto failedQuery = FailedQuery{std::move(submitted.ctx), {}};
+        reporter->reportFailure(failedQuery.ctx, *errorMessage);
+        reportedFailures.push_back(failedQuery);
+        queryTracker.moveToFailed(std::move(failedQuery));
+        return;
+    }
 
-            bytesProcessed += (std::filesystem::file_size(sourcePath.getRawValue()) * sourceOccurrencesInQuery);
+    const auto elapsedTime = extractElapsedTime(queryStatus);
+    std::optional<std::string> throughput;
 
-            /// Counting the lines, i.e., \n in the sourcePath
-            std::ifstream inFile(sourcePath.getRawValue());
-            tuplesProcessed
-                += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
-        }
-        runningQuery.bytesProcessed = bytesProcessed;
-        runningQuery.tuplesProcessed = tuplesProcessed;
-        serializeExecutionResults(runningQuery, resultJson);
-        return fmt::format(" in {} ({})", runningQuery.getElapsedTime(), runningQuery.getThroughput());
-    };
-
-    return runQueries(queries, numConcurrentQueries, submitter, queryPerformanceMessage);
-}
-
-void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    const size_t queryCounter,
-    const size_t totalQueries,
-    const std::string_view queryPerformanceMessage)
-{
-    const auto queryNameLength = runningQuery.systestQuery.testName.size();
-    const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
-    const auto queryNumberLength = queryNumberAsString.size();
-    const auto queryCounterAsString = std::to_string(queryCounter + 1);
-
-    /// spd logger cannot handle multiline prints with proper color and pattern.
-    /// And as this is only for test runs we use stdout here.
-    std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
-    std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0')
-              << queryNumberAsString;
-    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
-    if (runningQuery.passed)
+    if (elapsedTime.has_value() and submitted.bytesProcessed.has_value() and submitted.tuplesProcessed.has_value())
     {
-        fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
+        throughput = calculateThroughput(*submitted.bytesProcessed, *submitted.tuplesProcessed, *elapsedTime);
+    }
+
+    auto finished = FinishedQuery{std::move(submitted)};
+    finished.elapsedTime = elapsedTime;
+    finished.throughput = throughput;
+    finishedQueries.push_back(finished);
+
+    /// Report with performance information
+    if (elapsedTime && throughput)
+    {
+        const auto performanceMessage = fmt::format(" in {:.3f}s ({})", elapsedTime->count(), *throughput);
+        reporter->reportSuccess(finished.ctx, performanceMessage);
+    }
+    else if (elapsedTime)
+    {
+        const auto performanceMessage = fmt::format(" in {:.3f}s", elapsedTime->count());
+        reporter->reportSuccess(finished.ctx, performanceMessage);
     }
     else
     {
-        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "FAILED {}\n", queryPerformanceMessage);
-        std::cout << "===================================================================" << '\n';
-        std::cout << runningQuery.systestQuery.queryDefinition << '\n';
-        std::cout << "===================================================================" << '\n';
-        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "Error: {}\n", errorMessage);
-        std::cout << "===================================================================" << '\n';
+        reporter->reportSuccess(finished.ctx, " (no timing data)");
     }
-}
 
-std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
-{
-    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
+    queryTracker.moveToFinished(std::move(finished));
 }
-
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
-{
-    auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
-    QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
-}
-
 }

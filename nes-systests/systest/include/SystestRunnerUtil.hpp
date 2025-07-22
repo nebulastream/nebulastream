@@ -12,26 +12,21 @@
     limitations under the License.
 */
 
-#include <SystestConfiguration.hpp>
+#pragma once
 
 #include <vector>
-#include <Configurations/BaseOption.hpp>
 
-namespace NES
+#include <Listeners/QueryLog.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES::Systest
 {
-std::vector<BaseOption*> SystestConfiguration::getOptions()
-{
-    return {
-        &testsDiscoverDir,
-        &directlySpecifiedTestFiles,
-        &testFileExtension,
-        &workingDir,
-        &randomQueryOrder,
-        &numberConcurrentQueries,
-        &testGroups,
-        &testDataDir,
-        &endlessMode,
-        &excludeGroups,
-        &topology};
-}
+
+/// Extract exceptions from query status
+std::vector<Exception> getExceptions(const QueryStatus& status);
+
+/// Determine global query state from local status snapshots
+QueryState getGlobalQueryState(const QueryStatus& status);
+
 }

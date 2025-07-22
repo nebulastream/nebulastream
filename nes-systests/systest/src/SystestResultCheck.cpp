@@ -269,13 +269,13 @@ struct QueryResult
     std::vector<std::string> result;
 };
 
-std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
+std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQueryContext& ctx)
 {
-    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
-    std::ifstream resultFile(query.resultFile());
+    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", ctx.queryDefinition, ctx.resultFile());
+    std::ifstream resultFile(ctx.resultFile());
     if (!resultFile)
     {
-        throw NES::UnknownException("Failed to open result file: {}", query.resultFile());
+        throw NES::UnknownException("Failed to open result file: {}", ctx.resultFile());
     }
 
     QueryResult result;
@@ -644,13 +644,13 @@ private:
     ActualResultTuples actualResults;
 };
 
-QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
+QueryCheckResult checkQuery(const NES::Systest::SubmittedQuery& query)
 {
     /// Get result for running query
-    const auto queryResult = loadQueryResult(runningQuery.systestQuery);
+    const auto queryResult = loadQueryResult(query.ctx);
     if (not queryResult.has_value())
     {
-        return QueryCheckResult{fmt::format("Failed to load query result for query: {}", runningQuery.systestQuery.queryDefinition)};
+        return QueryCheckResult{fmt::format("Failed to load query result for query: {}", query.ctx.queryDefinition)};
     }
 
     const QuerySchemasAndResults querySchemasAndResults = [&]()
@@ -658,11 +658,11 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
         auto [actualSchemaResult, actualQueryResult] = queryResult.value();
 
         /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-        auto expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
+        auto expectedQueryResult = query.ctx.expectedResultsOrError;
         INVARIANT(std::holds_alternative<std::vector<std::string>>(expectedQueryResult), "Systest was expected to have an expected result");
 
         return QuerySchemasAndResults(
-            ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchema),
+            ExpectedResultSchema(query.planInfo.sinkOutputSchema),
             ActualResultSchema(actualSchemaResult),
             std::get<std::vector<std::string>>(expectedQueryResult),
             std::move(actualQueryResult));
@@ -681,7 +681,7 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 namespace NES::Systest
 {
 
-std::optional<std::string> checkResult(const RunningQuery& runningQuery)
+std::optional<std::string> checkResult(const SubmittedQuery& query)
 {
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
@@ -690,7 +690,7 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                                                               "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
                                                               "-------------------------------------------------";
 
-    switch (const auto checkQueryResult = checkQuery(runningQuery); checkQueryResult.type)
+    switch (const auto checkQueryResult = checkQuery(query); checkQueryResult.type)
     {
         case QueryCheckResult::Type::QUERY_NOT_FOUND: {
             return checkQueryResult.queryError;

@@ -1,0 +1,9 @@
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 5
+    downstreamNodes:
+      - 127.0.0.1:9091
+  - host: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 255
