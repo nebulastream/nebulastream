@@ -434,21 +434,24 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     std::cout << result.dump(4) << '\n';
 }
 
+NES::HostAddr hostAddr{"localhost:9090"};
 NES::GrpcAddr grpcAddr{"localhost:8080"};
 
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse::ArgumentParser& program)
 {
     if (program.is_used("-s"))
     {
-        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(program.get("-s")), .config = {}});
+        return std::make_unique<NES::GRPCQuerySubmissionBackend>(
+            NES::WorkerConfig{.host = hostAddr, .grpc = NES::GrpcAddr(program.get("-s")), .config = {}});
     }
     if (auto* env = std::getenv("NES_WORKER_GRPC_ADDR"))
     {
         NES_DEBUG("Found worker address in environment: {}", env);
-        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(env), .config = {}});
+        return std::make_unique<NES::GRPCQuerySubmissionBackend>(
+            NES::WorkerConfig{.host = hostAddr, .grpc = NES::GrpcAddr(env), .config = {}});
     }
 
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = grpcAddr, .config = {}});
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.host = hostAddr, .grpc = grpcAddr, .config = {}});
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
