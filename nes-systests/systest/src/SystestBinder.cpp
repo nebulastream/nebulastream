@@ -39,6 +39,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -56,7 +57,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
-#include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -82,7 +82,7 @@ public:
                 {
                     config["inputFormat"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, "", std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -312,10 +312,9 @@ struct SystestBinder::Impl
 
                                      if (systest.getBoundPlan().has_value())
                                      {
-                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
                                          try
                                          {
-                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
+                                             systest.setOptimizedPlan(LegacyOptimizer::optimize(systest.getBoundPlan().value(), testfile.sourceCatalog, testfile.sinkCatalog).plan);
                                          }
                                          catch (const Exception& exception)
                                          {
@@ -536,7 +535,7 @@ struct SystestBinder::Impl
                 }
 
                 const auto physicalSource
-                    = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+                    = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, "localhost", sourceConfig, ParserConfig::create(parserConfig));
                 if (not physicalSource.has_value())
                 {
                     NES_ERROR(
