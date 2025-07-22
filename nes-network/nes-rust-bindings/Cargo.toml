@@ -21,3 +21,4 @@ crate-type = ["staticlib"]
 [dependencies]
 cxx = "1.0"
 network_bindings = { path = "network" }
+spdlog_bindings = { path = "spdlog" }

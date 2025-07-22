@@ -12,5 +12,16 @@
     limitations under the License.
 */
 
-pub use network_bindings::*;
-pub use spdlog_bindings::*;
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <rust/cxx.h>
+#include <spdlog/logger.h>
+
+enum class Level : uint8_t;
+using SpdLogger = spdlog::logger;
+void log(const std::shared_ptr<SpdLogger>&, Level, rust::Str, uint32_t, rust::Str);
+
+void mdc_insert(rust::Str, rust::Str);
+void mdc_remove(rust::Str);
