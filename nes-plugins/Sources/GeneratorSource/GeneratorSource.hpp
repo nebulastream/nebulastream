@@ -61,7 +61,7 @@ public:
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-    void open() override;
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
