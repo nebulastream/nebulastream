@@ -7,3 +7,4 @@ config/
 scripts/
 vcpkg/
 test/
+demo/
