@@ -1,0 +1,10 @@
+# config_override.dummy
+# Demonstrates the ConfigOverride feature for system-level tests
+# Includes valid and invalid usages
+
+# --- Invalid: Missing colon ---
+Configuration worker.queryOptimizer.pageSize [8]
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
