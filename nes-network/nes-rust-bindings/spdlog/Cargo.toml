@@ -10,5 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(nes-rust-bindings/network)
-add_subdirectory(nes-rust-bindings/spdlog)
+[package]
+name = "spdlog_bindings"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = "0.3"
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"
