@@ -10,6 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(interface)
-add_subdirectory(nes-rust-bindings/network)
-add_subdirectory(nes-rust-bindings/spdlog)
+find_package(magic_enum CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+
+corrosion_add_cxxbridge(
+        nes-logger-bindings
+        CRATE nes_rust_bindings
+        FILES ../spdlog/lib.rs
+)
+target_sources(nes-logger-bindings PRIVATE src/LoggerBindings.cpp)
+target_link_libraries(nes-logger-bindings PUBLIC nes-common spdlog::spdlog magic_enum::magic_enum)
+target_include_directories(nes-logger-bindings PUBLIC include)
