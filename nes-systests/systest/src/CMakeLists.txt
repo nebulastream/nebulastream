@@ -11,12 +11,14 @@
 # limitations under the License.
 
 add_source_files(nes-systest-lib
+        BenchmarkUtils.cpp
+        QueryResultReporter.cpp
+        QueryTracker.cpp
         SystestExecutor.cpp
         SystestParser.cpp
         SystestRunner.cpp
         SystestState.cpp
         SystestResultCheck.cpp
         SystestConfiguration.cpp
-        QuerySubmitter.cpp
         SystestBinder.cpp
 )

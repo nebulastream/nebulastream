@@ -27,16 +27,6 @@
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 
-namespace
-{
-size_t countFailedTests(const std::string_view failedTestString, const std::string_view systestE2EExtension)
-{
-    return std::ranges::count_if(
-        std::views::iota(0UZ, failedTestString.length() - systestE2EExtension.length() + 1),
-        [&](const size_t idx) { return failedTestString.substr(idx, systestE2EExtension.length()) == systestE2EExtension; });
-};
-}
-
 namespace NES::Systest
 {
 
@@ -66,11 +56,12 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
     SystestConfiguration config{};
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
-    const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
+    constexpr std::string_view testFileName = "MultipleCorrectAndIncorrect";
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFileName, EXTENSION));
+    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFileName));
+    config.topology.setValue(fmt::format("{}/topologies/default_local.yaml", TEST_CONFIGURATION_DIR));
 
-    const auto systestResult = NES::executeSystests(config);
+    const auto systestResult = executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:1", testFileName))) << "Correct query found in failed queries.";
     ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:2", testFileName))) << "Query not found in failed queries.";
@@ -80,7 +71,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:6", testFileName))) << "Correct query found in failed queries.";
     ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:7", testFileName))) << "Query not found in failed queries.";
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:8", testFileName))) << "Correct query found in failed queries.";
-    ASSERT_EQ(countFailedTests(systestResult.outputMessage, SystestE2ETest::EXTENSION), 4) << "Number of failed queries is unexpected.";
+    ASSERT_EQ(systestResult.numFailedQueries, 4) << "Number of failed queries is unexpected.";
 }
 
 /// Each test file contains one correct and one similar, but incorrect query. We check that the correct query, which is always the
@@ -88,18 +79,18 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
 {
     const auto& [directory, testFile] = GetParam();
-    const auto testFileName = testFile + std::string(".dummy");
     SystestConfiguration config{};
     config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}{}", SYSTEST_DATA_DIR, directory, testFile, EXTENSION));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+    config.topology.setValue(fmt::format("{}/topologies/default_local.yaml", TEST_CONFIGURATION_DIR));
 
     const auto systestResult = NES::executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
-    ASSERT_EQ(countFailedTests(systestResult.outputMessage, SystestE2ETest::EXTENSION), 1) << "Too many failed queries.";
-    ASSERT_FALSE(systestResult.outputMessage.contains(testFileName + std::string(":1"))) << "Correct query found in failed queries.";
-    ASSERT_TRUE(systestResult.outputMessage.contains(testFileName + std::string(":2"))) << "Incorrect query not found in failed queries.";
+    ASSERT_EQ(systestResult.numFailedQueries, 1) << "Too many failed queries.";
+    ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:1", testFile))) << "Correct query found in failed queries.";
+    ASSERT_TRUE(systestResult.outputMessage.contains(fmt::format("{}:2", testFile))) << "Incorrect query not found in failed queries.";
 }
 
 INSTANTIATE_TEST_CASE_P(
