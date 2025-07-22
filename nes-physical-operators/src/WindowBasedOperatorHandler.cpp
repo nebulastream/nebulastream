@@ -66,7 +66,7 @@ WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
-    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(sliceAndWindowStore.get()))
+    if (auto* const sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(sliceAndWindowStore.get()))
     {
         sliceStore->setWorkerThreads(numberOfWorkerThreads);
     }

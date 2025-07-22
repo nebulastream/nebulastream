@@ -317,7 +317,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto *const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
+        const auto* const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
 
         auto stateSizeOnDisk = 0UL;
         auto stateSizeInMemory = 0UL;

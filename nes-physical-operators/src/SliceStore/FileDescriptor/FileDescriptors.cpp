@@ -135,11 +135,11 @@ void FileWriter::deleteAllFiles()
     file.close();
     keyFile.close();
 
-    std::filesystem::remove(filePath + ".dat");
-    std::filesystem::remove(filePath + "_key.dat");
+    boost::asio::post(ioCtx, [this] { std::filesystem::remove(filePath + ".dat"); });
+    boost::asio::post(ioCtx, [this] { std::filesystem::remove(filePath + "_key.dat"); });
     for (auto i = 0UL; i < varSizedCnt; ++i)
     {
-        std::filesystem::remove(filePath + fmt::format("_{}.dat", i));
+        boost::asio::post(ioCtx, [this, i] { std::filesystem::remove(filePath + fmt::format("_{}.dat", i)); });
     }
 }
 
