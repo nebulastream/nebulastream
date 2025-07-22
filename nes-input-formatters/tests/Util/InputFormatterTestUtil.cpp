@@ -48,6 +48,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -154,7 +155,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     return validParserConfig;
 }
 
-std::unique_ptr<Sources::SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<Sources::SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -166,9 +167,12 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
-        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
+        = sourceCatalog.addPhysicalSource(logicalSource.value(), "localhost","File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    auto [valve, ingestion] = Backpressure();
+    return std::make_pair(
+        std::move(valve),
+        Sources::SourceProvider::lower(NES::OriginId(1), ingestion, sourceDescriptor.value(), std::move(sourceBufferPool), -1));
 }
 
 std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)

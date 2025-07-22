@@ -49,6 +49,8 @@ public:
     /// return the underlying value as a value of the underlying type
     [[nodiscard]] constexpr T getRawValue() const { return v; }
 
+    explicit operator bool() const { return v != invalid; }
+
 private:
     T v;
 };
