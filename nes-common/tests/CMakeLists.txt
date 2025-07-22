@@ -20,9 +20,12 @@ add_library(nes-test-util
         "Util/src/BaseIntegrationTest.cpp"
         "Util/src/BaseUnitTest.cpp")
 
+find_package(PkgConfig)
+pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
+
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Util/include")
-target_link_libraries(nes-test-util PUBLIC ${GTEST_LIBRARIES} nes-common)
+target_link_libraries(nes-test-util PUBLIC ${GTEST_LIBRARIES} nes-common PkgConfig::uuid)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-test-util REUSE_FROM nes-common)
 endif ()
