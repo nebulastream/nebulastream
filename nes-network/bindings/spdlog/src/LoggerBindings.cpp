@@ -18,8 +18,8 @@
 #include <string>
 #include <unordered_map>
 #include <magic_enum/magic_enum.hpp>
+#include <rust/cxx.h>
 #include <spdlog/logger.h>
-#include "rust/cxx.h"
 
 thread_local std::unordered_map<const char*, std::string> filenames = {};
 

@@ -38,9 +38,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <grpcpp/security/credentials.h>
+#include <DistributedQueryId.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
-#include "DistributedQueryId.hpp"
 
 namespace NES
 {
