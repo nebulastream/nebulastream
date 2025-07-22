@@ -276,7 +276,8 @@ public:
                .workingDir = std::move(*workingDir),
                .queryIdInFile = queryIdInFile,
                .queryDefinition = std::move(*queryDefinition),
-               .expectedResultsOrError = std::move(*expectedResultsOrError)},
+               .expectedResultsOrError = std::move(*expectedResultsOrError),
+                .additionalSourceThreads = std::move(*additionalSourceThreads)},
             .planInfoOrException = createPlanInfoOrException(),
         };
     }

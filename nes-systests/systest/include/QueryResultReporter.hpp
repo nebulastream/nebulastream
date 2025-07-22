@@ -46,10 +46,10 @@ public:
         return passed;
     }
 
-    bool reportSuccess(const SystestQueryContext& ctx, const std::string_view performanceMessage = "");
-    bool reportFailure(const SystestQueryContext& ctx, const std::string& errorMessage, const std::string_view performanceMessage = "");
-    bool reportExpectedError(const SystestQueryContext& ctx, const ExpectedError& expectedError, const Exception& actualException);
-    bool reportUnexpectedSuccess(const SystestQueryContext& ctx, const ExpectedError& expectedError);
+    void reportSuccess(const SystestQueryContext& ctx, const std::string_view performanceMessage = "");
+    void reportFailure(const SystestQueryContext& ctx, const std::string& errorMessage, const std::string_view performanceMessage = "");
+    void reportExpectedError(const SystestQueryContext& ctx, const ExpectedError& expectedError, const Exception& actualException);
+    void reportUnexpectedSuccess(const SystestQueryContext& ctx, const ExpectedError& expectedError);
 
     size_t getFinishedCount() const;
 

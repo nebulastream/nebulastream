@@ -15,6 +15,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <utility>
@@ -22,7 +23,6 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest

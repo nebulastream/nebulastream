@@ -14,17 +14,25 @@
 
 #include <BenchmarkUtils.hpp>
 
+#include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <optional>
 #include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 #include <ErrorHandling.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
@@ -65,13 +73,14 @@ std::optional<std::chrono::duration<double>> extractElapsedTime(const QueryStatu
     {
         if (localStatus.metrics.running.has_value() and localStatus.metrics.stop.has_value())
         {
-            return std::chrono::duration_cast<std::chrono::duration<double>>(localStatus.metrics.stop.value() - localStatus.metrics.running.value());
+            return std::chrono::duration_cast<std::chrono::duration<double>>(
+                localStatus.metrics.stop.value() - localStatus.metrics.running.value());
         }
     }
     return std::nullopt;
 }
 
-std::string calculateThroughput(size_t bytesProcessed, size_t tuplesProcessed, std::chrono::duration<double> elapsedTime)
+std::string calculateThroughput(const size_t bytesProcessed, const size_t tuplesProcessed, const std::chrono::duration<double> elapsedTime)
 {
     if (bytesProcessed == 0 or tuplesProcessed == 0 or elapsedTime.count() <= 0.0)
     {
@@ -141,11 +150,14 @@ void serializeBenchmarkResults(const std::vector<FinishedQuery>& finished, nlohm
         /// Add source metrics if we have them from the original calculation
         /// Note: These were calculated during submission and stored in the SubmittedQuery
         /// but are not directly accessible in FinishedQuery. We'll calculate them again from PlanInfo.
-        if (auto [bytesProcessed, tuplesProcessed] = calculateSourceMetrics(finishedQuery.planInfo);
-            bytesProcessed > 0 or tuplesProcessed > 0)
+        if (finishedQuery.planInfo.has_value())
         {
-            queryResult["bytesProcessed"] = bytesProcessed;
-            queryResult["tuplesProcessed"] = tuplesProcessed;
+            if (auto [bytesProcessed, tuplesProcessed] = calculateSourceMetrics(*finishedQuery.planInfo);
+                bytesProcessed > 0 or tuplesProcessed > 0)
+            {
+                queryResult["bytesProcessed"] = bytesProcessed;
+                queryResult["tuplesProcessed"] = tuplesProcessed;
+            }
         }
 
         queryResults.push_back(queryResult);

@@ -31,7 +31,7 @@ class QueryTracker
     std::vector<FailedQuery> failedQueries;
     std::vector<FinishedQuery> finishedQueries;
 
-    uint64_t numConcurrentQueries;
+    const uint64_t numConcurrentQueries;
 
 public:
     QueryTracker(const std::vector<PlannedQuery>& queries, uint64_t concurrency);
@@ -44,9 +44,9 @@ public:
     std::optional<PlannedQuery> nextPending();
     std::optional<SubmittedQuery> nextSubmitted();
 
-    void markAsFailed(FailedQuery&& failed);
-    void markAsSubmitted(SubmittedQuery&& submitted);
-    void markAsFinished(FinishedQuery&& finished);
+    void moveToFailed(FailedQuery&& failed);
+    void moveToSubmitted(SubmittedQuery&& submitted);
+    void moveToFinished(FinishedQuery&& finished);
 };
 
 }

@@ -15,8 +15,10 @@
 #pragma once
 
 #include <cstdint>
+#include <concepts>
 #include <filesystem>
 #include <memory>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -78,11 +80,36 @@ public:
 private:
     void submit();
     void handle();
-    void onFailure(SubmittedQuery& submitted, const QueryStatus& status);
-    void onStopped(SubmittedQuery& submitted);
+    void onStopped(SubmittedQuery&& submitted);
     
-    [[nodiscard]] bool isBenchmarkMode() const;
-    void finalizeBenchmarkResults() const;
+    template<typename QueryT>
+    requires requires(QueryT q) { q.ctx; }
+    void onFailure(QueryT&& query, std::vector<Exception>&& exceptions)
+    {
+        std::string errorMessage;
+        /// Check if test is negative test
+        if (std::holds_alternative<ExpectedError>(query.ctx.expectedResultsOrError))
+        {
+            const auto& [code, message] = std::get<ExpectedError>(query.ctx.expectedResultsOrError);
+            INVARIANT(not exceptions.empty(), "Query status indicated failure, but no exceptions were stored");
+
+            /// Check if the actual error matches the expected error
+            if (code == exceptions.front().code())
+            {
+                reporter->reportSuccess(query.ctx);
+                queryTracker.moveToFinished(FinishedQuery{std::move(query)});
+                return;
+            }
+            
+            errorMessage = fmt::format("expected error {} but got {}", code, exceptions.front().code());
+        }
+
+        auto failed = FailedQuery{std::move(query.ctx), std::move(exceptions)};
+        errorMessage = failed.exceptions.empty() ? "Query failed without error details" : fmt::format("{}", failed.exceptions.front());
+        reporter->reportFailure(failed.ctx, std::move(errorMessage));
+        reportedFailures.push_back(failed);
+        queryTracker.moveToFailed(std::move(failed));
+    }
 };
 
 }

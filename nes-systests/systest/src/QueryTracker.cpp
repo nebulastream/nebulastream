@@ -62,17 +62,17 @@ std::optional<SubmittedQuery> QueryTracker::nextSubmitted()
     return {query};
 }
 
-void QueryTracker::markAsFailed(FailedQuery&& failed)
+void QueryTracker::moveToFailed(FailedQuery&& failed)
 {
     failedQueries.push_back(std::move(failed));
 }
 
-void QueryTracker::markAsSubmitted(SubmittedQuery&& submitted)
+void QueryTracker::moveToSubmitted(SubmittedQuery&& submitted)
 {
     submittedQueries.push_back(std::move(submitted));
 }
 
-void QueryTracker::markAsFinished(FinishedQuery&& finished)
+void QueryTracker::moveToFinished(FinishedQuery&& finished)
 {
     finishedQueries.push_back(std::move(finished));
 }

@@ -25,33 +25,26 @@ namespace NES::Systest
 
 QueryResultReporter::QueryResultReporter(const size_t totalQueries) : totalQueries(totalQueries) { }
 
-bool QueryResultReporter::reportSuccess(const SystestQueryContext& ctx, const std::string_view performanceMessage)
+void QueryResultReporter::reportSuccess(const SystestQueryContext& ctx, const std::string_view performanceMessage)
 {
     printQueryResultToStdOut(ctx, "", finishedCount++, totalQueries, performanceMessage, true);
-    return true;
 }
 
-bool QueryResultReporter::reportFailure(const SystestQueryContext& ctx, const std::string& errorMessage, const std::string_view performanceMessage)
+void QueryResultReporter::reportFailure(const SystestQueryContext& ctx, const std::string& errorMessage, const std::string_view performanceMessage)
 {
     printQueryResultToStdOut(ctx, errorMessage, finishedCount++, totalQueries, performanceMessage, false);
-    return false;
 }
 
-bool QueryResultReporter::reportExpectedError(const SystestQueryContext& ctx, const ExpectedError& expectedError, const Exception& actualException)
+void QueryResultReporter::reportExpectedError(const SystestQueryContext& ctx, const ExpectedError& expectedError, const Exception& actualException)
 {
-    if (expectedError.code == actualException.code())
-    {
-        return reportSuccess(ctx);
-    }
     const std::string errorMsg = fmt::format("expected error {} but got {}", expectedError.code, actualException.code());
-    return reportFailure(ctx, errorMsg);
+    reportFailure(ctx, errorMsg);
 }
 
-bool QueryResultReporter::reportUnexpectedSuccess(const SystestQueryContext& ctx, const ExpectedError& expectedError)
+void QueryResultReporter::reportUnexpectedSuccess(const SystestQueryContext& ctx, const ExpectedError& expectedError)
 {
     const std::string errorMsg = fmt::format("expected error {} but query succeeded", expectedError.code);
-    printQueryResultToStdOut(ctx, errorMsg, finishedCount++, totalQueries, "", false);
-    return false;
+    reportFailure(ctx, errorMsg);
 }
 
 size_t QueryResultReporter::getFinishedCount() const

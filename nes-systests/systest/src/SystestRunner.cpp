@@ -15,17 +15,16 @@
 #include <SystestRunner.hpp>
 
 #include <chrono>
-#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
 #include <utility>
 #include <variant>
-#include <vector>
 
 #include <bits/chrono.h>
 #include <fmt/format.h>
 
+#include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Overloaded.hpp>
 #include <BenchmarkUtils.hpp>
@@ -33,7 +32,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunnerUtil.hpp>
 #include <SystestState.hpp>
-#include "QueryResultReporter.hpp"
 
 namespace NES::Systest
 {

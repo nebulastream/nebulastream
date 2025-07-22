@@ -99,6 +99,7 @@ struct SystestQueryContext
     SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::string queryDefinition;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrError;
+    std::shared_ptr<std::vector<std::jthread>> additionalSourceThreads;
 };
 
 struct PlanInfo
@@ -138,8 +139,9 @@ struct SubmittedQuery
 struct FailedQuery
 {
     FailedQuery() = delete;
-    FailedQuery(PlannedQuery&& q, std::vector<Exception>&& exceptions) : ctx{std::move(q.ctx)}, exceptions{{std::move(exceptions)}} { }
-    FailedQuery(SubmittedQuery&& q, std::vector<Exception>&& exceptions) : ctx{std::move(q.ctx)}, exceptions{std::move(exceptions)} { }
+    FailedQuery(SystestQueryContext&& ctx, std::vector<Exception>&& exceptions) : ctx{std::move(ctx)}, exceptions{{std::move(exceptions)}}
+    {
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const FailedQuery& failed)
     {
@@ -154,10 +156,11 @@ struct FinishedQuery
 {
     FinishedQuery() = delete;
     explicit FinishedQuery(SubmittedQuery&& q) : ctx{std::move(q.ctx)}, planInfo{std::move(q.planInfo)} { }
+    explicit FinishedQuery(PlannedQuery&& q) : ctx{std::move(q.ctx)} { }
 
     SystestQueryContext ctx;
-    PlanInfo planInfo;
     /// Optional performance metrics
+    std::optional<PlanInfo> planInfo;
     std::optional<std::chrono::duration<double>> elapsedTime;
     std::optional<std::string> throughput;
 };
