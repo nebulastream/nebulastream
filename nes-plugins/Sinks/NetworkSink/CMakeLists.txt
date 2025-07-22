@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(interface)
-add_subdirectory(nes-rust-bindings/network)
-add_subdirectory(nes-rust-bindings/spdlog)
+add_plugin_as_library(Network Sink nes-sinks-registry network_sink_plugin_library NetworkSink.cpp)
+add_plugin_as_library(Network SinkValidation nes-sinks-registry network_sink_validation_plugin_library NetworkSink.cpp)
+
+target_link_libraries(network_sink_plugin_library PUBLIC nes-network-bindings)

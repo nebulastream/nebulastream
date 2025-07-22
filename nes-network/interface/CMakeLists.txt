@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(interface)
-add_subdirectory(nes-rust-bindings/network)
-add_subdirectory(nes-rust-bindings/spdlog)
+add_library(nes-network-interface INTERFACE)
+target_include_directories(nes-network-interface INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(nes-network-interface INTERFACE nes-configurations)
