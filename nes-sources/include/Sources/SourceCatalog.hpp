@@ -22,7 +22,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <Configurations/Descriptor.hpp>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -30,12 +30,21 @@
 
 namespace NES
 {
+
+Schema withSourceQualifier(const std::string& sourceName, const Schema& schema);
+
 /// @brief The source catalog handles the mapping of logical to physical sources.
 /// We expect the class to be used behind frontends that permit concurrent read-write access (like a REST server),
 /// so all individual operations in this class are thread safe and atomic.
 class SourceCatalog
 {
 public:
+    enum class SourceIngestionType : uint8_t
+    {
+        Origin,
+        Forward,
+    };
+
     SourceCatalog() = default;
     ~SourceCatalog() = default;
 
@@ -44,10 +53,13 @@ public:
     SourceCatalog& operator=(const SourceCatalog&) = delete;
     SourceCatalog& operator=(SourceCatalog&&) = delete;
 
+    /// @param logicalSourceName the name of the source (given by the user)
     /// @param schema the schema of fields without the logical source name as a prefix
+    /// @param sourceType if the source is a leaf source (origin), or a forwarding network source
     /// @return the created logical source if successful with a schema containing the logical source name as a prefix,
     /// nullopt if a logical source with that name already existed
-    [[nodiscard]] std::optional<NES::LogicalSource> addLogicalSource(const std::string& logicalSourceName, const Schema& schema);
+    [[nodiscard]] std::optional<NES::LogicalSource> addLogicalSource(
+        const std::string& logicalSourceName, const Schema& schema, SourceIngestionType sourceType = SourceIngestionType::Origin);
 
 
     /// @brief method to delete a logical source and any associated physical source.
@@ -59,6 +71,7 @@ public:
     [[nodiscard]] std::optional<SourceDescriptor> addPhysicalSource(
         const LogicalSource& logicalSource,
         std::string_view sourceType,
+        std::string workerId,
         std::unordered_map<std::string, std::string> descriptorConfig,
         const ParserConfig& parserConfig);
 
