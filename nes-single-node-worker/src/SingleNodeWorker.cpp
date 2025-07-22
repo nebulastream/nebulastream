@@ -74,6 +74,22 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
+    if (!configuration.connection.getValue().empty())
+    {
+        const auto& networkConfig = configuration.workerConfiguration.network;
+        initNetworkServices(
+            configuration.connection.getValue(),
+            host,
+            NetworkOptions{
+                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
+                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
+                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
+                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
+                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+            });
+    }
+}
+
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY

@@ -76,8 +76,8 @@ int main(const int argc, const char* argv[])
             return 0;
         }
         {
-            NES::Thread::initializeThread(NES::Host(configuration->data.getValue()), "main");
-            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->data.getValue()))};
+            NES::Thread::initializeThread(NES::Host(configuration->connection.getValue()), "main");
+            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->connection.getValue()))};
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);

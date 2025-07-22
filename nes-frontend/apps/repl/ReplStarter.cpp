@@ -75,6 +75,14 @@ extern void enable_memcom();
 
 namespace
 {
+NES::HostAddr hostAddr{"localhost:9090"};
+
+NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(std::string grpcAddr)
+{
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(
+        NES::WorkerConfig{.host = hostAddr, .grpc = NES::GrpcAddr(std::move(grpcAddr)), .config = {}});
+}
+
 enum class OnExitBehavior : uint8_t
 {
     WAIT_FOR_QUERY_TERMINATION,
@@ -245,13 +253,14 @@ int main(int argc, char** argv)
         enable_memcom();
         auto confVec = program.get<std::vector<std::string>>("--");
 
-        const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
-        std::vector<const char*> singleNodeArgV;
-        singleNodeArgV.reserve(singleNodeArgC + 1);
-        singleNodeArgV.push_back("nes-single-node-worker"); /// dummy option as arg expects first arg to be the program name
-        for (auto& arg : confVec)
-        {
-            singleNodeArgV.push_back(arg.c_str());
+            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
+                NES::WorkerConfig{.host = NES::HostAddr(""), .grpc = NES::GrpcAddr("localhost:8080"), .config = {}},
+                singleNodeWorkerConfig));
+#else
+            NES_ERROR("No server address given. Please use the -s option to specify the server address or use nes-repl-embedded to start a "
+                      "single node worker.")
+            return 1;
+#endif
         }
         auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                           .value_or(NES::SingleNodeWorkerConfiguration{});

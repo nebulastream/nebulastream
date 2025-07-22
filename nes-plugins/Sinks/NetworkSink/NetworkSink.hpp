@@ -105,10 +105,10 @@ private:
 /// NOLINTBEGIN(cert-err58-cpp)
 struct ConfigParametersNetworkSink
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
-        "data_endpoint",
+    static inline const DescriptorConfig::ConfigParameter<std::string> CONNECTION{
+        "connection",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECTION, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
         "bind",
@@ -147,7 +147,7 @@ struct ConfigParametersNetworkSink
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SinkDescriptor::parameterMap,
-            DATA_ENDPOINT,
+            CONNECTION,
             CHANNEL,
             BIND,
             BACKPRESSURE_UPPER_THRESHOLD,

@@ -437,13 +437,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
-
-    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
+    auto worker = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -580,13 +575,9 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
-
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
+    QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -597,14 +588,10 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
-    auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
+    auto remoteQueryManager = std::make_unique<QueryManager>(
+        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr(serverURI), .config = {}}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
+    return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
 }
