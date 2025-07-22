@@ -54,6 +54,8 @@ public:
     std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<ThreadNameFlag>(); }
 };
 
+extern void initialize_logging(std::shared_ptr<spdlog::logger> logger);
+
 namespace NES
 {
 
@@ -140,6 +142,9 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
     changeLogLevel(level);
 
     flusher = std::make_unique<spdlog::details::periodic_worker>([this]() { impl->flush(); }, std::chrono::seconds(1));
+
+    /// Enable rust logger
+    initialize_logging(impl);
 }
 
 Logger::Logger() : impl(detail::createEmptyLogger())
