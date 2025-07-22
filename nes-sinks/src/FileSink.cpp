@@ -74,7 +74,7 @@ void FileSink::start(PipelineExecutionContext&)
     {
         if (std::filesystem::exists(outputFilePath.c_str()))
         {
-            if (const std::error_code ec; !std::filesystem::remove(outputFilePath.c_str(), ec))
+            if (std::error_code ec; !std::filesystem::remove(outputFilePath.c_str(), ec))
             {
                 isOpen = false;
                 throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
