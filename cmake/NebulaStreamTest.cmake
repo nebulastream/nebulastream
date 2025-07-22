@@ -21,7 +21,7 @@ add_custom_target(e2e_tests)
 function(add_nes_test)
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-test-util)
+    target_link_libraries(${TARGET_NAME} nes-test-util nes-logger-bindings)
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
         # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
