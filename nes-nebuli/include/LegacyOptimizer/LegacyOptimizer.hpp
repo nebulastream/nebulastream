@@ -14,28 +14,24 @@
 
 #pragma once
 
-#include <chrono>
 #include <memory>
 
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
-class GRPCClient
+
+class LegacyOptimizer
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
-
 public:
-    explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
-
-    [[nodiscard]] QuerySummary status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
-    WorkerStatusResponse summary(std::chrono::system_clock::time_point after) const;
+    struct OptimizedLogicalPlan
+    {
+        LogicalPlan plan;
+    };
+    static OptimizedLogicalPlan
+    optimize(LogicalPlan inputPlan, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
 };
+
 }

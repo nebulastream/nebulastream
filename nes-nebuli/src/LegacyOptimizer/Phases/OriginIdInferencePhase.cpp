@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -27,7 +27,7 @@
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 namespace
@@ -64,36 +64,33 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan OriginIdInferencePhase::apply(const LogicalPlan& inputPlan)
 {
-    /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
+    LogicalPlan plan = inputPlan;
+    /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new origin ids
     auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (auto& assigner : getOperatorsByTraits<OriginIdAssignerTrait>(queryPlan))
+    for (auto& originIdAssignerOp : getOperatorsByTraits<OriginIdAssignerTrait>(inputPlan))
     {
-        if (assigner.tryGet<SourceDescriptorLogicalOperator>())
+        LogicalOperator inferredOp;
+        if (originIdAssignerOp.tryGet<SourceDescriptorLogicalOperator>())
         {
-            assigner = assigner.withInputOriginIds({{OriginId(++originIdCounter)}});
-            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
-            INVARIANT(replaceResult.has_value(), "replaceOperator failed");
-            queryPlan = std::move(replaceResult.value());
+            inferredOp
+                = originIdAssignerOp.withInputOriginIds({{OriginId(++originIdCounter)}}).withOutputOriginIds({OriginId(originIdCounter)});
         }
         else
         {
-            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(++originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
-            INVARIANT(replaceResult.has_value(), "replaceOperator failed");
-            queryPlan = std::move(replaceResult.value());
+            inferredOp = originIdAssignerOp.withOutputOriginIds({OriginId(++originIdCounter)});
         }
+        plan = *replaceOperator(plan, originIdAssignerOp.getId(), std::move(inferredOp));
     }
 
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.getRootOperators().size());
-    for (auto& sinkOperator : queryPlan.getRootOperators())
+    newSinks.reserve(plan.getRootOperators().size());
+    for (auto& sinkOperator : plan.getRootOperators())
     {
         newSinks.push_back(propagateOriginIds(sinkOperator));
     }
-    queryPlan = queryPlan.withRootOperators(newSinks);
+    return plan.withRootOperators(newSinks);
 }
 }

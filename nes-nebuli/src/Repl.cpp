@@ -27,11 +27,11 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <YAML/YAMLBinder.hpp>
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
-#include <LegacyOptimizer.hpp>
 #include <replxx.hxx>
 
 namespace NES
@@ -297,12 +297,10 @@ bool Repl::executeQuery(const std::string& query)
 {
     try
     {
-        auto yamlBinder = CLI::YAMLBinder{sourceCatalog, sinkCatalog};
-        auto optimizer = CLI::LegacyOptimizer{sourceCatalog, sinkCatalog};
-        auto logicalPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        auto optimizedPlan = optimizer.optimize(logicalPlan);
+        const auto logicalPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        const auto [optimizedPlan] = LegacyOptimizer::optimize(logicalPlan, sourceCatalog, sinkCatalog);
 
-        auto queryId = grpcClient->registerQuery(optimizedPlan);
+        const auto queryId = grpcClient->registerQuery(optimizedPlan);
         std::cout << "Query registered with ID: " << queryId << "\n";
 
         grpcClient->start(QueryId{queryId});
