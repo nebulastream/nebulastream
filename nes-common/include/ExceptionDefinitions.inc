@@ -68,6 +68,8 @@ EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
+EXCEPTION(InvalidSinkConfig, 2129, "invalid sink config")
+EXCEPTION(InvalidSourceConfig, 2129, "invalid source config")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -77,6 +79,12 @@ EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+
+/// 23XX NebuLI Distributed
+EXCEPTION(NoPathFound, 2300, "could not find path between source and sink")
+EXCEPTION(PlacementFailure, 2301, "could not place all operators")
+EXCEPTION(InvalidQueryPlan, 2302, "cannot place plans containing operators with more than two children")
+EXCEPTION(InvalidTopology, 2303, "node with same id added twice to topology")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

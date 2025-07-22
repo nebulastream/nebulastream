@@ -12,42 +12,50 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer.hpp>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
-#include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
-#include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
-#include <LegacyOptimizer/SinkBindingRule.hpp>
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
-#include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <vector>
 
-namespace NES::CLI
+#include <LegacyOptimizer/Phases/LogicalSourceExpansionPhase.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/RedundantProjectionRemovalPhase.hpp>
+#include <LegacyOptimizer/Phases/RedundantUnionRemovalPhase.hpp>
+#include <LegacyOptimizer/Phases/SinkBindingPhase.hpp>
+#include <LegacyOptimizer/Phases/SourceInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
+
+namespace NES
 {
-LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
+
+LegacyOptimizer::OptimizedLogicalPlan
+LegacyOptimizer::optimize(LogicalPlan inputPlan, SharedPtr<SourceCatalog> sourceCatalog, SharedPtr<SinkCatalog> sinkCatalog)
 {
-    auto newPlan = LogicalPlan{plan};
-    const auto sinkBindingRule = NES::LegacyOptimizer::SinkBindingRule{sinkCatalog};
-    const auto sourceInference = NES::LegacyOptimizer::SourceInferencePhase{sourceCatalog};
-    const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule{sourceCatalog};
-    constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
-    constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
-    constexpr auto redundantUnionRemovalRule = NES::LegacyOptimizer::RedundantUnionRemovalRule{};
-    constexpr auto redundantProjectionRemovalRule = NES::LegacyOptimizer::RedundantProjectionRemovalRule{};
+    using Transform = std::function<LogicalPlan(LogicalPlan)>;
 
-    sinkBindingRule.apply(newPlan);
-    sourceInference.apply(newPlan);
-    logicalSourceExpansionRule.apply(newPlan);
-    NES_INFO("After Source Expansion:\n{}", newPlan);
-    redundantUnionRemovalRule.apply(newPlan);
-    NES_INFO("After Redundant Union Removal:\n{}", newPlan);
-    typeInference.apply(newPlan);
+    std::vector<Transform> phases
+        = {[&](const LogicalPlan& p) { return SinkBindingPhase::apply(p, copyPtr(sinkCatalog)); },
+           [&](const LogicalPlan& p) { return SourceInferencePhase::apply(p, copyPtr(sourceCatalog)); },
+           [&](const LogicalPlan& p) { return LogicalSourceExpansionPhase::apply(p, copyPtr(sourceCatalog)); },
+           [](const LogicalPlan& p) { return RedundantUnionRemovalPhase::apply(p); },
+           [](const LogicalPlan& p) { return TypeInferencePhase::apply(p); },
+           [](const LogicalPlan& p) { return RedundantProjectionRemovalPhase::apply(p); },
+           [](const LogicalPlan& p) { return OriginIdInferencePhase::apply(p); },
+           [](const LogicalPlan& p) { return TypeInferencePhase::apply(p); }};
 
-    redundantProjectionRemovalRule.apply(newPlan);
-    NES_INFO("After Redundant Projection Removal:\n{}", newPlan);
+    LogicalPlan optimizedPlan = std::accumulate(
+        phases.begin(),
+        phases.end(),
+        std::move(inputPlan),
+        [](LogicalPlan plan, const Transform& phase) { return phase(std::move(plan)); });
 
-    originIdInferencePhase.apply(newPlan);
-    typeInference.apply(newPlan);
-    return newPlan;
+    NES_DEBUG("Plan after optimization passes: {}", optimizedPlan);
+    return OptimizedLogicalPlan{std::move(optimizedPlan)};
 }
 }
