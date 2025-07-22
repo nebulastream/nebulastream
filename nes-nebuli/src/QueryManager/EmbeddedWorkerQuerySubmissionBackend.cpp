@@ -40,6 +40,7 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 
                  /// Set connection/grpc from topology (these always come from cluster config)
                  mergedConfig.grpcAddressUri.setValue(config.grpc.getRawValue());
+                 mergedConfig.connection.setValue(config.host.getRawValue());
 
                  const LogContext logContext("create", config.grpc);
                  return SingleNodeWorker(mergedConfig, WorkerId("embedded"));

@@ -91,14 +91,6 @@ async fn create_channel<C: Communication>(
     }
 }
 
-/// Maximum number of buffers that can be in-flight (sent but not yet acknowledged).
-///
-/// This constant implements a sliding window flow control mechanism. When this limit
-/// is reached, the channel handler will stop sending new buffers and wait for
-/// acknowledgments from the receiver. This prevents unbounded memory growth and
-/// provides backpressure at the network level.
-const MAX_PENDING_ACKS: usize = 64;
-
 /// Commands sent from `SenderChannel` to the channel handler task.
 pub(super) enum ChannelCommand {
     /// Send a data buffer through the channel.
@@ -149,6 +141,7 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
+    max_pending_acks: usize,
 }
 
 enum ErrorOrStatus {
@@ -163,6 +156,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         queue: ChannelCommandQueueListener,
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
+        max_pending_acks: usize,
     ) -> Self {
         Self {
             cancellation_token,
@@ -171,6 +165,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             reader,
             writer,
             queue,
+            max_pending_acks,
         }
     }
     /// Handles commands from the `SenderChannel` (software side).
@@ -356,14 +351,14 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// based on the current state:
     ///
     /// - `should_send_pending`: Sends buffered data when `pending_writes` is non-empty
-    /// - `should_read_from_software`: Accepts new commands when `wait_for_ack` < `MAX_PENDING_ACKS`
+    /// - `should_read_from_software`: Accepts new commands when `wait_for_ack` < `max_pending_acks`
     /// - `should_read_from_other_side`: Reads acks when `wait_for_ack` is non-empty
     ///
     /// When there is no pending data to send, the codec buffer is flushed before
     /// entering `select!` so the receiver can see previously fed data and send acks.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
-            let should_read_from_software = self.wait_for_ack.len() < MAX_PENDING_ACKS;
+            let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
             let should_read_from_other_side = !self.wait_for_ack.is_empty();
             let should_send_pending = !self.pending_writes.is_empty();
 
@@ -483,6 +478,7 @@ async fn channel_handler(
         pending_channel.queue,
         reader,
         writer,
+        pending_channel.max_pending_acks,
     );
     handler.run().await
 }
