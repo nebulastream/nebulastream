@@ -30,6 +30,7 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 #include <unistd.h>
 
@@ -43,7 +44,7 @@
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
-#include <QuerySubmitter.hpp>
+#include <ExecutionBackend.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
@@ -51,11 +52,13 @@
 #include <SystestState.hpp>
 #include <from_current.hpp>
 
-
 using namespace std::literals;
 
 namespace NES
 {
+
+static constexpr auto DEFAULT_TOPOLOGY_PATH = TEST_CONFIGURATION_DIR "/topologies/default_local.yaml";
+
 SystestConfiguration readConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
@@ -63,8 +66,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
-              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+        .help(
+            "directly specified test file, e.g., filter.test or a directory to discover test files in. Use "
+            "'path/to/testFile:testNumber' to run a specific test by test number within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -88,11 +92,13 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// result dir
     program.add_argument("--workingDir")
-        .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
-              "/nes-systests/");
+        .help(
+            "change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR "/nes-systests/");
 
-    /// server/remote mode
-    program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
+    /// distributed mode, otherwise fall back to local (dummy topology, will lead to single-node execution
+    program.add_argument("--topology")
+        .help("run distributed, based on topology file (.yaml)")
+        .default_value(DEFAULT_TOPOLOGY_PATH);
 
     /// test query order
     program.add_argument("--shuffle").flag().help("run queries in random order");
@@ -282,10 +288,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.randomQueryOrder = true;
     }
 
-    if (program.is_used("-s"))
-    {
-        config.grpcAddressUri = program.get<std::string>("-s");
-    }
+    config.topology = program.get<std::string>("--topology");
 
     if (program.is_used("-n"))
     {
@@ -327,7 +330,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         argv.push_back("systest"); /// dummy option as arg expects first arg to be the program name
         for (auto& arg : confVec)
         {
-            argv.push_back(const_cast<char*>(arg.c_str()));
+            argv.push_back(arg.c_str());
         }
 
         config.singleNodeWorkerConfig = loadConfiguration<SingleNodeWorkerConfiguration>(argc, argv.data());
@@ -357,7 +360,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     return config;
 }
 
-void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfiguration& config)
+void runEndlessMode(std::vector<Systest::PlannedQuery> queries, SystestConfiguration& config)
 {
     std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
 
@@ -376,22 +379,24 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
 
     std::mt19937 rng(std::random_device{}());
 
-    const auto grpcURI = config.grpcAddressUri.getValue();
-    const auto runRemote = not grpcURI.empty();
-
-    auto submitter = [&]() -> std::unique_ptr<Systest::QuerySubmitter>
-    {
-        if (runRemote)
-        {
-            return std::make_unique<Systest::RemoteWorkerQuerySubmitter>(grpcURI);
-        }
-        return std::make_unique<Systest::LocalWorkerQuerySubmitter>(singleNodeWorkerConfiguration);
-    }();
-
     while (true)
     {
         std::ranges::shuffle(queries, rng);
-        const auto failedQueries = runQueries(queries, numberConcurrentQueries, *submitter);
+        std::vector<Systest::FailedQuery> failedQueries;
+        if (config.topology.getValue() == DEFAULT_TOPOLOGY_PATH)
+        {
+            failedQueries = Systest::SystestRunner::from(
+                                queries, Systest::SystestRunner::LocalExecution{singleNodeWorkerConfiguration}, numberConcurrentQueries)
+                                .run();
+        }
+        else
+        {
+            failedQueries = Systest::SystestRunner::from(
+                                queries,
+                                Systest::SystestRunner::DistributedExecution{std::filesystem::path{config.topology.getValue()}},
+                                numberConcurrentQueries)
+                                .run();
+        }
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
@@ -410,14 +415,14 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
 {
     std::error_code errorCode;
-    const auto relativeLogPath = std::filesystem::relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
+    const auto relativeLogPath = relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
     if (errorCode)
     {
         std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
         return;
     }
 
-    if (std::filesystem::exists(symlinkPath) || std::filesystem::is_symlink(symlinkPath))
+    if (exists(symlinkPath) || is_symlink(symlinkPath))
     {
         std::filesystem::remove(symlinkPath, errorCode);
         if (errorCode)
@@ -428,7 +433,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
 
     try
     {
-        std::filesystem::create_symlink(relativeLogPath, symlinkPath);
+        create_symlink(relativeLogPath, symlinkPath);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
@@ -486,8 +491,9 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
-        Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
-        auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
+        Systest::SystestBinder binder{
+            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), config.topology.getValue()};
+        auto [queries, loadedFiles] = binder.loadPlanQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
             return {
@@ -518,11 +524,17 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             std::mt19937 rng(std::random_device{}());
             std::ranges::shuffle(queries, rng);
         }
+
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-        std::vector<Systest::RunningQuery> failedQueries;
-        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
+        std::vector<Systest::FailedQuery> failedQueries;
+        Systest::SystestRunner::ExecutionMode executionMode;
+        if (config.topology.getValue() != std::filesystem::path{TEST_CONFIGURATION_DIR} / "topologies" / "default_local.yaml")
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
+            failedQueries = Systest::SystestRunner::from(
+                                queries,
+                                Systest::SystestRunner::DistributedExecution{std::filesystem::path{config.topology}},
+                                config.numberConcurrentQueries)
+                                .run();
         }
         else
         {
@@ -538,7 +550,11 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                failedQueries = Systest::SystestRunner::from(
+                                    queries,
+                                    Systest::SystestRunner::BenchmarkExecution{std::move(singleNodeWorkerConfiguration), benchmarkResults},
+                                    config.numberConcurrentQueries)
+                                    .run();
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -547,7 +563,11 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             }
             else
             {
-                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+                failedQueries = Systest::SystestRunner::from(
+                                    std::move(queries),
+                                    Systest::SystestRunner::LocalExecution{std::move(singleNodeWorkerConfiguration)},
+                                    numberConcurrentQueries)
+                                    .run();
             }
         }
         if (not failedQueries.empty())

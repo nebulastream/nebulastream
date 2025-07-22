@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <compare>
 #include <cstdint>
 #include <cstdlib>
 #include <expected>
@@ -33,36 +34,32 @@
 #include <variant>
 #include <vector>
 
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Distributed/DistributedQueryId.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <SystestSources/SourceTypes.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 #include <SystestConfiguration.hpp>
-
-#include <Identifiers/NESStrongType.hpp>
-
 
 namespace NES::Systest
 {
-
 
 class SystestRunner;
 
 using TestName = std::string;
 using TestGroup = std::string;
-
-using SystestQueryId = NES::NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
+using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 
@@ -87,47 +84,83 @@ private:
     Underlying value;
 };
 
-struct SystestQuery
+struct SystestQueryContext
 {
     static std::filesystem::path
     resultFile(const std::filesystem::path& workingDir, std::string_view testName, SystestQueryId queryIdInTestFile);
 
     static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
+
     [[nodiscard]] std::filesystem::path resultFile() const;
 
     TestName testName;
-    SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::filesystem::path testFilePath;
     std::filesystem::path workingDir;
-    /// The schema of the data written to a CSV file.
-    /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
+    SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::string queryDefinition;
-
-    struct PlanInfo
-    {
-        LogicalPlan queryPlan;
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
-        Schema sinkOutputSchema;
-    };
-    std::expected<PlanInfo, Exception> planInfoOrException;
-    std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
-    std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrError;
 };
 
-struct RunningQuery
+struct PlanInfo
 {
-    SystestQuery systestQuery;
-    QueryId queryId = INVALID_QUERY_ID;
-    QuerySummary querySummary;
-    std::optional<uint64_t> bytesProcessed{0};
-    std::optional<uint64_t> tuplesProcessed{0};
-    bool passed = false;
-    std::optional<Exception> exception;
-
-    std::chrono::duration<double> getElapsedTime() const;
-    [[nodiscard]] std::string getThroughput() const;
+    QueryPlanner::FinalizedLogicalPlan plan;
+    std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
+    Schema sinkOutputSchema;
 };
 
+struct PlannedQuery
+{
+    friend std::ostream& operator<<(std::ostream& os, const PlannedQuery& planned)
+    {
+        return os << fmt::format("[{}, systest -t {}:{}]", planned.ctx.testName, planned.ctx.testFilePath, planned.ctx.queryIdInFile);
+    }
+
+    SystestQueryContext ctx;
+    std::expected<PlanInfo, Exception> planInfoOrException;
+};
+
+struct SubmittedQuery
+{
+    SubmittedQuery() = delete;
+    SubmittedQuery(Distributed::QueryId&& id, PlannedQuery&& q)
+        : queryId{std::move(id)}, ctx{std::move(q.ctx)}, planInfo{std::move(*q.planInfoOrException)}
+    {
+    }
+
+    Distributed::QueryId queryId;
+    SystestQueryContext ctx;
+    PlanInfo planInfo;
+    /// Optional benchmarking metrics
+    std::optional<size_t> bytesProcessed;
+    std::optional<size_t> tuplesProcessed;
+};
+
+struct FailedQuery
+{
+    FailedQuery() = delete;
+    FailedQuery(PlannedQuery&& q, std::vector<Exception>&& exceptions) : ctx{std::move(q.ctx)}, exceptions{{std::move(exceptions)}} { }
+    FailedQuery(SubmittedQuery&& q, std::vector<Exception>&& exceptions) : ctx{std::move(q.ctx)}, exceptions{std::move(exceptions)} { }
+
+    friend std::ostream& operator<<(std::ostream& os, const FailedQuery& failed)
+    {
+        return os << fmt::format("[{}, {}]", failed.ctx.testName, failed.ctx.queryDefinition);
+    }
+
+    SystestQueryContext ctx;
+    std::vector<Exception> exceptions;
+};
+
+struct FinishedQuery
+{
+    FinishedQuery() = delete;
+    explicit FinishedQuery(SubmittedQuery&& q) : ctx{std::move(q.ctx)}, planInfo{std::move(q.planInfo)} { }
+
+    SystestQueryContext ctx;
+    PlanInfo planInfo;
+    /// Optional performance metrics
+    std::optional<std::chrono::duration<double>> elapsedTime;
+    std::optional<std::string> throughput;
+};
 
 struct TestFile
 {
@@ -144,14 +177,13 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
+    std::vector<PlannedQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
 
 /// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
-
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
@@ -160,18 +192,5 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 }
 
-
-template <>
-struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
-{
-    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-    static auto format(const NES::Systest::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
-    {
-        return fmt::format_to(
-            ctx.out(),
-            "[{}, systest -t {}:{}]",
-            runningQuery.systestQuery.testName,
-            runningQuery.systestQuery.testFilePath,
-            runningQuery.systestQuery.queryIdInFile);
-    }
-};
+FMT_OSTREAM(NES::Systest::FailedQuery);
+FMT_OSTREAM(NES::Systest::PlannedQuery);

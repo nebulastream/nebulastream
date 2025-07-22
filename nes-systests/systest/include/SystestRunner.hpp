@@ -14,68 +14,75 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <filesystem>
 #include <memory>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+#include <variant>
 #include <vector>
-#include <DataTypes/Schema.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
+
 #include <nlohmann/json_fwd.hpp>
+
+#include <BenchmarkUtils.hpp>
+#include <ExecutionBackend.hpp>
+#include <QueryResultReporter.hpp>
+#include <QueryTracker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-/// Forward declarations
-struct SystestQuery;
-struct RunningQuery;
-class QuerySubmitter;
 
-/// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
-static constexpr auto padSizeSuccess = 120;
-/// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries per file
-static constexpr auto padSizeQueryNumber = 2;
-/// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
-static constexpr auto padSizeQueryCounter = 3;
+class SystestRunner
+{
+public:
+    struct LocalExecution
+    {
+        SingleNodeWorkerConfiguration singleNodeWorkerConfig;
+    };
+    struct DistributedExecution
+    {
+        std::filesystem::path topologyPath;
+    };
+    struct BenchmarkExecution
+    {
+        SingleNodeWorkerConfiguration singleNodeWorkerConfig;
+        /// Type is bound to the variant, which in turn is bound to the outer object, which is single-use
+        /// Therefore, storing the ref here is safe
+        nlohmann::json& benchmarkResults; /// NOLINT(*-avoid-const-or-ref-data-members)
+    };
 
-/// Runs queries
-/// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+    using ExecutionMode = std::variant<LocalExecution, DistributedExecution, BenchmarkExecution>;
 
-/// Run queries locally ie not on single-node-worker in a separate process
-/// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration);
+private:
+    QueryTracker queryTracker;
+    ExecutionMode executionMode;
+    std::unique_ptr<ExecutionBackend> executionBackend;
+    std::unique_ptr<QueryResultReporter> reporter;
+    std::vector<FailedQuery> reportedFailures;
+    std::vector<FinishedQuery> finishedQueries;
 
-/// Run queries remote on the single-node-worker specified by the URI
-/// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+    SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, uint64_t queryConcurrency);
 
-/// Run queries sequentially locally and benchmark the run time of each query.
-/// @return vector containing failed queries
-[[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
+public:
+    static SystestRunner from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, uint64_t queryConcurrency);
 
-/// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
-/// function/arithmetical/FunctionDiv:4..................................Passed
-/// function/arithmetical/FunctionMul:5..................................Failed
-/// SELECT * FROM s....
-/// Expected ............ | Actual 1, 2,3
-void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    size_t queryCounter,
-    size_t totalQueries,
-    const std::string_view queryPerformanceMessage);
+    SystestRunner() = delete;
+    ~SystestRunner() = default;
+    SystestRunner(const SystestRunner&) = delete;
+    SystestRunner(SystestRunner&&) = delete;
+    SystestRunner operator=(const SystestRunner&) = delete;
+    SystestRunner operator=(SystestRunner&&) = delete;
+
+    std::vector<FailedQuery> run() &&;
+
+private:
+    void submit();
+    void handle();
+    void onFailure(SubmittedQuery& submitted, const QueryStatus& status);
+    void onStopped(SubmittedQuery& submitted);
+    
+    [[nodiscard]] bool isBenchmarkMode() const;
+    void finalizeBenchmarkResults() const;
+};
 
 }

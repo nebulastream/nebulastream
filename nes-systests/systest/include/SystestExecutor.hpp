@@ -23,7 +23,6 @@
 #include <argparse/argparse.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
 struct SystestExecutorResult
@@ -41,7 +40,7 @@ struct SystestExecutorResult
 namespace NES
 {
 
-void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfiguration& config);
+void runEndlessMode(std::vector<Systest::PlannedQuery> queries, SystestConfiguration& config);
 void loadConfig(const argparse::ArgumentParser& program, SystestConfiguration& config);
 SystestConfiguration readConfiguration(int argc, const char** argv);
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath);
