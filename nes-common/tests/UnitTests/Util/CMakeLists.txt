@@ -21,6 +21,7 @@ add_nes_common_test(nes-common-tests
         "RollingAverageTest.cpp"
         "TypeTraitsTest.cpp"
 )
+target_link_libraries(nes-common-tests nes_rust_bindings)
 
 add_nes_test(nes-thread-test
         "ThreadTest.cpp"
