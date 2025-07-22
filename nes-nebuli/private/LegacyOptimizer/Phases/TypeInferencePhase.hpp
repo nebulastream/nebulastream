@@ -14,24 +14,23 @@
 
 #pragma once
 
-#include <memory>
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 /// The type inference phase receives and query plan and infers all input and output schemata for all operators.
 class TypeInferencePhase
 {
 public:
-    TypeInferencePhase() = default;
+    TypeInferencePhase() = delete;
+    ~TypeInferencePhase() = delete;
+    TypeInferencePhase(const TypeInferencePhase&) = delete;
+    TypeInferencePhase(TypeInferencePhase&&) = delete;
+    TypeInferencePhase& operator=(const TypeInferencePhase&) = delete;
+    TypeInferencePhase& operator=(TypeInferencePhase&&) = delete;
 
-    /// Performs type inference on the given query plan.
-    /// This involves the following steps.
-    /// 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-    /// 2. Propagate the input and output schemas from source operators to the sink operators.
-    /// 3. If a operator contains expression, we infer the result dataType of this operators.
-    /// @throws TypeInferenceException if inferring the data types into the query failed
-    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
+
 }

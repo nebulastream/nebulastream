@@ -1,0 +1,34 @@
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO mock_sink
+sink:
+  name: mock_sink
+  type: File
+  host: "sink-node"
+  config:
+    inputFormat: CSV
+    filePath: "[MOCKED]"
+    append: false
+logicalSources:
+  - name: mock_source
+    schema:
+      - name: a
+        dataType: INT32
+      - name: b
+        dataType: INT32
+physicalSources:
+  - logicalSource: mock_source
+    host: "source-node"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+workerNodes:
+  - host: "sink-node"
+    grpc: "sink-node-grpc"
+    capacity: 1
+  - host: "source-node"
+    grpc: "source-node-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "sink-node"

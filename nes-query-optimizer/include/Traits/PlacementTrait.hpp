@@ -14,17 +14,27 @@
 
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <optional>
+#include <string>
+#include <typeinfo>
 
-namespace NES::LegacyOptimizer
+#include <Identifiers/Identifiers.hpp>
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
+
+namespace NES
 {
 
-/**
- * @brief This rule removes redundant projection, which project everything
- */
-class RedundantProjectionRemovalRule
+/// Assigns a placement on a physical node to an operator
+struct PlacementTrait final : TraitConcept
 {
-public:
-    void apply(LogicalPlan& queryPlan) const;
+    explicit PlacementTrait(std::string nodeId);
+
+    std::string onNode;
+
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] SerializableTrait serialize() const override;
 };
+
 }

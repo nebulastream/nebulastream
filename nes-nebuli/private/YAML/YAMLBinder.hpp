@@ -11,85 +11,63 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-
 #pragma once
 
-#include <istream>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
-#include <DataTypes/DataType.hpp>
+
+#include <Distributed/NetworkTopology.hpp>
+#include <Distributed/NodeCatalog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkDescriptor.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <QueryConfig.hpp>
+
+namespace NES
+{
+/// Validated and bound content of a YAML file, the members are not specific to the yaml-binder anymore but our "normal" types.
+/// If something goes wrong, for example, a source is declared twice, the binder will throw an exception.
+struct BoundLogicalPlan
+{
+    LogicalPlan plan;
+    TopologyGraph topology;
+    NodeCatalog nodeCatalog;
+    std::shared_ptr<SourceCatalog> sourceCatalog;
+};
+}
 
 namespace NES::CLI
 {
 
-/// In NES::CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
-/// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as NES::LogicalSource and NES::SourceDescriptor.
-struct SchemaField
-{
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, DataType type);
-    SchemaField() = default;
-
-    std::string name;
-    DataType type;
-};
-
-struct Sink
-{
-    std::string name;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
-};
-
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
-
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
-};
-
-struct QueryConfig
-{
-    std::string query;
-    std::unordered_map<std::string, Sink> sinks;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-
-/// Validated and bound content of a YAML file, the members are not specific to the yaml-binder anymore but our "normal" types.
-/// If something goes wrong, for example, a source is declared twice, the binder will throw an exception.
-struct BoundQueryConfig
-{
-    LogicalPlan plan;
-    /// This should be changed to bound sinks once there is a sink catalog
-    std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
-    std::vector<NES::LogicalSource> logicalSources;
-    std::vector<SourceDescriptor> sourceDescriptors;
-};
-
 class YAMLBinder
 {
+    LogicalPlan plan;
+    QueryConfig queryConfig;
+
+    TopologyGraph topology;
+    NodeCatalog nodeCatalog;
     std::shared_ptr<SourceCatalog> sourceCatalog;
 
-public:
-    explicit YAMLBinder(const std::shared_ptr<SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
-    BoundQueryConfig parseAndBind(std::istream& inputStream);
+    explicit YAMLBinder(const QueryConfig& config);
 
-    std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
-    std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
+public:
+    static YAMLBinder from(QueryConfig&& config) { return YAMLBinder{std::move(config)}; }
+
+    BoundLogicalPlan bind() &&;
+
+private:
+    void bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
+    void bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
+    LogicalPlan bindValidateSink(const Sink& unboundSink) const;
+};
+
+class YAMLLoader
+{
+    static QueryConfig loadFromFile(const std::string& filePath);
+    static QueryConfig loadFromStream(std::istream& stream);
+
+public:
+    static QueryConfig load(const std::string& inputArgument);
 };
 
 }

@@ -13,25 +13,23 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
-class SourceCatalog;
-}
-namespace NES::CLI
-{
-class LegacyOptimizer
+
+///  @brief This rule removes redundant projections, which project everything
+class RedundantProjectionRemovalPhase
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    LegacyOptimizer() = default;
-    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    RedundantProjectionRemovalPhase() = delete;
+    ~RedundantProjectionRemovalPhase() = delete;
+    RedundantProjectionRemovalPhase(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase(RedundantProjectionRemovalPhase&&) = delete;
+    RedundantProjectionRemovalPhase& operator=(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase& operator=(RedundantProjectionRemovalPhase&&) = delete;
 
-private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
 }

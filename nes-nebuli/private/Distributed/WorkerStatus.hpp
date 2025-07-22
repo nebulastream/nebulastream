@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <cstdint>
+#include <string>
+#include <string_view>
 
-namespace NES::LegacyOptimizer
+#include <SingleNodeWorkerRPCService.pb.h>
+
+namespace NES::Distributed
 {
 
-/**
- * @brief This rule removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
-{
-public:
-    void apply(LogicalPlan& queryPlan) const; ///NOLINT(readability-convert-member-functions-to-static)
-};
+/// Helper function to convert milliseconds since epoch to a readable time string
+std::string formatTimestamp(uint64_t timestampMs);
+
+/// Function to pretty print the WorkerStatusResponse
+void prettyPrintWorkerStatus(std::string_view grpcAddress, const WorkerStatusResponse& response);
 }

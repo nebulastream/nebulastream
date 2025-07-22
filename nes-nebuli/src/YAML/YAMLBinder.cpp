@@ -14,19 +14,23 @@
 
 #include <YAML/YAMLBinder.hpp>
 
+#include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <istream>
 #include <memory>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <yaml-cpp/yaml.h> /// NOLINT(misc-include-cleaner)
+
 #include <Configurations/ConfigurationsNames.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Identifiers/NESStrongType.hpp>
+#include <Distributed/NetworkTopology.hpp>
+#include <Distributed/NodeCatalog.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -36,105 +40,99 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
-#include <fmt/ranges.h>
-#include <yaml-cpp/exceptions.h>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
-#include <yaml-cpp/yaml.h> /// NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
-
-
-namespace
-{
-NES::DataType stringToFieldType(const std::string& fieldNodeType)
-{
-    try
-    {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
-    }
-    catch (std::runtime_error& e)
-    {
-        throw NES::SLTWrongSchema("Found invalid logical source configuration. {} is not a proper datatype.", fieldNodeType);
-    }
-}
-}
+#include <QueryConfig.hpp>
 
 namespace YAML
 {
 
 template <>
+struct convert<NES::CLI::NodeConfig>
+{
+    static bool decode(const YAML::Node& node, NES::CLI::NodeConfig& workerConfig)
+    {
+        workerConfig.host = node["host"].as<NES::CLI::HostAddr>();
+        workerConfig.grpc = node["grpc"].as<NES::CLI::GrpcAddr>();
+        workerConfig.capacity = node["capacity"].as<size_t>();
+        workerConfig.downstreamNodes = node["downstreamNodes"].as<std::vector<NES::CLI::HostAddr>>(std::vector<NES::CLI::HostAddr>{});
+        return true;
+    }
+};
+
+template <>
 struct convert<NES::CLI::SchemaField>
 {
-    static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
+    static bool decode(const YAML::Node& node, NES::CLI::SchemaField& schemaField)
     {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        schemaField.name = node["name"].as<std::string>();
+        schemaField.dataType = NES::CLI::stringToFieldType(node["dataType"].as<std::string>());
         return true;
     }
 };
 template <>
 struct convert<NES::CLI::Sink>
 {
-    static bool decode(const Node& node, NES::CLI::Sink& rhs)
+    static bool decode(const YAML::Node& node, NES::CLI::Sink& sink)
     {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = node["type"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        sink.name = node["name"].as<std::string>();
+        sink.type = node["type"].as<std::string>();
+        sink.host = node["host"].as<NES::CLI::HostAddr>();
+        sink.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
 template <>
 struct convert<NES::CLI::LogicalSource>
 {
-    static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
+    static bool decode(const YAML::Node& node, NES::CLI::LogicalSource& logicalSource)
     {
-        rhs.name = node["name"].as<std::string>();
-        rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
+        logicalSource.name = node["name"].as<std::string>();
+        logicalSource.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         return true;
     }
 };
 template <>
 struct convert<NES::CLI::PhysicalSource>
 {
-    static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
+    static bool decode(const YAML::Node& node, NES::CLI::PhysicalSource& physicalSource)
     {
-        rhs.logical = node["logical"].as<std::string>();
-        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
-        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
+        physicalSource.logicalSource = node["logicalSource"].as<std::string>();
+        physicalSource.host = node["host"].as<NES::CLI::HostAddr>();
+        physicalSource.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        physicalSource.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
 template <>
 struct convert<NES::CLI::QueryConfig>
 {
-    static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
+    static bool decode(const YAML::Node& node, NES::CLI::QueryConfig& config)
     {
-        const auto sink = node["sink"].as<NES::CLI::Sink>();
-        rhs.sinks.emplace(sink.name, sink);
-        rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
-        rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.query = node["query"].as<std::string>();
+        config.query = node["query"].as<std::string>();
+        config.sink = node["sink"].as<NES::CLI::Sink>(NES::CLI::Sink{});
+        config.logicalSources = node["logicalSources"].as<std::vector<NES::CLI::LogicalSource>>(std::vector<NES::CLI::LogicalSource>{});
+        config.physicalSources = node["physicalSources"].as<std::vector<NES::CLI::PhysicalSource>>(std::vector<NES::CLI::PhysicalSource>{});
+        config.workerNodes = node["workerNodes"].as<std::vector<NES::CLI::NodeConfig>>(std::vector<NES::CLI::NodeConfig>{});
         return true;
     }
 };
-
 }
 
 namespace NES::CLI
 {
-
-
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
+YAMLBinder::YAMLBinder(const QueryConfig& config)
+    : plan(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query))
+    , queryConfig{config}
+    , topology{TopologyGraph::from(
+          std::views::transform(config.workerNodes, [](const auto& conf) { return std::make_pair(conf.host, conf.downstreamNodes); })
+          | std::ranges::to<std::vector>())}
+    , nodeCatalog{NodeCatalog::from(config.workerNodes)}
+    , sourceCatalog{std::make_shared<SourceCatalog>()}
 {
 }
 
-SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
+void YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
 {
-}
-
-std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
-{
-    std::vector<NES::LogicalSource> boundSources{};
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {
@@ -144,23 +142,17 @@ std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std
         {
             schema.addField(name, type);
         }
-        if (const auto registeredSource = sourceCatalog->addLogicalSource(logicalSourceName, schema); registeredSource.has_value())
-        {
-            boundSources.push_back(registeredSource.value());
-        }
-        else
+        if (not sourceCatalog->addLogicalSource(logicalSourceName, schema).has_value())
         {
             NES_ERROR("Could not register logical source \"{}\" because it already exists", logicalSourceName);
         }
     }
-    return boundSources;
 }
 
-std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources)
+void YAMLBinder::bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources)
 {
-    std::vector<SourceDescriptor> boundSources{};
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, parserConfig, sourceConfig] : unboundSources)
+    for (auto [logicalSourceName, host, parserConfig, sourceConfig] : unboundSources)
     {
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         if (not logicalSource.has_value())
@@ -184,60 +176,102 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
         const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
         auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfig));
         const auto sourceDescriptorOpt = sourceCatalog->addPhysicalSource(
-            logicalSource.value(),
-            INITIAL<WorkerId>,
-            sourceType,
-            buffersInLocalPool,
-            std::move(validSourceConfig),
-            validInputFormatterConfig);
+            logicalSource.value(), host, sourceType, buffersInLocalPool, std::move(validSourceConfig), validInputFormatterConfig);
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());
         }
-        boundSources.push_back(sourceDescriptorOpt.value());
     }
-    return boundSources;
 }
 
-BoundQueryConfig YAMLBinder::parseAndBind(std::istream& inputStream)
+LogicalPlan YAMLBinder::bindValidateSink(const Sink& unboundSink) const
 {
-    BoundQueryConfig config{};
-    auto& [plan, sinks, logicalSources, physicalSources] = config;
+    const auto sinkOperators = plan.getRootOperators();
+    if (sinkOperators.size() != 1)
+    {
+        throw QueryInvalid(
+            "NebulaStream currently only supports a single sink per query, but the query contains: {}", sinkOperators.size());
+    }
+    auto sinkOperator = sinkOperators.front().tryGet<SinkLogicalOperator>();
+    INVARIANT(sinkOperator.has_value(), "Root operator in plan was not sink");
+
+    if (sinkOperator->sinkName == unboundSink.name)
+    {
+        auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(unboundSink.type, unboundSink.config);
+        const auto sinkDescriptor
+            = std::make_shared<Sinks::SinkDescriptor>(unboundSink.type, std::move(validatedSinkConfig), unboundSink.host, false);
+        sinkOperator->sinkDescriptor = sinkDescriptor;
+    }
+    else
+    {
+        throw UnknownSinkType(
+            "Sink name '{}' does not match the name specified in the configuration: '{}'", sinkOperator->sinkName, unboundSink.name, ",");
+    }
+    return plan.withRootOperators({*sinkOperator});
+}
+
+BoundLogicalPlan YAMLBinder::bind() &&
+{
+    /// Validate and set descriptors for sources and sinks, register into source catalog
+    bindRegisterLogicalSources(queryConfig.logicalSources);
+    bindRegisterPhysicalSources(queryConfig.physicalSources);
+    auto planWithUpdatedSink = bindValidateSink(queryConfig.sink);
+    return BoundLogicalPlan{
+        .plan = std::move(planWithUpdatedSink),
+        .topology = std::move(topology),
+        .nodeCatalog = std::move(nodeCatalog),
+        .sourceCatalog = sourceCatalog};
+}
+
+QueryConfig YAMLLoader::load(const std::string& inputArgument)
+{
+    const std::string source = inputArgument == "-" ? "stdin" : inputArgument;
+
     try
     {
-        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources] = YAML::Load(inputStream).as<QueryConfig>();
-        plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryString);
-        const auto sinkOperators = plan.rootOperators;
-        if (sinkOperators.size() != 1)
+        if (inputArgument == "-")
         {
-            throw QueryInvalid(
-                "NebulaStream currently only supports a single sink per query, but the query contains: {}", sinkOperators.size());
+            return loadFromStream(std::cin);
         }
-        auto sinkOperator = sinkOperators.at(0).tryGet<SinkLogicalOperator>();
-        INVARIANT(sinkOperator.has_value(), "Root operator in plan was not sink");
-
-        if (const auto foundSink = unboundSinks.find(sinkOperator->sinkName); foundSink != unboundSinks.end())
-        {
-            auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(foundSink->second.type, foundSink->second.config);
-            auto sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(foundSink->second.type, std::move(validatedSinkConfig), false);
-            sinkOperator->sinkDescriptor = sinkDescriptor;
-            sinks = std::unordered_map{std::make_pair(foundSink->second.name, sinkDescriptor)};
-        }
-        else
-        {
-            throw UnknownSinkType(
-                "Sinkname {} not specified in the configuration {}",
-                sinkOperator->sinkName,
-                fmt::join(std::ranges::views::keys(sinks), ","));
-        }
-        plan.rootOperators.at(0) = *sinkOperator;
-        logicalSources = bindRegisterLogicalSources(unboundLogicalSources);
-        physicalSources = bindRegisterPhysicalSources(unboundPhysicalSources);
-        return config;
+        return loadFromFile(inputArgument);
     }
-    catch (const YAML::ParserException& pex)
+    catch (const YAML::ParserException& e)
     {
-        throw QueryDescriptionNotParsable("{}", pex.what());
+        throw QueryDescriptionNotReadable("YAML syntax error in '{}' at line {}: {}", source, e.mark.line + 1, e.what());
     }
+    catch (const YAML::BadConversion& e)
+    {
+        throw QueryDescriptionNotReadable("YAML conversion error in '{}': {}", source, e.what());
+    }
+    catch (const YAML::Exception& e)
+    {
+        throw QueryDescriptionNotReadable("YAML error in '{}': {}", source, e.what());
+    }
+    catch (const std::ios_base::failure& e)
+    {
+        throw QueryDescriptionNotReadable("IO error reading '{}': {}", source, e.what());
+    }
+}
+
+QueryConfig YAMLLoader::loadFromFile(const std::string& filePath)
+{
+    if (!std::filesystem::exists(filePath))
+    {
+        throw QueryDescriptionNotReadable("File '{}' does not exist", filePath);
+    }
+
+    std::ifstream file{filePath};
+    if (!file.is_open())
+    {
+        throw QueryDescriptionNotReadable("Cannot open file '{}': {}", filePath, std::strerror(errno));
+    }
+
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    return loadFromStream(file);
+}
+
+QueryConfig YAMLLoader::loadFromStream(std::istream& stream)
+{
+    return YAML::Load(stream).as<QueryConfig>();
 }
 }
