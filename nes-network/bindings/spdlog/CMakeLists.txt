@@ -27,4 +27,4 @@ target_link_libraries(rustlogger_cxx_bridge PUBLIC spdlog::spdlog magic_enum::ma
 find_package(magic_enum CONFIG REQUIRED)
 find_package(spdlog     CONFIG REQUIRED)
 
-target_link_libraries(nes-logger-bindings PUBLIC nes-common rustlogger_cxx_bridge)
+target_link_libraries(nes-logger-bindings PUBLIC rustlogger_cxx_bridge)
