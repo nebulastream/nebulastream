@@ -34,9 +34,13 @@
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryEngineStatisticListener.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void init_receiver_service(std::string connectionAddr, NES::WorkerId worker_id);
+extern void init_sender_service(std::string connectionAddr, NES::WorkerId worker_id);
 
 namespace NES
 {
@@ -68,6 +72,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
+    }
+
+    if (!configuration.connection.getValue().empty())
+    {
+        init_receiver_service(configuration.connection.getValue(), workerId);
+        init_sender_service(configuration.connection.getValue(), workerId);
     }
 }
 
