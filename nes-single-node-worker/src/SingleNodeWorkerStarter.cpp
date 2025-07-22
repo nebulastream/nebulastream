@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <csignal>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <cpptrace/from_current.hpp>
+#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
@@ -24,19 +26,28 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
+extern void init_receiver_service(std::string bindAddr, std::string connectionAddr);
+extern void init_sender_service(std::string connectionAddr);
+
 int main(const int argc, const char* argv[])
 {
     CPPTRACE_TRY
     {
+        signal(SIGPIPE, SIG_IGN);
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {
             return 0;
         }
+        if (!configuration->bind.getValue().empty() && !configuration->connection.getValue().empty())
+        {
+            init_receiver_service(configuration->bind.getValue(), configuration->connection.getValue());
+            init_sender_service(configuration->connection.getValue());
+        }
 
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
-
+        grpc::EnableDefaultHealthCheckService(true);
         grpc::ServerBuilder builder;
         builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
