@@ -88,6 +88,32 @@ std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
     return resultFile(workingDir, testName + "differential", queryIdInFile);
 }
 
+// SystestProgressTracker implementation
+SystestProgressTracker::SystestProgressTracker() = default;
+
+SystestProgressTracker::SystestProgressTracker(size_t totalQueries) : totalQueries(totalQueries) { }
+
+void SystestProgressTracker::incrementQueryCounter() { ++queryCounter; }
+
+size_t SystestProgressTracker::getQueryCounter() const { return queryCounter.load(); }
+
+void SystestProgressTracker::setTotalQueries(size_t total) { totalQueries = total; }
+
+size_t SystestProgressTracker::getTotalQueries() const { return totalQueries; }
+
+double SystestProgressTracker::getProgress() const
+{
+    return totalQueries > 0 ? static_cast<double>(queryCounter.load()) / static_cast<double>(totalQueries) : 0.0;
+}
+
+void SystestProgressTracker::reset() { queryCounter.store(0); }
+
+void SystestProgressTracker::reset(size_t newTotalQueries)
+{
+    queryCounter.store(0);
+    totalQueries = newTotalQueries;
+}
+
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {
     TestFileMap testFiles;
