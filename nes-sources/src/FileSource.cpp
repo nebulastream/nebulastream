@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -43,7 +44,7 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sour
 {
 }
 
-void FileSource::open()
+void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
