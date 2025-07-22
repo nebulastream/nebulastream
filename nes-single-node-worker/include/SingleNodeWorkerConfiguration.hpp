@@ -26,6 +26,8 @@ namespace NES
 class SingleNodeWorkerConfiguration final : public BaseConfiguration
 {
 public:
+    StringOption connection = {"connection", "", "Connection name. This is the {Hostname}:{PORT}"};
+
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
     ScalarOption<std::string> grpcAddressUri
         = {"grpc",
@@ -44,7 +46,7 @@ connections.  Valid values include dns:///localhost:1234,
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &enableGoogleEventTrace}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &connection, &enableGoogleEventTrace}; }
 
     template <typename T>
     friend void generateHelp(std::ostream& ostream);

@@ -33,6 +33,7 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
     WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
     : worker{[&]()
              {
+                 workerConfiguration.connection = config.host.getRawValue();
                  workerConfiguration.grpcAddressUri.setValue(config.grpc.getRawValue());
                  const LogContext logContext("create", config.grpc);
                  return SingleNodeWorker(workerConfiguration, WorkerId("embedded"));
