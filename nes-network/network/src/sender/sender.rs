@@ -26,6 +26,24 @@ use tracing::{Instrument, debug, info_span};
 /// Timeout for graceful tokio runtime shutdown
 const RUNTIME_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(1);
 
+/// Configuration for sender-side network channels.
+#[derive(Clone, Debug)]
+pub struct SenderConfig {
+    /// Size of the software queue between C++ and the Rust channel handler.
+    pub sender_queue_size: usize,
+    /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged).
+    pub max_pending_acks: usize,
+}
+
+impl Default for SenderConfig {
+    fn default() -> Self {
+        Self {
+            sender_queue_size: 1024,
+            max_pending_acks: 64,
+        }
+    }
+}
+
 /// A handle to a registered network channel for sending tuple buffers.
 ///
 /// `SenderChannel` represents an active data channel to a specific `ReceiverChannel`.
@@ -274,7 +292,6 @@ impl<C: Communication + 'static> NetworkService<C> {
     /// - `runtime`: The Tokio runtime that will execute all async networking tasks
     /// - `this_connection`: The identifier for this service instance
     /// - `communication`: The communication layer (e.g., TCP, in-memory) to use
-    ///
     /// # Returns
     ///
     /// An `Arc<NetworkService>` that can be shared across threads and used to
@@ -336,6 +353,7 @@ impl<C: Communication + 'static> NetworkService<C> {
         self: &Arc<NetworkService<C>>,
         connection: ConnectionIdentifier,
         channel: ChannelIdentifier,
+        channel_config: SenderConfig,
     ) -> Result<SenderChannel> {
         // Use a Rust oneshot channel (internal communication primitive) to receive
         // the data channel handle from the network service
@@ -343,7 +361,10 @@ impl<C: Communication + 'static> NetworkService<C> {
         let Ok(_) = self
             .controller
             .send_blocking(NetworkServiceControlCommand::RegisterChannel(
-                connection, channel, tx,
+                connection,
+                channel,
+                tx,
+                channel_config,
             ))
         else {
             return Err("Network Service Closed".into());

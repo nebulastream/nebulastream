@@ -108,8 +108,9 @@ impl<C: Communication + 'static> NetworkService<C> {
     pub fn register_channel(
         self: &Arc<NetworkService<C>>,
         channel: ChannelIdentifier,
+        data_queue_size: usize,
     ) -> Result<ReceiverChannel> {
-        let (data_queue_sender, data_queue_receiver) = async_channel::bounded(10);
+        let (data_queue_sender, data_queue_receiver) = async_channel::bounded(data_queue_size);
         let (tx, rx) = oneshot::channel();
         let Ok(_) = self
             .sender

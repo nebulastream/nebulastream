@@ -145,7 +145,6 @@ struct ReflectedSourceDescriptor
     uint64_t physicalSourceId = 0;
     LogicalSource logicalSource;
     std::string type;
-    WorkerId workerId;
     ParserConfig parserConfig;
     Reflected config;
 };

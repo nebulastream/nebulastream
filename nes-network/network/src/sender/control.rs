@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+use super::SenderConfig;
 use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler};
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
@@ -44,6 +45,8 @@ pub(super) struct PendingChannel {
     pub cancellation: CancellationToken,
     /// Command queue for receiving commands to send on this channel
     pub queue: ChannelCommandQueueListener,
+    /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged).
+    pub max_pending_acks: usize,
 }
 
 /// Control commands sent to the network service dispatcher.
@@ -53,10 +56,12 @@ pub(super) struct PendingChannel {
 pub(super) enum NetworkServiceControlCommand {
     /// Register a new channel to the specified connection and channel identifier.
     /// The oneshot sender is used to return the channel's command queue.
+    /// The SenderConfig provides queue sizing and flow control parameters.
     RegisterChannel(
         ConnectionIdentifier,
         ChannelIdentifier,
         oneshot::Sender<ChannelCommandQueue>,
+        SenderConfig,
     ),
 }
 
@@ -72,7 +77,12 @@ pub(super) enum NetworkServiceControlCommand {
 pub(super) enum NetworkingConnectionControlCommand {
     /// Register a new channel on this connection. The oneshot sender returns
     /// the channel's command queue once registration completes.
-    RegisterChannel(ChannelIdentifier, oneshot::Sender<ChannelCommandQueue>),
+    /// The SenderConfig provides queue sizing and flow control parameters.
+    RegisterChannel(
+        ChannelIdentifier,
+        oneshot::Sender<ChannelCommandQueue>,
+        SenderConfig,
+    ),
     /// Retry establishing a channel after a failure. This reuses the existing
     /// cancellation token and command queue from the failed attempt.
     RetryChannel(PendingChannel),
@@ -427,14 +437,15 @@ async fn connection_handler<C: Communication + 'static>(
     let mut active_channel = ActiveTokens::default();
     while let Ok(control_message) = listener.recv().await {
         match control_message {
-            NetworkingConnectionControlCommand::RegisterChannel(channel, response) => {
-                let (sender, queue) = async_channel::bounded(1024);
+            NetworkingConnectionControlCommand::RegisterChannel(channel, response, config) => {
+                let (sender, queue) = async_channel::bounded(config.sender_queue_size);
                 let channel_cancellation = CancellationToken::new();
 
                 let pending_channel = PendingChannel {
                     id: channel,
                     cancellation: channel_cancellation.clone(),
                     queue,
+                    max_pending_acks: config.max_pending_acks,
                 };
 
                 tokio::spawn(
@@ -529,8 +540,12 @@ pub(super) async fn network_sender_dispatcher(
     > = HashMap::default();
 
     // Consume `RegisterChannel` requests from the worker and dispatch them to a dedicated handler
-    while let Ok(NetworkServiceControlCommand::RegisterChannel(target_connection, channel, tx)) =
-        control.recv().await
+    while let Ok(NetworkServiceControlCommand::RegisterChannel(
+        target_connection,
+        channel,
+        tx,
+        channel_config,
+    )) = control.recv().await
     {
         // if the new channel is on a connection, which has not yet been created, a new connection
         // handler is created before submitting the channel registration to the connection handler
@@ -547,7 +562,9 @@ pub(super) async fn network_sender_dispatcher(
         // Dispatch the request to the correct connection handler
         controller
             .send(NetworkingConnectionControlCommand::RegisterChannel(
-                channel, tx,
+                channel,
+                tx,
+                channel_config,
             ))
             .await
             // The Connection Controller should never terminate but instead attempt
