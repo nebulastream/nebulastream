@@ -185,6 +185,7 @@ static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 static constexpr auto ErrorToken = "ERROR"s;
+static constexpr auto DifferentialQueryToken = "DIFFERENTIAL"s;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
@@ -192,7 +193,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {QueryToken, TokenType::QUERY},
      {SinkToken, TokenType::SINK},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
-     {ErrorToken, TokenType::ERROR_EXPECTATION}});
+     {ErrorToken, TokenType::ERROR_EXPECTATION},
+     {DifferentialQueryToken, TokenType::DIFFERENTIAL_QUERY}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -331,10 +333,14 @@ void SystestParser::parse()
                         onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
                     }
                 }
-                else if (optionalToken == TokenType::QUERY)
+                else if (optionalToken == TokenType::DIFFERENTIAL_QUERY)
                 {
                     ++currentLine;
-                    onDifferentialQueryCallback(expectQuery());
+                    ++currentLine;
+                    if (onDifferentialQueryCallback)
+                    {
+                        onDifferentialQueryCallback(expectQuery());
+                    }
                 }
                 else
                 {
@@ -348,6 +354,9 @@ void SystestParser::parse()
             case TokenType::INVALID:
                 throw SLTUnexpectedToken(
                     "Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
+            case TokenType::DIFFERENTIAL_QUERY:
+                throw SLTUnexpectedToken(
+                    "Got DIFFERENTIAL_QUERY token without first part of the query during systest file parsing: {}.", lines[currentLine]);
             case TokenType::ERROR_EXPECTATION:
                 throw TestException(
                     "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);

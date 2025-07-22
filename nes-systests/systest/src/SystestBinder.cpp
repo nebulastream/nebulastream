@@ -684,21 +684,6 @@ struct SystestBinder::Impl
                     try
                     {
                         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(differentialQuery);
-                        auto sinkOperator = [](const LogicalPlan& queryPlan)
-                        {
-                            const auto rootOperators = queryPlan.rootOperators;
-                            if (rootOperators.size() != 1)
-                            {
-                                throw QueryInvalid(
-                                    "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-                                    rootOperators.size());
-                            }
-                            const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-                            INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
-                            return sinkOp.value();
-                        }(plan);
-                        sinkOperator.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sinkExpected.value());
-                        plan.rootOperators.at(0) = sinkOperator;
                         currentPlan.setDifferentialQueryPlan(plan);
                     }
                     catch (Exception& e)

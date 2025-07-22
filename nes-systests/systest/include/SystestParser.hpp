@@ -47,6 +47,7 @@ enum class TokenType : uint8_t
     QUERY,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
+    DIFFERENTIAL_QUERY
 };
 
 /// Assures that the number of parsed queries matches the number of parsed results
