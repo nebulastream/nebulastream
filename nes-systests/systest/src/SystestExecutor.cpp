@@ -630,13 +630,13 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         outputMessage << '\n' << "All queries passed.";
         return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
     }
-    CPPTRACE_CATCH(...)
+    CPPTRACE_CATCH(Exception & e)
     {
         tryLogCurrentException();
         const auto currentErrorCode = getCurrentErrorCode();
         return {
             .returnType = SystestExecutorResult::ReturnType::FAILED,
-            .outputMessage = fmt::format("Failed with exception code: {}", currentErrorCode),
+            .outputMessage = fmt::format("Failed with exception: {}, {}", currentErrorCode, e.what()),
             .errorCode = currentErrorCode};
     }
     return {
