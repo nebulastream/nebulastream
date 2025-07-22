@@ -78,6 +78,7 @@ struct QueryLog : AbstractQueryStatusListener
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
     [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
+    [[nodiscard]] std::vector<QuerySummary> getSummary();
 
 private:
     folly::Synchronized<QueryStatusLog> queryStatusLog;
