@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -87,9 +88,10 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId)
     return std::nullopt;
 }
 
-std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
+namespace
 {
-    const auto log = queryStatusLog.rlock();
+std::optional<QuerySummary> getQuerySummaryImpl(const auto& log, QueryId queryId)
+{
     if (const auto queryLog = log->find(queryId); queryLog != log->end())
     {
         /// Unfortunatly the multithreaded nature of the query engine cannot guarantee that a `Running` event always comes before the `Stopped` event.
@@ -156,5 +158,23 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         return summary;
     }
     return std::nullopt;
+}
+}
+
+std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
+{
+    const auto log = queryStatusLog.rlock();
+    return getQuerySummaryImpl(log, queryId);
+}
+std::vector<QuerySummary> QueryLog::getSummary()
+{
+    auto queryStatusLogLocked = queryStatusLog.rlock();
+    std::vector<QuerySummary> summaries;
+    summaries.reserve(queryStatusLogLocked->size());
+    for (auto id : std::views::keys(*queryStatusLogLocked))
+    {
+        summaries.emplace_back(getQuerySummaryImpl(queryStatusLogLocked, id).value());
+    }
+    return summaries;
 }
 }
