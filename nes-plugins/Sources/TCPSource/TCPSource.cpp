@@ -162,7 +162,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     return true;
 }
 
-void TCPSource::open()
+void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     NES_TRACE("TCPSource::open: Trying to create socket and connect.");
 
