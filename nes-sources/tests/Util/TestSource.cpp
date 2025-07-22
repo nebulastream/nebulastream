@@ -193,7 +193,7 @@ NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::TupleBu
     return FillTupleBufferResult(data->data.size());
 }
 
-void NES::TestSource::open()
+void NES::TestSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     control->open.set_value();
     if (control->fail_during_open)
