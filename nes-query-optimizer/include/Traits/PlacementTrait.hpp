@@ -14,11 +14,10 @@
 
 #pragma once
 
-#include <optional>
+#include <cstddef>
 #include <string>
 #include <typeinfo>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <SerializableTrait.pb.h>
 
@@ -28,13 +27,14 @@ namespace NES
 /// Assigns a placement on a physical node to an operator
 struct PlacementTrait final : TraitConcept
 {
-    explicit PlacementTrait(std::string nodeId);
+    explicit PlacementTrait(std::string workerId);
 
     std::string onNode;
 
-    bool operator==(const TraitConcept& other) const override;
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] SerializableTrait serialize() const override;
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] size_t hash() const override;
 };
 
 }

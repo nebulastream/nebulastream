@@ -14,22 +14,19 @@
 
 #include <Traits/PlacementTrait.hpp>
 
+#include <string>
 #include <typeinfo>
+#include <utility>
 
 #include <Traits/Trait.hpp>
+#include <folly/hash/Hash.h>
 #include <SerializableTrait.pb.h>
 
 namespace NES
 {
 
-PlacementTrait::PlacementTrait(std::string nodeId)
-    : onNode{std::move(nodeId)}
+PlacementTrait::PlacementTrait(std::string workerId) : onNode{std::move(workerId)}
 {
-}
-
-bool PlacementTrait::operator==(const TraitConcept& other) const
-{
-    return typeid(other) == typeid(*this);
 }
 
 const std::type_info& PlacementTrait::getType() const
@@ -41,6 +38,22 @@ SerializableTrait PlacementTrait::serialize() const
 {
     SerializableTrait trait;
     trait.set_trait_type(getType().name());
+
+    SerializableVariantDescriptor config;
+    config.set_string_value(onNode);
+    trait.mutable_config()->emplace("onNode", std::move(config));
+
     return trait;
 }
+
+bool PlacementTrait::operator==(const TraitConcept& other) const
+{
+    return typeid(other) == typeid(*this);
+}
+
+size_t PlacementTrait::hash() const
+{
+    return folly::hash::hash_combine(std::type_index(getType()).hash_code(), onNode);
+}
+
 }
