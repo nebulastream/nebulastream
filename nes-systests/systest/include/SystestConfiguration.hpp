@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
@@ -54,14 +55,7 @@ public:
     SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    StringOption grpcAddressUri
-        = {"grpc",
-           "",
-           R"(The address to try to bind to the server in URI form. If
-the scheme name is omitted, "dns:///" is assumed. To bind to any address,
-please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
-connections.  Valid values include dns:///localhost:1234,
-192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
+    StringOption topology = {"server", "", "run distributed, based on topology file (.yaml)"};
     BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

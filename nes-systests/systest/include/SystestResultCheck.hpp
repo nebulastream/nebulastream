@@ -17,11 +17,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
-#include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,7 +31,7 @@ namespace NES::Systest
 {
 
 /// Returns an error message or an empty optional if the query result is correct
-std::optional<std::string> checkResult(const RunningQuery& runningQuery);
+std::optional<std::string> checkResult(const SubmittedQuery& query);
 
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
