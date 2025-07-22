@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -67,7 +68,7 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
     }
 }
 
-void GeneratorSource::open()
+void GeneratorSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     this->generatorStartTime = std::chrono::system_clock::now();
     this->startOfInterval = std::chrono::system_clock::now();

@@ -82,7 +82,10 @@ void threadSetup(OriginId originId)
 /// RAII-Wrapper around source open and close
 struct SourceHandle
 {
-    explicit SourceHandle(Source& source) : source(source) { source.open(); }
+    explicit SourceHandle(Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider) : source(source)
+    {
+        source.open(std::move(bufferProvider));
+    }
 
     SourceHandle(const SourceHandle& other) = delete;
     SourceHandle(SourceHandle&& other) noexcept = delete;
@@ -105,10 +108,10 @@ struct SourceHandle
     Source& source; ///NOLINT Source handle should never outlive the source
 };
 
-SourceImplementationTermination
-dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+SourceImplementationTermination dataSourceThreadRoutine(
+    const std::stop_token& stopToken, Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider, const EmitFn& emit)
 {
-    const SourceHandle sourceHandle(source);
+    const SourceHandle sourceHandle(source, bufferProvider);
     const bool requiresMetadata = !source.addsMetadata();
     while (!stopToken.stop_requested())
     {
@@ -120,7 +123,7 @@ dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, Abstra
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider.getBufferBlocking();
+        auto emptyBuffer = bufferProvider->getBufferBlocking();
         const auto fillTupleResult = source.fillTupleBuffer(emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
@@ -166,7 +169,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, std::move(bufferProvider), dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
