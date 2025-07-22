@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 
+#include <BackpressureChannel.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -35,6 +36,7 @@ public:
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
+        Ingestion ingestion,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         int defaultNumberOfBuffersInLocalPool);

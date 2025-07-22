@@ -21,6 +21,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <BackpressureChannel.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <SourceThread.hpp>
@@ -28,13 +29,14 @@
 namespace NES::Sources
 {
 SourceHandle::SourceHandle(
+    Ingestion ingestion,
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     size_t numberOfBuffersInLocalPool,
     std::unique_ptr<Source> sourceImplementation)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(sourceImplementation));
+        std::move(ingestion), std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(sourceImplementation));
 }
 SourceHandle::~SourceHandle() = default;
 
