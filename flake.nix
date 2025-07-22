@@ -40,6 +40,7 @@
           yaml-cpp
           replxx
           magic-enum
+          libuuid
           boost
           openssl.dev
           zstd.dev
