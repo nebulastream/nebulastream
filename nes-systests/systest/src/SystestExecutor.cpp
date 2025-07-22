@@ -92,8 +92,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const URI& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    Systest::QuerySubmitter querySubmitter(
-        std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI.toString())})));
+    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(
+        WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr(grpcURI.toString())})));
 
     while (true)
     {
@@ -139,8 +139,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<QueryManager>(
-                std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configCopy));
+            auto queryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080")}, configCopy));
 
             Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
