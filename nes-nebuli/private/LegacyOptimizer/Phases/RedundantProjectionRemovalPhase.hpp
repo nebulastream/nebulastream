@@ -14,28 +14,22 @@
 
 #pragma once
 
-#include <chrono>
-#include <memory>
-
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 namespace NES
 {
-class GRPCClient
+
+///  @brief This rule removes redundant projections, which project everything
+class RedundantProjectionRemovalPhase
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
-
 public:
-    explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
+    RedundantProjectionRemovalPhase() = delete;
+    ~RedundantProjectionRemovalPhase() = delete;
+    RedundantProjectionRemovalPhase(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase(RedundantProjectionRemovalPhase&&) = delete;
+    RedundantProjectionRemovalPhase& operator=(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase& operator=(RedundantProjectionRemovalPhase&&) = delete;
 
-    [[nodiscard]] LocalQueryStatus status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
-    WorkerStatusResponse summary(std::chrono::system_clock::time_point after) const;
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
 }

@@ -14,28 +14,23 @@
 
 #pragma once
 
-#include <chrono>
-#include <memory>
-
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 namespace NES
 {
-class GRPCClient
+
+/// The type inference phase receives and query plan and infers all input and output schemata for all operators.
+class TypeInferencePhase
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
-
 public:
-    explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
+    TypeInferencePhase() = delete;
+    ~TypeInferencePhase() = delete;
+    TypeInferencePhase(const TypeInferencePhase&) = delete;
+    TypeInferencePhase(TypeInferencePhase&&) = delete;
+    TypeInferencePhase& operator=(const TypeInferencePhase&) = delete;
+    TypeInferencePhase& operator=(TypeInferencePhase&&) = delete;
 
-    [[nodiscard]] LocalQueryStatus status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
-    WorkerStatusResponse summary(std::chrono::system_clock::time_point after) const;
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
+
 }

@@ -14,28 +14,27 @@
 
 #pragma once
 
-#include <chrono>
-#include <memory>
+#include <optional>
+#include <string>
+#include <typeinfo>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
-class GRPCClient
+
+/// Assigns a placement on a physical node to an operator
+struct PlacementTrait final : TraitConcept
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
+    explicit PlacementTrait(std::string nodeId);
 
-public:
-    explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
-    void stop(QueryId queryId) const;
+    std::string onNode;
 
-    [[nodiscard]] LocalQueryStatus status(QueryId queryId) const;
-    void start(QueryId queryId) const;
-    void unregister(QueryId queryId) const;
-    WorkerStatusResponse summary(std::chrono::system_clock::time_point after) const;
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] SerializableTrait serialize() const override;
 };
+
 }
