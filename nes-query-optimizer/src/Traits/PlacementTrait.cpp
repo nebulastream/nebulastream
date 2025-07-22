@@ -12,19 +12,35 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Traits/PlacementTrait.hpp>
 
-#include <Plans/LogicalPlan.hpp>
+#include <typeinfo>
 
-namespace NES::LegacyOptimizer
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
+
+namespace NES
 {
 
-/**
- * @brief This rule removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
+PlacementTrait::PlacementTrait(std::string nodeId)
+    : onNode{std::move(nodeId)}
 {
-public:
-    void apply(LogicalPlan& queryPlan) const; ///NOLINT(readability-convert-member-functions-to-static)
-};
+}
+
+bool PlacementTrait::operator==(const TraitConcept& other) const
+{
+    return typeid(other) == typeid(*this);
+}
+
+const std::type_info& PlacementTrait::getType() const
+{
+    return typeid(this);
+}
+
+SerializableTrait PlacementTrait::serialize() const
+{
+    SerializableTrait trait;
+    trait.set_trait_type(getType().name());
+    return trait;
+}
 }

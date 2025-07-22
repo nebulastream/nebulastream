@@ -13,20 +13,28 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
-#include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
-namespace NES::LegacyOptimizer
-{
-class SinkBindingRule
-{
-public:
-    explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
-    void apply(LogicalPlan& queryPlan) const;
+#include <optional>
+#include <string>
+#include <typeinfo>
 
-private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+#include <Identifiers/Identifiers.hpp>
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
+
+namespace NES
+{
+
+/// Assigns a placement on a physical node to an operator
+struct PlacementTrait final : TraitConcept
+{
+    explicit PlacementTrait(std::string nodeId);
+
+    std::string onNode;
+
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] SerializableTrait serialize() const override;
 };
+
 }

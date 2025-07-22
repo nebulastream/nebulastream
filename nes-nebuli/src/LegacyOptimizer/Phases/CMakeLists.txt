@@ -10,10 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        Trait.cpp
-        OriginIdAssignerTrait.cpp
-        PlacementTrait.cpp
+add_source_files(nes-legacy-optimizer
+        LogicalSourceExpansionPhase.cpp
+        OriginIdInferencePhase.cpp
+        RedundantProjectionRemovalPhase.cpp
+        RedundantUnionRemovalPhase.cpp
+        SourceInferencePhase.cpp
+        TypeInferencePhase.cpp
+        SinkBindingPhase.cpp
 )
-
-add_plugin(OriginIdAssigner Trait nes-query-optimizer OriginIdAssignerTrait.cpp)

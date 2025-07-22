@@ -11,87 +11,69 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-
 #pragma once
 
-#include <istream>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp> /// NOLINT(misc-include-cleaner)
-#include <Sinks/SinkDescriptor.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <experimental/propagate_const>
+
+#include <DataTypes/Schema.hpp>
+#include <Distributed/NetworkTopology.hpp>
+#include <Distributed/NodeCatalog.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <QueryConfig.hpp>
+
+namespace NES
+{
+/// Validated and bound content of a YAML file, the members are not specific to the yaml-binder anymore but our "normal" types.
+/// If something goes wrong, for example, a source is declared twice, the binder will throw an exception.
+struct BoundLogicalPlan
+{
+    LogicalPlan plan;
+    TopologyGraph topology;
+    NodeCatalog nodeCatalog;
+    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<SinkCatalog> sinkCatalog;
+};
+}
 
 namespace NES::CLI
 {
 
-/// In NES::CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
-/// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as NES::LogicalSource and NES::SourceDescriptor.
-struct SchemaField
-{
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, DataType type);
-    SchemaField() = default;
-
-    std::string name;
-    DataType type;
-};
-
-struct Sink
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
-};
-
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
-
-struct PhysicalSource
-{
-    std::string logical;
-    std::string type;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
-};
-
-struct QueryConfig
-{
-    std::string query;
-    std::vector<Sink> sinks;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-
 class YAMLBinder
 {
-    std::experimental::propagate_const<std::shared_ptr<SourceCatalog>> sourceCatalog;
-    std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
+    LogicalPlan plan;
+    QueryConfig queryConfig;
+
+    TopologyGraph topology;
+    NodeCatalog nodeCatalog;
+    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<SinkCatalog> sinkCatalog;
+
+    explicit YAMLBinder(const QueryConfig& config);
 
 public:
-    explicit YAMLBinder(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
-    LogicalPlan parseAndBind(std::istream& inputStream);
+    static YAMLBinder from(QueryConfig&& config) { return YAMLBinder{std::move(config)}; }
 
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    [[nodiscard]] Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
-    std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
-    std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
-    std::vector<Sinks::SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
+    BoundLogicalPlan bind() &&;
+
+private:
+    void bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
+    void bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
+    void bindRegisterSinks(const std::vector<Sink>& unboundSinks);
+    Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
+};
+
+class YAMLLoader
+{
+    static QueryConfig loadFromFile(const std::string& filePath);
+    static QueryConfig loadFromStream(std::istream& stream);
+
+public:
+    static QueryConfig load(const std::string& inputArgument);
 };
 
 }

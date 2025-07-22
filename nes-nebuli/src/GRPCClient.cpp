@@ -32,23 +32,24 @@
 
 namespace NES
 {
+
 GRPCClient::GRPCClient(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
 {
 }
-QueryId GRPCClient::registerQuery(const NES::LogicalPlan& plan) const
+
+QueryId GRPCClient::registerQuery(const LogicalPlan& plan) const
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
-    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
-    auto status = stub->RegisterQuery(&context, request, &reply);
-    if (status.ok())
+    request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(plan));
+    if (const auto status = stub->RegisterQuery(&context, request, &reply); status.ok())
     {
         NES_DEBUG("Registration was successful.");
     }
     else
     {
-        throw NES::QueryRegistrationFailed(
+        throw QueryRegistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -69,7 +70,7 @@ void GRPCClient::start(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryStartFailed(
+        throw QueryStartFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -78,7 +79,7 @@ void GRPCClient::start(const QueryId queryId) const
 }
 
 
-NES::QuerySummary GRPCClient::status(const QueryId queryId) const
+QuerySummary GRPCClient::status(const QueryId queryId) const
 {
     grpc::ClientContext context;
     QuerySummaryRequest request;
@@ -119,7 +120,7 @@ NES::QuerySummary GRPCClient::status(const QueryId queryId) const
     }
     /// First, we need to cast the gRPC enum value to an int and then to the C++ enum
     const auto queryStatus(static_cast<NES::QueryStatus>(static_cast<uint8_t>(response.status())));
-    NES::QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
+    QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
     return querySummary;
 }
 
@@ -135,7 +136,7 @@ void GRPCClient::unregister(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryUnregistrationFailed(
+        throw QueryUnregistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
@@ -156,11 +157,32 @@ void GRPCClient::stop(const QueryId queryId) const
     }
     else
     {
-        throw NES::QueryStopFailed(
+        throw QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
             status.error_details());
     }
+}
+
+WorkerStatusResponse GRPCClient::summary(const std::chrono::system_clock::time_point after) const
+{
+    grpc::ClientContext context;
+    WorkerStatusRequest request;
+    request.set_afterunixtimestampinms(std::chrono::duration_cast<std::chrono::milliseconds>(after.time_since_epoch()).count());
+    WorkerStatusResponse response;
+    if (const auto status = stub->RequestStatus(&context, request, &response); status.ok())
+    {
+        NES_DEBUG("Unregister was successful.");
+    }
+    else
+    {
+        throw QueryStatusFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details());
+    }
+    return response;
 }
 }
