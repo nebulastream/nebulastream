@@ -29,10 +29,12 @@
 namespace NES
 {
 
+using HostAddr = NESStrongStringType<struct HostAddr_, "INVALID">;
 using GrpcAddr = NESStrongStringType<struct GrpcAddr_, "INVALID">;
 
 struct WorkerConfig
 {
+    HostAddr host;
     GrpcAddr grpc;
 };
 

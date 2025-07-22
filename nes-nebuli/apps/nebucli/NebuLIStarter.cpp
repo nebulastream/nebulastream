@@ -408,6 +408,7 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     std::cout << result.dump(4) << '\n';
 }
 
+NES::HostAddr hostAddr{"localhost:9090"};
 NES::GrpcAddr grpcAddr{"localhost:8080"};
 
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
@@ -418,7 +419,7 @@ NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
         return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(env)});
     }
 
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = grpcAddr});
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.host = hostAddr, .grpc = grpcAddr});
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
