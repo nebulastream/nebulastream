@@ -449,7 +449,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
             auto memorySegmentsOrError = co_await *awaitMemorySegments;
             if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
             {
-                NES_DEBUG("Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
+                NES_TRACE("Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
                 // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
                 // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
                 // co_await *aepSwitchBackAwaiter;
@@ -765,11 +765,12 @@ int64_t BufferManager::secondChancePass() noexcept
                 || (clockStart + deleted >= allBuffers.size() && (clockAt > (clockStart + deleted) % allBuffers.size())
                     && clockAt < clockStart)))
         {
+            size_t swapTo = (clockStart + deleted++) % allBuffers.size();
             //Swap deleted entries at the beginning of the clock range.
             //std::remove would swap them towards the end, but because we do not have a hard end bound swapping to the clock start seems more reasonable
             //This does mess up the order of the buffers a bit, but the effect on second chance should be small, because we are only swapping
             //with positions that we have seen at least once.
-            std::swap(allBuffers[clockStart + deleted++], allBuffers[clockAt]);
+            std::swap(allBuffers[swapTo], allBuffers[clockAt]);
         }
         else if (
             currentBCB->getDataReferenceCount() != 0 && currentBCB->getPinnedReferenceCount() == 0
@@ -847,7 +848,7 @@ int64_t BufferManager::secondChancePass() noexcept
         {
             auto secondBegin = allBuffers.begin();
             auto secondEnd = allBuffers.begin() + (clockStart + deleted - oldAllBuffersSize);
-            std::for_each(firstBegin, firstEnd, [](const auto* bcb) { delete bcb; });
+            std::for_each(secondBegin, secondEnd, [](const auto* bcb) { delete bcb; });
             allBuffers.erase(secondBegin, secondEnd);
         }
         //Add oldBufferSize to avoid becoming negative
@@ -974,7 +975,7 @@ size_t BufferManager::processWriteCompletionEvents() noexcept
             flushed++;
             if (auto awaiter = weakAwaiter.lock())
             {
-                NES_DEBUG("Resuming coroutine with empty segment");
+                NES_TRACE("Resuming coroutine with empty segment");
                 //save result in awaiter and resume coroutine
                 awaiter->setResultAndContinue(detail::DataSegment<detail::InMemoryLocation>{});
             }
@@ -1066,6 +1067,7 @@ int64_t BufferManager::processReadSubmissionEntries() noexcept
     {
         toResume->setResultAndContinue();
     }
+    NES_DEBUG("Processed {} read requests", processed);
     return processed;
 }
 
