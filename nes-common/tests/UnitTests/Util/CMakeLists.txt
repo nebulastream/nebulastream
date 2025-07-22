@@ -20,6 +20,7 @@ add_nes_common_test(nes-common-tests
         "BFSIteratorTest.cpp"
         "RollingAverageTest.cpp"
 )
+target_link_libraries(nes-common-tests bindings)
 
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"

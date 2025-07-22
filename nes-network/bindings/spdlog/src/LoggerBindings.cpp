@@ -21,7 +21,7 @@
 #include <spdlog/logger.h>
 #include "rust/cxx.h"
 
-static std::unordered_map<const char*, std::string> filenames = {};
+thread_local std::unordered_map<const char*, std::string> filenames = {};
 
 void log(
     const std::shared_ptr<spdlog::logger>& logger,
@@ -31,7 +31,6 @@ void log(
     rust::cxxbridge1::Str message)
 {
     auto filenameCString = filenames.try_emplace(filename.data(), filename.begin(), filename.end()).first->second.c_str();
-
     logger->log(
         spdlog::source_loc{filenameCString, static_cast<int>(line), "RUST"},
         magic_enum::enum_cast<spdlog::level::level_enum>(level).value_or(spdlog::level::level_enum::off),

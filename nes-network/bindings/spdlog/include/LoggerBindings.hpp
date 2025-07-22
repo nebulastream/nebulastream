@@ -18,4 +18,4 @@
 #include <spdlog/logger.h>
 
 using SpdLogger = spdlog::logger;
-void log(const ::std::shared_ptr<::SpdLogger>&, ::std::int32_t, ::rust::Str, ::std::uint32_t, ::rust::Str);
+void log(const std::shared_ptr<SpdLogger>&, int32_t, rust::Str, uint32_t, rust::Str);
