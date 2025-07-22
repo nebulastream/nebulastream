@@ -86,7 +86,10 @@ using EmitFn = std::function<void(TupleBuffer, bool addBufferMetadata)>;
 /// RAII-Wrapper around source open and close
 struct SourceHandle
 {
-    explicit SourceHandle(Source& source) : source(source) { source.open(); }
+    explicit SourceHandle(Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider) : source(source)
+    {
+        source.open(std::move(bufferProvider));
+    }
 
     SourceHandle(const SourceHandle& other) = delete;
     SourceHandle(SourceHandle&& other) noexcept = delete;
@@ -116,7 +119,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     const EmitFn& emit)
 {
-    const SourceHandle sourceHandle(source);
+    const SourceHandle sourceHandle(source, bufferProvider);
     while (ingestion.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:

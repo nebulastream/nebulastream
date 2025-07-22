@@ -56,7 +56,7 @@ public:
     virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
-    virtual void open() = 0;
+    virtual void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
