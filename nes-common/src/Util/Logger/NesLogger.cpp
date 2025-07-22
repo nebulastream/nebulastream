@@ -28,6 +28,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+extern void initialize_logging(std::shared_ptr<spdlog::logger> logger);
+
 namespace NES
 {
 
@@ -109,6 +111,9 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
     changeLogLevel(level);
 
     flusher = std::make_unique<spdlog::details::periodic_worker>([this]() { impl->flush(); }, std::chrono::seconds(1));
+
+    /// Enable rust logger
+    initialize_logging(impl);
 }
 
 Logger::Logger() : impl(detail::createEmptyLogger())
