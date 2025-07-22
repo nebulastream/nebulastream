@@ -28,7 +28,6 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <BackpressureChannel.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
@@ -74,7 +73,7 @@ void FileSink::start(PipelineExecutionContext&)
     {
         if (std::filesystem::exists(outputFilePath.c_str()))
         {
-            if (const std::error_code ec; !std::filesystem::remove(outputFilePath.c_str(), ec))
+            if (std::error_code ec; !std::filesystem::remove(outputFilePath.c_str(), ec))
             {
                 isOpen = false;
                 throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
