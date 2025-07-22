@@ -442,14 +442,21 @@ void printQueryResultToStdOut(
     const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
-
-    /// spd logger cannot handle multiline prints with proper color and pattern.
-    /// And as this is only for test runs we use stdout here.
+    std::string overrideStr;
+    if (not runningQuery.systestQuery.configurationOverride.overrideParameters.empty())
+    {
+        std::vector<std::string> kvs;
+        for (const auto& [k, v] : runningQuery.systestQuery.configurationOverride.overrideParameters)
+        {
+            kvs.push_back(fmt::format("{}={}", k, v));
+        }
+        overrideStr = fmt::format(" [{}]", fmt::join(kvs, ", "));
+    }
     std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0')
-              << queryNumberAsString;
-    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
+    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
+    std::cout << overrideStr;
+    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber + overrideStr.size()), '.');
     if (runningQuery.passed)
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
