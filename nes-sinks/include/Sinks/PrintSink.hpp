@@ -23,7 +23,6 @@
 
 #include <folly/Synchronized.h>
 
-#include <BackpressureChannel.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -31,6 +30,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Sinks
@@ -67,18 +67,16 @@ private:
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
         "ingestion",
         0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(INGESTION, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
         "inputFormat",
         std::nullopt,
-        std::function(
-                [](const std::unordered_map<std::string, std::string>& config) -> Expected<Configurations::EnumWrapper>
-                { return DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
+        std::function([](const std::unordered_map<std::string, std::string>& config)
+                      { return DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
