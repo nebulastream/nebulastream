@@ -22,6 +22,7 @@ add_nes_common_test(nes-common-tests
         "TypeTraitsTest.cpp"
         "PlanRendererTest.cpp"
 )
+target_link_libraries(nes-common-tests nes_rust_bindings)
 
 add_nes_test(nes-thread-test
         "ThreadTest.cpp"
