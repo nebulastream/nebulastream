@@ -22,6 +22,7 @@
 #include <optional>
 #include <random>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
@@ -45,6 +46,9 @@
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void initReceiverService(const std::string& connectionAddr, const NES::WorkerId& workerId);
+extern void initSenderService(const std::string& connectionAddr, const NES::WorkerId& workerId);
 
 namespace NES
 {
@@ -74,6 +78,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
+    if (!configuration.connection.getValue().empty())
+    {
+        initReceiverService(configuration.connection.getValue(), workerId);
+        initSenderService(configuration.connection.getValue(), workerId);
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
