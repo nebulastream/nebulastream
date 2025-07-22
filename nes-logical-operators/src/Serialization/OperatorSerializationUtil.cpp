@@ -128,7 +128,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
     const auto& sourceType = sourceDescriptor.sourcetype();
-    const auto workerId = WorkerId{sourceDescriptor.workerid()};
+    const auto& workerId = sourceDescriptor.workerid();
     const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.
@@ -161,17 +161,18 @@ OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescr
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
     auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto addTimestamp = serializableSinkDescriptor.addtimestamp();
+    auto workerId = serializableSinkDescriptor.workerid();
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     DescriptorConfig::Config sinkDescriptorConfig{};
-    for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
+    for (const auto& [key, descriptor] : serializableSinkDescriptor.config())
     {
-        sinkDescriptorConfig[key] = protoToDescriptorConfigType(desciptor);
+        sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
+    auto sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(
+        std::move(sinkType), std::move(sinkDescriptorConfig), std::move(workerId), std::move(addTimestamp));
     sinkDescriptor->schema = schema;
     return sinkDescriptor;
 }

@@ -76,14 +76,14 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1 = *sourceCatalog.addPhysicalSource(
         *sourceOpt,
-        NES::INITIAL<NES::WorkerId>,
+        "localhost",
         "testSource1",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         DescriptorConfig::Config{},
         ParserConfig{});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
-        NES::INITIAL<NES::WorkerId>,
+        "localhost",
         "testSource2",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         DescriptorConfig::Config{},
@@ -108,7 +108,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     const auto physical3Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
-        NES::INITIAL<WorkerId>,
+        "localhost",
         "testSource3",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         DescriptorConfig::Config{},
@@ -138,14 +138,14 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     const auto& logicalSource = sourceOpt.value();
     const auto physical1Opt = sourceCatalog.addPhysicalSource(
         logicalSource,
-        NES::INITIAL<NES::WorkerId>,
+        "localhost",
         "testSource1",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         DescriptorConfig::Config{},
         ParserConfig{});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         logicalSource,
-        NES::INITIAL<NES::WorkerId>,
+        "localhost",
         "testSource2",
         SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         DescriptorConfig::Config{},
@@ -213,7 +213,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
             {
                 auto physicalSourceOpt = sourceCatalog.addPhysicalSource(
                     *logicalSourceOpt,
-                    NES::INITIAL<NES::WorkerId>,
+                    "localhost",
                     "testSource",
                     SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
                     DescriptorConfig::Config{},

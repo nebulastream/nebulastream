@@ -28,7 +28,8 @@ namespace NES::Sinks
 
 struct SinkDescriptor final : Descriptor
 {
-    explicit SinkDescriptor(std::string sinkType, DescriptorConfig::Config&& config, bool addTimestamp);
+    explicit SinkDescriptor(
+        std::string sinkType, DescriptorConfig::Config&& config, const std::string& workerId, bool addTimestamp);
     ~SinkDescriptor() = default;
 
     /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.
@@ -39,6 +40,7 @@ struct SinkDescriptor final : Descriptor
 
     const std::string sinkType;
     Schema schema;
+    std::string workerId;
     bool addTimestamp;
 
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);

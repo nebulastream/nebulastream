@@ -72,7 +72,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
-    [[nodiscard]] WorkerId getWorkerId() const;
+    [[nodiscard]] std::string getWorkerId() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     [[nodiscard]] int32_t getBuffersInLocalPool() const;
 
@@ -84,7 +84,7 @@ private:
     friend OperatorSerializationUtil;
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
-    WorkerId workerId;
+    std::string workerId;
     std::string sourceType;
     ParserConfig parserConfig;
     int32_t numberOfBuffersInLocalPool;
@@ -93,7 +93,7 @@ private:
     explicit SourceDescriptor(
         LogicalSource logicalSource,
         PhysicalSourceId physicalSourceId,
-        WorkerId workerId,
+        std::string workerId,
         std::string sourceType,
         int32_t numberOfBuffersInLocalPool,
         DescriptorConfig::Config&& config,
