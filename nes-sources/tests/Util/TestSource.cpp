@@ -191,7 +191,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
     return data->data.size();
 }
 
-void NES::Sources::TestSource::open()
+void NES::Sources::TestSource::open(::std::shared_ptr<Memory::AbstractBufferProvider>)
 {
     control->open.set_value();
     if (control->fail_during_open)
@@ -227,11 +227,11 @@ NES::Sources::TestSource::~TestSource()
 }
 
 std::pair<std::unique_ptr<NES::Sources::SourceHandle>, std::shared_ptr<NES::Sources::TestSourceControl>>
-NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
+NES::Sources::getTestSource(Ingestion ingestion, OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     auto sourceHandle = std::make_unique<SourceHandle>(
-        std::move(originId), std::move(bufferPool), DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::move(testSource));
+        std::move(ingestion), std::move(originId), std::move(bufferPool), DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::move(testSource));
     return {std::move(sourceHandle), ctrl};
 }

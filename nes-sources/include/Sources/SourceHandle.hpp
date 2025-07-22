@@ -23,6 +23,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <BackpressureChannel.hpp>
 
 namespace NES::Sources
 {
@@ -39,6 +40,7 @@ class SourceHandle
 {
 public:
     explicit SourceHandle(
+        Ingestion ingestion,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         size_t numberOfBuffersInLocalPool,

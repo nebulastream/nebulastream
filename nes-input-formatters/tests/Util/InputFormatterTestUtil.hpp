@@ -145,7 +145,7 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
-std::unique_ptr<Sources::SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<Sources::SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,

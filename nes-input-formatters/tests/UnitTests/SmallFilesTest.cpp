@@ -161,7 +161,7 @@ public:
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType / currentTestFile.fileName;
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
-        const auto fileSource = InputFormatterTestUtil::createFileSource(
+        const auto [value, fileSource] = InputFormatterTestUtil::createFileSource(
             sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);

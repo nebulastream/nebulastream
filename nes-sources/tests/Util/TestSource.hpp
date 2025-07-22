@@ -94,7 +94,7 @@ class TestSource : public Source
 {
 public:
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-    void open() override;
+    void open(::std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
 protected:
@@ -110,6 +110,6 @@ private:
 };
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
+getTestSource(Ingestion ingestion, OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
 
 }
