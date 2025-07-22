@@ -15,7 +15,6 @@
 #pragma once
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -23,18 +22,19 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <string_view>
 #include <unordered_map>
+
 #include <netdb.h>
+#include <sys/socket.h> /// For socket functions
+#include <sys/types.h>
+
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
+#include <Util/Strings.hpp>
 
 namespace NES::Sources
 {
@@ -182,7 +182,7 @@ public:
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
-    void open() override;
+    void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     /// Close TCP connection.
     void close() override;
 
@@ -204,9 +204,6 @@ private:
     std::string socketPort;
     int socketType;
     int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

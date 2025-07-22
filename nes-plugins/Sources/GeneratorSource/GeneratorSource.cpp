@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -49,7 +50,7 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
     NES_TRACE("Init GeneratorSource.")
 }
 
-void GeneratorSource::open()
+void GeneratorSource::open(std::shared_ptr<Memory::AbstractBufferProvider>)
 {
     this->generatorStartTime = std::chrono::system_clock::now();
     NES_TRACE("Opening GeneratorSource.");
