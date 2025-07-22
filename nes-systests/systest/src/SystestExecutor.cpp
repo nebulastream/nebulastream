@@ -393,10 +393,11 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     {
         if (runRemote)
         {
-            return std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI)}));
+            return std::make_unique<QueryManager>(
+                std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr(grpcURI)}));
         }
         return std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-            WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, singleNodeWorkerConfiguration));
+            WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080")}, singleNodeWorkerConfiguration));
     }();
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
