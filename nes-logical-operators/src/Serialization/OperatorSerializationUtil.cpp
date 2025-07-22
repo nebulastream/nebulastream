@@ -152,6 +152,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
     const auto& sourceType = sourceDescriptor.sourcetype();
+    const auto& workerId = sourceDescriptor.workerid();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -167,7 +168,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
         sourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
-    return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(sourceDescriptorConfig), deserializedParserConfig};
+    return SourceDescriptor{physicalSourceId, logicalSource, sourceType, workerId, std::move(sourceDescriptorConfig), deserializedParserConfig};
 }
 
 Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
@@ -176,6 +177,7 @@ Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const
     auto sinkName = serializableSinkDescriptor.sinkname();
     const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
+    auto workerId = serializableSinkDescriptor.workerid();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     DescriptorConfig::Config sinkDescriptorConfig{};
@@ -184,7 +186,8 @@ Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const
         sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
-    return Sinks::SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), std::move(sinkDescriptorConfig)};
+    return Sinks::SinkDescriptor{
+        std::move(sinkName), schema, std::move(sinkType), std::move(workerId), std::move(sinkDescriptorConfig)};
 }
 
 

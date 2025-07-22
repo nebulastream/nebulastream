@@ -34,8 +34,13 @@
 namespace NES::Sinks
 {
 
-SinkDescriptor::SinkDescriptor(std::string sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+SinkDescriptor::SinkDescriptor(
+    std::string sinkName, const Schema& schema, const std::string_view sinkType, std::string workerId, DescriptorConfig::Config config)
+    : Descriptor(std::move(config))
+    , sinkName(std::move(sinkName))
+    , schema(std::make_shared<Schema>(schema))
+    , sinkType(sinkType)
+    , workerId(std::move(workerId))
 {
 }
 
@@ -54,6 +59,11 @@ std::string SinkDescriptor::getSinkName() const
     return sinkName;
 }
 
+std::string SinkDescriptor::getWorkerId() const
+{
+    return workerId;
+}
+
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
@@ -64,9 +74,10 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {})",
+        "SinkDescriptor: (name: {}, type: {}, workerId: {}, Config: {})",
         sinkDescriptor.sinkName,
         sinkDescriptor.sinkType,
+        sinkDescriptor.workerId,
         sinkDescriptor.toStringConfig());
     return out;
 }
@@ -82,6 +93,7 @@ SerializableSinkDescriptor SinkDescriptor::serialize() const
     serializedSinkDescriptor.set_sinkname(sinkName);
     SchemaSerializationUtil::serializeSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
     serializedSinkDescriptor.set_sinktype(sinkType);
+    serializedSinkDescriptor.set_workerid(workerId);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : getConfig())
     {
