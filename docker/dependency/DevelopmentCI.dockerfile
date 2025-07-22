@@ -15,3 +15,6 @@ WORKDIR /home/runner
 ENV HOME=/home/${USERNAME}
 ENV MOLD_JOBS=1
 USER 1001:1001
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/${USERNAME}/.cargo/bin:${PATH}"
