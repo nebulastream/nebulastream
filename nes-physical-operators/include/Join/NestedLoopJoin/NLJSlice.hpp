@@ -51,14 +51,6 @@ public:
     /// Returns true if combinePagedVectors() method has already been called. Does not acquire a lock for combinePagedVectorsMutex.
     [[nodiscard]] bool pagedVectorsCombined() const;
 
-    /// Returns the number of all tuples in the PagedVector in memory. Acquires a write lock for combinePagedVectorsMutex.
-    /// Returns zero if PagedVectors were already combined.
-    uint64_t getNumTuplesInMemoryForThreadId(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
-    /// Returns the number of all tuples in the PagedVector on disk. Acquires a write lock for combinePagedVectorsMutex.
-    /// Returns zero if PagedVectors were already combined.
-    uint64_t getNumTuplesOnDiskForThreadId(WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
-
 private:
     // TODO read locks for each paged vector
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;

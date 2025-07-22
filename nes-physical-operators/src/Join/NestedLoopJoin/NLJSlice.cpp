@@ -133,26 +133,4 @@ bool NLJSlice::pagedVectorsCombined() const
     return combinedPagedVectors;
 }
 
-uint64_t NLJSlice::getNumTuplesInMemoryForThreadId(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
-{
-    const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
-    const std::scoped_lock lock(combinePagedVectorsMutex);
-    if (combinedPagedVectors)
-    {
-        return 0;
-    }
-    return pagedVector->getNumberOfEntries();
-}
-
-uint64_t NLJSlice::getNumTuplesOnDiskForThreadId(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
-{
-    const auto* const pagedVector = getPagedVectorRef(threadId, joinBuildSide);
-    const std::scoped_lock lock(combinePagedVectorsMutex);
-    if (combinedPagedVectors)
-    {
-        return 0;
-    }
-    return pagedVector->getNumberOfTuplesOnDisk();
-}
-
 }

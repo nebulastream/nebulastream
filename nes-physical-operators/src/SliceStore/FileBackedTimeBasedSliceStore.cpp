@@ -317,8 +317,19 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto stateSizeOnDisk = nljSlice->getNumTuplesOnDiskForThreadId(threadId, joinBuildSide) * tupleSize;
-        const auto stateSizeInMemory = nljSlice->getNumTuplesInMemoryForThreadId(threadId, joinBuildSide) * tupleSize;
+        const auto *const pagedVector = nljSlice->getPagedVectorRef(threadId, joinBuildSide);
+
+        auto stateSizeOnDisk = 0UL;
+        auto stateSizeInMemory = 0UL;
+        nljSlice->acquireCombinePagedVectorsLock();
+        if (not nljSlice->pagedVectorsCombined())
+        {
+            stateSizeOnDisk = pagedVector->getNumberOfTuplesOnDisk();
+            stateSizeInMemory = pagedVector->getNumberOfEntries();
+        }
+        nljSlice->releaseCombinePagedVectorsLock();
+        stateSizeOnDisk *= tupleSize;
+        stateSizeInMemory *= tupleSize;
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
