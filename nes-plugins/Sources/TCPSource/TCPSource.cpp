@@ -330,7 +330,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-void TCPSource::open()
+void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     NES_TRACE("TCPSource::open: Trying to create socket and connect.");
 
