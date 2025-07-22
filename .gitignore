@@ -25,6 +25,10 @@ docker/executableImage/resources/NebulaStream*.deb
 # Python virtual environment
 venv
 
+# Rust
+**/target/
+**/Cargo.lock
+
 # Nes files
 .z3-trace
 tpch_cached_tables
