@@ -70,6 +70,14 @@ struct Trait
     Trait(const Trait& other);
     Trait(Trait&&) noexcept;
 
+    /// Compares this trait with another trait for equality.
+    /// @param other The trait to compare with.
+    /// @return bool True if the traits are equal, false otherwise.
+    bool operator==(const Trait& other) const
+    {
+        return self->equals(*other.self);
+    }
+
     /// Attempts to get the underlying trait as type TraitType.
     /// @tparam TraitType The type to try to get the trait as.
     /// @return std::optional<TraitType> The trait if it is of type TraitType, nullopt otherwise.
@@ -144,6 +152,19 @@ private:
 };
 
 using TraitSet = std::vector<Trait>;
+}
+
+template <typename T>
+std::optional<T> getTrait(const NES::TraitSet& traitSet)
+{
+    for (const auto& trait : traitSet)
+    {
+        if (trait.tryGet<T>())
+        {
+            return {trait.get<T>()};
+        }
+    }
+    return std::nullopt;
 }
 
 template <typename T>

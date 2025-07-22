@@ -31,8 +31,8 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    INVARIANT(queryPlan.rootOperators.size() == 1, "Query plan should currently have only one root operator");
-    auto rootOperator = queryPlan.rootOperators.front();
+    INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
+    auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
     /// Serialize Query Plan operators

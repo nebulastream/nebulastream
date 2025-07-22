@@ -61,6 +61,8 @@ public:
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
+    [[nodiscard]] LogicalOperator withAdditionalTraits(TraitSet traitSet) const override;
     [[nodiscard]] TraitSet getTraitSet() const override;
 
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
@@ -123,6 +125,7 @@ private:
     OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;
+    TraitSet traitSet;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
     Schema leftInputSchema, rightInputSchema, outputSchema;
