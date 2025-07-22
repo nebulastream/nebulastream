@@ -168,11 +168,16 @@ void verify_number_of_emits(
 TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 {
     auto bm = Memory::BufferManager::create();
+    auto [valve, ingestion] = Backpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            std::move(ingestion),
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -187,11 +192,16 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 TEST_F(SourceThreadTest, NoOpDestruction)
 {
     auto bm = Memory::BufferManager::create();
+    auto [valve, ingestion] = Backpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
         const Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -203,6 +213,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
 TEST_F(SourceThreadTest, FailureDuringRunning)
 {
     auto bm = Memory::BufferManager::create();
+    auto [valve, ingestion] = Backpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -210,7 +221,11 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
     control->injectError("I should fail");
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -228,12 +243,17 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
 TEST_F(SourceThreadTest, FailureDuringOpen)
 {
     auto bm = Memory::BufferManager::create();
+    auto [valve, ingestion] = Backpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -251,6 +271,7 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
 TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
 {
     auto bm = Memory::BufferManager::create();
+    auto [valve, ingestion] = Backpressure();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -258,7 +279,11 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -277,14 +302,18 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 {
     auto bm = Memory::BufferManager::create();
     RecordingEmitFunction recorder(*bm);
+    auto [valve, ingestion] = Backpressure();
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
-    control->injectEoS();
     {
         Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
@@ -300,5 +329,77 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
 }
+
+TEST_F(SourceThreadTest, ApplyBackbressure)
+{
+    auto bm = Memory::BufferManager::create();
+    RecordingEmitFunction recorder(*bm);
+    auto [valve, ingestion] = Backpressure();
+    valve.applyPressure();
+    auto control = std::make_shared<Sources::TestSourceControl>();
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectEoS();
+    {
+        Sources::SourceThread sourceThread(
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+        wait_for_emits(recorder, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_FALSE(control->wasClosed());
+        wait_for_emits(recorder, 0);
+        valve.releasePressure();
+        wait_for_emits(recorder, 4);
+        verify_non_blocking_stop(sourceThread);
+    }
+
+    verify_number_of_emits(recorder, 4);
+    verify_last_event<Sources::SourceReturnType::EoS>(recorder);
+    EXPECT_TRUE(control->wasOpened());
+    EXPECT_TRUE(control->wasClosed());
+    EXPECT_TRUE(control->wasDestroyed());
+}
+
+TEST_F(SourceThreadTest, StopDuringBackpressure)
+{
+    auto bm = Memory::BufferManager::create();
+    RecordingEmitFunction recorder(*bm);
+    auto [valve, ingestion] = Backpressure();
+    valve.applyPressure();
+    auto control = std::make_shared<Sources::TestSourceControl>();
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectEoS();
+    {
+        Sources::SourceThread sourceThread(
+            ingestion,
+            INITIAL<OriginId>,
+            bm,
+            DEFAULT_NUMBER_OF_LOCAL_BUFFERS,
+            std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+        wait_for_emits(recorder, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_FALSE(control->wasClosed());
+        wait_for_emits(recorder, 0);
+        verify_non_blocking_stop(sourceThread);
+    }
+
+    verify_number_of_emits(recorder, 0);
+    EXPECT_TRUE(control->wasOpened());
+    EXPECT_TRUE(control->wasClosed());
+    EXPECT_TRUE(control->wasDestroyed());
+}
+
 
 }
