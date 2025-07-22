@@ -22,6 +22,7 @@
 #include <optional>
 #include <random>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
@@ -41,10 +42,13 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void initNetworkServices(const std::string& connectionAddr, const NES::WorkerId& workerId, const NES::NetworkOptions& options);
 
 namespace NES
 {
@@ -74,6 +78,21 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
+    if (!configuration.connection.getValue().empty())
+    {
+        const auto& networkConfig = configuration.workerConfiguration.network;
+        initNetworkServices(
+            configuration.connection.getValue(),
+            workerId,
+            NetworkOptions{
+                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
+                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
+                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
+                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
+                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+            });
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
