@@ -399,7 +399,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     SystestProgressTracker& progressTracker)
 {
     auto worker = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -543,7 +543,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
@@ -556,7 +556,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto remoteQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI), .config = {}}));
+        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr(serverURI), .config = {}}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
