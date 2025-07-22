@@ -63,7 +63,6 @@
 #include <Util/Strings.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <NebuLI.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
