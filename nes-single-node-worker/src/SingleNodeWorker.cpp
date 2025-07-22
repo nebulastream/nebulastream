@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
@@ -41,6 +42,9 @@
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void initReceiverService(const std::string& connectionAddr, const NES::WorkerId& workerId);
+extern void initSenderService(const std::string& connectionAddr, const NES::WorkerId& workerId);
 
 namespace NES
 {
@@ -72,6 +76,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
+    }
+
+    if (!configuration.connection.getValue().empty())
+    {
+        initReceiverService(configuration.connection.getValue(), workerId);
+        initSenderService(configuration.connection.getValue(), workerId);
     }
 }
 

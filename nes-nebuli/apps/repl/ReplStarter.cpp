@@ -50,11 +50,12 @@
 
 namespace
 {
+constexpr NES::HostAddr hostAddr{"localhost:9090"};
 constexpr NES::GrpcAddr grpcAddr{"localhost:8080"};
 
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
 {
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = grpcAddr});
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.host = hostAddr, .grpc = grpcAddr});
 }
 }
 
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
             queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
-                NES::WorkerConfig{.grpc = NES::GrpcAddr("localhost:8080")}, singleNodeWorkerConfig));
+                NES::WorkerConfig{.host = NES::HostAddr(""), .grpc = NES::GrpcAddr("localhost:8080")}, singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")

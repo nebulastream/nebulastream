@@ -336,8 +336,8 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
 {
-    auto worker = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
+    auto worker = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080")}, configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     std::size_t queryFinishedCounter = 0;
@@ -460,8 +460,8 @@ void printQueryResultToStdOut(
 std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
 {
-    auto embeddedQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
+    auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080")}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
@@ -469,8 +469,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
-    auto remoteQueryManager
-        = std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI)}));
+    auto remoteQueryManager = std::make_unique<QueryManager>(
+        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr(serverURI)}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
