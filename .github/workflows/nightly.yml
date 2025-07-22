@@ -151,6 +151,7 @@ jobs:
                   git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
                   git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
                 fi
+                git commit -m "resolve conflict"
                 git rebase --continue
               done
             fi
@@ -351,6 +352,7 @@ jobs:
                   git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
                   git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
                 fi
+                git commit -m "resolve conflict"
                 git rebase --continue
               done
             fi
@@ -456,6 +458,7 @@ jobs:
                   git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
                   git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
                 fi
+                git commit -m "resolve conflict"
                 git rebase --continue
               done
             fi
