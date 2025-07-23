@@ -428,8 +428,7 @@ void printQueryResultToStdOut(
     const auto queryNameLength = runningQuery.systestQuery.testName.size();
     const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
-    const auto currentQueryIndex = progressTracker.getQueryCounter();
-    const auto queryCounterAsString = std::to_string(currentQueryIndex + 1);
+    const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter() + 1);
 
     std::string overrideStr;
     if (not runningQuery.systestQuery.configurationOverride.overrideParameters.empty())
@@ -442,22 +441,18 @@ void printQueryResultToStdOut(
         }
         overrideStr = fmt::format(" [{}]", fmt::join(kvs, ", "));
     }
-
-    const auto counterPad = padSizeQueryCounter > queryCounterAsString.size()
-                                ? padSizeQueryCounter - queryCounterAsString.size()
-                                : 0U;
+    const auto counterPad = padSizeQueryCounter > queryCounterAsString.size() ? padSizeQueryCounter - queryCounterAsString.size() : 0;
     std::cout << std::string(counterPad, ' ');
     std::cout << queryCounterAsString << "/" << progressTracker.getTotalQueries() << " ";
-
-    const auto numberPad = padSizeQueryNumber > queryNumberLength ? padSizeQueryNumber - queryNumberLength : 0U;
+    const auto numberPad = padSizeQueryNumber > queryNumberLength ? padSizeQueryNumber - queryNumberLength : 0;
     std::cout << runningQuery.systestQuery.testName << ":" << std::string(numberPad, '0') << queryNumberAsString;
     std::cout << overrideStr;
 
     const auto totalUsedSpace = queryNameLength + padSizeQueryNumber + overrideStr.size();
-    const auto paddingDots = totalUsedSpace >= padSizeSuccess ? 0U : static_cast<unsigned>(padSizeSuccess - totalUsedSpace);
-    constexpr unsigned MaxPadding = 1000;
-    std::cout << std::string(std::min(paddingDots, MaxPadding), '.');
-
+    const auto paddingDots = (totalUsedSpace >= padSizeSuccess) ? 0 : (padSizeSuccess - totalUsedSpace);
+    const auto maxPadding = 1000;
+    const auto finalPadding = std::min<size_t>(paddingDots, maxPadding);
+    std::cout << std::string(finalPadding, '.');
     if (runningQuery.passed)
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
