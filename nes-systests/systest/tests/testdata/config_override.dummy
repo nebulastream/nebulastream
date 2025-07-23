@@ -3,7 +3,7 @@
 # Includes valid and invalid usages
 
 # --- Valid: Single value override ---
-Configuration worker.queryOptimizer.pageSize: 8
+Configuration worker.query_optimizer.page_size: 8
 
 Source stream UINT64 id UINT64 value INLINE
 1,2
@@ -15,7 +15,7 @@ SELECT id, value FROM stream INTO ID_VALUE_SINK
 1 2
 
 # --- Valid: Multiple value override ---
-Configuration worker.queryOptimizer.pageSize: [8, 1024]
+Configuration worker.query_optimizer.page_size: [8, 1024]
 
 SELECT id, value FROM stream INTO ID_VALUE_SINK
 ----
