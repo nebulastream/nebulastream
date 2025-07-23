@@ -256,12 +256,11 @@ void BufferManager::destroy()
         if (allBuffers.size() > 0)
         {
             NES_WARNING("[BufferManager] Destroying BufferManager while buffers are still used")
-            for (auto& buffer : allBuffers)
+            for (const auto& buffer : allBuffers)
             {
                 if (buffer->getDataReferenceCount() != 0)
                 {
-                    buffer.controlBlock->dumpOwningThreadInfo();
-                    success = false;
+                    buffer->dumpOwningThreadInfo();
                 }
             }
         }
@@ -279,10 +278,7 @@ void BufferManager::destroy()
             if (!holder || holder->getDataReferenceCount() != 0)
             {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-                if (holder.segment)
-                {
-                    holder.segment->controlBlock->dumpOwningThreadInfo();
-                }
+                holder->dumpOwningThreadInfo();
 #endif
                 INVARIANT(
                     false,

@@ -258,8 +258,8 @@ private:
             return os;
         }
     };
-    std::mutex owningThreadsMutex;
-    std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
+    folly::synchronized<std::unordered_map<uint32_t, ThreadOwnershipInfo>> traceRefs;
+    std::atomic<uint32_t> traceRefCounter = 0;
 #endif
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);

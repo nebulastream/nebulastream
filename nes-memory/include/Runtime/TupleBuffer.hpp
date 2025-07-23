@@ -225,6 +225,9 @@ private:
     ///If == 1, then its unknown what this refer to, please search throught the children vector in the BCB.
     ///If > 1, then childOrMainData - 2 is the index of the child buffer in the BCB that this floating buffer belongs to.
     detail::ChildOrMainDataKey childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
+    #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    uint32_t traceRef;
+    #endif
 };
 
 
