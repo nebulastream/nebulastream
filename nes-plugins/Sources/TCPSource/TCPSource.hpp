@@ -25,16 +25,20 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <netdb.h>
+#include <sys/socket.h> /// For socket functions
+#include <sys/types.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Expected.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
+#include <Util/Strings.hpp>
 
 namespace NES::Sources
 {
@@ -45,11 +49,12 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<uint32_t>
         {
             /// Mandatory (no default value)
             const auto portNumber = DescriptorConfig::tryGet(PORT, config);
@@ -67,31 +72,27 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
         "socketDomain",
         AF_INET,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<int32_t>
         {
-            /// User specified value, set if input is valid, throw if not.
-            const auto& socketDomainString = config.at(DOMAIN);
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
+            auto domainValue = config.at(DOMAIN);
+            auto domainTypeString = Util::toUpperCase(domainValue);
+            if (domainTypeString == "AF_INET")
             {
-                return (AF_INET);
+                return AF_INET;
             }
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
+            if (domainTypeString == "AF_INET6")
             {
                 return AF_INET6;
             }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
-            return std::nullopt;
+            return unexpected("TCPSource: Domain Type '{}' is invalid. Expected either AF_INET or AF_INET6.", domainValue);
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
         "socketType",
         SOCK_STREAM,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<int32_t>
         {
-            auto socketTypeString = config.at(TYPE);
-            for (auto& character : socketTypeString)
-            {
-                character = toupper(character);
-            }
+            const auto socketType = config.at(TYPE);
+            auto socketTypeString = Util::toUpperCase(socketType);
             if (socketTypeString == "SOCK_STREAM")
             {
                 return SOCK_STREAM;
@@ -112,24 +113,26 @@ struct ConfigParametersTCP
             {
                 return SOCK_RDM;
             }
-            NES_ERROR(
-                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
-                "SOCK_RDM",
-                socketTypeString)
-            return std::nullopt;
+            return unexpected(
+                "TCPSource: Socket type '{}' is invalid. Expected either 'SOCK_STREAM', 'SOCK_DGRAM', 'SOCK_SEQPACKET', "
+                "'SOCK_RAW', or 'SOCK_RDM'",
+                socketTypeString);
         }};
     static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tupleDelimiter",
         '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flushIntervalMS",
         0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
         "socketBufferSize",
         1024,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
         "bytesUsedForSocketBufferSizeTransfer",
         0,
@@ -141,8 +144,7 @@ struct ConfigParametersTCP
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
+        = DescriptorConfig::createConfigParameterContainerMap(HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
@@ -173,7 +175,7 @@ public:
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
-    void open() override;
+    void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     /// Close TCP connection.
     void close() override;
 
@@ -195,9 +197,6 @@ private:
     std::string socketPort;
     int socketType;
     int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

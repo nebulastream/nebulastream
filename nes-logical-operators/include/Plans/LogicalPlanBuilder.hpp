@@ -89,6 +89,6 @@ private:
     /// @param: rightLogicalPlan the right query plan of the binary operation
     /// @return the updated queryPlan
     static LogicalPlan
-    addBinaryOperatorAndUpdateSource(const LogicalOperator& operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan);
+    addBinaryOperatorAndUpdateSource(const LogicalOperator& operatorNode, const LogicalPlan& leftLogicalPlan, const LogicalPlan& rightLogicalPlan);
 };
 }

@@ -25,11 +25,11 @@
 namespace NES::Sinks::SinkProvider
 {
 
-std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> lower(Valve valve, const SinkDescriptor& sinkDescriptor)
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
-    auto sinkArguments = NES::Sinks::SinkRegistryArguments(sinkDescriptor);
-    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.sinkType, sinkArguments); sink.has_value())
+    auto sinkArguments = NES::Sinks::SinkRegistryArguments(std::move(valve), sinkDescriptor);
+    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.sinkType, std::move(sinkArguments)); sink.has_value())
     {
         return std::move(sink.value());
     }

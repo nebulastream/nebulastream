@@ -39,6 +39,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -55,7 +56,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
-#include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -80,7 +80,7 @@ public:
                 }
                 auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
                     "Checksum", std::unordered_map<std::string, std::string>{{"filePath", filePath}});
-                return Sinks::SinkDescriptor{std::string{"Checksum"}, std::move(validatedSinkConfig), false};
+                return Sinks::SinkDescriptor{std::string{"Checksum"}, std::move(validatedSinkConfig), "", false};
             });
         INVARIANT(success, "Failed to register checksum sink");
     }
@@ -105,7 +105,7 @@ public:
                 }
 
                 auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
-                return Sinks::SinkDescriptor{sinkType, std::move(validatedSinkConfig), false};
+                return Sinks::SinkDescriptor{sinkType, std::move(validatedSinkConfig), "", false};
             });
         return success;
     }
@@ -220,7 +220,7 @@ public:
                 }
             });
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
-        const auto sinkOperatorOpt = this->optimizedPlan->rootOperators.at(0).tryGet<SinkLogicalOperator>();
+        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGet<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value().sinkDescriptor != nullptr, "The root sink should have a sink descriptor");
         if (sinkOperatorOpt.value().sinkDescriptor->sinkType == "Checksum")
@@ -229,7 +229,7 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->rootOperators.at(0).getOutputSchema();
+            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
             if (sinkOutputSchema != sinkProvider.getSinkSchema(sinkOperatorOpt.value().sinkName))
             {
                 this->exception = CannotInferSchema("The inferred sink schema does not match the schema declared in the systest");
@@ -331,32 +331,33 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        auto buildSystests = loadedSystests
+        auto buildSystests
+            = loadedSystests
             | std::views::filter(
-                                 [&testfile](const auto& loadedQueryPlan)
-                                 {
-                                     return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                                         or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
-                                 })
+                  [&testfile](const auto& loadedQueryPlan)
+                  {
+                      return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
+                  })
             | std::ranges::views::transform(
-                                 [&testfile, &foundQueries, &sinkProvider](auto& systest)
-                                 {
-                                     foundQueries.insert(systest.getSystemTestQueryId());
+                  [&testfile, &foundQueries, &sinkProvider](auto& systest)
+                  {
+                      foundQueries.insert(systest.getSystemTestQueryId());
 
-                                     if (systest.getBoundPlan().has_value())
-                                     {
-                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog};
-                                         try
-                                         {
-                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()), sinkProvider);
-                                         }
-                                         catch (const Exception& exception)
-                                         {
-                                             systest.setException(exception);
-                                         }
-                                     }
-                                     return std::move(systest).build();
-                                 })
+                      if (systest.getBoundPlan().has_value())
+                      {
+                          try
+                          {
+                              systest.setOptimizedPlan(
+                                  LegacyOptimizer::optimize(systest.getBoundPlan().value(), testfile.sourceCatalog).plan, sinkProvider);
+                          }
+                          catch (const Exception& exception)
+                          {
+                              systest.setException(exception);
+                          }
+                      }
+                      return std::move(systest).build();
+                  })
             | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file
@@ -565,7 +566,7 @@ struct SystestBinder::Impl
                 {
                     if (const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
                             logicalSource.value(),
-                            INITIAL<WorkerId>,
+                            "",
                             attachSource.sourceType,
                             -1,
                             Sources::SourceValidationProvider::provide(attachSource.sourceType, sourceConfig),
@@ -627,10 +628,10 @@ struct SystestBinder::Impl
                     try
                     {
                         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                        auto sinkOperators = plan.rootOperators;
+                        auto sinkOperators = plan.getRootOperators();
                         auto sinkOperator = [](const LogicalPlan& queryPlan)
                         {
-                            const auto rootOperators = queryPlan.rootOperators;
+                            const auto rootOperators = queryPlan.getRootOperators();
                             if (rootOperators.size() != 1)
                             {
                                 throw QueryInvalid(
@@ -643,7 +644,7 @@ struct SystestBinder::Impl
                         }(plan);
 
                         sinkOperator.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sinkExpected.value());
-                        plan.rootOperators.at(0) = sinkOperator;
+                        plan = plan.withRootOperators({sinkOperator});
                         currentTest.setBoundPlan(std::move(plan));
                     }
                     catch (Exception& e)

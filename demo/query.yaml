@@ -1,0 +1,37 @@
+logical:
+  - name: stream
+    schema:
+      - type: UINT64
+        name: id
+      - type: UINT64
+        name: value
+      - type: UINT64
+        name: timestamp
+nodes:
+  - connection: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 10
+    sinks:
+      - name: fast_csv_sink
+        type: Print
+        config:
+          ingestion: 100
+          inputFormat: CSV
+      - name: slow_csv_sink
+        type: Print
+        config:
+          ingestion: 1000
+          inputFormat: CSV
+  - connection: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 0
+    links:
+      downstreams: [ 127.0.0.1:9091 ]
+    physical:
+      - logical: stream
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          socketHost: 127.0.0.1
+          socketPort: 6666
+          type: TCP

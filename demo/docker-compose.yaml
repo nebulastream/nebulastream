@@ -1,0 +1,34 @@
+services:
+  worker-1:
+    healthcheck:
+      test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
+    command: [ "--bind=0.0.0.0:9090", "--connection=root:9090" ]
+    image: nebulastream/worker:distributed
+    build:
+      context: ..
+      dockerfile: docker/single-node-worker/SingleNodeWorker.dockerfile
+      args:
+        - TAG=distributed
+
+  worker-2:
+    healthcheck:
+      test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
+    command: [ "--bind=0.0.0.0:9090", "--connection=root:9090" ]
+    image: nebulastream/worker:distributed
+    build:
+      context: ..
+      dockerfile: docker/single-node-worker/SingleNodeWorker.dockerfile
+      args:
+        - TAG=distributed
+
+  nebuli:
+    depends_on:
+      - worker-1
+      - worker-2
+    image: nebulastream/nebuli:distributed
+    entrypoint: [ 'nebuli', '', '' ]
+    build:
+      context: ..
+      dockerfile: docker/nebuli/Nebuli.dockerfile
+      args:
+        - TAG=distributed

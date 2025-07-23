@@ -1,0 +1,54 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+sink:
+  name: sink
+  type: Print
+  host: "sink-node"
+  config:
+    inputFormat: CSV
+logicalSources:
+  - name: stream0
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id0
+        dataType: INT32
+  - name: stream1
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id1
+        dataType: INT32
+      - name: a
+        dataType: INT32
+      - name: b
+        dataType: INT32
+physicalSources:
+  - logicalSource: stream0
+    host: "source-node"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+  - logicalSource: stream1
+    host: "source-node"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+workerNodes:
+  - host: "source-node"
+    grpc: "source-node-grpc"
+    capacity: 3
+    downstreamNodes:
+      - "intermediate-node"
+  - host: "intermediate-node"
+    grpc: "intermediate-node-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "sink-node"
+  - host: "sink-node"
+    grpc: "sink-node-grpc"
+    capacity: 10
