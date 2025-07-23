@@ -1,0 +1,236 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
+#include <ios>
+#include <iostream>
+#include <latch>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <random>
+#include <ranges>
+#include <span>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <fmt/base.h>
+#include <fmt/ranges.h>
+
+#include <DataTypes/Schema.hpp>
+#include "Util/Logger/Formatter.hpp"
+// #include <Identifiers/Identifiers.hpp>
+// #include <MemoryLayout/RowLayoutField.hpp>
+// #include <Runtime/BufferManager.hpp>
+// #include <Runtime/TupleBuffer.hpp>
+// #include <Sources/SourceCatalog.hpp>
+// #include <Sources/SourceHandle.hpp>
+// #include <Sources/SourceReturnType.hpp>
+// #include <Util/Logger/LogLevel.hpp>
+// #include <Util/Logger/Logger.hpp>
+// #include <Util/Logger/impl/NesLogger.hpp>
+// #include <Util/TestTupleBuffer.hpp>
+// #include <gtest/gtest.h>
+// #include <yaml-cpp/node/parse.h>
+// #include "Runtime/NodeEngine.hpp"
+//
+// // #include <BaseUnitTest.hpp>
+// #include <optional>
+// #include <ErrorHandling.hpp>
+// #include <InputFormatterTestUtil.hpp>
+// #include <TestTaskQueue.hpp>
+
+
+struct TupleDelimiterFastLane
+{
+    uint8_t hasTupleDelimiter;
+    uint8_t noTupleDelimiter;
+};
+
+struct Interval
+{
+    uint32_t lo;
+    uint32_t hi;
+
+
+    bool operator<(const Interval& other) const { return this->lo < other.lo; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Interval& interval)
+    {
+        return os << '[' << interval.lo << ',' << interval.hi << ']';
+    }
+};
+FMT_OSTREAM(::Interval);
+
+void executeExperiment(const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS)
+{
+    PRECONDITION(
+        NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0, "The number of sequence numbers must be evenly divisible by the number of threads.");
+    // std::vector<TupleDelimiterFastLane> delimiters(NUM_SEQUENCE_NUMBERS);
+    std::vector<TupleDelimiterFastLane> delimiters(NUM_SEQUENCE_NUMBERS);
+    delimiters[0] = TupleDelimiterFastLane{.hasTupleDelimiter = 1, .noTupleDelimiter = 0};
+
+    std::vector<std::jthread> threads{};
+    threads.reserve(NUM_THREADS);
+
+    std::vector<std::vector<Interval>> threadLocalResultIntervals(NUM_THREADS);
+
+    std::latch completionLatch(NUM_THREADS);
+
+    for (size_t i = 0; i < NUM_THREADS; ++i)
+    {
+        threads.emplace_back(
+            [i, &delimiters, NUM_THREADS, NUM_SEQUENCE_NUMBERS, &threadLocalResultIntervals, &completionLatch]()
+            {
+                std::mt19937_64 sequenceNumberGen(i);
+                std::bernoulli_distribution boolDistribution{0.1};
+
+                size_t currentSequenceNumber = i + 1;
+
+                const auto leadingDelimiterSearch = [&delimiters](const size_t currentSequenceNumber) -> uint32_t
+                {
+                    size_t leadingDistance = 1;
+                    while (currentSequenceNumber > leadingDistance and delimiters[currentSequenceNumber - leadingDistance].noTupleDelimiter)
+                    {
+                        ++leadingDistance;
+                    }
+                    return (delimiters[currentSequenceNumber - leadingDistance].hasTupleDelimiter)
+                        ? (currentSequenceNumber - leadingDistance)
+                        : std::numeric_limits<uint32_t>::max();
+                };
+
+                const auto trailingDelimiterSearch = [&delimiters](const size_t currentSequenceNumber) -> uint32_t
+                {
+                    size_t trailingDistance = 1;
+                    while (delimiters[currentSequenceNumber + trailingDistance].noTupleDelimiter)
+                    {
+                        ++trailingDistance;
+                    }
+                    return (delimiters[currentSequenceNumber + trailingDistance].hasTupleDelimiter)
+                        ? (currentSequenceNumber + trailingDistance)
+                        : std::numeric_limits<uint32_t>::max();
+                };
+
+                while (currentSequenceNumber < NUM_SEQUENCE_NUMBERS)
+                {
+                    const bool hasTupleDelimiter = boolDistribution(sequenceNumberGen);
+                    if (hasTupleDelimiter)
+                    {
+                        std::this_thread::sleep_for(std::chrono::microseconds(10));
+                        delimiters[currentSequenceNumber] = TupleDelimiterFastLane{.hasTupleDelimiter = 1, .noTupleDelimiter = 0};
+
+                        const auto firstDelimiter = leadingDelimiterSearch(currentSequenceNumber);
+                        const auto lastDelimiter = trailingDelimiterSearch(currentSequenceNumber);
+                        if (firstDelimiter != std::numeric_limits<uint32_t>::max())
+                        {
+                            // fmt::println("{} found Interval: [{}-{}]", i, firstDelimiter, currentSequenceNumber);
+                            threadLocalResultIntervals.at(i).emplace_back()
+                                = Interval{.lo = firstDelimiter, .hi = static_cast<uint32_t>(currentSequenceNumber)};
+                        }
+                        if (lastDelimiter != std::numeric_limits<uint32_t>::max())
+                        {
+                            // fmt::println("{} found Interval: [{}-{}]", i, currentSequenceNumber, lastDelimiter);
+                            threadLocalResultIntervals.at(i).emplace_back()
+                                = Interval{.lo = static_cast<uint32_t>(currentSequenceNumber), .hi = lastDelimiter};
+                        }
+                    }
+                    else
+                    {
+                        delimiters[currentSequenceNumber] = TupleDelimiterFastLane{.hasTupleDelimiter = 0, .noTupleDelimiter = 1};
+                        const auto firstDelimiter = leadingDelimiterSearch(currentSequenceNumber);
+                        const auto lastDelimiter = trailingDelimiterSearch(currentSequenceNumber);
+                        if (firstDelimiter != std::numeric_limits<uint32_t>::max()
+                            and lastDelimiter != std::numeric_limits<uint32_t>::max())
+                        {
+                            // fmt::println("{} found Interval: [{}-{}]", i, firstDelimiter, lastDelimiter);
+                            threadLocalResultIntervals.at(i).emplace_back() = Interval{.lo = firstDelimiter, .hi = lastDelimiter};
+                        }
+                    }
+                    currentSequenceNumber += NUM_THREADS;
+                }
+                completionLatch.count_down();
+            });
+    }
+    completionLatch.wait();
+    auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
+    std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+    std::ranges::sort(
+        resultBufferVec.begin(),
+        resultBufferVec.end(),
+        [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
+    // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
+    for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
+    {
+        if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
+        {
+            if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
+            {
+                fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+            }
+            else
+            {
+                fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+            }
+        }
+        else
+        {
+            fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
+        }
+    }
+}
+
+void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBound)
+{
+    std::vector<std::jthread> threads{};
+
+    size_t counter = 0;
+    std::latch completionLatch(NUM_THREADS);
+    std::vector<size_t> threadLocalIncrementCounter(NUM_THREADS);
+
+    for (size_t i = 0; i < NUM_THREADS; ++i)
+    {
+        threads.emplace_back([i, &counter, &completionLatch, &upperBound, &threadLocalIncrementCounter, NUM_THREADS]()
+        {
+            size_t nextThreadCounter = i;
+            while (counter < upperBound)
+            {
+                if (counter == nextThreadCounter)
+                {
+                    counter = std::min(counter + 1, upperBound);
+                    ++threadLocalIncrementCounter[i];
+                    nextThreadCounter += NUM_THREADS;
+                }
+            }
+            completionLatch.count_down();
+        });
+    }
+    completionLatch.wait();
+    fmt::println("Upperbound: {}, final counter: {}", upperBound, counter);
+    fmt::println("Thread local counters: {}", fmt::join(threadLocalIncrementCounter, ","));
+}
+
+int main()
+{
+    ///
+    executeExperiment(40, 100000);
+    // syncLessIncreaseExperiment(8, 1000000);
+    return 0;
+}
