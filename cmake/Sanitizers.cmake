@@ -54,3 +54,12 @@ if (USE_GCOV)
     add_compile_options(--coverage)
     add_link_options(--coverage)
 endif ()
+
+option(USE_MULL "" OFF)
+
+if (USE_MULL)
+    if (NOT EXISTS "/usr/lib/mull-ir-frontend-18")
+        message(FATAL_ERROR "mull not found but USE_MULL is set")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fpass-plugin=/usr/lib/mull-ir-frontend-18 -g -grecord-command-line")
+endif ()
