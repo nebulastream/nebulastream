@@ -187,12 +187,12 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
 
     /// Initialise memory controller and measure execution times for reading and writing
-    /// Separate keys means keys and payload are written to separate files, and we may need an additional descriptor for variable sized data
+    /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data
     /// We then also need two buffers, one for key and one for payload file
-    const auto minNumFileDescriptorsPerWorker = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 3UL : 2UL;
+    const auto numFileDescriptorsPerWorker = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 3UL : 2UL;
     const auto memoryPoolSizeMultiplier = sliceStoreInfo.fileLayout == FileLayout::SEPARATE_KEYS ? 2UL : 1UL;
     fileDescriptorManager = std::make_shared<FileDescriptorManager>(
-        fileDescriptorManagerInfo, numberOfWorkerThreads, minNumFileDescriptorsPerWorker, memoryPoolSizeMultiplier);
+        fileDescriptorManagerInfo, numberOfWorkerThreads, numFileDescriptorsPerWorker, memoryPoolSizeMultiplier);
     measureReadAndWriteExecTimes(TEST_DATA_SIZES);
 }
 

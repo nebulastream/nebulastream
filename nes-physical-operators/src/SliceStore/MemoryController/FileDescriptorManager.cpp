@@ -22,7 +22,7 @@ namespace NES
 FileDescriptorManager::FileDescriptorManager(
     FileDescriptorManagerInfo fileDescriptorManagerInfo,
     const uint64_t numWorkerThreads,
-    const uint64_t minNumFileDescriptorsPerWorker,
+    const uint64_t numFileDescriptorsPerWorker,
     const uint64_t memoryPoolSizeMultiplier)
     : memoryPool(
           fileDescriptorManagerInfo.fileDescriptorBufferSize,
@@ -42,16 +42,16 @@ FileDescriptorManager::FileDescriptorManager(
     {
         this->fileDescriptorManagerInfo.maxNumFileDescriptors
             = setAndGetFileDescriptorLimit(this->fileDescriptorManagerInfo.maxNumFileDescriptors);
-        /// Each worker thread must be allowed to have minNumFileDescriptorsPerWorker many file writers and readers at once
-        if (this->fileDescriptorManagerInfo.maxNumFileDescriptors < 2 * numWorkerThreads * minNumFileDescriptorsPerWorker)
+        /// Each worker thread must be allowed to have numFileDescriptorsPerWorker many file writers and readers at once
+        if (this->fileDescriptorManagerInfo.maxNumFileDescriptors < 2 * numWorkerThreads * numFileDescriptorsPerWorker)
         {
             throw std::runtime_error("Not enough file descriptors available for the specified number of worker threads");
         }
 
         /// Subtract number of worker threads multiplied by number of descriptors per worker to be able to create file readers at any time
-        this->fileDescriptorManagerInfo.maxNumFileDescriptors -= numWorkerThreads * minNumFileDescriptorsPerWorker;
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors -= numWorkerThreads * numFileDescriptorsPerWorker;
         /// Divide by number of descriptors per worker as each created file writer potentially needs to open this amount of descriptors
-        this->fileDescriptorManagerInfo.maxNumFileDescriptors /= minNumFileDescriptorsPerWorker;
+        this->fileDescriptorManagerInfo.maxNumFileDescriptors /= numFileDescriptorsPerWorker;
         /// Divide by number of worker threads as we enforce a limit on each worker separately
         this->fileDescriptorManagerInfo.maxNumFileDescriptors /= numWorkerThreads;
     }

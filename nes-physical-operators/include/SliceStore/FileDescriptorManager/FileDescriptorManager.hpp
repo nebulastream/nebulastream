@@ -69,7 +69,7 @@ public:
     FileDescriptorManager(
         FileDescriptorManagerInfo fileDescriptorManagerInfo,
         uint64_t numWorkerThreads,
-        uint64_t minNumFileDescriptorsPerWorker,
+        uint64_t numFileDescriptorsPerWorker,
         uint64_t memoryPoolSizeMultiplier);
 
     std::shared_ptr<FileWriter>
