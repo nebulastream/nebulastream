@@ -19,18 +19,12 @@
 #include <ranges>
 #include <vector>
 #include <Functions/FunctionProvider.hpp>
-
-#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Util/PlanRenderer.hpp>
-
-#include <EmitOperatorHandler.hpp>
-#include <EmitPhysicalOperator.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -45,7 +39,6 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
-
     auto bufferSize = conf.pageSize.getValue();
 
     if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
@@ -56,13 +49,11 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         outputSchema = outputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
     }
 
-    auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
-    auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
+    auto scanMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
     auto accessedFields = projection.getAccessedFields();
     auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
-
 
     auto child = scanWrapper;
     for (const auto& [fieldName, function] : projection.getProjections())

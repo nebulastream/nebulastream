@@ -52,7 +52,6 @@
 
 namespace NES
 {
-
 static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
 getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
 {
@@ -125,7 +124,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
                     configuration.operatorBufferSize.getValue(), logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType));
             }
 
-        auto memoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+        auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+            configuration.pageSize.getValue(), layout);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
