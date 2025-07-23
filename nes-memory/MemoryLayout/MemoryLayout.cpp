@@ -19,16 +19,17 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
-
 std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
@@ -51,6 +52,19 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
         return buffer.storeChildBuffer(childBufferVal);
     }
     return {};
+}
+
+std::shared_ptr<MemoryLayout> MemoryLayout::create(uint64_t bufferSize, const Schema& schema)
+{
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
+        return RowLayout::create(bufferSize, std::move(schema));
+    }
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
+        return ColumnLayout::create(bufferSize, std::move(schema));
+    }
+    return std::make_shared<RowLayout>(RowLayout(bufferSize, std::move(schema)));
 }
 
 uint64_t MemoryLayout::getTupleSize() const
