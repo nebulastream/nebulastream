@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <optional>
 #include <string>
-#include <utility>
-#include <vector>
 
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
@@ -24,6 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+
 
 namespace NES::Systest
 {
@@ -36,15 +35,18 @@ public:
         Logger::setupLogging("SystestParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestParserInvalidTestFilesTest test class.");
     }
-
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserInvalidTestFilesTest test class."); }
 };
-
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
+    parser.registerOnSystestAttachSourceCallback(
+        [&](const SystestAttachSource&)
+        {
+            /// noop
+        });
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
@@ -92,25 +94,12 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
     const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
 
     SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
-}
-
-TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
-{
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
-
-    SystestParser parser{};
-    parser.registerOnCreateCallback(
-        [&](const std::string&,
-            const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { /* nop, ensure parsing*/ });
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-    parser.registerOnDifferentialQueryBlockCallback(
-        [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
 
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
@@ -191,4 +180,15 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideNoKeyTest)
     ASSERT_TRUE(parser.loadString("Configuration : [8]\n"));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
+
+TEST_F(SystestParserInvalidTestFilesTest, GlobalConfigOverrideInvalidTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "global_config_override_invalid.dummy";
+
+    SystestParser parser{};
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }

@@ -1,0 +1,31 @@
+# global_config_override.dummy
+# Demonstrates the GlobalConfiguration feature for system-level tests
+# Global configuration applies to all queries in the test file
+
+# --- Global configuration that applies to all queries ---
+GlobalConfiguration worker.queryOptimizer.pageSize: 8
+GlobalConfiguration worker.queryOptimizer.pageSize1: [16, 32]
+GlobalConfiguration worker.queryOptimizer.pageSize2: 64
+
+Source stream UINT64 id UINT64 value INLINE
+1,2
+
+SINK ID_VALUE_SINK UINT64 stream$id UINT64 stream$value
+
+# This query will use the global configuration
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# Regular configuration that will be merged with global configuration
+Configuration worker.queryOptimizer.pageSize3: 128
+
+# This query will also use the global configuration
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# This query will use the merged configuration (global + regular)
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2 
