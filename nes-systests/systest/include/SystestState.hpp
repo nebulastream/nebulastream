@@ -52,30 +52,6 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
-struct ConfigurationOverride
-{
-    std::unordered_map<std::string, std::string> overrideParameters;
-    bool operator==(const ConfigurationOverride& other) const = default;
-    bool operator!=(const ConfigurationOverride& other) const = default;
-};
-
-namespace std
-{
-template <>
-struct hash<ConfigurationOverride>
-{
-    std::size_t operator()(const ConfigurationOverride& co) const noexcept
-    {
-        std::string repr;
-        for (const auto& [key, value] : co.overrideParameters)
-        {
-            repr += key + ":" + value + ";";
-        }
-        return std::hash<std::string>{}(repr);
-    }
-};
-}
-
 namespace NES::Systest
 {
 
@@ -88,6 +64,8 @@ using TestGroup = std::string;
 using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
+
+using ConfigurationOverride = std::unordered_map<std::string, std::string>;
 
 struct ExpectedError
 {
@@ -174,7 +152,6 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queriesWithConfig;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
@@ -227,3 +204,23 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             runningQuery.systestQuery.queryIdInFile);
     }
 };
+
+namespace std
+{
+template <>
+struct hash<NES::Systest::ConfigurationOverride>
+{
+    std::size_t operator()(const NES::Systest::ConfigurationOverride& cfg) const noexcept
+    {
+        std::size_t seed = 0;
+        const auto hasher = std::hash<std::string>{};
+
+        for (const auto& [k, v] : cfg)
+        {
+            seed ^= hasher(k) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+};
+}
