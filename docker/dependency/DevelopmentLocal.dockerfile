@@ -21,6 +21,7 @@ RUN apt update && apt install -y \
     pkg-config\
     libelf-dev\
     linux-tools-common \
+    linux-tools-generic \
     linux-tools-`uname -r`
 
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
