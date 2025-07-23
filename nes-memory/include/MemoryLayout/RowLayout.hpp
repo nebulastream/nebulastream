@@ -34,13 +34,10 @@ namespace NES::Memory::MemoryLayouts
  */
 class RowLayout : public MemoryLayout
 {
-public:
-    /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-    RowLayout(uint64_t bufferSize, Schema schema);
-    RowLayout(const RowLayout&);
+    friend MemoryLayout;
 
-    /// @brief Factory to create a RowLayout
-    static std::shared_ptr<RowLayout> create(uint64_t bufferSize, Schema schema);
+public:
+    RowLayout(const RowLayout&);
 
     /// Gets the offset in bytes of all fields within a single tuple.
     /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
@@ -53,7 +50,11 @@ public:
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
 private:
+    RowLayout(uint64_t bufferSize, Schema schema);
+
+    /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
+    static std::shared_ptr<RowLayout> create(uint64_t bufferSize, const Schema& schema);
+
     std::vector<uint64_t> fieldOffSets;
 };
-
 }

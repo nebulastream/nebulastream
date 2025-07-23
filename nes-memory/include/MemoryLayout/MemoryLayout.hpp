@@ -45,13 +45,11 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
 class MemoryLayout
 {
 public:
-    /// @brief Constructor for MemoryLayout.
-    /// @param bufferSize A memory layout is always created for a specific buffer size.
-    /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, Schema schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
+
+    static std::shared_ptr<MemoryLayout> create(uint64_t bufferSize, const Schema& schema);
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
@@ -78,6 +76,11 @@ public:
     bool operator!=(const MemoryLayout& rhs) const = default;
 
 protected:
+    /// @brief Constructor for MemoryLayout.
+    /// @param bufferSize A memory layout is always created for a specific buffer size.
+    /// @param schema A memory layout is always created for a specific schema.
+    MemoryLayout(uint64_t bufferSize, Schema schema);
+
     uint64_t bufferSize;
     Schema schema;
     uint64_t recordSize;

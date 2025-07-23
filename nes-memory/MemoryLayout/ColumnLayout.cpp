@@ -22,7 +22,6 @@
 
 namespace NES::Memory::MemoryLayouts
 {
-
 ColumnLayout::ColumnLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
@@ -38,9 +37,9 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(uint64_t bufferSize, Schema schema)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(uint64_t bufferSize, const Schema& schema)
 {
-    return std::make_shared<ColumnLayout>(bufferSize, std::move(schema));
+    return std::make_shared<ColumnLayout>(ColumnLayout{bufferSize, schema});
 }
 
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
@@ -69,5 +68,4 @@ uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
     PRECONDITION(fieldIndex < columnOffsets.size(), "Field index is out of bounds");
     return columnOffsets[fieldIndex];
 }
-
 }
