@@ -485,9 +485,16 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
     /// Expected global configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides
         = {{{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-           {{.overrideParameters = {{"worker.queryOptimizer.pageSize1", "16"}}},
-            {.overrideParameters = {{"worker.queryOptimizer.pageSize1", "32"}}}},
-           {{.overrideParameters = {{"worker.queryOptimizer.pageSize2", "64"}}}}};
+           {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}}},
+            {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}}}},
+           {{.overrideParameters
+             = {{"worker.queryOptimizer.pageSize", "8"},
+                {"worker.queryOptimizer.pageSize1", "16"},
+                {"worker.queryOptimizer.pageSize2", "64"}}},
+            {.overrideParameters
+             = {{"worker.queryOptimizer.pageSize", "8"},
+                {"worker.queryOptimizer.pageSize1", "32"},
+                {"worker.queryOptimizer.pageSize2", "64"}}}}};
 
     /// Expected regular configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
