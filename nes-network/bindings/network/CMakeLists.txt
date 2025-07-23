@@ -10,21 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-logger-bindings src/LoggerBindings.cpp)
-target_include_directories(nes-logger-bindings
+add_library(nes-network-bindings src/NetworkBindings.cpp)
+target_include_directories(nes-network-bindings
         PRIVATE .
         PUBLIC include
 )
 
 corrosion_add_cxxbridge(
-        rustlogger_cxx_bridge
+        cxx_bridge
         CRATE bindings
-        FILES ../spdlog/lib.rs
+        FILES ../network/lib.rs
 )
-target_include_directories(rustlogger_cxx_bridge PUBLIC include)
-target_link_libraries(rustlogger_cxx_bridge PUBLIC spdlog::spdlog magic_enum::magic_enum)
+target_include_directories(cxx_bridge PUBLIC include)
+target_link_libraries(cxx_bridge PUBLIC nes-memory)
 
-find_package(magic_enum CONFIG REQUIRED)
-find_package(spdlog     CONFIG REQUIRED)
-
-target_link_libraries(nes-logger-bindings PUBLIC nes-common rustlogger_cxx_bridge)
+target_link_libraries(nes-network-bindings PUBLIC nes-common cxx_bridge)
