@@ -966,7 +966,7 @@ std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
             throw SLTUnexpectedToken("Empty configuration value found for key '{}'", key);
         }
         ConfigurationOverride override;
-        override.overrideParameters[key] = value;
+        override[key] = value;
         result.emplace_back(std::move(override));
     }
     return result;
@@ -1045,7 +1045,7 @@ std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
             throw SLTUnexpectedToken("Empty global configuration value found for key '{}'", key);
         }
         ConfigurationOverride override;
-        override.overrideParameters[key] = value;
+        override[key] = value;
         result.emplace_back(std::move(override));
     }
     return result;
