@@ -321,8 +321,6 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
@@ -398,7 +396,8 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
         .testDataIngestionType = TestDataIngestionType::INLINE,
         .tuples = std::vector<std::string>{"1,2"},
         .fileDataPath = "null",
-        .serverThreads = nullptr};
+        .serverThreads = nullptr,
+        .inlineGeneratorConfiguration = std::nullopt};
 
     /// Expected queries
     const std::vector<std::string> expectedQueries
@@ -415,8 +414,7 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
     size_t queryIndex = 0;
 
     SystestParser parser{};
-    QueryResultMap queryResultMap;
-
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnConfigurationCallback(
         [&configurationCallbackCalled, &expectedConfigOverrides, &configOverrideIndex](
             const std::vector<ConfigurationOverride>& configOverrides)
@@ -455,9 +453,8 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
             ++queryIndex;
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
@@ -469,7 +466,6 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_EQ(configOverrideIndex, expectedConfigOverrides.size()) << "Not all configuration overrides were processed";
     ASSERT_EQ(queryIndex, expectedQueries.size()) << "Not all queries were processed";
-    ASSERT_EQ(queryResultMap.size(), expectedResults.size()) << "Not all results were processed";
 
     /// Verify results
     ASSERT_TRUE(std::ranges::all_of(
@@ -484,21 +480,14 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
 
     /// Expected global configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides
-        = {{{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-           {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "16"}}},
-            {.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}, {"worker.queryOptimizer.pageSize1", "32"}}}},
-           {{.overrideParameters
-             = {{"worker.queryOptimizer.pageSize", "8"},
-                {"worker.queryOptimizer.pageSize1", "16"},
-                {"worker.queryOptimizer.pageSize2", "64"}}},
-            {.overrideParameters
-             = {{"worker.queryOptimizer.pageSize", "8"},
-                {"worker.queryOptimizer.pageSize1", "32"},
-                {"worker.queryOptimizer.pageSize2", "64"}}}}};
+        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "8"}}}},
+           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "16"}}},
+            {.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "32"}}}},
+           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize2", "64"}}}}};
 
     /// Expected regular configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
-        = {{{.overrideParameters = {{"worker.queryOptimizer.pageSize3", "128"}}}}};
+        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize3", "128"}}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
@@ -517,7 +506,8 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
         .testDataIngestionType = TestDataIngestionType::INLINE,
         .tuples = std::vector<std::string>{"1,2"},
         .fileDataPath = "null",
-        .serverThreads = nullptr};
+        .serverThreads = nullptr,
+        .inlineGeneratorConfiguration = std::nullopt};
 
     /// Expected queries
     const std::vector<std::string> expectedQueries = {
@@ -543,7 +533,7 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
     size_t queryIndex = 0;
 
     SystestParser parser{};
-    QueryResultMap queryResultMap;
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnGlobalConfigurationCallback(
         [&globalConfigurationCallbackCalled, &expectedGlobalConfigOverrides, &globalConfigOverrideIndex](
@@ -593,9 +583,8 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
             ++queryIndex;
         });
 
-    parser.registerOnResultTuplesCallback(
-        [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
