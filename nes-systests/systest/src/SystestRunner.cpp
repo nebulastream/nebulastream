@@ -125,8 +125,11 @@ void processQueryWithError(
 }
 
 
-std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter)
+std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    SystestProgressTracker& progressTracker)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -136,7 +139,6 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
 
     std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
     std::vector<std::shared_ptr<RunningQuery>> failed;
-    SystestProgressTracker progressTracker{queries.size()};
 
     const auto startMoreQueries = [&] -> bool
     {
@@ -241,11 +243,13 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    SystestProgressTracker& progressTracker)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
-    SystestProgressTracker progressTracker{queries.size()};
     for (const auto& queryToRun : queries)
     {
         if (not queryToRun.planInfoOrException.has_value())
@@ -360,16 +364,22 @@ void printQueryResultToStdOut(
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SingleNodeWorkerConfiguration& configuration,
+    SystestProgressTracker& progressTracker)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker);
 }
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const std::string& serverURI,
+    SystestProgressTracker& progressTracker)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
-    return runQueries(queries, numConcurrentQueries, submitter);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker);
 }
 
 }
