@@ -40,8 +40,8 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
-    auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
-    auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
+    auto scanMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
+
     auto accessedFields = projection.getAccessedFields();
     auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
