@@ -30,7 +30,6 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
-
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
     : rowMemoryLayout(std::move(rowMemoryLayout)) { };
 
@@ -89,5 +88,4 @@ void RowTupleBufferMemoryProvider::writeRecord(
         storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }
-
 }

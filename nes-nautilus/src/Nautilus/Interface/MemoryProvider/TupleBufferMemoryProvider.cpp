@@ -34,8 +34,10 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -116,13 +118,18 @@ std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(con
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, schema);
-        return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
+        auto rowMemoryLayout
+            = NES::Util::as<Memory::MemoryLayouts::RowLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+        //usage:
+        //auto newProvider = std::make_shared<RowTupleBufferMemoryProvider>(MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, schema));
+        return std::make_shared<RowTupleBufferMemoryProvider>(RowTupleBufferMemoryProvider{rowMemoryLayout});
     }
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, schema);
-        return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
+        auto columnMemoryLayout
+            = NES::Util::as<Memory::MemoryLayouts::ColumnLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+        auto* provider = new ColumnTupleBufferMemoryProvider(columnMemoryLayout);
+        return std::shared_ptr<ColumnTupleBufferMemoryProvider>(provider);
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }
