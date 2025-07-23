@@ -71,7 +71,8 @@ NES::Systest::SystestQuery makeQuery(
         "SELECT * FROM test",
         planInfoOrException,
         std::move(expected),
-        std::make_shared<std::vector<std::jthread>>()};
+        std::make_shared<std::vector<std::jthread>>(),
+        ConfigurationOverride{}};
 }
 }
 

@@ -335,9 +335,9 @@ struct SystestBinder::Impl
                 {
                     ConfigurationOverride mergedOverride = globalOverride;
                     /// Merge regular override parameters into the merged override
-                    for (const auto& [key, value] : regularOverride.overrideParameters)
+                    for (const auto& [key, value] : regularOverride)
                     {
-                        mergedOverride.overrideParameters[key] = value;
+                        mergedOverride[key] = value;
                     }
                     mergedOverrides.emplace_back(std::move(mergedOverride));
                 }
@@ -717,7 +717,18 @@ struct SystestBinder::Impl
                     .first->second.setExpectedResult(ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message});
             });
 
-        parser.registerOnConfigurationCallback([&](const std::vector<ConfigurationOverride>& overrides) { configOverrides = overrides; });
+        parser.registerOnConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides)
+            {
+                if (configOverrides.empty())
+                {
+                    configOverrides = overrides;
+                }
+                else
+                {
+                    configOverrides = mergeConfigurations(overrides, configOverrides);
+                }
+            });
 
         parser.registerOnGlobalConfigurationCallback(
             [&](const std::vector<ConfigurationOverride>& overrides)

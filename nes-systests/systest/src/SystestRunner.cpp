@@ -323,10 +323,10 @@ void printQueryResultToStdOut(
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter() + 1);
     std::string overrideStr;
-    if (not runningQuery.systestQuery.configurationOverride.overrideParameters.empty())
+    if (not runningQuery.systestQuery.configurationOverride.empty())
     {
         std::vector<std::string> kvs;
-        for (const auto& [k, v] : runningQuery.systestQuery.configurationOverride.overrideParameters)
+        for (const auto& [k, v] : runningQuery.systestQuery.configurationOverride)
         {
             kvs.push_back(fmt::format("{}={}", k, v));
         }

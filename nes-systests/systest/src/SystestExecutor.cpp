@@ -307,7 +307,8 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         std::cout << Systest::loadTestFileMap(config);
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
-    else if (program.is_used("--help"))
+
+    if (program.is_used("--help"))
     {
         std::cout << program << '\n';
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
@@ -333,13 +334,13 @@ void runEndlessMode(const std::vector<Systest::SystestQuery>& queries, SystestCo
     const auto grpcURI = config.grpcAddressUri.getValue();
     const auto runRemote = not grpcURI.empty();
 
-    std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+    std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
     for (const auto& query : queries)
     {
         queriesByOverride[query.configurationOverride].push_back(query);
     }
 
-    std::unordered_map<ConfigurationOverride, std::unique_ptr<Systest::QuerySubmitter>> submitters;
+    std::unordered_map<Systest::ConfigurationOverride, std::unique_ptr<Systest::QuerySubmitter>> submitters;
     for (const auto& [overrideConfig, _] : queriesByOverride)
     {
         if (runRemote)
@@ -349,19 +350,18 @@ void runEndlessMode(const std::vector<Systest::SystestQuery>& queries, SystestCo
         else
         {
             auto configCopy = singleNodeWorkerConfiguration;
-            for (const auto& [key, value] : overrideConfig.overrideParameters)
+            for (const auto& [key, value] : overrideConfig)
             {
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
-            submitters[overrideConfig] = std::make_unique<NES::Systest::LocalWorkerQuerySubmitter>(configCopy);
+            submitters[overrideConfig] = std::make_unique<Systest::LocalWorkerQuerySubmitter>(configCopy);
         }
     }
 
     while (true)
     {
-        for (const auto& [overrideConfig, queriesOrig] : queriesByOverride)
+        for (auto& [overrideConfig, queries] : queriesByOverride)
         {
-            std::vector<Systest::SystestQuery> queries = queriesOrig;
             std::ranges::shuffle(queries, rng);
             auto& submitter = *submitters[overrideConfig];
             const auto failedQueries = runQueries(queries, numberConcurrentQueries, submitter);
@@ -380,14 +380,14 @@ void runEndlessMode(const std::vector<Systest::SystestQuery>& queries, SystestCo
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
 {
     std::error_code errorCode;
-    const auto relativeLogPath = std::filesystem::relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
+    const auto relativeLogPath = relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
     if (errorCode)
     {
         std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
         return;
     }
 
-    if (std::filesystem::exists(symlinkPath) || std::filesystem::is_symlink(symlinkPath))
+    if (exists(symlinkPath) || is_symlink(symlinkPath))
     {
         std::filesystem::remove(symlinkPath, errorCode);
         if (errorCode)
@@ -398,7 +398,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
 
     try
     {
-        std::filesystem::create_symlink(relativeLogPath, symlinkPath);
+        create_symlink(relativeLogPath, symlinkPath);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
@@ -519,7 +519,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             }
             else
             {
-                std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
                 for (const auto& query : queries)
                 {
                     queriesByOverride[query.configurationOverride].push_back(query);
@@ -537,12 +537,12 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                     }
 
                     auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig.overrideParameters)
+                    for (const auto& [key, value] : overrideConfig)
                     {
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
 
-                    auto failed = runQueriesAtLocalWorker(queries, numberConcurrentQueries, configCopy);
+                    auto failed = runQueriesAtLocalWorker(queriesForConfig, numberConcurrentQueries, configCopy);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }
