@@ -3,7 +3,7 @@
 # Includes valid and invalid usages
 
 # --- Invalid: Missing colon ---
-Configuration worker.queryOptimizer.pageSize [8]
+Configuration worker.query_optimizer.page_size [8]
 
 SELECT id, value FROM stream INTO ID_VALUE_SINK
 ----
