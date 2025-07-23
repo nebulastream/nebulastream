@@ -349,7 +349,8 @@ public:
 
     [[nodiscard]] bool isDone() const noexcept;
 
-    std::variant<TupleBuffer, uint32_t> waitUntilDone() const noexcept;
+    std::variant<TupleBuffer, uint32_t> waitUntilDone() const;
+    std::variant<TupleBuffer, uint32_t> waitUntilDone(std::chrono::duration<float> timeout) const;
 
     bool await_ready() const noexcept;
 

@@ -212,15 +212,15 @@ std::optional<ChildKey> TupleBuffer::storeReturnChildIndex(TupleBuffer&& other) 
 {
     PRECONDITION(controlBlock != other.controlBlock, "Buffer cannot attach to itself as child buffer");
     other.controlBlock->pinnedRelease();
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    other.controlBlock->removeTrace(other.traceRef);
-#endif
     if (const auto childKey = other.childOrMainData.asChildKey())
     {
         const detail::DataSegment<detail::InMemoryLocation> childSegment = other.dataSegment;
         //other is a child buffer
         if (other.controlBlock->unregisterChild(*childKey))
         {
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+            other.controlBlock->removeTrace(other.traceRef);
+#endif
             //The passed other was also part of the reference count, we effectively destroyed the old one
             other.controlBlock->dataRelease();
             other.dataSegment = detail::DataSegment<detail::InMemoryLocation>{};
@@ -235,6 +235,9 @@ std::optional<ChildKey> TupleBuffer::storeReturnChildIndex(TupleBuffer&& other) 
         if (const auto childSegment
             = other.controlBlock->stealDataSegment().and_then(&detail::DataSegment<detail::DataLocation>::get<detail::InMemoryLocation>))
         {
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+            other.controlBlock->removeTrace(other.traceRef);
+#endif
             other.controlBlock = nullptr;
             other.dataSegment = detail::DataSegment<detail::InMemoryLocation>{};
             other.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();

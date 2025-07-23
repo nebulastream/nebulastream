@@ -307,10 +307,12 @@ void RepinBufferFuture::waitOnce() const noexcept
         }
     } while (currentWeakBlockAwaiter.lock().get() != nullptr);
 }
+
 bool RepinBufferFuture::isDone() const noexcept
 {
     return promise->getResult().has_value();
 }
+
 std::variant<TupleBuffer, uint32_t> RepinBufferFuture::waitUntilDone() const noexcept
 {
     auto result = promise->getResult();
