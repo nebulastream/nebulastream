@@ -168,7 +168,14 @@ void addSuccessor(BuilderContext& ctx) noexcept
 
 void pushContext(BuilderContext& ctx) noexcept
 {
-    ctx.contextStack.push_back(Frame{ctx.currentOp, ctx.prevOp, ctx.currentPipeline});
+    auto& parentFrame = ctx.contextStack.back();
+    auto nextIdx      = parentFrame.nextChildIdx++;
+
+    PRECONDITION(nextIdx < parentFrame.op->getChildren().size(),
+                 "pushContext called but no remaining child");
+
+    auto child = parentFrame.op->getChildren()[nextIdx];
+    ctx.contextStack.push_back(Frame{child, parentFrame.op, ctx.currentPipeline, 0});
 }
 
 void popContext(BuilderContext& ctx) noexcept
