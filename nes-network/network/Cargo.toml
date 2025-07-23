@@ -1,0 +1,19 @@
+[package]
+name = "nes_network"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "nes_network"
+
+[dependencies]
+tokio = { version = "1.40.0", features = ["macros", "rt", "sync", "net", "io-util", "time"] }
+tokio-util = { version = "0.7.13", features = ["codec"] }
+async-channel = "2.3.1"
+
+tracing = "0.1"
+
+serde = { version = "1.0.217", features = ["derive"] }
+tokio-stream = "0.1.17"
+tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
+futures = "0.3.31"
