@@ -68,7 +68,8 @@ private:
         const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        const std::shared_ptr<FileReader>& fileReader);
+        const std::shared_ptr<FileReader>& fileReader,
+        FileLayout fileLayout);
 
     static boost::asio::awaitable<void>
     writeVarSizedAndStoreIdx(char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter);

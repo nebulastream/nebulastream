@@ -159,7 +159,7 @@ void FileBackedPagedVector::readFromFile(
         /// Read payload and key field data from separate files first and then remaining designated pagedVectorKeys and payload from file
         case FileLayout::SEPARATE_PAYLOAD:
         case FileLayout::SEPARATE_KEYS: {
-            readSeparatelyFromFiles(groupedFieldTypeSizes, memoryLayout, bufferProvider, fileReader);
+            readSeparatelyFromFiles(groupedFieldTypeSizes, memoryLayout, bufferProvider, fileReader, fileLayout);
             break;
         }
     }
@@ -321,7 +321,8 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
-    const std::shared_ptr<FileReader>& fileReader)
+    const std::shared_ptr<FileReader>& fileReader,
+    const FileLayout fileLayout)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout
@@ -354,7 +355,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             {
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED:
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY: {
-                    if (fileReader->readKey(lastPagePtr, fieldSize) == 0)
+                    if (fileLayout == FileLayout::SEPARATE_PAYLOAD or fileReader->readKey(lastPagePtr, fieldSize) == 0)
                     {
                         if (keyPagePtr != nullptr)
                         {
