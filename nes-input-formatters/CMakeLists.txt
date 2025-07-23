@@ -13,6 +13,26 @@
 # include registrar generation functions
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
+
+include(FetchContent)
+
+# Fetch the roaring bitmaps for c++ release from github and link it with the input formatters library
+# Later on we should probably just use a manual installation of the roaring library in the docker container and delete this again.
+FetchContent_Declare(
+        roaring
+        GIT_REPOSITORY https://github.com/RoaringBitmap/CRoaring.git
+        GIT_TAG v4.3.5
+        GIT_SHALLOW TRUE)
+
+set(ENABLE_ROARING_TESTS OFF CACHE INTERNAL "")
+
+set(ROARING_BUILD_STATIC ON CACHE INTERNAL "")
+
+FetchContent_MakeAvailable(roaring)
+FetchContent_GetProperties(roaring)
+SET(CPP_ROARING_HEADERS ${roaring_SOURCE_DIR}/cpp/roaring64map.hh  ${roaring_SOURCE_DIR}/cpp/roaring.hh)
+file(COPY  ${CPP_ROARING_HEADERS} DESTINATION ${roaring_SOURCE_DIR}/include/roaring)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
@@ -21,7 +41,7 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
-target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable)
+target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable roaring PRIVATE nes-common nes-configurations nes-runtime nes-executable)
 
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
