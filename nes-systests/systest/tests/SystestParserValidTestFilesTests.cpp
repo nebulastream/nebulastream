@@ -375,9 +375,8 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
 
     /// Expected configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
-        = {{{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}}},
-           {{.overrideParameters = {{"worker.queryOptimizer.pageSize", "8"}}},
-            {.overrideParameters = {{"worker.queryOptimizer.pageSize", "1024"}}}}};
+        = {{{{"worker.queryOptimizer.pageSize", "8"}}},
+           {{{"worker.queryOptimizer.pageSize", "8"}}, {{"worker.queryOptimizer.pageSize", "1024"}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
@@ -480,14 +479,12 @@ TEST_F(SystestParserValidTestFileTest, GlobalConfigOverrideTest)
 
     /// Expected global configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedGlobalConfigOverrides
-        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize", "8"}}}},
-           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "16"}}},
-            {.overrideParameters = {{"worker.defaultQueryExecution.pageSize1", "32"}}}},
-           {{.overrideParameters = {{"worker.defaultQueryExecution.pageSize2", "64"}}}}};
+        = {{{{"worker.defaultQueryExecution.pageSize", "8"}}},
+           {{{"worker.defaultQueryExecution.pageSize1", "16"}}, {{"worker.defaultQueryExecution.pageSize1", "32"}}},
+           {{{"worker.defaultQueryExecution.pageSize2", "64"}}}};
 
     /// Expected regular configuration overrides
-    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
-        = {{{.overrideParameters = {{"worker.defaultQueryExecution.pageSize3", "128"}}}}};
+    std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides = {{{{"worker.defaultQueryExecution.pageSize3", "128"}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
