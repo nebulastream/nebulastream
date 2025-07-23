@@ -46,13 +46,6 @@ namespace detail
 BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
     : data(inMemorySegment), owningBufferRecycler(recycler)
 {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer and track which function obtained the buffer
-    std::unique_lock lock(owningThreadsMutex);
-    ThreadOwnershipInfo info;
-    fillThreadOwnershipInfo(info.threadName, info.callstack);
-    owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
 }
 
 // BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) : data(that.data.load())
@@ -130,14 +123,6 @@ void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& calls
 
 BufferControlBlock* BufferControlBlock::pinnedRetain()
 {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer (shared) and track which function increased the counter of the buffer
-    std::unique_lock lock(owningThreadsMutex);
-    ThreadOwnershipInfo info;
-    fillThreadOwnershipInfo(info.threadName, info.callstack);
-    owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
-
     //Spin over pinnedCounter, only increase it by one if it is 0 or more, because -1 means the data segment is being modified
     //and might become invalid
     int32_t old = pinnedCounter.load();
@@ -199,17 +184,31 @@ void BufferControlBlock::markRepinningDone() noexcept
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo()
 {
-    std::unique_lock lock(owningThreadsMutex);
-    NES_FATAL_ERROR("Buffer {} has {} live references", fmt::ptr(getData()), referenceCounter.load());
-    for (auto& item : owningThreads)
+    NES_ERROR("Buffer {:#x} has {} live references", getData().getLocation().getRaw(), pinnedCounter.load());
+    for (const auto refs = traceRefs.rlock(); const auto& val : *refs | std::views::values)
     {
-        for (auto& v : item.second)
-        {
-            NES_FATAL_ERROR(
-                "Thread {} has buffer {} requested on callstack: {}", v.threadName, fmt::ptr(getData()), v.callstack.resolve().to_string());
-        }
+        NES_ERROR(
+            "Thread {} has buffer {:#x} requested on callstack: {}",
+            val.threadName,
+            getData().getLocation().getRaw(),
+            val.callstack.resolve().to_string());
     }
 }
+
+uint32_t BufferControlBlock::addTrace()
+{
+    const auto traceRef = nextTraceRef.fetch_add(1);
+    const auto traces = traceRefs.wlock();
+    (*traces)[traceRef] = ThreadOwnershipInfo();
+    return traceRef;
+}
+
+void BufferControlBlock::removeTrace(const uint32_t traceRef)
+{
+    const auto traces = traceRefs.wlock();
+    traces->erase(traceRef);
+}
+
 #endif
 
 int32_t BufferControlBlock::getPinnedReferenceCount() const noexcept
@@ -227,28 +226,12 @@ bool BufferControlBlock::pinnedRelease()
     if (const uint32_t prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
     {
         skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-        {
-            std::unique_lock lock(owningThreadsMutex);
-            owningThreads.clear();
-        }
-#endif
         return true;
     }
     else
     {
         INVARIANT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
     }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    {
-        std::unique_lock lock(owningThreadsMutex);
-        auto& v = owningThreads[std::this_thread::get_id()];
-        if (!v.empty())
-        {
-            v.pop_front();
-        }
-    }
-#endif
     return false;
 }
 BufferControlBlock* BufferControlBlock::dataRetain()
@@ -272,28 +255,12 @@ bool BufferControlBlock::dataRelease()
         }
         children.clear();
         bufferRecycler->recycleSegment(data.exchange(emptySegment));
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-        {
-            std::unique_lock lock(owningThreadsMutex);
-            owningThreads.clear();
-        }
-#endif
         return true;
     }
     else
     {
         INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
     }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    {
-        std::unique_lock lock(owningThreadsMutex);
-        auto& v = owningThreads[std::this_thread::get_id()];
-        if (!v.empty())
-        {
-            v.pop_front();
-        }
-    }
-#endif
     return false;
 }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

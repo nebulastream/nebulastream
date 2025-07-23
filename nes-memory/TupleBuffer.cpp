@@ -28,7 +28,7 @@
 #include <boost/asio/detail/descriptor_ops.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include "TupleBufferImpl.hpp"
+#include <TupleBufferImpl.hpp>
 namespace NES::Memory
 {
 
@@ -56,6 +56,9 @@ TupleBuffer::TupleBuffer(
 {
     controlBlock->pinnedRetain();
     controlBlock->dataRetain();
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    traceRef = controlBlock->addTrace();
+#endif
 }
 
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept
@@ -65,6 +68,9 @@ TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept
     {
         controlBlock->pinnedRetain();
         controlBlock->dataRetain();
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        traceRef = controlBlock->addTrace();
+#endif
     }
 }
 
@@ -80,16 +86,25 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
     auto* const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
     dataSegment = other.dataSegment;
     childOrMainData = other.childOrMainData;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    const auto oldTraceRef = traceRef;
+#endif
 
     /// Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
     if (oldControlBlock != controlBlock)
     {
         controlBlock->pinnedRetain();
         controlBlock->dataRetain();
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        traceRef = controlBlock->addTrace();
+#endif
         if (oldControlBlock != nullptr)
         {
             oldControlBlock->pinnedRelease();
             oldControlBlock->dataRelease();
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+            oldControlBlock->removeTrace(oldTraceRef);
+#endif
         }
     }
     return *this;
@@ -116,6 +131,9 @@ TupleBuffer::~TupleBuffer() noexcept
     {
         controlBlock->pinnedRelease();
         controlBlock->dataRelease();
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        controlBlock->removeTrace(traceRef);
+#endif
     }
 }
 
@@ -192,9 +210,12 @@ void TupleBuffer::setOriginId(const OriginId id) noexcept
 
 std::optional<ChildKey> TupleBuffer::storeReturnChildIndex(TupleBuffer&& other) const noexcept
 {
-    PRECONDITION(controlBlock != other.controlBlock, "Cannot attach other to self");
+    PRECONDITION(controlBlock != other.controlBlock, "Buffer cannot attach to itself as child buffer");
     other.controlBlock->pinnedRelease();
-    if (auto childKey = other.childOrMainData.asChildKey())
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    other.controlBlock->removeTrace(other.traceRef);
+#endif
+    if (const auto childKey = other.childOrMainData.asChildKey())
     {
         const detail::DataSegment<detail::InMemoryLocation> childSegment = other.dataSegment;
         //other is a child buffer
@@ -292,6 +313,9 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
     swap(lhs.dataSegment, rhs.dataSegment);
     swap(lhs.controlBlock, rhs.controlBlock);
     swap(lhs.childOrMainData, rhs.childOrMainData);
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    swap(lhs.traceRef, rhs.traceRef);
+#endif
 }
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 {

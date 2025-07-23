@@ -19,13 +19,13 @@
 #include <cstdint>
 #include <future>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferPrimitives.hpp>
-#include <Runtime/DataSegment.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/DataSegment.hpp>
 #include <Time/Timestamp.hpp>
-#include <type_traits>
 
 namespace NES
 {
@@ -80,11 +80,11 @@ class TupleBuffer
 
     //[[nodiscard]] explicit TupleBuffer(detail::BufferControlBlock* controlBlock) noexcept;
     [[nodiscard]] explicit TupleBuffer(
-        detail::BufferControlBlock* controlBlock, detail::DataSegment<detail::InMemoryLocation> segment, detail::ChildOrMainDataKey childOrMainData) noexcept;
+        detail::BufferControlBlock* controlBlock,
+        detail::DataSegment<detail::InMemoryLocation> segment,
+        detail::ChildOrMainDataKey childOrMainData) noexcept;
 
 public:
-
-
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 
@@ -98,11 +98,12 @@ public:
     // [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept;
+    [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), dataSegment(other.dataSegment), childOrMainData(other.childOrMainData)
+    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept
+        : controlBlock(other.controlBlock), dataSegment(other.dataSegment), childOrMainData(other.childOrMainData)
     {
         other.controlBlock = nullptr;
         other.dataSegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
@@ -113,7 +114,7 @@ public:
     // [[nodiscard]] explicit TupleBuffer(FloatingBuffer&& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(TupleBuffer const& other) noexcept;
+    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     TupleBuffer& operator=(TupleBuffer&& other) noexcept;
@@ -225,9 +226,9 @@ private:
     ///If == 1, then its unknown what this refer to, please search throught the children vector in the BCB.
     ///If > 1, then childOrMainData - 2 is the index of the child buffer in the BCB that this floating buffer belongs to.
     detail::ChildOrMainDataKey childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
-    #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     uint32_t traceRef;
-    #endif
+#endif
 };
 
 

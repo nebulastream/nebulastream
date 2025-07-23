@@ -28,11 +28,10 @@
 #include <Time/Timestamp.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    #include <deque>
-    #include <mutex>
     #include <thread>
     #include <unordered_map>
     #include <cpptrace.hpp>
+    #include <folly/Synchronized.h>
 #endif
 
 namespace NES
@@ -195,6 +194,8 @@ public:
     std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, Lock& lock) const noexcept;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
+    [[nodiscard]] uint32_t addTrace();
+    void removeTrace(uint32_t traceRef);
 #endif
 
 private:
@@ -258,8 +259,9 @@ private:
             return os;
         }
     };
-    folly::synchronized<std::unordered_map<uint32_t, ThreadOwnershipInfo>> traceRefs;
-    std::atomic<uint32_t> traceRefCounter = 0;
+
+    folly::Synchronized<std::unordered_map<uint32_t, ThreadOwnershipInfo>> traceRefs;
+    std::atomic<uint32_t> nextTraceRef = 0;
 #endif
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
