@@ -71,7 +71,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
                         for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
                         {
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
-                                || fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
+                                or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                             {
                                 co_await writeVarSizedAndStoreIdx(reinterpret_cast<char*>(pagePtr), page, fileWriter);
                             }
@@ -139,7 +139,7 @@ void FileBackedPagedVector::readFromFile(
                         for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
                         {
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
-                                || fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
+                                or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                             {
                                 readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                             }
@@ -203,7 +203,7 @@ void FileBackedPagedVector::appendKeyPageIfFull(
     PRECONDITION(memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
     PRECONDITION(memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
 
-    if (keyPages.empty() || keyPages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
+    if (keyPages.empty() or keyPages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
         if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
         {
@@ -401,7 +401,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeVarSizedAndStoreIdx(
     char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter)
 {
     const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(ptrOnPage);
-    const auto& varSizedData = page.loadChildBuffer(*varSizedDataIdx);
+    const auto varSizedData = page.loadChildBuffer(*varSizedDataIdx);
     const auto fileIdx = co_await fileWriter->writeVarSized(varSizedData.getBuffer());
     memcpy(ptrOnPage, &fileIdx, sizeof(uint32_t));
 }

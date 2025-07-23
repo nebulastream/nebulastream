@@ -278,7 +278,7 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
 
     uint32_t varSizedDataSize;
     varSizedFile.read(reinterpret_cast<char*>(&varSizedDataSize), sizeof(uint32_t));
-    if ((varSizedFile.fail() and !varSizedFile.eof()) or varSizedFile.gcount() != sizeof(uint32_t))
+    if ((varSizedFile.fail() and not varSizedFile.eof()) or varSizedFile.gcount() != sizeof(uint32_t))
     {
         throw std::ios_base::failure("Failed to read variable sized data size from file");
     }
@@ -287,7 +287,7 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
     {
         *buffer.value().getBuffer<uint32_t>() = varSizedDataSize;
         varSizedFile.read(buffer.value().getBuffer<char>() + sizeof(uint32_t), varSizedDataSize);
-        if ((varSizedFile.fail() and !varSizedFile.eof()) or varSizedFile.gcount() != varSizedDataSize)
+        if ((varSizedFile.fail() and not varSizedFile.eof()) or varSizedFile.gcount() != varSizedDataSize)
         {
             throw std::ios_base::failure("Failed to read variable sized data from file");
         }
@@ -341,7 +341,7 @@ size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream
 size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& stream)
 {
     stream.read(buffer, dataSize);
-    if (stream.fail() and !stream.eof())
+    if (stream.fail() and not stream.eof())
     {
         throw std::ios_base::failure("Failed to read from file");
     }

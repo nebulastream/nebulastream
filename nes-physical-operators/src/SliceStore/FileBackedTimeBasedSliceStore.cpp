@@ -70,11 +70,9 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const JoinBuildSideType joinBuildSide,
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
-    const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
-    for (const auto& slice : slicesVec)
-    {
-        alteredSlicesPerThread[{WorkerThreadId(threadId % numberOfWorkerThreads), joinBuildSide}].emplace_back(slice);
-    }
+    const auto slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
+    auto& alteredSlicesVec = alteredSlicesPerThread[{WorkerThreadId(threadId % numberOfWorkerThreads), joinBuildSide}];
+    alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
     return slicesVec;
 }
 
@@ -85,7 +83,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
-    const auto& slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
+    const auto slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
     if (slice.has_value())
     {
         readSliceFromFiles(
@@ -215,7 +213,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto workerThreadId = WorkerThreadId(threadId % numberOfWorkerThreads);
     //std::cout << fmt::format("Updating slices for thread {}\n", threadId.getRawValue());
-    for (auto&& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, workerThreadId, joinBuildSide))
+    for (const auto& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, workerThreadId, joinBuildSide))
     {
         switch (operation)
         {
@@ -265,14 +263,15 @@ FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadI
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    slicesToUpdate.reserve(alteredSlicesVec.size());
 
     std::ranges::transform(
-        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        alteredSlicesVec,
         std::back_inserter(slicesToUpdate),
         [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
@@ -281,10 +280,11 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    slicesToUpdate.reserve(alteredSlicesVec.size());
 
     std::ranges::transform(
-        alteredSlicesPerThread[{threadId, joinBuildSide}],
+        alteredSlicesVec,
         std::back_inserter(slicesToUpdate),
         [watermark](const std::shared_ptr<Slice>& slice)
         {
@@ -295,7 +295,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
             return std::make_pair(slice, FileOperation::READ);
         });
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
@@ -304,7 +304,8 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 {
     /// Reserve space for every altered slice as we might update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    slicesToUpdate.reserve(alteredSlicesPerThread[{threadId, joinBuildSide}].size());
+    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    slicesToUpdate.reserve(alteredSlicesVec.size());
 
     auto tupleSize = memoryLayout->getTupleSize();
     if (sliceStoreInfo.fileLayout == FileLayout::SEPARATE_PAYLOAD)
@@ -312,7 +313,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         tupleSize -= memoryLayout->createKeyFieldsOnlySchema().getSizeOfSchemaInBytes();
     }
 
-    for (auto&& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
+    for (const auto& slice : alteredSlicesVec)
     {
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
@@ -335,9 +336,9 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 
         if (stateSizeOnDisk > sliceStoreInfo.minReadStateSize
-            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
-                   watermarkPredictors,
-                   timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
+            and AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+                    watermarkPredictors,
+                    timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
                 >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
@@ -345,11 +346,11 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         }
         else if (
             stateSizeInMemory > sliceStoreInfo.minWriteStateSize
-            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
-                   watermarkPredictors,
-                   timeNow + getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
-                       + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk)
-                       + sliceStoreInfo.predictionTimeDelta)
+            and AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+                    watermarkPredictors,
+                    timeNow + getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
+                        + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk)
+                        + sliceStoreInfo.predictionTimeDelta)
                 < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
@@ -358,7 +359,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         /// Slice should not be written out or read back in any other case
     }
 
-    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
