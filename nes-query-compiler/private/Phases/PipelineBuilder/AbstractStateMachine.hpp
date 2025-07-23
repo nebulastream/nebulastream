@@ -82,6 +82,25 @@ public:
         return result;
     }
 
+    [[nodiscard]] std::string getHistoryAsString() const
+    {
+        return getStepHistoryAsStringWithConverters(
+            [](StateT state) { return magic_enum::enum_name(state); }, [](EventT event) { return magic_enum::enum_name(event); });
+    }
+
+    template <typename StateToStringFn, typename EventToStringFn>
+    std::string getStepHistoryAsStringWithConverters(StateToStringFn stateToString, EventToStringFn eventToString) const
+    {
+        std::string result = "State Machine Step History:\n";
+        result += "============================\n";
+        for (const auto& [from, event, to] : stepHistory)
+        {
+            result += "From: " + std::string(stateToString(from))
+                + " -> On Event: " + std::string(eventToString(event)) + " -> To: " + std::string(stateToString(to)) + "\n";
+        }
+        return result;
+    }
+
 protected:
     AbstractStateMachine(std::vector<TransitionRow> table, StateT initial, StateT invalid)
         : currentState(initial), invalidState(invalid), initialState(initial)
@@ -99,8 +118,11 @@ protected:
         {
             return invalidState;
         }
-
-        currentState = it->second.to;
+        StateT fromState = currentState;
+        StateT toState = it->second.to;
+        /// Record the transition in the history
+        stepHistory.emplace_back(fromState, event, toState);
+        currentState = toState;
         for (auto& act : it->second.actions)
         {
             act(ctx);
@@ -112,10 +134,13 @@ protected:
 
     [[nodiscard]] StateT getState() const { return currentState; }
 
+    const std::vector<std::tuple<StateT, EventT, StateT>>& getStepHistory() const { return stepHistory; }
+    void clearStepHistory() { stepHistory.clear(); }
 private:
     StateT currentState;
     const StateT invalidState;
     const StateT initialState;
     std::unordered_map<Key, TransitionRow> tableMap;
+    std::vector<std::tuple<StateT, EventT, StateT>> stepHistory;
 };
 }
