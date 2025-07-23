@@ -128,7 +128,7 @@ done
 
 # first include in .cpp file is the corresponding .hpp file
 #
-for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
+for file in $(git diff --name-only --diff-filter RAM "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
 do
     # remove path and .cpp suffix, i.e. /foo/bar.cpp -> bar
     basename=$(basename "$file" .cpp)
