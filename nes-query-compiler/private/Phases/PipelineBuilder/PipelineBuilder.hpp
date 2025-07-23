@@ -63,11 +63,21 @@ public:
             ctx.prevOp = frame.prev;
             ctx.currentPipeline = frame.pipeline;
 
+            /// 1. process current operator
+            const Event event = deriveEvent(ctx, this->getState());
+            // DEBUG: Print derived event
+            std::cout << "[DEBUG] Derived event: " << static_cast<int>(event) << std::endl;
+            const auto state = fsm.step(event, ctx);
+            // DEBUG: Print new state after step
+            std::cout << "[DEBUG] New state after step: " << static_cast<int>(state) << std::endl;
+
+            // DEBUG: Print current operator ID and state
+            std::cout << "[DEBUG] Processing operator ID: " << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
             /// Add children to context stack
             if (frame.nextChildIdx < ctx.currentOp->getChildren().size())
             {
-                auto child = ctx.currentOp->getChildren()[frame.nextChildIdx++];
-                ctx.contextStack.push_back(Frame{child, ctx.currentOp, ctx.currentPipeline, 0});
+                // auto child = ctx.currentOp->getChildren()[frame.nextChildIdx++];
+                // ctx.contextStack.push_back(Frame{child, ctx.currentOp, ctx.currentPipeline, 0});
             }
             else
             {
@@ -75,13 +85,10 @@ public:
                 ctx.contextStack.pop_back();
             }
 
-            /// 1. normal processing of current operator
-            const Event event = deriveEvent(ctx, this->getState());
-            const auto state = fsm.step(event, ctx);
-
             /// 2. descend into first child if any
-            if (!ctx.currentOp->getChildren().empty() && (ctx.contextStack.empty() or ctx.contextStack.back().nextChildIdx == 0))
+            if (not ctx.currentOp->getChildren().empty() and (ctx.contextStack.empty() or ctx.contextStack.back().nextChildIdx == 0))
             {
+                std::cout << "[DEBUG] DescendChild event triggered for operator ID:" << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
                 fsm.step(Event::DescendChild, ctx);
                 continue;
             }
@@ -90,6 +97,7 @@ public:
             while (not ctx.contextStack.empty()
                    and ctx.contextStack.back().nextChildIdx >= ctx.contextStack.back().prev->getChildren().size())
             {
+                std::cout << "[DEBUG] ChildDone event triggered for operator ID:"  << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
                 fsm.step(Event::ChildDone, ctx);
             }
 
@@ -126,10 +134,10 @@ private:
         NES_ERROR("  Event: {}", magic_enum::enum_name(event));
         NES_ERROR("  Current Operator: {}", ctx.currentOp ? ctx.currentOp->explain(ExplainVerbosity::Short) : "null");
 
-        NES_ERROR("  Tracelog: {}", getAllTransitionsAsString());
+        NES_ERROR("  History: {}", getHistoryAsString());
 
 
-        throw InvalidQuerySyntax("Invalid state transition in PipelineBuilder State Machine. Trace log: {}", getAllTransitionsAsString());
+        throw InvalidQuerySyntax("Invalid state transition in PipelineBuilder State Machine. Trace log: {}From: {}, Event: {}", getHistoryAsString(), magic_enum::enum_name(fromState), magic_enum::enum_name(event));
         // TODO
     }
 
