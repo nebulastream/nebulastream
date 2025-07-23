@@ -23,6 +23,7 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
+
 namespace NES::Systest
 {
 /// Tests if SLT Parser rejects invalid .test files correctly
@@ -34,10 +35,8 @@ public:
         Logger::setupLogging("SystestParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestParserInvalidTestFilesTest test class.");
     }
-
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserInvalidTestFilesTest test class."); }
 };
-
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
@@ -101,24 +100,6 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
             /// nop
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
-}
-
-TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
-{
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
-
-    SystestParser parser{};
-    parser.registerOnSystestLogicalSourceCallback(
-        [](const SystestParser::SystestLogicalSource&)
-        {
-            /// nop
-        });
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-    parser.registerOnDifferentialQueryBlockCallback(
-        [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
 
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
@@ -199,4 +180,15 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideNoKeyTest)
     ASSERT_TRUE(parser.loadString("Configuration : [8]\n"));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
+
+TEST_F(SystestParserInvalidTestFilesTest, GlobalConfigOverrideInvalidTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "global_config_override_invalid.dummy";
+
+    SystestParser parser{};
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }

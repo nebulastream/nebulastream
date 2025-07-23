@@ -1,0 +1,30 @@
+# global_config_override_invalid.dummy
+# Demonstrates invalid GlobalConfiguration usage for system-level tests
+
+# --- Invalid: Missing colon ---
+GlobalConfiguration worker.queryOptimizer.pageSize [8]
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# --- Invalid: Empty key ---
+GlobalConfiguration : 8
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# --- Invalid: Empty value ---
+GlobalConfiguration worker.queryOptimizer.pageSize:
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2
+
+# --- Invalid: Multiple values without brackets ---
+GlobalConfiguration worker.queryOptimizer.pageSize: 8, 16
+
+SELECT id, value FROM stream INTO ID_VALUE_SINK
+----
+1 2 
