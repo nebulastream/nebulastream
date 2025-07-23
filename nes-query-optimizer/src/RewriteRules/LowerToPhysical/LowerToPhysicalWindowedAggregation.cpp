@@ -51,7 +51,6 @@
 
 namespace NES
 {
-
 static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
 getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
 {
@@ -115,9 +114,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
-        auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+        auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
-        auto memoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
