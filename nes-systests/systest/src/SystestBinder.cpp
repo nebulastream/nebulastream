@@ -179,6 +179,11 @@ public:
 
     void setException(const Exception& exception) { this->exception = exception; }
 
+    void setConfigurationOverrides(const std::vector<ConfigurationOverride>& configurationOverrides)
+    {
+        this->configurationOverrides = configurationOverrides;
+    }
+
     std::expected<LogicalPlan, Exception> getBoundPlan() const
     {
         if (boundPlan.has_value())
@@ -238,7 +243,7 @@ public:
     }
 
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
-    SystestQuery build() &&
+    std::vector<SystestQuery> build() &&
     {
         INVARIANT(not built, "Cannot build a SystestQuery twice");
         built = true;
@@ -256,22 +261,29 @@ public:
                         && sinkOutputSchema.has_value() && additionalSourceThreads.has_value(),
                     "Neither optimized plan nor an exception has been set");
                 return SystestQuery::PlanInfo{
-                    .queryPlan = std::move(optimizedPlan.value()),
-                    .sourcesToFilePathsAndCounts = std::move(sourcesToFilePathsAndCounts.value()),
+                    .queryPlan = optimizedPlan.value(),
+                    .sourcesToFilePathsAndCounts = sourcesToFilePathsAndCounts.value(),
                     .sinkOutputSchema = sinkOutputSchema.value(),
                 };
             }
             return std::unexpected{exception.value()};
         };
-        return SystestQuery{
-            .testName = std::move(testName.value()),
-            .queryIdInFile = queryIdInFile,
-            .testFilePath = std::move(testFilePath.value()),
-            .workingDir = std::move(workingDir.value()),
-            .queryDefinition = std::move(queryDefinition.value()),
-            .planInfoOrException = createPlanInfoOrException(),
-            .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value())};
+        /// create for each override a query instance
+        std::vector<SystestQuery> queries;
+        for (auto configurationOverride : configurationOverrides)
+        {
+            queries.push_back(
+                {.testName = testName.value(),
+                 .queryIdInFile = queryIdInFile,
+                 .testFilePath = testFilePath.value(),
+                 .workingDir = workingDir.value(),
+                 .queryDefinition = queryDefinition.value(),
+                 .planInfoOrException = createPlanInfoOrException(),
+                 .expectedResultsOrExpectedError = expectedResultsOrError.value(),
+                 .additionalSourceThreads = additionalSourceThreads.value(),
+                 .configurationOverride = configurationOverride});
+        }
+        return queries;
     }
     /// NOLINTEND(bugprone-unchecked-optional-access)
 
@@ -289,6 +301,7 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::vector<ConfigurationOverride> configurationOverrides;
     bool built = false;
 };
 
@@ -298,6 +311,40 @@ struct SystestBinder::Impl
         : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
     {
     }
+
+    std::vector<ConfigurationOverride>
+    mergeConfigurations(const std::vector<ConfigurationOverride>& overrides, const std::vector<ConfigurationOverride>& otherOverrides)
+    {
+        if (overrides.empty())
+        {
+            return overrides;
+        }
+
+        std::vector<ConfigurationOverride> mergedOverrides;
+        if (overrides.empty())
+        {
+            /// If no regular overrides, use global overrides
+            mergedOverrides = otherOverrides;
+        }
+        else
+        {
+            /// Merge global overrides with each regular override
+            for (const auto& regularOverride : overrides)
+            {
+                for (const auto& globalOverride : otherOverrides)
+                {
+                    ConfigurationOverride mergedOverride = globalOverride;
+                    /// Merge regular override parameters into the merged override
+                    for (const auto& [key, value] : regularOverride)
+                    {
+                        mergedOverride[key] = value;
+                    }
+                    mergedOverrides.emplace_back(std::move(mergedOverride));
+                }
+            }
+        }
+        return mergedOverrides;
+    };
 
     std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
     {
@@ -309,9 +356,9 @@ struct SystestBinder::Impl
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
             {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : testsForFile)
+                for (auto queriesLoaded = loadOptimizeQueriesFromTestFile(testfile); auto query : queriesLoaded)
                 {
-                    queries.emplace_back(std::move(query));
+                    queries.emplace_back(query);
                 }
                 ++loadedFiles;
             }
@@ -325,7 +372,7 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
+    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const TestFile& testfile)
     {
         SLTSinkFactory sinkProvider;
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
@@ -357,7 +404,7 @@ struct SystestBinder::Impl
                                      }
                                      return std::move(systest).build();
                                  })
-            | std::ranges::to<std::vector>();
+            | std::views::join | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file
         std::ranges::for_each(
@@ -387,6 +434,8 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
+        std::vector configOverrides{ConfigurationOverride{}};
+        std::vector globalConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
 
         parser.registerSubstitutionRule(
@@ -618,6 +667,10 @@ struct SystestBinder::Impl
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, currentQueryNumberInTest).first->second;
                 currentTest.setQueryDefinition(query);
+
+                auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
+                currentTest.setConfigurationOverrides(mergedConfigOverrides);
+
                 if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
                 {
                     currentTest.setException(sinkExpected.error());
@@ -650,6 +703,9 @@ struct SystestBinder::Impl
                     {
                         currentTest.setException(e);
                     }
+                    /// Reset currentConfigOverrides after applying it to this query
+                    /// This ensures that Configuration tokens only apply to the next query
+                    configOverrides = {ConfigurationOverride{}};
                 }
             });
 
@@ -659,6 +715,32 @@ struct SystestBinder::Impl
                 /// Error always belongs to the last parsed plan
                 plans.emplace(correspondingQueryId, correspondingQueryId)
                     .first->second.setExpectedResult(ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message});
+            });
+
+        parser.registerOnConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides)
+            {
+                if (configOverrides.empty())
+                {
+                    configOverrides = overrides;
+                }
+                else
+                {
+                    configOverrides = mergeConfigurations(overrides, configOverrides);
+                }
+            });
+
+        parser.registerOnGlobalConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides)
+            {
+                if (globalConfigOverrides.empty())
+                {
+                    globalConfigOverrides = overrides;
+                }
+                else
+                {
+                    globalConfigOverrides = mergeConfigurations(overrides, globalConfigOverrides);
+                }
             });
 
         parser.registerOnResultTuplesCallback(

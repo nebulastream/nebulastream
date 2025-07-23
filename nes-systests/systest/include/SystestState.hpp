@@ -51,7 +51,6 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
-
 namespace NES::Systest
 {
 
@@ -64,6 +63,8 @@ using TestGroup = std::string;
 using SystestQueryId = NES::NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
+
+using ConfigurationOverride = std::unordered_map<std::string, std::string>;
 
 struct ExpectedError
 {
@@ -111,6 +112,7 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    ConfigurationOverride configurationOverride;
 };
 
 struct RunningQuery
@@ -141,7 +143,6 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
 };
 
@@ -153,6 +154,28 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
+
+class SystestProgressTracker
+{
+public:
+    SystestProgressTracker();
+    explicit SystestProgressTracker(size_t totalQueries);
+
+    void incrementQueryCounter();
+    [[nodiscard]] size_t getQueryCounter() const;
+    void setTotalQueries(size_t total);
+
+    [[nodiscard]] size_t getTotalQueries() const;
+
+    [[nodiscard]] double getProgress() const;
+
+    void reset();
+    void reset(size_t newTotalQueries);
+
+private:
+    std::atomic<size_t> queryCounter{0};
+    size_t totalQueries{0};
+};
 
 }
 
@@ -171,3 +194,23 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             runningQuery.systestQuery.queryIdInFile);
     }
 };
+
+namespace std
+{
+template <>
+struct hash<NES::Systest::ConfigurationOverride>
+{
+    std::size_t operator()(const NES::Systest::ConfigurationOverride& cfg) const noexcept
+    {
+        std::size_t seed = 0;
+        const auto hasher = std::hash<std::string>{};
+
+        for (const auto& [k, v] : cfg)
+        {
+            seed ^= hasher(k) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+};
+}

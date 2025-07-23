@@ -58,7 +58,7 @@ public:
     ~SourceDescriptor() = default;
     SourceDescriptor(const SourceDescriptor& other) = default;
     /// Deleted, because the descriptors have a const field
-    SourceDescriptor& operator=(const SourceDescriptor& other) = delete;
+    SourceDescriptor& operator=(const SourceDescriptor& other) = default;
     SourceDescriptor(SourceDescriptor&& other) noexcept = default;
     SourceDescriptor& operator=(SourceDescriptor&& other) noexcept = delete;
 

@@ -71,7 +71,8 @@ NES::Systest::SystestQuery makeQuery(
         "SELECT * FROM test",
         planInfoOrException,
         std::move(expected),
-        std::make_shared<std::vector<std::jthread>>()};
+        std::make_shared<std::vector<std::jthread>>(),
+        NES::Systest::ConfigurationOverride{}};
 }
 }
 
@@ -104,11 +105,13 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
     MockSubmitter submitter;
+    SystestProgressTracker progressTracker{};
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
-    const auto result = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter);
+    const auto result
+        = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, progressTracker);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -129,11 +132,13 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
     const LogicalPlan plan{};
+    SystestProgressTracker progressTracker{};
 
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
-        submitter);
+        submitter,
+        progressTracker);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -154,13 +159,15 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
         .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
     const LogicalPlan plan{};
+    SystestProgressTracker progressTracker{};
 
     const auto result = runQueries(
         {makeQuery(
             SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
-        submitter);
+        submitter,
+        progressTracker);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
