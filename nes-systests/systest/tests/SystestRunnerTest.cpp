@@ -26,8 +26,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -37,11 +35,6 @@
 #include <gtest/gtest.h>
 
 #include <Identifiers/NESStrongType.hpp>
-#include <QueryManager/QueryManager.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
-
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -52,20 +45,18 @@
 namespace
 {
 
-/// NOLINTBEGIN(bugprone-unchecked-optional-access)
-
-NES::LocalQueryStatus makeSummary(const NES::QueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
+NES::QuerySummary makeSummary(const NES::QueryId id, const NES::QueryStatus status, const std::shared_ptr<NES::Exception>& err)
 {
-    NES::LocalQueryStatus queryStatus;
-    queryStatus.queryId = id;
-    queryStatus.state = currState;
-    if (currState == NES::QueryState::Failed && err)
+    NES::QuerySummary querySummary;
+    querySummary.queryId = id;
+    querySummary.currentStatus = status;
+    if (status == NES::QueryStatus::Failed && err)
     {
-        NES::QueryMetrics metrics;
-        metrics.error = *err;
-        queryStatus.metrics = metrics;
+        NES::QueryRunSummary run;
+        run.error = *err;
+        querySummary.runs.push_back(run);
     }
-    return queryStatus;
+    return querySummary;
 }
 
 NES::Systest::SystestQuery makeQuery(
@@ -73,15 +64,15 @@ NES::Systest::SystestQuery makeQuery(
     std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected)
 {
     return NES::Systest::SystestQuery{
-        .testName = "test_query",
-        .queryIdInFile = NES::INVALID<NES::Systest::SystestQueryId>,
-        .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
-        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
-        .queryDefinition = "SELECT * FROM test",
-        .planInfoOrException = planInfoOrException,
-        .expectedResultsOrExpectedError = std::move(expected),
-        .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
-        .differentialQueryPlan = std::nullopt};
+        "test_query",
+        NES::INVALID<NES::Systest::SystestQueryId>,
+        SYSTEST_DATA_DIR "filter.dummy",
+        NES::SystestConfiguration{}.workingDir.getValue(),
+        "SELECT * FROM test",
+        planInfoOrException,
+        std::move(expected),
+        std::make_shared<std::vector<std::jthread>>(),
+        NES::Systest::ConfigurationOverride{}};
 }
 }
 
@@ -96,63 +87,58 @@ public:
         Logger::setupLogging("SystestRunnerTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestRunnerTest test class.");
     }
-
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
-
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
 };
 
-class MockQueryManager final : public QueryManager
+class MockSubmitter final : public QuerySubmitter
 {
 public:
     MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, noexcept, override));
+    MOCK_METHOD(void, startQuery, (QueryId), (override));
+    MOCK_METHOD(void, stopQuery, (QueryId), (override));
+    MOCK_METHOD(void, unregisterQuery, (QueryId), (override));
+    MOCK_METHOD(QuerySummary, waitForQueryTermination, (QueryId), (override));
+    MOCK_METHOD(std::vector<QuerySummary>, finishedQueries, (), (override));
 };
 
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    QuerySubmitter submitter{std::make_unique<MockQueryManager>()};
+    MockSubmitter submitter;
+    SystestProgressTracker progressTracker{};
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
-    const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
+    auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
-    const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, discardPerformanceMessage);
+    const auto result
+        = runQueries({makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, progressTracker);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
+    MockSubmitter submitter;
     constexpr QueryId id{7};
+
+    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(submitter, startQuery(id));
+
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
 
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockManager, start(id));
-    EXPECT_CALL(*mockManager, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
-        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+    EXPECT_CALL(submitter, finishedQueries())
+        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Failed, runtimeErr)}))
+        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
 
-    QuerySubmitter submitter{std::move(mockManager)};
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
-    auto sourceOperator
-        = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    const LogicalPlan plan{};
+    SystestProgressTracker progressTracker{};
 
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
         submitter,
-        discardPerformanceMessage);
+        progressTracker);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -162,23 +148,18 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
+    MockSubmitter submitter;
     constexpr QueryId id{11};
 
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockManager, start(id));
-    EXPECT_CALL(*mockManager, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
-        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+    EXPECT_CALL(submitter, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(submitter, startQuery(id));
 
-    QuerySubmitter submitter{std::move(mockManager)};
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
-    auto sourceOperator
-        = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    EXPECT_CALL(submitter, finishedQueries())
+        .WillOnce(testing::Return(std::vector{makeSummary(id, QueryStatus::Stopped, nullptr)}))
+        .WillRepeatedly(testing::Return(std::vector<QuerySummary>{}));
+
+    const LogicalPlan plan{};
+    SystestProgressTracker progressTracker{};
 
     const auto result = runQueries(
         {makeQuery(
@@ -186,11 +167,9 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
-        discardPerformanceMessage);
+        progressTracker);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
 }
-
-/// NOLINTEND(bugprone-unchecked-optional-access)
 }
