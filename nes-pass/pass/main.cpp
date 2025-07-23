@@ -10,11 +10,16 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/Passes/PassPlugin.h"
+#include <llvm/ADT/StringRef.h>
+#include <llvm/Bitcode/BitcodeReader.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/IR/Verifier.h"
 
 using namespace llvm;
 
 void annotationsToAttributes(Module &M);
-ArrayRef<uint8_t> serialize(Function &F, LLVMContext &ctx);
+std::string serialize(Function &F, LLVMContext &ctx);
 Function *findRegistrationFunction(Module &M);
 
 
@@ -55,7 +60,8 @@ public:
                     IRBuilder<> B(BB);
 
                     // Serialize function to LLVM IR bitcode
-                    auto bitcode = serialize(F, ctx);
+                    auto bitcodeStr = serialize(F, ctx);
+                    ArrayRef<uint8_t> bitcode((const uint8_t *)bitcodeStr.data(), bitcodeStr.size());
 
                     // Create types
                     Type *int8Ty = IntegerType::get(ctx, 8);
@@ -107,25 +113,45 @@ void annotationsToAttributes(Module &M)
     }
 }
 
-ArrayRef<uint8_t> serialize(Function &F, LLVMContext &ctx)
+std::string serialize(Function &F, LLVMContext &ctx)
 {
-    std::unique_ptr<Module> wrapperModule = std::make_unique<Module>("func_module", ctx);
+    llvm::LLVMContext newCtx;
 
-    Function *clonedFunc = Function::Create(F.getFunctionType(), F.getLinkage(), F.getName(), wrapperModule.get());
+    Module wrapperModule = Module("func_module", ctx);
+
+    Function *clonedFunc = Function::Create(F.getFunctionType(), F.getLinkage(), F.getName(), &wrapperModule);
     ValueToValueMapTy v2vMap;
     for (auto originalIt = F.arg_begin(), cloneIt = clonedFunc->arg_begin(); originalIt != F.arg_end(); ++originalIt, ++cloneIt)
         v2vMap[&*originalIt] = &*cloneIt;
 
     SmallVector<ReturnInst *, 8> returnInst;
     CloneFunctionInto(clonedFunc, &F, v2vMap, CloneFunctionChangeType::LocalChangesOnly, returnInst);
+    llvm::errs() << "\nChecking Module\n";
 
-    std::string bitcodeStr;
-    raw_string_ostream OS(bitcodeStr);
-    WriteBitcodeToFile(*wrapperModule, OS);
-    OS.flush();
+    if (verifyModule(wrapperModule, &llvm::errs())) {
+        llvm::errs() << "\nCloned module is invalid!\n";
+        int* p = nullptr;
+        *p = 42;
+    }
 
-    ArrayRef<uint8_t> bitcodeArray((const uint8_t *)bitcodeStr.data(), bitcodeStr.size());
-    return bitcodeArray;
+    SmallVector<char, 0> buffer;
+    raw_svector_ostream OS(buffer);
+    WriteBitcodeToFile(wrapperModule, OS);
+
+    std::string bitcodeStr(buffer.begin(), buffer.end());
+
+    auto buffer2 = llvm::MemoryBuffer::getMemBuffer(
+    llvm::StringRef(bitcodeStr.data(), bitcodeStr.size()), "", false);
+    llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr = llvm::parseBitcodeFile(buffer2->getMemBufferRef(), newCtx);
+    if (!moduleOrErr) {
+        logAllUnhandledErrors(moduleOrErr.takeError(), llvm::errs(), "Bitcode parse error: ");
+        int* p = nullptr;
+        *p = 42;
+    }
+    std::size_t hashValue = std::hash<std::string>{}(bitcodeStr);
+
+    std::cout << "Hash: " << hashValue << "\n";
+    return bitcodeStr;
 }
 
 Function *findRegistrationFunction(Module &M) {

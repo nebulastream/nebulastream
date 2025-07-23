@@ -7,10 +7,10 @@
 template <typename Func>
 void invoke(Func func) {
     (void)func;
-    if (FunctionRegistry::instance().getMetadata(func).size() > 0)
+    if (InlineFunctionRegistry::instance().getMetadata((void *) func).size() > 0)
     {
         std::cout << "Found function in registry; inlining\n";
-        auto bitcode = FunctionRegistry::instance().getMetadata(func);
+        auto bitcode = InlineFunctionRegistry::instance().getMetadata((void *) func);
         std::cout << bitcode << std::endl;
     } else
     {

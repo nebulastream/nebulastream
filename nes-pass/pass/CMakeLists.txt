@@ -12,13 +12,11 @@ llvm_map_components_to_libnames(llvm_libs
 )
 target_include_directories(MinimalPass PRIVATE ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(MinimalPass PRIVATE ${LLVM_DEFINITIONS})
-target_compile_options(MinimalPass PRIVATE -Wno-unused-parameter)
-target_link_options(MinimalPass PRIVATE
-        $<$<LINK_LANGUAGE:C>:-Wl,--no-allow-shlib-undefined>
-)
-if(NOT LLVM_ENABLE_RTTI)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
-endif()
+set_target_properties(MinimalPass PROPERTIES
+        COMPILE_OPTIONS "-Wno-unused-parameter"
+        LINK_OPTIONS ""
+) #override global compile and link flags for the pass
+
 
 target_link_libraries(MinimalPass
         "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")

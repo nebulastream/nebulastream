@@ -4,22 +4,20 @@
 #include <mutex>
 #include <string>
 
-class FunctionRegistry {
+class InlineFunctionRegistry {
 public:
-    using FuncPtr = void(*)();
+    static InlineFunctionRegistry& instance();
 
-    static FunctionRegistry& instance();
-
-    int addToRegistry(FuncPtr fn, std::string bitcode);
-    std::string getMetadata(FuncPtr fn) const;
+    int addToRegistry(void *fn, std::string bitcode);
+    std::string getMetadata(void *fn) const;
 
 private:
     mutable std::mutex mutex_;
-    std::unordered_map<FuncPtr, std::string> registry_;
+    std::unordered_map<void *, std::string> registry_;
 };
 
 
-int registerFunction(FunctionRegistry::FuncPtr fn, const char *bitcodePtr, uint64_t bitcodeLen);
+int registerFunction(void *fn, const char *bitcodePtr, uint64_t bitcodeLen);
 
 
 //This needs to exist here, in order to inject the otherwise unused registerFunction declaration into the LLVM IR

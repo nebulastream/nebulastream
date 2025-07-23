@@ -3,7 +3,7 @@
 #include "FunctionRegistry.h"
 
 
-NAUT_INLINE void libTargetInline();
+//NAUT_INLINE void libTargetInline();
 
 void libTargetNoInline();
 
