@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-07-17_15-05-49'
+DATETIME = '2025-07-19_11-23-08'
 FILE = 'combined_benchmark_statistics.csv'
 
 
@@ -39,8 +39,8 @@ def filter_by_config(data, config):
     return data[mask]
 
 
-def filter_by_default_values_except_param(data, param):
-    other_params = [p for p in all_config_params if p != param]
+def filter_by_default_values_except_params(data, params):
+    other_params = [p for p in all_config_params if p not in params]
     mask = pd.Series(True, index=data.index)
     for p in other_params:
         mask &= data[p].isin(default_param_values[p])
@@ -199,6 +199,9 @@ file_backed_config_params = [
     'min_read_state_size', 'min_write_state_size', 'max_num_watermark_gaps', 'file_layout', 'max_num_file_descriptors',
     'lower_memory_bound', 'upper_memory_bound', 'with_cleanup', 'with_prediction', 'num_buffers_per_worker'
 ]
+watermark_predictor_config_params = [
+    'prediction_time_delta', 'min_read_state_size', 'min_write_state_size'
+]
 all_config_params = shared_config_params + file_backed_config_params
 
 # Find all default values for each config parameter
@@ -213,11 +216,12 @@ common_config_dicts = common_configs.to_dict(orient='records')
 # Map long queries to short codes and sort by hue column values
 query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
 df['query_id'] = df['query'].map(query_mapping)
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id'], ascending=[True, True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers'], ascending=[True, True, True, True, True, True])
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
+df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 
 
 # %% Compare slice store types for different configs
@@ -427,10 +431,8 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     data = data[data['ingestion_rate'] <= 10000]
     data = data[data['timestamp_increment'] <= 10000]
     data = data[data['batch_size'] < 10000]
-    #if param != 'match_rate':
-     #   data = data[data['match_rate'] == 70]
 
-    data = filter_by_default_values_except_param(data, param)
+    data = filter_by_default_values_except_params(data, [param])
     data_scaled, metric_unit = convert_units(data, metric)
 
     if param == 'query':
@@ -457,13 +459,13 @@ def plot_shared_params(data, param, metric, hue, label, legend):
 
     # Add legend below
     if param == 'query_id':
-        add_query_fig_text(' | ' + data_scaled['query_id'].unique(), 0.35, -0.65)
+        add_query_fig_text(' | ' + data_scaled[param].unique(), 0.35, -0.65)
     else:
         add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label}')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} ({metric_unit})')
+    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
 
@@ -475,56 +477,40 @@ for param in shared_config_params:
 
 # %% File-Backed-Only parameter plots
 
-def plot_file_backed_params(data, param, metric, hue, label, color):
-    data = data[data['match_rate'] == 90]
+def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
+    # data = data[data['match_rate'] == 90]
     data = data[data['file_descriptor_buffer_size'] <= 131072]
-    data = data[data['prediction_time_delta'] <= 100]
-    data = data[data['max_num_watermark_gaps'] <= 100]
+    # data = data[data['prediction_time_delta'] <= 100]
+    # data = data[data['max_num_watermark_gaps'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
     #    data = data[data['max_memory_consumption'] <= 4294967296]
     #if param == 'max_num_sequence_numbers':
     #    data = data[data['max_num_sequence_numbers'] <= 1000]
 
-    data = filter_by_default_values_except_param(data, param)
+    data = filter_by_default_values_except_params(data, [param])
     data_scaled, metric_unit = convert_units(data, metric)
-
-    if param == 'lower_memory_bound':
-        # Sort data by whether or not the query contained variable sized data
-        data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-        data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
-
-        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
-        legend = 'Slice Store | Time Increment'
-        param = 'query_id'
-    if param == 'upper_memory_bound':
-        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
-        legend = 'Slice Store | Query'
 
     plt.figure(figsize=(14, 6))
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
-        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', palette=('dark:' + color))
+        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o') #, palette=('dark:' + color))
 
         # Add labels for min and max values of metric for this param for each value of hue
         add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
     else:
-        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, palette=('dark:' + color))
+        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue) #, palette=('dark:' + color))
 
         #handles, labels = ax.get_legend_handles_labels()
         #custom_labels = [f'{scaled_df[hue].iloc[0]:.1f} {label_unit}' for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
         #ax.legend(handles, custom_labels, title='Max Memory')
 
     # Add legend below
-    if param in ['lower_memory_bound', 'upper_memory_bound']:
-        labels = ax.get_legend_handles_labels()[1]
-        add_query_fig_text(labels, 0.2, 0.0)
-    else:
-        add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
+    add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} ({metric_unit})')
-    plt.legend(title='Query | Time Increment')
+    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.legend(title=legend)
     plt.show()
 
 
@@ -537,8 +523,53 @@ for param in file_backed_config_params:
     #elif param == 'memory_model':
     #    hue = 'max_memory_consumption'
         #hue = 'max_memory_consumption_cat'
-    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'file_backed_hue', 'Throughput / sec', 'blue')
-    plot_file_backed_params(file_backed_data, param, 'memory', 'file_backed_hue', 'Memory', 'orange')
+    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'file_backed_hue', 'Throughput / sec', 'Query | Time Increment') #, 'blue')
+    plot_file_backed_params(file_backed_data, param, 'memory', 'file_backed_hue', 'Memory', 'Query | Time Increment') #, 'orange')
+
+
+# %% Watermark-Predictor parameter plots
+
+def plot_watermark_predictor_params(data, param, metric, hue, label, legend):
+    fig, axes = plt.subplots(nrows=3, figsize=(14, 16), sharex=True)
+    for i, predictor_value in enumerate(df['watermark_predictor_type'].unique()):
+        data_filtered = data[data['watermark_predictor_type'] == predictor_value]
+        ax = axes[i]
+
+        data_filtered = filter_by_default_values_except_params(data_filtered, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers'])
+        data_scaled, metric_unit = convert_units(data_filtered, metric)
+
+        if pd.api.types.is_numeric_dtype(data_scaled[param]):
+            if param != 'prediction_time_delta':
+                data_scaled, param_unit = convert_units(data_scaled, param)
+            else:
+                data_scaled, param_unit = convert_units(data_scaled, param, '')
+            # sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', ax=ax)
+            sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker='o', ax=ax)
+
+            # Add labels for min and max values of metric for this param for each value of hue
+            add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+        else:
+            sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
+
+        ax.set_title(f'watermark_predictor_type={data_scaled["watermark_predictor_type"].unique()[0]}')
+        ax.set_xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
+        ax.set_ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+        ax.legend(title=legend)
+
+    # Add legend below
+    add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
+
+    fig.suptitle(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}', fontsize=16)
+    fig.tight_layout(rect=[0, 0.02, 1, 0.98])
+    plt.show()
+
+
+file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
+for param in watermark_predictor_config_params:
+    for hue_value in df['file_backed_hue'].unique():
+        data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
+        plot_watermark_predictor_params(data_per_hue, param, 'throughput_data', 'watermark_predictor_hue', 'Throughput / sec', 'Watermark Gaps | Sequence Numbers')
+        plot_watermark_predictor_params(data_per_hue, param, 'memory', 'watermark_predictor_hue', 'Memory', 'Watermark Gaps | Sequence Numbers')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time

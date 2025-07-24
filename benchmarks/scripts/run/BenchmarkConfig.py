@@ -45,8 +45,8 @@ WINDOW_SIZE_SLIDE = [
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 
 # File-backed worker configuration parameters
-LOWER_MEMORY_BOUNDS = [0, 256 * 1024, 64 * 1024 * 1024, np.iinfo(np.uint64).max]
-UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 256 * 1024, 64 * 1024 * 1024]
+LOWER_MEMORY_BOUNDS = [0, 1024 * 1024, 256 * 1024 * 1024, np.iinfo(np.uint64).max]
+UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 1024 * 1024, 256 * 1024 * 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
@@ -144,6 +144,10 @@ def get_additional_default_values():
         if size != 10000 and size != 10000000:
             default_queries.append(query)
     return default_timestamp_increments, default_queries
+
+
+def get_memory_bounds_default_values():
+    return
 
 
 # This class stores all information needed to run a single benchmark
