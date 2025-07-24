@@ -161,6 +161,7 @@ bool ReadSegmentFuture::await_ready() const noexcept
 
 std::variant<ssize_t, uint32_t> ReadSegmentFuture::await_resume() const noexcept
 {
+    promise->updateIsDone();
     INVARIANT(promise->getResult(), "Resumed coroutine but no result was set in promise");
     return *promise->getResult();
 }
@@ -297,7 +298,7 @@ void RepinBufferFuture::waitOnce() const noexcept
             auto waitFn = currentBlockAwaiter->getWaitFn();
             INVARIANT(waitFn, "Wait function was invalid");
             waitFn();
-            promise->updateIsDone();
+            // promise->updateIsDone();
             if (currentBlockAwaiter->isDone())
             {
                 // auto weakAwaiter = currentBlockAwaiter->weak_from_this();

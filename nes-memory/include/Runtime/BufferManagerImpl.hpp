@@ -342,10 +342,14 @@ public:
 
     ReadSegmentAwaiter& operator=(ReadSegmentAwaiter&& other) = delete;
 
-    bool await_ready() const noexcept { return returnValue != std::nullopt; }
+    bool await_ready() const noexcept
+    {
+        std::unique_lock lock{mutex};
+        return returnValue.has_value();
+    }
     bool await_suspend(std::coroutine_handle<Promise> handle)
     {
-        std::scoped_lock lock{mutex};
+        std::unique_lock lock{mutex};
         if (returnValue)
         {
             return false;
@@ -356,23 +360,36 @@ public:
 
     std::optional<ssize_t> await_resume() const noexcept
     {
-        std::scoped_lock lock{mutex};
+        std::unique_lock lock{mutex};
         return returnValue;
     }
 
     void setResultAndContinue(ssize_t returnValue)
     {
-        std::scoped_lock lock{mutex};
+        std::unique_lock lock{mutex};
+        if (this->returnValue.has_value())
+        {
+            INVARIANT(false, "Continuing awaiter twice");
+            return;
+        }
         this->returnValue = returnValue;
         if (handle)
         {
+            NES_TRACE("Continuing coroutine from handle");
             auto sharedPromisePtr = handle.promise().getSharedPromise();
-            handle.resume();
+            sharedPromisePtr->getHandle().resume();
             sharedPromisePtr->updateIsDone();
+        } else
+        {
+            NES_TRACE("Skipping coroutine continuation, empty handle");
         }
     }
 
-    bool isDone() const noexcept { return returnValue.has_value(); }
+    bool isDone() const noexcept
+    {
+        std::unique_lock lock{mutex};
+        return returnValue.has_value();
+    }
 
     static std::optional<std::shared_ptr<ReadSegmentAwaiter>> create(
         folly::MPMCQueue<std::shared_ptr<ReadSegmentAwaiter>>& requestQueue,

@@ -234,7 +234,6 @@ public:
     {
         this->result = result;
         hasResult.test_and_set();
-        auto resumption = nextCoroutine.exchange({});
     }
 
     void unhandled_exception() noexcept { };
@@ -243,11 +242,10 @@ public:
     //When then the destructor of the future is called because it goes out-of-scope, it causes a segmentation fault
     detail::ErasedAwaiter final_suspend() noexcept
     {
-        const auto finalSuspendedBefore = finalSuspendStarted.test_and_set();
-        INVARIANT(!finalSuspendedBefore, "Coroutines final suspend called more than once");
-
         auto awaiterPtr = std::unique_ptr<detail::VirtualAwaiter>(
             new detail::ContinueOuterCoroutineAwaiter<ReadSegmentPromise>(nextCoroutine.exchange(std::weak_ptr<VirtualPromise>{})));
+        const auto finalSuspendedBefore = finalSuspendStarted.test_and_set();
+        INVARIANT(!finalSuspendedBefore, "Coroutines final suspend called more than once");
         return detail::ErasedAwaiter{std::move(awaiterPtr)};
     }
 

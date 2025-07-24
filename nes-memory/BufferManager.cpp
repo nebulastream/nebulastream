@@ -493,6 +493,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
             readSegmentFutures.reserve(toRepin.size());
             for (unsigned long i = 0; i < toRepin.size(); ++i)
             {
+                NES_TRACE("Starting to read segment {}", floating.controlBlock->getSegment(toRepin[i], *lock)->get<detail::OnDiskLocation>().value().getLocation());
                 auto readFuture = readOnDiskSegment(
                     *floating.controlBlock->getSegment(toRepin[i], *lock)->get<detail::OnDiskLocation>(), memorySegments[i]);
                 readSegmentFutures.push_back(readFuture);
@@ -1036,6 +1037,7 @@ ReadSegmentFuture BufferManager::readOnDiskSegment(
         std::weak_ptr{underlyingReadAwaiter});
     NES_TRACE("Awaiting read completion for on disk location {}", source.getLocation());
     auto readBytes = co_await *readAwaiter;
+    NES_TRACE("Read {} bytes from on disk location {}", readBytes, source.getLocation());
     co_return *readBytes;
 }
 
@@ -1090,7 +1092,7 @@ int64_t BufferManager::processReadSubmissionEntries() noexcept
     {
         toResume->setResultAndContinue();
     }
-    NES_DEBUG("Processed {} read requests", processed);
+    NES_TRACE("Processed {} read requests", processed);
     return processed;
 }
 
