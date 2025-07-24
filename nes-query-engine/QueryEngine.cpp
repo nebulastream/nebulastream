@@ -503,7 +503,23 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             }
             std::unreachable();
         }();
-        auto pinnedBufferRes = repinFuture.waitUntilDone(std::chrono::milliseconds(2000));
+        auto pinnedBufferOpt = std::make_optional(repinFuture.waitUntilDone());
+        std::variant<Memory::TupleBuffer, uint32_t> pinnedBufferRes;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+        if (!pinnedBufferOpt.has_value())
+        {
+            NES_ERROR("Failed to repin buffer for task {}, find traces of the locations where buffers were pinned below", taskId);
+            pool.bufferProvider->dumpPinnedBufferTraces();
+            INVARIANT(false, "Failed to repin buffer");
+        }
+#else
+        if (!pinnedBufferOpt.has_value())
+        {
+            ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);
+            return false;
+        }
+#endif
+        pinnedBufferRes = std::move(*pinnedBufferOpt);
         if (std::holds_alternative<Memory::detail::CoroutineError>(pinnedBufferRes))
         {
             ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);

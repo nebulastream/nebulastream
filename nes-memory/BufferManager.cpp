@@ -311,6 +311,25 @@ void BufferManager::destroy()
     }
 }
 
+void BufferManager::dumpPinnedBufferTraces()
+{
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    if (allBuffers.size() > 0)
+    {
+        uint64_t count = 0;
+        for (const auto& buffer : allBuffers)
+        {
+            if (buffer->getPinnedReferenceCount() != 0 && !buffer->getSegment(detail::ChildOrMainDataKey::MAIN()).value().isNotPreAllocated())
+            {
+                buffer->dumpOwningThreadInfo();
+                count++;
+            }
+        }
+        NES_ERROR("Found {} pinned buffers", count);
+    }
+#endif
+}
+
 void BufferManager::flushNewBuffers() noexcept
 {
     auto toFlush = newBuffers.size();
@@ -445,7 +464,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
             auto memorySegmentsOrError = co_await *awaitMemorySegments;
             if (auto error = getOptional<detail::CoroutineError>(memorySegmentsOrError))
             {
-                NES_TRACE("Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
+                NES_DEBUG("Failed to get memory segments for repinning with error message", typeFromCode(*error).getErrorMessage());
                 // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
                 // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
                 // co_await *aepSwitchBackAwaiter;
@@ -487,6 +506,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
                         std::bind(&ReadSegmentFuture::waitOnce, readFuture),
                         readFuture);
 
+                NES_TRACE("Awaiting read result for {}", segmentToUnspill[i].getLocation());
                 const auto readBytesOrError = co_await *awaitReadSegment;
                 if (const auto error = getOptional<detail::CoroutineError>(readBytesOrError))
                 {
@@ -494,6 +514,7 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
                     {
                         availableBuffers.write(segment);
                     }
+                    NES_DEBUG("Failed to read spilled buffer with error {}", typeFromCode(*error).getErrorMessage());
                     // auto switchBackAwaiter = std::make_shared<detail::ResumeAfterBlockAwaiter<Promise>>([] {}, [] { return false; });
                     // auto aepSwitchBackAwaiter = createAEPFromResumeAfterBlock(switchBackAwaiter);
                     // co_await *aepSwitchBackAwaiter;
@@ -515,10 +536,12 @@ RepinBufferFuture BufferManager::repinBuffer(FloatingBuffer&& floating_) noexcep
                 const auto swapped = floating.controlBlock->swapSegment(memorySegments[i], toRepin[i], *lock);
                 INVARIANT(swapped, "Failed to swap back in unspilled in memory data segment");
 
+                NES_TRACE("Starting to punch hole for segment {}", segmentToUnspill[i].getLocation());
                 const auto punchHoleFuture = punchHoleSegment(std::move(segmentToUnspill[i]));
                 //Directly awaiting here is fine because we never actually suspend in punchHole until we have yielded a value
                 //Still, would be good to have some mechanism here that doesn't require hard coupling of the implementation of the coroutines
                 auto submittedDeletion = co_await punchHoleFuture.awaitYield();
+                NES_TRACE("Yielded for hole punching submission {}", segmentToUnspill[i].getLocation());
                 if (!submittedDeletion)
                 {
                     NES_WARNING("Failed to submit segment deletion task, segment will only be removed from disk on system shutdown.");
@@ -1005,11 +1028,13 @@ ReadSegmentFuture BufferManager::readOnDiskSegment(
                 std::bind(&BufferManager::waitForReadSubmissionEntriesOnce, this),
                 std::weak_ptr{underlyingSubmissionAwaiter.value()});
 
+    NES_TRACE("Awaiting read submission for on disk location {}", source.getLocation());
     auto underlyingReadAwaiter = co_await *submissionAwaiter;
     auto readAwaiter = detail::AwaitExternalProgress<Promise, std::optional<ssize_t>, detail::ReadSegmentAwaiter<Promise>>::create(
         std::bind(&BufferManager::pollReadCompletionEntriesOnce, this),
         std::bind(&BufferManager::waitForReadCompletionEntriesOnce, this),
         std::weak_ptr{underlyingReadAwaiter});
+    NES_TRACE("Awaiting read completion for on disk location {}", source.getLocation());
     auto readBytes = co_await *readAwaiter;
     co_return *readBytes;
 }
@@ -1057,8 +1082,10 @@ int64_t BufferManager::processReadSubmissionEntries() noexcept
             nextRequest->getSource().getSize(),
             nextRequest->getSource().getLocation().getOffset());
         io_uring_sqe_set_data(sqe, readAwaiterW);
+        NES_TRACE("Created weak awaiter at {} for on disk location {}", fmt::ptr(readAwaiterW), nextRequest->getSource().getLocation());
     }
     int processed = io_uring_submit(&uringReadRing);
+    readsInFlight.fetch_add(processed);
     for (auto toResume : awaitersToResume)
     {
         toResume->setResultAndContinue();
@@ -1094,10 +1121,15 @@ size_t BufferManager::processReadCompletionEvents() noexcept
         //We can't just skip not fully read segments like in the write cqe processing, because there is a 1:1 mapping of coroutines and entries
         if (const auto awaiter = awaiterW->lock())
         {
+            NES_TRACE("Resuming coroutine with awaiter at {}", fmt::ptr(awaiterW));
             awaiter->setResultAndContinue(completion->res);
+        } else
+        {
+            NES_TRACE("Awaiter at {} was already deleted, skipping", fmt::ptr(awaiterW));
         }
         delete awaiterW;
         io_uring_cqe_seen(&uringReadRing, completion);
+        readsInFlight.fetch_sub(1);
         ++counter;
     }
     return counter;

@@ -237,6 +237,8 @@ public:
 
     void destroy() override;
 
+    void dumpPinnedBufferTraces() override;
+
 
 private:
     const std::chrono::duration<float> waitForUringMutexSeconds;
@@ -304,7 +306,7 @@ private:
     mutable std::timed_mutex readSqeMutex{};
     mutable std::timed_mutex readCqeMutex{};
     io_uring uringReadRing;
-    size_t readsInFlight;
+    std::atomic<uint64_t> readsInFlight;
     int readErrorCounter{0};
 
 

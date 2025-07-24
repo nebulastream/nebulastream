@@ -15,8 +15,12 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <ostream>
 #include <thread>
 #include <type_traits>
+
+#include <fmt/format.h>
+#include "Util/Logger/Formatter.hpp"
 
 
 namespace NES::Memory::detail
@@ -64,6 +68,15 @@ public:
     friend bool operator<=(const OnDiskLocation& lhs, const OnDiskLocation& rhs) { return !(rhs < lhs); }
     friend bool operator>(const OnDiskLocation& lhs, const OnDiskLocation& rhs) { return rhs < lhs; }
     friend bool operator>=(const OnDiskLocation& lhs, const OnDiskLocation& rhs) { return !(lhs < rhs); }
+
+    friend std::ostream& operator<<(std::ostream& os, const OnDiskLocation& obj)
+    {
+        return os << fmt::format(
+                   "OnDiskLocation(fileId: {}, offset: {}, notPreAllocated: {})",
+                   obj.getFileID(),
+                   obj.getOffset(),
+                   obj.isNotPreAllocated());
+    }
 
 private:
     uint64_t data;
@@ -127,24 +140,22 @@ public:
     friend bool operator<=(const DataLocation& lhs, const DataLocation& rhs) { return !(rhs < lhs); }
     friend bool operator>(const DataLocation& lhs, const DataLocation& rhs) { return rhs < lhs; }
     friend bool operator>=(const DataLocation& lhs, const DataLocation& rhs) { return !(lhs < rhs); }
-
 };
 
 static_assert(sizeof(DataLocation) == 24);
 static_assert(std::is_trivially_copyable_v<DataLocation>);
 
 template <typename T>
-concept DataLocationConcept = (std::is_same_v<T, InMemoryLocation> || std::is_same_v<T, OnDiskLocation> || std::is_same_v<T, DataLocation>) &&
-    requires (T t)
-{
-    {T()} -> std::same_as<T>;
+concept DataLocationConcept
+    = (std::is_same_v<T, InMemoryLocation> || std::is_same_v<T, OnDiskLocation> || std::is_same_v<T, DataLocation>) && requires(T t) {
+          { T() } -> std::same_as<T>;
 
-    //You could argue that isPreAllocated should be part of DataSegment, but:
-    //1. Location and Segment are super entangled anyway
-    //2. It's just a flag, so I'd like to store it as a bitflag as well and not use a whole word/byte for it
-    //3. Given 2., I don't want to start messing with the MSBs of the location inside the segment
-    { t.isNotPreAllocated() } -> std::same_as<bool>;
-};
+          //You could argue that isPreAllocated should be part of DataSegment, but:
+          //1. Location and Segment are super entangled anyway
+          //2. It's just a flag, so I'd like to store it as a bitflag as well and not use a whole word/byte for it
+          //3. Given 2., I don't want to start messing with the MSBs of the location inside the segment
+          { t.isNotPreAllocated() } -> std::same_as<bool>;
+      };
 
 static_assert(DataLocationConcept<OnDiskLocation>);
 static_assert(DataLocationConcept<InMemoryLocation>);
@@ -153,7 +164,8 @@ static_assert(DataLocationConcept<DataLocation>);
 template <DataLocationConcept T>
 class DataSegment
 {
-    template <DataLocationConcept O> friend class DataSegment;
+    template <DataLocationConcept O>
+    friend class DataSegment;
     T location;
     size_t size;
 
@@ -167,7 +179,6 @@ class DataSegment
     explicit operator const DataSegment<O>();
 
 public:
-
     //Making all of these methods explicit does nothing to improve safety but just makes it super clunky to use
     explicit DataSegment(T location, size_t size) noexcept;
     DataSegment(const DataSegment&) noexcept = default;
@@ -211,8 +222,6 @@ public:
     [[nodiscard]] uint32_t getSize() const;
     [[nodiscard]] bool isSpilled() const;
     [[nodiscard]] bool isNotPreAllocated() const;
-
-
 };
 static_assert(sizeof(DataSegment<DataLocation>) == 32);
 static_assert(std::is_trivially_copyable_v<DataSegment<DataLocation>>);
@@ -222,8 +231,7 @@ static_assert(std::is_trivially_copyable_v<DataSegment<DataLocation>>);
 template <NES::Memory::detail::DataLocationConcept T>
 struct std::hash<NES::Memory::detail::DataSegment<T>>
 {
-    std::size_t operator()(const NES::Memory::detail::DataSegment<T>& segment) const
-    {
-        return segment.location;
-    }
+    std::size_t operator()(const NES::Memory::detail::DataSegment<T>& segment) const { return segment.location; }
 };
+
+FMT_OSTREAM(NES::Memory::detail::OnDiskLocation);

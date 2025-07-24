@@ -98,6 +98,10 @@ public:
 
     std::shared_ptr<BufferManager> getParentBufferManager() const { return bufferManager; }
 
+    void dumpPinnedBufferTraces() override
+    {
+        throw NotImplemented("DumpPinnedBufferTraces not implemented for FixedSizeBufferPool.");
+    }
 private:
     std::shared_ptr<BufferManager> bufferManager;
     const std::function<void(detail::DataSegment<detail::InMemoryLocation>)> deallocator;

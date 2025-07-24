@@ -400,7 +400,7 @@ void setupLogging()
     const auto logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
 
     const auto absoluteLogPath = logDir / logFileName;
-    NES::Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
+    NES::Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_TRACE, false);
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {
         /// Set the correct logging path when using docker

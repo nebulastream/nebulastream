@@ -26,6 +26,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -36,13 +37,14 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include "Runtime/BufferManager.hpp"
 
 namespace NES::Sources
 {
 
 SourceThread::SourceThread(
     OriginId originId,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<Memory::BufferManager> poolProvider,
     size_t numOfLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
@@ -205,13 +207,14 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferManager = std::make_optional(localBufferManager);
     std::jthread sourceThread(
         detail::dataSourceThread,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager->createFixedSizeBufferPool(numOfLocalBuffers));
+        bufferManager);
     thread = std::move(sourceThread);
     return true;
 }

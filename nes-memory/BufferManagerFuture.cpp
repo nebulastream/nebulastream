@@ -317,7 +317,7 @@ bool RepinBufferFuture::isDone() const noexcept
     return promise->getResult().has_value();
 }
 
-std::variant<TupleBuffer, uint32_t> RepinBufferFuture::waitUntilDone() const noexcept
+std::variant<TupleBuffer, uint32_t> RepinBufferFuture::waitUntilDone() const
 {
     auto result = promise->getResult();
     while (!result)
