@@ -503,7 +503,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             }
             std::unreachable();
         }();
-        auto pinnedBufferRes = repinFuture.waitUntilDone();
+        auto pinnedBufferRes = repinFuture.waitUntilDone(std::chrono::milliseconds(2000));
         if (std::holds_alternative<Memory::detail::CoroutineError>(pinnedBufferRes))
         {
             ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);

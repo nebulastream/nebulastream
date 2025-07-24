@@ -57,7 +57,8 @@ void GetInMemorySegmentFuture::waitOnce() noexcept
                 // auto weakAwaiter = currentBlockAwaiter->weak_from_this();
                 currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
             }
-        } else
+        }
+        else
         {
             promise->updateIsDone();
             currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
@@ -126,7 +127,8 @@ void ReadSegmentFuture::waitOnce() noexcept
                 // auto weakAwaiter = currentBlockAwaiter->weak_from_this();
                 currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
             }
-        } else
+        }
+        else
         {
             promise->updateIsDone();
             currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
@@ -208,7 +210,8 @@ void PunchHoleFuture::waitOnce() noexcept
                 // auto weakAwaiter = currentBlockAwaiter->weak_from_this();
                 currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
             }
-        } else
+        }
+        else
         {
             promise->updateIsDone();
             currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
@@ -300,7 +303,8 @@ void RepinBufferFuture::waitOnce() const noexcept
                 // auto weakAwaiter = currentBlockAwaiter->weak_from_this();
                 currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
             }
-        } else
+        }
+        else
         {
             promise->updateIsDone();
             currentWeakBlockAwaiter = promise->exchangeAwaiter(nullptr);
@@ -328,6 +332,25 @@ std::variant<TupleBuffer, uint32_t> RepinBufferFuture::waitUntilDone() const noe
     }
     return *result;
 }
+std::optional<std::variant<TupleBuffer, uint32_t>> RepinBufferFuture::waitUntilDone(const std::chrono::milliseconds timeout) const
+{
+    auto result = promise->getResult();
+    auto timeLeft = timeout;
+    while (!result && timeLeft > std::chrono::milliseconds{0})
+    {
+        waitOnce();
+        // promise->updateIsDone();
+        result = promise->getResult();
+        if (!result)
+        {
+            const auto nextWait = std::min(timeLeft, std::chrono::milliseconds{10});
+            timeLeft -= nextWait;
+            std::this_thread::sleep_for(nextWait);
+        }
+    }
+    return result;
+}
+
 bool RepinBufferFuture::await_ready() const noexcept
 {
     return isDone();
