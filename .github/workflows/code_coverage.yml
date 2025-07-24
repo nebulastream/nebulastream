@@ -5,6 +5,29 @@
 name: Code Coverage
 
 on:
+  workflow_dispatch:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image of the head commit"
+      head_sha:
+        required: true
+        type: string
+        description: "Commit sha of head"
+      base_sha:
+        required: false
+        type: string
+        description: "Commit sha of base"
+      number_of_commits:
+        required: true
+        type: number
+        description: distance between base and head
+      branch:
+        required: false
+        type: string
+        description: "Name of the branch the code coverage is reported for"
+
   # We are using this yaml in other workflows, e.g., nightly or PR, so we need to allow another workflow call to trigger this workflow.
   # We are expecting the tag of the docker image to be passed as an output from the previous job.
   workflow_call:
@@ -17,10 +40,18 @@ on:
         required: true
         type: string
         description: "Commit sha of head"
+      base_sha:
+        required: false
+        type: string
+        description: "Commit sha of base"
       number_of_commits:
         required: true
         type: number
         description: distance between base and head
+      branch:
+        required: false
+        type: string
+        description: "Name of the branch the code coverage is reported for"
 
 jobs:
   build-code-coverage-pr-branch:
@@ -41,14 +72,23 @@ jobs:
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
       - name: Build coverage and export as lcov
         run: |
           cmake -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
       - uses: codecov/codecov-action@v5
+        if: ${{ inputs.base_sha }}
+        with:
+          run_command: 'pr-base-picking'
+          token: ${{ secrets.CODECOV_TOKEN }}
+          base_sha: ${{ inputs.base_sha }}
+      - uses: codecov/codecov-action@v5
         with:
           slug: nebulastream/nebulastream
           fail_ci_if_error: true
+          override_branch: ${{ inputs.branch }}
           files: build/ccov/coverage.lcov
           token: ${{ secrets.CODECOV_TOKEN }}
