@@ -146,9 +146,9 @@ void FileDescriptorManager::deleteFileWriters(const SliceEnd sliceEnd, const boo
     for (auto& local : threadWriters)
     {
         const std::scoped_lock lock(local.mutex);
-        for (const auto& joinBuildSide : {JoinBuildSideType::Left, JoinBuildSideType::Right})
+        for (const auto joinBuildSide : {JoinBuildSideType::Left, JoinBuildSideType::Right})
         {
-            const auto& writer = deleteFileWriter(local, {sliceEnd, joinBuildSide});
+            const auto writer = deleteFileWriter(local, {sliceEnd, joinBuildSide});
             if (writer.has_value() and withCleanup)
             {
                 writersToDelete.emplace_back(writer.value());
@@ -156,7 +156,7 @@ void FileDescriptorManager::deleteFileWriters(const SliceEnd sliceEnd, const boo
         }
     }
 
-    for (auto& writer : writersToDelete)
+    for (auto writer : writersToDelete)
     {
         writer->deleteAllFiles();
         writer.reset();
@@ -168,7 +168,7 @@ void FileDescriptorManager::deleteAllSliceFiles()
     for (auto& [writers, _, mutex] : threadWriters)
     {
         const std::scoped_lock lock(mutex);
-        for (auto& [writer, _] : writers | std::views::values)
+        for (auto [writer, _] : writers | std::views::values)
         {
             writer->deleteAllFiles();
         }
@@ -284,7 +284,7 @@ char* MemoryPool::allocateWriteBuffer(const WorkerThreadId threadId, ThreadLocal
             auto numWritersToDeallocate = 1UL;
             for (auto keyIt = lruQueue.rbegin(); keyIt != lruQueue.rend(); ++keyIt)
             {
-                const auto& [curWriter, _] = writers.find(*keyIt)->second;
+                const auto [curWriter, _] = writers.find(*keyIt)->second;
                 if (curWriter->hasBuffer() and curWriter.get() != writer)
                 {
                     curWriter->flushAndDeallocateBuffers();

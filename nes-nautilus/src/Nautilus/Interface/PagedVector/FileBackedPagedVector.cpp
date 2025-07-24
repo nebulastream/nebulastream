@@ -60,7 +60,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     {
         /// Write all tuples consecutivley to file
         case FileLayout::NO_SEPARATION: {
-            for (auto& [_, page] : pages)
+            for (auto [_, page] : pages)
             {
                 const auto numTuplesOnPage = page.getNumberOfTuples();
                 if (containsVarSizedData)
@@ -68,7 +68,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
                     auto* pagePtr = page.getBuffer();
                     for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
                     {
-                        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+                        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
                         {
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
                                 or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
@@ -136,7 +136,7 @@ void FileBackedPagedVector::readFromFile(
                 {
                     for (auto tupleIdx = 0UL; tupleIdx < tuplesRead; ++tupleIdx)
                     {
-                        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+                        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
                         {
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
                                 or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
@@ -230,13 +230,13 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
         co_await fileWriter->writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
     }
 
-    for (auto& [_, page] : pages)
+    for (auto [_, page] : pages)
     {
         auto* pagePtr = page.getBuffer();
         const auto numTuplesOnPage = page.getNumberOfTuples();
         for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
         {
-            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 switch (fieldType)
                 {
@@ -273,7 +273,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     const auto keyFieldsOnlyMemoryLayout
         = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
 
-    for (auto& [_, page] : pages)
+    for (auto [_, page] : pages)
     {
         auto* pagePtr = page.getBuffer();
         const auto numTuplesOnPage = page.getNumberOfTuples();
@@ -281,11 +281,11 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
-            auto& lastKeyPage = keyPages.back();
+            auto lastKeyPage = keyPages.back();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
             auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
-            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 switch (fieldType)
                 {
@@ -333,14 +333,14 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        const auto& lastPage = pages.getLastPage();
+        const auto lastPage = pages.getLastPage();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto* lastPagePtr = const_cast<int8_t*>(lastPage.getBuffer()) + numTuplesLastPage * memoryLayout->getTupleSize();
 
         // TODO get new key page only when all tuples were read and do not check for each tuple
         if (keyPagePtr != nullptr)
         {
-            if (const auto& currKeyPage = keyPages.front();
+            if (const auto currKeyPage = keyPages.front();
                 keyPagePtr >= currKeyPage.getBuffer() + currKeyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize())
             {
                 keyPages.erase(keyPages.begin());
@@ -349,7 +349,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             }
         }
 
-        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
+        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
         {
             switch (fieldType)
             {

@@ -202,7 +202,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
-    const auto& [timestamp, seqNumber, originId] = bufferMetaData;
+    const auto [timestamp, seqNumber, originId] = bufferMetaData;
     const auto watermark
         = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
     if (sliceStoreInfo.withPrediction and isExponential(++watermarkPredictorUpdateCnt[originId]))
@@ -420,6 +420,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
 {
+    // TODO
     const auto& ingestionTimesForWatermarks = watermarkProcessor->getIngestionTimesForWatermarks(
         originId, sliceStoreInfo.maxNumWatermarkGaps, sliceStoreInfo.maxNumSequenceNumbers);
     watermarkPredictors[originId]->update(ingestionTimesForWatermarks);
