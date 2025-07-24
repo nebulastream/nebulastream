@@ -232,7 +232,11 @@ public:
             sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
             if (sinkOutputSchema != sinkProvider.getSinkSchema(sinkOperatorOpt.value().sinkName))
             {
-                this->exception = CannotInferSchema("The inferred sink schema does not match the schema declared in the systest");
+                this->exception = CannotInferSchema(
+                    "The inferred sink schema does not match the schema declared in the systest. Inferred output schema: {}, expected "
+                    "output schema: {}",
+                    sinkOutputSchema,
+                    sinkProvider.getSinkSchema(sinkOperatorOpt.value().sinkName));
             }
         }
     }
