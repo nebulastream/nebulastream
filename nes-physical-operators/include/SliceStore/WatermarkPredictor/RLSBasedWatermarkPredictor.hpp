@@ -24,15 +24,17 @@ namespace NES
 class RLSBasedWatermarkPredictor final : public AbstractWatermarkPredictor
 {
 public:
-    explicit RLSBasedWatermarkPredictor(uint64_t initial = 0, uint64_t initCovariance = 1000, double lambda = 0.9);
+    explicit RLSBasedWatermarkPredictor(uint64_t initial = 0, uint64_t initCovariance = 1000, double lambda = 0.98);
 
     void update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
     [[nodiscard]] Timestamp getEstimatedWatermark(uint64_t timestamp) const override;
 
 private:
     double lambda;
-    folly::Synchronized<Eigen::VectorXd> weight;
-    folly::Synchronized<Eigen::MatrixXd> covariance;
+    folly::Synchronized<Eigen::Vector2d> weight;
+    folly::Synchronized<Eigen::Matrix2d> covariance;
+
+    uint64_t baseTime;
 };
 
 }

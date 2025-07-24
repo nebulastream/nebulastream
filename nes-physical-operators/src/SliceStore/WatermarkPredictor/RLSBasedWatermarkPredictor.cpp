@@ -20,45 +20,39 @@ namespace NES
 RLSBasedWatermarkPredictor::RLSBasedWatermarkPredictor(const uint64_t initial, const uint64_t initCovariance, const double lambda)
     : AbstractWatermarkPredictor(initial), lambda(lambda)
 {
-    weight = Eigen::VectorXd::Zero(2);
-    covariance = Eigen::MatrixXd::Identity(2, 2) * initCovariance;
+    weight = Eigen::Vector2d::Zero(2);
+    covariance = Eigen::Matrix2d::Identity(2, 2) * initCovariance;
+
+    const auto now = std::chrono::high_resolution_clock::now();
+    baseTime = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 }
 
 void RLSBasedWatermarkPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
 {
-    const auto n = data.size();
-    if (n < 1)
+    if (data.empty())
     {
         return;
     }
 
     const auto [weightLocked, covarianceLocked] = acquireLocked(weight, covariance);
-    for (auto i = 0UL; i < n; ++i)
+    for (const auto& [timestamp, watermark] : data)
     {
-        Eigen::VectorXd phi(2); /// Design vector
-        phi << 1, data[i].first;
+        Eigen::Vector2d phi;
+        phi << 1, static_cast<double>(timestamp - baseTime);
 
-        Eigen::VectorXd K = (*covarianceLocked * phi) / (lambda + phi.transpose() * *covarianceLocked * phi);
-        *weightLocked = *weightLocked + K * (data[i].second - phi.dot(*weightLocked));
+        const Eigen::Vector2d K = *covarianceLocked * phi / (lambda + phi.transpose() * *covarianceLocked * phi);
+        *weightLocked = *weightLocked + K * (watermark - phi.dot(*weightLocked));
         *covarianceLocked = (*covarianceLocked - K * phi.transpose() * *covarianceLocked) / lambda;
     }
-
-    init = true;
 }
 
 Timestamp RLSBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
-    if (!init)
-    {
-        return Timestamp(initial);
-    }
-
-    Eigen::VectorXd newX(2);
-    newX << 1, timestamp;
+    Eigen::Vector2d phi;
+    phi << 1, static_cast<double>(timestamp - baseTime);
 
     const auto weightLocked = weight.rlock();
-    return Timestamp(newX.dot(*weightLocked));
-    //return Timestamp((*weightLocked)(0) + (*weightLocked)(1) * timestamp);
+    return Timestamp(phi.dot(*weightLocked));
 }
 
 }
