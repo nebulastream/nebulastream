@@ -158,5 +158,6 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId) const
     }
     return std::nullopt;
 }
+
 ///NOLINTEND(readability-function-cognitive-complexity)
 }

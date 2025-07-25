@@ -42,8 +42,10 @@ public:
 
     public:
         explicit Asterisk(bool value) : value(value) { }
+
         friend ProjectionLogicalOperator;
     };
+
     using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
     ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
 

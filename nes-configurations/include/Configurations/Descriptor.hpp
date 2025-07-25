@@ -104,6 +104,7 @@ public:
         {
             return this->validateFunc(config);
         }
+
         friend std::ostream& operator<<(std::ostream& os, const ConfigParameter& obj) { return os << "name: " << obj.name; }
 
         static constexpr bool isEnumWrapper() { return not(std::is_same_v<U, void>); }
@@ -141,10 +142,12 @@ public:
         struct ConfigParameterModel : ConfigParameterConcept
         {
             ConfigParameterModel(const T& configParameter) : configParameter(configParameter) { }
+
             std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
             {
                 return configParameter.validate(config);
             }
+
             std::optional<ConfigType> getDefaultValue() const override { return configParameter.defaultValue; }
 
         private:
@@ -356,7 +359,6 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
 }
 
 FMT_OSTREAM(NES::Descriptor);
-
 
 template <typename T>
 struct fmt::formatter<NES::DescriptorConfig::ConfigParameter<T>> : ostream_formatter

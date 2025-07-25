@@ -51,4 +51,5 @@ private:
     DataType dataType;
 };
 }
+
 FMT_OSTREAM(NES::GreaterEqualsLogicalFunction);

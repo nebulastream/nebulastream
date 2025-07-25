@@ -31,6 +31,7 @@ class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
     explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler) : operatorHandler(operatorHandler) { }
+
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
 
 private:

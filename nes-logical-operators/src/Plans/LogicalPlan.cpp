@@ -292,7 +292,6 @@ std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan)
     return leafOperators;
 }
 
-
 std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, OperatorId operatorId)
 {
     for (const auto& rootOp : plan.getRootOperators())

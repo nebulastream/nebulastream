@@ -124,7 +124,6 @@ LogicalFunction RenameLogicalFunction::withInferredDataType(const Schema& schema
     return copy;
 }
 
-
 SerializableFunction RenameLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
@@ -139,7 +138,6 @@ SerializableFunction RenameLogicalFunction::serialize() const
 
     return serializedFunction;
 }
-
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunctionRegistryArguments arguments)

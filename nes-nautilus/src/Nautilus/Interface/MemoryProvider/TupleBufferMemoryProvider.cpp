@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -27,7 +30,6 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -71,7 +73,6 @@ VarVal TupleBufferMemoryProvider::loadValue(
     return VariableSizedData(textPtr);
 }
 
-
 VarVal TupleBufferMemoryProvider::storeValue(
     const DataType& physicalType,
     const RecordBuffer& recordBuffer,
@@ -102,7 +103,6 @@ VarVal TupleBufferMemoryProvider::storeValue(
     }
     throw UnknownDataType("Physical Type: type {} is currently not supported", physicalType);
 }
-
 
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)

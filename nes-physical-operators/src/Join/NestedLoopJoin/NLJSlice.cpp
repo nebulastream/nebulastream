@@ -84,7 +84,6 @@ NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuild
     std::unreachable();
 }
 
-
 void NLJSlice::combinePagedVectors()
 {
     /// Due to the out-of-order nature of our execution engine, it might happen that we call this code here from multiple worker threads.

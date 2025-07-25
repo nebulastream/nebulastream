@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <include/Util/TestTupleBuffer.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -33,7 +35,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
-#include <include/Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -252,6 +253,7 @@ Memory::TupleBuffer TestTupleBuffer::getBuffer()
 {
     return buffer;
 }
+
 std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer)
 {
     const auto str = buffer.toString(buffer.memoryLayout->getSchema());
@@ -263,6 +265,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const
 {
     return TupleIterator(*this);
 }
+
 TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
 {
     return TupleIterator(*this, getNumberOfTuples());

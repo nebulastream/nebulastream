@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
+
 #include <utility>
 #include <vector>
-#include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -35,6 +37,7 @@ MulPhysicalFunction::MulPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
     : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
+
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterMulPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {

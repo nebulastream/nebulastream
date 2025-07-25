@@ -22,6 +22,7 @@ namespace NES
 {
 
 using TraitRegistryReturnType = Trait;
+
 struct TraitRegistryArguments
 {
 };

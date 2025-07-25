@@ -25,7 +25,6 @@ namespace detail
 constexpr size_t PTHREAD_NAME_LENGTH = 15;
 }
 
-
 ///Sets the currents thread's name.
 ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
 void setThreadName(std::string_view threadName);

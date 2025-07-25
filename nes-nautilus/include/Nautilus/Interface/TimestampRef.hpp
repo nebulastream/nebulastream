@@ -62,22 +62,30 @@ class val<NES::Timestamp>
 {
 public:
     using Underlying = uint64_t;
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const Underlying timestamp) : value(timestamp) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const val<Underlying>& timestamp) : value(timestamp) { }
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const NES::Timestamp timestamp) : value(timestamp.getRawValue()) { }
+
     explicit val(tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+
     val(const val& other) = default;
     val& operator=(const val& other) = default;
 
     [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
-    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
-    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
-    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
-    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
+    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
+
+    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
+
+    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
+
+    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
     /// IMPORTANT: This should be used with utmost care. Only, if there is no other way to work with the strong types.
     /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function

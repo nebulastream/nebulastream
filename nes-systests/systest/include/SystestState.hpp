@@ -52,7 +52,6 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
-
 namespace NES::Systest
 {
 
@@ -80,7 +79,9 @@ public:
     explicit constexpr SourceInputFile(Underlying value) : value(std::move(value)) { }
 
     friend std::ostream& operator<<(std::ostream& os, const SourceInputFile& timestamp) { return os << timestamp.value; }
+
     [[nodiscard]] Underlying getRawValue() const { return value; }
+
     friend std::strong_ordering operator<=>(const SourceInputFile& lhs, const SourceInputFile& rhs) = default;
 
 private:
@@ -109,6 +110,7 @@ struct SystestQuery
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
     };
+
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
@@ -128,7 +130,6 @@ struct RunningQuery
     [[nodiscard]] std::string getThroughput() const;
 };
 
-
 struct TestFile
 {
     explicit TestFile(
@@ -139,6 +140,7 @@ struct TestFile
         std::shared_ptr<SourceCatalog> sourceCatalog,
         std::shared_ptr<SinkCatalog> sinkCatalog);
     [[nodiscard]] std::string getLogFilePath() const;
+
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
     std::filesystem::path file;
@@ -160,11 +162,11 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 }
 
-
 template <>
 struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
 {
     static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
     static auto format(const NES::Systest::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
     {
         return fmt::format_to(

@@ -24,10 +24,12 @@ void NES::InputFormatters::InputFormatterTaskPipeline::start(PipelineExecutionCo
 {
     this->inputFormatterTask->startTask();
 }
+
 void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionContext&)
 {
     this->inputFormatterTask->stopTask();
 }
+
 void NES::InputFormatters::InputFormatterTaskPipeline::execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
 {
     /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
@@ -39,6 +41,7 @@ void NES::InputFormatters::InputFormatterTaskPipeline::execute(const Memory::Tup
 
     this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
 }
+
 std::ostream& NES::InputFormatters::InputFormatterTaskPipeline::toString(std::ostream& os) const
 {
     return this->inputFormatterTask->toString(os);

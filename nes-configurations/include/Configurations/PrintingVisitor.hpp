@@ -26,6 +26,7 @@ public:
     explicit PrintingVisitor(std::ostream& ostream) : os(ostream) { }
 
     void push() override { indent += 1; }
+
     void pop() override { indent -= 1; }
 
     void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override

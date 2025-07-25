@@ -64,7 +64,6 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
     ASSERT_TRUE(sourceCatalog.containsLogicalSource(*sourceOpt));
 }
 
-
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog{};
@@ -141,7 +140,6 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     ASSERT_FALSE(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
     ASSERT_FALSE(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
 }
-
 
 TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
 {
@@ -247,4 +245,5 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         failedLogicalAdds);
 }
 }
+
 /// NOLINTEND(bugprone-unchecked-optional-access)

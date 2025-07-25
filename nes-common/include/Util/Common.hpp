@@ -97,7 +97,6 @@ std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
     return std::dynamic_pointer_cast<Out>(obj);
 }
 
-
 template <typename T, typename S>
 std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
 {

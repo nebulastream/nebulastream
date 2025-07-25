@@ -57,7 +57,6 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 }
 
-
 std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)

@@ -140,6 +140,7 @@ struct PipelineMemoryProvider
         : arena(arena), bufferProvider(bufferProvider)
     {
     }
+
     explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
         : arena(std::move(arena)), bufferProvider(bufferProvider)
     {
@@ -148,7 +149,6 @@ struct PipelineMemoryProvider
     ArenaRef arena;
     nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
-
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.

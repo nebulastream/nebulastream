@@ -52,4 +52,5 @@ private:
     LogicalFunction left, right;
 };
 }
+
 FMT_OSTREAM(NES::ModuloLogicalFunction);

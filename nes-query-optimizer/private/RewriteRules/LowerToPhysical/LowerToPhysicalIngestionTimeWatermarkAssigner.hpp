@@ -25,6 +25,7 @@ namespace NES
 struct LowerToPhysicalIngestionTimeWatermarkAssigner : AbstractRewriteRule
 {
     explicit LowerToPhysicalIngestionTimeWatermarkAssigner(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

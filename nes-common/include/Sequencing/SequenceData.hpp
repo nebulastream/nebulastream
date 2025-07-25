@@ -37,4 +37,5 @@ struct SequenceData
 };
 
 }
+
 FMT_OSTREAM(NES::SequenceData);

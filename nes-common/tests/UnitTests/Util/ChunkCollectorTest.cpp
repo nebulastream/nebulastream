@@ -33,6 +33,7 @@
 #include <BaseUnitTest.hpp>
 
 using namespace ::testing;
+
 namespace NES
 {
 

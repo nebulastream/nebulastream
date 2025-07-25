@@ -170,6 +170,7 @@ struct ConfigPrinter
         }
     }
 };
+
 std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config)
 {
     if (config.empty())

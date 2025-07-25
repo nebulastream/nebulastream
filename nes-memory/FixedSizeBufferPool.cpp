@@ -135,22 +135,27 @@ void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
     throw UnknownOperation("This function is not supported here");
 }
+
 size_t FixedSizeBufferPool::getBufferSize() const
 {
     return bufferManager->getBufferSize();
 }
+
 size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 {
     return numberOfReservedBuffers;
 }
+
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
     throw UnknownOperation("This function is not supported here");
 }
+
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     throw UnknownOperation("This function is not supported here");
 }
+
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize)
 {
     return bufferManager->getUnpooledBuffer(bufferSize);

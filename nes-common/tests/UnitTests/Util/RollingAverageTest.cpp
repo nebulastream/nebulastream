@@ -17,6 +17,7 @@
 #include <Util/RollingAverage.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+
 namespace NES
 {
 

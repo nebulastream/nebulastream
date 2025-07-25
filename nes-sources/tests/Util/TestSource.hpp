@@ -74,15 +74,18 @@ private:
     struct EoS
     {
     };
+
     struct Data
     {
         std::vector<std::byte> data;
         size_t numberOfTuples;
     };
+
     struct Error
     {
         std::string error;
     };
+
     using ControlData = std::variant<EoS, Data, Error>;
     folly::MPMCQueue<ControlData> queue{10};
 };

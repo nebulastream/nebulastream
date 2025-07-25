@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <utility>
 #include <Functions/BooleanFunctions/EqualsPhysicalFunction.hpp>
+
+#include <utility>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-
 
 namespace NES
 {

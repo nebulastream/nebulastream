@@ -47,7 +47,6 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-
 namespace NES::Sources
 {
 

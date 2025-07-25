@@ -85,6 +85,7 @@ public:
         : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
     {
     }
+
     LogicalPlan parseAndBind(std::istream& inputStream);
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

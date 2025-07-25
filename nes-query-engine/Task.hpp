@@ -39,10 +39,12 @@ public:
     using onFailure = std::function<void(Exception)>;
 
     BaseTask() = default;
+
     BaseTask(QueryId queryId, std::function<void()> onCompletion, std::function<void(Exception)> onError)
         : queryId(queryId), onCompletion(std::move(onCompletion)), onError(std::move(onError))
     {
     }
+
     void complete() const
     {
         /// NOLINTNEXTLINE bugprone-assignment-in-if-condition. Does not work in the INVARIANT macro. This is equivalent to !called.exchange(true)
@@ -52,6 +54,7 @@ public:
             onCompletion();
         }
     }
+
     void fail(Exception exception) const
     {
         /// NOLINTNEXTLINE bugprone-assignment-in-if-condition
@@ -132,16 +135,19 @@ struct StopPipelineTask : BaseTask
 struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
+
     StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target))
     {
     }
+
     std::weak_ptr<RunningSource> target;
 };
 
 struct FailSourceTask : BaseTask
 {
     FailSourceTask() : exception("", 0) { }
+
     FailSourceTask(
         QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target)), exception(std::move(exception))

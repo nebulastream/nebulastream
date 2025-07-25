@@ -73,6 +73,7 @@ private:
 
 public:
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) { }
+
     ~NonBlockingMonotonicSeqQueue() = default;
 
     NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other)

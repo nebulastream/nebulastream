@@ -63,7 +63,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 
-
 namespace NES::Systest
 {
 namespace
@@ -210,6 +209,7 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
     auto failedViews = failed | std::views::filter(std::not_fn(passes)) | std::views::transform([](auto& p) { return *p; });
     return {failedViews.begin(), failedViews.end()};
 }
+
 /// NOLINTEND(readability-function-cognitive-complexity)
 
 namespace
@@ -351,6 +351,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter);
 }
+
 std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {

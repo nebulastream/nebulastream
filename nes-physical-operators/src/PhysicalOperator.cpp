@@ -71,16 +71,19 @@ void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx) const
     INVARIANT(getChild().has_value(), "Child operator is not set");
     getChild().value().setup(executionCtx);
 }
+
 void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
     getChild().value().open(executionCtx, recordBuffer);
 }
+
 void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
     getChild().value().close(executionCtx, recordBuffer);
 }
+
 void PhysicalOperatorConcept::executeChild(ExecutionContext& executionCtx, Record& record) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
