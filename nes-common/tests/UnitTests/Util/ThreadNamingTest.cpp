@@ -30,7 +30,7 @@ class ThreadNamingTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("ThreadNamingTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");
     }
 };

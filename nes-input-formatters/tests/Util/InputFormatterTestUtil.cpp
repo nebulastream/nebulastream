@@ -168,7 +168,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    return Sources::SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
 std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
@@ -180,7 +180,7 @@ std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatte
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }
 
-void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
+void waitForSource(const std::vector<Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
     /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
     const auto timeout = std::chrono::seconds(1);

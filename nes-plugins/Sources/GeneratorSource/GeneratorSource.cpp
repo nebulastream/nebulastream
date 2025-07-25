@@ -60,7 +60,7 @@ void GeneratorSource::close()
     NES_TRACE("Closing GeneratorSource.");
 }
 
-size_t GeneratorSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t GeneratorSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     NES_INFO("Filling buffer in GeneratorSource.");
     try

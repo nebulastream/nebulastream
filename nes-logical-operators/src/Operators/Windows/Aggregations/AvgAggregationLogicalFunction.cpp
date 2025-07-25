@@ -109,9 +109,9 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     inputStamp = newOnField.getDataType();
 }
 
-NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

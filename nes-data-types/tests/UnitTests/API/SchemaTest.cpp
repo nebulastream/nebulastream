@@ -33,7 +33,7 @@ class SchemaTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("SchemaTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("SchemaTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("SchemaTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
@@ -238,7 +238,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
     }
 
     {
-        using enum NES::DataType::Type;
+        using enum DataType::Type;
         /// Calculating the schema size for multiple fields
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                               .addField("field1", UINT8)
@@ -252,7 +252,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
 
 TEST_F(SchemaTest, containsTest)
 {
-    using enum NES::DataType::Type;
+    using enum DataType::Type;
     {
         /// Checking contains for one fieldName
         auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", UINT8);
@@ -297,7 +297,7 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
 
 TEST_F(SchemaTest, getSourceNameQualifierTest)
 {
-    using enum NES::DataType::Type;
+    using enum DataType::Type;
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
     auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}

@@ -44,6 +44,6 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
 std::unique_ptr<AbstractRewriteRule>
 RewriteRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
-    return std::make_unique<NES::LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
+    return std::make_unique<LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
 }
 }

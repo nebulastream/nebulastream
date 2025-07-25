@@ -101,7 +101,7 @@ private:
     /// Note:
     /// - it is not possible to use positional args since formatString is combined with the fmt string containing {}
     /// - \u001B[0m is the ANSI escape code for "color reset"
-    /// - we call NES::Logger::getInstance()->shutdown() to ensure that async logger completely flushes. c.f. https://github.com/gabime/spdlog/wiki/7.-Flush-policy
+    /// - we call Logger::getInstance()->shutdown() to ensure that async logger completely flushes. c.f. https://github.com/gabime/spdlog/wiki/7.-Flush-policy
 
     /// This documents (and checks) requirements for calling a function. If violated, the function was called incorrectly.
     /// @param condition must be true to correctly call function guarded by precondition
@@ -113,7 +113,7 @@ private:
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
-                if (auto logger = NES::Logger::getInstance()) \
+                if (auto logger = Logger::getInstance()) \
                 { \
                     logger->shutdown(); \
                 } \
@@ -131,7 +131,7 @@ private:
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
-                if (auto logger = NES::Logger::getInstance()) \
+                if (auto logger = Logger::getInstance()) \
                 { \
                     logger->shutdown(); \
                 } \

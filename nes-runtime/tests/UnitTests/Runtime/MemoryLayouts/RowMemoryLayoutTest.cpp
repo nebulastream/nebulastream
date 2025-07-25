@@ -38,7 +38,7 @@ public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("RowMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("RowMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup RowMemoryLayoutTest test class.");
     }
     void SetUp() override

@@ -43,7 +43,7 @@ public:
     {
         if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE)
         {
-            throw NES::InvalidConfigParameter(
+            throw InvalidConfigParameter(
                 "sequenceStopsGenerator: {} not recognized", static_cast<uint32_t>(this->sequenceStopsGenerator));
         }
         this->parseSchema(rawSchema);

@@ -206,10 +206,10 @@ SerializableOperator SelectionLogicalOperator::serialize() const
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     auto functionVariant = arguments.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
-    if (std::holds_alternative<NES::FunctionList>(functionVariant))
+    if (std::holds_alternative<FunctionList>(functionVariant))
     {
         const auto functions = std::get<FunctionList>(functionVariant).functions();
 

@@ -181,7 +181,7 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     auto logicalOperator = IngestionTimeWatermarkAssignerLogicalOperator();
     if (auto& id = arguments.id)

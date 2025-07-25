@@ -30,10 +30,10 @@ class GRPCClient
 
 public:
     explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const NES::LogicalPlan& plan) const;
+    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
     void stop(QueryId queryId) const;
 
-    [[nodiscard]] NES::QuerySummary status(QueryId queryId) const;
+    [[nodiscard]] QuerySummary status(QueryId queryId) const;
     void start(QueryId queryId) const;
     void unregister(QueryId queryId) const;
 };

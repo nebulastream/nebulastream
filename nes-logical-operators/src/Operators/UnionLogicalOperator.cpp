@@ -220,7 +220,7 @@ LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema
     return copy;
 }
 
-LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     auto logicalOperator = UnionLogicalOperator();
     if (auto& id = arguments.id)

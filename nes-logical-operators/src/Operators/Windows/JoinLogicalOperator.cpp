@@ -305,7 +305,7 @@ SerializableOperator JoinLogicalOperator::serialize() const
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     PRECONDITION(arguments.inputSchemas.size() == 2, "Expected two input schemas, but got {}", arguments.inputSchemas.size());
 
@@ -315,7 +315,7 @@ LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOpera
     auto windowStartVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
     auto windowEndVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
-    if (std::holds_alternative<NES::FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
+    if (std::holds_alternative<FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
         and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant))
     {
         auto functions = std::get<FunctionList>(functionVariant).functions();

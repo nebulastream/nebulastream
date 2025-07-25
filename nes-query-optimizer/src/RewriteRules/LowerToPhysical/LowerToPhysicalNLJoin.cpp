@@ -139,7 +139,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
 
 static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
-    return NES::BFSRange(joinFunction)
+    return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
         | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getFieldName(); })
         | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
@@ -161,7 +161,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds()[0];
     auto logicalJoinFunction = join.getJoinFunction();
-    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
+    auto windowType = Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
     const auto pageSize = conf.pageSize.getValue();
 
 

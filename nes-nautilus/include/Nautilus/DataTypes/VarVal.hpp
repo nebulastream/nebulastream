@@ -78,11 +78,11 @@ namespace NES::Nautilus
         if constexpr (!requires { func(val); }) \
         { \
             throw UnknownOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
-            return NES::Nautilus::detail::var_val_t(val); \
+            return Nautilus::detail::var_val_t(val); \
         } \
         else \
         { \
-            NES::Nautilus::detail::var_val_t result = func(val); \
+            Nautilus::detail::var_val_t result = func(val); \
             return result; \
         } \
     }

@@ -31,6 +31,8 @@
 /// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current
 /// request has a tuple delimiter or not, calls the 'processSequenceNumber' function of the SequenceShredder and tracks the resulting spanning tuples.
 /// We check whether the range of all produces sequence numbers matches the expected range.
+namespace NES
+{
 class StreamingMultiThreadedAutomatedSequenceShredderTest : public ::testing::Test
 {
     using SequenceShredder = NES::InputFormatters::SequenceShredder;
@@ -47,8 +49,11 @@ public:
 
     public:
         TestThreadPool(
-            const SequenceShredder::SequenceNumberType upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
-            : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
+            const SequenceShredder::SequenceNumberType upperBound,
+            const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
+            : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS})
+            , currentSequenceNumber(1)
+            , completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
@@ -69,9 +74,12 @@ public:
                 }
                 threads.at(i) = std::jthread(
                     [this, i, upperBound, sequenceNumberGen = std::move(sequenceNumberGen), boolDistribution = std::move(boolDistribution)]
-                    { threadFunction(i, upperBound, sequenceNumberGen, boolDistribution); });
+                    {
+                        threadFunction(i, upperBound, sequenceNumberGen, boolDistribution);
+                    });
             }
         }
+
         /// Check if at least one thread is still active
         void waitForCompletion() const { completionLatch.wait(); }
 
@@ -96,7 +104,10 @@ public:
         std::mutex sequenceShredderMutex;
 
         void threadFunction(
-            size_t threadIdx, const size_t upperBound, std::mt19937_64 sequenceNumberGen, std::bernoulli_distribution boolDistribution)
+            size_t threadIdx,
+            const size_t upperBound,
+            std::mt19937_64 sequenceNumberGen,
+            std::bernoulli_distribution boolDistribution)
         {
             threadLocalCheckSum.at(threadIdx) = 0;
 
@@ -110,7 +121,7 @@ public:
                 auto tupleDelimiterIndex = indexOfLastDetectedTupleDelimiter.load();
 
                 while (tupleDelimiterIndex > threadLocalSequenceNumber
-                       and not(indexOfLastDetectedTupleDelimiter.compare_exchange_weak(tupleDelimiterIndex, threadLocalSequenceNumber)))
+                    and not(indexOfLastDetectedTupleDelimiter.compare_exchange_weak(tupleDelimiterIndex, threadLocalSequenceNumber)))
                 {
                     /// CAS loop implementing std::atomic_max
                 }
@@ -169,4 +180,5 @@ TEST_F(StreamingMultiThreadedAutomatedSequenceShredderTest, multiThreadedExhaust
     {
         executeTest<16>(100000, std::nullopt);
     }
+}
 }

@@ -30,7 +30,7 @@
 namespace NES
 {
 
-std::optional<NES::Sinks::SinkDescriptor> NES::SinkCatalog::addSinkDescriptor(
+std::optional<Sinks::SinkDescriptor> SinkCatalog::addSinkDescriptor(
     std::string sinkName, const Schema& schema, const std::string_view sinkType, std::unordered_map<std::string, std::string> config)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
@@ -51,7 +51,7 @@ std::optional<NES::Sinks::SinkDescriptor> NES::SinkCatalog::addSinkDescriptor(
     return sinkDescriptor;
 }
 
-std::optional<NES::Sinks::SinkDescriptor> NES::SinkCatalog::getSinkDescriptor(const std::string& sinkName) const
+std::optional<Sinks::SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& sinkName) const
 {
     const auto lockedSinks = sinks.rlock();
     const auto sinkDescriptorOpt = lockedSinks->find(std::string{sinkName});
@@ -62,25 +62,25 @@ std::optional<NES::Sinks::SinkDescriptor> NES::SinkCatalog::getSinkDescriptor(co
     return sinkDescriptorOpt->second;
 }
 
-bool NES::SinkCatalog::removeSinkDescriptor(const std::string& sinkName)
+bool SinkCatalog::removeSinkDescriptor(const std::string& sinkName)
 {
     const auto lockedSinks = sinks.wlock();
     return lockedSinks->erase(sinkName) == 1;
 }
 
-bool NES::SinkCatalog::removeSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor)
+bool SinkCatalog::removeSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor)
 {
     const auto lockedSinks = sinks.wlock();
     return lockedSinks->erase(sinkDescriptor.sinkName) == 1;
 }
 
-bool NES::SinkCatalog::containsSinkDescriptor(const std::string& sinkName) const
+bool SinkCatalog::containsSinkDescriptor(const std::string& sinkName) const
 {
     const auto lockedSinks = sinks.rlock();
     return lockedSinks->contains(sinkName);
 }
 
-bool NES::SinkCatalog::containsSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor) const
+bool SinkCatalog::containsSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor) const
 {
     const auto lockedSinks = sinks.rlock();
     return lockedSinks->contains(sinkDescriptor.sinkName);

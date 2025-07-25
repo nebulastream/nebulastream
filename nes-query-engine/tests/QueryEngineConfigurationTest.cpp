@@ -26,7 +26,7 @@ class QueryEngineConfigurationTest : public BaseUnitTest
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("QueryEngineConfigurationTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("QueryEngineConfigurationTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup QueryEngineConfigurationTest test class.");
     }
 

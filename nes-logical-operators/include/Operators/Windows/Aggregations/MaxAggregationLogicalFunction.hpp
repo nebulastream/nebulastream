@@ -34,7 +34,7 @@ public:
 
     void inferStamp(const Schema& schema) override;
     ~MaxAggregationLogicalFunction() override = default;
-    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:

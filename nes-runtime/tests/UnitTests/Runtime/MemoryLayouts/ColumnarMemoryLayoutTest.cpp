@@ -42,7 +42,7 @@ public:
     std::uniform_int_distribution<std::mt19937::result_type> dist;
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("ColumnarMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ColumnarMemoryLayoutTest test class.");
     }
 

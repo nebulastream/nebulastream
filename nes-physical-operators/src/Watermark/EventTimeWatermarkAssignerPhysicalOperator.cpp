@@ -61,7 +61,7 @@ void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, 
 void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PRECONDITION(
-        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
+        Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
         "Expects the local state to be of type WatermarkState");
     auto* const state = dynamic_cast<WatermarkState*>(executionCtx.getLocalState(id));
     executionCtx.watermarkTs = state->currentWatermark;

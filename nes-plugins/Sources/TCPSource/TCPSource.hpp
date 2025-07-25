@@ -179,7 +179,7 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
     void open() override;
@@ -192,7 +192,7 @@ public:
 
 private:
     bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBuffer(Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
     int connection = -1;
     int sockfd = -1;

@@ -80,10 +80,10 @@ bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
-class TestQueryStatisticListener : public NES::QueryEngineStatisticListener
+class TestQueryStatisticListener : public QueryEngineStatisticListener
 {
 public:
-    MOCK_METHOD(void, onEvent, (NES::Event), (override));
+    MOCK_METHOD(void, onEvent, (Event), (override));
 };
 
 /// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
@@ -107,7 +107,7 @@ struct ExpectStats
 \
     void apply(Name v) \
     { \
-        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
+        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
     }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
@@ -120,21 +120,21 @@ struct ExpectStats
 
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<QueryStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<QueryStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<PipelineStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<PipelineStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExecutionStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionComplete>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExecutionComplete>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExpired>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExpired>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskEmit>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskEmit>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 

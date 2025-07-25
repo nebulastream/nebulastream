@@ -66,7 +66,7 @@ class TupleBuffer
 {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
-    friend class NES::UnpooledChunksManager;
+    friend class UnpooledChunksManager;
     friend class FixedSizeBufferPool;
     friend class LocalBufferPool;
     friend class detail::MemorySegment;
