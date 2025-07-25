@@ -95,34 +95,17 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
         }
     }
 
-    if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
+    if (copy.sinkDescriptor.has_value())
     {
-        std::unordered_set expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
-        std::vector actualFields(firstSchema.begin(), firstSchema.end());
-
-        std::stringstream expectedFieldsString;
-        std::stringstream actualFieldsString;
-
-        for (const auto& field : firstSchema)
+        if (copy.getSinkDescriptor()->getSchema()->getNumberOfFields() == 0)
         {
-            if (std::ranges::find(expectedFields, field) == expectedFields.end())
-            {
-                expectedFieldsString << field << ", ";
-            }
-        }
-        for (const auto& field : *copy.sinkDescriptor.value().getSchema())
-        {
-            if (std::ranges::find(actualFields, field) == actualFields.end())
-            {
-                actualFieldsString << field << ", ";
-            }
+            copy.sinkDescriptor = copy.sinkDescriptor->withUpdatedSchema(firstSchema);
         }
 
-        throw CannotInferSchema(
-            "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and found "
-            "unexpected fields {}",
-            expectedFieldsString.str(),
-            actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
+        if (auto missmatch = SchemaMissmatch::of(*copy.sinkDescriptor.value().getSchema(), firstSchema))
+        {
+            throw CannotInferSchema("The schema of the sink must be equal to the schema of the input operator. {}", missmatch);
+        }
     }
     return copy;
 }
