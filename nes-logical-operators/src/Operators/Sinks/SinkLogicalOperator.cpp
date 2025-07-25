@@ -155,7 +155,7 @@ std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
 
 Schema SinkLogicalOperator::getOutputSchema() const
 {
-    INVARIANT(!children.empty(), "Sink should have at least one child");
+    INVARIANT(!children.empty(), "Logical Sink should have at least one child");
     return children.at(0).getOutputSchema();
 }
 

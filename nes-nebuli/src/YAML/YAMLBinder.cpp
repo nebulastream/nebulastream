@@ -73,6 +73,7 @@ struct convert<NES::CLI::Sink>
     {
         rhs.name = node["name"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
+        rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -106,8 +107,7 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
-        const auto sink = node["sink"].as<NES::CLI::Sink>();
-        rhs.sinks.push_back(sink);
+        rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
@@ -171,7 +171,7 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
             throw UnknownSourceName("{}", logicalSourceName);
         }
         PRECONDITION(sourceConfig.contains(std::string{SOURCE_TYPE_CONFIG}), "Missing `SOURCE_TYPE_CONFIG` in source configuration");
-        auto sourceType = sourceConfig.at(std::string{SOURCE_TYPE_CONFIG});
+        auto sourceType = sourceConfig.extract(std::string{SOURCE_TYPE_CONFIG}).mapped();
         NES_DEBUG("Source type is: {}", sourceType);
 
         const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
