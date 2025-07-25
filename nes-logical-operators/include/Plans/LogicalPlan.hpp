@@ -122,4 +122,5 @@ template <typename... TraitTypes>
 [[nodiscard]] std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan);
 
 }
+
 FMT_OSTREAM(NES::LogicalPlan);

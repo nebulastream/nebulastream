@@ -79,6 +79,7 @@ void logProxy(const char* message, const LogLevel logLevel);
 
 VarVal createNautilusMinValue(DataType::Type physicalType);
 VarVal createNautilusMaxValue(DataType::Type physicalType);
+
 template <typename T>
 static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
 {

@@ -22,10 +22,10 @@
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
-
 namespace NES::InputFormatters
 {
 class RawTupleBuffer;
+
 /// Type-erased wrapper around InputFormatterTask
 class InputFormatterTaskPipeline final : public ExecutablePipelineStage
 {
@@ -66,12 +66,16 @@ public:
     struct InputFormatterTaskModel final : InputFormatterTaskConcept
     {
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : inputFormatterTask(std::move(inputFormatterTask)) { }
+
         void startTask() override { inputFormatterTask.startTask(); }
+
         void stopTask() override { inputFormatterTask.stopTask(); }
+
         void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
         {
             inputFormatterTask.executeTask(rawTupleBuffer, pec);
         }
+
         std::ostream& toString(std::ostream& os) const override { return inputFormatterTask.taskToString(os); }
 
     private:

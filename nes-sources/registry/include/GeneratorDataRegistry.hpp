@@ -23,6 +23,7 @@ namespace NES::Sources
 {
 
 using GeneratorDataRegistryReturnType = SystestSourceYAMLBinder::PhysicalSource;
+
 struct GeneratorDataRegistryArguments
 {
     SystestSourceYAMLBinder::PhysicalSource physicalSourceConfig;

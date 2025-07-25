@@ -25,7 +25,6 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 
-
 namespace NES
 {
 

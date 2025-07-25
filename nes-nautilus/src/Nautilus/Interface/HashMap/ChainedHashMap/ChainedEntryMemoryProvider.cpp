@@ -29,7 +29,6 @@
 #include <static.hpp>
 #include <val.hpp>
 
-
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 

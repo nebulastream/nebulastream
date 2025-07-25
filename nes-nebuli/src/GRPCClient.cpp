@@ -35,6 +35,7 @@ namespace NES
 GRPCClient::GRPCClient(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
 {
 }
+
 QueryId GRPCClient::registerQuery(const NES::LogicalPlan& plan) const
 {
     grpc::ClientContext context;
@@ -76,7 +77,6 @@ void GRPCClient::start(const QueryId queryId) const
             status.error_details());
     }
 }
-
 
 NES::QuerySummary GRPCClient::status(const QueryId queryId) const
 {

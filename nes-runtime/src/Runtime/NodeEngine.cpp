@@ -41,9 +41,11 @@ class QueryTracker
     {
         std::unique_ptr<CompiledQueryPlan> qep;
     };
+
     struct Executing
     {
     };
+
     using QueryState = AtomicState<Idle, Executing>;
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
@@ -74,6 +76,7 @@ public:
 };
 
 NodeEngine::~NodeEngine() = default;
+
 NodeEngine::NodeEngine(
     std::shared_ptr<Memory::BufferManager> bufferManager,
     std::shared_ptr<SystemEventListener> systemEventListener,

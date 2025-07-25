@@ -25,6 +25,7 @@ namespace NES
 {
 
 using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggregationLogicalFunction>;
+
 struct AggregationLogicalFunctionRegistryArguments
 {
     std::vector<FieldAccessLogicalFunction> fields;

@@ -34,6 +34,7 @@ public:
     struct TupleBufferWithCumulativeSum
     {
         explicit TupleBufferWithCumulativeSum(Memory::TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
         size_t cumulativeSum{0};
         Memory::TupleBuffer buffer;
     };
@@ -55,8 +56,11 @@ public:
     [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
+
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const { return pages.getLastPage(); }
+
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
+
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
 private:
@@ -83,6 +87,7 @@ private:
 
         std::vector<TupleBufferWithCumulativeSum> pages;
     };
+
     PagesWrapper pages;
 };
 

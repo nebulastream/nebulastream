@@ -23,7 +23,6 @@
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
-
 namespace NES
 {
 
@@ -56,4 +55,5 @@ private:
 };
 
 }
+
 FMT_OSTREAM(NES::CastToTypeLogicalFunction);

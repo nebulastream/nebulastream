@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
+
 namespace NES
 {
 
@@ -41,7 +42,6 @@ public:
         NES_INFO("NumericTypeConversionTest test class SetUpTestCase.");
     }
 };
-
 
 TEST_P(NumericTypeConversionTest, SimpleTest)
 {

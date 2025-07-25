@@ -51,6 +51,7 @@ protected:
 private:
     template <DerivedBaseOption X>
     friend class SequenceOption;
+
     WrapOption() : TypedBaseOption<Type>() { }
 };
 

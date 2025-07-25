@@ -30,6 +30,7 @@ namespace NES::Nautilus::Interface
 /// Calculates the capacity of the hash map for the expected number of keys
 /// This method assures that the capacity is a power of 2 that is greater or equal to the number of keys
 constexpr auto assumedLoadFactor = 0.75;
+
 uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
 {
     PRECONDITION(numberOfKeys > 0, "Number of keys {} has to be greater than 0", numberOfKeys);
@@ -135,7 +136,6 @@ int8_t* ChainedHashMap::allocateSpaceForVarSized(Memory::AbstractBufferProvider*
     varSizedSpace.emplace_back(varSizedBuffer.value());
     return varSizedBuffer.value().getBuffer<int8_t>();
 }
-
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
 {

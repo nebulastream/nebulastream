@@ -35,6 +35,7 @@ struct BaseSystemEvent
 struct SubmitQuerySystemEvent : BaseSystemEvent
 {
     SubmitQuerySystemEvent(QueryId queryId, std::string query) : queryId(queryId), query(std::move(query)) { }
+
     SubmitQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
     std::string query;
@@ -43,6 +44,7 @@ struct SubmitQuerySystemEvent : BaseSystemEvent
 struct StartQuerySystemEvent : BaseSystemEvent
 {
     explicit StartQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+
     StartQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
 };
@@ -50,13 +52,13 @@ struct StartQuerySystemEvent : BaseSystemEvent
 struct StopQuerySystemEvent : BaseSystemEvent
 {
     explicit StopQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+
     StopQuerySystemEvent() = default;
     QueryId queryId = INVALID<QueryId>;
 };
 
 using SystemEvent = std::variant<SubmitQuerySystemEvent, StartQuerySystemEvent, StopQuerySystemEvent>;
 static_assert(std::is_default_constructible_v<SystemEvent>, "Events should be default constructible");
-
 
 struct SystemEventListener
 {

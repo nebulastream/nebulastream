@@ -350,7 +350,6 @@ std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const
     return exactMap;
 }
 
-
 void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     Interface::ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap)
 {

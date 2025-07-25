@@ -159,6 +159,7 @@ void Logger::changeLogLevel(LogLevel newLevel)
 struct LoggerHolder
 {
     static std::shared_ptr<Logger> singleton;
+
     ~LoggerHolder()
     {
         singleton.reset();
@@ -168,6 +169,7 @@ struct LoggerHolder
         /// spdlog::shutdown();
     }
 };
+
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 
 }

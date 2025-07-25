@@ -45,6 +45,7 @@ struct E2ETestParameters
     std::string directory;
     std::string testFile;
 };
+
 /// Tests if SLT Parser rejects invalid .test files correctly
 class SystestE2ETest : public Testing::BaseUnitTest, public testing::WithParamInterface<E2ETestParameters>
 {
@@ -54,6 +55,7 @@ public:
         Logger::setupLogging("SystestE2ETest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestE2ETest test class.");
     }
+
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestE2ETest test class."); }
 
     static constexpr std::string_view EXTENSION = ".dummy";
@@ -80,7 +82,6 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     ASSERT_FALSE(systestResult.outputMessage.contains(fmt::format("{}:8", testFileName))) << "Correct query found in failed queries.";
     ASSERT_EQ(countFailedTests(systestResult.outputMessage, SystestE2ETest::EXTENSION), 4) << "Number of failed queries is unexpected.";
 }
-
 
 /// Each test file contains one correct and one similar, but incorrect query. We check that the correct query, which is always the
 /// first query, passes and the second query, which is always the incorrect query, fails.

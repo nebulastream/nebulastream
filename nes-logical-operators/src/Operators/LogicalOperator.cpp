@@ -31,6 +31,7 @@ namespace NES
 LogicalOperatorConcept::LogicalOperatorConcept() : id(getNextLogicalOperatorId())
 {
 }
+
 LogicalOperatorConcept::LogicalOperatorConcept(OperatorId existingId) : id(existingId)
 {
 }

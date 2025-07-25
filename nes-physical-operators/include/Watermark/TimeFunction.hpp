@@ -22,7 +22,6 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 
-
 namespace NES
 {
 struct ExecutionContext;

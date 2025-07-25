@@ -88,4 +88,5 @@ private:
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
 };
 }
+
 FMT_OSTREAM(NES::Pipeline);

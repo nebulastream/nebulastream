@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -19,7 +21,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -31,6 +32,7 @@ MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLo
     : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
+
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {

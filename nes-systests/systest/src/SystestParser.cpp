@@ -84,7 +84,6 @@ NES::Systest::SystestParser::SystestSchema parseSchemaFields(const std::vector<s
     return schema;
 }
 
-
 bool emptyOrComment(const std::string& line)
 {
     return line.empty() /// completely empty
@@ -257,6 +256,7 @@ void SystestParser::registerOnSystestLogicalSourceCallback(SystestLogicalSourceC
 {
     this->onSystestLogicalSourceCallback = std::move(callback);
 }
+
 void SystestParser::registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback)
 {
     this->onAttachSourceCallback = std::move(callback);
@@ -402,7 +402,6 @@ bool SystestParser::moveToNextToken()
     /// Return false if we reached the end of the file
     return currentLine < lines.size();
 }
-
 
 std::optional<TokenType> SystestParser::getNextToken()
 {

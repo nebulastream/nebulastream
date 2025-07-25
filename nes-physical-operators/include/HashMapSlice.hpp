@@ -34,10 +34,12 @@ struct CreateNewSlicesArguments
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
     CreateNewHashMapSliceArgs() = default;
+
     CreateNewHashMapSliceArgs(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets)
         : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets)
     {
     }
+
     ~CreateNewHashMapSliceArgs() override = default;
     std::optional<uint64_t> keySize;
     std::optional<uint64_t> valueSize;

@@ -20,6 +20,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+
 namespace NES::Windowing
 {
 

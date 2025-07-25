@@ -77,7 +77,6 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::mi
 std::vector<std::byte> identifiableData(size_t identifier);
 bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
 
-
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
 class TestQueryStatisticListener : public NES::QueryEngineStatisticListener
@@ -182,6 +181,7 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure), (override));
 };
+
 struct TestQueryLifetimeController : QueryLifetimeController
 {
     MOCK_METHOD(void, initializeSourceFailure, (QueryId, OriginId, std::weak_ptr<RunningSource>, Exception), (override));
@@ -224,12 +224,16 @@ public:
     ExecutablePipelineStage* stage = nullptr;
 
     [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
     [[nodiscard]] testing::AssertionResult keepRunning() const
     {
         return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT) ? testing::AssertionFailure() : testing::AssertionSuccess();
     }
+
     [[nodiscard]] testing::AssertionResult wasStarted() const { return waitForFuture(startFuture, std::chrono::milliseconds(0)); }
+
     [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
 };
 
@@ -239,7 +243,9 @@ struct TestPipeline final : ExecutablePipelineStage
     {
         this->controller->stage = this;
     }
+
     ~TestPipeline() override { controller->stage = nullptr; }
+
     void start(PipelineExecutionContext&) override
     {
         std::this_thread::sleep_for(controller->startDuration.load());
@@ -275,7 +281,6 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 };
 
-
 struct TestSinkController
 {
     /// Waits for *at least* `numberOfExpectedBuffers`
@@ -286,10 +291,12 @@ struct TestSinkController
     std::vector<Memory::TupleBuffer> takeBuffers();
 
     testing::AssertionResult waitForInitialization(std::chrono::milliseconds timeout) const { return waitForFuture(setup_future, timeout); }
+
     testing::AssertionResult waitForDestruction(std::chrono::milliseconds timeout) const
     {
         return waitForFuture(destroyed_future, timeout);
     }
+
     testing::AssertionResult waitForShutdown(std::chrono::milliseconds timeout) const { return waitForFuture(shutdown_future, timeout); }
 
     std::atomic<size_t> invocations = 0;
@@ -310,6 +317,7 @@ class TestSink final : public ExecutablePipelineStage
 {
 public:
     void start(PipelineExecutionContext&) override { controller->setup.set_value(); }
+
     void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override
     {
         controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
@@ -323,6 +331,7 @@ public:
     }
 
     ~TestSink() override { controller->destroyed.set_value(); }
+
     TestSink(const TestSink& other) = delete;
     TestSink(TestSink&& other) noexcept = delete;
     TestSink& operator=(const TestSink& other) = delete;
@@ -345,18 +354,22 @@ createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeli
 struct QueryPlanBuilder
 {
     using identifier_t = size_t;
+
     struct SourceDescriptor
     {
         OriginId sourceId = INVALID<OriginId>;
     };
+
     struct PipelineDescriptor
     {
         PipelineId pipelineId = INVALID<PipelineId>;
     };
+
     struct SinkDescriptor
     {
         PipelineId pipelineId = INVALID<PipelineId>;
     };
+
     using QueryComponentDescriptor = std::variant<SourceDescriptor, SinkDescriptor, PipelineDescriptor>;
 
     identifier_t addPipeline(const std::vector<identifier_t>& predecssors);
@@ -473,6 +486,7 @@ template <size_t FailAfterNElements, size_t SourceToFail>
 struct FailAfter
 {
     size_t next = 0;
+
     std::optional<size_t> operator()()
     {
         if (next++ == FailAfterNElements)
@@ -488,6 +502,7 @@ struct DataThread
 {
     constexpr static auto DEFAULT_DATA_GENERATOR_INTERVAL = std::chrono::milliseconds(10);
     constexpr static size_t SEED = 0xDEADBEEF;
+
     void operator()(const std::stop_token& stopToken)
     {
         size_t identifier = 0;

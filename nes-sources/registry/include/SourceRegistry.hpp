@@ -25,6 +25,7 @@ namespace NES::Sources
 {
 
 using SourceRegistryReturnType = std::unique_ptr<Source>;
+
 struct SourceRegistryArguments
 {
     SourceDescriptor sourceDescriptor;

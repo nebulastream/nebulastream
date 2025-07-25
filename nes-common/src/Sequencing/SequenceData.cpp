@@ -16,7 +16,6 @@
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
 
-
 namespace NES
 {
 SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk)

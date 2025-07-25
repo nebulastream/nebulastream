@@ -36,6 +36,7 @@ public:
         NES::Logger::setupLogging("SchemaTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SchemaTest test class SetUpTestCase.");
     }
+
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
 
     auto getRandomFields(const auto numberOfFields)
@@ -330,7 +331,6 @@ TEST_F(SchemaTest, copyTest)
         EXPECT_TRUE(field.has_value() and field.value() == curField);
     }
 }
-
 
 TEST_F(SchemaTest, withoutSourceQualifierTest)
 {

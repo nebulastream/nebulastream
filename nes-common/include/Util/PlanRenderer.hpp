@@ -88,6 +88,7 @@ public:
         const std::vector<Operator> rootOperators = plan.getRootOperators();
         dump(rootOperators);
     }
+
     /// Prints a tree like graph of the queryplan to the stream this class was instatiated with.
     ///
     /// Caveats:
@@ -136,12 +137,14 @@ private:
     };
 
     std::vector<Layer> processedDag;
+
     struct QueueItem
     {
         Operator node;
         /// Saves the (already processed) node that queued this node. And if we find more parents, the vector has room for them too.
         std::vector<std::weak_ptr<PrintNode>> parents;
     };
+
     std::deque<QueueItem> layerCalcQueue;
 
     /// Converts the `Node`s to `PrintNode`s in the `processedDag` structure which knows about they layer the node should appear on and how
@@ -210,6 +213,7 @@ private:
         size_t current;
         size_t next;
     };
+
     /// Decides how to queue the children of the current node depending on whether we already queued it or already put in `processedDag`.
     ///
     /// There are four cases:
@@ -352,6 +356,7 @@ private:
             }
         }
     }
+
     [[nodiscard]] std::stringstream drawTree(size_t maxWidth) const
     {
         std::stringstream asciiOutput;

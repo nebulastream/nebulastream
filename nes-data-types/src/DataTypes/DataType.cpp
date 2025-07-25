@@ -146,6 +146,7 @@ uint32_t DataType::getSizeInBytes() const
     }
     std::unreachable();
 }
+
 /// NOLINTEND(readability-magic-numbers)
 
 std::string DataType::formattedBytesToString(const void* data) const
@@ -196,6 +197,7 @@ std::string DataType::formattedBytesToString(const void* data) const
     }
     std::unreachable();
 }
+
 bool DataType::isType(const Type type) const
 {
     return this->type == type;
@@ -231,18 +233,15 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(Dat
     return DataType{.type = DataType::Type::INT16};
 }
 
-
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::INT32};
 }
 
-
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::INT64};
 }
-
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
 {
@@ -259,12 +258,10 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(Da
     return DataType{.type = DataType::Type::UINT32};
 }
 
-
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::UINT64};
 }
-
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
 {
@@ -275,6 +272,7 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(
 {
     return DataType{.type = DataType::Type::VARSIZED};
 }
+
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZED_POINTER_REPDataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::VARSIZED_POINTER_REP};
@@ -285,14 +283,17 @@ bool DataType::isInteger() const
     return this->type == Type::UINT8 or this->type == Type::UINT16 or this->type == Type::UINT32 or this->type == Type::UINT64
         or this->type == Type::INT8 or this->type == Type::INT16 or this->type == Type::INT32 or this->type == Type::INT64;
 }
+
 bool DataType::isSignedInteger() const
 {
     return this->type == Type::INT8 or this->type == Type::INT16 or this->type == Type::INT32 or this->type == Type::INT64;
 }
+
 bool DataType::isFloat() const
 {
     return this->type == Type::FLOAT32 or this->type == Type::FLOAT64;
 }
+
 bool DataType::isNumeric() const
 {
     return isInteger() or isFloat();

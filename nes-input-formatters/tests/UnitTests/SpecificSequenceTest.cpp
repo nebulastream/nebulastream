@@ -36,6 +36,7 @@ public:
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");
     }
+
     void SetUp() override { BaseUnitTest::SetUp(); }
 
     void TearDown() override { BaseUnitTest::TearDown(); }
@@ -177,4 +178,5 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
 }
 
 }
+
 /// NOLINTEND(readability-magic-numbers)

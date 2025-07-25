@@ -23,6 +23,7 @@ namespace NES::Sinks
 {
 
 using SinkRegistryReturnType = std::unique_ptr<Sink>;
+
 struct SinkRegistryArguments
 {
     SinkDescriptor sinkDescriptor;

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -79,7 +80,6 @@ LogicalFunction FieldAssignmentLogicalFunction::getAssignment() const
 {
     return logicalFunction;
 }
-
 
 DataType FieldAssignmentLogicalFunction::getDataType() const
 {

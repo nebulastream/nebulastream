@@ -152,6 +152,7 @@ void tryLogCurrentException()
         NES_ERROR("failed to process with unknown error\n")
     }
 }
+
 Exception wrapExternalException()
 {
     try
@@ -171,7 +172,6 @@ Exception wrapExternalException()
         return UnknownException();
     }
 }
-
 
 ErrorCode getCurrentErrorCode()
 {

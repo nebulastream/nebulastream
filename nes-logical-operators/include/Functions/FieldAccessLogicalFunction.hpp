@@ -60,7 +60,6 @@ public:
     [[nodiscard]] std::string_view getType() const override;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
-
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
@@ -78,4 +77,5 @@ private:
 };
 
 }
+
 FMT_OSTREAM(NES::FieldAccessLogicalFunction);
