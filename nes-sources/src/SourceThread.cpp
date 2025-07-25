@@ -77,6 +77,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
 }
 
 using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
+
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -86,6 +87,7 @@ void threadSetup(OriginId originId)
 struct SourceHandle
 {
     explicit SourceHandle(Source& source) : source(source) { source.open(); }
+
     SourceHandle(const SourceHandle& other) = delete;
     SourceHandle(SourceHandle&& other) noexcept = delete;
     SourceHandle& operator=(const SourceHandle& other) = delete;
@@ -103,6 +105,7 @@ struct SourceHandle
             tryLogCurrentException();
         }
     }
+
     Source& source; ///NOLINT Source handle should never outlive the source
 };
 
@@ -147,6 +150,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 struct DestroyOnExit
 {
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+
     ~DestroyOnExit() { bufferProvider->destroy(); }
 };
 

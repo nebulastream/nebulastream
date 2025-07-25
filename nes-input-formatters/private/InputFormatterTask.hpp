@@ -41,7 +41,6 @@
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
 
-
 namespace NES::InputFormatters
 {
 /// The type that all formatters use to represent indexes to fields.
@@ -172,6 +171,7 @@ class InputFormatterTask
 {
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
+
     explicit InputFormatterTask(
         const OriginId originId, FormatterType inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
         : originId(originId)
@@ -195,6 +195,7 @@ public:
               | std::ranges::to<std::vector>())
     {
     }
+
     ~InputFormatterTask() = default;
 
     InputFormatterTask(const InputFormatterTask&) = delete;

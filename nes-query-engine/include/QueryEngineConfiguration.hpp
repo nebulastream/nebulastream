@@ -32,6 +32,7 @@ class QueryEngineConfiguration final : public BaseConfiguration
 
 public:
     QueryEngineConfiguration() = default;
+
     QueryEngineConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
 
     UIntOption numberOfWorkerThreads

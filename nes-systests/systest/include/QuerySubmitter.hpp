@@ -29,7 +29,6 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 
-
 namespace NES::Systest
 {
 

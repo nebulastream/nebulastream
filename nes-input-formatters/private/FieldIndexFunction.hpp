@@ -40,7 +40,9 @@ public:
             | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytes()); })
             | std::ranges::to<std::vector>();
     }
+
     [[nodiscard]] size_t getSizeOfTupleInBytes() const { return sizeOfTupleInBytes; }
+
     [[nodiscard]] const std::vector<size_t>& getFieldSizesInBytes() const { return fieldSizesInBytes; }
 
 private:
@@ -77,6 +79,7 @@ public:
         /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
         static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
     };
+
     ~FieldIndexFunction() = default;
 
     [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const

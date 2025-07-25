@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <QueryEngineTestingInfrastructure.hpp>
+
 #include <algorithm>
 #include <bit>
 #include <cassert>
@@ -47,7 +49,6 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
-#include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
 
 namespace NES::Testing
@@ -135,6 +136,7 @@ createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider
     auto pipeline = ExecutablePipeline::create(id, std::move(stage), {});
     return {pipeline, sinkController};
 }
+
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
 {
@@ -143,6 +145,7 @@ createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeli
     auto pipeline = ExecutablePipeline::create(id, std::move(stage), successors);
     return {pipeline, pipelineCtrl};
 }
+
 QueryPlanBuilder::identifier_t QueryPlanBuilder::addPipeline(const std::vector<identifier_t>& predecssors)
 {
     auto identifier = nextIdentifier++;
@@ -156,6 +159,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addPipeline(const std::vector<i
     objects[identifier] = PipelineDescriptor{PipelineId(pipelineIdCounter++)};
     return identifier;
 }
+
 QueryPlanBuilder::identifier_t QueryPlanBuilder::addSource()
 {
     auto identifier = nextIdentifier++;
@@ -163,6 +167,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSource()
     forwardRelations[identifier] = {};
     return identifier;
 }
+
 QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<identifier_t>& predecessors)
 {
     auto identifier = nextIdentifier++;
@@ -176,6 +181,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
     objects[identifier] = SinkDescriptor{PipelineId(pipelineIdCounter++)};
     return identifier;
 }
+
 QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&
 {
     auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
@@ -250,15 +256,18 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         .pipelineCtrls = pipelineCtrls,
         .stages = stages};
 }
+
 QueryPlanBuilder::QueryPlanBuilder(
     identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter)
     : nextIdentifier(nextIdentifier), pipelineIdCounter(pipelineIdCounter), originIdCounter(originIdCounter)
 {
 }
+
 TestingHarness::TestingHarness(size_t numberOfThreads, size_t numberOfBuffers)
     : bm(Memory::BufferManager::create(DEFAULT_BUFFER_SIZE, numberOfBuffers)), numberOfThreads(numberOfThreads)
 {
 }
+
 TestingHarness::TestingHarness() : TestingHarness(NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE)
 {
 }
@@ -357,22 +366,27 @@ void TestingHarness::start()
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
     qm = std::make_unique<NES::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
+
 void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const
 {
     qm->start(std::move(query));
 }
+
 void TestingHarness::stopQuery(QueryId id) const
 {
     qm->stop(id);
 }
+
 void TestingHarness::stop()
 {
     qm.reset();
 }
+
 testing::AssertionResult TestingHarness::waitForQepTermination(QueryId id, std::chrono::milliseconds timeout) const
 {
     return waitForFuture(queryTerminationFutures.at(id), timeout);
 }
+
 testing::AssertionResult TestingHarness::waitForQepRunning(QueryId id, std::chrono::milliseconds timeout)
 {
     return waitForFuture(queryRunningFutures.at(id), timeout);

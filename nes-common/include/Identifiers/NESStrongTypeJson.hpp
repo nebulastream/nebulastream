@@ -30,6 +30,7 @@ struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>>
     {
         return NES::NESStrongType<T, Tag, invalid, initial>{j.get<T>()};
     }
+
     static void to_json(json& j, NES::NESStrongType<T, Tag, invalid, initial> t) { j = t.getRawValue(); }
 };
 }

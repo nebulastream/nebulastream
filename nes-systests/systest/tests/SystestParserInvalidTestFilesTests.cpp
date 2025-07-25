@@ -23,7 +23,6 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
-
 namespace NES::Systest
 {
 /// Tests if SLT Parser rejects invalid .test files correctly
@@ -35,8 +34,10 @@ public:
         Logger::setupLogging("SystestParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestParserInvalidTestFilesTest test class.");
     }
+
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserInvalidTestFilesTest test class."); }
 };
+
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");

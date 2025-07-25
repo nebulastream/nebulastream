@@ -247,6 +247,7 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
     helpers.top().opBoolean = opTokenType;
     AntlrSQLBaseListener::enterComparisonOperator(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     if (helpers.empty())
@@ -341,7 +342,6 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
     AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
 
-
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
@@ -421,6 +421,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
     helpers.push(helper);
     AntlrSQLBaseListener::enterPrimaryQuery(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     LogicalPlan queryPlan;
@@ -467,11 +468,13 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
     AntlrSQLBaseListener::exitPrimaryQuery(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
     helpers.top().isWindow = true;
     AntlrSQLBaseListener::enterWindowClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
     helpers.top().isWindow = false;

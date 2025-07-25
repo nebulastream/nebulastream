@@ -39,11 +39,13 @@ struct SourceImplementationTermination
         StopRequested,
         EndOfStream
     } result;
+
     friend std::ostream& operator<<(std::ostream& os, const SourceImplementationTermination& obj)
     {
         return os << magic_enum::enum_name(obj.result);
     }
 };
+
 /// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.

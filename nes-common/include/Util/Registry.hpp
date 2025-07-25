@@ -35,6 +35,7 @@ class Registry
     {
         typename Registrar::KeyType key;
         auto operator<=>(const InternalKey&) const = default;
+
         struct Hash
         {
             std::size_t operator()(const InternalKey& key) const { return std::hash<typename Registrar::KeyType>()(key.key); }
@@ -91,6 +92,7 @@ private:
     {
         registryImpl.emplace(internalKey(std::move(key)), std::move(creatorFunction));
     }
+
     friend Registrar;
 
     std::unordered_map<InternalKey, typename Registrar::CreatorFn, typename InternalKey::Hash> registryImpl;
@@ -127,6 +129,7 @@ public:
         static ConcreteRegistry instance;
         return instance;
     }
+
     friend ConcreteRegistry;
 };
 }

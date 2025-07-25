@@ -20,7 +20,6 @@ namespace NES
 {
 class SerializableSchema;
 
-
 /// @brief The SchemaSerializationUtil offers functionality to serialize and de-serialize schemas to the
 /// corresponding protobuffer object.
 class SchemaSerializationUtil

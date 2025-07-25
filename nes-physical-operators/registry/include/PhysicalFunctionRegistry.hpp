@@ -22,6 +22,7 @@ namespace NES
 {
 
 using PhysicalFunctionRegistryReturnType = PhysicalFunction;
+
 struct PhysicalFunctionRegistryArguments
 {
     std::vector<PhysicalFunction> childFunctions;
@@ -32,7 +33,6 @@ class PhysicalFunctionRegistry
 {
 };
 }
-
 
 #define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
 #include <PhysicalFunctionGeneratedRegistrar.inc>

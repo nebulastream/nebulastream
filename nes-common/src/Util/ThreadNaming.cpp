@@ -20,7 +20,6 @@
 #include <pthread.h>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 void setThreadName(const std::string_view threadName)

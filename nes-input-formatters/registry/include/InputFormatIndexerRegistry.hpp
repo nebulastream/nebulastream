@@ -53,6 +53,7 @@ struct InputFormatIndexerRegistryArguments
     }
 
     size_t getNumberOfFieldsInSchema() const { return schema.getNumberOfFields(); }
+
     ParserConfig inputFormatIndexerConfig;
 
 private:

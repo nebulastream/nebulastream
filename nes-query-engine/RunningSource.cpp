@@ -74,6 +74,7 @@ OriginId RunningSource::getOriginId() const
 {
     return source->getSourceId();
 }
+
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<Sources::SourceHandle> source,
@@ -113,6 +114,7 @@ RunningSource::~RunningSource()
         }
     }
 }
+
 bool RunningSource::attemptUnregister()
 {
     if (tryUnregister(std::move(this->successors)))
@@ -129,6 +131,7 @@ Sources::SourceReturnType::TryStopResult RunningSource::tryStop() const
 {
     return this->source->tryStop(std::chrono::milliseconds(0));
 }
+
 void RunningSource::fail(Exception exception) const
 {
     unregisterWithError(std::move(exception));

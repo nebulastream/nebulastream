@@ -91,6 +91,7 @@ public:
         Logger::setupLogging("SystestRunnerTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestRunnerTest test class.");
     }
+
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 };
 

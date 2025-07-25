@@ -66,14 +66,20 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         }
 
         Memory::TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+
         [[nodiscard]] WorkerThreadId getId() const override { return INITIAL<WorkerThreadId>; }
+
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
+
         [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
+
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {
             return *operatorHandlers;
         }
+
         void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& opHandlers) override
         {
             operatorHandlers = &opHandlers;
@@ -211,14 +217,12 @@ public:
 
     void reset() { buffers.wlock()->clear(); }
 
-
     folly::Synchronized<std::vector<Memory::TupleBuffer>> buffers;
     std::shared_ptr<Memory::BufferManager> bm = Memory::BufferManager::create(512, 100000);
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
 
     std::random_device rd;
 };
-
 
 TEST_F(EmitPhysicalOperatorTest, BasicTest)
 {

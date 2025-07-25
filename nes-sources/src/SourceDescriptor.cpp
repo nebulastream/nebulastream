@@ -104,12 +104,10 @@ ParserConfig SourceDescriptor::getParserConfig() const
     return parserConfig;
 }
 
-
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
 }
-
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
@@ -129,6 +127,7 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     }
     return stringstream.str();
 }
+
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(

@@ -54,4 +54,5 @@ private:
     LogicalFunction right;
 };
 }
+
 FMT_OSTREAM(NES::ConcatLogicalFunction);

@@ -17,6 +17,7 @@
 namespace NES
 {
 class LogicalPlan;
+
 namespace LegacyOptimizer
 {
 

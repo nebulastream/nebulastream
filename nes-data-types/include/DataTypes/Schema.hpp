@@ -42,6 +42,7 @@ public:
         ROW_LAYOUT = 0,
         COLUMNAR_LAYOUT = 1
     };
+
     struct Field
     {
         Field() = default;
@@ -63,6 +64,7 @@ public:
             PRECONDITION(not this->streamName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
             PRECONDITION(not this->fieldName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
         }
+
         std::string streamName;
         std::string fieldName;
     };

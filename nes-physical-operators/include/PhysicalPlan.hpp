@@ -53,4 +53,5 @@ private:
     PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
 };
 }
+
 FMT_OSTREAM(NES::PhysicalPlan);

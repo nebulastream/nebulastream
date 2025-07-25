@@ -36,6 +36,7 @@ Interface::HashMap* getAggHashMapProxy(
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
     const AggregationBuildPhysicalOperator* buildOperator);
+
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:

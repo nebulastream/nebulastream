@@ -130,21 +130,31 @@ private:
     struct Model : Concept
     {
         FunctionType data;
+
         explicit Model(FunctionType d) : data(std::move(d)) { }
+
         [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
+
         [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return data.getChildren(); }
+
         [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override
         {
             return data.withChildren(children);
         }
+
         [[nodiscard]] SerializableFunction serialize() const override { return data.serialize(); }
+
         [[nodiscard]] std::string_view getType() const override { return data.getType(); }
+
         [[nodiscard]] DataType getDataType() const override { return data.getDataType(); }
+
         [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override
         {
             return data.withInferredDataType(schema);
         }
+
         [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return data.withDataType(dataType); }
+
         [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))
@@ -153,6 +163,7 @@ private:
             }
             return false;
         }
+
         [[nodiscard]] bool equals(const Concept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))
@@ -192,11 +203,12 @@ class FieldIdentifier
 
 public:
     explicit FieldIdentifier(std::string fieldName) : fieldName(std::move(fieldName)) { }
+
     [[nodiscard]] const std::string& getFieldName() const { return fieldName; }
+
     auto operator<=>(const FieldIdentifier&) const = default;
 };
 }
-
 
 namespace std
 {

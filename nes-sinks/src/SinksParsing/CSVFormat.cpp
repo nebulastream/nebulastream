@@ -50,7 +50,6 @@ CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : schema(p
     formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
 }
 
-
 std::string CSVFormat::getFormattedSchema() const
 {
     PRECONDITION(schema.hasFields(), "Encountered schema without fields in CSVFormat.");
@@ -62,7 +61,6 @@ std::string CSVFormat::getFormattedSchema() const
     }
     return fmt::format("{}\n", ss.str());
 }
-
 
 std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const
 {

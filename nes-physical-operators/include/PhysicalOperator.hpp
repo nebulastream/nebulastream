@@ -165,6 +165,7 @@ private:
     struct Concept : PhysicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : PhysicalOperatorConcept(existingId) { }
+
         [[nodiscard]] virtual std::shared_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual std::string toString() const = 0;
     };
@@ -267,4 +268,5 @@ private:
     PipelineLocation pipelineLocation;
 };
 }
+
 FMT_OSTREAM(NES::PhysicalOperator);

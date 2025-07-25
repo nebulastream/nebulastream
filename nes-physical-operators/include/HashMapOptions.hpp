@@ -26,7 +26,6 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 
@@ -95,6 +94,7 @@ struct HashMapOptions
         , numberOfBuckets(other.numberOfBuckets)
     {
     }
+
     HashMapOptions& operator=(HashMapOptions&& other) noexcept
     {
         hashFunction = other.hashFunction->clone();
@@ -109,6 +109,7 @@ struct HashMapOptions
         numberOfBuckets = std::move(other.numberOfBuckets);
         return *this;
     };
+
     HashMapOptions& operator=(const HashMapOptions& other)
     {
         hashFunction = other.hashFunction->clone();
@@ -123,6 +124,7 @@ struct HashMapOptions
         numberOfBuckets = other.numberOfBuckets;
         return *this;
     }
+
     ~HashMapOptions() = default;
 
     /// Method that gets called, once a hash map based slice gets destroyed.

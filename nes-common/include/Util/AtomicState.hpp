@@ -68,6 +68,7 @@ private:
         state = transitionFunction(std::move(std::get<FromState>(state)));
         return true;
     }
+
     std::mutex mutex;
     std::variant<States...> state;
 };
