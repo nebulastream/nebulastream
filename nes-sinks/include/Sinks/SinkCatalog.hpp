@@ -27,7 +27,7 @@ namespace NES
 class SinkCatalog
 {
 public:
-    std::optional<Sinks::SinkDescriptor> addSinkDescriptor(
+    std::expected<Sinks::SinkDescriptor, Exception> addSinkDescriptor(
         std::string sinkName, const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
 
     std::optional<Sinks::SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;

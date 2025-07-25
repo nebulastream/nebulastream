@@ -68,6 +68,8 @@ EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
+EXCEPTION(InvalidSinkName, 2129, "sink name is invalid")
+EXCEPTION(InvalidSinkConfiguration, 2130, "sink configuration is invalid")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
