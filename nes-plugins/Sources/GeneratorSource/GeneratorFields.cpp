@@ -209,7 +209,7 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     {
         throw NES::InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
     }
-    if (parsedStdDev < 0.0)
+    if (parsedStdDev.value() < 0.0)
     {
         throw NES::InvalidConfigParameter("Stddev must be non-negative");
     }
