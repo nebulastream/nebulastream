@@ -30,6 +30,7 @@
     "antlr4",
     "argparse",
     "boost-asio",
+    "cpp-httplib",
     "cpptrace",
     "fmt",
     "folly",
