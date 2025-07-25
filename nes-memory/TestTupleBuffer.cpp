@@ -377,12 +377,12 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto memoryLayout = std::make_shared<RowLayout>(buffer.getBufferSize(), schema);
+        auto memoryLayout = MemoryLayout::create(buffer.getBufferSize(), schema);
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto memoryLayout = std::make_shared<ColumnLayout>(buffer.getBufferSize(), schema);
+        auto memoryLayout = MemoryLayout::create(buffer.getBufferSize(), schema);
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
     else

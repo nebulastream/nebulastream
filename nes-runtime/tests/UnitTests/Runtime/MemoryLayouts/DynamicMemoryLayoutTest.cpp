@@ -22,11 +22,13 @@
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
+
 #include <BaseUnitTest.hpp>
 
 namespace NES::Memory::MemoryLayouts
@@ -51,14 +53,14 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
 
-        schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+        schema = Schema{GetParam()}
                      .addField("t1", DataType::Type::UINT16)
                      .addField("t2", DataType::Type::BOOLEAN)
                      .addField("t3", DataType::Type::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;
-            ASSERT_NO_THROW(layout = RowLayout::create(bufferManager->getBufferSize(), schema));
+            ASSERT_NO_THROW(layout = NES::Util::as<RowLayout>(MemoryLayout::create(bufferManager->getBufferSize(), schema)));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -67,7 +69,7 @@ public:
         else
         {
             std::shared_ptr<ColumnLayout> layout;
-            ASSERT_NO_THROW(layout = ColumnLayout::create(bufferManager->getBufferSize(), schema));
+            ASSERT_NO_THROW(layout = NES::Util::as<ColumnLayout>(MemoryLayout::create(bufferManager->getBufferSize(), schema)));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
