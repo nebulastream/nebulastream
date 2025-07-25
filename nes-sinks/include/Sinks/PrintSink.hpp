@@ -14,19 +14,22 @@
 
 #pragma once
 
-#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <Util/Expected.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -65,7 +68,9 @@ struct ConfigParametersPrint
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
         "inputFormat",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        std::function(
+            [](const std::unordered_map<std::string, std::string>& config) -> Expected<EnumWrapper>
+            { return DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);
