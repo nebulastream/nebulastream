@@ -71,7 +71,9 @@ INGORED_ENDINGS = {
     "xml",
     "yaml",
     "zip",
-    "bin"
+    "bin",
+    "nes",
+    "jsonl"
 }
 
 VENDORED_FILES = {

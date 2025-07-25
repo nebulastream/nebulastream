@@ -23,6 +23,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -56,52 +57,60 @@ namespace NES::InputFormatterTestUtil
 
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
+    const auto fieldNamesOther = testDataTypes | NES::views::enumerate
+        | std::views::transform([](const auto& idxDataTypePair) { return fmt::format("Field_{}", std::get<0>(idxDataTypePair)); })
+        | std::ranges::to<std::vector>();
+
+    return createSchema(testDataTypes, fieldNamesOther);
+}
+
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
+{
     auto schema = Schema{};
-    for (size_t fieldNumber = 1; const auto& dataType : testDataTypes)
+    for (const auto& [fieldNumber, dataType] : testDataTypes | NES::views::enumerate)
     {
         switch (dataType)
         {
             case TestDataTypes::UINT8:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT8));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT8));
                 break;
             case TestDataTypes::UINT16:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT16));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT16));
                 break;
             case TestDataTypes::UINT32:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT32));
                 break;
             case TestDataTypes::UINT64:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT64));
                 break;
             case TestDataTypes::INT8:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT8));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT8));
                 break;
             case TestDataTypes::INT16:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT16));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT16));
                 break;
             case TestDataTypes::INT32:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT32));
                 break;
             case TestDataTypes::INT64:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT64));
                 break;
             case TestDataTypes::FLOAT32:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
                 break;
             case TestDataTypes::FLOAT64:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
                 break;
             case TestDataTypes::BOOLEAN:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::BOOLEAN));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::BOOLEAN));
                 break;
             case TestDataTypes::CHAR:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::CHAR));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::CHAR));
                 break;
             case TestDataTypes::VARSIZED:
-                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
                 break;
         }
-        ++fieldNumber;
     }
     return schema;
 }
@@ -189,21 +198,6 @@ void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, c
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-}
-
-bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2)
-{
-    if (file_size(file1) != file_size(file2))
-    {
-        std::cout << fmt::format(
-            "File sizes do not match: {} vs. {}.", std::filesystem::file_size(file1), std::filesystem::file_size(file2));
-        return false;
-    }
-
-    std::ifstream f1(file1, std::ifstream::binary);
-    std::ifstream f2(file2, std::ifstream::binary);
-
-    return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
 }
 
 TestPipelineTask createInputFormatterTask(
