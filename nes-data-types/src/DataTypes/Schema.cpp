@@ -20,6 +20,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -121,6 +122,7 @@ std::ostream& operator<<(std::ostream& os, const Schema& schema)
     return os;
 }
 
+
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
 {
     if (const auto qualifierName = getSourceNameQualifier(); qualifierName.has_value())
@@ -215,6 +217,48 @@ Schema withoutSourceQualifier(const Schema& input)
 
 
     return withoutPrefix;
+}
+
+SchemaMissmatch::operator bool() const
+{
+    return !(missing_.empty() && extra_.empty());
+}
+
+SchemaMissmatch SchemaMissmatch::of(const Schema& expected, const Schema& actual)
+{
+    std::unordered_set expectedFields(expected.begin(), expected.end());
+    std::unordered_set actualFields(actual.begin(), actual.end());
+
+    std::vector<Schema::Field> missingFields;
+    std::vector<Schema::Field> extraFields;
+
+    std::set_difference(
+        expectedFields.begin(), expectedFields.end(), actualFields.begin(), actualFields.end(), std::back_inserter(missingFields));
+    std::set_difference(
+        actualFields.begin(), actualFields.end(), expectedFields.begin(), expectedFields.end(), std::back_inserter(missingFields));
+
+    return {missingFields, extraFields};
+}
+
+std::ostream& operator<<(std::ostream& os, const SchemaMissmatch& obj)
+{
+    if (obj)
+    {
+        os << "No Missmatch";
+    }
+    else
+    {
+        os << "Schema Missmatch:\n";
+        for (const auto& missing : obj.missing_)
+        {
+            os << " - " << missing << "\n";
+        }
+        for (const auto& missing : obj.missing_)
+        {
+            os << " + " << missing << "\n";
+        }
+    }
+    return os;
 }
 
 bool Schema::hasFields() const
