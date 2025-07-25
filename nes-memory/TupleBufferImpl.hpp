@@ -32,6 +32,7 @@
 
 namespace NES
 {
+class UnpooledChunksManager;
 }
 
 namespace NES::Memory
@@ -174,12 +175,12 @@ static_assert(alignof(BufferControlBlock) % 64 == 0);
  */
 class MemorySegment
 {
-    friend class Memory::TupleBuffer;
-    friend class Memory::LocalBufferPool;
-    friend class Memory::FixedSizeBufferPool;
-    friend class Memory::BufferManager;
-    friend class UnpooledChunksManager;
-    friend class Memory::detail::BufferControlBlock;
+    friend class NES::Memory::TupleBuffer; ///TODO: #1035
+    friend class NES::Memory::LocalBufferPool;
+    friend class NES::Memory::FixedSizeBufferPool;
+    friend class NES::Memory::BufferManager;
+    friend class NES::UnpooledChunksManager;
+    friend class NES::Memory::detail::BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t
     {

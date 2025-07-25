@@ -127,13 +127,14 @@ struct LogCaller<LogLevel::LOG_WARNING>
 
 
 /// @brief this is the new logging macro that is the entry point for logging calls
+///TODO: #1035
 #define NES_LOG(LEVEL, ...) \
     do \
     { \
         auto constexpr __level = getLogLevel(LEVEL); \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) \
         { \
-            LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
+            NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
         } \
         else \
         { \
@@ -143,13 +144,13 @@ struct LogCaller<LogLevel::LOG_WARNING>
     } while (0)
 
 /// Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG(LogLevel::LOG_TRACE, __VA_ARGS__);
+#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__); ///TODO: #1035
 /// Creates a log message with log level info.
-#define NES_INFO(...) NES_LOG(LogLevel::LOG_INFO, __VA_ARGS__);
+#define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
 /// Creates a log message with log level debug.
-#define NES_DEBUG(...) NES_LOG(LogLevel::LOG_DEBUG, __VA_ARGS__);
+#define NES_DEBUG(...) NES_LOG(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
 /// Creates a log message with log level warning.
-#define NES_WARNING(...) NES_LOG(LogLevel::LOG_WARNING, __VA_ARGS__);
+#define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
 /// Creates a log message with log level error.
-#define NES_ERROR(...) NES_LOG(LogLevel::LOG_ERROR, __VA_ARGS__);
+#define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
 }

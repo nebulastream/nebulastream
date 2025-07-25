@@ -161,7 +161,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds()[0];
     auto logicalJoinFunction = join.getJoinFunction();
-    auto windowType = Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
+    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
     const auto pageSize = conf.pageSize.getValue();
 
 

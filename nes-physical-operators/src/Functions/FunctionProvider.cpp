@@ -71,10 +71,10 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 namespace
 {
 template <typename T>
-requires requires(std::string_view input) { Util::from_chars<T>(input); }
+requires requires(std::string_view input) { NES::Util::from_chars<T>(input); } /// TODO: #1035
 T parseConstantValue(std::string_view input)
 {
-    if (auto value = Util::from_chars<T>(input))
+    if (auto value = NES::Util::from_chars<T>(input))
     {
         return *value;
     }

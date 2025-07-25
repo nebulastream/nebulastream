@@ -42,7 +42,7 @@ int main(const int argc, const char* argv[])
         builder.RegisterService(&workerService);
 
         const auto server = builder.BuildAndStart();
-        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
+        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri)); ///TODO: 1035
         server->Wait();
         return 0;
     }
