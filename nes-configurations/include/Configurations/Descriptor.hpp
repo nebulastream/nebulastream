@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <iosfwd>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -226,6 +227,9 @@ public:
 
         return validatedConfig;
     }
+
+    /// Converts config object into a serializable format
+    static std::unordered_map<std::string, std::string> toStringConfig(const Config& config);
 
 private:
     template <typename T, typename EnumType>
