@@ -198,4 +198,17 @@ std::string Descriptor::toStringConfig() const
     return ss.str();
 }
 
+std::unordered_map<std::string, std::string> DescriptorConfig::toStringConfig(const Config& config)
+{
+    return std::views::transform(
+               config,
+               [](const auto& pair)
+               {
+                   std::stringstream out{};
+                   std::visit(ConfigPrinter{out}, pair.second);
+                   return std::make_pair(pair.first, out.str());
+               })
+        | std::ranges::to<std::unordered_map<std::string, std::string>>();
+}
+
 }
