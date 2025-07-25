@@ -55,6 +55,13 @@ std::string SinkDescriptor::getSinkName() const
     return sinkName;
 }
 
+SinkDescriptor SinkDescriptor::withUpdatedSchema(Schema schema) const
+{
+    auto copy = *this;
+    copy.schema = std::make_shared<Schema>(std::move(schema));
+    return copy;
+}
+
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
