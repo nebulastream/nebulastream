@@ -13,6 +13,10 @@ The recent (based on the main branch) development image can be pulled from
 ```shell
 docker pull nebulastream/nes-development:latest
 ```
+> [!IMPORTANT]
+> If running on an arm64 / aarch64 architecture, ensure that containers you pull are built for a "linux/arm64" target.
+> Else builds may be very slow or fail while emulating the amd64 architecture.
+> If you are intentionally cross compiling for amd64 on an apple ARM processor with docker on colima and encounter crashes while building, you may need to disable rosetta.
 
 However, it is recommended to build a local development image, because it also installs the current user into the
 docker container, which prevents permission issues. Building a local image will fall back to a pre-built development
@@ -26,7 +30,8 @@ the `-l` flag). If you want to use `libstdc++` instead of the default libc++, yo
 ./scripts/install-local-docker-environment.sh
 ```
 
-**Note**: All commands need to be run from the **root of the git repository**!
+> [!NOTE]
+> All commands need to be run from the **root of the git repository**!
 
 The image contains an LLVM-based toolchain (with libc++), a recent CMake version, the mold linker and a pre-built
 development sdk based on the vcpkg manifest.
@@ -107,6 +112,9 @@ To integrate the container-based development environment you need to create a ne
 following settings:
 
 ![CLion-Toolchain-Settings](../resources/SetupDockerToolchainClion.png)
+
+> [!IMPORTANT]
+> If running on MacOS with Colima as your docker VM, you will need to select Colima instead of the default docker daemon.
 
 This configuration assumes ccache is using the default directory of `$HOME/.cache/ccache`. You can create additional
 docker-based toolchains if you plan to experiment with different sanitizer.
