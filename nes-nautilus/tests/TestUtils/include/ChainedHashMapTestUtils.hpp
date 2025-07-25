@@ -70,6 +70,7 @@ public:
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer;
     uint64_t keySize, valueSize, entriesPerPage, entrySize;
     TestParams params;
+
     enum ExactMapInsert : uint8_t
     {
         INSERT,

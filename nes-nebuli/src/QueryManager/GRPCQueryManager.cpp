@@ -41,6 +41,7 @@ namespace NES
 GRPCQueryManager::GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
 {
 }
+
 std::expected<QueryId, Exception> GRPCQueryManager::registerQuery(const NES::LogicalPlan& plan) noexcept
 {
     try
@@ -93,7 +94,6 @@ std::expected<void, Exception> GRPCQueryManager::start(const QueryId queryId) no
         return std::unexpected{QueryStartFailed("Message from external exception: {} ", e.what())};
     }
 }
-
 
 std::expected<NES::QuerySummary, Exception> GRPCQueryManager::status(const QueryId queryId) const noexcept
 {

@@ -27,6 +27,7 @@ using ChronoClock = std::chrono::system_clock;
 struct EventBase
 {
     EventBase(WorkerThreadId threadId, QueryId queryId) : threadId(threadId), queryId(queryId) { }
+
     EventBase() = default;
 
     ChronoClock::time_point timestamp = ChronoClock::now();
@@ -40,6 +41,7 @@ struct TaskExecutionStart : EventBase
         : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples)
     {
     }
+
     TaskExecutionStart() = default;
 
     PipelineId pipelineId = INVALID<PipelineId>;
@@ -53,6 +55,7 @@ struct TaskEmit : EventBase
         : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId), numberOfTuples(numberOfTuples)
     {
     }
+
     TaskEmit() = default;
 
     PipelineId fromPipeline = INVALID<PipelineId>;
@@ -67,6 +70,7 @@ struct TaskExecutionComplete : EventBase
         : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
     {
     }
+
     TaskExecutionComplete() = default;
 
 
@@ -88,12 +92,14 @@ struct TaskExpired : EventBase
 struct QueryStart : EventBase
 {
     QueryStart(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+
     QueryStart() = default;
 };
 
 struct QueryStop : EventBase
 {
     QueryStop(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+
     QueryStop() = default;
 };
 
@@ -101,6 +107,7 @@ struct PipelineStart : EventBase
 {
     PipelineStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
         : EventBase(threadId, queryId), pipelineId(pipelineId) { }
+
     PipelineStart() = default;
 
     PipelineId pipelineId = INVALID<PipelineId>;
@@ -111,6 +118,7 @@ struct PipelineStop : EventBase
     PipelineStop(WorkerThreadId threadId, QueryId queryId, PipelineId pipeline_id) : EventBase(threadId, queryId), pipelineId(pipeline_id)
     {
     }
+
     PipelineStop() = default;
 
     PipelineId pipelineId = INVALID<PipelineId>;

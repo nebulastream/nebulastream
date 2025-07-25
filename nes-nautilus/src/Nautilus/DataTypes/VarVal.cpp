@@ -29,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-
 namespace NES::Nautilus
 {
 

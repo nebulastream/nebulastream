@@ -48,19 +48,27 @@ public:
     RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
 
     [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
+
     [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
+
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept { return rawBuffer.getSequenceNumber(); }
+
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept { return rawBuffer.getChunkNumber(); }
+
     [[nodiscard]] OriginId getOriginId() const noexcept { return rawBuffer.getOriginId(); }
+
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return rawBuffer.getNumberOfTuples(); }
+
     void setNumberOfTuples(const uint64_t numberOfTuples) const noexcept { rawBuffer.setNumberOfTuples(numberOfTuples); }
+
     /// Allows to emit the underlying buffer without exposing it to the outside
     void emit(PipelineExecutionContext& pec, const PipelineExecutionContext::ContinuationPolicy continuationPolicy) const
     {
         pec.emitBuffer(rawBuffer, continuationPolicy);
     }
+
     [[nodiscard]] const Memory::TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }

@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -70,7 +71,6 @@ std::string_view CeilLogicalFunction::getType() const
 {
     return NAME;
 }
-
 
 bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {

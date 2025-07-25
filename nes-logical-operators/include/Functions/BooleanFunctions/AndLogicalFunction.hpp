@@ -53,4 +53,5 @@ private:
 };
 
 }
+
 FMT_OSTREAM(NES::AndLogicalFunction);

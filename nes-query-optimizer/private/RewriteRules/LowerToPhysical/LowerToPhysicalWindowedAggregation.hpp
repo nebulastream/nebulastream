@@ -25,6 +25,7 @@ namespace NES
 struct LowerToPhysicalWindowedAggregation : AbstractRewriteRule
 {
     explicit LowerToPhysicalWindowedAggregation(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

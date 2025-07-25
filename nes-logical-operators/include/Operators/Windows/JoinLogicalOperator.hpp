@@ -80,7 +80,6 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<EnumWrapper, JoinType> JOIN_TYPE{

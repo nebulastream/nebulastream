@@ -40,7 +40,9 @@ public:
     public:
         Snapshot(std::string name, TimeUnit runtime, std::vector<Snapshot> children)
             : name(std::move(name)), runtime(runtime), children(children) { };
+
         int64_t getRuntime() { return runtime.count(); }
+
         PrintTimePrecision getPrintTime()
         {
             return std::chrono::duration_cast<std::chrono::duration<PrintTimePrecision, PrintTimeUnit>>(runtime).count();

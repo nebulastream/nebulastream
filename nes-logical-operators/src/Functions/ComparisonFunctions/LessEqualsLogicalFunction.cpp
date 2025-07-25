@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,7 +36,6 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(LogicalFunction left, Logic
     : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }
-
 
 bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -93,7 +93,6 @@ std::string_view LessEqualsLogicalFunction::getType() const
 {
     return NAME;
 }
-
 
 SerializableFunction LessEqualsLogicalFunction::serialize() const
 {

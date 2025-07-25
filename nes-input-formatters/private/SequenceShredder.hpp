@@ -56,6 +56,7 @@ public:
         , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
 
     [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
+
     /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.
     /// Typically, these are the bytes of a spanning tuple that _ends_ in the staged buffer.
     [[nodiscard]] std::string_view getLeadingBytes() const { return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter); }
@@ -174,6 +175,7 @@ private:
         BitmapType tupleDelimiterBitmapSnapshot;
         BitmapType seenAndUsedBitmapSnapshot;
     };
+
     struct BitmapVectorSnapshot
     {
         size_t tail;
@@ -181,6 +183,7 @@ private:
         BitmapVectorType tupleDelimiterVectorSnapshot;
         BitmapVectorType seenAndUsedVectorSnapshot;
     };
+
     /// The unique_ptr avoids allocating space for all bitmaps (BitmapVectorSnapshot) in the common case, which is 'BitmapSnapshot'
     using Snapshot = std::variant<BitmapSnapshot, std::unique_ptr<BitmapVectorSnapshot>>;
 

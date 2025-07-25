@@ -22,14 +22,17 @@ consteval uint8_t operator""_u8(unsigned long long value)
 {
     return static_cast<uint8_t>(value);
 }
+
 consteval uint16_t operator""_u16(unsigned long long value)
 {
     return static_cast<uint16_t>(value);
 }
+
 consteval uint32_t operator""_u32(unsigned long long value)
 {
     return static_cast<uint32_t>(value);
 }
+
 consteval uint64_t operator""_u64(unsigned long long value)
 {
     return static_cast<uint64_t>(value);
@@ -43,6 +46,7 @@ template <typename T>
 struct HelperStructLiterals
 {
     T val;
+
     [[maybe_unused]] constexpr inline explicit HelperStructLiterals(T v) : val(v) { }
 
     constexpr inline T operator-() const { return -val; }
@@ -59,14 +63,17 @@ consteval HelperStructLiterals<int8_t> operator""_s8(unsigned long long value)
 {
     return HelperStructLiterals<int8_t>(value);
 }
+
 consteval HelperStructLiterals<int16_t> operator""_s16(unsigned long long value)
 {
     return HelperStructLiterals<int16_t>(value);
 }
+
 consteval HelperStructLiterals<int32_t> operator""_s32(unsigned long long value)
 {
     return HelperStructLiterals<int32_t>(value);
 }
+
 consteval HelperStructLiterals<int64_t> operator""_s64(unsigned long long value)
 {
     return HelperStructLiterals<int64_t>(value);

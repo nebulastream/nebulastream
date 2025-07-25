@@ -34,8 +34,11 @@ class EmitPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit EmitPhysicalOperator(
         OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+
     void setup(ExecutionContext&) const override { /*noop*/ }
+
     void terminate(ExecutionContext&) const override { /*noop*/ }
+
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;

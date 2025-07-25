@@ -180,6 +180,7 @@ private:
     struct Concept : LogicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : LogicalOperatorConcept(existingId) { }
+
         [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 

@@ -48,6 +48,7 @@ TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other
         controlBlock->retain();
     }
 }
+
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
 {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
@@ -71,6 +72,7 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
     }
     return *this;
 }
+
 TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept
 {
     /// Especially for rvalues, the following branch should most likely never be taken if the caller writes
@@ -87,10 +89,12 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept
 
     return *this;
 }
+
 TupleBuffer::~TupleBuffer() noexcept
 {
     release();
 }
+
 TupleBuffer& TupleBuffer::retain() noexcept
 {
     if (controlBlock)
@@ -99,6 +103,7 @@ TupleBuffer& TupleBuffer::retain() noexcept
     }
     return *this;
 }
+
 void TupleBuffer::release() noexcept
 {
     if (controlBlock)
@@ -114,30 +119,37 @@ int8_t* TupleBuffer::getBuffer() noexcept
 {
     return getBuffer<int8_t>();
 }
+
 uint32_t TupleBuffer::getReferenceCounter() const noexcept
 {
     return controlBlock ? controlBlock->getReferenceCount() : 0;
 }
+
 uint64_t TupleBuffer::getBufferSize() const noexcept
 {
     return size;
 }
+
 void TupleBuffer::setNumberOfTuples(const uint64_t numberOfTuples) const noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
+
 Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
+
 void TupleBuffer::setWatermark(const Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
+
 Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
+
 void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
@@ -152,22 +164,27 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
 }
+
 void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
+
 void TupleBuffer::setLastChunk(const bool isLastChunk) noexcept
 {
     controlBlock->setLastChunk(isLastChunk);
 }
+
 bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
+
 void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
+
 void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
@@ -207,6 +224,7 @@ bool TupleBuffer::hasSpaceLeft(const uint64_t used, const uint64_t needed) const
     }
     return false;
 }
+
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 {
     /// Enable ADL to spell out to onlookers how swap should be used.
@@ -216,6 +234,7 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
     swap(lhs.size, rhs.size);
     swap(lhs.controlBlock, rhs.controlBlock);
 }
+
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 {
     return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
@@ -225,14 +244,17 @@ uint64_t TupleBuffer::getNumberOfTuples() const noexcept
 {
     return controlBlock->getNumberOfTuples();
 }
+
 OriginId TupleBuffer::getOriginId() const noexcept
 {
     return controlBlock->getOriginId();
 }
+
 uint32_t TupleBuffer::getNumberOfChildBuffers() const noexcept
 {
     return controlBlock->getNumberOfChildBuffers();
 }
+
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
     return controlBlock->getChunkNumber();

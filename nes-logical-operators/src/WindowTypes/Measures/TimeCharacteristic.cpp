@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+
 #include <ostream>
 #include <string>
 #include <utility>
@@ -19,9 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
-
 
 namespace NES::Windowing
 {
@@ -34,6 +34,7 @@ TimeCharacteristic::TimeCharacteristic(const Type type, Schema::Field field, con
     : field(std::move(field)), type(type), unit(unit)
 {
 }
+
 TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess)
 {
     return createEventTime(fieldAccess, TimeUnit(1));

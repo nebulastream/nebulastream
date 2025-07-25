@@ -209,7 +209,6 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
 }
 
-
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";

@@ -15,6 +15,7 @@
 #include <Sinks/Sink.hpp>
 
 #include <ostream>
+
 namespace NES::Sinks
 {
 

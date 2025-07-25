@@ -103,7 +103,6 @@ public:
 template <class Op, class... Args>
 using PerfectForward = PerfectForwardImpl<Op, std::index_sequence_for<Args...>, Args...>;
 
-
 ///taken from libcxx/include/__functional/compose.h
 ///https://github.com/llvm/llvm-project/blob/a481452cd88acc180f82dd5631257c8954ed7812/libcxx/include/__functional/compose.h#L27
 struct ComposeOp
@@ -130,7 +129,6 @@ compose(Fn1&& f1, Fn2&& f2) noexcept(noexcept(Compose<std::decay_t<Fn1>, std::de
 {
     return Compose<std::decay_t<Fn1>, std::decay_t<Fn2>>(std::forward<Fn1>(f1), std::forward<Fn2>(f2));
 }
-
 
 ///taken from libcxx/include/__ranges/range_adaptor.h
 
@@ -202,6 +200,7 @@ template <class Range>
 concept simple_view
     = view<Range> && std::ranges::range<const Range> && std::same_as<std::ranges::iterator_t<Range>, std::ranges::iterator_t<const Range>>
     && std::same_as<std::ranges::sentinel_t<Range>, std::ranges::sentinel_t<const Range>>;
+
 template <view View>
 requires range_with_movable_references<View>
 class enumerate_view : public std::ranges::view_interface<enumerate_view<View>>
@@ -220,6 +219,7 @@ public:
     constexpr enumerate_view()
     requires std::default_initializable<View>
     = default;
+
     constexpr explicit enumerate_view(View base) : base_(std::move(base)) { }
 
     [[nodiscard]] constexpr auto begin()
@@ -227,6 +227,7 @@ public:
     {
         return iterator<false>(std::ranges::begin(base_), 0);
     }
+
     [[nodiscard]] constexpr auto begin() const
     requires range_with_movable_references<const View>
     {
@@ -241,6 +242,7 @@ public:
         else
             return sentinel<false>(std::ranges::end(base_));
     }
+
     [[nodiscard]] constexpr auto end() const
     requires range_with_movable_references<const View>
     {
@@ -255,6 +257,7 @@ public:
     {
         return std::ranges::size(base_);
     }
+
     [[nodiscard]] constexpr auto size() const
     requires std::ranges::sized_range<const View>
     {
@@ -266,6 +269,7 @@ public:
     {
         return base_;
     }
+
     [[nodiscard]] constexpr View base() && { return std::move(base_); }
 };
 
@@ -494,6 +498,7 @@ struct fn : range_adaptor_closure<fn>
         return /*-------------*/ enumerate_view(std::forward<Range>(range));
     }
 };
+
 inline constexpr auto enumerate = fn{};
 
 }

@@ -24,6 +24,7 @@ namespace NES::Sources
 {
 
 using FileDataRegistryReturnType = SystestSourceYAMLBinder::PhysicalSource;
+
 struct FileDataRegistryArguments
 {
     SystestSourceYAMLBinder::PhysicalSource physicalSourceConfig;

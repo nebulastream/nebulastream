@@ -94,6 +94,7 @@ public:
     }
 
     [[nodiscard]] uint64_t getWindowSize() const { return windowSize; }
+
     [[nodiscard]] uint64_t getWindowSlide() const { return windowSlide; }
 
 private:

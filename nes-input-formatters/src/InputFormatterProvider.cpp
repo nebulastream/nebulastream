@@ -37,6 +37,7 @@ provideInputFormatterTask(const OriginId originId, const Schema& schema, const P
     }
     throw UnknownParserType("unknown type of input formatter: {}", config.parserType);
 }
+
 bool contains(const std::string& parserType)
 {
     return InputFormatIndexerRegistry::instance().contains(parserType);

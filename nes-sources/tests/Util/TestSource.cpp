@@ -74,11 +74,13 @@ bool NES::Sources::TestSourceControl::injectEoS()
     }
     throw TestException("Sources::TestSourceControl::injectEoS failed, maybe source has already been stopped");
 }
+
 bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
 {
     PRECONDITION(!failed, "Should not be called on a failed source");
     return tryIngestionUntil(queue, Data{.data = std::move(data), .numberOfTuples = numberOfTuples}, [this] { return wasClosed(); });
 }
+
 bool NES::Sources::TestSourceControl::injectError(std::string error)
 {
     failed = true;
@@ -120,26 +122,31 @@ bool NES::Sources::TestSourceControl::wasClosed() const
 {
     return assertFutureStatus(closeFuture.wait_for(IMMEDIATELY));
 }
+
 bool NES::Sources::TestSourceControl::wasOpened() const
 {
     return assertFutureStatus(openFuture.wait_for(IMMEDIATELY));
 }
+
 bool NES::Sources::TestSourceControl::wasDestroyed() const
 {
     return assertFutureStatus(destroyedFuture.wait_for(IMMEDIATELY));
 }
+
 void NES::Sources::TestSourceControl::failDuringOpen(std::chrono::milliseconds blockFor)
 {
     assert(!wasOpened() && "open was already called. failedDuringOpen should be called during the test setup not during runtime");
     fail_during_open_duration = blockFor;
     fail_during_open = true;
 }
+
 void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
 {
     assert(!wasOpened() && "open was already called. failedDuringClose should be called during the test setup not during runtime");
     fail_during_close_duration = blockFor;
     fail_during_close = true;
 }
+
 size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
@@ -183,6 +190,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
     std::ranges::copy(data->data, tupleBuffer.getBuffer<std::byte>());
     return data->data.size();
 }
+
 void NES::Sources::TestSource::open()
 {
     control->open.set_value();
@@ -192,6 +200,7 @@ void NES::Sources::TestSource::open()
         throw TestException("I should throw here");
     }
 }
+
 void NES::Sources::TestSource::close()
 {
     control->close.set_value();
@@ -201,6 +210,7 @@ void NES::Sources::TestSource::close()
         throw TestException("I should throw here");
     }
 }
+
 std::ostream& NES::Sources::TestSource::toString(std::ostream& str) const
 {
     return str << "Test Source";
@@ -210,6 +220,7 @@ NES::Sources::TestSource::TestSource(OriginId sourceId, const std::shared_ptr<Te
     : sourceId(sourceId), control(control)
 {
 }
+
 NES::Sources::TestSource::~TestSource()
 {
     control->destroyed.set_value();

@@ -46,7 +46,6 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
-
 namespace
 {
 template <typename T, typename Tag>
@@ -54,10 +53,14 @@ class ResultCheckStrongType
 {
 public:
     explicit constexpr ResultCheckStrongType(const T value) : value(std::move(value)) { }
+
     using Underlying = T;
     using TypeTag = Tag;
+
     friend std::ostream& operator<<(std::ostream& os, const ResultCheckStrongType& strongType) { return os << strongType.getRawValue(); }
+
     [[nodiscard]] const T& getRawValue() const { return value; }
+
     [[nodiscard]] T& getRawValue() { return value; }
 
 private:
@@ -72,10 +75,13 @@ class ResultTuple
 {
 public:
     explicit ResultTuple(std::string tuple) : tuple(std::move(tuple)) { }
+
     using TupleType = Tag;
 
     [[nodiscard]] size_t size() const { return tuple.size(); }
+
     friend std::ostream& operator<<(std::ostream& os, const ResultTuple& resultTuple) { return os << resultTuple.tuple; }
+
     [[nodiscard]] const std::string& getRawValue() const { return tuple; }
 
     [[nodiscard]] std::vector<FieldType> getFields() const
@@ -126,10 +132,12 @@ public:
 
         sortOnFields(this->results, expectedResultsFieldSortIdxs);
     }
+
     ~ResultTuples() = default;
     using TupleType = Tag;
 
     [[nodiscard]] TupleType getTuple(const TupleIdxType tupleIdx) const { return TupleType(results.at(tupleIdx.getRawValue())); }
+
     [[nodiscard]] size_t size() const { return results.size(); }
 
 private:
@@ -141,12 +149,15 @@ class ErrorStream
 {
 public:
     explicit ErrorStream(std::stringstream errorStream) : errorStream(std::move(errorStream)) { }
+
     using ErrorStreamType = Tag;
 
     bool hasMismatch() const { return not errorStream.view().empty(); }
+
     ErrorStringType getErrorString() const { return ErrorStringType(errorStream.str()); }
 
     friend std::ostream& operator<<(std::ostream& os, const ErrorStream& ses) { return os << ses.errorStream.str(); }
+
     template <typename T>
     ErrorStream& operator<<(T&& value)
     {
@@ -252,12 +263,12 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
     return schema;
 }
 
-
 struct QueryResult
 {
     NES::Schema schema;
     std::vector<std::string> result;
 };
+
 std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
 {
     NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
@@ -307,6 +318,7 @@ public:
         , totalResultLinesSize(expectedResultLinesSize + actualResultLinesSize)
     {
     }
+
     ~LineIndexIterator() = default;
 
     [[nodiscard]] bool hasNext() const
@@ -315,14 +327,18 @@ public:
     }
 
     [[nodiscard]] ExpectedResultIndex getExpected() const { return expectedResultTupleIdx; }
+
     [[nodiscard]] ActualResultIndex getActual() const { return actualResultTupleIdx; }
+
     void advanceExpected() { this->expectedResultTupleIdx = ExpectedResultIndex(this->expectedResultTupleIdx.getRawValue() + 1); }
+
     void advanceActual() { this->actualResultTupleIdx = ActualResultIndex(this->actualResultTupleIdx.getRawValue() + 1); }
 
     [[nodiscard]] bool hasOnlyExpectedLinesLeft() const
     {
         return expectedResultTupleIdx < expectedResultLinesSize and actualResultTupleIdx >= actualResultLinesSize;
     }
+
     [[nodiscard]] bool hasOnlyActualLinesLeft() const
     {
         return actualResultTupleIdx < actualResultLinesSize and expectedResultTupleIdx >= expectedResultLinesSize;
@@ -512,7 +528,6 @@ bool compareTuples(
     std::unreachable();
 }
 
-
 ResultErrorStream compareResults(
     const ExpectedResultTuples& formattedExpectedResultLines,
     const ActualResultTuples& formattedActualResultLines,
@@ -565,10 +580,12 @@ struct QueryCheckResult
         SCHEMAS_MATCH_RESULTS_MATCH,
         QUERY_NOT_FOUND,
     };
+
     explicit QueryCheckResult(std::string queryErrorStream)
         : type(Type::QUERY_NOT_FOUND), queryError(std::move(queryErrorStream)), schemaErrorStream(""), resultErrorStream("")
     {
     }
+
     explicit QueryCheckResult(const SchemaErrorStream& schemaErrorStream, const ResultErrorStream& resultErrorStream)
         : schemaErrorStream(schemaErrorStream.getErrorString()), resultErrorStream(resultErrorStream.getErrorString())
     {
@@ -612,9 +629,11 @@ struct QuerySchemasAndResults
     }
 
     const ExpectedResultTuples& getExpectedResultTuples() const { return expectedResults; }
+
     const ActualResultTuples& getActualResultTuples() const { return actualResults; }
 
     [[nodiscard]] const ExpectedToActualFieldMap& getExpectedToActualResultMap() const { return expectedToActualResultMap; }
+
     [[nodiscard]] const SchemaErrorStream& getSchemaErrorStream() const { return expectedToActualResultMap.schemaErrorStream; }
 
 private:

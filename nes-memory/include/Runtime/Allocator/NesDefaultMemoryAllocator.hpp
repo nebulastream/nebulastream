@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <memory_resource>
+
 namespace NES::Memory
 {
 /**

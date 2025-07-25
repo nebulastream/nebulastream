@@ -126,6 +126,7 @@ public:
     explicit SystestQueryBuilder(const SystestQueryId queryIdInFile) : queryIdInFile(queryIdInFile) { }
 
     SystestQueryId getSystemTestQueryId() const { return queryIdInFile; }
+
     void setExpectedResult(std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrError)
     {
         this->expectedResultsOrError = std::move(expectedResultsOrError);
@@ -240,6 +241,7 @@ public:
             .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
             .additionalSourceThreads = std::move(additionalSourceThreads.value())};
     }
+
     /// NOLINTEND(bugprone-unchecked-optional-access)
 
 private:
@@ -636,6 +638,7 @@ struct SystestBinder::Impl
                    })
             | std::ranges::to<std::vector>();
     }
+
     /// NOLINTEND(readability-function-cognitive-complexity)
 
 private:
@@ -643,7 +646,6 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
 };
-
 
 SystestBinder::SystestBinder(
     const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir)
@@ -655,6 +657,7 @@ std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(
 {
     return impl->loadOptimizeQueries(discoveredTestFiles);
 }
+
 SystestBinder::~SystestBinder() = default;
 
 }

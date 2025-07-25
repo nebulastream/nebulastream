@@ -22,7 +22,6 @@
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 
-
 namespace NES
 {
 

@@ -82,7 +82,6 @@ void PagedVector::copyFrom(const PagedVector& other)
     pages.addPages(other.pages);
 }
 
-
 const Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.

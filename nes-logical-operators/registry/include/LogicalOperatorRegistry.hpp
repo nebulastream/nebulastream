@@ -27,6 +27,7 @@ namespace NES
 {
 
 using LogicalOperatorRegistryReturnType = LogicalOperator;
+
 struct LogicalOperatorRegistryArguments
 {
     std::optional<OperatorId> id;

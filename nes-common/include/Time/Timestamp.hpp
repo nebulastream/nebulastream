@@ -31,12 +31,19 @@ public:
     explicit constexpr Timestamp(const Underlying value) : value(value) { }
 
     Timestamp operator+(const Underlying offset) const { return Timestamp(value + offset); }
+
     Timestamp operator+=(const Underlying offset) const { return Timestamp(value + offset); }
+
     Timestamp operator-(const Underlying offset) const { return Timestamp(value - offset); }
+
     Timestamp operator-(const Timestamp other) const { return Timestamp(value - other.value); }
+
     Timestamp operator-=(const Underlying offset) const { return Timestamp(value - offset); }
+
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
+
     [[nodiscard]] Underlying getRawValue() const { return value; }
+
     friend constexpr std::strong_ordering operator<=>(const Timestamp& lhs, const Timestamp& rhs) = default;
 
 private:

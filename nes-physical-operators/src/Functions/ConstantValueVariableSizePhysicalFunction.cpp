@@ -12,15 +12,17 @@
     limitations under the License.
 */
 
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+
 namespace NES
 {
 ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)

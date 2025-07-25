@@ -47,6 +47,7 @@ struct WindowInfo
     }
 
     bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+
     Timestamp windowStart;
     Timestamp windowEnd;
 };

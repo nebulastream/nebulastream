@@ -72,4 +72,5 @@ private:
     std::string newFieldName;
 };
 }
+
 FMT_OSTREAM(NES::RenameLogicalFunction);

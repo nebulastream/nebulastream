@@ -25,6 +25,7 @@ namespace NES
 struct LowerToPhysicalSelection : AbstractRewriteRule
 {
     explicit LowerToPhysicalSelection(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

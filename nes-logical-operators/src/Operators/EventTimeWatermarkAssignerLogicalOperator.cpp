@@ -84,7 +84,6 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
     return false;
 }
 
-
 LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
@@ -102,7 +101,6 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(s
     copy.outputOriginIds = ids;
     return copy;
 }
-
 
 TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {
@@ -150,7 +148,6 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(st
     copy.inputOriginIds = ids[0];
     return copy;
 }
-
 
 std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
 {

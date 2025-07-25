@@ -91,6 +91,7 @@ private:
     template <typename>
     friend class BFSRange;
     BFSIterator() = default;
+
     explicit BFSIterator(T root) { nodeQueue.push(root); }
 
     std::queue<T> nodeQueue;
@@ -103,6 +104,7 @@ public:
     explicit BFSRange(T root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
+
     [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
 
 private:

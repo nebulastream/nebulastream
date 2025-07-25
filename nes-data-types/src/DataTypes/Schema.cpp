@@ -47,6 +47,7 @@ Schema Schema::addField(std::string name, const DataType& dataType)
 {
     return addField(std::move(name), dataType.type);
 }
+
 Schema Schema::addField(std::string name, const DataType::Type type)
 {
     DataType dataType{type};
@@ -185,6 +186,7 @@ bool Schema::renameField(const std::string& oldFieldName, const std::string_view
     }
     return false;
 }
+
 size_t Schema::getSizeOfSchemaInBytes() const
 {
     return sizeOfSchemaInBytes;
@@ -221,10 +223,12 @@ bool Schema::hasFields() const
 {
     return not fields.empty();
 }
+
 auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin())
 {
     return fields.cbegin();
 }
+
 auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
 {
     return fields.cend();

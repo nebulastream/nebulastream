@@ -21,7 +21,6 @@
 
 #include <QueryManager/QueryManager.hpp>
 
-
 namespace NES
 {
 class EmbeddedWorkerQueryManager final : public QueryManager

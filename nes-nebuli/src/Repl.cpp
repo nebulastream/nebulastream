@@ -102,6 +102,7 @@ void Repl::printWelcome()
         const char* name;
         const char* desc;
     };
+
     constexpr std::array<Cmd, 4> cmds{
         {{.name = "help", .desc = "Show this help message"},
          {.name = "clear", .desc = "Clear the screen"},
@@ -132,6 +133,7 @@ void Repl::printHelp()
         const char* name;
         const char* desc;
     };
+
     constexpr std::array<Cmd, 4> cmds{
         {{.name = "help", .desc = "Show this help message"},
          {.name = "clear", .desc = "Clear the screen"},

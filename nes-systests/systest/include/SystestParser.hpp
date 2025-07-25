@@ -32,7 +32,6 @@
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
 
-
 namespace NES::Systest
 {
 using namespace std::literals;
@@ -88,14 +87,17 @@ struct SystestField
 {
     DataType type;
     std::string name;
+
     friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
     {
         os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
         return os;
     }
+
     bool operator==(const SystestField& other) const = default;
     bool operator!=(const SystestField& other) const = default;
 };
+
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
 ///
@@ -110,6 +112,7 @@ public:
         /// Takes the keyword by reference and modifies it according to the rule
         std::function<void(std::string&)> ruleFunction;
     };
+
     /// Register a substitution rule to be applied to the file before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
@@ -118,6 +121,7 @@ public:
     [[nodiscard]] bool loadString(const std::string& str);
 
     using SystestSchema = std::vector<SystestField>;
+
     /// Type definitions ///
     struct SystestLogicalSource
     {

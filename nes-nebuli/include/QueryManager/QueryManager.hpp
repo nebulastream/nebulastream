@@ -24,7 +24,6 @@
 #include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 class LogicalPlan;

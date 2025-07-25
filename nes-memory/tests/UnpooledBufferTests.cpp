@@ -33,9 +33,11 @@ namespace
 struct TestData
 {
     explicit TestData(const size_t neededSize) : neededSize(neededSize) { }
+
     size_t neededSize;
     std::optional<TupleBuffer> buffer;
 };
+
 std::vector<TestData> createRandomSizeAllocations(const size_t numberOfRandomAllocationSizes, const size_t min, const size_t max)
 {
     PRECONDITION(min < max, "min {} > max {}", min, max);
@@ -56,7 +58,6 @@ std::vector<TestData> createRandomSizeAllocations(const size_t numberOfRandomAll
 
     return randomSizeAllocations;
 }
-
 
 void runAllocations(
     const size_t numberOfRandomAllocationSizes,
@@ -112,7 +113,6 @@ void runAllocations(
 
 }
 
-
 TEST(UnpooledBufferTests, SingleUnpooledBuffer)
 {
     constexpr auto numberOfRandomAllocationSizes = 1;
@@ -131,7 +131,6 @@ TEST(UnpooledBufferTests, MultipleUnpooledBuffer)
     runAllocations(numberOfRandomAllocationSizes, minAllocationSize, maxAllocationSize, numberOfThreads);
 }
 
-
 TEST(UnpooledBufferTests, MultipleUnpooledBufferLargeSizes)
 {
     constexpr auto numberOfRandomAllocationSizes = 1000;
@@ -140,7 +139,6 @@ TEST(UnpooledBufferTests, MultipleUnpooledBufferLargeSizes)
     constexpr auto numberOfThreads = 1;
     runAllocations(numberOfRandomAllocationSizes, minAllocationSize, maxAllocationSize, numberOfThreads);
 }
-
 
 TEST(UnpooledBufferTests, MultipleUnpooledBufferMultithreaded)
 {

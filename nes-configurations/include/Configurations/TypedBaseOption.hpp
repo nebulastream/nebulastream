@@ -133,6 +133,7 @@ const T& TypedBaseOption<T>::getDefaultValue() const
 {
     return defaultValue;
 }
+
 template <class T>
 void TypedBaseOption<T>::clear()
 {

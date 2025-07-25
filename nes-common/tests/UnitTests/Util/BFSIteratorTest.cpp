@@ -26,6 +26,7 @@ class TestNode
 {
 public:
     explicit TestNode(uint64_t id) : id(id) { }
+
     explicit TestNode(uint64_t id, std::vector<TestNode> children) : id(id), children(std::move(children)) { }
 
     [[nodiscard]] uint64_t getId() const { return id; }

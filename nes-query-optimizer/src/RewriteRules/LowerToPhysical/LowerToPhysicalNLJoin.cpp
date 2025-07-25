@@ -83,19 +83,21 @@ public:
                 return std::make_unique<IngestionTimeFunction>();
         }
     }
+
     static TimestampField ingestionTime() { return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME}; }
+
     static TimestampField eventTime(std::string fieldName, const Windowing::TimeUnit& tm) { return {std::move(fieldName), tm, EVENT_TIME}; }
 
 private:
     std::string fieldName;
     Windowing::TimeUnit unit;
     TimeFunctionType timeFunctionType;
+
     TimestampField(std::string fieldName, const Windowing::TimeUnit& unit, TimeFunctionType timeFunctionType)
         : fieldName(std::move(fieldName)), unit(unit), timeFunctionType(timeFunctionType)
     {
     }
 };
-
 
 static std::tuple<TimestampField, TimestampField>
 getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
