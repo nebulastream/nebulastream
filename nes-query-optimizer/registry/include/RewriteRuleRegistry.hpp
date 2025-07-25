@@ -24,6 +24,7 @@ namespace NES
 {
 
 using RewriteRuleRegistryReturnType = std::unique_ptr<AbstractRewriteRule>;
+
 struct RewriteRuleRegistryArguments
 {
     QueryExecutionConfiguration conf;

@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -97,7 +98,6 @@ SerializableFunction ExpLogicalFunction::serialize() const
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
     return serializedFunction;
 }
-
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

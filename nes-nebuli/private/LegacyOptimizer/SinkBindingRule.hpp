@@ -24,6 +24,7 @@ class SinkBindingRule
 {
 public:
     explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+
     void apply(LogicalPlan& queryPlan) const;
 
 private:

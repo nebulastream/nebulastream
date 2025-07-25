@@ -30,6 +30,7 @@ class HashMapRef
 {
 public:
     explicit HashMapRef(const nautilus::val<HashMap*>& hashMapRef) : hashMapRef(hashMapRef) { }
+
     virtual ~HashMapRef() = default;
 
     /// This function performs a lookup to the hash map with a record.

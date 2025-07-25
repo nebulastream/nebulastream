@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <Functions/ComparisonFunctions/GreaterEqualsPhysicalFunction.hpp>
+
 #include <utility>
 #include <vector>
-#include <Functions/ComparisonFunctions/GreaterEqualsPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-
 
 namespace NES
 {

@@ -26,6 +26,7 @@ namespace NES
 {
 
 using LogicalFunctionRegistryReturnType = LogicalFunction;
+
 struct LogicalFunctionRegistryArguments
 {
     DescriptorConfig::Config config;

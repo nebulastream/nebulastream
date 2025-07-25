@@ -100,6 +100,7 @@ void FieldOffsets::writeOffsetAt(const FieldIndex offset, const FieldIndex idx)
 {
     this->offsetBuffers.back()[currentIndex + idx] = offset;
 }
+
 void FieldOffsets::markNoTupleDelimiters()
 {
     this->offsetOfFirstTuple = std::numeric_limits<FieldIndex>::max();

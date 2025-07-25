@@ -26,7 +26,6 @@ public:
     virtual ~AbstractHashMapEntry() = default;
 };
 
-
 class HashMap
 {
 public:

@@ -52,15 +52,18 @@ std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const
         explain(deserialized, ExplainVerbosity::Debug));
     return std::unexpected(exception);
 }
+
 void LocalWorkerQuerySubmitter::startQuery(QueryId query)
 {
     worker.startQuery(query);
     ids.emplace(query);
 }
+
 void LocalWorkerQuerySubmitter::stopQuery(QueryId query)
 {
     worker.stopQuery(query, QueryTerminationType::Graceful);
 }
+
 void LocalWorkerQuerySubmitter::unregisterQuery(QueryId query)
 {
     worker.unregisterQuery(query);
@@ -111,25 +114,31 @@ std::vector<QuerySummary> LocalWorkerQuerySubmitter::finishedQueries()
         return results;
     }
 }
+
 LocalWorkerQuerySubmitter::LocalWorkerQuerySubmitter(const SingleNodeWorkerConfiguration& configuration) : worker(configuration)
 {
 }
+
 std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
     return QueryId(client.registerQuery(plan));
 }
+
 void RemoteWorkerQuerySubmitter::startQuery(const QueryId query)
 {
     client.start(query);
 }
+
 void RemoteWorkerQuerySubmitter::stopQuery(const QueryId query)
 {
     client.stop(query);
 }
+
 void RemoteWorkerQuerySubmitter::unregisterQuery(const QueryId query)
 {
     client.unregister(query);
 }
+
 QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(const QueryId query)
 {
     while (true)
@@ -142,6 +151,7 @@ QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(const QueryId q
         }
     }
 }
+
 std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
 {
     while (true)
@@ -169,6 +179,7 @@ std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
         return results;
     }
 }
+
 RemoteWorkerQuerySubmitter::RemoteWorkerQuerySubmitter(const std::string& serverURI)
     : client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()))
 {

@@ -937,7 +937,6 @@ TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
     test.stop();
 }
 
-
 TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
 {
     TestingHarness test;

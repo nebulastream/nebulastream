@@ -46,15 +46,18 @@ bool operator==(const LogicalSource& lhs, const LogicalSource& rhs)
 {
     return lhs.logicalSourceName == rhs.logicalSourceName && *lhs.schema == *rhs.schema;
 }
+
 bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
 {
     return !(lhs == rhs);
 }
 }
+
 uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& logicalSource) const noexcept
 {
     return std::hash<std::string>()(logicalSource.getLogicalSourceName());
 }
+
 std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSource)
 {
     return os << fmt::format("LogicalSource(name: {}, schema: {})", logicalSource.getLogicalSourceName(), *logicalSource.getSchema());

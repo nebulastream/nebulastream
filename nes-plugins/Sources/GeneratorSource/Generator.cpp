@@ -67,6 +67,7 @@ void Generator::addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> fi
     this->numFields++;
     this->fields.emplace_back(std::move(field));
 }
+
 /// TODO #355: Parse from YAML Nodes instead of a string
 void Generator::parseRawSchemaLine(std::string_view line)
 {

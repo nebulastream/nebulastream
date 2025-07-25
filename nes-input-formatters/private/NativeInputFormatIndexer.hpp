@@ -31,6 +31,7 @@ class NativeMetaData
 {
 public:
     NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
+
     static std::string_view getTupleDelimitingBytes() { return ""; }
 };
 

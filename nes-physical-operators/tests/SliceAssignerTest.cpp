@@ -35,6 +35,7 @@ struct SlicesForTimestamp
         : slice(sliceStart, sliceEnd), timestamp(timestamp)
     {
     }
+
     Slice slice;
     Timestamp timestamp;
 };
@@ -80,7 +81,6 @@ public:
         }
     }
 };
-
 
 TEST_F(SliceAssignerTest, getSliceDividerSize10Slide2)
 {

@@ -21,7 +21,6 @@ namespace NES
 {
 class SerializableDataType;
 
-
 /// The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
 /// corresponding protobuffer object.
 class DataTypeSerializationUtil

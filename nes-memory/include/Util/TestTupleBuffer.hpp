@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <Runtime/TupleBuffer.hpp>
+
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -25,7 +27,6 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -42,7 +43,6 @@ concept ContainsString = requires { requires(std::is_same_v<std::string, Types> 
 
 template <class Type>
 concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
-
 
 /// The DynamicField allows to read and write a field at a
 /// specific address and a specific data type.

@@ -44,7 +44,6 @@
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
-
 int main(int argc, char** argv)
 {
     CPPTRACE_TRY

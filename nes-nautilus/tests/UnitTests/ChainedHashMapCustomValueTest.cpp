@@ -41,6 +41,7 @@
 #include <NautilusTestUtils.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+
 namespace NES::Nautilus::Interface
 {
 class ChainedHashMapCustomValueTest

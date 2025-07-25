@@ -18,7 +18,6 @@
 #include <ErrorHandling.hpp>
 #include <SystestExecutor.hpp>
 
-
 int main(int argc, const char** argv)
 {
     auto startTime = std::chrono::high_resolution_clock::now();

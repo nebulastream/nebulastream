@@ -46,14 +46,17 @@ QueryId Nebuli::registerQuery(const LogicalPlan& plan)
 {
     return QueryId{grpcClient->registerQuery(plan)};
 }
+
 void Nebuli::startQuery(const QueryId queryId)
 {
     grpcClient->start(queryId);
 }
+
 void Nebuli::stopQuery(const QueryId queryId)
 {
     grpcClient->stop(queryId);
 }
+
 void Nebuli::unregisterQuery(const QueryId queryId)
 {
     grpcClient->unregister(queryId);

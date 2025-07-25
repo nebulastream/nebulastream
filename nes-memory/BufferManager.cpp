@@ -105,12 +105,12 @@ void BufferManager::destroy()
     }
 }
 
-
 std::shared_ptr<BufferManager> BufferManager::create(
     uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
 {
     return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
 }
+
 BufferManager::~BufferManager()
 {
     BufferManager::destroy();
@@ -220,7 +220,6 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
-
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {

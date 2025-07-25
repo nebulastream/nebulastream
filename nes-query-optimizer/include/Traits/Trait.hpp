@@ -144,6 +144,7 @@ private:
     struct Model : Concept
     {
         TraitType data;
+
         explicit Model(TraitType d) : data(std::move(d)) { }
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data); }
@@ -169,6 +170,7 @@ private:
         [[nodiscard]] size_t hash() const override { return data.hash(); }
 
         [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
+
         [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
     };
 

@@ -31,11 +31,11 @@
 #include <yaml-cpp/yaml.h> /// NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 
-
 namespace NES::SystestSourceYAMLBinder
 {
 struct SchemaField;
 }
+
 namespace
 {
 NES::DataType stringToFieldType(const std::string& fieldNodeType)
@@ -64,6 +64,7 @@ struct convert<NES::SystestSourceYAMLBinder::SchemaField>
         return true;
     }
 };
+
 template <>
 struct convert<NES::SystestSourceYAMLBinder::Sink>
 {
@@ -75,6 +76,7 @@ struct convert<NES::SystestSourceYAMLBinder::Sink>
         return true;
     }
 };
+
 template <>
 struct convert<NES::SystestSourceYAMLBinder::LogicalSource>
 {
@@ -85,6 +87,7 @@ struct convert<NES::SystestSourceYAMLBinder::LogicalSource>
         return true;
     }
 };
+
 template <>
 struct convert<NES::SystestSourceYAMLBinder::PhysicalSource>
 {
@@ -96,6 +99,7 @@ struct convert<NES::SystestSourceYAMLBinder::PhysicalSource>
         return true;
     }
 };
+
 template <>
 struct convert<NES::SystestSourceYAMLBinder::QueryConfig>
 {

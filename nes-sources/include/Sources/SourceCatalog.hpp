@@ -28,7 +28,6 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-
 namespace NES
 {
 /// @brief The source catalog handles the mapping of logical to physical sources.

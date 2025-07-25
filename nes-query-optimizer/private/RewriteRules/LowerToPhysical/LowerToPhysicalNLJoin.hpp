@@ -24,6 +24,7 @@ namespace NES
 struct LowerToPhysicalNLJoin : AbstractRewriteRule
 {
     explicit LowerToPhysicalNLJoin(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

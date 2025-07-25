@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <Functions/ComparisonFunctions/GreaterPhysicalFunction.hpp>
+
 #include <utility>
 #include <vector>
-#include <Functions/ComparisonFunctions/GreaterPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-
 
 namespace NES
 {
@@ -37,6 +37,7 @@ GreaterPhysicalFunction::GreaterPhysicalFunction(PhysicalFunction leftPhysicalFu
     : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
+
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterGreaterPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {

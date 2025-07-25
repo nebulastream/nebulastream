@@ -63,4 +63,5 @@ private:
     LogicalFunction logicalFunction;
 };
 }
+
 FMT_OSTREAM(NES::FieldAssignmentLogicalFunction);

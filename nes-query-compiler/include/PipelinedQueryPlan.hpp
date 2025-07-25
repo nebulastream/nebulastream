@@ -21,7 +21,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Pipeline.hpp>
 
-
 namespace NES
 {
 /// Represents a query plan composed of interconnected pipelines.
@@ -53,4 +52,5 @@ private:
     std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }
+
 FMT_OSTREAM(NES::PipelinedQueryPlan);

@@ -69,7 +69,9 @@ public:
     [[nodiscard]] std::string getValueAsString() const { return std::to_string(value); };
 
     [[nodiscard]] const std::string& getName() const { return name; }
+
     [[nodiscard]] T getValue() const { return value; };
+
     void setValue(T value) { this->value = value; }
 
     void setValueIfDefined(YAML::Node yamlNode)
@@ -81,6 +83,7 @@ public:
     }
 
     [[nodiscard]] std::string getDescription() const { return description; };
+
     [[nodiscard]] T getDefaultValue() const { return defaultValue; };
 
     bool equals(const std::any& other)

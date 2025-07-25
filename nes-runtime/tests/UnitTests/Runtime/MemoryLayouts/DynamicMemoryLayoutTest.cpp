@@ -45,6 +45,7 @@ public:
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
+
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();

@@ -37,11 +37,13 @@ namespace ErrorCodeDetail
 {
 enum ErrorCode
 {
+
 #define EXCEPTION(name, code, msg) name = (code),
 #include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 };
 }
+
 using ErrorCode = ErrorCodeDetail::ErrorCode;
 
 /// This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
@@ -66,7 +68,6 @@ private:
     std::string message;
     ErrorCode errorCode;
 };
-
 
 /// This macro is used to define exceptions in <ExceptionDefinitions.hpp>
 /// @param name The name of the exception

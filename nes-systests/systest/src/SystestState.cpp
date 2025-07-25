@@ -92,12 +92,10 @@ std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& work
     return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
 }
 
-
 std::filesystem::path SystestQuery::resultFile() const
 {
     return resultFile(workingDir, testName, queryIdInFile);
 }
-
 
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {
@@ -124,7 +122,6 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     }
     return testFiles;
 }
-
 
 std::vector<TestGroup> readGroups(const TestFile& testfile)
 {
@@ -172,7 +169,6 @@ TestFile::TestFile(
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
-
 struct TestGroupFiles
 {
     std::string name;
@@ -199,7 +195,6 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     }
     return testGroups;
 }
-
 
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {

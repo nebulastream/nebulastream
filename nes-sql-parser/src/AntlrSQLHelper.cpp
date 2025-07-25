@@ -27,10 +27,12 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
+
 std::vector<LogicalFunction>& AntlrSQLHelper::getWhereClauses()
 {
     return whereClauses;
 }
+
 std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 {
     return havingClauses;
@@ -41,10 +43,12 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
+
 void AntlrSQLHelper::addWhereClause(LogicalFunction expressionNode)
 {
     this->whereClauses.emplace_back(std::move(expressionNode));
 }
+
 void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
 {
     this->havingClauses.emplace_back(std::move(expressionNode));

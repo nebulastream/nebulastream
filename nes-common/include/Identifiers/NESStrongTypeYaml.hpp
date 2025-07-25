@@ -29,6 +29,7 @@ template <typename T, typename Tag, T invalid, T initial>
 struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
 {
     explicit as_if(const Node& node_) : node(node_) { }
+
     const Node& node;
 
     NES::NESStrongType<T, Tag, invalid, initial> operator()() const

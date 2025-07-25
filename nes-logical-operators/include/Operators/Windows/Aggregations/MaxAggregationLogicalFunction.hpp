@@ -20,6 +20,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+
 namespace NES
 {
 

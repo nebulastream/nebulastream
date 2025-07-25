@@ -70,4 +70,5 @@ private:
     TimeUnit unit;
 };
 }
+
 FMT_OSTREAM(NES::Windowing::TimeCharacteristic);

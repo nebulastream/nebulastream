@@ -87,6 +87,7 @@ public:
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");
     }
+
     void SetUp() override { BaseUnitTest::SetUp(); }
 
     void TearDown() override { BaseUnitTest::TearDown(); }
@@ -145,6 +146,7 @@ public:
             = (fileSizeInBytes / testConfig.sizeOfRawBuffers) + static_cast<uint64_t>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
         return numberOfExpectedRawBuffers;
     }
+
     SetupResult setupTest(
         const TestConfig& testConfig,
         InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer>& rawBuffers,
@@ -341,7 +343,6 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .sizeOfFormattedBuffers = 4096});
 }
 
-
 /// Simple test that confirms that we forward already formatted buffers without spanning tuples correctly
 TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 {
@@ -358,4 +359,5 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 }
 
 }
+
 /// NOLINTEND(readability-magic-numbers)

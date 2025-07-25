@@ -31,16 +31,22 @@ template <typename T>
 struct alignas(hardware_constructive_interference_size) AtomicCounter
 {
     explicit AtomicCounter(T defValue = 0) : counter(defValue) { }
+
     AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) { }
+
     AtomicCounter<T>& operator=(const AtomicCounter<T>& other)
     {
         counter.store(other.counter.load());
         return *this;
     }
+
     operator T() { return counter.load(); }
+
     T fetch_add(T delta) { return counter.fetch_add(delta); }
+
     std::atomic<T> counter;
 };
+
 static_assert(sizeof(AtomicCounter<uint64_t>) == 64);
 
 }

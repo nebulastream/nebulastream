@@ -20,7 +20,6 @@
 #include <argparse/argparse.hpp>
 #include <Checksum.hpp>
 
-
 int main(int argc, char* argv[])
 {
     argparse::ArgumentParser program(

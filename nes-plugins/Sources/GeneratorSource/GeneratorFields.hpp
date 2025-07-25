@@ -49,6 +49,7 @@ public:
 };
 
 constexpr auto NUM_PARAMETERS_SEQUENCE_FIELD = 5;
+
 /// @brief generates sequential records based on the sequence start, end and step size
 class SequenceField : public BaseStoppableGeneratorField
 {
@@ -71,6 +72,7 @@ private:
 };
 
 constexpr auto NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD = 4;
+
 /// @brief generates normally distríbuted floating point records
 class NormalDistributionField final : public BaseGeneratorField
 {
@@ -92,6 +94,7 @@ struct FieldValidator
     std::string_view identifier;
     std::function<void(std::string_view)> validator; /// Validator function throws an Exception if field is invalid
 };
+
 /// @brief Array containing functions paired with the fields identifier used to validate the fields syntax
 static const std::array<FieldValidator, 2> Validators
     = {{{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
@@ -107,4 +110,5 @@ static const std::unordered_multimap<std::string_view, DataType::Type> FieldName
        {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT64},
        {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT32}};
 }
+
 /// NOLINTEND(cert-err58-cpp)

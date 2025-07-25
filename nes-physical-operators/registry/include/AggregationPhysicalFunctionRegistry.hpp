@@ -28,6 +28,7 @@ namespace NES
 {
 
 using AggregationPhysicalFunctionRegistryReturnType = std::shared_ptr<AggregationPhysicalFunction>;
+
 struct AggregationPhysicalFunctionRegistryArguments
 {
     DataType inputType;
@@ -45,7 +46,6 @@ class AggregationPhysicalFunctionRegistry : public BaseRegistry<
 {
 };
 }
-
 
 #define INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
 #include <AggregationPhysicalFunctionGeneratedRegistrar.inc>

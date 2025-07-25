@@ -60,7 +60,9 @@ public:
     bool hasMultipleAttributes = false;
     bool hasUnnamedAggregation = false;
     bool asterisk = false;
+
     [[nodiscard]] bool isInFunctionCall() const { return not functionBuilder.empty(); }
+
     [[nodiscard]] bool isInAggFunction() const { return not windowAggs.empty(); }
 
     /// Containers that hold state of specific objects that we create during parsing.

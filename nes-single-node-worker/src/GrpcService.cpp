@@ -67,6 +67,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     }
     return {grpc::INTERNAL, "unknown exception"};
 }
+
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
@@ -85,6 +86,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
     }
     return {grpc::INTERNAL, "unkown exception"};
 }
+
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
@@ -103,6 +105,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
     }
     return {grpc::INTERNAL, "unkown exception"};
 }
+
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
