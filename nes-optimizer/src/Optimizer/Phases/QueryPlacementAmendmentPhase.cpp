@@ -70,8 +70,9 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
 }
 
 DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
+//    NES_ERROR("Topology {}",topology->toString());
     NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}", sharedQueryPlan->getId());
-    // NES_ERROR("{}", globalExecutionPlan->getAsString())
+//    NES_ERROR("{}", globalExecutionPlan->getAsString())
 
     auto startPlacementAmendmentTime = getTimestamp();
     uint64_t deploymentTime = 0;
@@ -82,7 +83,6 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
     NES_DEBUG("Placement strategy {}", magic_enum::enum_name(placementStrategy));
-    // NES_ERROR("Topology {}",topology->toString());
     NES_DEBUG("QueryPlacementAmendmentPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
     // Get current time stamp

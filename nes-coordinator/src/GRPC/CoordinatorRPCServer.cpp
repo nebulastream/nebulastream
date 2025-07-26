@@ -85,6 +85,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
 
     NES_DEBUG("Received worker registration request {}", registrationRequest->DebugString());
     auto configWorkerId = WorkerId(registrationRequest->workerid());
+    NES_ERROR("worker id to be register {}", configWorkerId.getRawValue());
     auto address = registrationRequest->address();
     auto grpcPort = registrationRequest->grpcport();
     auto dataPort = registrationRequest->dataport();
@@ -110,8 +111,6 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         coordinatorHealthCheckService->removeNodeFromHealthCheck(configWorkerId);
         // Remove the old topology node
         topology->unregisterWorker(configWorkerId);
-    } else {
-        configWorkerId = INVALID_WORKER_NODE_ID;
     }
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
@@ -121,6 +120,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());
+
+    NES_ERROR("got the worker id {}", workerId.getRawValue());
 
     if (!topology->addGeoLocation(workerId, std::move(geoLocation))) {
         NES_ERROR("Unable to update geo location of the topology");

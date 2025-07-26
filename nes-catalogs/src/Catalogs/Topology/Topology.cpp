@@ -101,10 +101,10 @@ WorkerId Topology::registerWorker(WorkerId workerId,
 
     // if worker is started with a workerId
     // then check if invalid worker id or an active worker with given workerId already exists
-    if (workerId == INVALID_WORKER_NODE_ID || nodeWithWorkerIdExists(workerId)) {
-        NES_WARNING(" worker id {} either invalid or a node with this id already "
-                    "exists. A new worker id will be assigned.",
-                    workerId);
+    if (workerId == INVALID_WORKER_NODE_ID) {
+        NES_ERROR("Worker id {} either invalid or a node with this id already "
+                  "exists. A new worker id will be assigned.",
+                  workerId);
         workerId = getNextWorkerId();
     }
 
