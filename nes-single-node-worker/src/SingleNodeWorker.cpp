@@ -33,7 +33,9 @@
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <GoogleEventTracePrinter.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -46,14 +48,26 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener), Util::copyPtr(listener)).build())
-    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
-    , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
-    , configuration(configuration)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration) : configuration(configuration), listener(std::make_shared<CompositeStatisticListener>())
 {
+    auto printingStatisticsListener = std::make_shared<PrintingStatisticListener>(
+        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+    listener->addListener(printingStatisticsListener);
+    listener->addSystemListener(printingStatisticsListener);
+
+    if (configuration.enableGoogleEventTrace.getValue())
+    {
+        auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
+            fmt::format("GoogleEventTrace_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", std::chrono::system_clock::now(), ::getpid()));
+        listener->addListener(googleTracePrinter);
+        listener->addSystemListener(googleTracePrinter);
+    }
+
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener), Util::copyPtr(listener)).build();
+
+    optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
     if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
         < configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue())
     {
