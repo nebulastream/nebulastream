@@ -31,7 +31,7 @@
 
 namespace NES
 {
-struct PrintingStatisticListener;
+struct CompositeStatisticListener;
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
