@@ -105,6 +105,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     /// endless mode
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
 
+    /// Statistics options
+    program.add_argument("--google-trace").flag().help("enable Google Event Trace logging for local single node worker");
+
     /// single node worker config
     program.add_argument("--")
         .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
@@ -344,6 +347,12 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.endlessMode = true;
     }
 
+    if (program.is_used("--google-trace"))
+    {
+        config.enableGoogleEventTrace = true;
+        std::cout << "Google Event Trace enabled. Trace files will be created at: file://" << std::filesystem::current_path().string() << std::endl;
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << Systest::loadTestFileMap(config);
@@ -373,6 +382,11 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
         singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
     }
 
+    /// Enable Google trace if requested
+    if (config.enableGoogleEventTrace.getValue())
+    {
+        singleNodeWorkerConfiguration.enableGoogleEventTrace = true;
+    }
 
     std::mt19937 rng(std::random_device{}());
 
@@ -535,6 +549,13 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
+
+            /// Enable Google trace if requested
+            if (config.enableGoogleEventTrace.getValue())
+            {
+                singleNodeWorkerConfiguration.enableGoogleEventTrace = true;
+            }
+
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;

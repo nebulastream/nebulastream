@@ -64,6 +64,13 @@ connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
     BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
 
+    /// Enable Google Event Trace logging (Chrome tracing format) for single node worker
+    BoolOption enableGoogleEventTrace
+        = {"enableGoogleEventTrace",
+           "false",
+           "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis when using "
+           "local single node worker."};
+
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:
