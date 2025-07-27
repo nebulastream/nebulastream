@@ -40,8 +40,14 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
+    /// Enable Replay logging (stores all events with input data for replay)
+    BoolOption enableReplayLogging
+        = {"enableReplayLogging",
+           "false",
+           "Enable Replay logging that stores all events and their input data in a format suitable for replaying the exact sequence of actions."};
+
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &enableGoogleEventTrace}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &enableGoogleEventTrace, &enableReplayLogging}; }
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 

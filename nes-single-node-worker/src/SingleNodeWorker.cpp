@@ -35,6 +35,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <ReplayPrinter.hpp>
 #include <CompositeStatisticListener.hpp>
 
 namespace NES
@@ -59,6 +60,14 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             fmt::format("GoogleEventTrace_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", std::chrono::system_clock::now(), ::getpid()));
         listener->addListener(googleTracePrinter);
         listener->addSystemListener(googleTracePrinter);
+    }
+
+    if (configuration.enableReplayLogging.getValue())
+    {
+        auto replayPrinter = std::make_shared<ReplayPrinter>(
+            fmt::format("ReplayData_{:%Y-%m-%d_%H-%M-%S}_{:d}", std::chrono::system_clock::now(), ::getpid()));
+        listener->addListener(replayPrinter);
+        listener->addSystemListener(replayPrinter);
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build();

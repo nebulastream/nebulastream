@@ -13,15 +13,25 @@
 */
 
 #pragma once
+
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include <variant>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <DataTypes/Schema.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
 using TaskId = NESStrongType<size_t, struct TaskId_, 0, 1>;
+using PipelineId = NESStrongType<size_t, struct PipelineId_, 0, 1>;
+
 using ChronoClock = std::chrono::system_clock;
 
 struct EventBase
@@ -34,31 +44,59 @@ struct EventBase
     QueryId queryId = INVALID<QueryId>;
 };
 
+/// Structure to hold serialized tuple data for replay
+struct TupleData
+{
+    std::vector<uint8_t> rawData;  /// Raw bytes from TupleBuffer
+    uint64_t numberOfTuples;       /// Number of tuples in the buffer
+    uint64_t bufferSize;           /// Total buffer size in bytes
+    
+    TupleData() = default;
+    TupleData(const Memory::TupleBuffer& buffer)
+        : numberOfTuples(buffer.getNumberOfTuples()), bufferSize(buffer.getBufferSize())
+    {
+        /// Copy the raw data from the buffer
+        const uint8_t* bufferPtr = buffer.getBuffer<uint8_t>();
+        const uint64_t bufferSize = buffer.getBufferSize();
+        rawData.assign(bufferPtr, bufferPtr + bufferSize);
+    }
+};
+
 struct TaskExecutionStart : EventBase
 {
-    TaskExecutionStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, size_t numberOfTuples)
-        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples)
+    /// Constructor with tuple data for replay
+    TaskExecutionStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, 
+                      size_t numberOfTuples, TupleData tupleData)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples), 
+          tupleData(std::move(tupleData))
     {
     }
+    
     TaskExecutionStart() = default;
 
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples;
+    TupleData tupleData;  /// Tuple data for replay
 };
 
 struct TaskEmit : EventBase
 {
-    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId, size_t numberOfTuples)
-        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId), numberOfTuples(numberOfTuples)
+    /// Constructor with tuple data for replay
+    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId, 
+             size_t numberOfTuples, TupleData tupleData)
+        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId), 
+          numberOfTuples(numberOfTuples), tupleData(std::move(tupleData))
     {
     }
+    
     TaskEmit() = default;
 
     PipelineId fromPipeline = INVALID<PipelineId>;
     PipelineId toPipeline = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples{};
+    TupleData tupleData;  /// Tuple data for replay
 };
 
 struct TaskExecutionComplete : EventBase

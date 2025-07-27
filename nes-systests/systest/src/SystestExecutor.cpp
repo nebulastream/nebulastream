@@ -107,6 +107,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// Statistics options
     program.add_argument("--google-trace").flag().help("enable Google Event Trace logging for local single node worker");
+    program.add_argument("--replay-logging").flag().help("enable Replay logging for local single node worker");
 
     /// single node worker config
     program.add_argument("--")
@@ -353,6 +354,12 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         std::cout << "Google Event Trace enabled. Trace files will be created at: file://" << std::filesystem::current_path().string() << std::endl;
     }
 
+    if (program.is_used("--replay-logging"))
+    {
+        config.enableReplayLogging = true;
+        std::cout << "Replay logging enabled. Replay files will be created in directory: file://" << std::filesystem::current_path().string() << std::endl;
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << Systest::loadTestFileMap(config);
@@ -386,6 +393,12 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     if (config.enableGoogleEventTrace.getValue())
     {
         singleNodeWorkerConfiguration.enableGoogleEventTrace = true;
+    }
+
+    /// Enable replay logging if requested
+    if (config.enableReplayLogging.getValue())
+    {
+        singleNodeWorkerConfiguration.enableReplayLogging = true;
     }
 
     std::mt19937 rng(std::random_device{}());
@@ -554,6 +567,12 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             if (config.enableGoogleEventTrace.getValue())
             {
                 singleNodeWorkerConfiguration.enableGoogleEventTrace = true;
+            }
+
+            /// Enable replay logging if requested
+            if (config.enableReplayLogging.getValue())
+            {
+                singleNodeWorkerConfiguration.enableReplayLogging = true;
             }
 
             if (config.benchmark)

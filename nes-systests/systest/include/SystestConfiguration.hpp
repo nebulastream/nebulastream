@@ -71,6 +71,13 @@ connections.  Valid values include dns:///localhost:1234,
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis when using "
            "local single node worker."};
 
+    /// Enable Replay logging (stores all events with input data for replay) for single node worker
+    BoolOption enableReplayLogging
+        = {"enableReplayLogging",
+           "false",
+           "Enable Replay logging that stores all events and their input data in a format suitable for replaying the exact sequence of actions when using "
+           "local single node worker."};
+
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:

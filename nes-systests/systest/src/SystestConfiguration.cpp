@@ -21,18 +21,21 @@ namespace NES
 {
 std::vector<BaseOption*> SystestConfiguration::getOptions()
 {
-    return {
-        &testsDiscoverDir,
-        &directlySpecifiedTestFiles,
-        &testFileExtension,
-        &workingDir,
-        &randomQueryOrder,
-        &numberConcurrentQueries,
-        &testGroups,
-        &testDataDir,
-        &endlessMode,
-        &excludeGroups,
-        &grpcAddressUri,
-        &enableGoogleEventTrace};
+    return {&testDataDir,
+            &configDir,
+            &workingDir,
+            &logFilePath,
+            &grpcAddressUri,
+            &workerConfig,
+            &queryCompilerConfig,
+            &numberConcurrentQueries,
+            &randomQueryOrder,
+            &endlessMode,
+            &benchmark,
+            &testGroups,
+            &excludeGroups,
+            &grpcAddressUri,
+            &enableGoogleEventTrace,
+            &enableReplayLogging};
 }
 }
