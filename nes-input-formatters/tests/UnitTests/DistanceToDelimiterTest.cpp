@@ -324,13 +324,14 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                 };
 
                 const auto getTupleDelimiter
-                    = [&boolDistribution, &sequenceNumberGen](const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize)
+                    = [&boolDistribution, &sequenceNumberGen, &NUM_THREADS](const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize)
                 {
                     const bool isTupleDelimiter = boolDistribution(sequenceNumberGen);
+                    const auto maxIterationsWithoutDelimiter = (ringBufferSize - NUM_THREADS) / NUM_THREADS;
                     /// Make sure there never is a sequence of 'no tuple delimiters' that is larger than the size of the ringbuffer - 1
                     /// As long as the size of the ring buffer is larger than the number of threads, this avoids a deadlock, where the
                     /// ring buffer has no, or only a single tuple delimiter and all sequence numbers are stuck in the prior iteration.
-                    if (not isTupleDelimiter and noTupleDelimiterSeqCount + 1 >= (ringBufferSize - 1))
+                    if (not isTupleDelimiter and noTupleDelimiterSeqCount + 1 >= maxIterationsWithoutDelimiter)
                     {
                         return true;
                     }
@@ -360,7 +361,6 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                             .completedLeading = false,
                             .completedTrailing = false,
                             .abaItNumber = abaItNumber};
-                        // std::atomic_thread_fence(std::memory_order_seq_cst);
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -386,7 +386,6 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                             .completedLeading = false,
                             .completedTrailing = false,
                             .abaItNumber = abaItNumber};
-                        // std::atomic_thread_fence(std::memory_order_seq_cst);
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
@@ -470,7 +469,7 @@ int main()
 {
     ///
     // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
-    executeRingBufferExperiment(8, 100000, 128, 0.1);
+    executeRingBufferExperiment(2, 1000, 16, 0.1);
     // executeExperiment(40, 1000000);
     // syncLessIncreaseExperiment(8, 1000000);
     return 0;
