@@ -56,6 +56,28 @@ void threadRoutine(
                 },
                 [&](StartQuerySystemEvent startQuery)
                 { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
+                [&](StopQuerySystemEvent stopQuery)
+                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Stop Query {}\n", stopQuery.timestamp, stopQuery.queryId); },
+                [&](QueryStart queryStart)
+                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Query {} Started\n", queryStart.timestamp, queryStart.queryId); },
+                [&](QueryStop queryStop)
+                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Query {} Stopped\n", queryStop.timestamp, queryStop.queryId); },
+                [&](PipelineStart pipelineStart)
+                {
+                    file << fmt::format(
+                        "{:%Y-%m-%d %H:%M:%S} Pipeline {} for Query {} Started\n",
+                        pipelineStart.timestamp,
+                        pipelineStart.pipelineId,
+                        pipelineStart.queryId);
+                },
+                [&](PipelineStop pipelineStop)
+                {
+                    file << fmt::format(
+                        "{:%Y-%m-%d %H:%M:%S} Pipeline {} for Query {} Stopped\n",
+                        pipelineStop.timestamp,
+                        pipelineStop.pipelineId,
+                        pipelineStop.queryId);
+                },
                 [&](TaskExecutionStart taskStartEvent)
                 {
                     file << fmt::format(
