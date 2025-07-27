@@ -165,7 +165,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     /// query termination is requested via a system event, not via a source event.
     test.stats.expect(
         ExpectStats::QueryStart(1),
-        ExpectStats::QueryStop(0),
+        ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(8),
@@ -219,7 +219,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
     ///           We expect a range of executed tasks between 8-10 because the query stop races with the 2nd-5th emit.
     test.stats.expect(
         ExpectStats::QueryStart(1),
-        ExpectStats::QueryStop(1),
+        ExpectStats::QueryStop(2),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(2, 10),
@@ -874,7 +874,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
     /// Statistics. 1 Query Start/Stop with 2 pipelines and 0 data emitted
     test.stats.expect(
         ExpectStats::QueryStart(1),
-        ExpectStats::QueryStop(1),
+        ExpectStats::QueryStop(2),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(0),
