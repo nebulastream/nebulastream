@@ -175,6 +175,12 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread();
 
+    /// Emit a QueryStop event for 'natural query completion'
+    void emitQueryStopEvent(QueryId queryId)
+    {
+        statistic->onEvent(QueryStop{WorkerThread::id, queryId});
+    }
+
 
     /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
     std::function<void(Exception)> injectQueryFailureUnsafe(RunningQueryPlanNode* node, std::function<void(Exception)> failure)
@@ -758,8 +764,8 @@ void QueryCatalog::start(
     const std::scoped_lock lock(mutex);
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
-        RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
-            : listener(std::move(listener)), queryId(queryId)
+        RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, QueryLifetimeController& controller)
+            : listener(std::move(listener)), queryId(queryId), controller(controller)
         {
         }
 
@@ -838,15 +844,24 @@ void QueryCatalog::start(
                         return Terminated{Terminated::Stopped};
                     });
                 listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
+                
+                /// Emit QueryStop event for natural query completion
+                /// This ensures that queries that complete naturally (e.g., when all sources emit EoS)
+                /// also emit QueryStop events for statistics tracking
+                if (auto threadPool = dynamic_cast<ThreadPool*>(&controller))
+                {
+                    threadPool->emitQueryStopEvent(queryId);
+                }
             }
         }
 
         std::shared_ptr<AbstractQueryStatusListener> listener;
         QueryId queryId;
         WeakStateRef state;
+        QueryLifetimeController& controller;
     };
 
-    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener);
+    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, controller);
     const auto startTimestamp = std::chrono::system_clock::now();
     auto state = std::make_shared<StateRef>(Reserved{});
     this->queryStates.emplace(queryId, state);
