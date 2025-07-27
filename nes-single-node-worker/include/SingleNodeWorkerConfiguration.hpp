@@ -16,7 +16,6 @@
 #include <string>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/PrintingVisitor.hpp>
 #include <Configurations/ScalarOption.hpp>
 
 namespace NES
@@ -35,8 +34,14 @@ please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
 
+    /// Enable Google Event Trace logging (Chrome tracing format)
+    BoolOption enableGoogleEventTrace
+        = {"enableGoogleEventTrace",
+           "false",
+           "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
+
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &enableGoogleEventTrace}; }
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 
