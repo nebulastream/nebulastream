@@ -73,9 +73,9 @@ struct TupleDelimiterFastLaneRB
     // -> could model those together where we can exclude that there is concurrent write access (e.g., hasTupleDelimiter/noTupleDelimiter)
     uint8_t hasTupleDelimiter = false;
     uint8_t noTupleDelimiter = false;
-    uint32_t abaItNumber = 0;
     bool completedLeading = true;
     bool completedTrailing = true;
+    uint32_t abaItNumber = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const TupleDelimiterFastLaneRB& interval)
     {
@@ -222,11 +222,11 @@ uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
 }
 
 template <bool IsLeading>
-bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<TupleDelimiterFastLaneRB>& tds)
+bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto tdVal = tds[tdsIdx];
+    const auto tdVal = tds[tdsIdx].load();
     // Todo: is grossly wrong <-- need to adjust 'IsLeading' aware and also when wrapping to MAX_VALUE
     // -> only adjust if wrapping around
     if (IsLeading)
@@ -239,11 +239,11 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
 }
 
 template <bool IsLeading>
-bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<TupleDelimiterFastLaneRB>& tds)
+bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto tdVal = tds[tdsIdx];
+    const auto tdVal = tds[tdsIdx].load();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
@@ -253,18 +253,24 @@ bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance
     return tdVal.hasTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
 }
 
-void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<TupleDelimiterFastLaneRB>& ringBuffer)
+void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<std::atomic<TupleDelimiterFastLaneRB>>& ringBuffer)
 {
-    ringBuffer[firstDelimiter].completedTrailing = true;
+    auto newFirstEntry = ringBuffer[firstDelimiter].load();
+    newFirstEntry.completedTrailing = true;
+    ringBuffer[firstDelimiter] = newFirstEntry;
 
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
     {
-        ringBuffer[nextDelimiter].completedLeading = true;
-        ringBuffer[nextDelimiter].completedTrailing = true;
+        auto newMiddleEntry = ringBuffer[nextDelimiter].load();
+        newMiddleEntry.completedLeading = true;
+        newMiddleEntry.completedTrailing = true;
+        ringBuffer[nextDelimiter] = newMiddleEntry;
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
-    ringBuffer[lastDelimiter].completedLeading = true;
+    auto newLastEntry = ringBuffer[lastDelimiter].load();
+    newLastEntry.completedLeading = true;
+    ringBuffer[lastDelimiter] = newLastEntry;
 }
 
 void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS, const size_t SIZE_OF_RING_BUFFER, const double tdLikelihood)
@@ -272,9 +278,9 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
     assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
-    std::vector<TupleDelimiterFastLaneRB> ringBuffer(SIZE_OF_RING_BUFFER);
+    std::vector<std::atomic<TupleDelimiterFastLaneRB>> ringBuffer(SIZE_OF_RING_BUFFER);
     ringBuffer[0] = TupleDelimiterFastLaneRB{
-        .hasTupleDelimiter = 1, .noTupleDelimiter = 0, .abaItNumber = 1, .completedLeading = true, .completedTrailing = false};
+        .hasTupleDelimiter = 1, .noTupleDelimiter = 0, .completedLeading = true, .completedTrailing = false, .abaItNumber = 1};
 
     std::vector<std::jthread> threads{};
     threads.reserve(NUM_THREADS);
@@ -337,8 +343,9 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                 {
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    if (ringBuffer[snRBIdx].abaItNumber != (abaItNumber - 1) or not ringBuffer[snRBIdx].completedLeading
-                        or not ringBuffer[snRBIdx].completedTrailing)
+                    const auto currentEntry = ringBuffer[snRBIdx].load();
+                    if (currentEntry.abaItNumber != (abaItNumber - 1) or not currentEntry.completedLeading
+                        or not currentEntry.completedTrailing)
                     {
                         continue;
                     }
@@ -350,10 +357,10 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                         ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
                             .hasTupleDelimiter = 1,
                             .noTupleDelimiter = 0,
-                            .abaItNumber = abaItNumber,
                             .completedLeading = false,
-                            .completedTrailing = false};
-                        std::atomic_thread_fence(std::memory_order_seq_cst);
+                            .completedTrailing = false,
+                            .abaItNumber = abaItNumber};
+                        // std::atomic_thread_fence(std::memory_order_seq_cst);
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -376,10 +383,10 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                         ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
                             .hasTupleDelimiter = 0,
                             .noTupleDelimiter = 1,
-                            .abaItNumber = abaItNumber,
                             .completedLeading = false,
-                            .completedTrailing = false};
-                        std::atomic_thread_fence(std::memory_order_seq_cst);
+                            .completedTrailing = false,
+                            .abaItNumber = abaItNumber};
+                        // std::atomic_thread_fence(std::memory_order_seq_cst);
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
@@ -406,7 +413,7 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
     // {
     //     fmt::println("{}: {}", idx, ringBuffer);
     // }
-    fmt::println("{}", fmt::join(ringBuffer, ","));
+    // fmt::println("{}", fmt::join(ringBuffer, ","));
     fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
     for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
     {
@@ -462,7 +469,8 @@ void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBoun
 int main()
 {
     ///
-    executeRingBufferExperiment(10, 100000, 128, 0.1);
+    // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
+    executeRingBufferExperiment(8, 100000, 128, 0.1);
     // executeExperiment(40, 1000000);
     // syncLessIncreaseExperiment(8, 1000000);
     return 0;
