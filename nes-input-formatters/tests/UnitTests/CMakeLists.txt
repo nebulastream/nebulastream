@@ -31,4 +31,4 @@ target_link_libraries(tail-calculation-experiment PUBLIC nes-input-formatters-te
 #add_executable(find-interval-test FindIntervalTest.cpp)
 #target_link_libraries(find-interval-test PUBLIC nes-input-formatters-test-utils)
 add_executable(distance-to-delimiter-test DistanceToDelimiterTest.cpp)
-target_link_libraries(distance-to-delimiter-test PUBLIC nes-input-formatters-test-utils)
+target_link_libraries(distance-to-delimiter-test PUBLIC nes-input-formatters-test-utils atomic)

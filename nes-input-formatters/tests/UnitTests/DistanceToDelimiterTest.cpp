@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <atomic>
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -69,8 +70,6 @@ struct TupleDelimiterFastLane
 
 struct TupleDelimiterFastLaneRB
 {
-    // Can't really model all bools/uint8_ts as a single bool/8-bit value, since that would mean concurrent write access
-    // -> could model those together where we can exclude that there is concurrent write access (e.g., hasTupleDelimiter/noTupleDelimiter)
     uint8_t hasTupleDelimiter = false;
     uint8_t noTupleDelimiter = false;
     bool completedLeading = true;
@@ -79,8 +78,15 @@ struct TupleDelimiterFastLaneRB
 
     friend std::ostream& operator<<(std::ostream& os, const TupleDelimiterFastLaneRB& interval)
     {
-        return os << fmt::format("[{}-{}-{}-{}-{}]", static_cast<int32_t>(interval.hasTupleDelimiter), static_cast<int32_t>(interval.noTupleDelimiter), interval.abaItNumber, interval.completedLeading, interval.completedTrailing);
+        return os << fmt::format(
+                   "[{}-{}-{}-{}-{}]",
+                   static_cast<int32_t>(interval.hasTupleDelimiter),
+                   static_cast<int32_t>(interval.noTupleDelimiter),
+                   interval.abaItNumber,
+                   interval.completedLeading,
+                   interval.completedTrailing);
     }
+    bool operator==(const TupleDelimiterFastLaneRB& desired_first_delimiter) const = default;
 };
 
 struct Interval
@@ -222,7 +228,8 @@ uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
 }
 
 template <bool IsLeading>
-bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
+bool hasNoTD(
+    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
@@ -239,7 +246,8 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
 }
 
 template <bool IsLeading>
-bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
+bool hasTD(
+    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
@@ -253,11 +261,13 @@ bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance
     return tdVal.hasTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
 }
 
-void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<std::atomic<TupleDelimiterFastLaneRB>>& ringBuffer)
+void setCompletedFlags(
+    const size_t firstDelimiter, const size_t lastDelimiter, std::vector<std::atomic<TupleDelimiterFastLaneRB>>& ringBuffer)
 {
-    auto newFirstEntry = ringBuffer[firstDelimiter].load();
-    newFirstEntry.completedTrailing = true;
-    ringBuffer[firstDelimiter] = newFirstEntry;
+    // std::cout << fmt::format("Completing: [{}-{}]", firstDelimiter, lastDelimiter) << std::flush;
+    // auto newFirstEntry = ringBuffer[firstDelimiter].load();
+    // newFirstEntry.completedTrailing = true;
+    // ringBuffer[firstDelimiter] = newFirstEntry;
 
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
@@ -273,7 +283,8 @@ void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, 
     ringBuffer[lastDelimiter] = newLastEntry;
 }
 
-void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS, const size_t SIZE_OF_RING_BUFFER, const double tdLikelihood)
+void executeRingBufferExperiment(
+    const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS, const size_t SIZE_OF_RING_BUFFER, const double tdLikelihood)
 {
     assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
@@ -323,8 +334,8 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                                                                                             : std::numeric_limits<uint32_t>::max();
                 };
 
-                const auto getTupleDelimiter
-                    = [&boolDistribution, &sequenceNumberGen, &NUM_THREADS](const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize)
+                const auto getTupleDelimiter = [&boolDistribution, &sequenceNumberGen, &NUM_THREADS](
+                                                   const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize)
                 {
                     const bool isTupleDelimiter = boolDistribution(sequenceNumberGen);
                     const auto maxIterationsWithoutDelimiter = (ringBufferSize - NUM_THREADS) / NUM_THREADS;
@@ -336,6 +347,20 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                         return true;
                     }
                     return isTupleDelimiter;
+                };
+
+                const auto claimSpanningTuple = [&ringBuffer](const size_t firstDelimiter, const uint32_t abaItNumber) -> bool
+                {
+                    const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                    auto atomicFirstDelimiter = ringBuffer[firstDelimiterIdx].load();
+                    auto desiredFirstDelimiter = atomicFirstDelimiter;
+                    desiredFirstDelimiter.completedTrailing = true;
+                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing
+                           and not(ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter)))
+                    {
+                        desiredFirstDelimiter.completedLeading = atomicFirstDelimiter.completedLeading;
+                    }
+                    return atomicFirstDelimiter == desiredFirstDelimiter;
                 };
 
                 size_t noTupleDelimiterSeqCount = 0;
@@ -366,15 +391,26 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         if (firstDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            setCompletedFlags(firstDelimiter % ringBuffer.size(), snRBIdx, ringBuffer);
-                            threadLocalResultIntervals.at(i).emplace_back()
-                                = Interval{.lo = firstDelimiter, .hi = static_cast<uint32_t>(currentSequenceNumber)};
+                            // TODO: CONSTRUCTION SITE
+                            /// The leading ST ends in the snRBIdx, if its index is larger than the snRBIdx, it is from a prior iteration
+                            const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiter > snRBIdx);
+                            if (const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                                claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+                            {
+                                /// Successfully claimed the first tuple, now set the rest
+                                setCompletedFlags(firstDelimiterIdx, snRBIdx, ringBuffer);
+                                threadLocalResultIntervals.at(i).emplace_back()
+                                    = Interval{.lo = firstDelimiter, .hi = static_cast<uint32_t>(currentSequenceNumber)};
+                            }
                         }
                         if (lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            setCompletedFlags(snRBIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
-                            threadLocalResultIntervals.at(i).emplace_back()
-                                = Interval{.lo = static_cast<uint32_t>(currentSequenceNumber), .hi = lastDelimiter};
+                            if (const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size(); claimSpanningTuple(snRBIdx, abaItNumber))
+                            {
+                                setCompletedFlags(snRBIdx, lastDelimiterIdx, ringBuffer);
+                                threadLocalResultIntervals.at(i).emplace_back()
+                                    = Interval{.lo = static_cast<uint32_t>(currentSequenceNumber), .hi = lastDelimiter};
+                            }
                         }
                     }
                     else
@@ -392,8 +428,15 @@ void executeRingBufferExperiment(const size_t NUM_THREADS, const size_t NUM_SEQU
                         if (firstDelimiter != std::numeric_limits<uint32_t>::max()
                             and lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            setCompletedFlags(firstDelimiter % ringBuffer.size(), lastDelimiter % ringBuffer.size(), ringBuffer);
-                            threadLocalResultIntervals.at(i).emplace_back() = Interval{.lo = firstDelimiter, .hi = lastDelimiter};
+                            if (const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                                claimSpanningTuple(firstDelimiterIdx, abaItNumber))
+                            {
+                                /// Successfully claimed the first tuple, now set the rest
+                                setCompletedFlags(firstDelimiterIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
+                                threadLocalResultIntervals.at(i).emplace_back() = Interval{.lo = firstDelimiter, .hi = lastDelimiter};
+                            }
+                            // setCompletedFlags(firstDelimiter % ringBuffer.size(), lastDelimiter % ringBuffer.size(), ringBuffer);
+                            // threadLocalResultIntervals.at(i).emplace_back() = Interval{.lo = firstDelimiter, .hi = lastDelimiter};
                         }
                     }
                     currentSequenceNumber += NUM_THREADS;
@@ -469,7 +512,7 @@ int main()
 {
     ///
     // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
-    executeRingBufferExperiment(2, 1000, 16, 0.1);
+    executeRingBufferExperiment(1, 20, 16, 0.5);
     // executeExperiment(40, 1000000);
     // syncLessIncreaseExperiment(8, 1000000);
     return 0;
