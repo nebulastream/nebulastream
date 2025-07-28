@@ -11,12 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        Slice.cpp
-        DefaultTimeBasedSliceStore.cpp
-        FileBackedTimeBasedSliceStore.cpp
+        AsyncLogger.cpp
 )
-
-add_subdirectory(FileDescriptor)
-add_subdirectory(Logger)
-add_subdirectory(MemoryController)
-add_subdirectory(WatermarkPredictor)

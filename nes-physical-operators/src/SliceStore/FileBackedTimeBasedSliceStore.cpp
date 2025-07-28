@@ -13,10 +13,12 @@
 */
 
 #include <ranges>
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
@@ -83,7 +85,9 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
+    const auto workerThread = WorkerThreadId(threadId % numberOfWorkerThreads);
     const auto slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
+    writeSliceOperationToFile(workerThread, FileOperation::READ, OperationStatus::START, sliceEnd);
     if (slice.has_value())
     {
         readSliceFromFiles(
@@ -98,7 +102,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
                     std::views::iota(0UL, numberOfWorkerThreads), [&allThreadIds](uint64_t id) { allThreadIds.emplace_back(id); });
                 return allThreadIds;
             }(),
-            WorkerThreadId(threadId % numberOfWorkerThreads),
+            workerThread,
             joinBuildSide);
     }
     return slice;
@@ -183,6 +187,15 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
         alteredSlicesPerThread[{WorkerThreadId(i), JoinBuildSideType::Left}];
         alteredSlicesPerThread[{WorkerThreadId(i), JoinBuildSideType::Right}];
     }
+
+    /// Initialise files to keep track of slice operations
+    /*logger.reserve(numberOfWorkerThreads);
+    for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
+    {
+        logger[i] = std::make_shared<AsyncLogger>(
+            fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_{}.stats", std::chrono::system_clock::now(), i));
+    }*/
+    logger = std::make_shared<AsyncLogger>(fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now()));
 
     /// Initialise memory controller and measure execution times for reading and writing
     /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data
@@ -341,6 +354,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                     timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
                 >= sliceEnd)
         {
+            writeSliceOperationToFile(threadId, FileOperation::READ, OperationStatus::START, sliceEnd);
             /// Slice should be read back now as it will be triggered once the read operation has finished
             slicesToUpdate.emplace_back(slice, FileOperation::READ);
         }
@@ -353,6 +367,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                         + sliceStoreInfo.predictionTimeDelta)
                 < sliceEnd)
         {
+            writeSliceOperationToFile(threadId, FileOperation::WRITE, OperationStatus::START, sliceEnd);
             /// Slice should be written out as it will not be triggered before write and read operations have finished
             slicesToUpdate.emplace_back(slice, FileOperation::WRITE);
         }
@@ -385,8 +400,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
         pagedVector->truncate(sliceStoreInfo.fileLayout);
     }
     nljSlice->releaseCombinePagedVectorsLock();
-
     // TODO handle wrong predictions
+
+    writeSliceOperationToFile(threadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd());
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -416,6 +432,8 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             nljSlice->releaseCombinePagedVectorsLock();
         }
     }
+
+    writeSliceOperationToFile(workerThreadId, FileOperation::READ, OperationStatus::END, slice->getSliceEnd());
 }
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
@@ -494,6 +512,18 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
     const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
     const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
     readExecTimeFunction = {readSlope, readIntercept};
+}
+
+void FileBackedTimeBasedSliceStore::writeSliceOperationToFile(
+    const WorkerThreadId, const FileOperation operation, const OperationStatus status, const SliceEnd sliceEnd) const
+{
+    logger->log(
+        fmt::format(
+            "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}",
+            std::chrono::system_clock::now(),
+            magic_enum::enum_name<FileOperation>(operation),
+            magic_enum::enum_name<OperationStatus>(status),
+            sliceEnd));
 }
 
 }

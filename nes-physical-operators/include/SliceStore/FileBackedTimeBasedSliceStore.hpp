@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/FileDescriptorManager/FileDescriptorManager.hpp>
+#include <SliceStore/Logger/AsyncLogger.hpp>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -28,6 +28,12 @@ enum class FileOperation : uint8_t
 {
     READ,
     WRITE
+};
+
+enum class OperationStatus : uint8_t
+{
+    START,
+    END
 };
 
 struct SliceStoreInfo
@@ -119,6 +125,8 @@ private:
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes);
 
+    void writeSliceOperationToFile(WorkerThreadId threadId, FileOperation operation, OperationStatus status, SliceEnd sliceEnd) const;
+
     static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
     {
         return static_cast<uint64_t>(execTimeFunction.first * dataSize + execTimeFunction.second);
@@ -150,6 +158,10 @@ private:
     /// which is also used for predictions.
     std::pair<double, double> writeExecTimeFunction;
     std::pair<double, double> readExecTimeFunction;
+
+    /// Track slices operations for benchmarking purposes
+    //std::vector<std::shared_ptr<AsyncLogger>> logger;
+    std::shared_ptr<AsyncLogger> logger;
 
     uint64_t numberOfWorkerThreads;
 
