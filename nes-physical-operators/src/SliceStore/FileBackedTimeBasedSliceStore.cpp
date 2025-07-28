@@ -195,7 +195,12 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
         logger[i] = std::make_shared<AsyncLogger>(
             fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_{}.stats", std::chrono::system_clock::now(), i));
     }*/
-    logger = std::make_shared<AsyncLogger>(fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now()));
+    const auto loggers
+        = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_0.stats", std::chrono::system_clock::now()),
+           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_1.stats", std::chrono::system_clock::now()),
+           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_2.stats", std::chrono::system_clock::now()),
+           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_3.stats", std::chrono::system_clock::now())};
+    logger = std::make_shared<AsyncLogger>(loggers);
 
     /// Initialise memory controller and measure execution times for reading and writing
     /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data

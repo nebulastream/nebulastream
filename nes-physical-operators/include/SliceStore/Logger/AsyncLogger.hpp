@@ -26,20 +26,20 @@ namespace NES
 class AsyncLogger
 {
 public:
-    explicit AsyncLogger(const std::string& fileName);
+    explicit AsyncLogger(const std::vector<std::string>& fileNames);
     ~AsyncLogger();
 
     void log(const std::string& message);
 
 private:
-    void processLogs();
+    void processLogs(const std::string& fileName, size_t queueIndex);
 
-    std::ofstream logFile;
-    std::queue<std::string> logQueue;
-    std::mutex queueMutex;
-    std::condition_variable cv;
-    std::thread loggingThread;
+    std::vector<std::queue<std::string>> logQueues;
+    std::vector<std::mutex> queueMutexes;
+    std::vector<std::condition_variable> cvs;
+    std::vector<std::thread> loggingThreads;
     std::atomic<bool> stopLogging;
+    std::atomic<size_t> nextQueue;
 };
 
 }

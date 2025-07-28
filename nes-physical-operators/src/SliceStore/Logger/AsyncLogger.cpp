@@ -17,46 +17,68 @@
 namespace NES
 {
 
-AsyncLogger::AsyncLogger(const std::string& fileName) : stopLogging(false)
+AsyncLogger::AsyncLogger(const std::vector<std::string>& fileNames) : stopLogging(false), nextQueue(0)
 {
-    logFile.open(fileName, std::ios::out | std::ios::app);
-    loggingThread = std::thread(&AsyncLogger::processLogs, this);
+    logQueues.resize(fileNames.size());
+    queueMutexes = std::vector<std::mutex>(fileNames.size());
+    cvs = std::vector<std::condition_variable>(fileNames.size());
+    for (size_t i = 0; i < fileNames.size(); ++i)
+    {
+        loggingThreads.emplace_back(&AsyncLogger::processLogs, this, fileNames[i], i);
+    }
 }
 
 AsyncLogger::~AsyncLogger()
 {
     stopLogging = true;
-    cv.notify_all();
-    if (loggingThread.joinable())
+    for (auto& cv : cvs)
     {
-        loggingThread.join();
+        cv.notify_all();
     }
-    if (logFile.is_open())
+    for (auto& thread : loggingThreads)
     {
-        logFile.close();
+        if (thread.joinable())
+        {
+            thread.join();
+        }
     }
 }
 
 void AsyncLogger::log(const std::string& message)
 {
+    const size_t queueIndex = nextQueue++ % loggingThreads.size();
     {
-        const std::lock_guard lock(queueMutex);
-        logQueue.push(message);
+        const std::lock_guard lock(queueMutexes[queueIndex]);
+        logQueues[queueIndex].push(message);
     }
-    cv.notify_one();
+    cvs[queueIndex].notify_one();
 }
 
-void AsyncLogger::processLogs()
+void AsyncLogger::processLogs(const std::string& fileName, const size_t queueIndex)
 {
-    while (not stopLogging or not logQueue.empty())
+    std::ofstream logFile(fileName, std::ios::out | std::ios::app);
+    if (not logFile.is_open())
     {
-        std::unique_lock lock(queueMutex);
-        cv.wait(lock, [this] { return stopLogging or not logQueue.empty(); });
+        throw std::runtime_error("Failed to open log file: " + fileName);
+    }
 
-        while (not logQueue.empty())
+    while (not stopLogging or not logQueues[queueIndex].empty())
+    {
+        std::string message;
         {
-            logFile << logQueue.front() << '\n';
-            logQueue.pop();
+            std::unique_lock lock(queueMutexes[queueIndex]);
+            cvs[queueIndex].wait(lock, [this, queueIndex] { return stopLogging or not logQueues[queueIndex].empty(); });
+
+            if (not logQueues[queueIndex].empty())
+            {
+                message = std::move(logQueues[queueIndex].front());
+                logQueues[queueIndex].pop();
+            }
+        }
+
+        if (not message.empty())
+        {
+            logFile << message << '\n';
         }
     }
 }
