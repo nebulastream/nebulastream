@@ -13,6 +13,7 @@
 */
 
 #include <CompositeStatisticListener.hpp>
+#include <ReplayPrinter.hpp>
 
 namespace NES
 {
@@ -41,6 +42,29 @@ void CompositeStatisticListener::addListener(std::shared_ptr<QueryEngineStatisti
 void CompositeStatisticListener::addSystemListener(std::shared_ptr<SystemEventListener> listener)
 {
     systemListeners.push_back(std::move(listener));
+}
+
+std::shared_ptr<ReplayPrinter> CompositeStatisticListener::getReplayPrinter() const
+{
+    /// Look for a ReplayPrinter in the query engine listeners
+    for (const auto& listener : statisticListeners)
+    {
+        if (auto replayPrinter = std::dynamic_pointer_cast<ReplayPrinter>(listener))
+        {
+            return replayPrinter;
+        }
+    }
+    
+    /// Look for a ReplayPrinter in the system listeners
+    for (const auto& listener : systemListeners)
+    {
+        if (auto replayPrinter = std::dynamic_pointer_cast<ReplayPrinter>(listener))
+        {
+            return replayPrinter;
+        }
+    }
+    
+    return nullptr;
 }
 
 bool CompositeStatisticListener::hasListeners() const

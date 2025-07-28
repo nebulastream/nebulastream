@@ -21,13 +21,19 @@
 
 namespace NES
 {
+struct CompositeStatisticListener;
+struct ReplayPrinter;
 struct CompositeStatisticListener final : QueryEngineStatisticListener, SystemEventListener
 {
     void onEvent(Event event) override;
     void onEvent(SystemEvent event) override;
 
     void addListener(std::shared_ptr<QueryEngineStatisticListener> listener);
+    /// Add a system event listener
     void addSystemListener(std::shared_ptr<SystemEventListener> listener);
+
+    /// Get the ReplayPrinter instance if it exists
+    std::shared_ptr<ReplayPrinter> getReplayPrinter() const;
 
     /// Check if the composite listener has any listeners
     [[nodiscard]] bool hasListeners() const;

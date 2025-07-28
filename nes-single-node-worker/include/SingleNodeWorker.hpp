@@ -80,5 +80,9 @@ public:
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.
     [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
+
+private:
+    /// Capture compiled libraries for a query and store them in the replay directory
+    void captureCompiledLibraries(QueryId queryId) const;
 };
 }

@@ -249,6 +249,7 @@ ReplayPrinter::ReplayPrinter(const std::filesystem::path& baseDir)
 {
     NES_INFO("Writing Replay Data to directory: {}", baseDir);
     NES_INFO("Tuple data capture is ENABLED - this will significantly increase memory usage and file size");
+    NES_INFO("Compiled libraries will be stored in: {}/libraries", baseDir);
     
     /// Create the base directory if it doesn't exist
     if (!std::filesystem::exists(baseDirectory))
@@ -290,6 +291,42 @@ void ReplayPrinter::flush()
         {
             closeQueryFile(queryId);
         }
+    }
+}
+
+void ReplayPrinter::storeCompiledLibrary(QueryId queryId, const std::filesystem::path& libraryPath)
+{
+    /// Create a libraries subfolder in the replay directory
+    auto librariesDir = baseDirectory / "libraries";
+    if (!std::filesystem::exists(librariesDir))
+    {
+        std::filesystem::create_directories(librariesDir);
+    }
+    
+    /// Copy the library to the replay directory's libraries subfolder
+    if (std::filesystem::exists(libraryPath))
+    {
+        auto filename = libraryPath.filename();
+        auto replayLibraryPath = librariesDir / filename;
+        
+        try
+        {
+            std::filesystem::copy_file(libraryPath, replayLibraryPath, std::filesystem::copy_options::overwrite_existing);
+            compiledLibraries[queryId].push_back(replayLibraryPath);
+            NES_INFO("Copied compiled library for Query {}: {} -> {}", queryId.getRawValue(), libraryPath, replayLibraryPath);
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            NES_WARNING("Failed to copy compiled library {} for Query {}: {}", libraryPath, queryId.getRawValue(), e.what());
+            /// Still store the original path for reference
+            compiledLibraries[queryId].push_back(libraryPath);
+        }
+    }
+    else
+    {
+        NES_WARNING("Compiled library not found: {}", libraryPath);
+        /// Store the path anyway for reference
+        compiledLibraries[queryId].push_back(libraryPath);
     }
 }
 
@@ -407,6 +444,35 @@ void ReplayPrinter::threadRoutine(const std::stop_token& token)
         /// Serialize the event with all its data
         auto eventData = serializeEvent(event);
         
+        /// Add compiled library information for QueryStart events
+        std::visit(Overloaded{
+            [&](const QueryStart& queryStart) {
+                auto libIt = compiledLibraries.find(queryStart.queryId);
+                if (libIt != compiledLibraries.end() && !libIt->second.empty()) {
+                    auto metadata = nlohmann::json::object();
+                    metadata["compiledLibraries"] = nlohmann::json::array();
+                    for (const auto& libPath : libIt->second) {
+                        auto libInfo = nlohmann::json::object();
+                        libInfo["path"] = libPath.string();
+                        libInfo["filename"] = libPath.filename().string();
+                        
+                        /// Add file size if the file exists
+                        if (std::filesystem::exists(libPath)) {
+                            libInfo["size"] = std::filesystem::file_size(libPath);
+                            libInfo["lastModified"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::filesystem::last_write_time(libPath).time_since_epoch()).count();
+                        }
+                        
+                        metadata["compiledLibraries"].push_back(libInfo);
+                    }
+                    eventData["metadata"] = metadata;
+                }
+            },
+            [&](const auto&) {
+                /// No special handling for other events
+            }
+        }, event);
+        
         /// Write the event with proper comma handling
         if (!firstEventForQuery[targetQueryId])
         {
@@ -420,7 +486,7 @@ void ReplayPrinter::threadRoutine(const std::stop_token& token)
             Overloaded{
                 [&](const QueryStart& queryStart)
                 {
-                    activeQueries.emplace(queryStart.queryId, queryStart.timestamp);
+                    activeQueries[queryStart.queryId] = std::vector<PipelineId>{};
                 },
                 [&](const QueryStop& queryStop)
                 {
@@ -430,24 +496,16 @@ void ReplayPrinter::threadRoutine(const std::stop_token& token)
                 },
                 [&](const PipelineStart& pipelineStart)
                 {
-                    activePipelines.emplace(pipelineStart.pipelineId, 
-                        std::make_tuple(pipelineStart.queryId, pipelineStart.timestamp));
+                    activePipelines.emplace(pipelineStart.pipelineId, std::make_pair(pipelineStart.queryId, pipelineStart.threadId));
+                    /// Add pipeline to the query's pipeline list
+                    auto it = activeQueries.find(pipelineStart.queryId);
+                    if (it != activeQueries.end()) {
+                        it->second.push_back(pipelineStart.pipelineId);
+                    }
                 },
                 [&](const PipelineStop& pipelineStop)
                 {
                     activePipelines.erase(pipelineStop.pipelineId);
-                },
-                [&](const TaskExecutionStart& taskStart)
-                {
-                    activeTasks.emplace(taskStart.taskId, taskStart.timestamp);
-                },
-                [&](const TaskExecutionComplete& taskComplete)
-                {
-                    activeTasks.erase(taskComplete.taskId);
-                },
-                [&](const TaskExpired& taskExpired)
-                {
-                    activeTasks.erase(taskExpired.taskId);
                 },
                 [&](const auto&) {
                     /// No tracking needed for other event types

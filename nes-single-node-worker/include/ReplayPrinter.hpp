@@ -46,6 +46,11 @@ struct ReplayPrinter final : QueryEngineStatisticListener, SystemEventListener
     /// Flushes all replay files and closes them, blocking until all pending events are written
     void flush();
 
+    /// Store the path to a compiled query shared library for replay
+    /// @param queryId The query ID that the library belongs to
+    /// @param libraryPath The path to the compiled shared library
+    void storeCompiledLibrary(QueryId queryId, const std::filesystem::path& libraryPath);
+
 private:
     /// Thread routine that processes events and writes to replay files
     void threadRoutine(const std::stop_token& token);
@@ -71,9 +76,11 @@ private:
     std::unordered_map<QueryId, bool> queryFootersWritten;
 
     /// Track active queries and pipelines for relationship mapping
-    std::unordered_map<QueryId, std::chrono::system_clock::time_point> activeQueries;
-    std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point>> activePipelines;
-    std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
+    std::unordered_map<QueryId, std::vector<PipelineId>> activeQueries;
+    std::unordered_map<PipelineId, std::pair<QueryId, WorkerThreadId>> activePipelines;
+    
+    /// Track compiled libraries for each query
+    std::unordered_map<QueryId, std::vector<std::filesystem::path>> compiledLibraries;
 };
 
 } 
