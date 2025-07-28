@@ -10,6 +10,7 @@ SINK stream_sink UINT64 tcp_audio_stream$start VARSIZED tcp_audio_stream$label
 MODEL speech_model TESTDATA/model/audio_model.onnx
 VARSIZED
 VARSIZED output
+BATCH_SIZE 1
 
 ## This file contains a single tuple which has a audio sample of 1 second. The Sample is represented as a base64 encoded
 ## array of 16k floats32, exactly what the speech recognition model expects.

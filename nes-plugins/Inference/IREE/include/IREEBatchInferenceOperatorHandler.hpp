@@ -40,7 +40,11 @@ public:
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
     [[nodiscard]] Batch* getOrCreateNewBatch() const;
-    void emitBatchesToProbe(Batch& batch, const BufferMetaData& bufferMetadata, PipelineExecutionContext* pipelineCtx) const;
+    void createNewBatch() const;
+    void emitBatchesToProbe(Batch& batch,
+        const SequenceData& sequenceData,
+        PipelineExecutionContext* pipelineCtx,
+        const Timestamp watermarkTs) const;
 
     std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
     void triggerSlices(
@@ -50,32 +54,39 @@ public:
     uint64_t batchSize;
     mutable uint64_t tuplesSeen = 0;
     mutable std::vector<std::shared_ptr<Batch>> batches;
+    mutable std::mutex batchesMutex;
 
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
 };
 
+enum class BatchState : uint8_t
+{
+    MARKED_AS_CREATED,
+    MARKED_AS_EMITTED,
+    MARKED_AS_PROCESSED
+};
+
 class Batch
 {
 public:
-    Batch(uint64_t batchId, uint64_t numberOfWorkerThreads) : batchId(batchId)
+    Batch(uint64_t batchId, uint64_t numberOfBatches) : batchId(batchId)
     {
-        for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+        for (uint64_t i = 0; i < numberOfBatches; ++i)
         {
             pagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
         }
     }
 
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId) const
+    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef() const
     {
-        const auto pos = workerThreadId % pagedVectors.size();
-        return pagedVectors[pos].get();
+        return pagedVectors[0].get();
     }
 
     void combinePagedVectors()
     {
-        const std::scoped_lock lock(combinePagedVectorsMutex);
+        const std::scoped_lock lock(pagedVectorsMutex);
         if (pagedVectors.size() > 1)
         {
             for (uint64_t i = 1; i < pagedVectors.size(); ++i)
@@ -95,10 +106,16 @@ public:
                 [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
     }
 
+    size_t getNumberOfPagedVectors() const
+    {
+        return pagedVectors.size();
+    }
+
     uint64_t batchId;
+    mutable std::atomic<BatchState> state;
 private:
+    std::mutex pagedVectorsMutex;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> pagedVectors;
-    std::mutex combinePagedVectorsMutex;
 };
 
 struct EmittedBatch

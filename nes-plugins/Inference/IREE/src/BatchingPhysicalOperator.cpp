@@ -29,21 +29,28 @@ void emitBatchesProxy(
     OperatorHandler* ptrOpHandler,
     PipelineExecutionContext* pipelineCtx,
     const Timestamp watermarkTs,
-    const SequenceNumber sequenceNumber,
-    const ChunkNumber chunkNumber,
-    const bool lastChunk,
-    const OriginId originId)
+    const SequenceNumber sequenceNumber)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
-    for (auto batchIt = opHandler->batches.begin(); batchIt != opHandler->batches.end(); ++batchIt)
+    ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
+
+    auto batchesToBeEmitted = opHandler->batches
+        | std::views::filter([](const std::shared_ptr<Batch>& batch)
+            {
+                return batch && batch->state.load() == BatchState::MARKED_AS_CREATED;
+            });
+    auto batchesCount = static_cast<size_t>(std::ranges::distance(batchesToBeEmitted));
+
+    for (const auto& batch : batchesToBeEmitted)
     {
-        auto batch = batchIt->get();
-        batch->combinePagedVectors();
-        opHandler->emitBatchesToProbe(*batch, bufferMetaData, pipelineCtx);
+        const bool lastChunk = chunkNumber == batchesCount;
+        const SequenceData sequenceData{sequenceNumber, ChunkNumber(chunkNumber), lastChunk};
+
+        opHandler->emitBatchesToProbe(*batch, sequenceData, pipelineCtx, watermarkTs);
+        ++chunkNumber;
     }
 }
 
@@ -68,16 +75,14 @@ void BatchingPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         }, operatorHandler);
 
     const auto batchPagedVectorMemRef = nautilus::invoke(
-        +[](Batch* batch, const WorkerThreadId workerThreadId)
+        +[](Batch* batch)
         {
             PRECONDITION(batch != nullptr, "batch context should not be null!");
-            return batch->getPagedVectorRef(workerThreadId);
-        },
-        batchMemRef,
-        executionCtx.workerThreadId);
+            return batch->getPagedVectorRef();
+        }, batchMemRef);
 
     const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
-    batchPagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);\
+    batchPagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 
 void BatchingPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&) const
@@ -89,15 +94,12 @@ void BatchingPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
 void BatchingPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(
+    nautilus::invoke(
         emitBatchesProxy,
         operatorHandlerMemRef,
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
+        executionCtx.sequenceNumber);
 }
 
 }

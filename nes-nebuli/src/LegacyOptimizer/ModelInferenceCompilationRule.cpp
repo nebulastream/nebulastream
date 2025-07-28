@@ -18,6 +18,7 @@
 #include <InferModelLogicalOperator.hpp>
 #include <InferModelNameLogicalOperator.hpp>
 #include <ModelCatalog.hpp>
+#include <Operators/SequenceLogicalOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
@@ -36,9 +37,21 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan)
         auto name = modelNameOperator.getModelName();
         auto model = catalog->load(name);
         auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields());
-        USED_IN_DEBUG auto shouldReplace = replaceOperator(
+
+        if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
+        {
+            USED_IN_DEBUG auto shouldReplace = replaceOperator(
             queryPlan, modelNameOperator, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
-        queryPlan = std::move(shouldReplace.value());
+            queryPlan = std::move(shouldReplace.value());
+        }
+        else
+        {
+            queryPlan = replaceSubtree(
+                            queryPlan,
+                            modelNameOperator,
+                            inferModel.withChildren({SequenceLogicalOperator().withChildren(modelNameOperator.getChildren())}))
+                            .value();
+        }
     }
 
     NES_DEBUG("ModelInferenceCompilationRule: Plan after\n{}", queryPlan);

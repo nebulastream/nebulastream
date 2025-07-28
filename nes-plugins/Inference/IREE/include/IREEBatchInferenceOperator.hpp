@@ -57,8 +57,7 @@ protected:
     void performInference(
         const Interface::PagedVectorRef& pagedVectorRef,
         Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
-        ExecutionContext& executionCtx,
-        nautilus::val<OperatorHandler*> operatorHandler) const;
+        ExecutionContext& executionCtx) const;
 };
 
 }

@@ -44,8 +44,10 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
-    const OriginId outputOriginId)
+    const OriginId outputOriginId,
+    bool sequentialProcessing)
     : numberOfWorkerThreads(0)
+    , sequentialProcessing(sequentialProcessing)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
