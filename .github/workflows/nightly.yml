@@ -131,6 +131,7 @@ jobs:
             exit
           fi
       - name: push corpus
+        continue-on-error: true
         run: |
           cd nes-corpora
           exp_backoff=1
@@ -332,6 +333,7 @@ jobs:
             exit
           fi
       - name: push corpus
+        continue-on-error: true
         run: |
           cd nes-corpora
           exp_backoff=1
@@ -414,6 +416,7 @@ jobs:
           rm -rf nes-corpora/${{ inputs.fuzzer }}/corpus
           mv /merged_corpus_wip nes-corpora/${{ inputs.fuzzer }}/corpus
       - name: push corpus
+        continue-on-error: true
         run: |
           cd nes-corpora
 
