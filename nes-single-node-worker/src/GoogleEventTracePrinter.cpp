@@ -18,7 +18,12 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <stop_token>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/SystemEventListener.hpp>
@@ -28,24 +33,13 @@
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
 namespace NES
 {
 
-namespace
-{
-/// Chrome tracing event types
-constexpr std::string_view EVENT_BEGIN = "B";
-constexpr std::string_view EVENT_END = "E";
-constexpr std::string_view EVENT_INSTANT = "i";
-
-/// Chrome tracing categories
-constexpr std::string_view CATEGORY_QUERY = "query";
-constexpr std::string_view CATEGORY_PIPELINE = "pipeline";
-constexpr std::string_view CATEGORY_TASK = "task";
-constexpr std::string_view CATEGORY_SYSTEM = "system";
-}
+constexpr uint64_t READ_RETRY_MS = 100;
 
 uint64_t GoogleEventTracePrinter::timestampToMicroseconds(const std::chrono::system_clock::time_point& timestamp)
 {
@@ -53,7 +47,7 @@ uint64_t GoogleEventTracePrinter::timestampToMicroseconds(const std::chrono::sys
 }
 
 nlohmann::json GoogleEventTracePrinter::createTraceEvent(
-    const std::string& name, Category cat, Phase ph, uint64_t ts, uint64_t dur, const nlohmann::json& args)
+    const std::string& name, Category cat, Phase phase, uint64_t timestamp, uint64_t dur, const nlohmann::json& args)
 {
     nlohmann::json event;
     event["name"] = name;
@@ -76,7 +70,7 @@ nlohmann::json GoogleEventTracePrinter::createTraceEvent(
     }
 
     /// Convert phase enum to string
-    switch (ph)
+    switch (phase)
     {
         case Phase::Begin:
             event["ph"] = "B";
@@ -89,7 +83,7 @@ nlohmann::json GoogleEventTracePrinter::createTraceEvent(
             break;
     }
 
-    event["ts"] = ts;
+    event["ts"] = timestamp;
     event["pid"] = 1; /// Process ID
     event["tid"] = 1; /// Thread ID (will be overridden for specific events)
 
@@ -134,10 +128,12 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
     bool firstEvent = true;
 
     /// Helper function to emit events with proper comma handling
-    auto emit = [&](nlohmann::json&& evt)
+    auto emit = [&](const nlohmann::json& evt)
     {
         if (!firstEvent)
+        {
             file << ",\n";
+        }
         firstEvent = false;
         file << "    " << evt.dump();
     };
@@ -146,7 +142,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
     {
         CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
 
-        if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
+        if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(READ_RETRY_MS), event))
         {
             continue;
         }
@@ -167,7 +163,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = 0; /// System thread
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
                 },
                 [&](const StartQuerySystemEvent& startEvent)
                 {
@@ -178,7 +174,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         timestampToMicroseconds(startEvent.timestamp));
                     traceEvent["tid"] = 0; /// System thread
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
                 },
                 [&](const StopQuerySystemEvent& stopEvent)
                 {
@@ -189,7 +185,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         timestampToMicroseconds(stopEvent.timestamp));
                     traceEvent["tid"] = 0; /// System thread
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
                 },
                 [&](const QueryStart& queryStart)
                 {
@@ -200,7 +196,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         timestampToMicroseconds(queryStart.timestamp));
                     traceEvent["tid"] = queryStart.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Track active query with thread ID
                     activeQueries.emplace(queryStart.queryId, std::make_pair(queryStart.timestamp, queryStart.threadId));
@@ -220,7 +216,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         timestampToMicroseconds(queryStop.timestamp));
                     traceEvent["tid"] = originalTid;
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Remove from active queries
                     activeQueries.erase(queryStop.queryId);
@@ -240,7 +236,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = pipelineStart.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Track active pipeline with thread ID
                     activePipelines.emplace(
@@ -265,7 +261,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = originalTid;
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Remove from active pipelines
                     activePipelines.erase(pipelineStop.pipelineId);
@@ -286,7 +282,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskStart.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Track this task for duration calculation
                     activeTasks.emplace(taskStart.taskId, taskStart.timestamp);
@@ -314,7 +310,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskComplete.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
                 },
                 [&](const TaskEmit& taskEmit)
                 {
@@ -338,7 +334,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskEmit.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
                 },
                 [&](const TaskExpired& taskExpired)
                 {
@@ -356,7 +352,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskExpired.threadId.getRawValue();
 
-                    emit(std::move(traceEvent));
+                    emit(traceEvent);
 
                     /// Remove from active tasks if present
                     activeTasks.erase(taskExpired.taskId);
