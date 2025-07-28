@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <atomic>
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -58,6 +58,9 @@
 // #include <ErrorHandling.hpp>
 // #include <InputFormatterTestUtil.hpp>
 // #include <TestTaskQueue.hpp>
+#include <condition_variable>
+
+
 #include <Util/Ranges.hpp>
 
 
@@ -278,15 +281,55 @@ void setCompletedFlags(
         ringBuffer[nextDelimiter] = newMiddleEntry;
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
-    auto newLastEntry = ringBuffer[lastDelimiter].load();
+
+    // TOdo: problem
+    // -> between loading newLastEntry and setting it again below, another thread may have changed newLastEntry already
+    // -> since it is 'completing', no other thread should advance entry to next ABA iteration
+    // -> this should be the only thread that can set entry
+    // -> however, another thread may set 'completedTrailing' <-- todo: make some of the values const of atomic struct?
+    // -> Could: use bitmap and 'or' with bitmap <-- todo: would require redesign
+    // Current solution:
+    // -> CAS loop, make sure value is expected and update if not, retry until successful
+    auto lastEntry = ringBuffer[lastDelimiter].load();
+    auto newLastEntry = lastEntry;
+    // ringBuffer[lastDelimiter] = newLastEntry;
     newLastEntry.completedLeading = true;
-    ringBuffer[lastDelimiter] = newLastEntry;
+    while (not ringBuffer[lastDelimiter].compare_exchange_weak(lastEntry, newLastEntry))
+    {
+        newLastEntry.completedTrailing = lastEntry.completedTrailing;
+    }
 }
+
+class TimedLatch
+{
+private:
+    std::latch latch_;
+    std::condition_variable cv_;
+    std::mutex mutex_;
+
+public:
+    TimedLatch(std::ptrdiff_t count) : latch_(count) { }
+
+    void count_down()
+    {
+        latch_.count_down();
+        cv_.notify_all();
+    }
+
+    void wait() { latch_.wait(); }
+
+    template <typename Rep, typename Period>
+    bool wait_for(const std::chrono::duration<Rep, Period>& timeout)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return latch_.try_wait(); });
+    }
+};
 
 void executeRingBufferExperiment(
     const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS, const size_t SIZE_OF_RING_BUFFER, const double tdLikelihood)
 {
-    assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
+    // assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
     std::vector<std::atomic<TupleDelimiterFastLaneRB>> ringBuffer(SIZE_OF_RING_BUFFER);
@@ -298,7 +341,7 @@ void executeRingBufferExperiment(
 
     std::vector<std::vector<Interval>> threadLocalResultIntervals(NUM_THREADS);
 
-    std::latch completionLatch(NUM_THREADS);
+    TimedLatch completionLatch(NUM_THREADS);
 
     for (size_t i = 0; i < NUM_THREADS; ++i)
     {
@@ -356,10 +399,12 @@ void executeRingBufferExperiment(
                     auto desiredFirstDelimiter = atomicFirstDelimiter;
                     desiredFirstDelimiter.completedTrailing = true;
                     bool claimedSpanningTuple = false;
-                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing and not claimedSpanningTuple)
+                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing
+                           and not claimedSpanningTuple)
                     {
                         desiredFirstDelimiter.completedLeading = atomicFirstDelimiter.completedLeading;
-                        claimedSpanningTuple = ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter);
+                        claimedSpanningTuple
+                            = ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter);
                     }
                     return claimedSpanningTuple;
                 };
@@ -449,37 +494,72 @@ void executeRingBufferExperiment(
                 completionLatch.count_down();
             });
     }
-    completionLatch.wait();
-    auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-    std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-    std::ranges::sort(
-        resultBufferVec.begin(),
-        resultBufferVec.end(),
-        [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
+    // completionLatch.wait();
+    const auto success = completionLatch.wait_for(std::chrono::seconds(100));
+    if (not success)
+    {
+        // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
+        // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        // std::ranges::sort(
+        //     resultBufferVec.begin(),
+        //     resultBufferVec.end(),
+        //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
+        // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
+        // {
+        //     fmt::println("{}: {}", idx, ringBuffer);
+        // }
+        // // fmt::println("{}", fmt::join(ringBuffer, ","));
+        // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
+        // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
+        // {
+        //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
+        //     {
+        //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
+        //         {
+        //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+        //         }
+        //         else
+        //         {
+        //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+        //         }
+        //     }
+        //     else
+        //     {
+        //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
+        //     }
+        // }
+        std::exit(1);
+    }
+    // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
+    // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+    // std::ranges::sort(
+    //     resultBufferVec.begin(),
+    //     resultBufferVec.end(),
+    //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
     // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
     // {
     //     fmt::println("{}: {}", idx, ringBuffer);
     // }
     // fmt::println("{}", fmt::join(ringBuffer, ","));
-    fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-    for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-    {
-        if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-        {
-            if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-            {
-                fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-            }
-            else
-            {
-                fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-            }
-        }
-        else
-        {
-            fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-        }
-    }
+    // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
+    // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
+    // {
+    //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
+    //     {
+    //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
+    //         {
+    //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+    //         }
+    //         else
+    //         {
+    //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
+    //     }
+    // }
 }
 
 void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBound)
@@ -517,7 +597,7 @@ int main()
 {
     ///
     // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
-    executeRingBufferExperiment(4, 10000, 16, 0.5);
+    executeRingBufferExperiment(23, 100000000, 1024, 0.1);
     // executeExperiment(40, 1000000);
     // syncLessIncreaseExperiment(8, 1000000);
     return 0;
