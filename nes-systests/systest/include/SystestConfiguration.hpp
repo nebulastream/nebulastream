@@ -31,7 +31,7 @@ class SystestConfiguration final : public BaseConfiguration
 public:
     SystestConfiguration() = default;
 
-    /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
+    /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `SystestExecutor::parseConfiguration()`
     StringOption testsDiscoverDir
         = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     StringOption testDataDir

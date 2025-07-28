@@ -38,6 +38,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -146,6 +147,8 @@ public:
         this->additionalSourceThreads = std::move(additionalSourceThreads);
     }
 
+    void setConfigurationOverrides(std::vector<ConfigurationOverride> overrides) { configurationOverrides = std::move(overrides); }
+
     void setQueryDefinition(std::string queryDefinition) { this->queryDefinition = std::move(queryDefinition); }
 
     void setBoundPlan(LogicalPlan boundPlan) { this->boundPlan = std::move(boundPlan); }
@@ -164,32 +167,32 @@ public:
     void setOptimizedPlan(LogicalPlan optimizedPlan)
     {
         this->optimizedPlan = std::move(optimizedPlan);
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+        std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
             getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
             [&sourceNamesToFilepathAndCountForQuery](const SourceDescriptorLogicalOperator& logicalSourceOperator)
             {
-                if (const auto path = logicalSourceOperator.getSourceDescriptor().tryGetFromConfig<std::string>(std::string{"file_path"});
-                    path.has_value())
+                const auto& sourceDescriptor = logicalSourceOperator.getSourceDescriptor();
+                if (const auto path = sourceDescriptor.tryGetFromConfig<std::string>(std::string{"file_path"}); path.has_value())
                 {
-                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator.getSourceDescriptor());
-                        entry.empty())
+                    const auto physicalSourceId = sourceDescriptor.getPhysicalSourceId();
+                    if (auto it = sourceNamesToFilepathAndCountForQuery.find(physicalSourceId);
+                        it == sourceNamesToFilepathAndCountForQuery.end())
                     {
                         sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator.getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                            physicalSourceId, std::make_pair(SourceInputFile{*path}, uint64_t{1}));
                     }
                     else
                     {
-                        entry.mapped().second++;
-                        sourceNamesToFilepathAndCountForQuery.insert(std::move(entry));
+                        it->second.second++;
                     }
                 }
                 else
                 {
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
-                        logicalSourceOperator.getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        sourceDescriptor.getPhysicalSourceId(),
+                        sourceDescriptor.getLogicalSource().getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
@@ -277,7 +280,8 @@ public:
         auto planInfoTemplate = createPlanInfoOrException();
 
         std::vector<SystestQuery> queries;
-        for (auto configurationOverride : configurationOverrides)
+        queries.reserve(configurationOverrides.size());
+        for (const auto& configurationOverride : configurationOverrides)
         {
             queries.push_back(
                 {.testName = testName.value(),
@@ -306,7 +310,7 @@ private:
     std::optional<LogicalPlan> boundPlan;
     std::optional<Exception> exception;
     std::optional<LogicalPlan> optimizedPlan;
-    std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
+    std::optional<std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
@@ -745,8 +749,7 @@ struct SystestBinder::Impl
                 lastParsedQueryId = currentQueryNumberInTest;
                 auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
                 lastMergedConfigOverrides = mergedConfigOverrides;
-                queryCallback(
-                    testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest, mergedConfigOverrides);
+                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest, mergedConfigOverrides);
                 configOverrides = {ConfigurationOverride{}};
             });
 
@@ -790,27 +793,30 @@ struct SystestBinder::Impl
             {
                 const auto extractSinkName = [](const std::string& query) -> std::string
                 {
-                    std::istringstream stream(query);
-                    std::string token;
-                    while (stream >> token)
+                    const auto lowerQuery = Util::toLowerCase(query);
+                    const auto intoPos = lowerQuery.find("into");
+                    if (intoPos == std::string::npos)
                     {
-                        if (Util::toLowerCase(token) == "into")
-                        {
-                            std::string sink;
-                            if (!(stream >> sink))
-                            {
-                                NES_ERROR("INTO clause not followed by sink name in query: {}", query);
-                                return "";
-                            }
-                            if (!sink.empty() && sink.back() == ';')
-                            {
-                                sink.pop_back();
-                            }
-                            return sink;
-                        }
+                        return "";
                     }
-                    NES_ERROR("INTO clause not found in query: {}", query);
-                    return "";
+
+                    std::size_t nameStart = intoPos + 4;
+                    while (nameStart < query.size() && std::isspace(static_cast<unsigned char>(query[nameStart])))
+                    {
+                        ++nameStart;
+                    }
+                    std::size_t nameEnd = nameStart;
+                    while (nameEnd < query.size() && !std::isspace(static_cast<unsigned char>(query[nameEnd])) && query[nameEnd] != ';')
+                    {
+                        ++nameEnd;
+                    }
+
+                    std::string sink = query.substr(nameStart, nameEnd - nameStart);
+                    while (!sink.empty() && (sink.back() == ';' || std::isspace(static_cast<unsigned char>(sink.back()))))
+                    {
+                        sink.pop_back();
+                    }
+                    return sink;
                 };
 
                 const auto leftSinkName = extractSinkName(leftQuery);
