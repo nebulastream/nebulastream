@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include <argparse/argparse.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
@@ -44,10 +43,12 @@ namespace NES
 class SystestExecutor
 {
 public:
-    SystestExecutor(SystestConfiguration config) : config(config) { };
+    explicit SystestExecutor(SystestConfiguration config);
+    SystestExecutor(int argc, const char** argv);
     SystestExecutorResult executeSystests();
 
 private:
+    static SystestConfiguration parseConfiguration(int argc, const char** argv);
     void runEndlessMode(const std::vector<Systest::SystestQuery>& queries);
 
     SystestConfiguration config;

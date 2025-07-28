@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -34,6 +35,7 @@
 #include <variant>
 #include <vector>
 
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/base.h>
@@ -44,7 +46,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -52,6 +53,47 @@
 #include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
+
+namespace NES::Systest
+{
+struct ConfigurationOverride
+{
+    std::unordered_map<std::string, std::string> overrideParameters;
+    ConfigurationOverride() = default;
+
+    ConfigurationOverride(std::initializer_list<std::pair<std::string_view, std::string_view>> init)
+    {
+        for (const auto& [key, value] : init)
+        {
+            overrideParameters.emplace(std::string{key}, std::string{value});
+        }
+    }
+
+    std::string& operator[](std::string_view key) { return overrideParameters[std::string{key}]; }
+
+    [[nodiscard]] const std::string& at(std::string_view key) const { return overrideParameters.at(std::string{key}); }
+
+    bool operator==(const ConfigurationOverride& other) const = default;
+    bool operator!=(const ConfigurationOverride& other) const = default;
+};
+}
+
+namespace std
+{
+template <>
+struct hash<NES::Systest::ConfigurationOverride>
+{
+    std::size_t operator()(const NES::Systest::ConfigurationOverride& co) const noexcept
+    {
+        std::string repr;
+        for (const auto& [key, value] : co.overrideParameters)
+        {
+            repr += key + ":" + value + ";";
+        }
+        return std::hash<std::string>{}(repr);
+    }
+};
+}
 
 namespace NES::Systest
 {
@@ -65,8 +107,6 @@ using TestGroup = std::string;
 using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
-
-using ConfigurationOverride = std::unordered_map<std::string, std::string>;
 
 struct ExpectedError
 {
@@ -111,7 +151,7 @@ struct SystestQuery
     struct PlanInfo
     {
         LogicalPlan queryPlan;
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
+        std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
     };
 
@@ -205,23 +245,3 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             runningQuery.systestQuery.queryIdInFile);
     }
 };
-
-namespace std
-{
-template <>
-struct hash<NES::Systest::ConfigurationOverride>
-{
-    std::size_t operator()(const NES::Systest::ConfigurationOverride& cfg) const noexcept
-    {
-        std::size_t seed = 0;
-        const auto hasher = std::hash<std::string>{};
-
-        for (const auto& [k, v] : cfg)
-        {
-            seed ^= hasher(k) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed;
-    }
-};
-}

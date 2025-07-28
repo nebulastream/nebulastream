@@ -211,7 +211,6 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
 }
 
-
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";
@@ -375,8 +374,8 @@ TEST_F(SystestParserValidTestFileTest, ConfigOverrideTest)
 
     /// Expected configuration overrides
     std::vector<std::vector<ConfigurationOverride>> expectedConfigOverrides
-        = {{{{"worker.queryOptimizer.pageSize", "8"}}},
-           {{{"worker.queryOptimizer.pageSize", "8"}}, {{"worker.queryOptimizer.pageSize", "1024"}}}};
+        = {{{{"worker.query_optimizer.page_size", "8"}}},
+           {{{"worker.query_optimizer.page_size", "8"}}, {{"worker.query_optimizer.page_size", "1024"}}}};
 
     /// Expected logical source
     const SystestParser::SystestLogicalSource expectedLogicalSource{
