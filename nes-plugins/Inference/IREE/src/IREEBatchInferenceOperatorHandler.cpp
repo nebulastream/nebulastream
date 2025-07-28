@@ -25,7 +25,7 @@ IREEBatchInferenceOperatorHandler::IREEBatchInferenceOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     OriginId outputOriginId,
     Nebuli::Inference::Model model)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, true)
     , batchSize(model.getInputShape().front())
     , model(std::move(model))
 {
@@ -43,6 +43,8 @@ void IREEBatchInferenceOperatorHandler::start(PipelineExecutionContext& pipeline
         threadLocalAdapters.emplace_back(IREEAdapter::create());
         threadLocalAdapters.back()->initializeModel(model);
     }
+
+    createNewBatch();
 }
 
 void IREEBatchInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
@@ -61,47 +63,71 @@ const std::shared_ptr<IREEAdapter>& IREEBatchInferenceOperatorHandler::getIREEAd
 
 void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
     Batch& batch,
-    const BufferMetaData& bufferMetadata,
-    PipelineExecutionContext* pipelineCtx) const
+    const SequenceData& sequenceData,
+    PipelineExecutionContext* pipelineCtx,
+    const Timestamp watermarkTs) const
 {
-    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
-    const auto sequenceData = bufferMetadata.seqNumber;
+    batch.combinePagedVectors();
+    const auto numberOfTuples = batch.getNumberOfTuples();
 
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
-    tupleBuffer.setWatermark(bufferMetadata.watermarkTs);
-    tupleBuffer.setNumberOfTuples(batch.getNumberOfTuples());
+    tupleBuffer.setWatermark(watermarkTs);
+    tupleBuffer.setNumberOfTuples(numberOfTuples);
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedBatch>();
     bufferMemory->batchId = batch.batchId;
 
     pipelineCtx->emitBuffer(tupleBuffer);
+    batch.state.store(BatchState::MARKED_AS_EMITTED, std::memory_order_release);
 
     NES_DEBUG(
-        "Emitted batch #{} with watermarkTs {} sequenceNumber {} originId {} of size {} tuples ",
-        bufferMemory->batchId+1,
+        "Emitted batch {} with watermarkTs {} sequenceNumber {} originId {} tuples {}",
+        bufferMemory->batchId,
         tupleBuffer.getWatermark(),
         tupleBuffer.getSequenceDataAsString(),
         tupleBuffer.getOriginId(),
         tupleBuffer.getNumberOfTuples());
 }
 
+void IREEBatchInferenceOperatorHandler::createNewBatch() const
+{
+    tuplesSeen = 0;
+    auto batch = std::make_shared<Batch>(batches.size(), 1);
+    batch->state.store(BatchState::MARKED_AS_CREATED, std::memory_order_release);
+    batches.emplace_back(batch);
+}
+
 Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
 {
     tuplesSeen++;
-    if (batches.empty() || tuplesSeen == batchSize)
+    if (tuplesSeen == batchSize || batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_EMITTED)
     {
-        tuplesSeen = 0;
-        auto batch = std::make_shared<Batch>(batches.size(), numberOfWorkerThreads);
-        batches.emplace_back(batch);
-        return batch.get();
+        createNewBatch();
+        return batches.back().get();
     }
+
+    if (batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_PROCESSED)
+    {
+        auto processedBatches = batches
+            | std::views::filter([](const std::shared_ptr<Batch>& batch)
+                {
+                    return batch && batch->state.load() == BatchState::MARKED_AS_PROCESSED;
+                });
+        auto batchesCount = static_cast<size_t>(std::ranges::distance(processedBatches));
+        if (batchesCount == batches.size()) batches.clear();
+        createNewBatch();
+        return batches.back().get();
+    }
+
     return batches.back().get();
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> IREEBatchInferenceOperatorHandler::getCreateNewSlicesFunction() const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+IREEBatchInferenceOperatorHandler::getCreateNewSlicesFunction() const
 {
     return [](SliceStart, SliceEnd)
     {

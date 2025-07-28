@@ -30,6 +30,11 @@ namespace NES::Runtime::Execution::Operators
 
 void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const
 {
+    nautilus::invoke(
+        +[](const SequenceNumber seq, uint64_t n)
+        {
+            NES_INFO("Tuple buffer with {} tuples sequence {}", n, seq)
+        }, recordBuffer.getSequenceNumber(), recordBuffer.getNumRecords());
     auto buffer = nautilus::invoke(
         +[](OperatorHandler* handler, uint8_t* bufferMemory) -> Memory::TupleBuffer*
         { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(bufferMemory).value_or(nullptr); },

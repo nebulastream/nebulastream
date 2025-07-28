@@ -1,0 +1,10 @@
+type: Generator
+stopGeneratorWhenSequenceFinishes: ALL
+maxRuntimeMS: 1500000
+seed: 1
+generatorSchema: |
+  SEQUENCE UINT64 0 10000000 1
+  SEQUENCE FLOAT32 4.0 8.0 0.1
+  SEQUENCE FLOAT32 2.0 4.0 0.1
+  SEQUENCE FLOAT32 1.0 6.0 0.1
+  SEQUENCE FLOAT32 0.1 3.0 0.1
