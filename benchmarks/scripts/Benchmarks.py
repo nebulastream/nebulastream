@@ -539,10 +539,10 @@ def plot_watermark_predictor_params(data, param, metric, hue, label, legend):
         data_scaled, metric_unit = convert_units(data_filtered, metric)
 
         if pd.api.types.is_numeric_dtype(data_scaled[param]):
-            if param != 'prediction_time_delta':
-                data_scaled, param_unit = convert_units(data_scaled, param)
+            if param == 'prediction_time_delta':
+                data_scaled, param_unit = convert_units(data_scaled, param, 'μs')
             else:
-                data_scaled, param_unit = convert_units(data_scaled, param, '')
+                data_scaled, param_unit = convert_units(data_scaled, param)
             # sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', ax=ax)
             sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker='o', ax=ax)
 
@@ -568,8 +568,9 @@ file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
 for param in watermark_predictor_config_params:
     for hue_value in df['file_backed_hue'].unique():
         data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
-        plot_watermark_predictor_params(data_per_hue, param, 'throughput_data', 'watermark_predictor_hue', 'Throughput / sec', 'Watermark Gaps | Sequence Numbers')
-        plot_watermark_predictor_params(data_per_hue, param, 'memory', 'watermark_predictor_hue', 'Memory', 'Watermark Gaps | Sequence Numbers')
+        if data_per_hue['query_id'].unique()[0] == 'Q3':
+            plot_watermark_predictor_params(data_per_hue, param, 'throughput_data', 'watermark_predictor_hue', 'Throughput / sec', 'Watermark Gaps | Sequence Numbers')
+            plot_watermark_predictor_params(data_per_hue, param, 'memory', 'watermark_predictor_hue', 'Memory', 'Watermark Gaps | Sequence Numbers')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time

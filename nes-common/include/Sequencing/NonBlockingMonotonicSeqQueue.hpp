@@ -117,7 +117,7 @@ public:
     }
 
     std::vector<std::pair<SequenceNumber::Underlying, T>>
-    getNextSequenceNumbersAndValues(uint64_t numGapsAllowed, uint64_t maxNumSeqNumbers) const
+    getNextSequenceNumbersAndValues(uint64_t maxNumGaps, uint64_t maxNumSeqNumbers) const
     {
         auto currentBlock = std::atomic_load(&head);
         /// get the current sequence number and access the associated block
@@ -128,7 +128,7 @@ public:
         auto seqIndexInBlock = currentSequenceNumber % BlockSize;
 
         std::vector<std::pair<SequenceNumber::Underlying, T>> containers;
-        while (numGapsAllowed > 0 && maxNumSeqNumbers > 0)
+        while (maxNumGaps > 0 && maxNumSeqNumbers > 0)
         {
             if (seqIndexInBlock >= BlockSize)
             {
@@ -150,7 +150,7 @@ public:
             }
             else
             {
-                --numGapsAllowed;
+                --maxNumGaps;
             }
 
             ++seqIndexInBlock;

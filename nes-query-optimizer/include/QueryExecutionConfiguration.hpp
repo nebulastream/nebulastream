@@ -98,12 +98,15 @@ public:
            "0",
            "Minimum state size per slice and thread to be read back to memory.",
            {std::make_shared<NumberValidation>()}};
-    UIntOption minWriteStateSize = {
-        "minWriteStateSize", "0", "Minimum state size per slice and thread to be written to file.", {std::make_shared<NumberValidation>()}};
+    UIntOption minWriteStateSize
+        = {"minWriteStateSize",
+           "4096",
+           "Minimum state size per slice and thread to be written to file.",
+           {std::make_shared<NumberValidation>()}};
     UIntOption predictionTimeDelta
         = {"predictionTimeDelta",
            "0",
-           "Time delta added to watermark predictions to account for execution time.",
+           "Time delta in microseconds that is added to watermark predictions to account for execution time.",
            {std::make_shared<NumberValidation>()}};
     BoolOption withCleanup = {"withCleanup", "true", "Delete state on external storage devices for file backed slice store."};
     BoolOption withPrediction = {"withPrediction", "false", "Predict watermarks for file backed slice store."};
@@ -114,7 +117,7 @@ public:
            "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
     EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
-           WatermarkPredictorType::KALMAN,
+           WatermarkPredictorType::RLS,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
     UIntOption maxNumFileDescriptors

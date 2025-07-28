@@ -94,7 +94,7 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
 }
 
 std::vector<std::pair<uint64_t, Timestamp::Underlying>> MultiOriginWatermarkProcessor::getIngestionTimesForWatermarks(
-    const OriginId origin, const uint64_t numGapsAllowed, const uint64_t maxNumSeqNumbers) const
+    const OriginId origin, const uint64_t maxNumGaps, const uint64_t maxNumSeqNumbers) const
 {
     std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimesForWatermarks;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
@@ -102,7 +102,7 @@ std::vector<std::pair<uint64_t, Timestamp::Underlying>> MultiOriginWatermarkProc
         if (origins[originIndex] == origin)
         {
             const auto& nextSequenceNumbers
-                = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(numGapsAllowed, maxNumSeqNumbers);
+                = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(maxNumGaps, maxNumSeqNumbers);
             ingestionTimesForWatermarks.reserve(nextSequenceNumbers.size());
 
             const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
