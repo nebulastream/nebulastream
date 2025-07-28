@@ -23,13 +23,13 @@
 #include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <Util/Logger/Logger.hpp>
 
 
 namespace NES::LowerToPhysicalOperators
@@ -37,7 +37,8 @@ namespace NES::LowerToPhysicalOperators
 
 namespace
 {
-std::unique_ptr<AbstractRewriteRule> resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+std::unique_ptr<AbstractRewriteRule>
+resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     const auto logicalOperatorName = logicalOperator.getName();
     const auto joinStrategy = registryArgument.conf.joinStrategy.getValue();

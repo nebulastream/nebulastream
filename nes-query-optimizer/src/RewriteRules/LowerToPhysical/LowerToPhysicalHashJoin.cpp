@@ -187,34 +187,30 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 {
                     const auto leftFieldNewName = leftField.getFieldName() + "_" + std::to_string(counter++);
                     const auto rightFieldNewName = rightField.getFieldName() + "_" + std::to_string(counter++);
-                    leftJoinNames.emplace_back(
-                        FieldNamesExtension{
-                            .oldName = leftField.getFieldName(),
-                            .newName = leftFieldNewName,
-                            .oldDataType = leftField.getDataType(),
-                            .newDataType = *joinedDataType});
-                    rightJoinNames.emplace_back(
-                        FieldNamesExtension{
-                            .oldName = rightField.getFieldName(),
-                            .newName = rightFieldNewName,
-                            .oldDataType = rightField.getDataType(),
-                            .newDataType = *joinedDataType});
+                    leftJoinNames.emplace_back(FieldNamesExtension{
+                        .oldName = leftField.getFieldName(),
+                        .newName = leftFieldNewName,
+                        .oldDataType = leftField.getDataType(),
+                        .newDataType = *joinedDataType});
+                    rightJoinNames.emplace_back(FieldNamesExtension{
+                        .oldName = rightField.getFieldName(),
+                        .newName = rightFieldNewName,
+                        .oldDataType = rightField.getDataType(),
+                        .newDataType = *joinedDataType});
                 }
             }
             else
             {
-                leftJoinNames.emplace_back(
-                    FieldNamesExtension{
-                        .oldName = leftField.getFieldName(),
-                        .newName = leftField.getFieldName(),
-                        .oldDataType = leftField.getDataType(),
-                        .newDataType = leftField.getDataType()});
-                rightJoinNames.emplace_back(
-                    FieldNamesExtension{
-                        .oldName = rightField.getFieldName(),
-                        .newName = rightField.getFieldName(),
-                        .oldDataType = rightField.getDataType(),
-                        .newDataType = rightField.getDataType()});
+                leftJoinNames.emplace_back(FieldNamesExtension{
+                    .oldName = leftField.getFieldName(),
+                    .newName = leftField.getFieldName(),
+                    .oldDataType = leftField.getDataType(),
+                    .newDataType = leftField.getDataType()});
+                rightJoinNames.emplace_back(FieldNamesExtension{
+                    .oldName = rightField.getFieldName(),
+                    .newName = rightField.getFieldName(),
+                    .oldDataType = rightField.getDataType(),
+                    .newDataType = rightField.getDataType()});
             }
         });
 
@@ -244,9 +240,8 @@ addMapOperators(const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExt
         inputSchemaOfMap.addField(newName, newDataType);
 
         /// Create a new map operator with the cast as its function
-        mapPhysicalOperators.emplace_back(
-            std::make_shared<PhysicalOperatorWrapper>(
-                MapPhysicalOperator(newName, castedPhysicalFunction), copyOfInputSchemaOfMap, inputSchemaOfMap));
+        mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
+            MapPhysicalOperator(newName, castedPhysicalFunction), copyOfInputSchemaOfMap, inputSchemaOfMap));
     }
 
     return {inputSchemaOfMap, mapPhysicalOperators};

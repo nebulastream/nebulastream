@@ -12,7 +12,6 @@
 
 add_plugin(NLJoin RewriteRule nes-query-optimizer LowerToPhysicalNLJoin.cpp)
 add_plugin(HashJoin RewriteRule nes-query-optimizer LowerToPhysicalHashJoin.cpp)
-add_plugin(Map RewriteRule nes-query-optimizer LowerToPhysicalMap.cpp)
 add_plugin(Selection RewriteRule nes-query-optimizer LowerToPhysicalSelection.cpp)
 add_plugin(Projection RewriteRule nes-query-optimizer LowerToPhysicalProjection.cpp)
 add_plugin(WindowedAggregation RewriteRule nes-query-optimizer LowerToPhysicalWindowedAggregation.cpp)
