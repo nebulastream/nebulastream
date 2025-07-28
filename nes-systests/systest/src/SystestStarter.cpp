@@ -13,84 +13,30 @@
 */
 
 #include <chrono>
+#include <cstddef>
+#include <cstdlib>
+#include <exception>
+#include <filesystem>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Configurations/Util.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <argparse/argparse.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
+#include <SystestState.hpp>
 
-namespace NES
+namespace
 {
-
-void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
-{
-    std::error_code errorCode;
-    const auto relativeLogPath = relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
-    if (errorCode)
-    {
-        std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
-        return;
-    }
-
-    if (exists(symlinkPath) || is_symlink(symlinkPath))
-    {
-        std::filesystem::remove(symlinkPath, errorCode);
-        if (errorCode)
-        {
-            std::cerr << "Error removing existing symlink during logger setup:  " << errorCode.message() << "\n";
-        }
-    }
-
-    try
-    {
-        create_symlink(relativeLogPath, symlinkPath);
-    }
-    catch (const std::filesystem::filesystem_error& e)
-    {
-        std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
-    }
-}
-
-void setupLogging(const SystestConfiguration& config)
-{
-    std::filesystem::path absoluteLogPath;
-    const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
-
-    if (config.logFilePath.getValue().empty())
-    {
-        std::error_code errorCode;
-        create_directories(logDir, errorCode);
-        if (errorCode)
-        {
-            std::cerr << "Error creating log directory during logger setup: " << errorCode.message() << "\n";
-            return;
-        }
-
-        const auto now = std::chrono::system_clock::now();
-        const auto pid = ::getpid();
-        std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
-
-        absoluteLogPath = logDir / logFileName;
-    }
-    else
-    {
-        absoluteLogPath = config.logFilePath.getValue();
-        const std::filesystem::path parentDir = absoluteLogPath.parent_path();
-        if (not exists(parentDir) or not is_directory(parentDir))
-        {
-            fmt::println(std::cerr, "Error creating log file during logger setup: directory does not exist: file://{}", parentDir.string());
-            std::exit(1); /// NOLINT(concurrency-mt-unsafe)
-        }
-    }
-
-    fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
-    Logger::setupLogging(absoluteLogPath.string(), LogLevel::LOG_DEBUG, false);
-
-    const auto symlinkPath = logDir / "latest.log";
-    createSymlink(absoluteLogPath, symlinkPath);
-}
-
-SystestConfiguration readConfiguration(int argc, const char** argv)
+NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
@@ -167,7 +113,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         std::exit(1); ///NOLINT(concurrency-mt-unsafe)
     }
 
-    auto config = SystestConfiguration();
+    auto config = NES::SystestConfiguration();
 
     if (program.is_used("-b"))
     {
@@ -177,7 +123,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         {
             NES_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
             std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
-            exit(-1); ///NOLINT(concurrency-mt-unsafe)
+            std::exit(-1); ///NOLINT(concurrency-mt-unsafe)
         }
         std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
         config.numberConcurrentQueries = 1;
@@ -185,7 +131,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     if (program.is_used("-d"))
     {
-        Logger::setupLogging("systest.log", LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("systest.log", NES::LogLevel::LOG_DEBUG);
     }
 
     if (program.is_used("--data"))
@@ -246,8 +192,54 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         }
         else
         {
-            std::cerr << testFilePath << " is not a file or directory.\n";
-            std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+            /// The given path is neither a path to a directory nor a path to a file.
+            /// We now check if this name belongs to a test file in nes-systests by searching through the nes-systests directory manually.
+            const auto findAllInTree
+                = [](const std::filesystem::path& wanted, const std::filesystem::path& root) -> std::vector<std::filesystem::path>
+            {
+                std::vector<std::filesystem::path> hits;
+                for (const auto& entry :
+                     std::filesystem::recursive_directory_iterator(root, std::filesystem::directory_options::skip_permission_denied))
+                {
+                    if (entry.is_regular_file() && entry.path().filename() == wanted)
+                    {
+                        hits.emplace_back(entry.path());
+                    }
+                }
+                return hits;
+            };
+
+            const auto resolveTestArg
+                = [&](const std::filesystem::path& arg, const std::filesystem::path& discoverRoot) -> std::vector<std::filesystem::path>
+            {
+                if (exists(arg))
+                {
+                    return {canonical(arg)};
+                }
+                return findAllInTree(arg.filename(), discoverRoot);
+            };
+
+            const std::filesystem::path discoverRoot = config.testsDiscoverDir.getValue();
+            const auto matches = resolveTestArg(testFilePath, discoverRoot);
+
+            switch (matches.size())
+            {
+                case 0:
+                    std::cerr << '\'' << testFilePath << "' could not be located under '" << discoverRoot << "'.\n";
+                    std::exit(EXIT_FAILURE);
+
+                case 1:
+                    config.directlySpecifiedTestFiles = matches.front();
+                    break;
+
+                default:
+                    std::cerr << "Ambiguous test name '" << testFilePath << "':\n";
+                    for (const auto& p : matches)
+                    {
+                        std::cerr << "  • " << p << '\n';
+                    }
+                    std::exit(EXIT_FAILURE); /// NOLINT(concurrency-mt-unsafe)
+            }
         }
     }
 
@@ -313,16 +305,16 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     {
         auto confVec = program.get<std::vector<std::string>>("--");
 
-        const int argc = confVec.size() + 1;
-        std::vector<const char*> argv;
-        argv.reserve(argc + 1);
-        argv.push_back("systest"); /// dummy option as arg expects first arg to be the program name
+        const int workerArgc = static_cast<int>(confVec.size()) + 1;
+        std::vector<const char*> workerArgv;
+        workerArgv.reserve(workerArgc + 1);
+        workerArgv.push_back("systest"); /// dummy option as arg expects first arg to be the program name
         for (auto& arg : confVec)
         {
-            argv.push_back(const_cast<char*>(arg.c_str()));
+            workerArgv.push_back(const_cast<char*>(arg.c_str()));
         }
 
-        config.singleNodeWorkerConfig = loadConfiguration<SingleNodeWorkerConfiguration>(argc, argv.data());
+        config.singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(workerArgc, workerArgv.data());
     }
 
     /// Setup Working Directory
@@ -338,15 +330,15 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     if (program.is_used("--list"))
     {
-        std::cout << Systest::loadTestFileMap(config);
+        std::cout << NES::Systest::loadTestFileMap(config);
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
-
-    if (program.is_used("--help"))
+    else if (program.is_used("--help"))
     {
         std::cout << program << '\n';
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
+
     return config;
 }
 }
@@ -355,16 +347,16 @@ int main(int argc, const char** argv)
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto config = NES::readConfiguration(argc, argv);
-    setupLogging(config);
+    auto config = parseConfiguration(argc, argv);
+    NES::SystestExecutor executor(std::move(config));
+    const auto result = executor.executeSystests();
 
-    auto executor = NES::SystestExecutor(config);
-    switch (const auto [returnType, outputMessage, exceptionCode] = executor.executeSystests(); returnType)
+    switch (result.returnType)
     {
         case SystestExecutorResult::ReturnType::SUCCESS: {
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            std::cout << outputMessage << '\n';
+            std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
                       << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
             return 0;
@@ -372,12 +364,12 @@ int main(int argc, const char** argv)
         case SystestExecutorResult::ReturnType::FAILED: {
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            PRECONDITION(exceptionCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
-            NES_ERROR("{}", outputMessage);
-            std::cout << outputMessage << '\n';
+            PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
+            NES_ERROR("{}", result.outputMessage);
+            std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
                       << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
-            return static_cast<int>(exceptionCode.value());
+            return result.errorCode.value();
         }
     }
 }

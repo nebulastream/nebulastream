@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include <argparse/argparse.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
@@ -44,7 +44,7 @@ namespace NES
 class SystestExecutor
 {
 public:
-    SystestExecutor(SystestConfiguration config) : config(config) { };
+    explicit SystestExecutor(SystestConfiguration config);
     SystestExecutorResult executeSystests();
 
 private:

@@ -14,6 +14,7 @@ add_source_files(nes-systest-lib
         SystestExecutor.cpp
         SystestParser.cpp
         SystestRunner.cpp
+        SystestProgressTracker.cpp
         SystestState.cpp
         SystestResultCheck.cpp
         SystestConfiguration.cpp

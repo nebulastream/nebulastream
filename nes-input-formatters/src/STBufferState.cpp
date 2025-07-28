@@ -21,9 +21,9 @@
 #include <utility>
 #include <fmt/format.h>
 
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
-#include "Util/Logger/Logger.hpp"
 
 namespace NES
 {
