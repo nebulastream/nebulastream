@@ -351,7 +351,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     {
         config.enableGoogleEventTrace = true;
         std::cout << "Google Event Trace enabled. Trace files will be created at: file://" << std::filesystem::current_path().string()
-                  << std::endl;
+                  << '\n';
     }
 
     if (program.is_used("--list"))
