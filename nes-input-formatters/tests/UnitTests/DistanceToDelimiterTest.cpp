@@ -355,12 +355,13 @@ void executeRingBufferExperiment(
                     auto atomicFirstDelimiter = ringBuffer[firstDelimiterIdx].load();
                     auto desiredFirstDelimiter = atomicFirstDelimiter;
                     desiredFirstDelimiter.completedTrailing = true;
-                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing
-                           and not(ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter)))
+                    bool claimedSpanningTuple = false;
+                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing and not claimedSpanningTuple)
                     {
                         desiredFirstDelimiter.completedLeading = atomicFirstDelimiter.completedLeading;
+                        claimedSpanningTuple = ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter);
                     }
-                    return atomicFirstDelimiter == desiredFirstDelimiter;
+                    return claimedSpanningTuple;
                 };
 
                 size_t noTupleDelimiterSeqCount = 0;
@@ -393,9 +394,9 @@ void executeRingBufferExperiment(
                         {
                             // TODO: CONSTRUCTION SITE
                             /// The leading ST ends in the snRBIdx, if its index is larger than the snRBIdx, it is from a prior iteration
-                            const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiter > snRBIdx);
-                            if (const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
-                                claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+                            const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                            const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
+                            if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, snRBIdx, ringBuffer);
@@ -405,8 +406,11 @@ void executeRingBufferExperiment(
                         }
                         if (lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            if (const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size(); claimSpanningTuple(snRBIdx, abaItNumber))
+                            // const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
+                            // const auto abaItNumberOfLastDelimiter = abaItNumber - static_cast<size_t>(lastDelimiterIdx < snRBIdx);
+                            if (claimSpanningTuple(snRBIdx, abaItNumber))
                             {
+                                const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
                                 setCompletedFlags(snRBIdx, lastDelimiterIdx, ringBuffer);
                                 threadLocalResultIntervals.at(i).emplace_back()
                                     = Interval{.lo = static_cast<uint32_t>(currentSequenceNumber), .hi = lastDelimiter};
@@ -428,8 +432,9 @@ void executeRingBufferExperiment(
                         if (firstDelimiter != std::numeric_limits<uint32_t>::max()
                             and lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            if (const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
-                                claimSpanningTuple(firstDelimiterIdx, abaItNumber))
+                            const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                            const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
+                            if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
@@ -512,7 +517,7 @@ int main()
 {
     ///
     // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
-    executeRingBufferExperiment(1, 20, 16, 0.5);
+    executeRingBufferExperiment(4, 10000, 16, 0.5);
     // executeExperiment(40, 1000000);
     // syncLessIncreaseExperiment(8, 1000000);
     return 0;
