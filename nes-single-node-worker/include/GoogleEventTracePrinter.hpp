@@ -14,14 +14,22 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <stop_token>
+#include <string>
 #include <thread>
+#include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <variant>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <StatisticPrinter.hpp>
 
@@ -38,13 +46,15 @@ struct GoogleEventTracePrinter final : QueryEngineStatisticListener, SystemEvent
     /// Constructs a GoogleEventTracePrinter that writes to the specified file path
     /// @param path The file path where the trace will be written
     explicit GoogleEventTracePrinter(const std::filesystem::path& path);
-    ~GoogleEventTracePrinter();
+    ~GoogleEventTracePrinter() override;
 
     /// Flushes the trace file and closes it, blocking until all pending events are written
     void flush();
 
 private:
-    enum class Category
+    static constexpr size_t QUEUE_LENGTH = 1000;
+
+    enum class Category : int
     {
         Query,
         Pipeline,
@@ -52,7 +62,7 @@ private:
         System
     };
 
-    enum class Phase
+    enum class Phase : int
     {
         Begin,
         End,
@@ -61,8 +71,8 @@ private:
 
     static uint64_t timestampToMicroseconds(const std::chrono::system_clock::time_point& timestamp);
 
-    nlohmann::json
-    createTraceEvent(const std::string& name, Category cat, Phase ph, uint64_t ts, uint64_t dur = 0, const nlohmann::json& args = {});
+    static nlohmann::json createTraceEvent(
+        const std::string& name, Category cat, Phase phase, uint64_t timestamp, uint64_t dur = 0, const nlohmann::json& args = {});
 
     /// Thread routine that processes events and writes to the trace file
     void threadRoutine(const std::stop_token& token);
@@ -70,7 +80,7 @@ private:
     void writeTraceFooter();
 
     std::ofstream file;
-    folly::MPMCQueue<CombinedEventType> events{1000};
+    folly::MPMCQueue<CombinedEventType> events{QUEUE_LENGTH};
     std::jthread traceThread;
     bool headerWritten = false;
     bool footerWritten = false;
