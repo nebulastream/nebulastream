@@ -25,13 +25,11 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
-
 
 namespace NES::Systest
 {
@@ -40,16 +38,19 @@ using namespace std::literals;
 /// Tokens ///
 enum class TokenType : uint8_t
 {
-    INVALID,
-    LOGICAL_SOURCE,
-    ATTACH_SOURCE,
-    SINK,
     QUERY,
+    CREATE,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
     CONFIGURATION,
     GLOBAL_CONFIGURATION,
     DIFFERENTIAL
+};
+
+enum class TestDataIngestionType : uint8_t
+{
+    INLINE,
+    FILE
 };
 
 /// Assures that the number of parsed queries matches the number of parsed results
@@ -91,14 +92,17 @@ struct SystestField
 {
     DataType type;
     std::string name;
+
     friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
     {
         os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
         return os;
     }
+
     bool operator==(const SystestField& other) const = default;
     bool operator!=(const SystestField& other) const = default;
 };
+
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
 ///
@@ -113,7 +117,8 @@ public:
         /// Takes the keyword by reference and modifies it according to the rule
         std::function<void(std::string&)> ruleFunction;
     };
-    /// Register a substitution rule to be applied to the file before parsing
+
+    /// Register a substitution rule to be applied before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
     /// Loading overrides existing parse content
@@ -121,6 +126,7 @@ public:
     [[nodiscard]] bool loadString(const std::string& str);
 
     using SystestSchema = std::vector<SystestField>;
+
     /// Type definitions ///
     struct SystestLogicalSource
     {
@@ -146,36 +152,28 @@ public:
 
     using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
-    using SystestLogicalSourceCallback = std::function<void(const SystestLogicalSource&)>;
-    using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
-    using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
-    using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
-    using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using DifferentialQueryBlockCallback
         = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
+    using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
+    using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
-    void registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback);
-    void registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback);
-    void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
+    void registerOnCreateCallback(CreateCallback callback);
+    void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
     void registerOnConfigurationCallback(ConfigurationCallback callback);
     void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
-    void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
 
     void parse();
     void parseResultLines();
 
 private:
-    /// Substitution rules ///
-    std::vector<SubstitutionRule> substitutionRules;
-    void applySubstitutionRules(std::string& line);
-
     /// Parsing utils ///
-    [[nodiscard]] static std::optional<TokenType> getTokenIfValid(std::string potentialToken);
+    [[nodiscard]] static std::optional<TokenType> getTokenIfValid(const std::string& line);
     /// Parse the next token and return its type.
     [[nodiscard]] std::optional<TokenType> getNextToken();
     /// Got the next token. Returns false if reached end of file.
@@ -183,29 +181,27 @@ private:
     /// Look ahead at the next token without consuming it
     [[nodiscard]] std::optional<TokenType> peekToken() const;
 
-    [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>> expectSystestLogicalSource();
-    [[nodiscard]] SystestAttachSource expectAttachSource();
-    [[nodiscard]] SystestSink expectSink() const;
+    /// Apply registered substitutions to line
+    void applySubstitutionRules(std::string& line);
+
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
+    [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
     [[nodiscard]] std::pair<std::string, std::string> expectDifferentialBlock();
     [[nodiscard]] ErrorExpectation expectError() const;
     [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
     [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
-    [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>>
-    expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens);
 
+    std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
-    SystestLogicalSourceCallback onSystestLogicalSourceCallback;
-    SystestAttachSourceCallback onAttachSourceCallback;
-    SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
+    CreateCallback onCreateCallback;
+    DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
     ConfigurationCallback onConfigurationCallback;
     GlobalConfigurationCallback onGlobalConfigurationCallback;
-    DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
 
     std::optional<std::string> lastParsedQuery;
     std::optional<SystestQueryId> lastParsedQueryId;

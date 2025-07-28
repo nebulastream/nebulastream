@@ -15,12 +15,12 @@
 #pragma once
 
 #include <algorithm>
-#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -55,6 +55,53 @@
 namespace NES::Systest
 {
 
+struct ConfigurationOverride
+{
+    std::unordered_map<std::string, std::string> overrideParameters;
+    ConfigurationOverride() = default;
+
+    ConfigurationOverride(std::initializer_list<std::pair<std::string_view, std::string_view>> init)
+    {
+        for (const auto& [key, value] : init)
+        {
+            overrideParameters.emplace(std::string{key}, std::string{value});
+        }
+    }
+
+    std::string& operator[](std::string_view key) { return overrideParameters[std::string{key}]; }
+
+    [[nodiscard]] const std::string& at(std::string_view key) const { return overrideParameters.at(std::string{key}); }
+
+    bool operator==(const ConfigurationOverride& other) const = default;
+    bool operator!=(const ConfigurationOverride& other) const = default;
+};
+}
+
+namespace std
+{
+template <>
+struct hash<NES::Systest::ConfigurationOverride>
+{
+    std::size_t operator()(const NES::Systest::ConfigurationOverride& co) const noexcept
+    {
+        std::size_t seed = 0;
+        std::hash<std::string> hasher;
+        const auto mix = [](std::size_t currentSeed, std::size_t value) noexcept
+        { return currentSeed ^ (value + 0x9e3779b9 + (currentSeed << 6U) + (currentSeed >> 2U)); };
+
+        for (const auto& [key, value] : co.overrideParameters)
+        {
+            seed = mix(seed, hasher(key));
+            seed = mix(seed, hasher(value));
+        }
+        return seed;
+    }
+};
+}
+
+namespace NES::Systest
+{
+
 
 class SystestRunner;
 
@@ -64,8 +111,6 @@ using TestGroup = std::string;
 using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
-
-using ConfigurationOverride = std::unordered_map<std::string, std::string>;
 
 struct ExpectedError
 {
@@ -112,6 +157,46 @@ struct SystestQuery
         LogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
+
+        PlanInfo() = default;
+
+        PlanInfo(LogicalPlan plan, std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources, Schema sinkSchema)
+            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
+        {
+        }
+
+        PlanInfo(LogicalPlan plan, Schema sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema)) { }
+
+        PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
+        {
+            copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
+        }
+
+        PlanInfo& operator=(const PlanInfo& other)
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+            queryPlan = other.queryPlan;
+            sinkOutputSchema = other.sinkOutputSchema;
+            copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
+            return *this;
+        }
+
+        PlanInfo(PlanInfo&&) noexcept = default;
+        PlanInfo& operator=(PlanInfo&&) noexcept = default;
+
+    private:
+        void copySourceMappingFrom(const std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>& original)
+        {
+            sourcesToFilePathsAndCounts.clear();
+            sourcesToFilePathsAndCounts.reserve(original.size());
+            for (const auto& [descriptor, fileInfo] : original)
+            {
+                sourcesToFilePathsAndCounts.emplace(descriptor, fileInfo);
+            }
+        }
     };
 
     std::expected<PlanInfo, Exception> planInfoOrException;
@@ -152,6 +237,7 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
+    std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
@@ -164,28 +250,6 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
-
-class SystestProgressTracker
-{
-public:
-    SystestProgressTracker();
-    explicit SystestProgressTracker(size_t totalQueries);
-
-    void incrementQueryCounter();
-    [[nodiscard]] size_t getQueryCounter() const;
-    void setTotalQueries(size_t total);
-
-    [[nodiscard]] size_t getTotalQueries() const;
-
-    [[nodiscard]] double getProgress() const;
-
-    void reset();
-    void reset(size_t newTotalQueries);
-
-private:
-    std::atomic<size_t> queryCounter{0};
-    size_t totalQueries{0};
-};
 
 }
 
@@ -204,23 +268,3 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             runningQuery.systestQuery.queryIdInFile);
     }
 };
-
-namespace std
-{
-template <>
-struct hash<NES::Systest::ConfigurationOverride>
-{
-    std::size_t operator()(const NES::Systest::ConfigurationOverride& cfg) const noexcept
-    {
-        std::size_t seed = 0;
-        const auto hasher = std::hash<std::string>{};
-
-        for (const auto& [k, v] : cfg)
-        {
-            seed ^= hasher(k) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed;
-    }
-};
-}

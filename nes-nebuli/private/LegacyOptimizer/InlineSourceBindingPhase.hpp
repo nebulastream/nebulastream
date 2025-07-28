@@ -15,9 +15,9 @@
 #pragma once
 #include <memory>
 #include <utility>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {
