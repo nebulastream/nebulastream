@@ -36,7 +36,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -47,44 +46,6 @@
 namespace
 {
 
-/// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
-NES::Systest::SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
-{
-    NES::Systest::SystestParser::SystestSchema schema;
-    if (arguments.size() % 2 != 0)
-    {
-        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
-        {
-            throw NES::SLTUnexpectedToken(
-                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
-                fmt::join(arguments, ","),
-                lastArg);
-        }
-        throw NES::SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
-    }
-
-    for (size_t i = 0; i < arguments.size(); i += 2)
-    {
-        NES::DataType dataType;
-        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(arguments[i]); type.has_value())
-        {
-            dataType = NES::DataTypeProvider::provideDataType(type.value());
-        }
-        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
-        {
-            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
-        }
-        else
-        {
-            throw NES::SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
-        }
-        schema.emplace_back(dataType, arguments[i + 1]);
-    }
-
-    return schema;
-}
-
-
 bool emptyOrComment(const std::string& line)
 {
     return line.empty() /// completely empty
@@ -92,108 +53,92 @@ bool emptyOrComment(const std::string& line)
         || line.starts_with('#'); /// slt comment
 }
 
-std::optional<std::filesystem::path> validateYamlConfigPath(const std::string_view filePath)
+std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
 {
-    const std::filesystem::path path(filePath);
-    if (not std::filesystem::exists(path) or not std::filesystem::is_regular_file(path) or not path.has_extension())
+    std::istringstream stream(line);
+
+    std::string token;
+    std::string key;
+    stream >> token >> key;
+
+    if (!key.ends_with(':'))
     {
-        return std::nullopt;
+        throw NES::SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
+    }
+    key.pop_back(); /// remove trailing ':'
+
+    if (key.empty())
+    {
+        throw NES::SLTUnexpectedToken("Expected {} key before colon, but got empty key", kindLabel);
     }
 
-    const std::string ext = NES::Util::toLowerCase(path.extension().string());
-    return (ext == ".yaml" or ext == ".yml") ? std::optional{path} : std::nullopt;
+    std::string valueList;
+    std::getline(stream >> std::ws, valueList);
+
+    if (valueList.empty())
+    {
+        throw NES::SLTUnexpectedToken("Expected {} value after key '{}', but got empty value", kindLabel, key);
+    }
+
+    std::vector<std::string> values;
+    auto invalidFormat = [&](std::string_view details)
+    { throw NES::SLTUnexpectedToken("Invalid {} format for key '{}': '{}'. {}", kindLabel, key, valueList, details); };
+
+    if (valueList.front() == '[' && valueList.back() == ']')
+    {
+        valueList = valueList.substr(1, valueList.size() - 2);
+        if (valueList.empty())
+        {
+            invalidFormat("Expected at least one value inside the brackets");
+        }
+        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+    }
+    else
+    {
+        if (valueList.find_first_of("[]") != std::string::npos)
+        {
+            invalidFormat("Use either single value or properly formatted list in square brackets");
+        }
+        if (valueList.find(',') != std::string::npos)
+        {
+            invalidFormat("Multiple values must be enclosed in square brackets");
+        }
+        values = {valueList};
+    }
+
+    std::vector<NES::Systest::ConfigurationOverride> result;
+    for (auto& value : values)
+    {
+        value = NES::Util::trimWhiteSpaces(value);
+        if (value.empty())
+        {
+            throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
+        }
+        NES::Systest::ConfigurationOverride override;
+        override.overrideParameters[key] = value;
+        result.emplace_back(std::move(override));
+    }
+    return result;
 }
 
-NES::SystestAttachSource parseAttachSource(const std::string& line)
-{
-    const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
-    /// Attach SourceType (SourceConfig) IFormatter (IFormatterConfig) LogicalSourceName DataIngestionType
-    constexpr size_t minNumberOfTokensInAttachSource = 5;
-    constexpr size_t maxNumberOfTokensInAttachSource = 7;
-
-    /// Preliminary checks
-    if (attachSourceTokens.size() < minNumberOfTokensInAttachSource or attachSourceTokens.size() > maxNumberOfTokensInAttachSource)
-    {
-        throw NES::SLTUnexpectedToken(
-            "Expected between {} and {} tokens for attach source, but found {} tokens in \"{}\"",
-            minNumberOfTokensInAttachSource,
-            maxNumberOfTokensInAttachSource,
-            attachSourceTokens.size(),
-            fmt::join(attachSourceTokens, ", "));
-    }
-    if (NES::Util::toUpperCase(attachSourceTokens.front()) != "ATTACH")
-    {
-        throw NES::SLTUnexpectedToken("Expected first token of attach source to be 'ATTACH'");
-    }
-
-    /// Validate and parse tokens
-    size_t nextTokenIdx = 1;
-    NES::SystestAttachSource attachSource{};
-
-    attachSource.sourceType = std::string(attachSourceTokens.at(nextTokenIdx++));
-    attachSource.sourceConfigurationPath
-        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view sourceType, size_t& nextTokenIdx)
-    {
-        if (const auto sourceConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
-        {
-            ++nextTokenIdx;
-            return sourceConfigPath.value();
-        }
-        /// Set default source config path
-        return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
-    }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
-
-    attachSource.inputFormatterType = attachSourceTokens.at(nextTokenIdx++);
-    attachSource.inputFormatterConfigurationPath
-        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view inputFormatterType, size_t& nextTokenIdx)
-    {
-        if (const auto inputFormatterConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
-        {
-            ++nextTokenIdx;
-            return inputFormatterConfigPath.value();
-        }
-        /// Set default source config path
-        return std::filesystem::path(TEST_CONFIGURATION_DIR)
-            / fmt::format("inputFormatters/{}_default.yaml", NES::Util::toLowerCase(inputFormatterType));
-    }(attachSourceTokens, attachSource.inputFormatterType, nextTokenIdx);
-
-    attachSource.logicalSourceName = attachSourceTokens.at(nextTokenIdx++);
-
-    if (not magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.at(nextTokenIdx))))
-    {
-        throw NES::SLTUnexpectedToken(
-            "Last keyword of attach source must be a valid TestDataIngestionType, but was: {}", attachSourceTokens.at(nextTokenIdx));
-    }
-    attachSource.testDataIngestionType
-        = magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.at(nextTokenIdx++))).value();
-
-    if (nextTokenIdx != attachSourceTokens.size())
-    {
-        throw NES::SLTUnexpectedToken(
-            "Number of parsed tokens {} does not match number of input tokens {}", nextTokenIdx, attachSourceTokens.size());
-    }
-    return attachSource;
-}
 }
 
 namespace NES::Systest
 {
 
-static constexpr auto SystestLogicalSourceToken = "Source"s;
-static constexpr auto AttachSourceToken = "Attach"s;
-static constexpr auto QueryToken = "SELECT"s;
-static constexpr auto SinkToken = "SINK"s;
-static constexpr auto ResultDelimiter = "----"s;
-static constexpr auto ErrorToken = "ERROR"s;
-static constexpr auto ConfigurationToken = "CONFIGURATION"s;
-static constexpr auto GlobalConfigurationToken = "GLOBALCONFIGURATION"s;
-static constexpr auto DifferentialToken = "===="s;
+using namespace std::string_view_literals;
+
+static constexpr std::string_view CreateToken = "CREATE"sv;
+static constexpr std::string_view QueryToken = "SELECT"sv;
+static constexpr std::string_view ResultDelimiter = "----"sv;
+static constexpr std::string_view ErrorToken = "ERROR"sv;
+static constexpr std::string_view DifferentialToken = "===="sv;
+static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
+static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
-    {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
-     {AttachSourceToken, TokenType::ATTACH_SOURCE},
+    {{CreateToken, TokenType::CREATE},
      {QueryToken, TokenType::QUERY},
-     {SinkToken, TokenType::SINK},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
@@ -202,7 +147,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
-    auto found = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
+    auto found
+        = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& existing) { return existing.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
         "substitution rule keywords must be unique. Tried to register for the second time: {}",
@@ -241,8 +187,8 @@ bool SystestParser::loadString(const std::string& str)
         /// add lines that do not start with a comment
         if (commentPos != 0)
         {
-            /// Apply subsitutions & add to parsing lines
             applySubstitutionRules(line);
+            /// Add to parsing lines
             lines.push_back(line);
         }
     }
@@ -259,28 +205,24 @@ void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback
     this->onResultTuplesCallback = std::move(callback);
 }
 
-void SystestParser::registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback)
-{
-    this->onSystestLogicalSourceCallback = std::move(callback);
-}
-void SystestParser::registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback)
-{
-    this->onAttachSourceCallback = std::move(callback);
-}
-
-void SystestParser::registerOnSystestSinkCallback(SystestSinkCallback callback)
-{
-    this->onSystestSinkCallback = std::move(callback);
-}
-
 void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback callback)
 {
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnCreateCallback(CreateCallback callback)
+{
+    this->onCreateCallback = std::move(callback);
+}
+
 void SystestParser::registerOnConfigurationCallback(ConfigurationCallback callback)
 {
     this->onConfigurationCallback = std::move(callback);
+}
+
+void SystestParser::registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback)
+{
+    this->onGlobalConfigurationCallback = std::move(callback);
 }
 
 void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback)
@@ -292,63 +234,31 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
 void SystestParser::parse()
 {
     SystestQueryIdAssigner queryIdAssigner{};
-    lastParsedQuery.reset();
-    lastParsedQueryId.reset();
-    shouldRevisitCurrentLine = false;
     while (auto token = getNextToken())
     {
         switch (token.value())
         {
-            case TokenType::ATTACH_SOURCE: {
-                if (onAttachSourceCallback)
-                {
-                    onAttachSourceCallback(expectAttachSource());
-                }
-                break;
-            }
-            case TokenType::LOGICAL_SOURCE: {
-                auto [logicalSource, attachSourceOpt] = expectSystestLogicalSource();
-                if (onSystestLogicalSourceCallback)
-                {
-                    onSystestLogicalSourceCallback(logicalSource);
-                }
-                if (onAttachSourceCallback and attachSourceOpt.has_value())
-                {
-                    onAttachSourceCallback(std::move(attachSourceOpt.value()));
-                }
-                break;
-            }
-            case TokenType::SINK: {
-                auto sink = expectSink();
-                if (onSystestSinkCallback)
-                {
-                    onSystestSinkCallback(std::move(sink));
-                }
+            case TokenType::CREATE: {
+                auto [query, testData] = expectCreateStatement();
+                onCreateCallback(query, testData);
                 break;
             }
             case TokenType::QUERY: {
-                static const std::unordered_set<TokenType> defaultQueryStopTokens{
-                    TokenType::RESULT_DELIMITER,
-                    TokenType::DIFFERENTIAL,
-                    TokenType::LOGICAL_SOURCE,
-                    TokenType::ATTACH_SOURCE,
-                    TokenType::SINK,
-                    TokenType::CONFIGURATION,
-                    TokenType::GLOBAL_CONFIGURATION};
+                static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
 
-                auto query = expectQuery(defaultQueryStopTokens);
+                auto query = expectQuery(DefaultQueryStopTokens);
                 lastParsedQuery = query;
                 auto queryId = queryIdAssigner.getNextQueryNumber();
                 lastParsedQueryId = queryId;
                 if (onQueryCallback)
                 {
-                    onQueryCallback(std::move(query), queryId);
+                    onQueryCallback(query, queryId);
                 }
                 break;
             }
             case TokenType::RESULT_DELIMITER: {
-                /// Look ahead for error expectation
-                if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
+                const auto optionalToken = peekToken();
+                if (optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
                     auto expectation = expectError();
@@ -367,18 +277,18 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::CONFIGURATION: {
-                auto config = expectConfiguration();
+                auto overrides = expectConfiguration();
                 if (onConfigurationCallback)
                 {
-                    onConfigurationCallback(std::move(config));
+                    onConfigurationCallback(std::move(overrides));
                 }
                 break;
             }
             case TokenType::GLOBAL_CONFIGURATION: {
-                auto globalConfig = expectGlobalConfiguration();
+                auto overrides = expectGlobalConfiguration();
                 if (onGlobalConfigurationCallback)
                 {
-                    onGlobalConfigurationCallback(std::move(globalConfig));
+                    onGlobalConfigurationCallback(std::move(overrides));
                 }
                 break;
             }
@@ -398,9 +308,6 @@ void SystestParser::parse()
                 }
                 break;
             }
-            case TokenType::INVALID:
-                throw SLTUnexpectedToken(
-                    "Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
             case TokenType::ERROR_EXPECTATION:
                 throw TestException(
                     "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);
@@ -414,27 +321,28 @@ void SystestParser::applySubstitutionRules(std::string& line)
     {
         size_t pos = 0;
         const std::string& keyword = rule.keyword;
-
         while ((pos = line.find(keyword, pos)) != std::string::npos)
         {
-            /// Apply the substitution function to the part of the string found
             std::string substring = line.substr(pos, keyword.length());
             rule.ruleFunction(substring);
-
-            /// Replace the found substring with the modified substring
             line.replace(pos, keyword.length(), substring);
             pos += substring.length();
         }
     }
 }
 
-std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
+std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
+    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
+
+    std::string potentialToken;
+    std::istringstream stream(line);
+    stream >> potentialToken;
+
     /// Lookup in map
     const auto* it = std::ranges::find_if(
         stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
@@ -442,7 +350,7 @@ std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialTok
     {
         return it->second;
     }
-    return TokenType::INVALID;
+    return std::nullopt;
 }
 
 bool SystestParser::moveToNextToken()
@@ -471,7 +379,6 @@ bool SystestParser::moveToNextToken()
     return currentLine < lines.size();
 }
 
-
 std::optional<TokenType> SystestParser::getNextToken()
 {
     if (!moveToNextToken())
@@ -479,13 +386,16 @@ std::optional<TokenType> SystestParser::getNextToken()
         return std::nullopt;
     }
 
-    std::string potentialToken;
-    std::istringstream stream(lines[currentLine]);
-    stream >> potentialToken;
+    const std::string line = lines[currentLine];
 
-    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
+    INVARIANT(!line.empty(), "a potential token should never be empty");
 
-    return getTokenIfValid(potentialToken);
+    if (auto token = getTokenIfValid(line); token.has_value())
+    {
+        return token;
+    }
+
+    throw SLTUnexpectedToken("Should never run into the INVALID token during systest file parsing, but got line: {}.", lines[currentLine]);
 }
 
 std::optional<TokenType> SystestParser::peekToken() const
@@ -501,256 +411,10 @@ std::optional<TokenType> SystestParser::peekToken() const
         return std::nullopt;
     }
 
-    std::string potentialToken;
-    std::istringstream stream(lines[peekLine]);
-    stream >> potentialToken;
+    const std::string line = lines[peekLine];
 
-    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
-    return getTokenIfValid(potentialToken);
-}
-
-SystestParser::SystestSink SystestParser::expectSink() const
-{
-    INVARIANT(currentLine < lines.size(), "current parse line should exist");
-
-    SystestSink sink;
-    const auto& line = lines[currentLine];
-    std::istringstream lineAsStream(line);
-
-    /// Read and discard the first word as it is always Source
-    std::string discard;
-    if (!(lineAsStream >> discard))
-    {
-        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
-    }
-    INVARIANT(
-        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken),
-        "Expected first word to be `{}` for sink statement",
-        SystestLogicalSourceToken);
-
-    /// Read the source name and check if successful
-    if (!(lineAsStream >> sink.name))
-    {
-        throw SLTUnexpectedToken("failed to read sink name in {}", line);
-    }
-
-    std::string sinkTypeTokenOrFieldType;
-    std::vector<std::string> arguments;
-    if (!(lineAsStream >> sinkTypeTokenOrFieldType))
-    {
-        throw SLTUnexpectedToken("failed to read sink name or type token in {}", line);
-    }
-    if (sinkTypeTokenOrFieldType == "TYPE")
-    {
-        /// Read the sink type and check if successful
-        if (!(lineAsStream >> sink.type))
-        {
-            throw SLTUnexpectedToken("failed to read sink type in {}", line);
-        }
-    }
-    else
-    {
-        sink.type = "File";
-        arguments.push_back(sinkTypeTokenOrFieldType);
-    }
-
-    std::string argument;
-    while (lineAsStream >> argument)
-    {
-        arguments.push_back(argument);
-    }
-
-    /// After the source definition line we expect schema fields
-    sink.fields = parseSchemaFields(arguments);
-
-    return sink;
-}
-
-std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource>>
-SystestParser::expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens)
-{
-    std::vector<std::string> arguments;
-    auto curPos = attachSourceTokens.begin();
-    std::advance(curPos, 2); /// First two words are always: Source sourceName
-    for (; curPos != attachSourceTokens.end(); ++curPos)
-    {
-        if (magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
-        {
-            break;
-        }
-        arguments.emplace_back(*curPos);
-    }
-    source.fields = parseSchemaFields(arguments);
-    std::unordered_map<std::string, std::string> configOptions;
-    INVARIANT(
-        std::distance(curPos, attachSourceTokens.end()) % 2 != 0,
-        "Generator Config Options are always pairwise! Error in {}",
-        lines[currentLine]);
-    ++curPos;
-    while (curPos != attachSourceTokens.end())
-    {
-        std::string key = *curPos;
-        std::string value = *(++curPos);
-        value = value.ends_with(',') ? value.substr(0, value.size() - 1) : value;
-
-        configOptions.try_emplace(key, value);
-        ++curPos;
-    }
-    currentLine++;
-    std::vector<std::string> fieldSchemas;
-    while (!emptyOrComment(lines[currentLine]))
-    {
-        fieldSchemas.emplace_back(lines[currentLine]);
-        currentLine++;
-    }
-    return std::make_pair(
-        source,
-        SystestAttachSource{
-            .sourceType = "Generator",
-            .sourceConfigurationPath = "inline:///",
-            .inputFormatterType = "CSV",
-            .inputFormatterConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
-            .logicalSourceName = source.name,
-            .testDataIngestionType = TestDataIngestionType::GENERATOR,
-            .tuples = {},
-            .fileDataPath = {},
-            .serverThreads = nullptr,
-            .inlineGeneratorConfiguration = InlineGeneratorConfiguration{.fieldSchema = fieldSchemas, .options = configOptions}});
-}
-
-std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource>> SystestParser::expectSystestLogicalSource()
-{
-    INVARIANT(currentLine < lines.size(), "current parse line should exist");
-
-    SystestLogicalSource source;
-    auto& line = lines[currentLine];
-    const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
-
-    /// Read and discard the first word as it is always Source
-    if (attachSourceTokens.front() != SystestLogicalSourceToken)
-    {
-        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
-    }
-
-    /// Read the source name and check if successful
-    if (attachSourceTokens.size() <= 1)
-    {
-        throw SLTUnexpectedToken("failed to read source name in {}", line);
-    }
-    source.name = attachSourceTokens.at(1);
-
-    if (const auto dataIngestionType = magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.back())))
-    {
-        const std::vector<std::string> arguments = attachSourceTokens | std::views::drop(2)
-            | std::views::take(std::ranges::size(attachSourceTokens) - 3) | std::ranges::to<std::vector<std::string>>();
-
-        /// After the source definition line we expect schema fields
-        source.fields = parseSchemaFields(arguments);
-
-        const auto attachSource = [&]()
-        {
-            switch (dataIngestionType.value())
-            {
-                case TestDataIngestionType::INLINE: {
-                    ++currentLine; /// proceed to results
-                    return SystestAttachSource{
-                        .sourceType = "File",
-                        .sourceConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "sources/file_default.yaml",
-                        .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
-                        .logicalSourceName = source.name,
-                        .testDataIngestionType = dataIngestionType.value(),
-                        .tuples = expectTuples(false),
-                        .fileDataPath = {},
-                        .serverThreads = nullptr,
-                        .inlineGeneratorConfiguration = std::nullopt};
-                }
-                case TestDataIngestionType::FILE: {
-                    return SystestAttachSource{
-                        .sourceType = "File",
-                        .sourceConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "sources/file_default.yaml",
-                        .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
-                        .logicalSourceName = source.name,
-                        .testDataIngestionType = dataIngestionType.value(),
-                        .tuples = {},
-                        .fileDataPath = expectFilePath(),
-                        .serverThreads = nullptr,
-                        .inlineGeneratorConfiguration = std::nullopt};
-                }
-                case TestDataIngestionType::GENERATOR: {
-                    return SystestAttachSource{
-                        .sourceType = "Generator",
-                        .sourceConfigurationPath = expectFilePath(),
-                        .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
-                        .logicalSourceName = source.name,
-                        .testDataIngestionType = dataIngestionType.value(),
-                        .tuples = {},
-                        .fileDataPath = {},
-                        .serverThreads = nullptr,
-                        .inlineGeneratorConfiguration = std::nullopt};
-                }
-            }
-            std::unreachable();
-        }();
-        return std::make_pair(source, attachSource);
-    }
-    if (std::ranges::any_of(
-            attachSourceTokens
-                | std::views::transform([](const auto& token) { return magic_enum::enum_cast<NES::TestDataIngestionType>(token); })
-                | std::views::filter([](const auto& optType) { return optType.has_value(); }),
-            [](const auto& optType) { return optType.value() == NES::TestDataIngestionType::GENERATOR; }))
-    {
-        return expectInlineGeneratorSource(source, attachSourceTokens);
-    }
-
-
-    const std::vector<std::string> arguments = attachSourceTokens | std::views::drop(2) | std::ranges::to<std::vector<std::string>>();
-
-    /// After the source definition line we expect schema fields
-    source.fields = parseSchemaFields(arguments);
-
-    return std::make_pair(source, std::nullopt);
-}
-
-/// Attach SOURCE_TYPE LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
-/// Attach SOURCE_TYPE SOURCE_CONFIG_PATH LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
-SystestAttachSource SystestParser::expectAttachSource()
-{
-    INVARIANT(currentLine < lines.size(), "current parse line should exist");
-
-    switch (auto attachSource = parseAttachSource(lines[currentLine]); attachSource.testDataIngestionType)
-    {
-        case TestDataIngestionType::INLINE: {
-            attachSource.tuples = {expectTuples(true)};
-            return attachSource;
-        }
-        case TestDataIngestionType::FILE: {
-            attachSource.fileDataPath = {expectFilePath()};
-            return attachSource;
-        }
-        case TestDataIngestionType::GENERATOR: {
-            attachSource.sourceConfigurationPath = {expectFilePath()};
-            return attachSource;
-        }
-    }
-    std::unreachable();
-}
-
-std::filesystem::path SystestParser::expectFilePath()
-{
-    ++currentLine;
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    if (const auto parsedFilePath = std::filesystem::path(lines.at(currentLine));
-        std::filesystem::exists(parsedFilePath) and parsedFilePath.has_filename())
-    {
-        return parsedFilePath;
-    }
-    throw TestException("Attach source with FileData must be followed by valid file path, but got: {}", lines.at(currentLine));
+    INVARIANT(!line.empty(), "a potential token should never be empty");
+    return getTokenIfValid(line);
 }
 
 std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
@@ -774,7 +438,7 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
         std::istringstream stream(lines[currentLine]);
         if (stream >> potentialToken)
         {
-            if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value() && tokenType.value() != TokenType::INVALID)
+            if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
                 break;
             }
@@ -786,6 +450,56 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     return tuples;
 }
 
+std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()
+{
+    std::string createQuery;
+    std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData = std::nullopt;
+
+    while (currentLine < lines.size())
+    {
+        const std::string line = lines[currentLine++];
+        if (emptyOrComment(line))
+        {
+            continue;
+        }
+
+        createQuery += line;
+        if (createQuery.ends_with(';'))
+        {
+            break;
+        }
+        createQuery += '\n';
+    }
+
+    while (currentLine < lines.size() && emptyOrComment(lines[currentLine]))
+    {
+        currentLine++;
+    }
+
+    if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH INLINE"))
+    {
+        testData = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
+        currentLine++;
+        while (currentLine < lines.size() && !lines[currentLine].empty())
+        {
+            testData.value().second.push_back(lines[currentLine]);
+            currentLine++;
+        }
+        currentLine--;
+    }
+    else if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH FILE"))
+    {
+        testData = std::make_pair(TestDataIngestionType::FILE, std::vector<std::string>{});
+        testData->second.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
+    }
+    else
+    {
+        currentLine--;
+    }
+
+    return std::make_pair(createQuery, testData);
+}
+
 std::string SystestParser::expectQuery()
 {
     return expectQuery({TokenType::RESULT_DELIMITER});
@@ -793,7 +507,7 @@ std::string SystestParser::expectQuery()
 
 std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stopTokens)
 {
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
     std::string queryString;
     while (currentLine < lines.size())
@@ -820,21 +534,24 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
-                if (tokenType.value() != TokenType::INVALID)
+                if (stopTokens.contains(tokenType.value()))
                 {
-                    if (stopTokens.contains(tokenType.value()))
+                    const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+
+                    if (trimmedQuerySoFar.back() != ';')
                     {
-                        break;
+                        throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
                     }
+                    break;
                 }
-                else
+            }
+            else
+            {
+                const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
+                if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
                 {
-                    const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
-                    if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
-                    {
-                        throw SLTUnexpectedToken(
-                            "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
-                    }
+                    throw SLTUnexpectedToken(
+                        "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
                 }
             }
         }
@@ -879,12 +596,10 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
     shouldRevisitCurrentLine = false;
 
     static const std::unordered_set<TokenType> differentialStopTokens{
-        TokenType::LOGICAL_SOURCE,
-        TokenType::ATTACH_SOURCE,
-        TokenType::SINK,
         TokenType::RESULT_DELIMITER,
         TokenType::DIFFERENTIAL,
         TokenType::ERROR_EXPECTATION,
+        TokenType::CREATE,
         TokenType::CONFIGURATION,
         TokenType::GLOBAL_CONFIGURATION};
 
@@ -898,157 +613,13 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
 std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    const auto& line = lines[currentLine];
-    std::istringstream stream(line);
-    std::string key, valueList;
-
-    /// Skip the Configuration token
-    std::string token;
-    stream >> token;
-    stream >> key;
-
-    if (!key.ends_with(":"))
-    {
-        throw SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
-    }
-    key.pop_back();
-
-    std::getline(stream >> std::ws, valueList);
-    
-    /// Validate that we have a value
-    if (valueList.empty())
-    {
-        throw SLTUnexpectedToken("Expected configuration value after key '{}', but got empty value", key);
-    }
-
-    /// Check if the key is empty after removing the colon
-    if (key.empty())
-    {
-        throw SLTUnexpectedToken("Expected configuration key before colon, but got empty key");
-    }
-    
-    std::vector<std::string> values;
-    
-    /// Check if the value is wrapped in square brackets (multiple values)
-    if (valueList.front() == '[' && valueList.back() == ']')
-    {
-        /// Parse multiple values in square brackets
-        valueList = valueList.substr(1, valueList.size() - 2);
-        if (valueList.empty())
-        {
-            throw SLTUnexpectedToken("Expected at least one value in square brackets for key '{}', but got empty brackets", key);
-        }
-        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
-    }
-    else
-    {
-        /// Single value without brackets - validate no brackets are present
-        if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
-        {
-            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Use either single value or properly formatted list in square brackets", key, valueList);
-        }
-
-        /// Check if there are commas in the value, which indicates multiple values without brackets
-        if (valueList.find(',') != std::string::npos)
-        {
-            throw SLTUnexpectedToken("Invalid configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets", key, valueList);
-        }
-        values = {valueList};
-    }
-
-    INVARIANT(!values.empty(), "when expecting a configuration keyword the configuration should not be empty");
-    std::vector<ConfigurationOverride> result;
-    for (auto& value : values)
-    {
-        value = NES::Util::trimWhiteSpaces(value);
-        if (value.empty())
-        {
-            throw SLTUnexpectedToken("Empty configuration value found for key '{}'", key);
-        }
-        ConfigurationOverride override;
-        override[key] = value;
-        result.emplace_back(std::move(override));
-    }
-    return result;
+    return parseConfigurationLine(lines[currentLine], "configuration");
 }
 
 std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    const auto& line = lines[currentLine];
-    std::istringstream stream(line);
-    std::string key, valueList;
-
-    /// Skip the GlobalConfiguration token
-    std::string token;
-    stream >> token;
-    stream >> key;
-
-    if (!key.ends_with(":"))
-    {
-        throw SLTUnexpectedToken("Expected colon at end of key: '{}'", key);
-    }
-    key.pop_back();
-
-    if (key.empty())
-    {
-        throw SLTUnexpectedToken("Expected global configuration key before colon, but got empty key");
-    }
-
-    std::getline(stream >> std::ws, valueList);
-
-    if (valueList.empty())
-    {
-        throw SLTUnexpectedToken("Expected global configuration value after key '{}', but got empty value", key);
-    }
-
-    std::vector<std::string> values;
-
-    if (valueList.front() == '[' && valueList.back() == ']')
-    {
-        valueList = valueList.substr(1, valueList.size() - 2);
-        if (valueList.empty())
-        {
-            throw SLTUnexpectedToken("Expected at least one value in square brackets for key '{}', but got empty brackets", key);
-        }
-        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
-    }
-    else
-    {
-        if (valueList.find('[') != std::string::npos or valueList.find(']') != std::string::npos)
-        {
-            throw SLTUnexpectedToken(
-                "Invalid global configuration format for key '{}': '{}'. Use either single value or properly formatted list in square "
-                "brackets",
-                key,
-                valueList);
-        }
-
-        if (valueList.find(',') != std::string::npos)
-        {
-            throw SLTUnexpectedToken(
-                "Invalid global configuration format for key '{}': '{}'. Multiple values must be enclosed in square brackets",
-                key,
-                valueList);
-        }
-
-        values = {valueList};
-    }
-
-    INVARIANT(!values.empty(), "when expecting a global configuration keyword the configuration should not be empty");
-    std::vector<ConfigurationOverride> result;
-    for (auto& value : values)
-    {
-        value = NES::Util::trimWhiteSpaces(value);
-        if (value.empty())
-        {
-            throw SLTUnexpectedToken("Empty global configuration value found for key '{}'", key);
-        }
-        ConfigurationOverride override;
-        override[key] = value;
-        result.emplace_back(std::move(override));
-    }
-    return result;
+    return parseConfigurationLine(lines[currentLine], "global configuration");
 }
 
 SystestParser::ErrorExpectation SystestParser::expectError() const

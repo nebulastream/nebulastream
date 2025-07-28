@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -30,6 +31,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -48,11 +50,19 @@ static constexpr auto padSizeQueryCounter = 3;
 
 /// Runs queries
 /// @return returns a collection of failed queries
+using QueryPerformanceMessageBuilder = std::function<std::string(RunningQuery&)>;
+
+inline std::string discardPerformanceMessage(RunningQuery&)
+{
+    return "";
+}
+
 [[nodiscard]] std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
-    SystestProgressTracker& progressTracker);
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
@@ -86,7 +96,7 @@ static constexpr auto padSizeQueryCounter = 3;
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery,
     const std::string& errorMessage,
-    SystestProgressTracker& context,
+    SystestProgressTracker& progressTracker,
     const std::string_view queryPerformanceMessage);
 
 }
