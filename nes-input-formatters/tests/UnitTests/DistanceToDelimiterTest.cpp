@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -37,61 +38,177 @@
 #include <fmt/ranges.h>
 
 #include <DataTypes/Schema.hpp>
-#include "Util/Logger/Formatter.hpp"
-// #include <Identifiers/Identifiers.hpp>
-// #include <MemoryLayout/RowLayoutField.hpp>
-// #include <Runtime/BufferManager.hpp>
-// #include <Runtime/TupleBuffer.hpp>
-// #include <Sources/SourceCatalog.hpp>
-// #include <Sources/SourceHandle.hpp>
-// #include <Sources/SourceReturnType.hpp>
-// #include <Util/Logger/LogLevel.hpp>
-// #include <Util/Logger/Logger.hpp>
-// #include <Util/Logger/impl/NesLogger.hpp>
-// #include <Util/TestTupleBuffer.hpp>
-// #include <gtest/gtest.h>
-// #include <yaml-cpp/node/parse.h>
-// #include "Runtime/NodeEngine.hpp"
-//
-// // #include <BaseUnitTest.hpp>
-// #include <optional>
-// #include <ErrorHandling.hpp>
-// #include <InputFormatterTestUtil.hpp>
-// #include <TestTaskQueue.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <condition_variable>
 
 
 #include <Util/Ranges.hpp>
 
+// 33: 000000000000000000000000000000100000000000000000000000000000000 <- 4294967296
+// 34: 000000000000000000000000000001000000000000000000000000000000000 <- 8589934592
+// 35: 000000000000000000000000000010000000000000000000000000000000000 <-- 17179869184
+// 36: 000000000000000000000000000100000000000000000000000000000000000 <-- 34359738368
 
-struct TupleDelimiterFastLane
+class AtomicBitmapState
 {
-    uint8_t hasTupleDelimiter;
-    uint8_t noTupleDelimiter;
-};
-
-
-struct TupleDelimiterFastLaneRB
-{
-    uint8_t hasTupleDelimiter = false;
-    uint8_t noTupleDelimiter = false;
-    bool completedLeading = true;
-    bool completedTrailing = true;
-    uint32_t abaItNumber = 0;
-
-    friend std::ostream& operator<<(std::ostream& os, const TupleDelimiterFastLaneRB& interval)
+    static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
+    static constexpr uint64_t noTupleDelimiterBit = 8589934592ULL;
+    static constexpr uint64_t completedLeadingBit = 17179869184ULL;
+    static constexpr uint64_t completedTrailingBit = 34359738368ULL;
+public:
+    class BitmapState
     {
-        return os << fmt::format(
-                   "[{}-{}-{}-{}-{}]",
-                   static_cast<int32_t>(interval.hasTupleDelimiter),
-                   static_cast<int32_t>(interval.noTupleDelimiter),
-                   interval.abaItNumber,
-                   interval.completedLeading,
-                   interval.completedTrailing);
+    public:
+        explicit BitmapState(const uint64_t state) : state(state) {};
+        [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state); }
+        [[nodiscard]] bool hasTupleDelimiter() const { return (state & hasTupleDelimiterBit) == hasTupleDelimiterBit; }
+        [[nodiscard]] bool hasNoTupleDelimiter() const { return (state & noTupleDelimiterBit) == noTupleDelimiterBit; }
+        [[nodiscard]] bool hasCompletedLeading() const { return (state & completedLeadingBit) == completedLeadingBit; }
+        [[nodiscard]] bool hasCompletedTrailing() const { return (state & completedTrailingBit) == completedTrailingBit; }
+
+        // Todo: make private and hide behind helper functions?
+        void setCompletedLeadingAndTrailing()
+        {
+            constexpr uint64_t completedLeadingAndTrailingBits = 51539607552ULL;
+            this->state |= completedLeadingAndTrailingBits;
+        }
+
+        void updateLeading(const BitmapState other)
+        {
+            this->state |= (other.getBitmapState() & completedLeadingBit);
+        }
+
+        void setCompletedTrailing()
+        {
+            this->state |= completedTrailingBit;
+        }
+
+    private:
+        friend class AtomicBitmapState;
+        [[nodiscard]] uint64_t getBitmapState() const { return state; }
+        uint64_t state;
+    };
+    // Todo: rethink separating state into non atomic class and wrapping
+    // - advantage: can operate on state without atomic operations
+    // - disadvantage: how to implement e.g., 'setCompletedLeading' via or, without two function calls (one nested)
+    AtomicBitmapState() : state(51539607552) {};
+    // explicit AtomicBitmapState(const uint64_t initialState) : state(initialState) {};
+    ~AtomicBitmapState() = default;
+
+    AtomicBitmapState(const AtomicBitmapState&) = delete;
+    AtomicBitmapState(const AtomicBitmapState&&) = delete;
+    void operator=(const AtomicBitmapState& other) = delete;
+    void operator=(const AtomicBitmapState&& other) = delete;
+
+    BitmapState getState() const { return BitmapState{this->state.load()}; }
+
+    bool tryClaimSpanningTuple(const uint32_t abaItNumber)
+    {
+        auto atomicFirstDelimiter = getState();
+
+        auto desiredFirstDelimiter = atomicFirstDelimiter;
+        desiredFirstDelimiter.setCompletedTrailing();
+
+        bool claimedSpanningTuple = false;
+        while (atomicFirstDelimiter.getABAItNo() == abaItNumber and not atomicFirstDelimiter.hasCompletedTrailing()
+               and not claimedSpanningTuple)
+        {
+            desiredFirstDelimiter.updateLeading(atomicFirstDelimiter);
+            claimedSpanningTuple = this->state.compare_exchange_weak(atomicFirstDelimiter.state, desiredFirstDelimiter.state);
+        }
+        return claimedSpanningTuple;
     }
-    bool operator==(const TupleDelimiterFastLaneRB& desired_first_delimiter) const = default;
+
+    void setNewState(const BitmapState& newState)
+    {
+        this->state = newState.getBitmapState();
+    }
+
+    [[nodiscard]] uint32_t getABAItNo() const
+    {
+        /// The first 32 bits are the ABA number
+        return static_cast<uint32_t>(state.load());
+    }
+
+    [[nodiscard]] bool getHasTupleDelimiter() const
+    {
+        const auto currentState = state.load();
+        const bool hasTupleDelimiter = (currentState & hasTupleDelimiterBit) == hasTupleDelimiterBit;
+        return hasTupleDelimiter;
+    }
+
+    [[nodiscard]] bool getNoTupleDelimiter() const
+    {
+        const auto currentState = state.load();
+        const bool noTupleDelimiter = (currentState & noTupleDelimiterBit) == noTupleDelimiterBit;
+        return noTupleDelimiter;
+    }
+
+    [[nodiscard]] bool getCompletedLeading() const
+    {
+        const auto currentState = state.load();
+        const bool completedLeading = (currentState & completedLeadingBit) == completedLeadingBit;
+        return completedLeading;
+    }
+
+    [[nodiscard]] bool getCompletedTrailing() const
+    {
+        const auto currentState = state.load();
+        const bool completedTrailing = (currentState & completedTrailingBit) == completedTrailingBit;
+        return completedTrailing;
+    }
+
+    void setCompletedLeading()
+    {
+        this->state |= completedLeadingBit;
+    }
+
+    void setCompletedTrailing()
+    {
+        this->state |= completedTrailingBit;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState)
+     {
+         return os << fmt::format(
+                    "[{}-{}-{}-{}-{}]",
+                    atomicBitmapState.getHasTupleDelimiter(),
+                    atomicBitmapState.getNoTupleDelimiter(),
+                    atomicBitmapState.getABAItNo(),
+                    atomicBitmapState.getCompletedLeading(),
+                    atomicBitmapState.getCompletedTrailing());
+     }
+private:
+    /// [1-32] : Tag (against ABA)
+    /// [33]   : HasTupleDelimiter
+    /// [34]   : NoTupleDelimiter
+    /// [35]   : CompletedLeading
+    /// [36]   : CompletedTrailing
+    std::atomic<uint64_t> state;
 };
 
+
+// struct TupleDelimiterFastLaneRB
+// {
+//     uint8_t hasTupleDelimiter = false;
+//     uint8_t noTupleDelimiter = false;
+//     bool completedLeading = true;
+//     bool completedTrailing = true;
+//     uint32_t abaItNumber = 0;
+//
+//     friend std::ostream& operator<<(std::ostream& os, const TupleDelimiterFastLaneRB& interval)
+//     {
+//         return os << fmt::format(
+//                    "[{}-{}-{}-{}-{}]",
+//                    static_cast<int32_t>(interval.hasTupleDelimiter),
+//                    static_cast<int32_t>(interval.noTupleDelimiter),
+//                    interval.abaItNumber,
+//                    interval.completedLeading,
+//                    interval.completedTrailing);
+//     }
+//     bool operator==(const TupleDelimiterFastLaneRB& desired_first_delimiter) const = default;
+// };
+//
 struct Interval
 {
     uint32_t lo;
@@ -105,125 +222,8 @@ struct Interval
         return os << '[' << interval.lo << ',' << interval.hi << ']';
     }
 };
-FMT_OSTREAM(::TupleDelimiterFastLaneRB);
+FMT_OSTREAM(::AtomicBitmapState);
 FMT_OSTREAM(::Interval);
-
-void executeExperiment(const size_t NUM_THREADS, const size_t NUM_SEQUENCE_NUMBERS)
-{
-    PRECONDITION(
-        NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0, "The number of sequence numbers must be evenly divisible by the number of threads.");
-    // std::vector<TupleDelimiterFastLane> delimiters(NUM_SEQUENCE_NUMBERS);
-    std::vector<TupleDelimiterFastLane> delimiters(NUM_SEQUENCE_NUMBERS);
-    delimiters[0] = TupleDelimiterFastLane{.hasTupleDelimiter = 1, .noTupleDelimiter = 0};
-
-    std::vector<std::jthread> threads{};
-    threads.reserve(NUM_THREADS);
-
-    std::vector<std::vector<Interval>> threadLocalResultIntervals(NUM_THREADS);
-
-    std::latch completionLatch(NUM_THREADS);
-
-    for (size_t i = 0; i < NUM_THREADS; ++i)
-    {
-        threads.emplace_back(
-            [i, &delimiters, NUM_THREADS, NUM_SEQUENCE_NUMBERS, &threadLocalResultIntervals, &completionLatch]()
-            {
-                std::mt19937_64 sequenceNumberGen(i);
-                std::bernoulli_distribution boolDistribution{0.1};
-
-                size_t currentSequenceNumber = i + 1;
-
-                const auto leadingDelimiterSearch = [&delimiters](const size_t currentSequenceNumber) -> uint32_t
-                {
-                    size_t leadingDistance = 1;
-                    while (delimiters[currentSequenceNumber - leadingDistance].noTupleDelimiter)
-                    {
-                        ++leadingDistance;
-                    }
-                    return (delimiters[currentSequenceNumber - leadingDistance].hasTupleDelimiter)
-                        ? (currentSequenceNumber - leadingDistance)
-                        : std::numeric_limits<uint32_t>::max();
-                };
-
-                const auto trailingDelimiterSearch = [&delimiters](const size_t currentSequenceNumber) -> uint32_t
-                {
-                    size_t trailingDistance = 1;
-                    while (delimiters[currentSequenceNumber + trailingDistance].noTupleDelimiter)
-                    {
-                        ++trailingDistance;
-                    }
-                    return (delimiters[currentSequenceNumber + trailingDistance].hasTupleDelimiter)
-                        ? (currentSequenceNumber + trailingDistance)
-                        : std::numeric_limits<uint32_t>::max();
-                };
-
-                while (currentSequenceNumber < NUM_SEQUENCE_NUMBERS)
-                {
-                    const bool hasTupleDelimiter = boolDistribution(sequenceNumberGen);
-                    if (hasTupleDelimiter)
-                    {
-                        // std::this_thread::sleep_for(std::chrono::microseconds(10));
-                        delimiters[currentSequenceNumber] = TupleDelimiterFastLane{.hasTupleDelimiter = 1, .noTupleDelimiter = 0};
-
-                        const auto firstDelimiter = leadingDelimiterSearch(currentSequenceNumber);
-                        const auto lastDelimiter = trailingDelimiterSearch(currentSequenceNumber);
-                        if (firstDelimiter != std::numeric_limits<uint32_t>::max())
-                        {
-                            // fmt::println("{} found Interval: [{}-{}]", i, firstDelimiter, currentSequenceNumber);
-                            threadLocalResultIntervals.at(i).emplace_back()
-                                = Interval{.lo = firstDelimiter, .hi = static_cast<uint32_t>(currentSequenceNumber)};
-                        }
-                        if (lastDelimiter != std::numeric_limits<uint32_t>::max())
-                        {
-                            // fmt::println("{} found Interval: [{}-{}]", i, currentSequenceNumber, lastDelimiter);
-                            threadLocalResultIntervals.at(i).emplace_back()
-                                = Interval{.lo = static_cast<uint32_t>(currentSequenceNumber), .hi = lastDelimiter};
-                        }
-                    }
-                    else
-                    {
-                        delimiters[currentSequenceNumber] = TupleDelimiterFastLane{.hasTupleDelimiter = 0, .noTupleDelimiter = 1};
-                        const auto firstDelimiter = leadingDelimiterSearch(currentSequenceNumber);
-                        const auto lastDelimiter = trailingDelimiterSearch(currentSequenceNumber);
-                        if (firstDelimiter != std::numeric_limits<uint32_t>::max()
-                            and lastDelimiter != std::numeric_limits<uint32_t>::max())
-                        {
-                            // fmt::println("{} found Interval: [{}-{}]", i, firstDelimiter, lastDelimiter);
-                            threadLocalResultIntervals.at(i).emplace_back() = Interval{.lo = firstDelimiter, .hi = lastDelimiter};
-                        }
-                    }
-                    currentSequenceNumber += NUM_THREADS;
-                }
-                completionLatch.count_down();
-            });
-    }
-    completionLatch.wait();
-    auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-    std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-    std::ranges::sort(
-        resultBufferVec.begin(),
-        resultBufferVec.end(),
-        [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
-    // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-    for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-    {
-        if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-        {
-            if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-            {
-                fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-            }
-            else
-            {
-                fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-            }
-        }
-        else
-        {
-            fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-        }
-    }
-}
 
 uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
 {
@@ -232,53 +232,47 @@ uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
 
 template <bool IsLeading>
 bool hasNoTD(
-    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
+    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<AtomicBitmapState>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto tdVal = tds[tdsIdx].load();
+    const auto bitmapState = tds[tdsIdx].getState();
     // Todo: is grossly wrong <-- need to adjust 'IsLeading' aware and also when wrapping to MAX_VALUE
     // -> only adjust if wrapping around
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
-        return tdVal.noTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
+        return bitmapState.hasNoTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
     const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
-    return tdVal.noTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
+    return bitmapState.hasNoTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
 template <bool IsLeading>
 bool hasTD(
-    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<std::atomic<TupleDelimiterFastLaneRB>>& tds)
+    const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<AtomicBitmapState>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto tdVal = tds[tdsIdx].load();
+    const auto bitmapState = tds[tdsIdx].getState();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
-        return tdVal.hasTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
+        return bitmapState.hasTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
     const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
-    return tdVal.hasTupleDelimiter == 1 and tdVal.abaItNumber == adjustedAbaItNumber;
+    return bitmapState.hasTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
 void setCompletedFlags(
-    const size_t firstDelimiter, const size_t lastDelimiter, std::vector<std::atomic<TupleDelimiterFastLaneRB>>& ringBuffer)
+    const size_t firstDelimiter, const size_t lastDelimiter, std::vector<AtomicBitmapState>& ringBuffer)
 {
-    // std::cout << fmt::format("Completing: [{}-{}]", firstDelimiter, lastDelimiter) << std::flush;
-    // auto newFirstEntry = ringBuffer[firstDelimiter].load();
-    // newFirstEntry.completedTrailing = true;
-    // ringBuffer[firstDelimiter] = newFirstEntry;
-
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
     {
-        auto newMiddleEntry = ringBuffer[nextDelimiter].load();
-        newMiddleEntry.completedLeading = true;
-        newMiddleEntry.completedTrailing = true;
-        ringBuffer[nextDelimiter] = newMiddleEntry;
+        auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
+        newMiddleEntry.setCompletedLeadingAndTrailing();
+        ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
 
@@ -290,14 +284,15 @@ void setCompletedFlags(
     // -> Could: use bitmap and 'or' with bitmap <-- todo: would require redesign
     // Current solution:
     // -> CAS loop, make sure value is expected and update if not, retry until successful
-    auto lastEntry = ringBuffer[lastDelimiter].load();
-    auto newLastEntry = lastEntry;
-    // ringBuffer[lastDelimiter] = newLastEntry;
-    newLastEntry.completedLeading = true;
-    while (not ringBuffer[lastDelimiter].compare_exchange_weak(lastEntry, newLastEntry))
-    {
-        newLastEntry.completedTrailing = lastEntry.completedTrailing;
-    }
+    ringBuffer[lastDelimiter].setCompletedLeading();
+    // auto lastEntry = ringBuffer[lastDelimiter].load();
+    // auto newLastEntry = lastEntry;
+    // // ringBuffer[lastDelimiter] = newLastEntry;
+    // newLastEntry.completedLeading = true;
+    // while (not ringBuffer[lastDelimiter].compare_exchange_weak(lastEntry, newLastEntry))
+    // {
+    //     newLastEntry.completedTrailing = lastEntry.completedTrailing;
+    // }
 }
 
 class TimedLatch
@@ -332,9 +327,8 @@ void executeRingBufferExperiment(
     // assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
-    std::vector<std::atomic<TupleDelimiterFastLaneRB>> ringBuffer(SIZE_OF_RING_BUFFER);
-    ringBuffer[0] = TupleDelimiterFastLaneRB{
-        .hasTupleDelimiter = 1, .noTupleDelimiter = 0, .completedLeading = true, .completedTrailing = false, .abaItNumber = 1};
+    std::vector<AtomicBitmapState> ringBuffer(SIZE_OF_RING_BUFFER);
+    ringBuffer[0].setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
 
     std::vector<std::jthread> threads{};
     threads.reserve(NUM_THREADS);
@@ -392,22 +386,23 @@ void executeRingBufferExperiment(
                     return isTupleDelimiter;
                 };
 
-                const auto claimSpanningTuple = [&ringBuffer](const size_t firstDelimiter, const uint32_t abaItNumber) -> bool
-                {
-                    const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
-                    auto atomicFirstDelimiter = ringBuffer[firstDelimiterIdx].load();
-                    auto desiredFirstDelimiter = atomicFirstDelimiter;
-                    desiredFirstDelimiter.completedTrailing = true;
-                    bool claimedSpanningTuple = false;
-                    while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing
-                           and not claimedSpanningTuple)
-                    {
-                        desiredFirstDelimiter.completedLeading = atomicFirstDelimiter.completedLeading;
-                        claimedSpanningTuple
-                            = ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter);
-                    }
-                    return claimedSpanningTuple;
-                };
+                // const auto claimSpanningTuple = [&ringBuffer](const size_t firstDelimiter, const uint32_t abaItNumber) -> bool
+                // {
+                //     const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
+                //     auto atomicFirstDelimiter = ringBuffer[firstDelimiterIdx].getState();
+                //
+                //     auto desiredFirstDelimiter = atomicFirstDelimiter;
+                //     desiredFirstDelimiter.completedTrailing = true;
+                //     bool claimedSpanningTuple = false;
+                //     while (atomicFirstDelimiter.abaItNumber == abaItNumber and not atomicFirstDelimiter.completedTrailing
+                //            and not claimedSpanningTuple)
+                //     {
+                //         desiredFirstDelimiter.completedLeading = atomicFirstDelimiter.completedLeading;
+                //         claimedSpanningTuple
+                //             = ringBuffer[firstDelimiterIdx].compare_exchange_weak(atomicFirstDelimiter, desiredFirstDelimiter);
+                //     }
+                //     return claimedSpanningTuple;
+                // };
 
                 size_t noTupleDelimiterSeqCount = 0;
                 // size_t retryCount = 0;
@@ -415,9 +410,11 @@ void executeRingBufferExperiment(
                 {
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    const auto currentEntry = ringBuffer[snRBIdx].load();
-                    if (currentEntry.abaItNumber != (abaItNumber - 1) or not currentEntry.completedLeading
-                        or not currentEntry.completedTrailing)
+                    const auto currentEntry = ringBuffer[snRBIdx].getState();
+                    const auto currentABAItNo = currentEntry.getABAItNo();
+                    const auto currentHasCompletedLeading = currentEntry.hasCompletedLeading();
+                    const auto currentHasCompletedTrailing = currentEntry.hasCompletedTrailing();
+                    if (currentABAItNo != (abaItNumber - 1) or not currentHasCompletedLeading or not currentHasCompletedTrailing)
                     {
                         continue;
                     }
@@ -426,12 +423,13 @@ void executeRingBufferExperiment(
                     if (hasTupleDelimiter)
                     {
                         noTupleDelimiterSeqCount = 0;
-                        ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
-                            .hasTupleDelimiter = 1,
-                            .noTupleDelimiter = 0,
-                            .completedLeading = false,
-                            .completedTrailing = false,
-                            .abaItNumber = abaItNumber};
+                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
+                        // ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
+                        //     .hasTupleDelimiter = 1,
+                        //     .noTupleDelimiter = 0,
+                        //     .completedLeading = false,
+                        //     .completedTrailing = false,
+                            // .abaItNumber = abaItNumber};
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -441,7 +439,9 @@ void executeRingBufferExperiment(
                             /// The leading ST ends in the snRBIdx, if its index is larger than the snRBIdx, it is from a prior iteration
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
-                            if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+
+                            // if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, snRBIdx, ringBuffer);
@@ -453,7 +453,8 @@ void executeRingBufferExperiment(
                         {
                             // const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
                             // const auto abaItNumberOfLastDelimiter = abaItNumber - static_cast<size_t>(lastDelimiterIdx < snRBIdx);
-                            if (claimSpanningTuple(snRBIdx, abaItNumber))
+                            // if (claimSpanningTuple(snRBIdx, abaItNumber))
+                            if (ringBuffer[snRBIdx].tryClaimSpanningTuple(abaItNumber))
                             {
                                 const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
                                 setCompletedFlags(snRBIdx, lastDelimiterIdx, ringBuffer);
@@ -465,12 +466,13 @@ void executeRingBufferExperiment(
                     else
                     {
                         ++noTupleDelimiterSeqCount;
-                        ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
-                            .hasTupleDelimiter = 0,
-                            .noTupleDelimiter = 1,
-                            .completedLeading = false,
-                            .completedTrailing = false,
-                            .abaItNumber = abaItNumber};
+                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
+                        // ringBuffer[snRBIdx] = TupleDelimiterFastLaneRB{
+                        //     .hasTupleDelimiter = 0,
+                        //     .noTupleDelimiter = 1,
+                        //     .completedLeading = false,
+                        //     .completedTrailing = false,
+                        //     .abaItNumber = abaItNumber};
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
@@ -479,7 +481,8 @@ void executeRingBufferExperiment(
                         {
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
-                            if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+                            // if (claimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
@@ -495,39 +498,39 @@ void executeRingBufferExperiment(
             });
     }
     // completionLatch.wait();
-    const auto success = completionLatch.wait_for(std::chrono::seconds(100));
+    const auto success = completionLatch.wait_for(std::chrono::seconds(5));
     if (not success)
     {
-        // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-        // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-        // std::ranges::sort(
-        //     resultBufferVec.begin(),
-        //     resultBufferVec.end(),
-        //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
-        // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
-        // {
-        //     fmt::println("{}: {}", idx, ringBuffer);
-        // }
-        // // fmt::println("{}", fmt::join(ringBuffer, ","));
-        // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-        // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-        // {
-        //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-        //     {
-        //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-        //         {
-        //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-        //         }
-        //         else
-        //         {
-        //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-        //     }
-        // }
+        auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
+        std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        std::ranges::sort(
+            resultBufferVec.begin(),
+            resultBufferVec.end(),
+            [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
+        for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
+        {
+            fmt::println("{}: {}", idx, ringBuffer);
+        }
+        fmt::println("{}", fmt::join(ringBuffer, ","));
+        fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
+        for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
+        {
+            if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
+            {
+                if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
+                {
+                    fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+                }
+                else
+                {
+                    fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+                }
+            }
+            else
+            {
+                fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
+            }
+        }
         std::exit(1);
     }
     // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
@@ -595,10 +598,8 @@ void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBoun
 
 int main()
 {
-    ///
-    // std::cout << sizeof(TupleDelimiterFastLaneRB) << std::endl;
-    executeRingBufferExperiment(23, 100000000, 1024, 0.1);
-    // executeExperiment(40, 1000000);
-    // syncLessIncreaseExperiment(8, 1000000);
+    // std::cout << sizeof(AtomicBitmapState) << std::endl;
+    executeRingBufferExperiment(23, 10000000, 64, 0.5);
+    // executeRingBufferExperiment(23, 10000000, 1024, 0.1);
     return 0;
 }
