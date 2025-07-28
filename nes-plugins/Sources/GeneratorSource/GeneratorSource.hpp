@@ -78,7 +78,7 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
         "stopGeneratorWhenSequenceFinishes",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<EnumWrapper>
         {
             const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
             if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
@@ -90,14 +90,13 @@ struct ConfigParametersGenerator
             switch (optToken.value().asEnum<GeneratorStop>().value())
             {
                 case GeneratorStop::ALL: {
-                    return std::optional(EnumWrapper(GeneratorStop::ALL));
+                    return EnumWrapper(GeneratorStop::ALL);
                 }
                 case GeneratorStop::ONE: {
-                    return std::optional(EnumWrapper(GeneratorStop::ONE));
+                    return EnumWrapper(GeneratorStop::ONE);
                 }
                 default: {
-                    NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                    throw NES::InvalidConfigParameter(
+                    return unexpected(
                         "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
                 }
             }

@@ -17,13 +17,13 @@
 #include <cctype>
 #include <concepts>
 #include <cstddef>
-#include <optional>
+#include <exception>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <Util/Ranges.hpp>
+#include <Util/Expected.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
@@ -31,21 +31,21 @@ namespace NES::Util
 {
 
 template <>
-std::optional<float> from_chars<float>(const std::string_view input)
+Expected<float> from_chars<float>(const std::string_view input)
 {
     const std::string str(trimWhiteSpaces(input));
     try
     {
         return std::stof(str);
     }
-    catch (...)
+    catch (std::exception& e)
     {
-        return {};
+        return unexpected("Could not convert {} to float: {}", input, e.what());
     }
 }
 
 template <>
-std::optional<bool> from_chars<bool>(const std::string_view input)
+Expected<bool> from_chars<bool>(const std::string_view input)
 {
     auto trimmed = trimWhiteSpaces(input);
     if (toLowerCase(trimmed) == "true" || trimmed == "1")
@@ -56,7 +56,7 @@ std::optional<bool> from_chars<bool>(const std::string_view input)
     {
         return false;
     }
-    return {};
+    return unexpected("Could not convert {} to bool", input);
 }
 
 template <>
@@ -124,16 +124,16 @@ std::string formatFloat(std::floating_point auto value)
 }
 
 template <>
-std::optional<double> from_chars<double>(const std::string_view input)
+Expected<double> from_chars<double>(const std::string_view input)
 {
     const std::string str(trimWhiteSpaces(input));
     try
     {
         return std::stod(str);
     }
-    catch (...)
+    catch (std::exception& e)
     {
-        return {};
+        return unexpected("Could not convert {} to double: {}", input, e.what());
     }
 }
 
@@ -142,13 +142,13 @@ template std::string formatFloat(float);
 template std::string formatFloat(double);
 
 template <>
-std::optional<std::string> from_chars<std::string>(const std::string_view input)
+Expected<std::string> from_chars<std::string>(const std::string_view input)
 {
     return std::string(input);
 }
 
 template <>
-std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
+Expected<std::string_view> from_chars<std::string_view>(std::string_view input)
 {
     return input;
 }

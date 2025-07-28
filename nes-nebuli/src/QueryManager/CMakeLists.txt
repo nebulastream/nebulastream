@@ -10,18 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_common_test(nes-common-tests
-        "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
-        "UtilFunctionTest.cpp"
-        "StringUtilTest.cpp"
-        "RangesTest.cpp"
-        "LogLevelTest.cpp"
-        "BFSIteratorTest.cpp"
-        "RollingAverageTest.cpp"
-        "ExpectedTest.cpp"
+add_source_files(nes-query-manager-grpc
+        GRPCQueryManager.cpp
 )
 
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
-)
+add_source_files(nes-query-manager-embedded
+        EmbeddedWorkerQueryManager.cpp)

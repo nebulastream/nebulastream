@@ -48,7 +48,7 @@ public:
         Field(std::string name, DataType dataType);
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
-        bool operator==(const Field&) const = default;
+        auto operator<=>(const Field&) const = default;
 
         std::string name;
         DataType dataType{};
@@ -126,6 +126,20 @@ private:
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
 
+class SchemaMissmatch
+{
+    std::vector<Schema::Field> missing_;
+    std::vector<Schema::Field> extra_;
+    SchemaMissmatch(std::vector<Schema::Field> missing, std::vector<Schema::Field> extra) : missing_(std::move(missing)), extra_(std::move(extra)) { }
+
+public:
+    static SchemaMissmatch of(const Schema& expected, const Schema& actual);
+    [[nodiscard]] const std::vector<Schema::Field>& missing() const { return missing_; }
+    [[nodiscard]] const std::vector<Schema::Field>& extra() const { return extra_; }
+    explicit operator bool() const;
+    friend std::ostream& operator<<(std::ostream& os, const SchemaMissmatch& obj);
+};
+
 }
 
 template <>
@@ -136,3 +150,4 @@ struct std::hash<NES::Schema::Field>
 
 FMT_OSTREAM(NES::Schema);
 FMT_OSTREAM(NES::Schema::Field);
+FMT_OSTREAM(NES::SchemaMissmatch);
