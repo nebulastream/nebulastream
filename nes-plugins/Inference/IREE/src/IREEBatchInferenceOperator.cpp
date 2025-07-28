@@ -91,10 +91,10 @@ IREEBatchInferenceOperator::IREEBatchInferenceOperator(
 void IREEBatchInferenceOperator::performInference(
     const Interface::PagedVectorRef& pagedVectorRef,
     Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
-    ExecutionContext& executionCtx,
-    nautilus::val<OperatorHandler*> operatorHandler) const
+    ExecutionContext& executionCtx) const
 {
     const auto fields = memoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+    const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
 
     nautilus::val<int> rowIdx(0);
     for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
@@ -166,30 +166,35 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
     openChild(executionCtx, recordBuffer);
 
     const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getBuffer());
-
-    const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
 
     const auto batchMemRef = nautilus::invoke(
-            +[](OperatorHandler* ptrOpHandler, const EmittedBatch* batch)
-            {
-                PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-                const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
-                return opHandler->batches[batch->batchId].get();
-            }, operatorHandler, emittedBatch);
+        +[](OperatorHandler* ptrOpHandler, const EmittedBatch* currentBatch)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
+            std::shared_ptr<Batch> batch = opHandler->batches[currentBatch->batchId];
+            return batch.get();
+        }, operatorHandlerMemRef, emittedBatch);
 
     const auto batchPagedVectorMemRef = nautilus::invoke(
-        +[](Batch* batch, const WorkerThreadId workerThreadId)
+        +[](const Batch* batch)
         {
             PRECONDITION(batch != nullptr, "batch context should not be null!");
-            return batch->getPagedVectorRef(workerThreadId);
-        },
-        batchMemRef,
-        workerThreadIdForPages);
+            return batch->getPagedVectorRef();
+        }, batchMemRef);
 
     const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
-    performInference(batchPagedVectorRef, *memoryProvider, executionCtx, operatorHandler);
+    performInference(batchPagedVectorRef, *memoryProvider, executionCtx);
+
+    nautilus::invoke(
+        +[](OperatorHandler* ptrOpHandler, const EmittedBatch* currentBatch)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
+            std::shared_ptr<Batch> batch = opHandler->batches[currentBatch->batchId];
+            batch->state.store(BatchState::MARKED_AS_PROCESSED, std::memory_order_release);
+        }, operatorHandlerMemRef, emittedBatch);
 }
 
 void IREEBatchInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -197,7 +202,8 @@ void IREEBatchInferenceOperator::close(ExecutionContext& executionCtx, RecordBuf
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
-Record IREEBatchInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
+Record
+IREEBatchInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
     Record record;
     for (const auto& fieldName : nautilus::static_iterable(projections))
