@@ -44,6 +44,7 @@
 
 
 #include <Util/Ranges.hpp>
+#include "ErrorHandling.hpp"
 
 class SSMetaData;
 
@@ -59,6 +60,8 @@ class AtomicBitmapState
     static constexpr uint64_t usedTrailingBufferBit = 34359738368ULL;
     /// 37:   000000000000000000000000001000000000000000000000000000000000000
     static constexpr uint64_t claimedSpanningTupleBit = 68719476736ULL;
+    ///       000000000000000000000000000110000000000000000000000000000000000
+    static constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
 
 public:
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
@@ -77,13 +80,6 @@ public:
         [[nodiscard]] bool hasUsedLeadingBuffer() const { return (state & usedLeadingBufferBit) == usedLeadingBufferBit; }
         [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
         [[nodiscard]] bool hasClaimedSpanningTuple() const { return (state & claimedSpanningTupleBit) == claimedSpanningTupleBit; }
-
-        // Todo: make private and hide behind helper functions?
-        void setUsedLeadingAndTrailingBuffer()
-        {
-            constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
-            this->state |= usedLeadingAndTrailingBufferBits;
-        }
 
         void updateLeading(const BitmapState other) { this->state |= (other.getBitmapState() & usedLeadingBufferBit); }
 
@@ -132,6 +128,7 @@ private:
 
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
     void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
+    void setUsedLeadingAndTrailingBuffer() { this->state |= usedTrailingBufferBit; }
 
 
     friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState)
@@ -167,6 +164,16 @@ class SSMetaData
 {
 public:
     SSMetaData() = default;
+
+    bool isInRange(const size_t abaItNumber)
+    {
+        const auto currentEntry = this->getState();
+        const auto currentABAItNo = currentEntry.getABAItNo();
+        const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
+        const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
+        return currentABAItNo == (abaItNumber - 1) && currentHasCompletedLeading && currentHasCompletedTrailing;
+    }
+
     bool tryClaimSpanningTuple(const uint32_t abaItNumber)
     {
         if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
@@ -179,9 +186,12 @@ public:
     }
     void setStateOfFirstIndex()
     {
+        /// 21474836481ULL: Tag: 1, HasTupleDelimiter: True, NoTupleDelimiter: False, UsedLeading: True, UsedTrailing: False
+        /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
+        constexpr auto stateOfFirstIndex = 21474836481ULL;
         this->leadingBufferRefCount = 0;
         this->trailingBufferRefCount = 1;
-        this->atomicBitmapState.setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
+        this->atomicBitmapState.setNewState(AtomicBitmapState::BitmapState{stateOfFirstIndex});
     }
     void setNewState(const AtomicBitmapState::BitmapState& newState)
     {
@@ -192,16 +202,14 @@ public:
 
     void claimNoDelimiterBuffer()
     {
-        auto newMiddleEntry = this->atomicBitmapState.getState();
-        newMiddleEntry.setUsedLeadingAndTrailingBuffer();
-
+        /// First claim buffer uses
         --this->leadingBufferRefCount;
         --this->trailingBufferRefCount;
         INVARIANT(this->leadingBufferRefCount == 0, "Leading count expected to be 0 but was", this->leadingBufferRefCount);
         INVARIANT(this->trailingBufferRefCount == 0, "Trailing count expected to be 0, but was", this->trailingBufferRefCount);
 
-        // Todo: instead of getting state and calling 'setUsedLeadingAndTrailingBuffer', directly or into state
-        this->atomicBitmapState.setNewState(newMiddleEntry);
+        /// Then atomically mark buffer as used
+        this->atomicBitmapState.setUsedLeadingAndTrailingBuffer();
     }
 
     void claimLeadingBuffer()
@@ -274,9 +282,6 @@ void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, 
     while (nextDelimiter != lastDelimiter)
     {
         ringBuffer[nextDelimiter].claimNoDelimiterBuffer();
-        // auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
-        // newMiddleEntry.setUsedLeadingAndTrailingBuffer();
-        // ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
     ringBuffer[lastDelimiter].claimLeadingBuffer();
@@ -384,11 +389,12 @@ void executeRingBufferExperiment(
                     // Todo START: replace with single CAS and merge into if cases
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    const auto currentEntry = ringBuffer[snRBIdx].getState();
-                    const auto currentABAItNo = currentEntry.getABAItNo();
-                    const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
-                    const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
-                    if (currentABAItNo != (abaItNumber - 1) or not currentHasCompletedLeading or not currentHasCompletedTrailing)
+                    // const auto currentEntry = ringBuffer[snRBIdx].getState();
+                    // const auto currentABAItNo = currentEntry.getABAItNo();
+                    // const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
+                    // const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
+                    // if (currentABAItNo != (abaItNumber - 1) or not currentHasCompletedLeading or not currentHasCompletedTrailing)
+                    if (not ringBuffer[snRBIdx].isInRange(abaItNumber))
                     {
                         continue;
                     }
