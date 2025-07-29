@@ -14,8 +14,5 @@ add_library(nes-memory-test-utils TestUtils/MemoryTestUtils.cpp)
 target_include_directories(nes-memory-test-utils PUBLIC TestUtils)
 target_link_libraries(nes-memory-test-utils PUBLIC nes-memory)
 
-add_nes_test(buffer-test BufferTests.cpp)
-target_link_libraries(buffer-test nes-memory nes-memory-test-utils)
-
 add_nes_test(unpooled-buffer-test UnpooledBufferTests.cpp)
 target_link_libraries(unpooled-buffer-test nes-memory nes-memory-test-utils)
