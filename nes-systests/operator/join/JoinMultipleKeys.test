@@ -42,3 +42,16 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id =
 19000 20000 1 19 19000 1 19 19000
 20000 21000 1 20 20000 1 20 20000
 21000 22000 1 21 21000 1 21 21000
+
+
+# Query 2 - Join two streams
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec) WHERE value < UINT64(15)
+INTO sinkStreamStream2;
+----
+DIFFERENTIAL
+SELECT *
+FROM
+    (SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec))
+WHERE value < UINT64(15)
+INTO sinkStreamStream2;
