@@ -88,6 +88,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           slug: nebulastream/nebulastream
+          commit_parent: ${{ inputs.base_sha }}
           fail_ci_if_error: true
           override_branch: ${{ inputs.branch }}
           files: build/ccov/coverage.lcov
