@@ -62,8 +62,9 @@ class AtomicBitmapState
     static constexpr uint64_t claimedSpanningTupleBit = 68719476736ULL;
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
+    /// Tag: 1, HasTupleDelimiter: True, NoTupleDelimiter: False, UsedLeading: True, UsedTrailing: False
+    static constexpr uint64_t stateOfFirstEntry = 21474836481ULL;
 
-public:
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
     /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
     /// [34]   : NoTupleDelimiter:     when set, threads continue spanning tuple search with next cell in ring buffer
@@ -100,7 +101,6 @@ public:
 
     [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
 
-private:
     friend SSMetaData;
     bool tryClaimSpanningTuple(const uint32_t abaItNumber)
     {
@@ -118,7 +118,18 @@ private:
         return claimedSpanningTuple;
     }
 
-    void setNewState(const BitmapState& newState) { this->state = newState.getBitmapState(); }
+    void setStateOfFirstEntry()
+    {
+        this->state = stateOfFirstEntry;
+    }
+    void setHasTupleDelimiterState(const size_t abaItNumber)
+    {
+        this->state = (hasTupleDelimiterBit | abaItNumber);
+    }
+    void setNoTupleDelimiterState(const size_t abaItNumber)
+    {
+        this->state = (noTupleDelimiterBit | abaItNumber);
+    }
 
     [[nodiscard]] uint32_t getABAItNo() const
     {
@@ -163,15 +174,32 @@ struct Interval
 class SSMetaData
 {
 public:
-    SSMetaData() = default;
+    SSMetaData() : leadingBufferRefCount(1), trailingBufferRefCount(1) {};
 
+    template <bool HasTupleDelimiter>
     bool isInRange(const size_t abaItNumber)
     {
+        // Todo: claiming the entry with a single CAS is difficult, since it is difficult to set all bits correctly
+        // -> did the prior entry have a delimiter, what was the other meta data (if we have more meta data in the future)
         const auto currentEntry = this->getState();
         const auto currentABAItNo = currentEntry.getABAItNo();
         const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
         const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
-        return currentABAItNo == (abaItNumber - 1) && currentHasCompletedLeading && currentHasCompletedTrailing;
+        const auto priorEntryIsUsed = currentABAItNo == (abaItNumber - 1) and currentHasCompletedLeading and currentHasCompletedTrailing;
+        if (priorEntryIsUsed)
+        {
+            this->leadingBufferRefCount = 1;
+            this->trailingBufferRefCount = 1;
+            if (HasTupleDelimiter)
+            {
+                this->atomicBitmapState.setHasTupleDelimiterState(abaItNumber);
+            }
+            else
+            {
+                this->atomicBitmapState.setNoTupleDelimiterState(abaItNumber);
+            }
+        }
+        return priorEntryIsUsed;
     }
 
     bool tryClaimSpanningTuple(const uint32_t abaItNumber)
@@ -186,18 +214,10 @@ public:
     }
     void setStateOfFirstIndex()
     {
-        /// 21474836481ULL: Tag: 1, HasTupleDelimiter: True, NoTupleDelimiter: False, UsedLeading: True, UsedTrailing: False
         /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
-        constexpr auto stateOfFirstIndex = 21474836481ULL;
         this->leadingBufferRefCount = 0;
         this->trailingBufferRefCount = 1;
-        this->atomicBitmapState.setNewState(AtomicBitmapState::BitmapState{stateOfFirstIndex});
-    }
-    void setNewState(const AtomicBitmapState::BitmapState& newState)
-    {
-        this->leadingBufferRefCount = 1;
-        this->trailingBufferRefCount = 1;
-        this->atomicBitmapState.setNewState(newState);
+        this->atomicBitmapState.setStateOfFirstEntry();
     }
 
     void claimNoDelimiterBuffer()
@@ -227,9 +247,9 @@ public:
 
 private:
     // 24 Bytes (TupleBuffer)
-    int8_t leadingBufferRefCount = 1;
+    int8_t leadingBufferRefCount;
     // 48 Bytes (TupleBuffer)
-    int8_t trailingBufferRefCount = 1;
+    int8_t trailingBufferRefCount;
     // 56 Bytes (Atomic state)
     AtomicBitmapState atomicBitmapState;
     // 60 Bytes (meta data)
@@ -386,25 +406,17 @@ void executeRingBufferExperiment(
                 size_t noTupleDelimiterSeqCount = 0;
                 while (currentSequenceNumber <= NUM_SEQUENCE_NUMBERS)
                 {
-                    // Todo START: replace with single CAS and merge into if cases
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    // const auto currentEntry = ringBuffer[snRBIdx].getState();
-                    // const auto currentABAItNo = currentEntry.getABAItNo();
-                    // const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
-                    // const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
-                    // if (currentABAItNo != (abaItNumber - 1) or not currentHasCompletedLeading or not currentHasCompletedTrailing)
-                    if (not ringBuffer[snRBIdx].isInRange(abaItNumber))
-                    {
-                        continue;
-                    }
-                    // todo END -----------------------
 
                     const bool hasTupleDelimiter = getTupleDelimiter(noTupleDelimiterSeqCount, ringBuffer.size(), currentSequenceNumber);
                     if (hasTupleDelimiter)
                     {
+                        if (not ringBuffer[snRBIdx].isInRange<true>(abaItNumber))
+                        {
+                            continue;
+                        }
                         noTupleDelimiterSeqCount = 0;
-                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -434,8 +446,11 @@ void executeRingBufferExperiment(
                     }
                     else
                     {
+                        if (not ringBuffer[snRBIdx].isInRange<true>(abaItNumber))
+                        {
+                            continue;
+                        }
                         ++noTupleDelimiterSeqCount;
-                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
