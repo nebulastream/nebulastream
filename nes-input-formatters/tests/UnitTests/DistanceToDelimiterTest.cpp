@@ -178,21 +178,28 @@ public:
     }
     void setNewState(const AtomicBitmapState::BitmapState& newState) { this->atomicBitmapState.setNewState(newState); }
     void setUsedLeadingBuffer() { this->atomicBitmapState.setUsedLeadingBuffer(); }
-    void setUsedTrailingBuffer() { this->atomicBitmapState.setUsedTrailingBuffer(); }
 
     [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
-    [[nodiscard]] int8_t useLeadingBuffer() { return --this->leadingBufferRefCount; }
-    [[nodiscard]] int8_t useTrailingBuffer() { return --this->trailingBufferRefCount; }
+    void useLeadingBuffer()
+    {
+        --this->leadingBufferRefCount;
+        // INVARIANT(this->leadingBufferRefCount == 0);
+    }
+    void useTrailingBuffer()
+    {
+        --this->trailingBufferRefCount;
+        // INVARIANT(this->trailingBufferRefCount == 0);
+    }
     [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRefCount; }
-    [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
+    // [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
 private:
     // 24 Bytes (TupleBuffer)
-    int8_t leadingBufferRefCount{};
+    int8_t leadingBufferRefCount{1};
     // 48 Bytes (TupleBuffer)
-    int8_t trailingBufferRefCount{};
+    int8_t trailingBufferRefCount{1};
     // 56 Bytes (Atomic state)
     AtomicBitmapState atomicBitmapState;
     // 60 Bytes (meta data)
@@ -250,6 +257,7 @@ void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, 
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
     // Todo: use buffer first
+    ringBuffer[lastDelimiter].useLeadingBuffer();
     ringBuffer[lastDelimiter].setUsedLeadingBuffer();
 }
 
