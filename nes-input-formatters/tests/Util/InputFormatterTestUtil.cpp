@@ -106,10 +106,10 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return schema;
 }
 
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
+Sources::SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
 {
-    return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
+    return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType, const std::stop_token&)
+               -> Sources::SourceReturnType::EmitResult
     {
         std::visit(
             Overloaded{
@@ -117,6 +117,7 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
                 [](const Sources::SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
                 [](const Sources::SourceReturnType::Error& error) { throw error.ex; }},
             returnType);
+        return Sources::SourceReturnType::EmitResult::SUCCESS;
     };
 }
 
