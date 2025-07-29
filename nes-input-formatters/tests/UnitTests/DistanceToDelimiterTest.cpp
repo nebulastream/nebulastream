@@ -25,6 +25,7 @@
 #include <latch>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <random>
 #include <ranges>
@@ -170,36 +171,57 @@ public:
     {
         if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
         {
-            --trailingBufferRefCount;
+            --this->trailingBufferRefCount;
             this->atomicBitmapState.setUsedTrailingBuffer();
             return true;
         }
         return false;
     }
-    void setNewState(const AtomicBitmapState::BitmapState& newState) { this->atomicBitmapState.setNewState(newState); }
-    void setUsedLeadingBuffer() { this->atomicBitmapState.setUsedLeadingBuffer(); }
+    void setStateOfFirstIndex()
+    {
+        this->leadingBufferRefCount = 0;
+        this->trailingBufferRefCount = 1;
+        this->atomicBitmapState.setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
+    }
+    void setNewState(const AtomicBitmapState::BitmapState& newState)
+    {
+        this->leadingBufferRefCount = 1;
+        this->trailingBufferRefCount = 1;
+        this->atomicBitmapState.setNewState(newState);
+    }
 
-    [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
-    void useLeadingBuffer()
+    void claimNoDelimiterBuffer()
+    {
+        auto newMiddleEntry = this->atomicBitmapState.getState();
+        newMiddleEntry.setUsedLeadingAndTrailingBuffer();
+
+        --this->leadingBufferRefCount;
+        --this->trailingBufferRefCount;
+        INVARIANT(this->leadingBufferRefCount == 0, "Leading count expected to be 0 but was", this->leadingBufferRefCount);
+        INVARIANT(this->trailingBufferRefCount == 0, "Trailing count expected to be 0, but was", this->trailingBufferRefCount);
+
+        // Todo: instead of getting state and calling 'setUsedLeadingAndTrailingBuffer', directly or into state
+        this->atomicBitmapState.setNewState(newMiddleEntry);
+    }
+
+    void claimLeadingBuffer()
     {
         --this->leadingBufferRefCount;
-        // INVARIANT(this->leadingBufferRefCount == 0);
+        INVARIANT(this->leadingBufferRefCount == 0, "Leading count expected to be 0, but was", this->leadingBufferRefCount);
+        this->atomicBitmapState.setUsedLeadingBuffer();
     }
-    void useTrailingBuffer()
-    {
-        --this->trailingBufferRefCount;
-        // INVARIANT(this->trailingBufferRefCount == 0);
-    }
+
+    [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
     [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRefCount; }
-    // [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
+    [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
 private:
     // 24 Bytes (TupleBuffer)
-    int8_t leadingBufferRefCount{1};
+    int8_t leadingBufferRefCount = 1;
     // 48 Bytes (TupleBuffer)
-    int8_t trailingBufferRefCount{1};
+    int8_t trailingBufferRefCount = 1;
     // 56 Bytes (Atomic state)
     AtomicBitmapState atomicBitmapState;
     // 60 Bytes (meta data)
@@ -251,14 +273,13 @@ void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, 
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
     {
-        auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
-        newMiddleEntry.setUsedLeadingAndTrailingBuffer();
-        ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
+        ringBuffer[nextDelimiter].claimNoDelimiterBuffer();
+        // auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
+        // newMiddleEntry.setUsedLeadingAndTrailingBuffer();
+        // ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
-    // Todo: use buffer first
-    ringBuffer[lastDelimiter].useLeadingBuffer();
-    ringBuffer[lastDelimiter].setUsedLeadingBuffer();
+    ringBuffer[lastDelimiter].claimLeadingBuffer();
 }
 
 class TimedLatch
@@ -294,7 +315,7 @@ void executeRingBufferExperiment(
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
     std::vector<SSMetaData> ringBuffer(SIZE_OF_RING_BUFFER);
-    ringBuffer[0].setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
+    ringBuffer[0].setStateOfFirstIndex();
 
     std::vector<std::jthread> threads{};
     threads.reserve(NUM_THREADS);
@@ -337,9 +358,14 @@ void executeRingBufferExperiment(
                                                                                             : std::numeric_limits<uint32_t>::max();
                 };
 
-                const auto getTupleDelimiter = [&boolDistribution, &sequenceNumberGen, &NUM_THREADS](
-                                                   const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize)
+                const auto getTupleDelimiter
+                    = [&boolDistribution, &sequenceNumberGen, &NUM_THREADS, NUM_SEQUENCE_NUMBERS](
+                          const size_t noTupleDelimiterSeqCount, const size_t ringBufferSize, const size_t currentSequenceNumber)
                 {
+                    if (currentSequenceNumber == NUM_SEQUENCE_NUMBERS)
+                    {
+                        return true;
+                    }
                     const bool isTupleDelimiter = boolDistribution(sequenceNumberGen);
                     const auto maxIterationsWithoutDelimiter = (ringBufferSize - NUM_THREADS) / NUM_THREADS;
                     /// Make sure there never is a sequence of 'no tuple delimiters' that is larger than the size of the ringbuffer - 1
@@ -353,7 +379,7 @@ void executeRingBufferExperiment(
                 };
 
                 size_t noTupleDelimiterSeqCount = 0;
-                while (currentSequenceNumber < NUM_SEQUENCE_NUMBERS)
+                while (currentSequenceNumber <= NUM_SEQUENCE_NUMBERS)
                 {
                     // Todo START: replace with single CAS and merge into if cases
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
@@ -368,7 +394,7 @@ void executeRingBufferExperiment(
                     }
                     // todo END -----------------------
 
-                    const bool hasTupleDelimiter = getTupleDelimiter(noTupleDelimiterSeqCount, ringBuffer.size());
+                    const bool hasTupleDelimiter = getTupleDelimiter(noTupleDelimiterSeqCount, ringBuffer.size(), currentSequenceNumber);
                     if (hasTupleDelimiter)
                     {
                         noTupleDelimiterSeqCount = 0;
@@ -378,8 +404,6 @@ void executeRingBufferExperiment(
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         if (firstDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            // TODO: CONSTRUCTION SITE
-                            /// The leading ST ends in the snRBIdx, if its index is larger than the snRBIdx, it is from a prior iteration
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
 
@@ -427,108 +451,56 @@ void executeRingBufferExperiment(
                 completionLatch.count_down();
             });
     }
-    const auto success = completionLatch.wait_for(std::chrono::seconds(20));
-    if (not success)
+    if (not completionLatch.wait_for(std::chrono::seconds(20)))
     {
-        // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-        // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-        // std::ranges::sort(
-        //     resultBufferVec.begin(),
-        //     resultBufferVec.end(),
-        //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
-        // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
-        // {
-        //     fmt::println("{}: {}", idx, ringBuffer);
-        // }
-        // fmt::println("{}", fmt::join(ringBuffer, ","));
-        // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-        // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-        // {
-        //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-        //     {
-        //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-        //         {
-        //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-        //         }
-        //         else
-        //         {
-        //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-        //     }
-        // }
         std::exit(1);
     }
-    // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-    // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-    // std::ranges::sort(
-    //     resultBufferVec.begin(),
-    //     resultBufferVec.end(),
-    //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
-    // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
-    // {
-    //     fmt::println("{}: {}", idx, ringBuffer);
-    // }
-    // fmt::println("{}", fmt::join(ringBuffer, ","));
-    // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-    // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-    // {
-    //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-    //     {
-    //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-    //         {
-    //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-    //         }
-    //         else
-    //         {
-    //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-    //     }
-    // }
-}
 
-void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBound)
-{
-    std::vector<std::jthread> threads{};
+    /// Validate that thread local intervals overall add up to exactly the number of sequence numbers processed
+    /// Example for 4 sequence numbers: [0-1], [1-3], [3-4] --> (1-0) + (3-1) + (4-3) = 1 + 2 + 1 = 4
+    size_t globalCheckSum = std::accumulate(
+        threadLocalResultIntervals.begin(),
+        threadLocalResultIntervals.end(),
+        0,
+        [](const size_t runningSum, const std::vector<Interval>& threadLocalIntervals)
+        {
+            return std::accumulate(
+                threadLocalIntervals.begin(),
+                threadLocalIntervals.end(),
+                runningSum,
+                [](const size_t globalRunningSum, const Interval& interval) { return globalRunningSum + (interval.hi - interval.lo); });
+        });
+    INVARIANT(
+        globalCheckSum == NUM_SEQUENCE_NUMBERS, "Expected sum of intervals to be: {}, but was: {}", globalCheckSum, NUM_SEQUENCE_NUMBERS);
 
-    size_t counter = 0;
-    std::latch completionLatch(NUM_THREADS);
-    std::vector<size_t> threadLocalIncrementCounter(NUM_THREADS);
-
-    for (size_t i = 0; i < NUM_THREADS; ++i)
+    /// Check that the usages for all buffers are exactly 0
+    for (const auto& [idx, metaData] : ringBuffer | NES::views::enumerate)
     {
-        threads.emplace_back(
-            [i, &counter, &completionLatch, &upperBound, &threadLocalIncrementCounter, NUM_THREADS]()
-            {
-                size_t nextThreadCounter = i;
-                while (counter < upperBound)
-                {
-                    if (counter == nextThreadCounter)
-                    {
-                        counter = std::min(counter + 1, upperBound);
-                        ++threadLocalIncrementCounter[i];
-                        nextThreadCounter += NUM_THREADS;
-                    }
-                }
-                completionLatch.count_down();
-            });
+        if (std::cmp_greater(idx, NUM_SEQUENCE_NUMBERS))
+        {
+            break;
+        }
+        INVARIANT(
+            metaData.getLeadingBufferRefCount() == 0,
+            "Buffer at index {} had leading buffer count other than 0: {}",
+            idx,
+            metaData.getLeadingBufferRefCount());
+        /// The very last element of the ring buffer will still have a trailing buffer use
+        if (static_cast<size_t>(idx) != (NUM_SEQUENCE_NUMBERS % ringBuffer.size()))
+        {
+            INVARIANT(
+                metaData.getTrailingBufferRefCount() == 0,
+                "Buffer at index {} had trailing buffer count other than 0: {}",
+                idx,
+                metaData.getTrailingBufferRefCount());
+        }
     }
-    completionLatch.wait();
-    fmt::println("Upperbound: {}, final counter: {}", upperBound, counter);
-    fmt::println("Thread local counters: {}", fmt::join(threadLocalIncrementCounter, ","));
 }
 
 int main()
 {
     // std::cout << sizeof(AtomicBitmapState) << std::endl;
+    // executeRingBufferExperiment(1, 1000, 64, 0.5);
     executeRingBufferExperiment(23, 10000000, 64, 0.5);
-    // executeRingBufferExperiment(23, 10000000, 1024, 0.1);
     return 0;
 }
