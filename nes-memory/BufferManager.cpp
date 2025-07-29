@@ -31,7 +31,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
-#include <FixedSizeBufferPool.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES
@@ -44,7 +43,6 @@ BufferManager::BufferManager(
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
     const uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
-    , numOfAvailableBuffers(numOfBuffers)
     , unpooledChunksManager(memoryResource)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
@@ -59,26 +57,10 @@ void BufferManager::destroy()
     bool expected = false;
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
-        const std::scoped_lock lock(availableBuffersMutex, localBufferPoolsMutex);
-        auto success = true;
-        NES_DEBUG("Shutting down Buffer Manager");
-
-        /// Destroy all active localBufferPools
-        for (auto& localPool : localBufferPools)
+        bool success = true;
+        if (allBuffers.size() != getAvailableBuffers())
         {
-            /// If the weak ptr is invalid the local buffer pool has already been destroyed
-            if (const auto pool = localPool.lock())
-            {
-                pool->destroy();
-            }
-        }
-        localBufferPools.clear();
-
-        size_t numOfAvailableBuffers = this->numOfAvailableBuffers.load();
-
-        if (allBuffers.size() != numOfAvailableBuffers)
-        {
-            NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), numOfAvailableBuffers);
+            NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), getAvailableBuffers());
             success = false;
         }
         for (auto& buffer : allBuffers)
@@ -95,7 +77,7 @@ void BufferManager::destroy()
             success,
             "Requested buffer manager shutdown but a buffer is still used allBuffers={} available={}",
             allBuffers.size(),
-            numOfAvailableBuffers);
+            getAvailableBuffers());
         /// RAII takes care of deallocating memory here
         allBuffers.clear();
 
@@ -118,8 +100,6 @@ BufferManager::~BufferManager()
 
 void BufferManager::initialize(uint32_t withAlignment)
 {
-    std::unique_lock lock(availableBuffersMutex);
-
     const size_t pages = sysconf(_SC_PHYS_PAGES);
     size_t page_size = sysconf(_SC_PAGE_SIZE);
     auto memorySizeInBytes = pages * page_size;
@@ -197,7 +177,6 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     {
         return std::nullopt;
     }
-    numOfAvailableBuffers.fetch_sub(1);
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
@@ -213,7 +192,6 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     {
         return std::nullopt;
     }
-    numOfAvailableBuffers.fetch_sub(1);
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
@@ -232,7 +210,6 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
     availableBuffers.write(segment);
-    numOfAvailableBuffers.fetch_add(1);
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*)
@@ -257,51 +234,13 @@ size_t BufferManager::getNumOfUnpooledBuffers() const
 
 size_t BufferManager::getAvailableBuffers() const
 {
-    return numOfAvailableBuffers.load();
-}
-
-size_t BufferManager::getAvailableBuffersInFixedSizePools() const
-{
-    const std::unique_lock lock(localBufferPoolsMutex);
-    const auto numberOfAvailableBuffers = std::ranges::count_if(localBufferPools, [](auto& weak) { return !weak.expired(); });
-    return numberOfAvailableBuffers;
+    /// If there are pending reads the queue may report negative values. This effectivly means its empty.
+    return static_cast<size_t>(std::max(availableBuffers.size(), static_cast<ssize_t>(0)));
 }
 
 BufferManagerType BufferManager::getBufferManagerType() const
 {
     return BufferManagerType::GLOBAL;
-}
-
-std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)
-{
-    const std::unique_lock lock(availableBuffersMutex);
-    std::deque<detail::MemorySegment*> buffers;
-
-    NES_DEBUG(
-        "Attempting to create fixed size buffer pool of {} Buffers. Currently available are {} buffers",
-        numberOfReservedBuffers,
-        numOfAvailableBuffers);
-
-    const ssize_t numberOfAvailableBuffers = availableBuffers.size();
-    if (numberOfAvailableBuffers < 0 || static_cast<size_t>(numberOfAvailableBuffers) < numberOfReservedBuffers)
-    {
-        NES_WARNING("Could not allocate FixedSizeBufferPool with {} buffers", numberOfReservedBuffers);
-        return {};
-    }
-
-    for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
-    {
-        detail::MemorySegment* memorySegment = nullptr;
-        availableBuffers.blockingRead(memorySegment);
-        numOfAvailableBuffers.fetch_sub(1);
-        buffers.emplace_back(memorySegment);
-    }
-    auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), buffers, numberOfReservedBuffers);
-    {
-        std::unique_lock lock(localBufferPoolsMutex);
-        localBufferPools.push_back(ret);
-    }
-    return ret;
 }
 
 }
