@@ -158,14 +158,7 @@ void dataSourceThread(
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
     threadSetup(originId);
-    if (!bufferProvider)
-    {
-        emit(originId, SourceReturnType::Error(BufferAllocationFailure()));
-        result.set_exception(std::make_exception_ptr(BufferAllocationFailure()));
-        return;
-    }
 
-    const DestroyOnExit onExit{bufferProvider.value()};
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -173,7 +166,7 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
-        emit(originId, SourceReturnType::Data{std::move(buffer)});
+        emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
     try
@@ -181,14 +174,14 @@ void dataSourceThread(
         result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
-            emit(originId, SourceReturnType::EoS{});
+            emit(originId, SourceReturnType::EoS{}, stopToken);
         }
     }
     catch (const std::exception& e)
     {
         auto ingestionException = RunningRoutineFailure(e.what());
         result.set_exception_at_thread_exit(std::make_exception_ptr(ingestionException));
-        emit(originId, SourceReturnType::Error{std::move(ingestionException)});
+        emit(originId, SourceReturnType::Error{std::move(ingestionException)}, stopToken);
     }
 }
 }
