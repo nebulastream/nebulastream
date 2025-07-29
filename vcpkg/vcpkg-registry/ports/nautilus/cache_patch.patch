@@ -1,0 +1,425 @@
+diff --git a/docs/options.md b/docs/options.md
+index 69ca4ea..220f573 100644
+--- a/docs/options.md
++++ b/docs/options.md
+@@ -22,3 +22,5 @@ engine.:
+ | dump.graph.full=[true,false]            | false    | Represents both data and control-flow (full=true) or only the control-flow (full=false).                                                              |
+ | mlir.optimizationLevel=[0,1,2,3]        | 3        | Sets the optimization level for the code-generation if the MLIR backend is used.                                                                      |
+ | mlir.enableMultithreading=[true,false]  | true     | Allows MLIR Backend to use multiple threads.                                                                                                          |
++| mlir.enable_object_cache=[true,false]   | false    | Enables deterministic file-backed caching for MLIR compiled objects.                                                                                  |
++| mlir.cache_dir=[path]                   | /tmp/mlir-cache | Sets the directory for storing cached compiled objects when MLIR caching is enabled.                                                                    |
+diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
+index 8351989..57933b8 100644
+--- a/nautilus/include/nautilus/options.hpp
++++ b/nautilus/include/nautilus/options.hpp
+@@ -30,6 +30,10 @@ public:
+ 		return defaultValue;
+ 	}
+ 
++	std::string getCachedObjectPath() const {
++		return getOptionOrDefault("mlir.load_object", std::string{});
++	}
++
+ private:
+ 	std::unordered_map<std::string, OptionValue> options;
+ };
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+index fa17d70..762fbaa 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+@@ -30,6 +30,9 @@ if (ENABLE_MLIR_BACKEND)
+             MLIRPassManager.cpp
+             LLVMIROptimizer.cpp
+             JITCompiler.cpp
++            FileBackedObjectCache.cpp
++            ModuleIdentifier.cpp
++            JITLoader.cpp
+     )
+ endif ()
+ 
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.cpp b/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.cpp
+new file mode 100644
+index 0000000..a03985c
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.cpp
+@@ -0,0 +1,43 @@
++#include "nautilus/compiler/backends/mlir/FileBackedObjectCache.hpp"
++#include <llvm/Support/raw_fd_ostream.h>
++#include <llvm/Support/FileSystem.h>
++#include <llvm/Support/MemoryBuffer.h>
++#include <llvm/Support/Path.h>
++
++namespace nautilus::compiler::mlir {
++
++FileBackedObjectCache::FileBackedObjectCache(std::string cacheDir)
++    : dir(std::move(cacheDir)) {
++    // Ensure the cache directory exists
++    if (!llvm::sys::fs::exists(dir)) {
++        llvm::sys::fs::create_directories(dir, EC);
++    }
++}
++
++void FileBackedObjectCache::notifyObjectCompiled(const llvm::Module *M,
++                                                  llvm::MemoryBufferRef Obj) {
++    // Keep the in-memory copy (super-class)
++    SimpleObjectCache::notifyObjectCompiled(M, Obj);
++
++    // And write it to disk
++    llvm::raw_fd_ostream os(pathFor(M), EC, llvm::sys::fs::OF_None);
++    if (!EC) {
++        os << Obj.getBuffer();
++    }
++}
++
++std::unique_ptr<llvm::MemoryBuffer>
++FileBackedObjectCache::getObject(const llvm::Module *M) {
++    if (auto MB = SimpleObjectCache::getObject(M)) {
++        return MB;  // Already cached this run
++    }
++    return llvm::MemoryBuffer::getFile(pathFor(M)); // Try disk
++}
++
++std::string FileBackedObjectCache::pathFor(const llvm::Module *M) const {
++    // Cheap key: hash(IR text + target triple)
++    auto Key = llvm::hash_value(M->getModuleIdentifier() + M->getTargetTriple());
++    return (llvm::Twine(dir) + "/" + llvm::utohexstr(Key) + ".o").str();
++}
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.hpp b/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.hpp
+new file mode 100644
+index 0000000..8de33dd
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/FileBackedObjectCache.hpp
+@@ -0,0 +1,31 @@
++#pragma once
++
++#include <mlir/ExecutionEngine/ExecutionEngine.h>
++#include <llvm/Support/raw_ostream.h>
++#include <llvm/Support/FileSystem.h>
++#include <llvm/Support/MemoryBuffer.h>
++#include <string>
++
++namespace nautilus::compiler::mlir {
++
++/**
++ * @brief A file-backed object cache that extends MLIR's SimpleObjectCache
++ * to provide persistent caching of compiled objects on disk.
++ */
++class FileBackedObjectCache : public mlir::SimpleObjectCache {
++public:
++    explicit FileBackedObjectCache(std::string cacheDir);
++
++    void notifyObjectCompiled(const llvm::Module *M,
++                              llvm::MemoryBufferRef Obj) override;
++
++    std::unique_ptr<llvm::MemoryBuffer>
++    getObject(const llvm::Module *M) override;
++
++private:
++    std::string pathFor(const llvm::Module *M) const;
++    std::string dir;
++    std::error_code EC;
++};
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index ccad0f6..f74cf55 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -1,6 +1,8 @@
+ 
+ #include "nautilus/compiler/backends/mlir/JITCompiler.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
++#include "nautilus/compiler/backends/mlir/FileBackedObjectCache.hpp"
++#include "nautilus/compiler/backends/mlir/ModuleIdentifier.hpp"
+ #include <mlir/ExecutionEngine/OptUtils.h>
+ #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+@@ -12,7 +14,8 @@ std::unique_ptr<::mlir::ExecutionEngine>
+ JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mlir::ModuleOp>& mlirModule,
+                               const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                               const std::vector<std::string>& jitProxyFunctionSymbols,
+-                              const std::vector<void*>& jitProxyFunctionTargetAddresses) {
++                              const std::vector<void*>& jitProxyFunctionTargetAddresses,
++                              const engine::Options& options) {
+ 
+ 	// Register the translation from MLIR to LLVM IR, which must happen before we
+ 	// can JIT-compile.
+@@ -26,14 +29,31 @@ JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mlir::ModuleOp>& mlirModule,
+ 		llvm::errs() << "Failed to emit LLVM IR\n";
+ 	}
+ 
++	// Generate stable module identifier for caching
++	auto fingerprint = generateModuleFingerprint(*mlirModule);
++	setStableModuleIdentifier(llvmModule.get(), fingerprint);
++
++	// Create file-backed cache if enabled
++	std::unique_ptr<FileBackedObjectCache> cache;
++	if (options.getOptionOrDefault("mlir.enable_object_cache", false)) {
++		auto cacheDir = options.getOptionOrDefault("mlir.cache_dir", "/tmp/mlir-cache");
++		cache = std::make_unique<FileBackedObjectCache>(cacheDir);
++	}
++
+ 	// Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
+-	::mlir::ExecutionEngineOptions options;
+-	options.jitCodeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
+-	options.transformer = optPipeline;
+-	auto maybeEngine = ::mlir::ExecutionEngine::create(*mlirModule, options);
++	::mlir::ExecutionEngineOptions eeOpts;
++	eeOpts.jitCodeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
++	eeOpts.transformer = optPipeline;
++	eeOpts.enableObjectDump = cache != nullptr;  // Enable cache if we have a cache object
++	auto maybeEngine = ::mlir::ExecutionEngine::create(*mlirModule, eeOpts);
+ 
+ 	assert(maybeEngine && "failed to construct an execution engine");
+ 
++	// Attach the cache to the engine if we have one
++	if (cache) {
++		maybeEngine->jit->getObjLinkingLayer().setObjectCache(std::move(cache));
++	}
++
+ 	// We register all external functions (symbols) that we do not inline.
+ 	const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+ 		auto symbolMap = llvm::orc::SymbolMap();
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+index b41290e..8b0ff27 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
++#include "nautilus/options.hpp"
+ #include <llvm/IR/Module.h>
+ #include <mlir/ExecutionEngine/ExecutionEngine.h>
+ #include <mlir/IR/BuiltinOps.h>
+@@ -22,6 +23,7 @@ public:
+ 	jitCompileModule(::mlir::OwningOpRef<::mlir::ModuleOp>& mlirModule,
+ 	                 const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+ 	                 const std::vector<std::string>& jitProxyFunctionSymbols,
+-	                 const std::vector<void*>& jitProxyFunctionTargetAddresses);
++	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
++	                 const engine::Options& options);
+ };
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.cpp
+new file mode 100644
+index 0000000..79256ec
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.cpp
+@@ -0,0 +1,60 @@
++#include "nautilus/compiler/backends/mlir/JITLoader.hpp"
++#include "nautilus/exceptions/RuntimeException.hpp"
++#include <llvm/Support/MemoryBuffer.h>
++#include <llvm/Support/Error.h>
++#include <llvm/Support/raw_ostream.h>
++#include <llvm/ExecutionEngine/Orc/LLJIT.h>
++#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
++#include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
++#include <llvm/Support/DynamicLibrary.h>
++
++namespace nautilus::compiler::mlir {
++
++std::unique_ptr<::mlir::ExecutionEngine>
++JITLoader::loadObjectFile(const std::string& objPath,
++                          const std::vector<std::string>& jitProxyFunctionSymbols,
++                          const std::vector<void*>& jitProxyFunctionTargetAddresses) {
++    
++    // 1. Empty LLJIT for the current host triple / data layout.
++    auto jitExp = llvm::orc::LLJITBuilder().create();
++    if (!jitExp) {
++        throw RuntimeException("Failed to create LLJIT instance");
++    }
++    auto jit = std::move(*jitExp);
++
++    // 2. Feed in the ready-made object.
++    auto objBuf = llvm::MemoryBuffer::getFile(objPath);
++    if (!objBuf) {
++        throw RuntimeException("Failed to load object file: " + objPath);
++    }
++    
++    if (auto err = jit->addObjectFile(std::move(*objBuf))) {
++        std::string errorMsg;
++        llvm::raw_string_ostream errorStream(errorMsg);
++        errorStream << err;
++        throw RuntimeException("Failed to add object file: " + errorStream.str());
++    }
++
++    // 3. Re-register helper ("proxy") symbols that the object expects.
++    llvm::orc::MangleAndInterner mangle(jit->getExecutionSession(),
++                                        jit->getDataLayout());
++    llvm::orc::SymbolMap sm;
++    for (size_t i = 0; i < jitProxyFunctionSymbols.size(); ++i) {
++        auto address = jitProxyFunctionTargetAddresses.at(i);
++        sm[mangle(jitProxyFunctionSymbols.at(i))] = 
++            {llvm::orc::ExecutorAddr::fromPtr(address),
++             llvm::JITSymbolFlags::Exported};
++    }
++    
++    if (auto err = jit->getMainJITDylib().define(llvm::orc::absoluteSymbols(sm))) {
++        std::string errorMsg;
++        llvm::raw_string_ostream errorStream(errorMsg);
++        errorStream << err;
++        throw RuntimeException("Failed to define symbols: " + errorStream.str());
++    }
++
++    // 4. Wrap into the same ExecutionEngine façade the rest of Nautilus uses.
++    return std::make_unique<::mlir::ExecutionEngine>(std::move(jit));
++}
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.hpp
+new file mode 100644
+index 0000000..5d1f0de
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITLoader.hpp
+@@ -0,0 +1,30 @@
++#pragma once
++
++#include <mlir/ExecutionEngine/ExecutionEngine.h>
++#include <string>
++#include <vector>
++
++namespace nautilus::compiler::mlir {
++
++/**
++ * @brief JITLoader loads pre-compiled object files and creates ExecutionEngine instances
++ */
++class JITLoader {
++public:
++    JITLoader() = delete;
++    ~JITLoader() = delete;
++
++    /**
++     * @brief Load a pre-compiled object file and create an ExecutionEngine
++     * @param objPath Path to the object file to load
++     * @param jitProxyFunctionSymbols Vector of function symbol names
++     * @param jitProxyFunctionTargetAddresses Vector of function addresses
++     * @return std::unique_ptr<mlir::ExecutionEngine> The loaded engine
++     */
++    static std::unique_ptr<::mlir::ExecutionEngine>
++    loadObjectFile(const std::string& objPath,
++                   const std::vector<std::string>& jitProxyFunctionSymbols,
++                   const std::vector<void*>& jitProxyFunctionTargetAddresses);
++};
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index c8630a0..1774cf7 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp"
+ #include "nautilus/compiler/backends/mlir/JITCompiler.hpp"
++#include "nautilus/compiler/backends/mlir/JITLoader.hpp"
+ #include "nautilus/compiler/backends/mlir/LLVMIROptimizer.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRExecutable.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
+@@ -28,8 +29,7 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+                                                             const DumpHandler& dumpHandler,
+                                                             const engine::Options& options) const {
+ 
+-	// 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an
+-	// MLIR module.
++	// Create the MLIRLoweringProvider to get proxy symbols and addresses
+ 	::mlir::DialectRegistry registry;
+ 	::mlir::func::registerAllExtensions(registry);
+ 	registerBuiltinDialectTranslation(registry);
+@@ -47,6 +47,15 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 		throw RuntimeException("verification of MLIR module failed!");
+ 	};
+ 
++	// if we specified a cached object path we laod it instead
++	if (auto obj = options.getCachedObjectPath(); !obj.empty()) {
++		auto engine = JITLoader::loadObjectFile(
++			obj,
++			loweringProvider->getJitProxyFunctionSymbols(),
++			loweringProvider->getJitProxyTargetAddresses());
++		return std::make_unique<MLIRExecutable>(std::move(engine));
++	}
++
+ 	// 2.a dump MLIR to console or a file
+ 	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
+ 		::mlir::OpPrintingFlags flags;
+@@ -68,7 +77,7 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	// 4. JIT compile LLVM IR module and return engine that provides access
+ 	// compiled execute function.
+ 	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                            loweringProvider->getJitProxyTargetAddresses());
++	                                            loweringProvider->getJitProxyTargetAddresses(), options);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+ 		auto result = engine->lookupPacked("execute");
+ 		if (!result) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.cpp b/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.cpp
+new file mode 100644
+index 0000000..8d63c0d
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.cpp
+@@ -0,0 +1,36 @@
++#include "nautilus/compiler/backends/mlir/ModuleIdentifier.hpp"
++#include <mlir/IR/BuiltinOps.h>
++#include <llvm/IR/Module.h>
++#include <llvm/Support/raw_string_ostream.h>
++#include <llvm/ADT/StringRef.h>
++#include <llvm/Support/SHA256.h>
++#include <sstream>
++#include <iomanip>
++
++namespace nautilus::compiler::mlir {
++
++std::string generateModuleFingerprint(mlir::ModuleOp module) {
++    // Convert the MLIR module to a string representation
++    std::string result;
++    llvm::raw_string_ostream output(result);
++    module.print(output);
++    
++    // Generate SHA-256 hash of the module text
++    llvm::SHA256 hasher;
++    llvm::StringRef data(result);
++    llvm::SHA256::hash(data, hasher);
++    
++    // Convert hash to hex string
++    std::stringstream ss;
++    for (unsigned char byte : hasher.result()) {
++        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
++    }
++    
++    return ss.str();
++}
++
++void setStableModuleIdentifier(llvm::Module* llvmModule, const std::string& fingerprint) {
++    llvmModule->setModuleIdentifier(fingerprint);
++}
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.hpp b/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.hpp
+new file mode 100644
+index 0000000..d17c9c9
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/backends/mlir/ModuleIdentifier.hpp
+@@ -0,0 +1,17 @@
++#pragma once
++
++#include <mlir/IR/BuiltinOps.h>
++#include <llvm/IR/Module.h>
++#include <string>
++
++namespace nautilus::compiler::mlir {
++
++/**
++ * @brief Generate a stable fingerprint for an MLIR module
++ * @param module The MLIR module to fingerprint
++ * @return A stable string identifier for the module
++ */
++[[nodiscard]] std::string generateModuleFingerprint(mlir::ModuleOp module) const;
++void setStableModuleIdentifier(llvm::Module* llvmModule, const std::string& fingerprint);
++
++} // namespace nautilus::compiler::mlir 
+\ No newline at end of file
