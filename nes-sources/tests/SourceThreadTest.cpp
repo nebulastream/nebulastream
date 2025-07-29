@@ -178,7 +178,12 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
         SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
     }
 
     verify_no_events(recorder);
@@ -215,7 +220,12 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
         SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
         wait_for_emits(recorder, 3);
         verify_non_blocking_stop(sourceThread);
     }
@@ -237,7 +247,12 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
         SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
         wait_for_emits(recorder, 1);
         verify_non_blocking_stop(sourceThread);
     }
@@ -261,7 +276,12 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
         SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
         wait_for_emits(recorder, 3);
         verify_non_blocking_stop(sourceThread);
     }
@@ -286,7 +306,12 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
         SourceThread sourceThread(
             INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
         wait_for_emits(recorder, 3);
         control->injectEoS();
         wait_for_emits(recorder, 4);
