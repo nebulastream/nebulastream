@@ -42,7 +42,7 @@ namespace NES::Sources
 
 SourceThread::SourceThread(
     OriginId originId,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> poolProvider,
     size_t numOfLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
@@ -144,19 +144,14 @@ SourceImplementationTermination dataSourceThreadRoutine(
     return {SourceImplementationTermination::StopRequested};
 }
 
-struct DestroyOnExit
-{
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    ~DestroyOnExit() { bufferProvider->destroy(); }
-};
-
 void dataSourceThread(
     const std::stop_token& stopToken,
     std::promise<SourceImplementationTermination> result,
     Source* source,
     SourceReturnType::EmitFunction emit,
-    OriginId originId,
-    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
+    const OriginId originId,
+    ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
 {
     threadSetup(originId);
     if (!bufferProvider)
@@ -179,7 +174,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -212,7 +207,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager->createFixedSizeBufferPool(numOfLocalBuffers));
+        localBufferManager);
     thread = std::move(sourceThread);
     return true;
 }

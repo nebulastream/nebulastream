@@ -216,7 +216,7 @@ NES::Sources::TestSource::~TestSource()
 }
 
 std::pair<std::unique_ptr<NES::Sources::SourceHandle>, std::shared_ptr<NES::Sources::TestSourceControl>>
-NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
+NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractBufferProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
