@@ -44,6 +44,7 @@
 
 #include <Util/Ranges.hpp>
 
+class SSMetaData;
 
 class AtomicBitmapState
 {
@@ -102,6 +103,8 @@ public:
 
     [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
 
+private:
+    friend SSMetaData;
     bool tryClaimSpanningTuple(const uint32_t abaItNumber)
     {
         auto atomicFirstDelimiter = getState();
@@ -115,13 +118,7 @@ public:
             desiredFirstDelimiter.updateLeading(atomicFirstDelimiter);
             claimedSpanningTuple = this->state.compare_exchange_weak(atomicFirstDelimiter.state, desiredFirstDelimiter.state);
         }
-        if (claimedSpanningTuple)
-        {
-            // Todo: claim trailing buffer, set bit, return true
-            this->state |= usedTrailingBufferBit;
-            return true;
-        }
-        return false;
+        return claimedSpanningTuple;
     }
 
     void setNewState(const BitmapState& newState) { this->state = newState.getBitmapState(); }
@@ -133,6 +130,7 @@ public:
     }
 
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
+    void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
 
 
     friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState)
@@ -148,7 +146,6 @@ public:
                    loadedBitmap.hasClaimedSpanningTuple());
     }
 
-private:
     std::atomic<uint64_t> state;
 };
 
@@ -169,14 +166,27 @@ class SSMetaData
 {
 public:
     SSMetaData() = default;
-    [[nodiscard]] const AtomicBitmapState& getAtomicState() const { return this->atomicBitmapState; }
-    [[nodiscard]] AtomicBitmapState& getAtomicState() { return this->atomicBitmapState; }
+    bool tryClaimSpanningTuple(const uint32_t abaItNumber)
+    {
+        if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
+        {
+            --trailingBufferRefCount;
+            this->atomicBitmapState.setUsedTrailingBuffer();
+            return true;
+        }
+        return false;
+    }
+    void setNewState(const AtomicBitmapState::BitmapState& newState) { this->atomicBitmapState.setNewState(newState); }
+    void setUsedLeadingBuffer() { this->atomicBitmapState.setUsedLeadingBuffer(); }
+    void setUsedTrailingBuffer() { this->atomicBitmapState.setUsedTrailingBuffer(); }
+
+    [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
     [[nodiscard]] int8_t useLeadingBuffer() { return --this->leadingBufferRefCount; }
     [[nodiscard]] int8_t useTrailingBuffer() { return --this->trailingBufferRefCount; }
     [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRefCount; }
     [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
-    [[nodiscard]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
-    [[nodiscard]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
+    [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
+    [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
 private:
     // 24 Bytes (TupleBuffer)
@@ -204,7 +214,7 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto bitmapState = tds[tdsIdx].getAtomicState().getState();
+    const auto bitmapState = tds[tdsIdx].getState();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
@@ -219,7 +229,7 @@ bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto bitmapState = tds[tdsIdx].getAtomicState().getState();
+    const auto bitmapState = tds[tdsIdx].getState();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
@@ -234,13 +244,13 @@ void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, 
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
     {
-        auto newMiddleEntry = ringBuffer[nextDelimiter].getAtomicState().getState();
+        auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
         newMiddleEntry.setUsedLeadingAndTrailingBuffer();
-        ringBuffer[nextDelimiter].getAtomicState().setNewState(newMiddleEntry);
+        ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
     // Todo: use buffer first
-    ringBuffer[lastDelimiter].getAtomicState().setUsedLeadingBuffer();
+    ringBuffer[lastDelimiter].setUsedLeadingBuffer();
 }
 
 class TimedLatch
@@ -276,7 +286,7 @@ void executeRingBufferExperiment(
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
     std::vector<SSMetaData> ringBuffer(SIZE_OF_RING_BUFFER);
-    ringBuffer[0].getAtomicState().setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
+    ringBuffer[0].setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
 
     std::vector<std::jthread> threads{};
     threads.reserve(NUM_THREADS);
@@ -340,7 +350,7 @@ void executeRingBufferExperiment(
                     // Todo START: replace with single CAS and merge into if cases
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    const auto currentEntry = ringBuffer[snRBIdx].getAtomicState().getState();
+                    const auto currentEntry = ringBuffer[snRBIdx].getState();
                     const auto currentABAItNo = currentEntry.getABAItNo();
                     const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
                     const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
@@ -354,7 +364,7 @@ void executeRingBufferExperiment(
                     if (hasTupleDelimiter)
                     {
                         noTupleDelimiterSeqCount = 0;
-                        ringBuffer[snRBIdx].getAtomicState().setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
+                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -365,7 +375,7 @@ void executeRingBufferExperiment(
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
 
-                            if (ringBuffer[firstDelimiterIdx].getAtomicState().tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, snRBIdx, ringBuffer);
@@ -375,7 +385,7 @@ void executeRingBufferExperiment(
                         }
                         if (lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            if (ringBuffer[snRBIdx].getAtomicState().tryClaimSpanningTuple(abaItNumber))
+                            if (ringBuffer[snRBIdx].tryClaimSpanningTuple(abaItNumber))
                             {
                                 const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
                                 setCompletedFlags(snRBIdx, lastDelimiterIdx, ringBuffer);
@@ -387,7 +397,7 @@ void executeRingBufferExperiment(
                     else
                     {
                         ++noTupleDelimiterSeqCount;
-                        ringBuffer[snRBIdx].getAtomicState().setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
+                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
@@ -396,7 +406,7 @@ void executeRingBufferExperiment(
                         {
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
-                            if (ringBuffer[firstDelimiterIdx].getAtomicState().tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
