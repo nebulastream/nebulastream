@@ -100,23 +100,8 @@ public:
     void operator=(const AtomicBitmapState& other) = delete;
     void operator=(const AtomicBitmapState&& other) = delete;
 
-    BitmapState getState() const { return BitmapState{this->state.load()}; }
+    [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
 
-    // Todo: how to make sure that thread that successfully claims buffer can safely access trailing buffer
-    // Simple: leading <-- thread has exclusive access, take use first, then set bit
-    // Hard:   Trailing <-- thread only knows that it claimed the buffer when setting the 'usedTrailingBufferBit' <-- Todo: rename in 'claimedSpanningTuple'?
-    //              -> need to make sure that it is impossible to advance cell between claiming buffer and getting buffer use
-    //              -> Two bits: one to claim buffer, one to communicate that buffer was used
-    //                      - both buffers used means cell is done
-    //              -> Trailing process:
-    //                  - try claim ST (when failed, trivial, do nothing)
-    //                  - when successful:
-    //                      - Thread knows it is the only thread that can access buffer
-    //                      - get buffer usage
-    //                      - set 'usedBufferBit'
-    //              -> Leading process:
-    //                  - simply 'or' usedLeadingBit
-    //                  - only when both 'usedLeadingBit' and 'usedTrailingBit' are set, a cell can be reclaimed
     bool tryClaimSpanningTuple(const uint32_t abaItNumber)
     {
         auto atomicFirstDelimiter = getState();
@@ -179,6 +164,33 @@ struct Interval
         return os << '[' << interval.lo << ',' << interval.hi << ']';
     }
 };
+
+class SSMetaData
+{
+public:
+    SSMetaData() = default;
+    [[nodiscard]] const AtomicBitmapState& getAtomicState() const { return this->atomicBitmapState; }
+    [[nodiscard]] AtomicBitmapState& getAtomicState() { return this->atomicBitmapState; }
+    [[nodiscard]] int8_t useLeadingBuffer() { return --this->leadingBufferRefCount; }
+    [[nodiscard]] int8_t useTrailingBuffer() { return --this->trailingBufferRefCount; }
+    [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRefCount; }
+    [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRefCount; }
+    [[nodiscard]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
+    [[nodiscard]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
+
+private:
+    // 24 Bytes (TupleBuffer)
+    int8_t leadingBufferRefCount{};
+    // 48 Bytes (TupleBuffer)
+    int8_t trailingBufferRefCount{};
+    // 56 Bytes (Atomic state)
+    AtomicBitmapState atomicBitmapState;
+    // 60 Bytes (meta data)
+    uint32_t firstDelimiterOffset{};
+    // 64 Bytes (meta data)
+    uint32_t lastDelimiterOffset{};
+};
+
 FMT_OSTREAM(::AtomicBitmapState);
 FMT_OSTREAM(::Interval);
 
@@ -188,13 +200,11 @@ uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
 }
 
 template <bool IsLeading>
-bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<AtomicBitmapState>& tds)
+bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<SSMetaData>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto bitmapState = tds[tdsIdx].getState();
-    // Todo: is grossly wrong <-- need to adjust 'IsLeading' aware and also when wrapping to MAX_VALUE
-    // -> only adjust if wrapping around
+    const auto bitmapState = tds[tdsIdx].getAtomicState().getState();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
@@ -205,11 +215,11 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
 }
 
 template <bool IsLeading>
-bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<AtomicBitmapState>& tds)
+bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<SSMetaData>& tds)
 {
     const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
     const auto tdsIdx = adjustedSN % tds.size();
-    const auto bitmapState = tds[tdsIdx].getState();
+    const auto bitmapState = tds[tdsIdx].getAtomicState().getState();
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
@@ -219,18 +229,18 @@ bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance
     return bitmapState.hasTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
-void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<AtomicBitmapState>& ringBuffer)
+void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<SSMetaData>& ringBuffer)
 {
     size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
     while (nextDelimiter != lastDelimiter)
     {
-        auto newMiddleEntry = ringBuffer[nextDelimiter].getState();
+        auto newMiddleEntry = ringBuffer[nextDelimiter].getAtomicState().getState();
         newMiddleEntry.setUsedLeadingAndTrailingBuffer();
-        ringBuffer[nextDelimiter].setNewState(newMiddleEntry);
+        ringBuffer[nextDelimiter].getAtomicState().setNewState(newMiddleEntry);
         nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
     }
     // Todo: use buffer first
-    ringBuffer[lastDelimiter].setUsedLeadingBuffer();
+    ringBuffer[lastDelimiter].getAtomicState().setUsedLeadingBuffer();
 }
 
 class TimedLatch
@@ -265,8 +275,8 @@ void executeRingBufferExperiment(
     // assert(NUM_SEQUENCE_NUMBERS % NUM_THREADS == 0);
     assert(SIZE_OF_RING_BUFFER > NUM_THREADS);
     // Todo: assert than max allowed index of ring buffer is evenly divisible by SIZE_OF_RING_BUFFER (allows overflow wrapping)
-    std::vector<AtomicBitmapState> ringBuffer(SIZE_OF_RING_BUFFER);
-    ringBuffer[0].setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
+    std::vector<SSMetaData> ringBuffer(SIZE_OF_RING_BUFFER);
+    ringBuffer[0].getAtomicState().setNewState(AtomicBitmapState::BitmapState{21474836481ULL});
 
     std::vector<std::jthread> threads{};
     threads.reserve(NUM_THREADS);
@@ -327,9 +337,10 @@ void executeRingBufferExperiment(
                 size_t noTupleDelimiterSeqCount = 0;
                 while (currentSequenceNumber < NUM_SEQUENCE_NUMBERS)
                 {
+                    // Todo START: replace with single CAS and merge into if cases
                     const auto abaItNumber = getABAItNumber(currentSequenceNumber, ringBuffer.size());
                     const auto snRBIdx = currentSequenceNumber % ringBuffer.size();
-                    const auto currentEntry = ringBuffer[snRBIdx].getState();
+                    const auto currentEntry = ringBuffer[snRBIdx].getAtomicState().getState();
                     const auto currentABAItNo = currentEntry.getABAItNo();
                     const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
                     const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
@@ -337,12 +348,13 @@ void executeRingBufferExperiment(
                     {
                         continue;
                     }
+                    // todo END -----------------------
 
                     const bool hasTupleDelimiter = getTupleDelimiter(noTupleDelimiterSeqCount, ringBuffer.size());
                     if (hasTupleDelimiter)
                     {
                         noTupleDelimiterSeqCount = 0;
-                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
+                        ringBuffer[snRBIdx].getAtomicState().setNewState(AtomicBitmapState::BitmapState{4294967296ULL | abaItNumber});
 
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
@@ -353,7 +365,7 @@ void executeRingBufferExperiment(
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
 
-                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].getAtomicState().tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, snRBIdx, ringBuffer);
@@ -363,7 +375,7 @@ void executeRingBufferExperiment(
                         }
                         if (lastDelimiter != std::numeric_limits<uint32_t>::max())
                         {
-                            if (ringBuffer[snRBIdx].tryClaimSpanningTuple(abaItNumber))
+                            if (ringBuffer[snRBIdx].getAtomicState().tryClaimSpanningTuple(abaItNumber))
                             {
                                 const auto lastDelimiterIdx = lastDelimiter % ringBuffer.size();
                                 setCompletedFlags(snRBIdx, lastDelimiterIdx, ringBuffer);
@@ -375,7 +387,7 @@ void executeRingBufferExperiment(
                     else
                     {
                         ++noTupleDelimiterSeqCount;
-                        ringBuffer[snRBIdx].setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
+                        ringBuffer[snRBIdx].getAtomicState().setNewState(AtomicBitmapState::BitmapState{8589934592ULL | abaItNumber});
                         const auto firstDelimiter = leadingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
                         const auto lastDelimiter = trailingDelimiterSearch(snRBIdx, abaItNumber, currentSequenceNumber);
 
@@ -384,7 +396,7 @@ void executeRingBufferExperiment(
                         {
                             const auto firstDelimiterIdx = firstDelimiter % ringBuffer.size();
                             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
-                            if (ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
+                            if (ringBuffer[firstDelimiterIdx].getAtomicState().tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
                             {
                                 /// Successfully claimed the first tuple, now set the rest
                                 setCompletedFlags(firstDelimiterIdx, lastDelimiter % ringBuffer.size(), ringBuffer);
@@ -397,39 +409,39 @@ void executeRingBufferExperiment(
                 completionLatch.count_down();
             });
     }
-    const auto success = completionLatch.wait_for(std::chrono::seconds(5));
+    const auto success = completionLatch.wait_for(std::chrono::seconds(20));
     if (not success)
     {
-        auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
-        std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
-        std::ranges::sort(
-            resultBufferVec.begin(),
-            resultBufferVec.end(),
-            [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
-        for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
-        {
-            fmt::println("{}: {}", idx, ringBuffer);
-        }
-        fmt::println("{}", fmt::join(ringBuffer, ","));
-        fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
-        for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
-        {
-            if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
-            {
-                if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
-                {
-                    fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-                }
-                else
-                {
-                    fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
-                }
-            }
-            else
-            {
-                fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
-            }
-        }
+        // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
+        // std::vector<Interval> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        // std::ranges::sort(
+        //     resultBufferVec.begin(),
+        //     resultBufferVec.end(),
+        //     [](const Interval& leftInterval, const Interval& rightInterval) { return leftInterval < rightInterval; });
+        // for (const auto& [idx, ringBuffer] : ringBuffer | NES::views::enumerate)
+        // {
+        //     fmt::println("{}: {}", idx, ringBuffer);
+        // }
+        // fmt::println("{}", fmt::join(ringBuffer, ","));
+        // fmt::println("Sorted results: {}", fmt::join(resultBufferVec, ","));
+        // for (size_t i = 0; i < resultBufferVec.size() - 1; ++i)
+        // {
+        //     if (resultBufferVec[i].hi != resultBufferVec[i + 1].lo)
+        //     {
+        //         if (resultBufferVec[i].lo == resultBufferVec[i + 1].lo)
+        //         {
+        //             fmt::println("{} x duplicate connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+        //         }
+        //         else
+        //         {
+        //             fmt::println("{} x missing connection with {}", resultBufferVec[i], resultBufferVec[i + 1]);
+        //         }
+        //     }
+        //     else
+        //     {
+        //         fmt::println("{} <-- connects: {}-{}", resultBufferVec[i], resultBufferVec[i], resultBufferVec[i + 1]);
+        //     }
+        // }
         std::exit(1);
     }
     // auto combinedThreadResults = std::ranges::views::join(threadLocalResultIntervals);
@@ -498,7 +510,7 @@ void syncLessIncreaseExperiment(const size_t NUM_THREADS, const size_t upperBoun
 int main()
 {
     // std::cout << sizeof(AtomicBitmapState) << std::endl;
-    executeRingBufferExperiment(23, 10000000, 64, 0.1);
+    executeRingBufferExperiment(23, 10000000, 64, 0.5);
     // executeRingBufferExperiment(23, 10000000, 1024, 0.1);
     return 0;
 }
