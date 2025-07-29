@@ -118,18 +118,9 @@ class AtomicBitmapState
         return claimedSpanningTuple;
     }
 
-    void setStateOfFirstEntry()
-    {
-        this->state = stateOfFirstEntry;
-    }
-    void setHasTupleDelimiterState(const size_t abaItNumber)
-    {
-        this->state = (hasTupleDelimiterBit | abaItNumber);
-    }
-    void setNoTupleDelimiterState(const size_t abaItNumber)
-    {
-        this->state = (noTupleDelimiterBit | abaItNumber);
-    }
+    void setStateOfFirstEntry() { this->state = stateOfFirstEntry; }
+    void setHasTupleDelimiterState(const size_t abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber); }
+    void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = (noTupleDelimiterBit | abaItNumber); }
 
     [[nodiscard]] uint32_t getABAItNo() const
     {
@@ -174,7 +165,7 @@ struct Interval
 class SSMetaData
 {
 public:
-    SSMetaData() : leadingBufferRefCount(1), trailingBufferRefCount(1) {};
+    SSMetaData() : leadingBufferRefCount(1), trailingBufferRefCount(1) { };
 
     template <bool HasTupleDelimiter>
     bool isInRange(const size_t abaItNumber)
@@ -266,6 +257,12 @@ uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
     return static_cast<uint32_t>(sequenceNumber / rbSize) + 1;
 }
 
+// Todo(When replacing sequence shredder impl): convert 'hasNoTD' to function on 'SSMetaData' object
+// -> 'RingBuffer' should be its own class and expose the functions below and the lambda functions
+// -> make sure to hide implementation details to the outside, the interface should potentially be a single function
+//    -> 'resolveSpanningTuple()' that either returns an empty spanning tuple (fail) or a spanning tuple with at least 2 buffers
+//      -> gets rid of 'isInRange()', evaluating lazily, might mean we already indexed an buffer
+//          -> if it becomes performance critical, implement 'stashed' queue that threads (that otherwise did not do any work?) complete
 template <bool IsLeading>
 bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<SSMetaData>& tds)
 {
@@ -275,10 +272,10 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
-        return bitmapState.hasNoTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
+        return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
     const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
-    return bitmapState.hasNoTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
+    return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
 template <bool IsLeading>
@@ -290,10 +287,10 @@ bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
-        return bitmapState.hasTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
+        return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
     const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
-    return bitmapState.hasTupleDelimiter() == 1 and bitmapState.getABAItNo() == adjustedAbaItNumber;
+    return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
 void setCompletedFlags(const size_t firstDelimiter, const size_t lastDelimiter, std::vector<SSMetaData>& ringBuffer)
