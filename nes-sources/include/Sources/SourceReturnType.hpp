@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -43,7 +44,13 @@ enum class TryStopResult : uint8_t
     TIMEOUT
 };
 
+enum class EmitResult : uint8_t
+{
+    SUCCESS,
+    STOP_REQUESTED,
+};
+
 using SourceReturnType = std::variant<Error, Data, EoS>;
-using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
+using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
 
 }
