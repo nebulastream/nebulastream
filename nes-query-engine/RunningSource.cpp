@@ -17,6 +17,8 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <semaphore>
+#include <stop_token>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -41,29 +43,56 @@ SourceReturnType::EmitFunction emitFunction(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               const OriginId sourceId, SourceReturnType::SourceReturnType event)
+    auto availableBuffer = std::make_shared<std::counting_semaphore<64>>(64);
+    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+               const OriginId sourceId,
+               SourceReturnType::SourceReturnType event,
+               const std::stop_token& stopToken) -> SourceReturnType::EmitResult
     {
-        std::visit(
+        return std::visit(
             Overloaded{
                 [&](const SourceReturnType::Data& data)
                 {
                     for (const auto& successor : successors)
                     {
+                        {
+                            /// release the semaphore in case the source wants to terminate
+                            std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
+                            availableBuffer->acquire();
+                            if (stopToken.stop_requested())
+                            {
+                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                            }
+                        }
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
-                            queryId, successor, data.buffer, {}, {}, PipelineExecutionContext::ContinuationPolicy::NEVER))
+                            queryId,
+                            successor,
+                            data.buffer,
+                            [availableBuffer] { availableBuffer->release(); },
+                            {},
+                            PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
+                            if (stopToken.stop_requested())
+                            {
+                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                            }
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
+                    return SourceReturnType::EmitResult::SUCCESS;
                 },
                 [&](SourceReturnType::EoS)
                 {
                     ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
                     controller.initializeSourceStop(queryId, sourceId, source);
+                    return SourceReturnType::EmitResult::SUCCESS;
                 },
-                [&](SourceReturnType::Error error) { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
+                [&](SourceReturnType::Error error)
+                {
+                    controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));
+                    return SourceReturnType::EmitResult::SUCCESS;
+                }},
             std::move(event));
     };
 }
