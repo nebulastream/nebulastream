@@ -30,7 +30,7 @@ namespace NES
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<AbstractPoolProvider> bufferPool,
+    std::shared_ptr<AbstractBufferProvider> bufferPool,
     const int defaultNumberOfBuffersInLocalPool)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
