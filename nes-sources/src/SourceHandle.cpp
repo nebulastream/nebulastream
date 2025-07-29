@@ -29,7 +29,7 @@ namespace NES
 {
 SourceHandle::SourceHandle(
     OriginId originId,
-    std::shared_ptr<AbstractPoolProvider> bufferPool,
+    std::shared_ptr<AbstractBufferProvider> bufferPool,
     size_t numberOfBuffersInLocalPool,
     std::unique_ptr<Source> sourceImplementation)
 {
