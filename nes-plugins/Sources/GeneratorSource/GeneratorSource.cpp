@@ -60,7 +60,7 @@ void GeneratorSource::close()
     NES_TRACE("Closing GeneratorSource.");
 }
 
-size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     NES_INFO("Filling buffer in GeneratorSource.");
     try
@@ -71,7 +71,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         if (maxRuntime >= 0 && elapsedTime >= maxRuntime)
         {
             NES_INFO("Reached max runtime! Stopping Source");
-            return 0;
+            return FillTupleBufferResult();
         }
         const size_t rawTBSize = tupleBuffer.getBufferSize();
         while (writtenBytes < rawTBSize and not this->generator.shouldStop() and not stopToken.stop_requested())
@@ -90,15 +90,19 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
                 generatedBuffers++;
                 this->orphanTuples = tuplesStream.str().substr(writtenBytes, tuplesStream.str().length() - writtenBytes);
                 tuplesStream.str("");
-                return writtenBytes;
+                return FillTupleBufferResult(writtenBytes);
             }
             writtenBytes += insertedBytes;
         }
         tuplesStream.read(tupleBuffer.getBuffer<char>(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
-        NES_INFO("Wrote {} bytes", writtenBytes);
-        return writtenBytes;
+        NES_TRACE("Wrote {} bytes", writtenBytes);
+        if (writtenBytes == 0)
+        {
+            return FillTupleBufferResult(); /// End of Stream
+        }
+        return FillTupleBufferResult(writtenBytes);
     }
     catch (const std::exception& e)
     {
