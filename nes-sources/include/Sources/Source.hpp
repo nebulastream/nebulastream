@@ -31,12 +31,27 @@ namespace NES::Sources
 class Source
 {
 public:
+    struct FillTupleBufferResult
+    {
+        FillTupleBufferResult() = default;
+        explicit FillTupleBufferResult(size_t numTuples) : result(Tuples{numTuples}) { };
+
+        struct EoS
+        {
+        };
+        struct Tuples
+        {
+            size_t numTuples;
+        };
+        std::variant<EoS, Tuples> result = EoS{};
+    };
+
     Source() = default;
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+    virtual FillTupleBufferResult fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) = 0;
