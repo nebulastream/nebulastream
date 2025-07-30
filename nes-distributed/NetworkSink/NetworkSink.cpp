@@ -125,7 +125,6 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
         return;
     }
 
-    NES_INFO("Closing Network Sink. Number of Buffers transmitted: {}", buffersSent.load());
     close_sender_channel(*std::move(this->channel));
     NES_DEBUG("Sender channel {} closed", channelId);
 }
@@ -164,8 +163,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
             throw CannotOpenSink(
                 "Sink Failed"); /// This cannot be the case currently, as the sender queue is not closed from anywhere on the cxx side
         case SendResult::Ok: {
-            ++buffersSent;
-            NES_DEBUG("Sent buffer {}", buffersSent);
+            NES_DEBUG("Sent buffer {}", inputBuffer.getSequenceNumber());
             /// Sent a buffer, check the backpressure handler to send another one
             if (const auto nextBuffer = backpressureHandler.onSuccess(valve))
             {
@@ -175,6 +173,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
             {
                 flush_channel(**channel);
             }
+            break;
         }
         case SendResult::Full: {
             if (const auto emit = backpressureHandler.onFull(inputBuffer, valve))

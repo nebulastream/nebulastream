@@ -82,7 +82,6 @@ private:
     std::optional<rust::Box<SenderChannel>> channel;
     std::string channelId;
     std::string connectionId;
-    std::atomic<size_t> buffersSent = 0;
 };
 
 struct ConfigParametersNetworkSink

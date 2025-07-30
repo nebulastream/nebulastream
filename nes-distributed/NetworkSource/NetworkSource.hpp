@@ -50,7 +50,7 @@ public:
     NetworkSource(NetworkSource&&) = delete;
     NetworkSource& operator=(NetworkSource&&) = delete;
 
-    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     void open(std::shared_ptr<Memory::AbstractBufferProvider> provider) override;
     void close() override;
@@ -66,7 +66,6 @@ private:
     std::optional<rust::Box<ReceiverChannel>> channel{};
     rust::Box<ReceiverServer> receiverServer;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{};
-    size_t buffersReceived{0};
 };
 
 struct ConfigParametersNetworkSource

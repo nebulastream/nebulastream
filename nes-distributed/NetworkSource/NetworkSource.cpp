@@ -56,16 +56,16 @@ void NetworkSource::open(std::shared_ptr<Memory::AbstractBufferProvider> provide
     this->channel = register_receiver_channel(*receiverServer, rust::String(channelIdentifier));
 }
 
-size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TupleBufferBuilder builder(tupleBuffer, *bufferProvider);
     const std::stop_callback callback(stopToken, [this] { interrupt_receiver(**channel); });
     if (receive_buffer(**channel, builder))
     {
-        NES_DEBUG("Received buffer {}", ++buffersReceived);
-        return 1; /// Received one buffer
+        NES_DEBUG("Received buffer {}", tupleBuffer.getSequenceNumber());
+        return FillTupleBufferResult(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
-    return 0; /// End of Stream
+    return FillTupleBufferResult(); /// End of Stream
 }
 
 void NetworkSource::close()
