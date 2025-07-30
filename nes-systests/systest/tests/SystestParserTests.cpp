@@ -223,4 +223,47 @@ TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
     ASSERT_DEATH_DEBUG(parser.registerSubstitutionRule(rule2), "");
 }
 
+TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
+{
+    SystestParser parser{};
+
+    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink";
+    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink";
+
+    bool mainQueryCallbackCalled = false;
+    bool differentialQueryCallbackCalled = false;
+
+    parser.registerOnQueryCallback(
+        [&](const std::string& queryOut, SystestQueryId)
+        {
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Main query callback was called after the differential one.";
+            ASSERT_FALSE(mainQueryCallbackCalled) << "Main query callback should only be called once.";
+            ASSERT_EQ(expectedMainQuery, queryOut);
+            mainQueryCallbackCalled = true;
+        });
+
+    parser.registerOnDifferentialQueryCallback(
+        [&](const std::string& differentialQueryOut)
+        {
+            ASSERT_TRUE(mainQueryCallbackCalled) << "Differential callback was called before the main query callback.";
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Differential query callback should only be called once.";
+            ASSERT_EQ(expectedDifferentialQuery, differentialQueryOut);
+            differentialQueryCallbackCalled = true;
+        });
+
+    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
+                                          { FAIL() << "Result tuple callback should not be called for a differential query test."; });
+    parser.registerOnErrorExpectationCallback(
+        [](const SystestParser::ErrorExpectation&, SystestQueryId)
+        { FAIL() << "Error expectation callback should not be called for a differential query test."; });
+
+    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "differential.dummy";
+    ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
+
+    EXPECT_NO_THROW(parser.parse());
+
+    ASSERT_TRUE(mainQueryCallbackCalled) << "The main query callback was never called.";
+    ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
+}
+
 }
