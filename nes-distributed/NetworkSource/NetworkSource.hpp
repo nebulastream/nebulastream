@@ -16,7 +16,6 @@
 
 #include "NetworkSource.hpp"
 
-#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <stop_token>
@@ -62,10 +61,12 @@ public:
 
 private:
     bool fillBuffer(Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+
     std::string channelIdentifier;
     std::optional<rust::Box<ReceiverChannel>> channel{};
     rust::Box<ReceiverServer> receiverServer;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{};
+    size_t buffersReceived{0};
 };
 
 struct ConfigParametersNetworkSource
@@ -76,7 +77,7 @@ struct ConfigParametersNetworkSource
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(CHANNEL);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL);
 };
 
 }

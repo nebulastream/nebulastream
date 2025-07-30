@@ -365,6 +365,7 @@ async fn control_socket(
         };
     }
 }
+
 impl NetworkService {
     pub fn start(
         runtime: Runtime,

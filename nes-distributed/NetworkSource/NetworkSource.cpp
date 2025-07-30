@@ -13,31 +13,35 @@
 */
 
 #include "NetworkSource.hpp"
-#include "NetworkSourceValidation.hpp"
 
-#include <chrono>
+#include <cstddef>
 #include <memory>
+#include <ostream>
 #include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <utility>
+
+#include <fmt/format.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <network/lib.h>
-#include <NetworkBindings.hpp>
 #include <ErrorHandling.hpp>
+#include <NetworkBindings.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include "rust/cxx.h"
 
 
 namespace NES::Sources
 {
 
 NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
-    : channelIdentifier(sourceDescriptor.getFromConfig(ConfigParametersNetwork::CHANNEL)), receiverServer(receiver_instance())
+    : channelIdentifier(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL)), receiverServer(receiver_instance())
 {
 }
 
@@ -46,18 +50,19 @@ std::ostream& NetworkSource::toString(std::ostream& str) const
     return str << fmt::format("NetworkSource({})", this->channelIdentifier);
 }
 
-void NetworkSource::open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
+void NetworkSource::open(std::shared_ptr<Memory::AbstractBufferProvider> provider)
 {
-    this->bufferProvider = std::move(bufferProvider);
+    this->bufferProvider = std::move(provider);
     this->channel = register_receiver_channel(*receiverServer, rust::String(channelIdentifier));
 }
 
-size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& token)
+size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TupleBufferBuilder builder(tupleBuffer, *bufferProvider);
-    std::stop_callback cb(token, [this] { interrupt_receiver(**channel); });
+    const std::stop_callback callback(stopToken, [this] { interrupt_receiver(**channel); });
     if (receive_buffer(**channel, builder))
     {
+        NES_DEBUG("Received buffer {}", ++buffersReceived);
         return 1; /// Received one buffer
     }
     return 0; /// End of Stream
@@ -67,6 +72,7 @@ void NetworkSource::close()
 {
     INVARIANT(channel.has_value(), "Network Source was closed multiple times");
     close_receiver_channel(std::move(*channel));
+    NES_DEBUG("Receiver channel {} closed", channelIdentifier);
 }
 
 DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

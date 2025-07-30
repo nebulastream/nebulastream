@@ -273,10 +273,11 @@ int main(const int argc, char** argv)
             std::cerr << program;
             return 1;
         }
+
         std::vector<std::reference_wrapper<argparse::ArgumentParser>> subcommands{
             parsers.registerParser, parsers.startParser, parsers.stopParser, parsers.unregisterParser, parsers.dumpParser};
 
-        if (std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); }))
+        if (!std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); }))
         {
             /// TODO(yschroeder97): fix REPL
             const auto client = std::make_shared<NES::GRPCClient>(CreateChannel("localhost:8080", grpc::InsecureChannelCredentials()));

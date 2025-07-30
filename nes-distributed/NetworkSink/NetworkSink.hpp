@@ -98,7 +98,7 @@ struct ConfigParametersNetworkSink
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(CONNECTION, CHANNEL);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CONNECTION, CHANNEL);
 };
 
 }

@@ -41,6 +41,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include "Identifiers/NESStrongType.hpp"
 
 namespace NES::Sinks
 {
@@ -111,6 +112,7 @@ void NetworkSink::start(PipelineExecutionContext&)
 {
     this->server = sender_instance();
     this->channel = register_sender_channel(**server, connectionId, rust::String(channelId));
+    NES_DEBUG("Sender channel {} registered", channelId);
 }
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
@@ -125,7 +127,7 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
 
     NES_INFO("Closing Network Sink. Number of Buffers transmitted: {}", buffersSent.load());
     close_sender_channel(*std::move(this->channel));
-    NES_INFO("Network Channel successfully closed");
+    NES_DEBUG("Sender channel {} closed", channelId);
 }
 
 void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
@@ -163,6 +165,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
                 "Sink Failed"); /// This cannot be the case currently, as the sender queue is not closed from anywhere on the cxx side
         case SendResult::Ok: {
             ++buffersSent;
+            NES_DEBUG("Sent buffer {}", buffersSent);
             /// Sent a buffer, check the backpressure handler to send another one
             if (const auto nextBuffer = backpressureHandler.onSuccess(valve))
             {

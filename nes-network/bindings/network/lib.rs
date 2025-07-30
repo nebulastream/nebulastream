@@ -6,6 +6,7 @@ use nes_network::sender::{ChannelControlMessage, ChannelControlQueue};
 use nes_network::*;
 use once_cell::sync;
 use std::error::Error;
+use std::io::Read;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -225,7 +226,7 @@ fn send_channel(
         sequence_number: metadata.sequence_number as u64,
         origin_id: metadata.origin_id as u64,
         chunk_number: metadata.chunk_number as u64,
-        number_of_tuples: metadata.number_of_tuples as u64,
+        number_of_tuples: data.len() as u64,
         watermark: metadata.watermark as u64,
         last_chunk: metadata.last_chunk,
         data: Vec::from(data),
