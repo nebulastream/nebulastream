@@ -26,6 +26,8 @@ user inside the container will be root.
 If no development image matches the current dependency hash, you can build the development environment locally (using
 the `-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
 
+Currently, we do not provide any libstdc++ images for ARM, but you can build them locally.
+
 ```shell
 ./scripts/install-local-docker-environment.sh
 ```
@@ -202,6 +204,9 @@ Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fall
 the system.
 
 If you intend to use the docker image with libstdc++ you can get the development image by pulling
+
+> [!NOTE]
+> We do not provide libstdc++ images for ARM at the moment.
 
 ```shell
 docker pull nebulastream/nes-development:latest-libstdcxx
