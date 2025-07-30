@@ -22,6 +22,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ostream>
 #include <string_view>
 #include <utility>
@@ -32,6 +33,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
+
+#include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
 {
@@ -45,6 +48,11 @@ private:
 
 public:
     StagedBuffer() = default;
+    StagedBuffer(RawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawTupleBuffer))
+        , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
+        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
     StagedBuffer(
         RawTupleBuffer rawTupleBuffer,
         const size_t sizeOfBufferInBytes,
@@ -86,163 +94,287 @@ protected:
     uint32_t offsetOfLastTupleDelimiter{};
 };
 
-/// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).
-/// A spanning tuple is a tuple that spans over at least two raw input buffers.
-/// Given an input buffer without a delimiter, the SequenceShredder may find one spanning tuple at most (the raw input buffer connects
-/// two raw input buffers with tuple delimiters).
-/// Given an input buffer with a tuple delimiter, the SequenceShredder may find up to two spanning tuples. A first, starting in a raw input
-/// buffer with a lower sequence number, ending in the raw input buffer. A second, starting in the raw input buffer, ending in a raw
-/// input buffer with a higher sequence number.
-struct SpanningTuple
+struct SequenceShredderResult
 {
-    SequenceNumber::Underlying spanStart = 0;
-    SequenceNumber::Underlying spanEnd = 0;
-    bool isStartValid = false;
-    bool isEndValid = false;
+    bool isInRange;
+    size_t indexOfInputBuffer;
+    std::vector<StagedBuffer> spanningBuffers;
 };
 
-struct CriticalSequenceNumberEntry;
+
+/// Forward declare to make friend
+class SSMetaData;
+class AtomicBitmapState
+{
+    /// 33:   000000000000000000000000000000100000000000000000000000000000000
+    static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
+    /// 34:   000000000000000000000000000001000000000000000000000000000000000
+    static constexpr uint64_t noTupleDelimiterBit = 8589934592ULL;
+    /// 35:   000000000000000000000000000010000000000000000000000000000000000
+    static constexpr uint64_t usedLeadingBufferBit = 17179869184ULL;
+    /// 36:   000000000000000000000000000100000000000000000000000000000000000
+    static constexpr uint64_t usedTrailingBufferBit = 34359738368ULL;
+    /// 37:   000000000000000000000000001000000000000000000000000000000000000
+    static constexpr uint64_t claimedSpanningTupleBit = 68719476736ULL;
+    ///       000000000000000000000000000110000000000000000000000000000000000
+    static constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
+    /// Tag: 1, HasTupleDelimiter: True, NoTupleDelimiter: False, UsedLeading: True, UsedTrailing: False
+    static constexpr uint64_t stateOfFirstEntry = 21474836481ULL;
+
+    /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
+    /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
+    /// [34]   : NoTupleDelimiter:     when set, threads continue spanning tuple search with next cell in ring buffer
+    /// [35]   : UsedLeadingBuffer:    signals to threads that the leading buffer use was consumed already
+    /// [36]   : UsedTrailingBuffer:   signals to threads that the trailing buffer use was consumed already
+    /// [37]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an ST by another thread
+    class BitmapState
+    {
+    public:
+        explicit BitmapState(const uint64_t state) : state(state) { };
+        [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state); }
+        [[nodiscard]] bool hasTupleDelimiter() const { return (state & hasTupleDelimiterBit) == hasTupleDelimiterBit; }
+        [[nodiscard]] bool hasNoTupleDelimiter() const { return (state & noTupleDelimiterBit) == noTupleDelimiterBit; }
+        [[nodiscard]] bool hasUsedLeadingBuffer() const { return (state & usedLeadingBufferBit) == usedLeadingBufferBit; }
+        [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
+        [[nodiscard]] bool hasClaimedSpanningTuple() const { return (state & claimedSpanningTupleBit) == claimedSpanningTupleBit; }
+
+        void updateLeading(const BitmapState other) { this->state |= (other.getBitmapState() & usedLeadingBufferBit); }
+
+        void claimSpanningTuple() { this->state |= claimedSpanningTupleBit; }
+
+    private:
+        friend class AtomicBitmapState;
+        [[nodiscard]] uint64_t getBitmapState() const { return state; }
+        uint64_t state;
+    };
+    AtomicBitmapState() : state(51539607552) { };
+    ~AtomicBitmapState() = default;
+
+    AtomicBitmapState(const AtomicBitmapState&) = delete;
+    AtomicBitmapState(const AtomicBitmapState&&) = delete;
+    void operator=(const AtomicBitmapState& other) = delete;
+    void operator=(const AtomicBitmapState&& other) = delete;
+
+    [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
+
+    friend SSMetaData;
+    bool tryClaimSpanningTuple(const uint32_t abaItNumber)
+    {
+        auto atomicFirstDelimiter = getState();
+        auto desiredFirstDelimiter = atomicFirstDelimiter;
+        desiredFirstDelimiter.claimSpanningTuple();
+
+        bool claimedSpanningTuple = false;
+        while (atomicFirstDelimiter.getABAItNo() == abaItNumber and not atomicFirstDelimiter.hasClaimedSpanningTuple()
+               and not claimedSpanningTuple)
+        {
+            desiredFirstDelimiter.updateLeading(atomicFirstDelimiter);
+            claimedSpanningTuple = this->state.compare_exchange_weak(atomicFirstDelimiter.state, desiredFirstDelimiter.state);
+        }
+        return claimedSpanningTuple;
+    }
+
+    void setStateOfFirstEntry() { this->state = stateOfFirstEntry; }
+    void setHasTupleDelimiterState(const size_t abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber); }
+    void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = (noTupleDelimiterBit | abaItNumber); }
+
+    [[nodiscard]] uint32_t getABAItNo() const
+    {
+        /// The first 32 bits are the ABA number
+        return static_cast<uint32_t>(state.load());
+    }
+
+    void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
+    void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
+    void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
+
+
+    friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState)
+    {
+        const auto loadedBitmap = atomicBitmapState.getState();
+        return os << fmt::format(
+                   "[{}-{}-{}-{}-{}]",
+                   loadedBitmap.hasTupleDelimiter(),
+                   loadedBitmap.hasNoTupleDelimiter(),
+                   loadedBitmap.getABAItNo(),
+                   loadedBitmap.hasUsedLeadingBuffer(),
+                   loadedBitmap.hasUsedTrailingBuffer(),
+                   loadedBitmap.hasClaimedSpanningTuple());
+    }
+
+    std::atomic<uint64_t> state;
+};
+
+struct Interval
+{
+    uint32_t lo;
+    uint32_t hi;
+
+    bool operator<(const Interval& other) const { return this->lo < other.lo; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Interval& interval)
+    {
+        return os << '[' << interval.lo << ',' << interval.hi << ']';
+    }
+};
+
+class SSMetaData
+{
+public:
+    SSMetaData() { };
+
+    template <bool HasTupleDelimiter>
+    bool isInRange(const size_t abaItNumber, const StagedBuffer& indexedBuffer)
+    {
+        // Todo: claiming the entry with a single CAS is difficult, since it is difficult to set all bits correctly
+        // -> did the prior entry have a delimiter, what was the other meta data (if we have more meta data in the future)
+        const auto currentEntry = this->getState();
+        const auto currentABAItNo = currentEntry.getABAItNo();
+        const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
+        const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
+        const auto priorEntryIsUsed = currentABAItNo == (abaItNumber - 1) and currentHasCompletedLeading and currentHasCompletedTrailing;
+        if (priorEntryIsUsed)
+        {
+            if (HasTupleDelimiter)
+            {
+                this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+                this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+                this->firstDelimiterOffset = indexedBuffer.getOffsetOfFirstTupleDelimiter();
+                this->lastDelimiterOffset = indexedBuffer.getOffsetOfLastTupleDelimiter();
+                this->atomicBitmapState.setHasTupleDelimiterState(abaItNumber);
+            }
+            else
+            {
+                this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+                this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+                this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
+                this->lastDelimiterOffset = std::numeric_limits<uint32_t>::max();
+                this->atomicBitmapState.setNoTupleDelimiterState(abaItNumber);
+            }
+        }
+        return priorEntryIsUsed;
+    }
+
+    // Todo: make private or similar
+
+
+    std::optional<StagedBuffer> tryClaimSpanningTuple(const uint32_t abaItNumber)
+    {
+        if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
+        {
+            if (firstDelimiterOffset == std::numeric_limits<uint32_t>::max() and lastDelimiterOffset == 0)
+            {
+                const auto dummyBuffer = StagedBuffer(RawTupleBuffer{}, 1, firstDelimiterOffset, lastDelimiterOffset);
+                this->atomicBitmapState.setUsedTrailingBuffer();
+                return {dummyBuffer};
+                // return NES::Memory::TupleBuffer{};
+            }
+            // Todo: claim buffer and put into result vector
+            // --this->trailingBufferRef;
+            INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
+            // const auto sizeOfBuffer = this->trailingBufferRef.getNumberOfTuples();
+            // spanningTupleVector[spanningTupleIdx]
+            //     = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+            // spanningTupleVector[spanningTupleIdx] = std::move(this->trailingBufferRef);
+            // return std::optional{std::move(this->trailingBufferRef)};
+            const auto stagedBuffer
+                = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+            this->atomicBitmapState.setUsedTrailingBuffer();
+            return {stagedBuffer};
+        }
+        return std::nullopt;
+    }
+    void setStateOfFirstIndex()
+    {
+        /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
+        // this->leadingBufferRef = 0;
+        // this->trailingBufferRef = 1;
+        // Todo: need to set 'sizeOfBufferInBytes' otherwise InputFormatterTask fails
+        this->atomicBitmapState.setStateOfFirstEntry();
+        this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
+        this->lastDelimiterOffset = 0;
+    }
+
+    void claimNoDelimiterBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
+    {
+        /// First claim buffer uses
+        // --this->leadingBufferRef;
+        // --this->trailingBufferRef;
+        // INVARIANT(this->leadingBufferRef == 0, "Leading count expected to be 0 but was", this->leadingBufferRef);
+        // INVARIANT(this->trailingBufferRef == 0, "Trailing count expected to be 0, but was", this->trailingBufferRef);
+        INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
+        INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
+
+        spanningTupleVector[spanningTupleIdx]
+            = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        this->trailingBufferRef = NES::Memory::TupleBuffer{};
+        // spanningTupleVector[spanningTupleIdx]
+        //     = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, 0, firstDelimiterOffset, lastDelimiterOffset);
+        // spanningTupleVector[spanningTupleIdx] = std::move(this->leadingBufferRef);
+        // spanningTupleVector[spanningTupleIdx] = std::move(this->trailingBufferRef);
+
+        /// Then atomically mark buffer as used
+        this->atomicBitmapState.setUsedLeadingAndTrailingBuffer();
+    }
+
+    void claimLeadingBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
+    {
+        INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
+
+        spanningTupleVector[spanningTupleIdx]
+            = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        // spanningTupleVector[spanningTupleIdx] = std::move(this->leadingBufferRef);
+        // --this->leadingBufferRef;
+        // INVARIANT(this->leadingBufferRef == 0, "Leading count expected to be 0, but was", this->leadingBufferRef);
+        this->atomicBitmapState.setUsedLeadingBuffer();
+    }
+
+    [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
+    // [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRef; }
+    // [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRef; }
+    [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
+    [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
+
+    // Todo: validation functions
+    bool isLeadingBufferRefNull() const { return this->leadingBufferRef.getBuffer() == nullptr; }
+    bool isTrailingBufferRefNull() const { return this->trailingBufferRef.getBuffer() == nullptr; }
+
+private:
+    // 24 Bytes (TupleBuffer)
+    Memory::TupleBuffer leadingBufferRef;
+    // 48 Bytes (TupleBuffer)
+    Memory::TupleBuffer trailingBufferRef;
+    // 56 Bytes (Atomic state)
+    AtomicBitmapState atomicBitmapState;
+    // 60 Bytes (meta data)
+    uint32_t firstDelimiterOffset{};
+    // 64 Bytes (meta data)
+    uint32_t lastDelimiterOffset{};
+};
 
 class SequenceShredder
 {
+    static constexpr size_t SIZE_OF_RING_BUFFER = 1024;
+
 public:
-    using BitmapType = uint64_t;
     using SequenceNumberType = SequenceNumber::Underlying;
-    static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 8;
-    using BitmapVectorType = std::vector<BitmapType>;
 
-    struct SpanningTupleBuffers
-    {
-        size_t indexOfProcessedSequenceNumber;
-        std::vector<StagedBuffer> stagedBuffers;
-    };
-
-private:
-    static constexpr size_t MAX_VALUE = std::numeric_limits<SequenceNumberType>::max();
-    static constexpr size_t BITMAP_SIZE_BIT_SHIFT = std::countr_zero(SIZE_OF_BITMAP_IN_BITS); /// log2 of size of bitmaps
-    static constexpr size_t BITMAP_SIZE_MODULO = (SIZE_OF_BITMAP_IN_BITS - 1);
-    static constexpr SequenceNumberType FIRST_BIT_MASK = 1;
-    static constexpr SequenceNumberType LAST_BIT_MASK = MAX_VALUE - 1;
-    static constexpr SequenceNumberType INVALID_SEQUENCE_NUMBER = SequenceNumber::INVALID;
-    static constexpr size_t MAX_NUMBER_OF_BITMAPS = 2048;
-    static constexpr size_t SHIFT_TO_SECOND_BIT = 1;
-    static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
-    static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
-
-public:
-    explicit SequenceShredder(size_t sizeOfTupleDelimiter);
-    explicit SequenceShredder(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
+    explicit SequenceShredder() : ringBuffer(std::vector<SSMetaData>(SIZE_OF_RING_BUFFER)) { ringBuffer[0].setStateOfFirstIndex(); };
     ~SequenceShredder();
-
-    /// Return
-    [[nodiscard]] size_t getTail() const { return this->tail; }
-
-    /// Check if the sequence number is in the allowed range of the ring buffer.
-    /// Example: 4 bitmaps, tail is 4, then the allowed range for sequence numbers is 256-511: [256,319][320,383][384,447][448,511]
-    [[nodiscard]] bool isInRange(SequenceNumberType sequenceNumber);
-
-    /// Logs the sequence number range of the SequenceShredder. Additionally, iterates over all bitmaps and detects whether the
-    /// SequenceShredder is in a valid state for sequence number (each bit represents a sequence number). Logs all invalid sequence numbers.
-    [[nodiscard]] bool validateState() noexcept;
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     /// For details on the inner workings of this function, read the description of the class above.
     template <bool HasTupleDelimiter>
-    SpanningTupleBuffers processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, SequenceNumberType sequenceNumber);
+    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
 
-    friend std::ostream& operator<<(std::ostream& os, SequenceShredder& sequenceShredder);
+    friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    std::mutex readWriteMutex; /// protects all member variable below, except for 'stagedBuffers' and 'stagedBufferUses'
-    SequenceNumberType tail; /// represents the total number of times that the tail-bitmap changed
-    BitmapVectorType tupleDelimiterBitmaps;
-    BitmapVectorType seenAndUsedBitmaps;
-    size_t numberOfBitmaps;
-    size_t numberOfBitmapsModulo;
-    size_t resizeRequestCount;
-    /// The SequenceShredder owns staged buffers that must still become part of spanning tuples.
-    std::vector<StagedBuffer> stagedBuffers;
-    /// Keeps track of how often a specific buffer was used in spanning tuples
-    /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
-    std::vector<int8_t> stagedBufferUses;
-    bool isFirstTuple = true;
-
-    struct BitmapSnapshot
-    {
-        size_t numberOfBitmapsModulo;
-        BitmapType tupleDelimiterBitmapSnapshot;
-        BitmapType seenAndUsedBitmapSnapshot;
-    };
-    struct BitmapVectorSnapshot
-    {
-        size_t tail;
-        size_t numberOfBitmapsModulo;
-        BitmapVectorType tupleDelimiterVectorSnapshot;
-        BitmapVectorType seenAndUsedVectorSnapshot;
-    };
-    /// The unique_ptr avoids allocating space for all bitmaps (BitmapVectorSnapshot) in the common case, which is 'BitmapSnapshot'
-    using Snapshot = std::variant<BitmapSnapshot, std::unique_ptr<BitmapVectorSnapshot>>;
-
-    enum class WrappingMode : uint8_t
-    {
-        NO_WRAPPING = 0, /// 00: checking the bitmap of the sequence number suffices (common case)
-        CHECK_WRAPPING_TO_LOWER = 1, /// 01: the sequence number could complete a spanning tuple (ST) ending in a lower bitmap
-        CHECK_WRAPPING_TO_HIGHER = 2, /// 10: the sequence number could complete an ST starting in a higher bitmap
-        CHECK_WRAPPING_TO_LOWER_AND_HIGHER = 3, /// 11: ... could complete an ST starting in a lower bitmap and ending in a higher bitmap
-    };
-
-    /// @Note Must be called why holding the readWriteMutex
-    /// Called when a thread completed the tail bitmap. The tail bitmap is complete, if the seenAndUsedBitmap pointed to by the tail contains only '1's.
-    /// Resets the tail bitmaps and increments the tail. If new tail bitmaps are complete, repeats the process, until the new tail bitmaps are not complete.
-    /// Increases the size of the ring buffer if enough threads issue 'resizeRequests'.
-    void incrementTail();
-
-    /// Determines whether the buffer of the sequence number connects to the buffer of a smaller sequence number with a tuple delimiter,
-    /// meaning that the buffer with the smaller sequence number starts a spanning tuple that the buffer of the sequence number is a part of.
-    std::pair<SequenceNumberType, bool> tryGetSpanningTupleStart(
-        SequenceNumberType sequenceNumberBitIndex,
-        SequenceNumberType sequenceNumberBitmapOffset,
-        const SequenceNumberType& tupleDelimiterBitmap,
-        const SequenceNumberType& seenAndUsedBitmap);
-
-    /// Determines whether the buffer of the sequence number connects to a buffer of a higher sequence number with a tuple delimiter,
-    /// meaning that the buffer with the higher sequence number ends a spanning tuple that the buffer of the sequence number is a part of.
-    std::pair<SequenceNumberType, bool> tryGetSpanningTupleEnd(
-        SequenceNumberType sequenceNumberBitIndex,
-        SequenceNumberType sequenceNumberBitmapOffset,
-        const SequenceNumberType& tupleDelimiterBitmap,
-        const SequenceNumberType& seenAndUsedBitmap);
-
-    /// Called by a thread that needs to search for the start of a spanning tuple in a lower bitmap than the one that its sequence number maps to.
-    /// Skips over buffers that were seen, but did not contain a tuple delimiter, represented by a '0' in the tuple delimiter bitmap and
-    /// a '1' in the seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
-    /// representing the start of a spanning tuple and a bool that indicates whether it is a valid start.
-    std::pair<SequenceNumberType, bool> tryToFindLowerWrappingSpanningTuple(
-        size_t sequenceNumberBitmapOffset, size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot);
-
-    /// Called by a thread that needs to search for the end of a spanning tuple in a higher bitmap than the one that its sequence number maps to.
-    /// Skips over buffers that were seen, but did not contain a tuple delimiter, represented by a '0' in the tuple delimiter bitmap and a '1'
-    /// in the seen and used bitmap. If the first 'non-0-1-buffer' contains a tuple delimiter, the function returns the sequence number
-    /// representing the end of a spanning tuple and a bool that indicates whether it is a valid end.
-    std::pair<SequenceNumberType, bool> tryToFindHigherWrappingSpanningTuple(
-        size_t sequenceNumberBitmapOffset, size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot);
-
-    /// If a buffer does not contain a tuple delimiter, it is only possible to find one spanning tuple.
-    /// Both, the start and the end of the spanning tuple must be valid.
-    SpanningTupleBuffers checkSpanningTupleWithoutTupleDelimiter(
-        const SpanningTuple& spanningTuple, SequenceNumberType sequenceNumber, SequenceNumberType numberOfBitmapsModuloSnapshot);
-
-    /// If a buffer contains a tuple delimiter, it is possible to find two spanning tuples, one ending in the sequence number and one starting with it.
-    SpanningTupleBuffers checkSpanningTupleWithTupleDelimiter(
-        SpanningTuple spanningTuple,
-        SequenceNumberType sequenceNumber,
-        SequenceNumberType numberOfBitmapsModuloSnapshot,
-        StagedBuffer stagedBufferOfSequenceNumber);
+    // Todo: make 'RingBuffer' its own class (in its own file) <-- SequenceShredder should be thin wrapper around RingBuffer (if possible, with a single function)
+    std::vector<SSMetaData> ringBuffer;
 };
 
 }
 
 FMT_OSTREAM(NES::InputFormatters::SequenceShredder);
-FMT_OSTREAM(NES::InputFormatters::CriticalSequenceNumberEntry);

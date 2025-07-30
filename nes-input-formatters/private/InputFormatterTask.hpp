@@ -179,7 +179,9 @@ public:
         , schemaInfo(schema)
         , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
+        , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>() : nullptr)
+        // , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
+
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
@@ -212,10 +214,11 @@ public:
         if constexpr (hasSpanningTuple())
         {
             INVARIANT(sequenceShredder != nullptr, "The SequenceShredder handles spanning tuples, thus it must not be null.");
-            if (not sequenceShredder->validateState())
-            {
-                throw FormattingError("Failed to validate SequenceShredder.");
-            }
+            // Todo: assuming that we call 'validate' during destructor of InputFormatterTask anyway, which should ALWAYS follow a 'stopTask'
+            // if (not sequenceShredder->validateState())
+            // {
+            //     throw FormattingError("Failed to validate SequenceShredder.");
+            // }
         }
     }
 
@@ -251,11 +254,12 @@ public:
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
         /// After enough out-of-range requests, the SequenceShredder increases the size of its ring buffer.
-        if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
-        {
-            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-            return;
-        }
+        // Todo: make sure that we can retry at another point in time
+        // if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
+        // {
+        //     rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+        //     return;
+        // }
 
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
         auto fieldIndexFunction = typename FormatterType::FieldIndexFunctionType(*pec.getBufferManager());
@@ -360,13 +364,23 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<true>(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<true>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
                 fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
             rawBuffer.getSequenceNumber().getRawValue());
+        if (not isInRange)
+        {
+            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return;
+        }
+
+        if (stagedBuffers.size() < 1)
+        {
+            return;
+        }
 
         /// 1. process leading spanning tuple if required
         auto formattedBuffer = bufferProvider->getBufferBlocking();
@@ -429,13 +443,19 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<false>(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<false>(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
                 fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
             rawBuffer.getSequenceNumber().getRawValue());
+        if (not isInRange)
+        {
+            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            return;
+        }
+
         if (stagedBuffers.size() < 3)
         {
             return;

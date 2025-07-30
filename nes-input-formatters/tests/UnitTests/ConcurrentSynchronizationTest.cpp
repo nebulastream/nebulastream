@@ -55,7 +55,7 @@ public:
             const SequenceShredder::SequenceNumberType upperBound,
             const std::optional<SequenceShredder::SequenceNumberType> fixedSeed,
             NES::Memory::TupleBuffer dummyBuffer)
-            : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
+            : sequenceShredder(SequenceShredder{}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
@@ -130,11 +130,6 @@ public:
                     /// CAS loop implementing std::atomic_max
                 }
 
-                /// Wait until sequence number is in range
-                while (not sequenceShredder.isInRange(threadLocalSequenceNumber))
-                {
-                }
-
                 /// Since all threads copy the same reference, all copies of that reference point to the same buffer control block
                 /// Thus, we can't set the sequence number in that control block. Instead, we exploit the 'offset of last tuple delimiter',
                 /// of the StagedBuffer, which we create during each iteration and which is not manipulated by other threads
@@ -146,26 +141,34 @@ public:
 
                 if (tupleDelimiter)
                 {
-                    NES::InputFormatters::SequenceShredder::SpanningTupleBuffers result
+                    NES::InputFormatters::SequenceShredderResult result
                         = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
-                    if (result.stagedBuffers.size() > 1)
+                    while (not result.isInRange)
+                    {
+                        result = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                    }
+                    if (result.spanningBuffers.size() > 1)
                     {
                         /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
-                        const auto spanStart = result.stagedBuffers.front().getOffsetOfLastTupleDelimiter();
-                        const auto spanEnd = result.stagedBuffers.back().getOffsetOfLastTupleDelimiter();
+                        const auto spanStart = result.spanningBuffers.front().getOffsetOfLastTupleDelimiter();
+                        const auto spanEnd = result.spanningBuffers.back().getOffsetOfLastTupleDelimiter();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }
                 }
                 else
                 {
-                    NES::InputFormatters::SequenceShredder::SpanningTupleBuffers result
+                    NES::InputFormatters::SequenceShredderResult result
                         = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber);
-                    if (result.stagedBuffers.size() > 1)
+                    while (not result.isInRange)
+                    {
+                        result = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                    }
+                    if (result.spanningBuffers.size() > 1)
                     {
                         /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
-                        const auto spanStart = result.stagedBuffers.front().getOffsetOfLastTupleDelimiter();
-                        const auto spanEnd = result.stagedBuffers.back().getOffsetOfLastTupleDelimiter();
+                        const auto spanStart = result.spanningBuffers.front().getOffsetOfLastTupleDelimiter();
+                        const auto spanEnd = result.spanningBuffers.back().getOffsetOfLastTupleDelimiter();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }

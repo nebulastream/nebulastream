@@ -20,6 +20,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ostream>
 #include <ranges>
 #include <sstream>
@@ -27,723 +28,286 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include "Util/Ranges.hpp"
 
 #include <Identifiers/Identifiers.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
 {
-/// Enable for detailed bitmap prints
-constexpr bool VERBOSE_DEBUG_BITMAP_PRINTING = false;
-
-SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter) : SequenceShredder(sizeOfTupleDelimiter, INITIAL_NUM_BITMAPS)
-{
-}
-
-SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size_t initialNumBitmaps)
-    : tail(0)
-    , tupleDelimiterBitmaps(BitmapVectorType(initialNumBitmaps))
-    , seenAndUsedBitmaps(BitmapVectorType(initialNumBitmaps))
-    , numberOfBitmaps(initialNumBitmaps)
-    , numberOfBitmapsModulo(initialNumBitmaps - 1)
-    , resizeRequestCount(0)
-    , stagedBuffers({})
-    , stagedBufferUses(std::vector<int8_t>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
-{
-    this->stagedBuffers.reserve(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
-    for (size_t i = 0; i < (numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT); ++i)
-    {
-        this->stagedBuffers.emplace_back();
-    }
-
-    this->tupleDelimiterBitmaps.shrink_to_fit();
-    this->seenAndUsedBitmaps.shrink_to_fit();
-
-    this->tupleDelimiterBitmaps.at(0) |= static_cast<SequenceNumberType>(1);
-    this->stagedBuffers.at(0) = StagedBuffer{RawTupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
-    this->stagedBufferUses.at(0) = 1;
-}
 
 SequenceShredder::~SequenceShredder()
 {
-    if (not validateState())
-    {
-        NES_ERROR("Failed to validate state");
-    }
-};
-
-bool SequenceShredder::isInRange(const SequenceNumberType sequenceNumber)
-{
-    const auto targetBitmap = (sequenceNumber >> BITMAP_SIZE_BIT_SHIFT);
-    const std::scoped_lock lock(this->readWriteMutex); /// protects: write(resizeRequestCount), read(tail,numberOfBitmaps)
-    /// The target bitmap is in range, if it does not exceed the current head (tail + number of bitmaps - 1)
-    if (targetBitmap < (this->tail + this->numberOfBitmaps))
-    {
-        return true;
-    }
-    ++this->resizeRequestCount;
-    return false;
-}
-
-struct CriticalSequenceNumberEntry
-{
-    SequenceShredder::SequenceNumberType sequenceNumber;
-    std::string reason;
-
-    friend std::ostream& operator<<(std::ostream& os, const CriticalSequenceNumberEntry& entry)
-    {
-        os << fmt::format("({}: {})", entry.sequenceNumber, entry.reason);
-        return os;
-    }
-};
-
-bool SequenceShredder::validateState() noexcept
-{
     try
     {
-        /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
+        for (const auto& [idx, metaData] : ringBuffer | NES::views::enumerate)
         {
-            const std::unique_lock lock(this->readWriteMutex);
-            std::stringstream stateStream;
+            const auto state = metaData.getState();
+            INVARIANT(state.hasUsedLeadingBuffer() == true, "Buffer at index {} does still claim to own leading buffer", idx);
+            INVARIANT(metaData.isLeadingBufferRefNull() == true, "Buffer at index {} still owns a leading buffer reference", idx);
 
-            const auto firstSequenceNumberInRange = this->tail * SIZE_OF_BITMAP_IN_BITS;
-            const auto lastSequenceNumberInRange = firstSequenceNumberInRange + (SIZE_OF_BITMAP_IN_BITS * numberOfBitmaps) - 1;
-
-            auto largestActiveSequenceNumber = SequenceNumber::INVALID;
-            std::vector<CriticalSequenceNumberEntry> criticalSequenceNumbers;
-            std::vector<SequenceNumberType> openSequenceNumbers;
-            /// Skipping the invalid sequence number '0' (which the SequenceShredder uses for a dummy buffer)
-            for (size_t sequenceNumberOffset = 1; sequenceNumberOffset < this->stagedBuffers.size(); ++sequenceNumberOffset)
+            const auto& nextEntryRef = ringBuffer.at((idx + 1) % ringBuffer.size());
+            const auto nextEntryRefState = nextEntryRef.getState();
+            const auto adjustment = static_cast<size_t>(static_cast<size_t>(idx + 1) == ringBuffer.size());
+            if (state.getABAItNo() == nextEntryRefState.getABAItNo() - adjustment)
             {
-                const auto runningSequenceNumber = firstSequenceNumberInRange + sequenceNumberOffset;
-                const auto offsetToTail = sequenceNumberOffset / SIZE_OF_BITMAP_IN_BITS;
-                const auto bitIdx = runningSequenceNumber % SIZE_OF_BITMAP_IN_BITS;
-                const auto bitmapIdx = (this->tail + offsetToTail) & this->numberOfBitmapsModulo;
-                const auto seenAndUsedBitmap = this->seenAndUsedBitmaps.at(bitmapIdx);
-                const auto tupleDelimiterBitmap = this->tupleDelimiterBitmaps.at(bitmapIdx);
-                const auto currentBit = static_cast<size_t>(1) << bitIdx;
-                const auto isSeenAndUsedBitmapSet = static_cast<bool>(seenAndUsedBitmap & currentBit);
-                const auto isTupleDelimiterBitmapSet = static_cast<bool>(tupleDelimiterBitmap & currentBit);
-
-                const auto stagedBufferIdx = runningSequenceNumber % this->stagedBuffers.size();
-                const auto isUsed = this->stagedBufferUses.at(stagedBufferIdx) != 0;
-                const auto isNull = not(this->stagedBuffers.at(stagedBufferIdx).isValidRawBuffer());
-                const auto isInValidNotUsedState = not(isUsed) and isNull;
-                const auto isInValidUsedState = isUsed and not(isNull) and (isSeenAndUsedBitmapSet or isTupleDelimiterBitmapSet);
-                auto sequenceNumberIsOutOfRange = false;
-                if (not(isNull))
-                {
-                    const auto sequenceNumberOfBuffer
-                        = this->stagedBuffers.at(stagedBufferIdx).getRawTupleBuffer().getSequenceNumber().getRawValue();
-                    sequenceNumberIsOutOfRange
-                        = sequenceNumberOfBuffer < firstSequenceNumberInRange or sequenceNumberOfBuffer > lastSequenceNumberInRange;
-                }
-                if (not(isInValidNotUsedState or isInValidUsedState) or sequenceNumberIsOutOfRange)
-                {
-                    /// Encountered critical state
-                    auto criticalSequenceNumberEntry = CriticalSequenceNumberEntry{
-                        .sequenceNumber = runningSequenceNumber,
-                        .reason = fmt::format(
-                            "isUsed: {}, isNull: {}, isTupleDelimiterBitmapSet: {}, isSeenAndUsedBitmapSet: {}",
-                            isUsed,
-                            isNull,
-                            isTupleDelimiterBitmapSet,
-                            isSeenAndUsedBitmapSet)};
-                    criticalSequenceNumbers.emplace_back(criticalSequenceNumberEntry);
-                }
-                if (isInValidUsedState)
-                {
-                    openSequenceNumbers.emplace_back(runningSequenceNumber);
-                }
-                largestActiveSequenceNumber = isInValidUsedState ? runningSequenceNumber : largestActiveSequenceNumber;
+                INVARIANT(state.hasUsedTrailingBuffer() == true, "Buffer at index {} does still claim to own leading buffer", idx);
+                INVARIANT(metaData.isTrailingBufferRefNull() == true, "Buffer at index {} still owns a trailing buffer reference", idx);
             }
-            stateStream << fmt::format(
-                "SequenceShredder State(SequenceNumberRange[{}-{}], Largest Active Sequence Number: {}, Open Sequence Numbers({}), "
-                "Critical Sequence Numbers({}))",
-                firstSequenceNumberInRange,
-                lastSequenceNumberInRange,
-                largestActiveSequenceNumber,
-                openSequenceNumbers.empty() ? "None" : fmt::format("{}", fmt::join(openSequenceNumbers, ", ")),
-                criticalSequenceNumbers.empty() ? "None" : fmt::format("{}", fmt::join(criticalSequenceNumbers, ", ")));
-            if (not criticalSequenceNumbers.empty())
-            {
-                NES_ERROR("Validation failed: {}", stateStream.str());
-            }
-            NES_DEBUG("Validation successful.");
-            return true;
         }
     }
     catch (...)
     {
         NES_ERROR("Validation failed unexpectedly.");
-        return false;
     }
+};
+
+uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
+{
+    return static_cast<uint32_t>(sequenceNumber / rbSize) + 1;
 }
 
-template <bool HasTupleDelimiter>
-SequenceShredder::SpanningTupleBuffers
-SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumber, const SequenceNumberType sequenceNumber)
+// Todo(When replacing sequence shredder impl): convert 'hasNoTD' to function on 'SSMetaData' object
+// -> 'RingBuffer' should be its own class and expose the functions below and the lambda functions
+// -> make sure to hide implementation details to the outside, the interface should potentially be a single function
+//    -> 'resolveSpanningTuple()' that either returns an empty spanning tuple (fail) or a spanning tuple with at least 2 buffers
+//      -> gets rid of 'isInRange()', evaluating lazily, might mean we already indexed an buffer
+//          -> if it becomes performance critical, implement 'stashed' queue that threads (that otherwise did not do any work?) complete
+template <bool IsLeading>
+bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<SSMetaData>& tds)
 {
-    /// Calculate how many bitmaps preceed the bitmap that the sequence number maps to (sequenceNumber / SIZE_OF_BITMAP_IN_BITS).
-    /// running example (sequenceNumber = 67, size of bitmaps: 64 bits): 67 / 64 (or 67 >> 6) = 1 <--- sequence number maps to the second bitmap
-    const auto sequenceNumberBitmapCount = (sequenceNumber >> BITMAP_SIZE_BIT_SHIFT);
-    /// Calculate the sequenceNumber that the first bit of the bitmap that the sequence number belongs to represents
-    /// running example: 1 * 64 (or 1 << 6) = 64
-    const auto sequenceNumberBitmapOffset = sequenceNumberBitmapCount << BITMAP_SIZE_BIT_SHIFT;
-    /// Determine the correct index of the bit in its bitmap and shift a '1' to it
-    /// running example: 67 % 64 (or 67 & 63) = 3 <-- sequence number 67 maps to the third bit of the second bitmap
-    const auto sequenceNumberBitIndex = sequenceNumber & BITMAP_SIZE_MODULO;
-    const auto sequenceNumberBit = FIRST_BIT_MASK << sequenceNumberBitIndex;
-
-    /// Create two masks, one where all bits lower than the bit of the sequence number are '1's and one in which
-    /// all the higher bits are '1's, e.g.: (00100) -> (00011 and 11000)
-    const auto lowerBitsMask = sequenceNumberBit - 1;
-    const auto higherBitsMask = MAX_VALUE ^ (lowerBitsMask | sequenceNumberBit);
-
-    Snapshot snapshot;
-    bool needToCheckForWrappingToLower = false;
-    bool needToCheckForWrappingToHigher = false;
-    SequenceNumberType sequenceNumberBitmapIndex{};
-    /// protect: read(tail,numberOfBitmapsModulo), read(tupleDelimiterBitmaps, seenAndUsedBitmaps)
+    const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
+    const auto tdsIdx = adjustedSN % tds.size();
+    const auto bitmapState = tds[tdsIdx].getState();
+    if (IsLeading)
     {
-        SequenceNumberType sequenceNumberBufferPosition{};
-        const std::scoped_lock lock(this->readWriteMutex);
-        sequenceNumberBufferPosition = sequenceNumber & (this->stagedBuffers.size() - 1);
-        /// The SequenceShredder takes ownership of the staged buffer and returns it, once its uses reaches '0'
-        this->stagedBuffers.at(sequenceNumberBufferPosition) = stagedBufferOfSequenceNumber; ///NOLINT(performance-unnecessary-value-param)
-        sequenceNumberBitmapIndex
-            = sequenceNumberBitmapCount & this->numberOfBitmapsModulo; /// Needs protection because numBitsModule is variable
-
-        /// Set the bit in the correct bitmap, depending on whether it contains a tuple delimiter or not
-        if constexpr (HasTupleDelimiter)
-        {
-            /// A buffer with a delimiter has three uses. To construct the leading, and to construct the trailing spanning tuple,
-            /// and to return the buffer, in case it contains full tuples
-            this->stagedBufferUses.at(sequenceNumberBufferPosition) = 3;
-            this->tupleDelimiterBitmaps.at(sequenceNumberBitmapIndex) |= sequenceNumberBit;
-        }
-        else
-        {
-            /// A buffer without a delimiter can only construct a single spanning tuple.
-            this->stagedBufferUses.at(sequenceNumberBufferPosition) = 1;
-            this->seenAndUsedBitmaps.at(sequenceNumberBitmapIndex) |= sequenceNumberBit;
-        }
-
-        /// The wrappingCheckBitmap contains '1's if we saw a sequence number, but it did not have a tuple delimiter:
-        /// 0011 <-- seenAndUsedBitmap, 0101 <-- tupleDelimitersBitmap
-        /// 0101 | 0011 = 0111 and 0111 ^ 0101 = 0010 <-- the only '1' is exactly where only seen and used had a '1'
-        /// Thus, the wrappingCheckBitmap represents possible paths from one tuple delimiter to another.
-        const auto wrappingCheckBitmap
-            = (this->tupleDelimiterBitmaps.at(sequenceNumberBitmapIndex) | this->seenAndUsedBitmaps.at(sequenceNumberBitmapIndex))
-            ^ this->tupleDelimiterBitmaps.at(sequenceNumberBitmapIndex);
-        /// If the wrappingCheckBitmap contains all '1's of the lowerBitsMask, prior threads processed all sequence numbers
-        /// with smaller sequence numbers that map to the same bitmap and none of the corresponding buffers contained a tuple delimiter.
-        /// We need to check if there is a tuple delimiter in a prior bitmap (analog process for higher)
-        /// (We could check if the next higher bitmap is the tail, but it does not seem worth it)
-        needToCheckForWrappingToLower = ((lowerBitsMask | wrappingCheckBitmap) == wrappingCheckBitmap);
-        needToCheckForWrappingToHigher = ((higherBitsMask | wrappingCheckBitmap) == wrappingCheckBitmap);
-
-        /// If neither end is 'reachable' from the bit-index of the sequence number, it suffices to search spanning tuples in
-        /// the bitmap of the sequence number. Otherwise, we need to potentially check all other bitmaps.
-        /// The thread takes a snapshot of the required bitmap(s). The snapshot allows the thread to look for spanning tuples
-        /// without locking and allows it to determine exactly which spanning tuples it completed (see class description).
-        if (needToCheckForWrappingToLower or needToCheckForWrappingToHigher)
-        { /// assigning using a ternary operator with a cast is slower than simply branching
-            snapshot = std::make_unique<BitmapVectorSnapshot>(
-                this->tail, this->numberOfBitmapsModulo, this->tupleDelimiterBitmaps, this->seenAndUsedBitmaps);
-        }
-        else
-        {
-            snapshot = BitmapSnapshot{
-                .numberOfBitmapsModulo = this->numberOfBitmapsModulo,
-                .tupleDelimiterBitmapSnapshot = this->tupleDelimiterBitmaps.at(sequenceNumberBitmapIndex),
-                .seenAndUsedBitmapSnapshot = this->seenAndUsedBitmaps.at(sequenceNumberBitmapIndex)};
-        }
+        const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
+        return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
-    SpanningTuple spanningTuple{};
-    /// Determine which kind of wrapping (to other bitmaps) is necessary. The common case should be NO_WRAPPING.
-    const auto wrappingMode = static_cast<WrappingMode>(needToCheckForWrappingToLower + (needToCheckForWrappingToHigher << FIRST_BIT_MASK));
-    switch (wrappingMode)
+    const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
+    return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
+}
+
+template <bool IsLeading>
+bool hasTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance, const std::vector<SSMetaData>& tds)
+{
+    const auto adjustedSN = (IsLeading) ? snRBIdx - distance : snRBIdx + distance;
+    const auto tdsIdx = adjustedSN % tds.size();
+    const auto bitmapState = tds[tdsIdx].getState();
+    if (IsLeading)
     {
-        case WrappingMode::NO_WRAPPING: {
-            /// Checking for wrapping is not necessary to either lower or higher. We just need to check the current bitmap.
-            const auto bitmapSnapshot = std::get<BitmapSnapshot>(snapshot);
-            /// Try to find the start and end of the spanning tuple in the bitmap of the sequence number.
-            const auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
-                sequenceNumberBitIndex,
-                sequenceNumberBitmapOffset,
-                bitmapSnapshot.tupleDelimiterBitmapSnapshot,
-                bitmapSnapshot.seenAndUsedBitmapSnapshot);
-            const auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
-                sequenceNumberBitIndex,
-                sequenceNumberBitmapOffset,
-                bitmapSnapshot.tupleDelimiterBitmapSnapshot,
-                bitmapSnapshot.seenAndUsedBitmapSnapshot);
-
-            spanningTuple = SpanningTuple{
-                .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
-            break;
-        }
-        case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
-            auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
-                sequenceNumberBitIndex,
-                sequenceNumberBitmapOffset,
-                bitmapSnapshot.tupleDelimiterVectorSnapshot.at(sequenceNumberBitmapIndex),
-                bitmapSnapshot.seenAndUsedVectorSnapshot.at(sequenceNumberBitmapIndex));
-
-            /// If the buffer of the sequence number has tuple delimiter, we always need to check for wrapping, since
-            /// there are two possible spanning tuples, one starting at the sequence number.
-            /// If it does not have a tuple delimiter, we can abort early, because start and end must both be valid.
-            if (isEndValid or HasTupleDelimiter)
-            {
-                const auto [spanningTupleStart, isStartValid]
-                    = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{
-                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
-            }
-            else
-            {
-                spanningTuple = SpanningTuple{
-                    .spanStart = INVALID_SEQUENCE_NUMBER, .spanEnd = spanningTupleEnd, .isStartValid = false, .isEndValid = isEndValid};
-            }
-            break;
-        }
-        case WrappingMode::CHECK_WRAPPING_TO_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
-            auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
-                sequenceNumberBitIndex,
-                sequenceNumberBitmapOffset,
-                bitmapSnapshot.tupleDelimiterVectorSnapshot.at(sequenceNumberBitmapIndex),
-                bitmapSnapshot.seenAndUsedVectorSnapshot.at(sequenceNumberBitmapIndex));
-
-            /// If the buffer of the sequence number has tuple delimiter, we always need to check for wrapping, since
-            /// the there are two possible spanning tuples, one ending with the sequence number.
-            /// If it does not have a tuple delimiter, we can abort early, because start and end must both be valid.
-            if (spanningTupleStart or HasTupleDelimiter)
-            {
-                const auto [spanningTupleEnd, isEndValid]
-                    = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{
-                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
-            }
-            else
-            {
-                spanningTuple = SpanningTuple{
-                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
-            }
-            break;
-        }
-        case WrappingMode::CHECK_WRAPPING_TO_LOWER_AND_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
-            const auto [spanningTupleStart, isStartValid]
-                = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-            if (spanningTupleStart or HasTupleDelimiter)
-            {
-                const auto [spanningTupleEnd, isEndValid]
-                    = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{
-                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
-            }
-            else
-            {
-                spanningTuple = SpanningTuple{
-                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
-            }
-            break;
-        }
+        const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
+        return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
+    const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
+    return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
+}
 
-    /// Check whether the start/end of the spanning tuple is valid and determine how many STs to return and whether to increment the tail
-    const auto numberOfBitmapsModuloSnapshot = (std::holds_alternative<BitmapSnapshot>(snapshot))
-        ? std::get<BitmapSnapshot>(snapshot).numberOfBitmapsModulo
-        : std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot))->numberOfBitmapsModulo;
+void setCompletedFlags(
+    const size_t firstDelimiter,
+    const size_t lastDelimiter,
+    std::vector<SSMetaData>& ringBuffer,
+    std::vector<StagedBuffer>& spanningTupleBuffers,
+    size_t spanningTupleIdx)
+{
+    size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
+    while (nextDelimiter != lastDelimiter)
+    {
+        ringBuffer[nextDelimiter].claimNoDelimiterBuffer(spanningTupleBuffers, spanningTupleIdx);
+        ++spanningTupleIdx;
+        nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
+    }
+    ringBuffer[lastDelimiter].claimLeadingBuffer(spanningTupleBuffers, spanningTupleIdx);
+}
+
+// Todo: could also just return TupleBuffer (and get SN from buffer), but initial dummy buffer is problem
+// -> could honestly think about creating struct that mimics buffer (and control block) and reinterpet_casting it to TupleBuffer
+std::optional<uint32_t> nonClaimingLeadingDelimiterSearch(
+    const std::vector<SSMetaData>& ringBuffer,
+    const size_t snRBIdx,
+    const size_t abaItNumber,
+    const SequenceShredder::SequenceNumberType currentSequenceNumber)
+{
+    size_t leadingDistance = 1;
+    while (hasNoTD<true>(snRBIdx, abaItNumber, leadingDistance, ringBuffer))
+    {
+        ++leadingDistance;
+    }
+    return hasTD<true>(snRBIdx, abaItNumber, leadingDistance, ringBuffer) ? std::optional{currentSequenceNumber - leadingDistance}
+                                                                          : std::nullopt;
+}
+std::optional<uint32_t> nonClaimingTrailingDelimiterSearch(
+    const std::vector<SSMetaData>& ringBuffer,
+    const size_t snRBIdx,
+    const size_t abaItNumber,
+    const SequenceShredder::SequenceNumberType currentSequenceNumber)
+{
+    size_t trailingDistance = 1;
+    while (hasNoTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer))
+    {
+        ++trailingDistance;
+    }
+    return hasTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer) ? std::optional{currentSequenceNumber + trailingDistance}
+                                                                            : std::nullopt;
+};
+std::pair<std::optional<StagedBuffer>, SequenceShredder::SequenceNumberType> leadingDelimiterSearch(
+    std::vector<SSMetaData>& ringBuffer,
+    const size_t snRBIdx,
+    const size_t abaItNumber,
+    const SequenceShredder::SequenceNumberType currentSequenceNumber)
+{
+    size_t leadingDistance = 1;
+    while (hasNoTD<true>(snRBIdx, abaItNumber, leadingDistance, ringBuffer))
+    {
+        ++leadingDistance;
+    }
+    if (hasTD<true>(snRBIdx, abaItNumber, leadingDistance, ringBuffer))
+    {
+        const auto spanningTupleStartSN = currentSequenceNumber - leadingDistance;
+        const auto spanningTupleStartIdx = spanningTupleStartSN % ringBuffer.size();
+        // Todo: adjust aba number while iterating
+        const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < leadingDistance);
+        return std::make_pair(ringBuffer[spanningTupleStartIdx].tryClaimSpanningTuple(adjustedAbaItNumber), spanningTupleStartSN);
+    }
+    return std::make_pair(std::nullopt, 0);
+};
+
+std::pair<std::optional<StagedBuffer>, SequenceShredder::SequenceNumberType> trailingDelimiterSearch(
+    std::vector<SSMetaData>& ringBuffer,
+    const size_t snRBIdx,
+    const size_t abaItNumber,
+    const SequenceShredder::SequenceNumberType currentSequenceNumber,
+    const size_t spanningTupleStartIdx,
+    const size_t abaItNumberSpanningTupleStart)
+{
+    size_t trailingDistance = 1;
+
+    while (hasNoTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer))
+    {
+        ++trailingDistance;
+    }
+    if (hasTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer))
+    {
+        const auto leadingSequenceNumber = currentSequenceNumber + trailingDistance;
+
+        /// Todo Problem:
+        /// - we adjust the ABAItNumber based on the end of the spanning tuple, but we want to claim the start of the spanning tuple
+        /// - the 'spanningTupleStartIdx'
+        return std::make_pair(
+            ringBuffer[spanningTupleStartIdx].tryClaimSpanningTuple(abaItNumberSpanningTupleStart), leadingSequenceNumber);
+    }
+    return std::make_pair(std::nullopt, 0);
+    // return hasTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer) ? std::optional{currentSequenceNumber + trailingDistance}
+    //                                                                         : std::nullopt;
+};
+
+// Todo: either also use 'requires' approach here, instead of if constexpr
+//      -> or combine (but combining is probably not a good idea <-- rather use helper functions to abstract away similar behavior
+template <bool HasTupleDelimiter>
+SequenceShredderResult SequenceShredder::processSequenceNumber(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
+{
+    const auto abaItNumber = getABAItNumber(sequenceNumber, ringBuffer.size());
+    const auto snRBIdx = sequenceNumber % ringBuffer.size();
+
+    // Todo: streamline both cases better
     if constexpr (HasTupleDelimiter)
     {
-        /// If two other threads already completed the leading and spanning tuple starting/ending in 'stagedBufferOfSequenceNumber', the
-        /// stagedBuffers vector might not contain stagedBufferOfSequenceNumber anymore, in that case, the SequenceShredder returns the
-        /// original 'stagedBufferOfSequenceNumber'
-        return checkSpanningTupleWithTupleDelimiter(
-            spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot, stagedBufferOfSequenceNumber);
-    }
-    else
-    {
-        const auto spanningTupleIsValid = spanningTuple.isStartValid and spanningTuple.isEndValid;
-        if (not spanningTupleIsValid)
+        if (not ringBuffer[snRBIdx].isInRange<true>(abaItNumber, indexedRawBuffer))
         {
-            return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = 0, .stagedBuffers = {}};
+            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
         }
-        return checkSpanningTupleWithoutTupleDelimiter(spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot);
+
+        const auto [firstBuffer, firstBufferSN] = leadingDelimiterSearch(ringBuffer, snRBIdx, abaItNumber, sequenceNumber);
+        const auto [secondBuffer, secondBufferSN]
+            = trailingDelimiterSearch(ringBuffer, snRBIdx, abaItNumber, sequenceNumber, snRBIdx, abaItNumber);
+        /// Neither a leading, nor a trailing spanning tuple found, return empty vector
+        if (not(firstBuffer.has_value()) and not(secondBuffer.has_value()))
+        {
+            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
+        }
+        if (firstBuffer.has_value() and not(secondBuffer.has_value()))
+        {
+            const auto sizeOfSpanningTuple = sequenceNumber - firstBufferSN + 1;
+            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+            spanningTupleBuffers[0] = firstBuffer.value();
+            const auto firstIndex = firstBufferSN % ringBuffer.size();
+            setCompletedFlags(firstIndex, snRBIdx, ringBuffer, spanningTupleBuffers, 1);
+            return SequenceShredderResult{
+                .isInRange = true, .indexOfInputBuffer = sizeOfSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
+        }
+        if (not(firstBuffer.has_value()) and secondBuffer.has_value())
+        {
+            const auto sizeOfSpanningTuple = secondBufferSN - sequenceNumber + 1;
+            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+            spanningTupleBuffers[0] = secondBuffer.value();
+            const auto lastIndex = secondBufferSN % ringBuffer.size();
+            setCompletedFlags(snRBIdx, lastIndex, ringBuffer, spanningTupleBuffers, 1);
+            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = std::move(spanningTupleBuffers)};
+        }
+        if (firstBuffer.has_value() and secondBuffer.has_value())
+        {
+            const auto sizeOfFirstSpanningTuple = sequenceNumber - firstBufferSN + 1;
+            const auto sizeOfBothSpanningTuples = secondBufferSN - firstBufferSN + 1;
+            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSpanningTuples);
+            spanningTupleBuffers[0] = firstBuffer.value();
+            const auto firstIndex = firstBufferSN % ringBuffer.size();
+            setCompletedFlags(firstIndex, snRBIdx, ringBuffer, spanningTupleBuffers, 1);
+            const auto lastIndex = secondBufferSN % ringBuffer.size();
+            setCompletedFlags(snRBIdx, lastIndex, ringBuffer, spanningTupleBuffers, sizeOfFirstSpanningTuple);
+            return SequenceShredderResult{
+                .isInRange = true, .indexOfInputBuffer = sizeOfFirstSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
+        }
     }
+
+    // No Tuple Delimiter
+    if (not ringBuffer[snRBIdx].isInRange<false>(abaItNumber, indexedRawBuffer))
+    {
+        return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
+    }
+    // TODO: must not try to claim during first search
+    // -> we want to claim the tuple delimiter buffer that we find during the leading search
+    // -> Two options:
+    //      1. leading search -> successful -> trailing search -> successful -> claim leading
+    //      2. trailing search -> successful -> try-claim leading search
+    const auto firstDelimiter = nonClaimingLeadingDelimiterSearch(ringBuffer, snRBIdx, abaItNumber, sequenceNumber);
+    if (not firstDelimiter.has_value())
+    {
+        return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
+    }
+
+    if (const auto lastDelimiter = nonClaimingTrailingDelimiterSearch(ringBuffer, snRBIdx, abaItNumber, sequenceNumber);
+        lastDelimiter.has_value())
+    {
+        const auto firstDelimiterIdx = firstDelimiter.value() % ringBuffer.size();
+        const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
+        if (const auto optStagedBuffer = ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter))
+        {
+            const auto sizeOfSpanningTuple = lastDelimiter.value() - firstDelimiter.value() + 1;
+            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+            spanningTupleBuffers[0] = optStagedBuffer.value();
+            /// Successfully claimed the first tuple, now set the rest
+            setCompletedFlags(firstDelimiterIdx, lastDelimiter.value() % ringBuffer.size(), ringBuffer, spanningTupleBuffers, 1);
+            const auto currentBufferIdx = sequenceNumber - firstDelimiter.value();
+            return SequenceShredderResult{
+                .isInRange = true, .indexOfInputBuffer = currentBufferIdx, .spanningBuffers = std::move(spanningTupleBuffers)};
+        }
+    }
+    return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
 }
 /// Instantiate processSequenceNumber for both 'true' and 'false' so that the linker knows which templates to generate.
-template SequenceShredder::SpanningTupleBuffers SequenceShredder::processSequenceNumber<true>(StagedBuffer, SequenceNumberType);
-template SequenceShredder::SpanningTupleBuffers SequenceShredder::processSequenceNumber<false>(StagedBuffer, SequenceNumberType);
+template SequenceShredderResult SequenceShredder::processSequenceNumber<true>(StagedBuffer, SequenceNumberType);
+template SequenceShredderResult SequenceShredder::processSequenceNumber<false>(StagedBuffer, SequenceNumberType);
 
-void SequenceShredder::incrementTail()
+
+std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder)
 {
-    bool hasCompletedTailBitmap = true;
-    bool tailWrappedAround = false;
-    auto tailBitmapIndex = this->tail & this->numberOfBitmapsModulo;
-    while (hasCompletedTailBitmap)
-    {
-        /// Can't read/write from/to tail or bitmaps, because of torn-reads/writes
-        this->tupleDelimiterBitmaps.at(tailBitmapIndex) = 0;
-        this->seenAndUsedBitmaps.at(tailBitmapIndex) = 0;
-        ++this->tail;
-        tailWrappedAround |= (tailBitmapIndex == 0);
-        tailBitmapIndex = this->tail & this->numberOfBitmapsModulo;
-        hasCompletedTailBitmap = (this->seenAndUsedBitmaps.at(tailBitmapIndex) == MAX_VALUE);
-    }
-
-    /// We use the number of bitmaps to map a sequence number to a bitmap (sequenceNumberBitmapIndex = sequenceNumber / SIZE_OF_BITMAP % numberOfBitmaps)
-    /// If numberOfBitmaps changes, the bitmap that the SequenceShredder maps a sequence number to may change:
-    /// Say the tail is currently 3 and the number of bitmaps is 4. The next bigger number of bitmaps is 8, which
-    /// correctly maps sequence numbers in bitmap 3 to [193,256], but '8' does not map sequence numbers [257,320] to the same bitmap that '4' does:
-    /// (257-1) / 64 % 4 = 0 and (259-1) / 64 % 4 = 0, but (258-1) / 64 % 8 = 4 (257 and 259 in bitmap 0 would never be connected with 258 in bitmap 4)
-    /// Thus, we need to make sure that the current and the next bigger number of bitmaps map all sequence numbers that fit in the current bitmaps
-    /// to exactly the same bitmaps.
-    /// We guarantee this by only increasing the number of bitmaps if:
-    /// 1. The current and the next bigger number of bitmaps map the tail to the same bitmap, which in extension means
-    /// that the increase also preserves the mapping of sequence numbers to the bitmaps between the tail and the last bitmap index.
-    /// 2. The tail just wrapped around, ensuring that all bitmaps in front of the tail are clean (all 0s, no conflict possible).
-    const auto isResizeRequestCountLimitReached = this->resizeRequestCount >= MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING;
-    if (isResizeRequestCountLimitReached and tailWrappedAround)
-    {
-        /// Double the current number of bitmaps
-        const auto nextNumberOfBitmaps = this->numberOfBitmaps << 1;
-        /// Check if the increase preserves the mapping to the tail bitmap
-        const auto nextSizePreservesPlacementsOfTail = ((this->tail) & (nextNumberOfBitmaps - 1)) == tailBitmapIndex;
-        /// Check that the increase would not go beyond the maximum number of bitmaps
-        const auto isResizeInAllowedRange = (nextNumberOfBitmaps <= MAX_NUMBER_OF_BITMAPS);
-        if (nextSizePreservesPlacementsOfTail and isResizeInAllowedRange)
-        {
-            NES_WARNING("Resizing number of bitmaps from {} to {}", this->numberOfBitmaps, (this->numberOfBitmaps << FIRST_BIT_MASK));
-            this->numberOfBitmaps = nextNumberOfBitmaps;
-            this->numberOfBitmapsModulo = numberOfBitmaps - 1;
-            this->tupleDelimiterBitmaps.resize(numberOfBitmaps);
-            this->seenAndUsedBitmaps.resize(numberOfBitmaps);
-            this->stagedBuffers.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
-            this->stagedBufferUses.resize(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
-            this->tupleDelimiterBitmaps.shrink_to_fit();
-            this->seenAndUsedBitmaps.shrink_to_fit();
-            this->stagedBuffers.shrink_to_fit();
-            this->resizeRequestCount = 0;
-        }
-    }
-}
-
-std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryGetSpanningTupleStart(
-    const SequenceNumberType sequenceNumberBitIndex,
-    const SequenceNumberType sequenceNumberBitmapOffset,
-    const SequenceNumberType& tupleDelimiterBitmap,
-    const SequenceNumberType& seenAndUsedBitmap)
-{
-    /// 0. Since we mark start indexes of spanning tuples in the seenAndUsedBitmap, it must never occur that a start index
-    ///    that already has '1's both in the seenAndUsedBitmap and the tupleDelimiteBitmap. Since, that would mean finding the spanning tuple again.
-    ///    We can count the number of consecutive '1's in the lower bits of the seenAndUsedBitmap.
-    ///    If the index of the first '0' (following the sequence of '1's) is a tuple delimiter, it marks a valid start of a spanning tuple.
-    /// 1. align seen and used so that the highest (left-most) bit is the bit to the right of the sequenceNumberBitIndex
-    ///                                                  bit index:      543210                        543210
-    ///    example (given: sequenceNumberBitIndex: 3, seenAndUsedBitmap: 000110, tupleDelimiterBitmap: 000001):
-    ///    00-0-110 -- shift seenAndUsedBitmapby 3(=6-3) -->  110000
-    const auto alignedSeenAndUsed = seenAndUsedBitmap << (SIZE_OF_BITMAP_IN_BITS - sequenceNumberBitIndex);
-    /// 2. count the leading number of ones (example: countl_one(110000) = 2), which represents the next reachable tuple delimiter
-    const auto offsetToClosestReachableTupleDelimiter = std::countl_one(alignedSeenAndUsed);
-    /// 3. calculate the index in the tuple delimiter bitmap (example: 3 - (2+1) = 0)
-    const auto indexOfClosestReachableTupleDelimiter = sequenceNumberBitIndex - (offsetToClosestReachableTupleDelimiter + 1);
-    /// 4. add the offset of the bitmap the index and add 1 to get the correct sequence number of the tuple delimiter
-    const auto sequenceNumberOfTupleClosestReachableTupleDelimiter = sequenceNumberBitmapOffset + indexOfClosestReachableTupleDelimiter;
-    /// 5. check if the tuple delimiter bitmap contains a '1' at the index (running example: bool(1 << 0(=0000001) & 0000001) = true)
-    const bool isTupleDelimiter = static_cast<bool>((FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & tupleDelimiterBitmap);
-    /// 6. return the index of of the closest reachable tuple delimiter and a flag indicating whether it is valid
-    return std::make_pair(sequenceNumberOfTupleClosestReachableTupleDelimiter, isTupleDelimiter);
-}
-
-std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryGetSpanningTupleEnd(
-    const SequenceNumberType sequenceNumberBitIndex,
-    const SequenceNumberType sequenceNumberBitmapOffset,
-    const SequenceNumberType& tupleDelimiterBitmap,
-    const SequenceNumberType& seenAndUsedBitmap)
-{
-    /// 0. We need to look for the first index that is 'reachable' via seen sequence numbers that has a tuple delimiter. That index might either
-    ///    have a '1' in both in the seenAndUsedBitmap and the tupleDelimiterBitmap or only the tupleDelimiterBitmap. This is ok, since we only
-    ///    mark the indexes with a tuple delimiter as 'seenAndUsed' if they represent the start of a spanning tuple, not the end.
-    ///    Thus, we first need to prepare a bitmap, that only contains '1's at indexes, where the seenAndUsedBitmap is '1' and the tupleDelimiterBitmap
-    ///    is '0' (all other combinations (0-0, 0-1, 1-1) are '0's (negated implication: not(x -> y) == not(not(x) or y) == x and not(y))
-    const auto onlySeenIsOne = seenAndUsedBitmap & ~(tupleDelimiterBitmap);
-    /// 1. align seen and used so that the lowest (right-most) bit is the bit to the left of the sequenceNumberBitIndex
-    ///                                                  bit index:      543210                        543210
-    ///    example (given: sequenceNumberBitIndex: 2, seenAndUsedBitmap: 011000, tupleDelimiterBitmap: 100000):
-    ///    011-0-00 -- shift right by 3(=2+1) -->  0000011
-    const auto alignedSeenAndUsed = onlySeenIsOne >> (sequenceNumberBitIndex + 1);
-    /// 2. count the trailing number of ones + 1 (example: countl_one(000011) + 1 = 2 + 1 = 3), representing the offset of the closest reachable tuple delimiter
-    const auto offsetToClosestReachableTupleDelimiter = std::countr_one(alignedSeenAndUsed) + 1;
-    /// 3. calculate the index in the tuple delimiter bitmap (example: 2 + 3 = 5)
-    const auto indexOfClosestReachableTupleDelimiter = sequenceNumberBitIndex + offsetToClosestReachableTupleDelimiter;
-    /// 4. add the offset of the bitmap the index and add 1 to get the correct sequence number of the tuple delimiter
-    const auto sequenceNumberOfTupleClosestReachableTupleDelimiter = sequenceNumberBitmapOffset + indexOfClosestReachableTupleDelimiter;
-    /// 5. check if the tuple delimiter bitmap contains a '1' at the index (example: bool(1 << 5(=100000) & 100000) = true)
-    const bool isTupleDelimiter = (FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & tupleDelimiterBitmap;
-    /// 6. return the index of of the closest reachable tuple delimiter and a flag indicating whether it is valid
-    return std::make_pair(sequenceNumberOfTupleClosestReachableTupleDelimiter, isTupleDelimiter);
-}
-
-std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFindLowerWrappingSpanningTuple(
-    const size_t sequenceNumberBitmapOffset, const size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot)
-{
-    size_t bitmapIndex = currentBitmapIndex;
-    size_t bitmapIndexOffset = 0;
-    bool allBuffersSeenButNoDelimiter = true;
-    /// Skip bitmaps that consist of only seen buffers without a tuple delimiter
-    /// The while loop can never iterate past the current tail, because the tail must contain at least one tuple delimiter
-    /// Additionally, if there is still a path to a tuple delimiter, there is still an open spanning tuple start that only this thread can
-    /// detect. Thus, no other thread can move the tail past the bitmap that contains that tuple delimiter
-    while (allBuffersSeenButNoDelimiter)
-    {
-        ++bitmapIndexOffset;
-        bitmapIndex = (currentBitmapIndex - bitmapIndexOffset) & bitmapSnapshot.numberOfBitmapsModulo;
-        allBuffersSeenButNoDelimiter = (bitmapSnapshot.seenAndUsedVectorSnapshot.at(bitmapIndex) == MAX_VALUE)
-            and (bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex) == 0);
-    }
-
-    /// We determine the number of zeros to the first delimiter that must be covered by 1s in the seenAndUsedBitmap for a valid sequence
-    const auto potentialStart = std::countl_one(bitmapSnapshot.seenAndUsedVectorSnapshot.at(bitmapIndex)) + 1;
-    const auto indexOfClosestReachableTupleDelimiter = SIZE_OF_BITMAP_IN_BITS - potentialStart;
-    const auto sequenceNumberOfClosestReachableTupleDelimiter
-        = (sequenceNumberBitmapOffset - (bitmapIndexOffset << BITMAP_SIZE_BIT_SHIFT) + indexOfClosestReachableTupleDelimiter);
-    const bool isTupleDelimiter
-        = ((FIRST_BIT_MASK << indexOfClosestReachableTupleDelimiter) & bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex)) != 0U;
-    return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, isTupleDelimiter);
-}
-std::pair<SequenceShredder::SequenceNumberType, bool> SequenceShredder::tryToFindHigherWrappingSpanningTuple(
-    const size_t sequenceNumberBitmapOffset, const size_t currentBitmapIndex, const BitmapVectorSnapshot& bitmapSnapshot)
-{
-    /// Skip bitmaps that consist of only seen buffers without a tuple delimiter
-    /// The while loop can iterate into the tail, if prior threads already processed all buffers in the last bitmap and none of
-    /// these buffers contains a tuple delimiter.
-    /// Also, the tail might have moved since the thread took the snapshot, allowing for new bitmaps that the spanning tuple might wrap to.
-    /// However it is the responsibility of the other threads that write to these new bitmaps to detect the spanning tuple, since only they can
-    /// see the entire spanning tuple and they are guaranteed to see the bit corresponding to the sequence number processed by this thread.
-    size_t bitmapIndex = currentBitmapIndex;
-    size_t bitmapIndexOffset = 0;
-    bool allBuffersSeenButNoDelimiter = true;
-    while (allBuffersSeenButNoDelimiter)
-    {
-        ++bitmapIndexOffset;
-        bitmapIndex = (currentBitmapIndex + bitmapIndexOffset) & bitmapSnapshot.numberOfBitmapsModulo;
-        allBuffersSeenButNoDelimiter = (bitmapSnapshot.seenAndUsedVectorSnapshot.at(bitmapIndex) == MAX_VALUE)
-            and (bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex) == 0);
-    }
-    /// Just like 'tryGetSpanningTupleEnd()', bit a different sequence number calculation and an extra tail check
-    const auto onlySeenIsOne
-        = bitmapSnapshot.seenAndUsedVectorSnapshot.at(bitmapIndex) & ~(bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex));
-
-    const auto indexOfClosestReachableTupleDelimiter = static_cast<uint64_t>(std::countr_one(onlySeenIsOne));
-    const auto sequenceNumberOfClosestReachableTupleDelimiter
-        = (sequenceNumberBitmapOffset + (bitmapIndexOffset << BITMAP_SIZE_BIT_SHIFT) + indexOfClosestReachableTupleDelimiter);
-    const bool isTupleDelimiter = FIRST_BIT_MASK
-        << (indexOfClosestReachableTupleDelimiter)&bitmapSnapshot.tupleDelimiterVectorSnapshot.at(bitmapIndex);
-    const auto tailBitmapIndex = bitmapSnapshot.tail & bitmapSnapshot.numberOfBitmapsModulo;
-    const auto isNotTailBitmap = bitmapIndex != tailBitmapIndex;
-    return std::make_pair(sequenceNumberOfClosestReachableTupleDelimiter, (isTupleDelimiter and isNotTailBitmap));
-}
-
-SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithoutTupleDelimiter(
-    const SpanningTuple& spanningTuple, const SequenceNumberType sequenceNumber, const SequenceNumberType numberOfBitmapsModuloSnapshot)
-{
-    /// Determine bitmap count, bitmap index and position in bitmap of start of spanning tuple
-    const auto bitmapOfSpanningTupleStart = (spanningTuple.spanStart) >> BITMAP_SIZE_BIT_SHIFT;
-    const auto bitmapIndexOfSpanningTupleStart = bitmapOfSpanningTupleStart & numberOfBitmapsModuloSnapshot;
-    const auto positionOfSpanningTupleStart = ((spanningTuple.spanStart) & BITMAP_SIZE_MODULO);
-    /// Check that both the start and the end of the spanning tuple are valid
-    /// If both are valid, move a '1' to the bit position of the start of the spanning tuple
-    const auto validatedSpanningTupleStartBit = FIRST_BIT_MASK << positionOfSpanningTupleStart;
-
-    /// Collect all buffers that contribute to the spanning tuple.
-    std::vector<StagedBuffer> spanningTupleBuffers{};
-    const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
-    const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot << BITMAP_SIZE_BIT_SHIFT) - 1;
-
-    /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
-    {
-        const std::scoped_lock lock(this->readWriteMutex);
-        for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
-        {
-            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            const auto newUses = --this->stagedBufferUses.at(adjustedSpanningTupleIndex);
-            INVARIANT(newUses >= 0, "Uses can never be negative");
-            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers.at(adjustedSpanningTupleIndex))
-                                               : this->stagedBuffers.at(adjustedSpanningTupleIndex);
-            spanningTupleBuffers.emplace_back(std::move(returnBuffer));
-        }
-        /// Mark the spanning tuple as completed, by setting the start of the spanning tuple to 1 (if it is valid)
-        this->seenAndUsedBitmaps.at(bitmapIndexOfSpanningTupleStart) |= validatedSpanningTupleStartBit;
-        /// Check if the spanning tuple completed a bitmap (set the last bit in corresponding the seenAndUsed bitmap)
-        const auto completedBitmap = (this->seenAndUsedBitmaps.at(bitmapIndexOfSpanningTupleStart) == MAX_VALUE);
-
-        /// Check if the bitmap is the current tail-bitmap, if it is, the current thread needs to increment the tail
-        if (completedBitmap and (bitmapOfSpanningTupleStart == this->tail))
-        {
-            incrementTail();
-        }
-        isFirstTuple = false;
-    }
-
-    const size_t sequenceNumberIndex = sequenceNumber - spanningTuple.spanStart;
-    return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumberIndex, .stagedBuffers = std::move(spanningTupleBuffers)};
-}
-
-SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithTupleDelimiter(
-    SpanningTuple spanningTuple,
-    const SequenceNumberType sequenceNumber,
-    const SequenceNumberType numberOfBitmapsModuloSnapshot,
-    StagedBuffer stagedBufferOfSequenceNumber)
-{
-    /// Determine bitmap count, bitmap index and position in bitmap of start of spanning tuple
-    const auto bitmapOfSpanningTupleStart = (spanningTuple.spanStart) >> BITMAP_SIZE_BIT_SHIFT;
-    const auto bitmapIndexOfSpanningTupleStart = bitmapOfSpanningTupleStart & numberOfBitmapsModuloSnapshot;
-    const auto positionOfSpanningTupleStart = ((spanningTuple.spanStart) & BITMAP_SIZE_MODULO);
-    /// Determine bitmap count, bitmap index and position in bitmap of ssequence number
-    const auto bitmapOfSequenceNumber = sequenceNumber >> BITMAP_SIZE_BIT_SHIFT;
-    const auto bitmapIndexOfSpanningSequenceNumber = bitmapOfSequenceNumber & numberOfBitmapsModuloSnapshot;
-    const auto positionOfSequenceNumber = (sequenceNumber & BITMAP_SIZE_MODULO);
-    /// If they are valid, move the corresponding '1's to the bit positions of the starts of the respective spanning tuples
-    const auto firstValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTuple.isStartValid))
-        << positionOfSpanningTupleStart;
-    const auto secondValidatedSpanningTupleStartBit = (static_cast<SequenceNumberType>(spanningTuple.isEndValid))
-        << positionOfSequenceNumber;
-
-    std::vector<StagedBuffer> returnBuffers{};
-    const auto startIndex = (spanningTuple.isStartValid) ? spanningTuple.spanStart : sequenceNumber;
-    const auto endIndex = (spanningTuple.isEndValid) ? spanningTuple.spanEnd : sequenceNumber;
-    const auto usingBufferForLeadingSpanningTuple = static_cast<int8_t>(startIndex < sequenceNumber);
-    const auto usingBufferForTrailingSpanningTuple = static_cast<int8_t>(sequenceNumber < endIndex);
-    const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
-    const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot * SIZE_OF_BITMAP_IN_BITS) - 1;
-
-    /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
-    {
-        const std::scoped_lock lock(this->readWriteMutex);
-        /// If the sequenceNumber is behind the current tail, two other threads completed the leading/trailing spanning tuples starting/ending
-        /// in 'stagedBufferOfSequenceNumber'. Thus, the 'stagedBufferOfSequenceNumber' has no more uses and we can safely return it.
-        if (const auto minSequenceNumber = this->tail << BITMAP_SIZE_BIT_SHIFT; sequenceNumber < minSequenceNumber)
-        {
-            const auto adjustedSpanningTupleIndex = sequenceNumber & stagedBufferSizeModulo;
-            /// Check if the corresponding staged buffer, if not null, still has the same sequence number
-            const auto sequenceShredderStillOwnsBuffer = stagedBuffers.at(adjustedSpanningTupleIndex).isValidRawBuffer()
-                and (stagedBuffers.at(adjustedSpanningTupleIndex).getRawTupleBuffer().getSequenceNumber().getRawValue() == sequenceNumber);
-            /// If the sequence shredder still owns the 'stagedBufferOfSequenceNumber', return its ownerhip
-            if (sequenceShredderStillOwnsBuffer)
-            {
-                returnBuffers.emplace_back(std::move(this->stagedBuffers.at(adjustedSpanningTupleIndex)));
-                --this->stagedBufferUses.at(adjustedSpanningTupleIndex);
-            }
-            else
-            {
-                returnBuffers.emplace_back(std::move(stagedBufferOfSequenceNumber));
-            }
-            INVARIANT(this->stagedBufferUses.at(adjustedSpanningTupleIndex) >= 0, "Uses can never be negative");
-            return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = 0, .stagedBuffers = std::move(returnBuffers)};
-        }
-        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
-        {
-            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-            /// A buffer with a tuple delimiter has up to three uses:
-            /// 1. Formatting the tuples in the buffer, 2. Formatting the leading spanning tuple, 3. Formatting the trailing spanning tuple
-            const int8_t uses = (spanningTupleIndex != sequenceNumber)
-                ? static_cast<int8_t>(1)
-                : static_cast<int8_t>(1) + usingBufferForLeadingSpanningTuple + usingBufferForTrailingSpanningTuple;
-            this->stagedBufferUses.at(adjustedSpanningTupleIndex) -= uses; ///NOLINT(cppcoreguidelines-narrowing-conversions)
-            const auto newUses = this->stagedBufferUses.at(adjustedSpanningTupleIndex);
-            INVARIANT(newUses >= 0, "Uses can never be negative");
-            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers.at(adjustedSpanningTupleIndex))
-                                               : this->stagedBuffers.at(adjustedSpanningTupleIndex);
-            returnBuffers.emplace_back(std::move(returnBuffer));
-        }
-        /// Mark the spanning tuple as completed, by setting the start of the spanning tuple to 1 (if it is valid)
-        this->seenAndUsedBitmaps.at(bitmapIndexOfSpanningTupleStart) |= firstValidatedSpanningTupleStartBit;
-        this->seenAndUsedBitmaps.at(bitmapIndexOfSpanningSequenceNumber) |= secondValidatedSpanningTupleStartBit;
-        /// Check if either of the two spanning tuples completed a bitmap (set the last bit in corresponding the seenAndUsed bitmap)
-        const auto firstSpanningTupleCompletedBitmap
-            = ((seenAndUsedBitmaps.at(bitmapIndexOfSpanningTupleStart) == MAX_VALUE) and spanningTuple.isStartValid);
-        const auto secondSpanningTupleCompletedBitmap
-            = ((seenAndUsedBitmaps.at(bitmapIndexOfSpanningSequenceNumber) == MAX_VALUE) and spanningTuple.isEndValid);
-        /// Check if either of the two bitmaps is the current tail-bitmap
-        const bool firstSpanningTupleCompletedTailBitmap
-            = firstSpanningTupleCompletedBitmap and ((bitmapOfSpanningTupleStart) == this->tail);
-        const bool secondSpanningTupleCompletedTailBitmap = secondSpanningTupleCompletedBitmap and ((bitmapOfSequenceNumber) == this->tail);
-
-        /// If one of the two spanning tuples completed a bitmap that is the current tail bitmap, the thread needs to increment the tail
-        if (firstSpanningTupleCompletedTailBitmap or secondSpanningTupleCompletedTailBitmap)
-        {
-            incrementTail();
-        }
-        isFirstTuple = false;
-    }
-
-    const size_t sequenceNumberIndex = sequenceNumber - startIndex;
-    return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumberIndex, .stagedBuffers = std::move(returnBuffers)};
-}
-
-void bitmapToString(const SequenceShredder::SequenceNumberType bitmap, std::ostream& os)
-{
-    constexpr SequenceShredder::SequenceNumberType numberOfBitsInByte = 8;
-    for (SequenceShredder::SequenceNumberType i = 0; i < (sizeof(SequenceShredder::SequenceNumberType) * numberOfBitsInByte); ++i)
-    {
-        os << ((bitmap >> i) & 1);
-    }
-}
-
-namespace
-{
-std::string bitmapsToString(const std::vector<SequenceShredder::SequenceNumberType>& bitmaps)
-{
-    if (bitmaps.empty())
-    {
-        return "";
-    }
-
-    std::stringstream ss;
-    bitmapToString(bitmaps.front(), ss);
-    for (const auto& bitmap : bitmaps | std::views::drop(1))
-    {
-        ss << "-";
-        bitmapToString(bitmap, ss);
-    }
-    return ss.str();
-}
-}
-
-std::ostream& operator<<(std::ostream& os, SequenceShredder& sequenceShredder)
-{
-    const std::scoped_lock lock(sequenceShredder.readWriteMutex);
-
-    if (VERBOSE_DEBUG_BITMAP_PRINTING)
-    {
-        os << fmt::format(
-            "SequenceShredder(number of bitmaps: {}, resize request count: {}, tail: {}, tupleDelimiterBitmaps: {}, seenAndUsedBitmaps: "
-            "{})",
-            sequenceShredder.numberOfBitmaps,
-            sequenceShredder.resizeRequestCount,
-            sequenceShredder.tail,
-            bitmapsToString(sequenceShredder.tupleDelimiterBitmaps),
-            bitmapsToString(sequenceShredder.seenAndUsedBitmaps));
-    }
-    else
-    {
-        os << fmt::format(
-            "SequenceShredder(number of bitmaps: {}, resize request count: {}, tail: {})",
-            sequenceShredder.numberOfBitmaps,
-            sequenceShredder.resizeRequestCount,
-            sequenceShredder.tail);
-    }
-
+    // Todo: implement logging
+    (void)sequenceShredder;
     return os;
 }
 }
