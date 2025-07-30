@@ -79,7 +79,7 @@ void GeneratorSource::close()
     NES_TRACE("Generated {} buffers in {}. Closing GeneratorSource.", generatedBuffers, totalElapsedTime);
 }
 
-size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     NES_DEBUG("Filling buffer in GeneratorSource.");
     try
@@ -89,7 +89,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         if (maxRuntime >= 0 && elapsedTime >= maxRuntime)
         {
             NES_INFO("Reached max runtime! Stopping Source");
-            return 0;
+            return FillTupleBufferResult();
         }
 
         /// Asking the generatorRate how many tuples we should generate for this interval [now, now + flushInterval].
@@ -113,8 +113,13 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         const size_t rawTBSize = tupleBuffer.getBufferSize();
         uint64_t curTupleCount = 0;
         size_t writtenBytes = 0;
-        while (curTupleCount < numberOfTuplesToGenerate and not this->generator.shouldStop() and not stopToken.stop_requested())
+        while (curTupleCount < numberOfTuplesToGenerate)
         {
+            if (this->generator.shouldStop() || stopToken.stop_requested())
+            {
+                break;
+            }
+
             auto insertedBytes = tuplesStream.tellp();
             if (not orphanTuples.empty())
             {
@@ -133,6 +138,12 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
             writtenBytes += insertedBytes;
             ++curTupleCount;
         }
+
+        if (curTupleCount == 0 || stopToken.stop_requested())
+        {
+            return FillTupleBufferResult();
+        }
+
         tuplesStream.read(tupleBuffer.getMemArea<char>(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
@@ -155,7 +166,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
             std::this_thread::sleep_for(sleepDuration);
         }
         this->startOfInterval = std::chrono::system_clock::now();
-        return writtenBytes;
+        return FillTupleBufferResult(writtenBytes);
     }
     catch (const std::exception& e)
     {
