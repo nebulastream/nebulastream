@@ -33,6 +33,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -140,23 +141,22 @@ SourceImplementationTermination dataSourceThreadRoutine(
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto numReadBytes = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
-        if (numReadBytes != 0)
+        if (const auto* numberOfTuples = std::get_if<Source::FillTupleBufferResult::Tuples>(&fillTupleResult.result))
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer->setNumberOfTuples(numReadBytes);
+            emptyBuffer->setNumberOfTuples(numberOfTuples->numTuples);
             emit(*emptyBuffer, true);
         }
-
-        if (stopToken.stop_requested())
+        else
         {
-            return {SourceImplementationTermination::StopRequested};
-        }
+            if (stopToken.stop_requested())
+            {
+                return {SourceImplementationTermination::StopRequested};
+            }
 
-        if (numReadBytes == 0)
-        {
             return {SourceImplementationTermination::EndOfStream};
         }
     }

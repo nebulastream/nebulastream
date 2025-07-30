@@ -196,7 +196,7 @@ void TCPSource::open(std::shared_ptr<Memory::AbstractBufferProvider>)
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
@@ -205,7 +205,11 @@ size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const s
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
-        return numReceivedBytes;
+        if (numReceivedBytes == 0)
+        {
+            return FillTupleBufferResult();
+        }
+        return FillTupleBufferResult(numReceivedBytes);
     }
     catch (const std::exception& e)
     {
