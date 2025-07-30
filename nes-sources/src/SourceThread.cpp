@@ -26,6 +26,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -48,7 +49,7 @@ SourceThread::SourceThread(
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
-namespace detail
+namespace
 {
 void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
 {
@@ -119,23 +120,22 @@ dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, Abstra
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
         auto emptyBuffer = bufferProvider.getBufferBlocking();
-        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillTupleBuffer(emptyBuffer, stopToken);
 
-        if (numReadBytes != 0)
+        if (!fillTupleResult.isEoS())
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer.setNumberOfTuples(numReadBytes);
+            emptyBuffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
             emit(emptyBuffer, true);
         }
-
-        if (stopToken.stop_requested())
+        else
         {
-            return {SourceImplementationTermination::StopRequested};
-        }
+            if (stopToken.stop_requested())
+            {
+                return {SourceImplementationTermination::StopRequested};
+            }
 
-        if (numReadBytes == 0)
-        {
             return {SourceImplementationTermination::EndOfStream};
         }
     }
@@ -193,12 +193,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     std::jthread sourceThread(
-        detail::dataSourceThread,
-        std::move(terminationPromise),
-        sourceImplementation.get(),
-        std::move(emitFunction),
-        originId,
-        localBufferManager);
+        dataSourceThread, std::move(terminationPromise), sourceImplementation.get(), std::move(emitFunction), originId, localBufferManager);
     thread = std::move(sourceThread);
     return true;
 }
@@ -227,7 +222,7 @@ void SourceThread::stop()
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
     PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
-    NES_DEBUG("SourceThread  {} : attempting to stop source", originId);
+    NES_DEBUG("SourceThread {} : attempting to stop source", originId);
     thread.request_stop();
 
     try
