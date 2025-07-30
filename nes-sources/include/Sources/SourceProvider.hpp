@@ -16,11 +16,11 @@
 #include <memory>
 #include <string>
 
-#include <BackpressureChannel.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <BackpressureChannel.hpp>
 
 namespace NES::Sources
 {
