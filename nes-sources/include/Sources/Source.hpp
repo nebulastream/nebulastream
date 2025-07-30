@@ -15,10 +15,11 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
+#include <ostream>
 #include <stop_token>
-#include <string>
+#include <variant>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
@@ -30,12 +31,38 @@ namespace NES
 class Source
 {
 public:
+    class FillTupleBufferResult
+    {
+        explicit FillTupleBufferResult(size_t sizeInBytes) : result(Data{sizeInBytes}) { };
+        FillTupleBufferResult() = default;
+
+        struct EoS
+        {
+        };
+
+        struct Data
+        {
+            size_t sizeInBytes;
+        };
+
+        std::variant<EoS, Data> result = EoS{};
+
+    public:
+        static FillTupleBufferResult eos() { return {}; }
+
+        static FillTupleBufferResult withBytes(size_t sizeInBytes) { return FillTupleBufferResult{sizeInBytes}; }
+
+        [[nodiscard]] bool isEoS() const { return std::holds_alternative<EoS>(result); }
+
+        [[nodiscard]] size_t getNumberOfBytes() const { return std::get<Data>(result).sizeInBytes; }
+    };
+
     Source() = default;
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+    virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open() = 0;
