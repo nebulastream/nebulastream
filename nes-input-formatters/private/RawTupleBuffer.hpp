@@ -25,6 +25,8 @@
 
 namespace NES
 {
+using SequenceNumberType = SequenceNumber::Underlying;
+
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
 /// 2. It exposes only those functions of the TupleBuffer that are required for formatting
@@ -77,4 +79,64 @@ public:
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 };
+
+/// A staged buffer represents a raw buffer together with the locations of the first and last tuple delimiter.
+/// Thus, the SequenceShredder can determine the spanning tuple(s) starting/ending in or containing the StagedBuffer.
+struct StagedBuffer
+{
+private:
+    friend class SequenceShredder;
+
+public:
+    StagedBuffer() = default;
+    StagedBuffer(RawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawTupleBuffer))
+        , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
+        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
+    StagedBuffer(
+        RawTupleBuffer rawTupleBuffer,
+        const size_t sizeOfBufferInBytes,
+        const uint32_t offsetOfFirstTupleDelimiter,
+        const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawTupleBuffer))
+        , sizeOfBufferInBytes(sizeOfBufferInBytes)
+        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
+
+    [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
+
+    /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of a spanning tuple that _ends_ in the staged buffer.
+    [[nodiscard]] std::string_view getLeadingBytes() const { return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter); }
+
+    /// Returns the _last_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
+    [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
+    {
+        const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
+        const auto startOfTrailingSpanningTuple = offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
+        return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
+    }
+
+    [[nodiscard]] uint32_t getOffsetOfFirstTupleDelimiter() const { return offsetOfFirstTupleDelimiter; }
+
+    [[nodiscard]] uint32_t getOffsetOfLastTupleDelimiter() const { return offsetOfLastTupleDelimiter; }
+
+    [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
+
+    [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
+
+    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }
+
+    void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
+
+
+protected:
+    RawTupleBuffer rawBuffer;
+    size_t sizeOfBufferInBytes{};
+    uint32_t offsetOfFirstTupleDelimiter{};
+    uint32_t offsetOfLastTupleDelimiter{};
+};
+
 }
