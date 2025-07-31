@@ -52,11 +52,11 @@ public:
     GeneratorSource(GeneratorSource&&) = delete;
     GeneratorSource& operator=(GeneratorSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-    void open() override;
+    void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);

@@ -36,6 +36,7 @@
 #include <DataServer/TCPDataServer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceReturnType.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
@@ -52,19 +53,15 @@ namespace NES::Sources
 {
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
-    : socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
+    : errBuffer{}
+    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
     , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
 {
-    /// init physical types
-    const std::vector<std::string> schemaKeys;
-    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
+    NES_TRACE("Init TCPSource.");
 }
 
 std::ostream& TCPSource::toString(std::ostream& str) const
@@ -78,9 +75,6 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
     str << "\n  socketDomain: " << socketDomain;
-    str << "\n  tupleDelimiter: " << tupleDelimiter;
-    str << "\n  socketBufferSize: " << socketBufferSize;
-    str << "\n  bytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
     str << "\n  flushIntervalInMs" << flushIntervalInMs;
     str << ")\n";
     return str;
@@ -127,8 +121,8 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
-            strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+            throw CannotOpenSource(
+                "Could not connect to: {}:{}. {}", socketHost, socketPort, strerror_r(errno, errBuffer.data(), errBuffer.size()));
         }
 
         /// Set the timeout for the connect attempt
@@ -162,7 +156,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     return true;
 }
 
-void TCPSource::open()
+void TCPSource::open(std::shared_ptr<Memory::AbstractBufferProvider>)
 {
     NES_TRACE("TCPSource::open: Trying to create socket and connect.");
 
@@ -202,7 +196,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
@@ -211,16 +205,20 @@ size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const s
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
-        return numReceivedBytes;
+        if (numReceivedBytes == 0)
+        {
+            return FillTupleBufferResult();
+        }
+        return FillTupleBufferResult(numReceivedBytes);
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
-        throw e;
+        NES_ERROR("Failed to fill the TupleBuffer. Error: {}.", e.what());
+        throw;
     }
 }
 
-bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBuffer(Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
@@ -256,7 +254,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
                  >= flushIntervalInMs))
         {
-            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -272,11 +270,11 @@ DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::st
 
 void TCPSource::close()
 {
-    NES_DEBUG("TCPSource::close: trying to close connection.");
+    NES_DEBUG("Trying to close connection.");
     if (connection >= 0)
     {
         ::close(sockfd);
-        NES_TRACE("TCPSource::close: connection closed.");
+        NES_TRACE("Connection closed.");
     }
 }
 

@@ -1,0 +1,46 @@
+query: |
+  SELECT * FROM source WHERE value % UINT64(1000) == UINT64(0) INTO sink
+
+sinks:
+  - name: sink
+    type: Print
+    schema:
+      - name: source$timestamp
+        dataType: UINT64
+      - name: source$value
+        dataType: UINT64
+    host: 127.0.0.1:9091
+    config:
+      inputFormat: CSV
+
+logicalSources:
+  - name: source
+    schema:
+      - dataType: UINT64
+        name: timestamp
+      - dataType: UINT64
+        name: value
+
+physicalSources:
+  - logicalSource: source
+    type: Generator
+    host: 127.0.0.1:9090
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      stopGeneratorWhenSequenceFinishes: ALL
+      maxRuntimeMS: 3000
+      seed: 1
+      generatorSchema: |
+        SEQUENCE UINT64 0 1000000 1
+        SEQUENCE UINT64 0 1000000 1
+
+workerNodes:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 0
+    downstreamNodes:
+      - 127.0.0.1:9091
+  - host: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 2
