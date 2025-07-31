@@ -432,7 +432,8 @@ void WordListField::validate(std::string_view rawSchemaLine)
     const auto path = std::filesystem::path(SYSTEST_DATA_DIR) / std::string(parameters[1]);
     if (not std::filesystem::exists(path))
     {
-        throw InvalidConfigParameter("Invalid WORDLIST schema! Path {} does not exist! Schema line: {}", path, rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid WORDLIST schema! Path {} does not exist! Schema<Field, Unordered> line: {}", path, rawSchemaLine);
     }
 
     std::ifstream wordListFile(std::string(path), std::ios::in);
@@ -480,17 +481,18 @@ RandomStrField::RandomStrField(std::string_view rawSchemaLine)
         parameters[2]);
     INVARIANT(
         parsedMinLength >= 0,
-        "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
+        "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema<Field, Unordered> line: {}",
         parsedMinLength,
         rawSchemaLine);
     INVARIANT(
         parsedMaxLength >= 0,
-        "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
+        "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema<Field, Unordered> line: {}",
         parsedMaxLength,
         rawSchemaLine);
     INVARIANT(
         parsedMinLength <= parsedMaxLength,
-        "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+        "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema<Field, "
+        "Unordered> line: "
         "{}",
         parsedMinLength,
         parsedMaxLength,
@@ -515,24 +517,26 @@ void RandomStrField::validate(std::string_view rawSchemaLine)
 
     if (not parsedMinLength)
     {
-        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema line: {}", rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema<Field, Unordered> line: {}", rawSchemaLine);
     }
     if (not parsedMaxLength)
     {
-        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema line: {}", rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema<Field, Unordered> line: {}", rawSchemaLine);
     }
 
     if (parsedMinLength <= 0)
     {
         throw InvalidConfigParameter(
-            "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
+            "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema<Field, Unordered> line: {}",
             parsedMinLength,
             rawSchemaLine);
     }
     if (parsedMaxLength <= 0)
     {
         throw InvalidConfigParameter(
-            "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
+            "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema<Field, Unordered> line: {}",
             parsedMaxLength,
             rawSchemaLine);
     }
@@ -540,7 +544,8 @@ void RandomStrField::validate(std::string_view rawSchemaLine)
     if (parsedMinLength > parsedMaxLength)
     {
         throw InvalidConfigParameter(
-            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema<Field, "
+            "Unordered> line: "
             "{}",
             parsedMinLength,
             parsedMaxLength,

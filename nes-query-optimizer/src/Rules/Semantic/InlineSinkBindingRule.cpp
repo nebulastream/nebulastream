@@ -19,6 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -63,14 +64,14 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
     {
         if (auto sink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); sink.has_value())
         {
-            const auto schema = sink.value()->getSchema();
+            const auto schema = sink.value()->getTargetSchema();
             const auto type = sink.value()->getSinkType();
             auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
             /// "host" is not part of the sink config — it determines placement, not sink behavior.
             /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find("host");
+            auto hostIt = config.find(Identifier::parse("host"));
             if (hostIt == config.end())
             {
                 throw InvalidConfigParameter("'host'");

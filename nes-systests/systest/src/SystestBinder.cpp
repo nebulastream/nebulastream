@@ -39,7 +39,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -86,38 +89,38 @@ public:
     }
 
     bool registerSink(
-        const std::string& sinkType,
-        const std::string_view sinkNameInFile,
-        const Schema& schema,
-        const std::unordered_map<std::string, std::string>& /*config*/)
+        const Identifier& sinkType,
+        const Identifier& sinkNameInFile,
+        const Schema<UnqualifiedUnboundField, Ordered>& schema,
+        const std::unordered_map<Identifier, std::string>& /*config*/)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
-                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
+                Identifier assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
-                std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
-                std::unordered_map<std::string, std::string> formatConfig{};
-                if (sinkType == "File")
+                std::unordered_map<Identifier, std::string> config{{Identifier::parse("file_path"), std::move(filePath)}};
+                std::unordered_map<Identifier, std::string> formatConfig{};
+                if (sinkType == Identifier::parse("File"))
                 {
-                    config["output_format"] = "CSV";
+                    config[Identifier::parse("output_format")] = "CSV";
                 }
-                else if (toUpperCase(sinkType) == "CHECKSUM")
+                else if (sinkType == Identifier::parse("CHECKSUM"))
                 {
-                    formatConfig["quote_strings"] = "true";
+                    formatConfig[Identifier::parse("quote_strings")] = "true";
                 }
 
                 PRECONDITION(
                     not possibleSinkPlacements.empty(),
                     "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
                 std::string host = possibleSinkPlacements.at(0).getRawValue();
-                if (auto hostIt = config.find("host"); hostIt != config.end())
+                if (auto hostIt = config.find(Identifier::parse("host")); hostIt != config.end())
                 {
                     host = hostIt->second;
                 }
 
-                const auto sink = sinkCatalog->addSinkDescriptor(
-                    std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(config), formatConfig);
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -128,10 +131,10 @@ public:
     }
 
     std::optional<SinkDescriptor> getInlineSink(
-        const Schema& schema,
-        std::string_view sinkType,
-        std::unordered_map<std::string, std::string> config,
-        const std::unordered_map<std::string, std::string>& formatConfig)
+        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
+        const Identifier& sinkType,
+        std::unordered_map<Identifier, std::string> config,
+        const std::unordered_map<Identifier, std::string>& formatConfig)
     {
         PRECONDITION(
             not possibleSinkPlacements.empty(),
@@ -141,28 +144,27 @@ public:
     }
 
     std::expected<SinkDescriptor, Exception>
-    createActualSink(const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
+    createActualSink(const Identifier& sinkNameInFile, Identifier assignedSinkName, const std::filesystem::path& filePath)
     {
         const auto sinkProviderIter = sinkProviders.find(sinkNameInFile);
         if (sinkProviderIter == sinkProviders.end())
         {
             throw UnknownSinkName("{}", sinkNameInFile);
         }
-        return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
+        return sinkProviderIter->second(std::move(assignedSinkName), filePath);
     }
 
-    static inline const Schema checksumSchema = []
+    static inline const Schema<UnqualifiedUnboundField, Ordered> checksumSchema = []
     {
-        Schema checksumSinkSchema;
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return checksumSinkSchema;
+        return Schema<UnqualifiedUnboundField, Ordered>{std::vector{
+            UnqualifiedUnboundField{Identifier::parse("COUNT"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            UnqualifiedUnboundField{Identifier::parse("CHECKSUM"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}}};
     }();
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
     std::vector<Host> possibleSinkPlacements;
-    std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
+    std::unordered_map<Identifier, std::function<std::expected<SinkDescriptor, Exception>(Identifier, std::filesystem::path)>>
         sinkProviders;
 };
 
@@ -256,7 +258,17 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema();
+            sinkOutputSchema = [&]
+            {
+                /// Sinks do not have an output schema, but they are guaranteed to have only one child, from which we can take the output schema
+                const auto sink = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+                if (!sink.has_value())
+                {
+                    throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
+                }
+                return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
+                    sink.value()->getSinkDescriptor()->getSchema());
+            }();
         }
     }
 
@@ -360,7 +372,7 @@ private:
     std::optional<Exception> exception;
     std::optional<DistributedLogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
-    std::optional<Schema> sinkOutputSchema;
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
@@ -572,12 +584,12 @@ struct SystestBinder::Impl
         const auto host = statement.host ? *statement.host : Host(clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.getRawValue(),
+            .logical = statement.attachedTo.asCanonicalString(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
 
-        std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
+        std::unordered_map<Identifier, std::string> defaultParserConfig{{Identifier::parse("type"), "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
 
         if (testData.has_value())
@@ -585,10 +597,10 @@ struct SystestBinder::Impl
             physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
         }
 
-        const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+        const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo);
         if (not logicalSource.has_value())
         {
-            throw UnknownSourceName("{}", statement.attachedTo.getRawValue());
+            throw UnknownSourceName("{}", statement.attachedTo);
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
@@ -601,12 +613,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema;
-        for (const auto& field : statement.schema.getFields())
-        {
-            schema.addField(field.name, field.dataType);
-        }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema, statement.sinkConfig);
     }
 
     void createCallback(
@@ -661,28 +668,28 @@ struct SystestBinder::Impl
             auto sourceConfig = inlineSource.value()->getSourceConfig();
             auto parserConfig = inlineSource.value()->getParserConfig();
 
-            parserConfig.try_emplace("type", "CSV");
+            parserConfig.try_emplace(Identifier::parse("type"), "CSV");
 
             /// By default, all relative paths are relative to the testDataDir.
-            if (sourceConfig.contains("file_path") && !sourceConfig.at("file_path").starts_with("/"))
+            if (sourceConfig.contains(Identifier::parse("file_path")) && !sourceConfig.at(Identifier::parse("file_path")).starts_with("/"))
             {
-                auto filePath = inlineSource.value()->getSourceConfig().at("file_path");
+                auto filePath = inlineSource.value()->getSourceConfig().at(Identifier::parse("file_path"));
                 filePath = testDataDir / filePath;
-                sourceConfig.erase("file_path");
-                sourceConfig.emplace("file_path", filePath);
+                sourceConfig.erase(Identifier::parse("file_path"));
+                sourceConfig.emplace(Identifier::parse("file_path"), filePath);
             }
 
             PRECONDITION(
                 not clusterConfiguration.allowSourcePlacement.empty(),
                 "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
+            sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
                 const TypedLogicalOperator<InlineSourceLogicalOperator> newOperator{
-                    inlineSource.value()->getSourceType(), inlineSource.value()->getSchema(), sourceConfig, parserConfig};
+                    inlineSource.value()->getSourceType(), inlineSource.value()->getSourceSchema(), sourceConfig, parserConfig};
 
-                return newOperator->withChildren(newChildren);
+                return newOperator.withChildren(newChildren);
             }
         }
 
@@ -709,17 +716,17 @@ struct SystestBinder::Impl
 
         auto sinkConfig = sinkOperator->getSinkConfig();
         auto formatConfig = sinkOperator->getFormatConfig();
-        auto schema = sinkOperator->getSchema();
-        sinkConfig.erase("file_path");
-        sinkConfig.emplace("file_path", resultFile);
+        auto schema = sinkOperator->getTargetSchema();
+        sinkConfig.erase(Identifier::parse("file_path"));
+        sinkConfig.emplace(Identifier::parse("file_path"), resultFile);
 
-        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
+        if (not(sinkConfig.contains(Identifier::parse("output_format"))) and sinkOperator->getSinkType() != Identifier::parse("CHECKSUM"))
         {
-            sinkConfig.emplace("output_format", "CSV");
+            sinkConfig.emplace(Identifier::parse("output_format"), "CSV");
         }
-        if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
+        if (sinkOperator->getSinkType() == Identifier::parse("CHECKSUM"))
         {
-            formatConfig["quote_strings"] = "true";
+            formatConfig[Identifier::parse("quote_strings")] = "true";
         }
 
         auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
@@ -729,7 +736,7 @@ struct SystestBinder::Impl
         }
         const auto newOperator = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor.value()};
 
-        return newOperator->withChildren(sinkOperator->getChildren());
+        return newOperator.withChildren(sinkOperator->getChildren());
     }
 
     LogicalOperator setNamedSink(
@@ -739,16 +746,16 @@ struct SystestBinder::Impl
         const SystestQueryId& currentQueryNumberInTest,
         const TypedLogicalOperator<SinkLogicalOperator>& sinkOperator) const
     {
-        const std::string sinkName = sinkOperator->getSinkName();
+        const auto sinkNameInFile = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
-
+        const auto sinkForQuery
+            = Identifier::parse(toUpperCase(sinkNameInFile.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        auto sinkExpected = sltSinkProvider.createActualSink(toUpperCase(sinkName), sinkForQuery, resultFile);
+        auto sinkExpected = sltSinkProvider.createActualSink(sinkNameInFile, sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -756,7 +763,7 @@ struct SystestBinder::Impl
 
         const auto newOperator = TypedLogicalOperator<SinkLogicalOperator>{sinkExpected.value()};
 
-        return newOperator->withChildren(sinkOperator->getChildren());
+        return newOperator.withChildren(sinkOperator->getChildren());
     }
 
     void setSinks(

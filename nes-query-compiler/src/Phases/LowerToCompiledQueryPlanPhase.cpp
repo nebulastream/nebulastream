@@ -34,7 +34,7 @@
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 #include <options.hpp>
 
 namespace NES
@@ -58,7 +58,7 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", *pipeline);
 
     /// Convert logical source descriptor to actual source descriptor
-    const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
+    const auto sourceOperator = pipeline->getRootOperator().get<SourceDescriptorPhysicalOperator>();
 
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
 

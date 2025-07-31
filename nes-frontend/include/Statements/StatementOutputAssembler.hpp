@@ -26,8 +26,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -64,16 +68,27 @@ concept AssemblembleStatementResult =
     /// OutputAssembler convert return type and the advertised OutputRowType match
     && std::convertible_to<detail::ConversionResultType<Result>, typename StatementOutputAssembler<Result>::OutputRowType>;
 
-using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
+using LogicalSourceOutputRowType = std::tuple<Identifier, Schema<UnqualifiedUnboundField, Ordered>>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
-using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, Host>;
+using SourceDescriptorOutputRowType = std::tuple<
+    PhysicalSourceId,
+    Identifier,
+    Schema<UnqualifiedUnboundField, Ordered>,
+    std::string,
+    ParserConfig,
+    NES::DescriptorConfig::Config,
+    Host>;
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
 
-using SinkDescriptorOutputRowType
-    = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, Host, std::unordered_map<std::string, std::string>>;
+using SinkDescriptorOutputRowType = std::tuple<
+    Identifier,
+    Schema<UnqualifiedUnboundField, Ordered>,
+    std::string,
+    NES::DescriptorConfig::Config,
+    Host,
+    std::unordered_map<Identifier, std::string>>;
 constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
     "sink_name", "schema", "sink_type", "sink_config", "host", "format_config"};
 
@@ -145,7 +160,7 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.created.getSinkName(),
-                *result.created.getSchema(),
+                *std::get<NamedSinkDescriptor>(result.created.getUnderlying()).getSchema(),
                 result.created.getSinkType(),
                 result.created.getConfig(),
                 result.created.getHost(),
@@ -207,7 +222,7 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
         {
             output.emplace_back(
                 sink.getSinkName(),
-                *sink.getSchema(),
+                *std::get<NamedSinkDescriptor>(sink.getUnderlying()).getSchema(),
                 sink.getSinkType(),
                 sink.getConfig(),
                 sink.getHost(),
@@ -224,7 +239,7 @@ struct StatementOutputAssembler<DropLogicalSourceStatementResult>
 
     auto convert(const DropLogicalSourceStatementResult& result)
     {
-        return std::make_pair(logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped.getRawValue(), result.schema)});
+        return std::make_pair(logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped, result.schema)});
     }
 };
 
@@ -259,7 +274,7 @@ struct StatementOutputAssembler<DropSinkStatementResult>
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.dropped.getSinkName(),
-                *result.dropped.getSchema(),
+                *std::get<NamedSinkDescriptor>(result.dropped.getUnderlying()).getSchema(),
                 result.dropped.getSinkType(),
                 result.dropped.getConfig(),
                 result.dropped.getHost(),

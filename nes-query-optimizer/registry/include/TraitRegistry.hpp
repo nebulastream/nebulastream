@@ -20,6 +20,9 @@
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
+///NOLINTNEXTLINE(misc-include-cleaner)
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 
 namespace NES
 {
@@ -28,6 +31,7 @@ using TraitRegistryReturnType = Trait;
 
 struct TraitRegistryArguments
 {
+    LogicalOperator logicalOperator;
     Reflected reflected;
 };
 

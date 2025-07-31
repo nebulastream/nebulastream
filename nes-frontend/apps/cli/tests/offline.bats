@@ -254,7 +254,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: stream$value
+      - name: value
         type: UINT64
     type: Void
     config: { }
@@ -405,7 +405,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: Generator/type: NonExistentSource/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"source type 'NonExistentSource' is not registered"* ]]
+  [[ "$output" == *"source type 'NONEXISTENTSOURCE' is not registered"* ]]
 }
 
 @test "error: unregistered sink type reports type name" {
@@ -414,7 +414,7 @@ bad_topology() {
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"Invalid configuration for sink"* ]]
-  [[ "$output" == *"NonExistentSink"* ]]
+  [[ "$output" == *"NONEXISTENTSINK"* ]]
 }
 
 @test "error: source on non-existing worker reports source name and host" {
@@ -458,7 +458,7 @@ bad_topology() {
 
 @test "error: sink schema mismatch reports expected vs actual fields" {
   # Rename the sink schema field to something that won't match the source output
-  local f=$(bad_topology 's/GENERATOR_SOURCE\$DOUBLE/WRONG\$FIELD/')
+  local f=$(bad_topology '/^sinks:/,/^[a-z]/s/name: DOUBLE/name: WRONG_FIELD/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"cannot infer schema"* ]]

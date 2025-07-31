@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -21,10 +24,14 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -38,6 +45,7 @@ class SelectionLogicalOperator : public ManagedByOperator
 {
 public:
     explicit SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate);
+    SelectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, LogicalFunction predicate);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 
@@ -48,37 +56,35 @@ public:
 
     [[nodiscard]] SelectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] LogicalOperator getChild() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SelectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
-
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{
-            "selectionFunctionName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(SELECTION_FUNCTION_NAME, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
-    };
+    [[nodiscard]] SelectionLogicalOperator withInferredSchema() const;
 
 private:
     static constexpr std::string_view NAME = "Selection";
+    std::optional<LogicalOperator> child;
     LogicalFunction predicate;
 
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 
-    friend Reflector<TypedLogicalOperator<SelectionLogicalOperator>>;
+    TraitSet traitSet;
+    friend struct std::hash<SelectionLogicalOperator>;
 };
+
+namespace detail
+{
+struct ReflectedSelectionLogicalOperator
+{
+    OperatorId operatorId{OperatorId::INVALID};
+    LogicalFunction predicate;
+};
+}
 
 template <>
 struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
@@ -89,16 +95,17 @@ struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
 template <>
 struct Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
     TypedLogicalOperator<SelectionLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::SelectionLogicalOperator>
 {
-struct ReflectedSelectionLogicalOperator
-{
-    LogicalFunction predicate;
+    uint64_t operator()(const NES::SelectionLogicalOperator& op) const noexcept;
 };
-}

@@ -25,7 +25,9 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -45,6 +47,19 @@ template <typename Checked = NES::detail::ErasedLogicalFunction>
 struct TypedLogicalFunction;
 using LogicalFunction = TypedLogicalFunction<>;
 
+namespace detail
+{
+template <typename T>
+struct is_typed_logical_function : std::false_type
+{
+};
+
+template <typename T>
+struct is_typed_logical_function<TypedLogicalFunction<T>> : std::true_type
+{
+};
+}
+
 /// Concept defining the interface for all logical functions in the query plan.
 /// This concept defines the common interface that all logical functions must implement.
 /// Logical functions represent functions in the query plan and are used during query
@@ -55,7 +70,7 @@ concept LogicalFunctionConcept = requires(
     ExplainVerbosity verbosity,
     std::vector<LogicalFunction> children,
     DataType dataType,
-    Schema schema,
+    Schema<Field, Unordered> schema,
     const T& rhs) {
     /// Returns a string representation of the function
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -68,9 +83,6 @@ concept LogicalFunctionConcept = requires(
 
     /// Creates a new function with the given children
     { thisFunction.withChildren(children) } -> std::convertible_to<T>;
-
-    /// Creates a new operator with the given datatype
-    { thisFunction.withDataType(dataType) } -> std::convertible_to<T>;
 
     /// Creates a new function with inferred data type based on input schema
     { thisFunction.withInferredDataType(schema) } -> std::same_as<LogicalFunction>;
@@ -94,8 +106,7 @@ struct ErasedLogicalFunction
 
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual DataType getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
-    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const = 0;
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
@@ -133,9 +144,9 @@ struct TypedLogicalFunction
     /// @tparam T The type of the function. Must satisfy LogicalFunctionConcept concept.
     /// @param op The function to wrap.
     template <typename T>
-    requires requires(const T& function) {
+    requires(requires(const T& function) {
         { function.getChildren() } -> std::convertible_to<std::vector<LogicalFunction>>;
-    }
+    } && !NES::detail::is_typed_logical_function<T>::value)
     TypedLogicalFunction(const T& op) : self(std::make_shared<NES::detail::FunctionModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
@@ -256,9 +267,10 @@ struct TypedLogicalFunction
 
     [[nodiscard]] DataType getDataType() const { return self->getDataType(); };
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType); };
-
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema); };
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const
+    {
+        return self->withInferredDataType(schema);
+    };
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
@@ -268,6 +280,12 @@ struct TypedLogicalFunction
     };
 
     [[nodiscard]] std::string_view getType() const { return self->getType(); };
+
+    [[nodiscard]] bool operator==(const TypedLogicalFunction& other) const
+    requires(!std::is_same_v<Checked, NES::detail::ErasedLogicalFunction>)
+    {
+        return self->equals(*other.self);
+    };
 
     [[nodiscard]] bool operator==(const LogicalFunction& other) const { return self->equals(*other.self); };
 
@@ -297,7 +315,7 @@ struct FunctionModel : ErasedLogicalFunction
         return impl.withChildren(children);
     }
 
-    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
+    [[nodiscard]] Reflected reflect() const override { return NES::Reflector<FunctionType>{}(impl); }
 
     [[nodiscard]] std::string_view getType() const override { return impl.getType(); }
 
@@ -305,9 +323,10 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override { return impl.withInferredDataType(schema); }
-
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return impl.withDataType(dataType); }
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const override
+    {
+        return impl.withInferredDataType(schema);
+    }
 
     [[nodiscard]] bool operator==(const LogicalFunction& other) const
     {
@@ -359,33 +378,18 @@ struct hash<NES::LogicalFunction>
 {
     std::size_t operator()(const NES::LogicalFunction& lfn) const noexcept { return std::hash<std::string_view>{}(lfn.getType()); }
 };
+
+/// NOLINTBEGIN(cert-dcl58-cpp)
+template <NES::LogicalFunctionConcept FunctionType>
+struct hash<NES::TypedLogicalFunction<FunctionType>>
+{
+    std::size_t operator()(const NES::TypedLogicalFunction<FunctionType>& function) const noexcept
+    {
+        return std::hash<FunctionType>{}(*function);
+    }
+};
+
+/// NOLINTEND(cert-dcl58-cpp)
 }
 
 FMT_OSTREAM(NES::LogicalFunction);
-
-namespace NES
-{
-class FieldIdentifier
-{
-    std::string fieldName;
-
-public:
-    explicit FieldIdentifier(std::string fieldName) : fieldName(std::move(fieldName)) { }
-
-    [[nodiscard]] const std::string& getFieldName() const { return fieldName; }
-
-    auto operator<=>(const FieldIdentifier&) const = default;
-};
-}
-
-namespace std
-{
-template <>
-struct hash<NES::FieldIdentifier>
-{
-    std::size_t operator()(const NES::FieldIdentifier& identifier) const noexcept
-    {
-        return std::hash<std::string>{}(identifier.getFieldName());
-    }
-};
-}

@@ -15,9 +15,9 @@
 #pragma once
 
 #include <optional>
+#include <../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 

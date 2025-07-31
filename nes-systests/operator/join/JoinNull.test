@@ -3,7 +3,7 @@
 # groups: [WindowOperators, Join, NullHandling]
 
 # Source definitions
-CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 0,,0
@@ -16,7 +16,7 @@ ATTACH INLINE
 1,9,1500
 0,,2100
 
-CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH INLINE
 0,0,100
@@ -28,13 +28,13 @@ ATTACH INLINE
 1,,1800
 1,12,2500
 
-CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64 NOT NULL, stream2.value2 UINT64, stream2.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64, timestamp2 UINT64 NOT NULL) TYPE File;
 
 # Query 1 - Join two streams
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (id = id2)
-WINDOW TUMBLING (timestamp, size 1 sec)
+WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 0,1000,0,NULL,0,0,0,100
@@ -57,7 +57,7 @@ INTO sink;
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (value = value2)
-WINDOW TUMBLING (timestamp, size 1 sec)
+WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300
@@ -68,7 +68,7 @@ INTO sink;
 SELECT *
 FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
 ON (value = value2 AND id = id2)
-WINDOW TUMBLING (timestamp, size 1 sec)
+WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
 INTO sink;
 ----
 1000,2000,0,7,1000,0,7,1300

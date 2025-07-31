@@ -29,6 +29,9 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -49,7 +52,8 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
-    , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
+    , schemaFormatter(
+          SchemaFormatter(std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
 {
 }
 
