@@ -114,7 +114,8 @@ public:
     explicit ReflectionContext() = default;
 
     template <typename... Args>
-    explicit ReflectionContext(Args... args) : context{(std::pair{std::type_index{typeid(Args)}, std::any{std::move(args)}}, ...)}
+    explicit ReflectionContext(Args... args)
+        : context{std::pair{std::type_index{typeid(std::remove_cvref_t<Args>)}, std::any{std::move(args)}}...}
     {
     }
 
@@ -134,7 +135,7 @@ public:
     requires ContextfulUnreflector<T>
     [[nodiscard]] T unreflect(const Reflected& data) const
     {
-        if (const auto it = context.find(std::type_index(typeid(typename Unreflector<T>::ContextType))); it != context.end())
+        if (const auto it = context.find(std::type_index{typeid(typename Unreflector<T>::ContextType)}); it != context.end())
         {
             return Unreflector<T>{std::any_cast<typename Unreflector<T>::ContextType>(it->second)}(data, *this);
         }

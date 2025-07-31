@@ -15,3 +15,7 @@ add_source_files(nes-logical-operators
         SourceNameLogicalOperator.cpp
         InlineSourceLogicalOperator.cpp
 )
+
+add_plugin(SourceDescriptor LogicalOperator nes-logical-operators SourceDescriptorLogicalOperator.cpp)
+add_plugin(InlineSource LogicalOperator nes-logical-operators InlineSourceLogicalOperator.cpp)
+add_plugin(SourceName LogicalOperator nes-logical-operators SourceNameLogicalOperator.cpp)

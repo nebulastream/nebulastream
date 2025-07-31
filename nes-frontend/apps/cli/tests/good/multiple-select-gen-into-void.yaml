@@ -82,7 +82,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }

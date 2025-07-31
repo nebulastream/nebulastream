@@ -73,7 +73,7 @@ struct ConfigParametersFile
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
-        "append",
+        "APPEND",
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
 

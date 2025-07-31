@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
-#include <WindowTypes/Types/WindowType.hpp>
+#pragma once
+#include <optional>
 
-namespace NES::Windowing
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+
+namespace NES
 {
 
-WindowType::WindowType() = default;
-
+class OperatorMapping
+{
+public:
+    virtual ~OperatorMapping() = default;
+    [[nodiscard]] virtual std::optional<LogicalOperator> getOperator(OperatorId operatorId, const ReflectionContext& context) = 0;
+};
 }

@@ -24,8 +24,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -37,7 +39,7 @@
 namespace NES
 {
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left))), right(std::move(right))
 {
 }
 
@@ -53,20 +55,14 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-EqualsLogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
-
-LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
@@ -101,7 +97,7 @@ Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFuncti
 EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedEqualsLogicalFunction>(reflected);
-    return EqualsLogicalFunction{left, right};
+    return EqualsLogicalFunction{std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType

@@ -298,7 +298,7 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
-/// Shutdown of the Query Engine will `HardStop` all query plans.
+/// Shutdown of the Query Engine will \"HardStop\" all query plans.
 TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
 {
     TestingHarness test;

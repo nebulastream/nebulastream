@@ -19,7 +19,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
 namespace NES
@@ -44,7 +46,8 @@ public:
         const std::string& outputFormatterType,
         const std::unordered_map<std::string, std::string>& config);
 
-    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef>
+    lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
 };
 
 }

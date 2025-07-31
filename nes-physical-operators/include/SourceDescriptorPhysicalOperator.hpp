@@ -21,17 +21,17 @@
 
 namespace NES
 {
-class SourcePhysicalOperator final : public PhysicalOperatorConcept
+class SourceDescriptorPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id);
+    explicit SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, OriginId id);
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
     [[nodiscard]] SourceDescriptor getDescriptor() const;
     [[nodiscard]] OriginId getOriginId() const;
 
-    bool operator==(const SourcePhysicalOperator& other) const;
+    bool operator==(const SourceDescriptorPhysicalOperator& other) const;
 
 private:
     std::optional<PhysicalOperator> child;

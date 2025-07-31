@@ -4,24 +4,24 @@
 # groups: [milestone, benchmark, large, Aggregation, Join]
 
 # Source definition. We have removed some columns that are not needed in our queries
-CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE LOGICAL SOURCE bid(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR bid TYPE File;
 ATTACH FILE large/nexmark/bid_6GB.csv
 
-CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
+CREATE LOGICAL SOURCE auction(timestamp_auction UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR auction TYPE File;
 ATTACH FILE large/nexmark/auction_707MB.csv
 
-CREATE LOGICAL SOURCE person(id INT32 NOT NULL, name VARSIZED NOT NULL, email_address VARSIZED NOT NULL, credit_card VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, timestamp UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE LOGICAL SOURCE person(id INT32 NOT NULL, name VARSIZED NOT NULL, email_address VARSIZED NOT NULL, credit_card VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, timestamp_person UINT64 NOT NULL, extra VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR person TYPE File;
 ATTACH FILE large/nexmark/person_840MB.csv
 
-CREATE SINK bidCheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q1CheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q2CheckSum(bid.auctionId INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q5Checksum(bidbid.start UINT64 NOT NULL, bidbid.end UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.num UINT64 NOT NULL, bid.max_tmp UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q8CheckSum(personauction.start UINT64 NOT NULL, personauction.end UINT64 NOT NULL, person.id INT32 NOT NULL, person.name VARSIZED NOT NULL)  TYPE Checksum;
-CREATE SINK q8VariantCheckSum(bidauction.start UINT64 NOT NULL, bidauction.end UINT64 NOT NULL, bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL, bid.timestamp UINT64 NOT NULL, auction.id INT32 NOT NULL, auction.initialbid INT32 NOT NULL, auction.reserve INT32 NOT NULL, auction.expires UINT64 NOT NULL, auction.seller INT32 NOT NULL, auction.category INT32 NOT NULL)  TYPE Checksum;
+CREATE SINK bidCheckSum(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1CheckSum(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q2CheckSum(auctionId INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32 NOT NULL, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q8CheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, name VARSIZED NOT NULL)  TYPE Checksum;
+CREATE SINK q8VariantCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, timestamp_auction UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL)  TYPE Checksum;
 
 
 # Query 0
@@ -44,13 +44,13 @@ SELECT start, end, auctionId, num, max_tmp
 FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
       FROM bid
       GROUP BY auctionId
-      WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+      WINDOW SLIDING(timestamp_bid, SIZE 10 SEC, ADVANCE BY 2 SEC))
 INNER JOIN (SELECT MAX(num_ids) AS max_tmp, start, end
               FROM
                     (SELECT auctionId, COUNT(auctionId) AS num_ids, start
                      FROM bid
                      GROUP BY auctionId
-                     WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+                     WINDOW SLIDING(timestamp_bid, SIZE 10 SEC, ADVANCE BY 2 SEC))
               WINDOW TUMBLING(start, SIZE 2 SEC))
 ON num == max_tmp
 WINDOW TUMBLING(start, SIZE 2 SEC)
@@ -67,7 +67,7 @@ FROM (
             FROM (SELECT * FROM person)
         INNER JOIN
             (SELECT * FROM auction)
-        ON id = seller WINDOW TUMBLING (timestamp, size 10 sec)
+        ON id = seller WINDOW TUMBLING (timestamp_person, timestamp_auction, size 10 sec)
     )
 INTO q8CheckSum;
 ----
@@ -75,10 +75,10 @@ INTO q8CheckSum;
 
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
-SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
+SELECT start, end, timestamp_bid, auctionId, bidder, price, timestamp_auction, id, initialbid, reserve, expires, seller, category
     FROM (SELECT * FROM bid)
 INNER JOIN
     (SELECT * FROM auction)
-ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
+ON auctionId = id WINDOW TUMBLING (timestamp_bid, timestamp_auction, size 10 sec) INTO q8VariantCheckSum;
 ----
 182197843 1176742157900

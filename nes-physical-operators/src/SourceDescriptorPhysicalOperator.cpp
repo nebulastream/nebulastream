@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 
 #include <memory>
 #include <optional>
@@ -24,30 +24,30 @@
 namespace NES
 {
 
-SourcePhysicalOperator::SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id)
+SourceDescriptorPhysicalOperator::SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, OriginId id)
     : originId(id), descriptor(std::move(descriptor)) { };
 
-SourceDescriptor SourcePhysicalOperator::getDescriptor() const
+SourceDescriptor SourceDescriptorPhysicalOperator::getDescriptor() const
 {
     return descriptor;
 };
 
-OriginId SourcePhysicalOperator::getOriginId() const
+OriginId SourceDescriptorPhysicalOperator::getOriginId() const
 {
     return originId;
 };
 
-bool SourcePhysicalOperator::operator==(const SourcePhysicalOperator& other) const
+bool SourceDescriptorPhysicalOperator::operator==(const SourceDescriptorPhysicalOperator& other) const
 {
     return descriptor == other.descriptor;
 }
 
-std::optional<PhysicalOperator> SourcePhysicalOperator::getChild() const
+std::optional<PhysicalOperator> SourceDescriptorPhysicalOperator::getChild() const
 {
     return child;
 }
 
-void SourcePhysicalOperator::setChild(PhysicalOperator child)
+void SourceDescriptorPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
 }

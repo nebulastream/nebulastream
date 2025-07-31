@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -25,7 +26,9 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -88,17 +91,17 @@ MergePointSet findMergePoints(const std::vector<std::shared_ptr<PhysicalOperator
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
 PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
-    const std::optional<Schema>& inputSchema,
+    const std::optional<Schema<QualifiedUnboundField, Ordered>>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
     const uint64_t configuredBufferSize)
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
-    if (inputSchema.value().getSizeOfSchemaInBytes() > configuredBufferSize)
+    if (inputSchema.value().getSizeInBytes() > configuredBufferSize)
     {
         throw TuplesTooLargeForPipelineBufferSize(
             "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
-            inputSchema.value().getSizeOfSchemaInBytes(),
+            inputSchema.value().getSizeInBytes(),
             configuredBufferSize);
     }
 
@@ -107,14 +110,20 @@ PhysicalOperator createScanOperator(
     /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
     if (prevPipeline.isSourcePipeline())
     {
-        const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+        const auto inputFormatterConfig
+            = prevPipeline.getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider),
+                inputSchema.value() | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+                    | std::ranges::to<std::vector>());
         }
     }
-    return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
+    return ScanPhysicalOperator(
+        memoryProvider,
+        *inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+            | std::ranges::to<std::vector>());
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -290,7 +299,7 @@ void buildPipelineRecursively(
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = toUpperCase(
-                currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
+                currentPipeline->getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getParserConfig().parserType);
 
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
@@ -299,7 +308,14 @@ void buildPipelineRecursively(
             if (not(sourceFormat == "NATIVE" and toUpperCase(sinkFormat) == "NATIVE"))
             {
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
-                    *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+                    *currentPipeline,
+                    *currentPipeline->getRootOperator()
+                         .get<SourceDescriptorPhysicalOperator>()
+                         .getDescriptor()
+                         .getLogicalSource()
+                         .getSchema(),
+                    opWrapper->getInputMemoryLayoutType(),
+                    configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
                 if (toUpperCase(sinkFormat) == "NATIVE")

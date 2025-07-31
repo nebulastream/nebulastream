@@ -3,13 +3,13 @@
 # groups: [Formatter, JSON]
 
 CREATE LOGICAL SOURCE jsonStream(KEY UINT64 NOT NULL, value UINT64, name VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("JSON" AS PARSER.`TYPE`);
+CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET('JSON' AS PARSER."TYPE");
 ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME":"max"}
 
 CREATE LOGICAL SOURCE jsonStreamWithNulls(key UINT64 NOT NULL, value UINT64, name VARSIZED);
-CREATE PHYSICAL SOURCE FOR jsonStreamWithNulls TYPE File SET("JSON" AS PARSER.`TYPE`);
+CREATE PHYSICAL SOURCE FOR jsonStreamWithNulls TYPE File SET('JSON' AS PARSER."TYPE");
 ATTACH INLINE
 {"KEY":1, "VALUE":null, "NAME":"john1"}
 {"KEY":2, "VALUE":1}
@@ -19,9 +19,9 @@ ATTACH INLINE
 {"KEY":6, "NAME":null}
 
 
-CREATE SINK keySink(jsonStream.key UINT64 NOT NULL) TYPE File;
-CREATE SINK keySinkWithNulls(jsonStreamWithNulls.key UINT64 NOT NULL) TYPE File;
-CREATE SINK allFieldsSink(jsonStreamWithNulls.key UINT64 NOT NULL, jsonStreamWithNulls.value UINT64, jsonStreamWithNulls.name VARSIZED) TYPE File;
+CREATE SINK keySink(key UINT64 NOT NULL) TYPE File;
+CREATE SINK keySinkWithNulls(key UINT64 NOT NULL) TYPE File;
+CREATE SINK allFieldsSink(key UINT64 NOT NULL, value UINT64, name VARSIZED) TYPE File;
 
 SELECT KEY FROM jsonStream WHERE NOT ISNULL(value) INTO keySink;
 ----

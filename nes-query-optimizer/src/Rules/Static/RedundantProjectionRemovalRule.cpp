@@ -21,9 +21,12 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -59,15 +62,21 @@ bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemoval
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& projectionOp :
-         getOperatorByType<ProjectionLogicalOperator>(queryPlan)
+    for (const auto& projectionOp : getOperatorByType<ProjectionLogicalOperator>(queryPlan)
              | std::views::filter(
-                 [](const auto& op)
-                 {
-                     INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
-                     INVARIANT(op.getInputSchemas().size() == 1, "Projection operator must have exactly one input schema");
-                     return op.getInputSchemas().front() == op.getOutputSchema();
-                 }))
+                                        [](const auto& op)
+                                        {
+                                            INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
+                                            for (const auto& field : op->getProjections())
+                                            {
+                                                const auto& [as, function] = field;
+                                                if (!function.template tryGetAs<FieldAccessLogicalFunction>().has_value())
+                                                {
+                                                    return false;
+                                                }
+                                            }
+                                            return unbind(op.getChildren().front().getOutputSchema()) == unbind(op.getOutputSchema());
+                                        }))
     {
         auto child = projectionOp.getChildren().front();
         auto replaceResult = replaceSubtree(queryPlan, projectionOp.getId(), child);

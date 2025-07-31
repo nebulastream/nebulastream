@@ -18,3 +18,5 @@ function(add_nes_optimizer_test)
 endfunction()
 
 add_subdirectory(Rules)
+add_nes_optimizer_test(DecideFieldMappingsTest UnitTests/DecideFieldMappingsTest.cpp)
+add_nes_optimizer_test(CalcTargetOrderTest UnitTests/CalcTargetOrderTest.cpp)

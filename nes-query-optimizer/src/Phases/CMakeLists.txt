@@ -14,4 +14,6 @@ add_source_files(nes-query-optimizer
         SemanticAnalyzer.cpp
         OperatorPlacer.cpp
         RuleBasedOptimizer.cpp
+        DecideFieldMappings.cpp
+        DecideFieldOrder.cpp
 )

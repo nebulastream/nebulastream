@@ -16,14 +16,17 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,7 +38,7 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : child(std::move(child)) { };
 
 bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
@@ -47,23 +50,15 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-ExpLogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
     const auto newChild = child.withInferredDataType(schema);
     const std::string eulerNumber = "2.7182818284590452353602874713527";
     const ConstantValueLogicalFunction expConstantValue{
         DataTypeProvider::provideDataType(
             DataType::Type::FLOAT64, newChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE),
         eulerNumber};
-    return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+    return PowLogicalFunction(expConstantValue, newChild).withInferredDataType(schema);
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
@@ -101,7 +96,7 @@ Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& fu
 ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [child] = context.unreflect<detail::ReflectedExpLogicalFunction>(reflected);
-    return ExpLogicalFunction(child);
+    return ExpLogicalFunction(std::move(child));
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)

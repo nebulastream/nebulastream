@@ -14,27 +14,18 @@
 
 #pragma once
 #include <string>
-#include <utility>
+#include <string_view>
+#include <Util/Reflection/ReflectionCore.hpp>
 
 namespace NES
 {
-struct WindowMetaData
+
+template <>
+struct Reflector<std::string_view>
 {
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
-
-    WindowMetaData() = default;
-
-    WindowMetaData(std::string startName, std::string endName)
-        : windowStartFieldName(std::move(startName)), windowEndFieldName(std::move(endName))
-    {
-    }
-
-    bool operator==(const WindowMetaData& other) const
-    {
-        return windowStartFieldName == other.windowStartFieldName && windowEndFieldName == other.windowEndFieldName;
-    }
-
-    bool operator!=(const WindowMetaData& other) const { return !(*this == other); }
+    Reflected operator()(const std::string_view data) const { return reflect(std::string(data)); }
 };
+
+/// No Unreflector so that we don't get a dangling reference
+
 }

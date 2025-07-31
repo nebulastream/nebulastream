@@ -20,7 +20,9 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -39,7 +41,7 @@ namespace NES
 {
 
 std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemoryProvider::createFieldOffsets(
-    const Schema& schema,
+    const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
 {
@@ -51,20 +53,22 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
     uint64_t offset = sizeof(ChainedHashMapEntry);
     for (const auto& fieldName : fieldNameKeys)
     {
-        const auto field = schema.getFieldByName(fieldName);
+        const auto field = schema[fieldName];
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytesWithNull();
+        fieldsKey.emplace_back(
+            FieldOffsets{.fieldIdentifier = fieldValue.getFullyQualifiedName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
+        offset += fieldValue.getDataType().getSizeInBytesWithNull();
     }
 
     for (const auto& fieldName : fieldNameValues)
     {
-        const auto field = schema.getFieldByName(fieldName);
+        const auto field = schema[fieldName];
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytesWithNull();
+        fieldsValue.emplace_back(
+            FieldOffsets{.fieldIdentifier = fieldValue.getFullyQualifiedName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
+        offset += fieldValue.getDataType().getSizeInBytesWithNull();
     }
     return {fieldsKey, fieldsValue};
 }

@@ -187,9 +187,9 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 
   assert_json_equal '[{"worker":"sink-node:8080"}]' "${lines[0]}"
-  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[1]}"
+  assert_json_equal '[{"schema":[[{"name":"TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[1]}"
   assert_json_equal '[{"host":"sink-node:8080","parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[2]}"
-  assert_json_equal '[{"format_config":{},"host":"sink-node:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[3]}"
+  assert_json_equal '[{"format_config":{},"host":"sink-node:8080","schema":[[{"name":"TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[3]}"
   assert_json_equal '[]' "${lines[4]}"
   QUERY_ID=$(echo ${lines[5]} | jq -r '.[0].query_id')
 

@@ -14,11 +14,16 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
 
 #include <memory>
+
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
@@ -30,15 +35,20 @@ namespace NES
 
 LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
-    const auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
-    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema(), memoryLayoutType, memoryLayoutType);
+    auto assignerOp = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
+    const Schema<QualifiedUnboundField, Ordered> outputSchema = createPhysicalOutputSchema(traitSet);
+    const Schema<QualifiedUnboundField, Ordered> inputSchema = createPhysicalOutputSchema(assignerOp->getChild().getTraitSet());
+
+    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assignerOp->getOnField());
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assignerOp->getUnit()));
+
+    const auto wrapper
+        = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchema, outputSchema, memoryLayoutType, memoryLayoutType);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

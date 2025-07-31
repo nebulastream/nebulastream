@@ -12,27 +12,9 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <WindowTypes/Types/WindowType.hpp>
-
-#include <memory>
-#include <string>
-#include <Util/Reflection.hpp>
+#include <DataTypes/SchemaBase.hpp>
 
 namespace NES
 {
 
-Reflected reflectWindowType(const Windowing::WindowType& windowType);
-std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected, const ReflectionContext& context);
-
-}
-
-namespace NES::detail
-{
-struct ReflectedWindowTypeReflection
-{
-    std::string type;
-    Reflected config;
-};
 }

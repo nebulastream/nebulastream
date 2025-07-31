@@ -15,11 +15,16 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -30,18 +35,22 @@ namespace NES
 
 LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
     const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
+    const Schema<QualifiedUnboundField, Ordered> outputSchema = createPhysicalOutputSchema(traitSet);
+    const Schema<QualifiedUnboundField, Ordered> inputSchema = createPhysicalOutputSchema(selection->getChild()->getTraitSet());
+
     auto physicalOperator = SelectionPhysicalOperator(func);
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
-        logicalOperator.getOutputSchema(),
+        inputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

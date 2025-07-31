@@ -22,7 +22,9 @@
 #include <variant>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -73,7 +75,7 @@ struct ShowSinksStatementResult
 struct DropLogicalSourceStatementResult
 {
     LogicalSourceName dropped;
-    Schema schema;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
 };
 
 struct DropPhysicalSourceStatementResult

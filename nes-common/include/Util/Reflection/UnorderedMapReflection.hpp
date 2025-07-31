@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Util/Reflection/ReflectionCore.hpp>
 #include <rfl/Generic.hpp>
 #include <ErrorHandling.hpp>
@@ -25,7 +27,6 @@
 
 namespace NES
 {
-
 /// Reflector/Unreflector for std::unordered_map<K, V, ...>
 /// Only supports string or arithmetic key types
 template <typename K, typename V, typename Hash, typename KeyEqual, typename Allocator>
@@ -102,6 +103,26 @@ struct Unreflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
                 throw CannotDeserialize("Expected object for std::unordered_map, received {}", NAMEOF_TYPE(ValueType));
             },
             data->variant());
+    }
+};
+
+template <typename K, typename V, typename Hash, typename KeyEqual, typename Allocator>
+requires(!std::is_same_v<K, std::string> && !std::is_arithmetic_v<K>)
+struct Reflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
+{
+    Reflected operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& data) const
+    {
+        return reflect(data | std::ranges::to<std::vector>());
+    }
+};
+
+template <typename K, typename V, typename Hash, typename KeyEqual, typename Allocator>
+requires(!std::is_same_v<K, std::string> && !std::is_arithmetic_v<K>)
+struct Unreflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
+{
+    std::unordered_map<K, V, Hash, KeyEqual, Allocator> operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return context.unreflect<std::vector<std::pair<K, V>>>(data) | std::ranges::to<std::unordered_map>();
     }
 };
 

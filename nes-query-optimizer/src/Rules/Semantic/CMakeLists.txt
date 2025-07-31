@@ -11,11 +11,13 @@
 # limitations under the License.
 
 add_source_files(nes-query-optimizer
-        InlineSinkBindingRule.cpp
-        InlineSourceBindingRule.cpp
+        InlineSinkBindingPhase.cpp
+        InlineSourceBindingPhase.cpp
         SourceInferenceRule.cpp
         LogicalSourceExpansionRule.cpp
         OriginIdInferenceRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp
+        CalcTargetOrderPhase.cpp
+        LegacyOptimizer.cpp
 )

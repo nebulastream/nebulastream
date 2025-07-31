@@ -15,15 +15,16 @@
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 
 #include <algorithm>
-#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -36,7 +37,7 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left))), right(std::move(std::move(right)))
 {
 }
 
@@ -57,20 +58,19 @@ DataType GreaterEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
+    {
+        throw CannotInferStamp(
+            "Can only apply greater equals to two functions with numeric data types, but got left: {}, right: {}", copy.left, copy.right);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
-
-LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
@@ -101,7 +101,7 @@ GreaterEqualsLogicalFunction
 Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedGreaterEqualsLogicalFunction>(reflected);
-    return {left, right};
+    return {std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType

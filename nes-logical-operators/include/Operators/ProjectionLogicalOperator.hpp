@@ -14,27 +14,42 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
+#include <DataTypes/SchemaBase.hpp>
+
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Reorderer.hpp>
+#include <Operators/Reprojecter.hpp>
+#include <Schema/Field.hpp>
+#include <Util/DynamicBase.hpp>
+
 namespace NES
 {
 
 /// Combines both selecting the fields to project and renaming/mapping of fields
-class ProjectionLogicalOperator : public ManagedByOperator
+class ProjectionLogicalOperator : public Reprojecter, public Reorderer, public ManagedByOperator
 {
 public:
     class Asterisk
@@ -42,15 +57,21 @@ public:
         bool value;
 
     public:
-        explicit Asterisk(bool value) : value(value) { }
+        explicit Asterisk(const bool value) : value(value) { }
 
         friend ProjectionLogicalOperator;
     };
 
-    using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
-    ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<Projection> projections, Asterisk asterisk);
+    using Projection = std::pair<Field, LogicalFunction>;
+    using UnboundProjection = std::pair<Identifier, LogicalFunction>;
 
-    [[nodiscard]] const std::vector<Projection>& getProjections() const;
+    ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<UnboundProjection> projections, Asterisk asterisk);
+    ProjectionLogicalOperator(
+        WeakLogicalOperator self, LogicalOperator child, std::vector<UnboundProjection> projections, Asterisk asterisk);
+
+    [[nodiscard]] std::vector<Projection> getProjections() const;
+    [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
+    [[nodiscard]] bool hasAsterisk() const;
 
     [[nodiscard]] bool operator==(const ProjectionLogicalOperator& rhs) const;
 
@@ -59,44 +80,36 @@ public:
 
     [[nodiscard]] ProjectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] std::vector<std::string> getAccessedFields() const;
+    /// @brief returns the fields of the child operator this projection accesses
+    [[nodiscard]] std::vector<Field> getAccessedFields() const;
 
-    [[nodiscard]] ProjectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] ProjectionLogicalOperator withInferredSchema() const;
+    [[nodiscard]] Schema<Field, Ordered> getOrderedOutputSchema(ChildOutputOrderProvider orderProvider) const override;
 
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<std::string> PROJECTION_FUNCTION_NAME{
-            "projectionFunctionName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> ASTERISK{
-            "asterisk",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ASTERISK, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME, ASTERISK);
-    };
+    [[nodiscard]] const DynamicBase* getDynamicBase() const;
 
 private:
     static constexpr std::string_view NAME = "Projection";
-    std::vector<Projection> projections;
 
+    std::optional<LogicalOperator> child;
     bool asterisk = false;
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    std::vector<UnboundProjection> projections;
 
-    friend Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>;
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
+    TraitSet traitSet;
+
+    friend struct std::hash<ProjectionLogicalOperator>;
+    friend Reflector<ProjectionLogicalOperator>;
 };
 
 template <>
@@ -108,6 +121,9 @@ struct Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 template <>
 struct Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
     TypedLogicalOperator<ProjectionLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
@@ -115,12 +131,19 @@ static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
 
 }
 
+template <>
+struct std::hash<NES::ProjectionLogicalOperator>
+{
+    size_t operator()(const NES::ProjectionLogicalOperator& projectionOperator) const noexcept;
+};
+
 namespace NES::detail
 {
 struct ReflectedProjectionLogicalOperator
 {
+    OperatorId operatorId{OperatorId::INVALID};
     bool asterisk;
-    std::vector<std::pair<std::optional<std::string>, LogicalFunction>> projections;
+    std::vector<ProjectionLogicalOperator::UnboundProjection> projections;
 };
 
 }

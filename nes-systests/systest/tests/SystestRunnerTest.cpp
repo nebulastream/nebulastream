@@ -30,7 +30,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -52,6 +51,12 @@
 #include <QueryStatus.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
+
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -117,9 +122,14 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor
-        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", Host("localhost"), {{"output_format", "CSV"}}, {}).value();
-    SystestQueryId dummyQueryId = NES::INVALID<NES::Systest::SystestQueryId>;
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}
+                                             .addSinkDescriptor(
+                                                 Identifier::parse("dummySink"),
+                                                 Schema<UnqualifiedUnboundField, Ordered>{},
+                                                 Identifier::parse("Print"),
+                                                 Host("localhost"),
+                                                 {{Identifier::parse("output_format"), "CSV"}})
+                                             .value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -183,17 +193,17 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     SystestProgressTracker progressTracker;
 
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), Identifier::parse("File"), Host("localhost"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
     auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
     const LogicalPlan plan{
-        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema{}}, {}, std::nullopt, dummyQueryId)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, std::nullopt, dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -219,18 +229,18 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     SystestProgressTracker progressTracker;
 
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), Identifier::parse("File"), Host("localhost"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
     auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
     const LogicalPlan plan{
-        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema{}},
+            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
             std::nullopt,
             dummyQueryId)},
@@ -251,10 +261,10 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
 
     auto [submitter, mockBackend] = createQuerySubmitter();
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), Identifier::parse("File"), Host("localhost"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
     auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
     const LogicalPlan plan{
         INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
@@ -265,7 +275,7 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     EXPECT_ANY_THROW(
         const auto result = runQueries(
             {makeQuery(
-                SystestQuery::PlanInfo{distributedPlan, Schema{}},
+                SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
                 ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
                 runAfter,
                 dummyQueryId)},
@@ -308,25 +318,25 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     SystestProgressTracker progressTracker;
 
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), Identifier::parse("File"), Host("localhost"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
     auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
     const LogicalPlan plan{
         INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
-    auto query1 = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));
+    auto query1 = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));
 
     auto query2 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema{}},
+        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         std::vector<std::string>{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema{}},
+        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         std::vector<std::string>{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));

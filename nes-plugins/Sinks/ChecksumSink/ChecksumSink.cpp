@@ -25,6 +25,9 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -80,8 +83,8 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "S$Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
-                     << ",S$Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
+    outputFileStream << "Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
+                     << ",Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;
