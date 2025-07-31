@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -27,6 +27,9 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Functions/UnboundFieldAccessLogicalFunction.hpp"
+#include "Operators/Windows/WindowedAggregationLogicalOperator.hpp"
 
 namespace NES
 {
@@ -37,13 +40,13 @@ class LogicalPlanBuilder
 public:
     /// Creates a query plan from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static LogicalPlan createLogicalPlan(std::string logicalSourceName);
+    static LogicalPlan createLogicalPlan(Identifier logicalSourceName);
 
     static LogicalPlan createLogicalPlan(
-        std::string inlineSourceType,
-        const Schema& schema,
-        std::unordered_map<std::string, std::string> sourceConfig,
-        std::unordered_map<std::string, std::string> parserConfig);
+        Identifier inlineSourceType,
+        SchemaBase<UnboundFieldBase<1>, true> schema,
+        std::unordered_map<Identifier, std::string> sourceConfig,
+        std::unordered_map<Identifier, std::string> parserConfig);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
@@ -51,7 +54,7 @@ public:
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
     static LogicalPlan
-    addProjection(std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan);
+    addProjection(std::vector<ProjectionLogicalOperator::UnboundProjection> projections, bool asterisk, const LogicalPlan& queryPlan);
 
     /// @brief: this call adds the selection operator to the queryPlan; the operator selects records according to the predicate.
     /// @param selectionFunction a function node containing the predicate
@@ -62,8 +65,9 @@ public:
     static LogicalPlan addWindowAggregation(
         LogicalPlan queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,
-        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
-        std::vector<FieldAccessLogicalFunction> onKeys);
+        std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
+        std::vector<UnboundFieldAccessLogicalFunction> onKeys,
+        Windowing::TimeCharacteristic timeCharacteristic);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftLogicalPlan the left query plan to combine by the union
@@ -82,15 +86,17 @@ public:
         LogicalPlan rightLogicalPlan,
         const LogicalFunction& joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
-        JoinLogicalOperator::JoinType joinType);
+        JoinLogicalOperator::JoinType joinType,
+        Windowing::TimeCharacteristic leftCharacteristic,
+        Windowing::TimeCharacteristic rightCharacteristic);
 
-    static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
+    static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addInlineSink(
-        std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
+        Identifier type, SchemaBase<UnboundFieldBase<1>, true> schema, std::unordered_map<Identifier, std::string> sinkConfig, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);
+    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources

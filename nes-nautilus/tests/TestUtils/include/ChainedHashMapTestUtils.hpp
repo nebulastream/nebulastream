@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -55,7 +55,7 @@ struct TestParams
     TestParams() = default;
     TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue& minMaxNumberOfBuckets, const MinMaxValue& minMaxPageSize);
     uint64_t numberOfItems{}, numberOfBuckets{}, pageSize{};
-    std::vector<Schema> keyDataTypes, valueDataTypes;
+    std::vector<UnboundOrderedSchema> keyDataTypes, valueDataTypes;
 };
 
 class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
@@ -63,7 +63,7 @@ class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
 public:
     std::shared_ptr<BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    Schema inputSchema;
+    UnboundOrderedSchema inputSchema{};
     std::vector<FieldOffsets> fieldKeys, fieldValues;
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<TupleBuffer> inputBuffers;

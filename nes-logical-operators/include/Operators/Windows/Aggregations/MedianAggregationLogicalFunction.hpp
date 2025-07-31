@@ -17,8 +17,8 @@
 #include <memory>
 #include <string_view>
 
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -29,13 +29,9 @@ namespace NES
 class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    /// Creates a new MedianAggregationLogicalFunction
-    /// @param onField field on which the aggregation should be performed
-    /// @param asField function describing how the aggregated field should be called
-    MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit MedianAggregationLogicalFunction(LogicalFunction inputFunction);
 
-    void inferStamp(const Schema& schema) override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
 
     ~MedianAggregationLogicalFunction() override = default;
 
@@ -45,7 +41,5 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Median";
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 }

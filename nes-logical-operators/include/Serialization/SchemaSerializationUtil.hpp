@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <DataTypes/Schema.hpp>
+#include <vector>
+#include <Schema/Schema.hpp>
 
 namespace NES
 {
@@ -29,11 +30,11 @@ public:
     /// @param schema std::shared_ptr<Schema>.
     /// @param serializedSchema The corresponding protobuff object, which is used to capture the state of the object.
     /// @return the modified serializedSchema
-    static SerializableSchema serializeSchema(const Schema& schema, SerializableSchema* serializedSchema);
+    static SerializableSchema* serializeSchema(const Schema& schema, SerializableSchema* serializedSchema);
 
     /// @brief De-serializes the SerializableSchema and all its fields to a std::shared_ptr<Schema>
     /// @param serializedSchema the serialized schema.
     /// @return std::shared_ptr<Schema>
-    static Schema deserializeSchema(const SerializableSchema& serializedSchema);
+    static Schema deserializeSchema(const SerializableSchema& serializedSchema, const std::vector<LogicalOperator>& operators);
 };
 }

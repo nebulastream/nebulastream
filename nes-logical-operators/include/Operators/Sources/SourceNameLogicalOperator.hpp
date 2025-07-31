@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
@@ -36,15 +36,11 @@ namespace NES
 class SourceNameLogicalOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
+    explicit SourceNameLogicalOperator(Identifier logicalSourceName);
 
     static void inferInputOrigins();
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] SourceNameLogicalOperator withSchema(const Schema& schema) const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
@@ -56,23 +52,32 @@ public:
     [[nodiscard]] SourceNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceNameLogicalOperator withInferredSchema() const;
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Source";
-    std::string logicalSourceName;
 
     std::vector<LogicalOperator> children;
+    Identifier logicalSourceName;
+
     TraitSet traitSet;
-    Schema schema, inputSchema, outputSchema;
+    friend struct std::hash<SourceNameLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::SourceNameLogicalOperator>
+{
+    std::size_t operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const;
+};

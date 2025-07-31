@@ -50,9 +50,9 @@ ATTACH INLINE
 6,4,test1,test2
 8,5,test1,test2
 
-CREATE SINK sinkWindow(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkStreamWithText(streamWithText.id UINT64, streamWithText.value UINT64, streamWithText.text1 VARSIZED, streamWithText.text2 VARSIZED)  TYPE File;
-CREATE SINK sinkId(stream.id UINT64)  TYPE File;
+CREATE SINK sinkWindow(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkStreamWithText(id UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED)  TYPE File;
+CREATE SINK sinkId(id UINT64)  TYPE File;
 
 # Filter equal
 SELECT id FROM stream WHERE value == UINT64(1) INTO sinkId;

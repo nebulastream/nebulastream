@@ -44,12 +44,12 @@ ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME": "max", "EXTRA_KEY": {"KEY": 2}}
 
-CREATE SINK keySink(jsonStream.key UINT64) TYPE File;
-CREATE SINK valueSink(jsonStream.value UINT64) TYPE File;
-CREATE SINK nameSink(jsonStream.name VARSIZED) TYPE File;
-CREATE SINK allFieldsSink(jsonStream.key UINT64, jsonStream.value UINT64, jsonStream.name VARSIZED) TYPE File;
-CREATE SINK allFieldsWrongFieldNameSink(jsonStreamWrongFieldName.key UINT64, jsonStreamWrongFieldName.value UINT64, jsonStreamWrongFieldName.name VARSIZED) TYPE File;
-CREATE SINK allFieldsWrongDataTypeSink(jsonStreamWrongDataTypes.key UINT64, jsonStreamWrongDataTypes.value UINT64, jsonStreamWrongDataTypes.name VARSIZED) TYPE File;
+CREATE SINK keySink(key UINT64) TYPE File;
+CREATE SINK valueSink(value UINT64) TYPE File;
+CREATE SINK nameSink(name VARSIZED) TYPE File;
+CREATE SINK allFieldsSink(key UINT64, value UINT64, name VARSIZED) TYPE File;
+CREATE SINK allFieldsWrongFieldNameSink(key UINT64, value UINT64, name VARSIZED) TYPE File;
+CREATE SINK allFieldsWrongDataTypeSink(key UINT64, value UINT64, name VARSIZED) TYPE File;
 
 SELECT KEY FROM jsonStream INTO keySink;
 ----

@@ -23,7 +23,7 @@ namespace NES::API
 {
 [[maybe_unused]] inline Windowing::TimeCharacteristic IngestionTime()
 {
-    return Windowing::TimeCharacteristic::createIngestionTime();
+    return Windowing::UnboundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}};
 }
 
 [[maybe_unused]] inline Windowing::TimeMeasure Milliseconds(uint64_t milliseconds)

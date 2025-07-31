@@ -171,7 +171,7 @@ ATTACH FILE small/stream8.csv
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH FILE small/stream8.csv
 
-CREATE SINK file_sink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64) TYPE File ;
+CREATE SINK file_sink(id UINT64, value UINT64, timestamp UINT64) TYPE File ;
 
 SELECT * FROM stream INTO file_sink;
 ----

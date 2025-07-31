@@ -17,7 +17,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -35,10 +36,10 @@ class InlineSourceLogicalOperator
 {
 public:
     explicit InlineSourceLogicalOperator(
-        std::string type,
-        const Schema& schema,
-        std::unordered_map<std::string, std::string> sourceConfig,
-        std::unordered_map<std::string, std::string> parserConfig);
+        Identifier type,
+        SchemaBase<UnboundFieldBase<1>, true> sourceSchema,
+        std::unordered_map<Identifier, std::string> sourceConfig,
+        std::unordered_map<Identifier, std::string> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
     static void serialize(SerializableOperator&);
@@ -49,32 +50,44 @@ public:
     [[nodiscard]] InlineSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema() const;
 
-    [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSourceConfig() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getParserConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] Identifier getSourceType() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getSourceConfig() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getParserConfig() const;
+    [[nodiscard]] SchemaBase<UnboundFieldBase<1>, true> getSourceSchema() const;
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "InlineSource";
 
+    SchemaBase<UnboundFieldBase<1>, true> sourceSchema;
+    Identifier sourceType;
+    std::unordered_map<Identifier, std::string> sourceConfig;
+    std::unordered_map<Identifier, std::string> parserConfig;
+
     std::vector<LogicalOperator> children;
+
     TraitSet traitSet;
 
-    Schema schema;
+    /// Set during schema inference
+    std::optional<SchemaBase<UnboundFieldBase<1>, false>> outputSchema;
 
-    std::string sourceType;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::InlineSourceLogicalOperator>
+{
+    uint64_t operator()(const NES::InlineSourceLogicalOperator& op) const noexcept;
+};

@@ -1,7 +1,7 @@
-From f7ce1006877916c7239c7340473ef23a6fc459dc Mon Sep 17 00:00:00 2001
+From 2c20a7afce9b4b9b2316a79d722429671aa8e2ac Mon Sep 17 00:00:00 2001
 From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
-Date: Fri, 28 Mar 2025 17:26:30 +0100
-Subject: [PATCH] Folly Patch
+Date: Mon, 19 Jan 2026 16:24:25 +0100
+Subject: [PATCH] nes patch
 
 ---
  CMake/FindCython.cmake                      |   47 -
@@ -21,12 +21,10 @@ Subject: [PATCH] Folly Patch
  CMake/FollyFunctions.cmake                  |  324 -----
  CMake/GenPkgConfig.cmake                    |  110 --
  CMake/folly-config.cmake.in                 |   47 -
+ CMake/folly-config.h.cmake                  |   89 --
  CMake/folly-deps.cmake                      |  315 -----
  CMake/libfolly.pc.in                        |   11 -
- CMakeLists.txt                              | 1237 ++++---------------
- cmake/FollyConfigChecks.cmake               |  182 +++
- cmake/config.cmake                          |    5 +
- {CMake => cmake}/folly-config.h.cmake       |   32 +-
+ CMakeLists.txt                              | 1181 ++++---------------
  folly/Exception.h                           |   12 +-
  folly/Executor.cpp                          |   13 +-
  folly/Function.h                            |    8 +-
@@ -50,7 +48,6 @@ Subject: [PATCH] Folly Patch
  folly/functional/Invoke.h                   |   10 +-
  folly/lang/SafeAssert.h                     |    1 +
  folly/memory/MallctlHelper.cpp              |   20 +-
- folly/stub/logging.h                        |   23 +
  folly/synchronization/HazptrDomain.h        |    2 +
  folly/synchronization/HazptrObj.h           |    5 +-
  folly/synchronization/HazptrObjLinked.h     |    2 +-
@@ -58,7 +55,7 @@ Subject: [PATCH] Folly Patch
  folly/synchronization/ParkingLot.h          |   22 +-
  folly/synchronization/SaturatingSemaphore.h |    2 +-
  folly/synchronization/detail/HazptrUtils.h  |    2 +-
- 54 files changed, 617 insertions(+), 3003 deletions(-)
+ 51 files changed, 364 insertions(+), 3047 deletions(-)
  delete mode 100644 CMake/FindCython.cmake
  delete mode 100644 CMake/FindDoubleConversion.cmake
  delete mode 100644 CMake/FindFmt.cmake
@@ -76,12 +73,9 @@ Subject: [PATCH] Folly Patch
  delete mode 100644 CMake/FollyFunctions.cmake
  delete mode 100644 CMake/GenPkgConfig.cmake
  delete mode 100644 CMake/folly-config.cmake.in
+ delete mode 100644 CMake/folly-config.h.cmake
  delete mode 100644 CMake/folly-deps.cmake
  delete mode 100644 CMake/libfolly.pc.in
- create mode 100644 cmake/FollyConfigChecks.cmake
- create mode 100644 cmake/config.cmake
- rename {CMake => cmake}/folly-config.h.cmake (74%)
- create mode 100644 folly/stub/logging.h
 
 diff --git a/CMake/FindCython.cmake b/CMake/FindCython.cmake
 deleted file mode 100644
@@ -1672,6 +1666,101 @@ index 1689f9a2d..000000000
 -if (NOT folly_FIND_QUIETLY)
 -  message(STATUS "Found folly: ${FOLLY_PREFIX_DIR}")
 -endif()
+diff --git a/CMake/folly-config.h.cmake b/CMake/folly-config.h.cmake
+deleted file mode 100644
+index ec6706a45..000000000
+--- a/CMake/folly-config.h.cmake
++++ /dev/null
+@@ -1,89 +0,0 @@
+-/*
+- * Copyright (c) Facebook, Inc. and its affiliates.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#if !defined(FOLLY_MOBILE)
+-#if defined(__ANDROID__) || \
+-    (defined(__APPLE__) &&  \
+-     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
+-#define FOLLY_MOBILE 1
+-#else
+-#define FOLLY_MOBILE 0
+-#endif
+-#endif // FOLLY_MOBILE
+-
+-#cmakedefine FOLLY_HAVE_PTHREAD 1
+-#cmakedefine FOLLY_HAVE_PTHREAD_ATFORK 1
+-
+-#cmakedefine FOLLY_HAVE_LIBGFLAGS 1
+-#cmakedefine FOLLY_UNUSUAL_GFLAGS_NAMESPACE 1
+-#cmakedefine FOLLY_GFLAGS_NAMESPACE @FOLLY_GFLAGS_NAMESPACE@
+-
+-#cmakedefine FOLLY_HAVE_LIBGLOG 1
+-
+-#cmakedefine FOLLY_USE_JEMALLOC 1
+-#cmakedefine FOLLY_USE_LIBSTDCPP 1
+-
+-#if __has_include(<features.h>)
+-#include <features.h>
+-#endif
+-
+-#cmakedefine FOLLY_HAVE_ACCEPT4 1
+-#cmakedefine01 FOLLY_HAVE_GETRANDOM
+-#cmakedefine FOLLY_HAVE_PREADV 1
+-#cmakedefine FOLLY_HAVE_PWRITEV 1
+-#cmakedefine FOLLY_HAVE_CLOCK_GETTIME 1
+-#cmakedefine FOLLY_HAVE_PIPE2 1
+-#cmakedefine FOLLY_HAVE_SENDMMSG 1
+-#cmakedefine FOLLY_HAVE_RECVMMSG 1
+-#cmakedefine FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF 1
+-
+-#cmakedefine FOLLY_HAVE_IFUNC 1
+-#cmakedefine FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE 1
+-#cmakedefine FOLLY_HAVE_UNALIGNED_ACCESS 1
+-#cmakedefine FOLLY_HAVE_VLA 1
+-#cmakedefine FOLLY_HAVE_WEAK_SYMBOLS 1
+-#cmakedefine FOLLY_HAVE_LINUX_VDSO 1
+-#cmakedefine FOLLY_HAVE_MALLOC_USABLE_SIZE 1
+-#cmakedefine FOLLY_HAVE_INT128_T 1
+-#cmakedefine FOLLY_HAVE_WCHAR_SUPPORT 1
+-#cmakedefine FOLLY_HAVE_EXTRANDOM_SFMT19937 1
+-#cmakedefine FOLLY_USE_LIBCPP 1
+-#cmakedefine HAVE_VSNPRINTF_ERRORS 1
+-
+-#cmakedefine FOLLY_HAVE_LIBUNWIND 1
+-#cmakedefine FOLLY_HAVE_DWARF 1
+-#cmakedefine FOLLY_HAVE_ELF 1
+-#cmakedefine FOLLY_HAVE_SWAPCONTEXT 1
+-#cmakedefine FOLLY_HAVE_BACKTRACE 1
+-#cmakedefine FOLLY_USE_SYMBOLIZER 1
+-#define FOLLY_DEMANGLE_MAX_SYMBOL_SIZE 1024
+-
+-#cmakedefine FOLLY_HAVE_SHADOW_LOCAL_WARNINGS 1
+-
+-#cmakedefine FOLLY_HAVE_LIBLZ4 1
+-#cmakedefine FOLLY_HAVE_LIBLZMA 1
+-#cmakedefine FOLLY_HAVE_LIBSNAPPY 1
+-#cmakedefine FOLLY_HAVE_LIBZ 1
+-#cmakedefine FOLLY_HAVE_LIBZSTD 1
+-#cmakedefine FOLLY_HAVE_LIBBZ2 1
+-
+-#cmakedefine01 FOLLY_LIBRARY_SANITIZE_ADDRESS
+-
+-#cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
+-
+-#cmakedefine01 FOLLY_HAVE_LIBRT
 diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
 deleted file mode 100644
 index e0e02c02e..000000000
@@ -2011,10 +2100,10 @@ index ffa043c1f..000000000
 -Libs: -L${libdir} -lfolly
 -Libs.private: @FOLLY_PKGCONFIG_PRIVATE_LIBS@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fc9f56350..fc93f0c6f 100644
+index fc9f56350..c8cdf6cc5 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,1001 +1,254 @@
+@@ -1,1001 +1,256 @@
 -# Copyright (c) Facebook, Inc. and its affiliates.
 -#
 -# Licensed under the Apache License, Version 2.0 (the "License");
@@ -2084,7 +2173,10 @@ index fc9f56350..fc93f0c6f 100644
 -  This is generally discouraged, since folly does not commit to having \
 -  a stable ABI."
 -  OFF
--)
++configure_file(
++        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
++        ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
+ )
 -# Mark BUILD_SHARED_LIBS as an "advanced" option, since enabling it
 -# is generally discouraged.
 -mark_as_advanced(BUILD_SHARED_LIBS)
@@ -2101,7 +2193,7 @@ index fc9f56350..fc93f0c6f 100644
 -  if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
 -    message(FATAL_ERROR "Folly requires a 64bit target architecture.")
 -  endif()
--
+ 
 -  if (MSVC_VERSION LESS 1900)
 -    message(
 -      FATAL_ERROR
@@ -2117,30 +2209,85 @@ index fc9f56350..fc93f0c6f 100644
 -set(
 -  FOLLY_DIR_PREFIXES
 -  "${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_BINARY_DIR}"
--)
--
++add_library(folly
++        folly/SharedMutex.cpp
++        folly/ScopeGuard.cpp
++        folly/concurrency/CacheLocality.cpp
++        folly/detail/Futex.cpp
++        folly/detail/ThreadLocalDetail.cpp
++        folly/detail/StaticSingletonManager.cpp
++        folly/detail/AtFork.cpp
++        folly/system/ThreadId.cpp
++        folly/synchronization/ParkingLot.cpp
++        folly/synchronization/SanitizeThread.cpp
++
++        # Required for MPMC
++        folly/synchronization/AsymmetricMemoryBarrier.cpp
++        folly/synchronization/Hazptr.cpp
++        folly/detail/MemoryIdler.cpp
++        folly/detail/UniqueInstance.cpp
++        folly/executors/QueuedImmediateExecutor.cpp
++        folly/Executor.cpp
++        folly/portability/SysMembarrier.cpp
++        folly/memory/MallctlHelper.cpp
++        folly/memory/detail/MallocImpl.cpp
++
++        folly/hash/SpookyHashV1.cpp
++        folly/hash/SpookyHashV2.cpp
+ )
+ 
 -include(GNUInstallDirs)
--
++target_compile_features(folly PRIVATE cxx_std_20)
+ 
 -set(CMAKE_THREAD_PREFER_PTHREAD ON)
 -set(THREADS_PREFER_PTHREAD_FLAG ON)
 -find_package(Threads REQUIRED)
 -set(FOLLY_HAVE_PTHREAD "${CMAKE_USE_PTHREADS_INIT}")
 -list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
 -list(APPEND FOLLY_LINK_LIBRARIES Threads::Threads)
--
++target_include_directories(folly PUBLIC
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/config>)
+ 
 -if(MSVC)
 -  include(FollyCompilerMSVC)
 -else()
 -  include(FollyCompilerUnix)
 -endif()
 -include(FollyFunctions)
--
++include(GNUInstallDirs)
++include(CMakePackageConfigHelpers)
+ 
 -include(folly-deps) # Find the required packages
 -include(FollyConfigChecks)
- configure_file(
+-configure_file(
 -  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/folly-config.h.cmake
 -  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
--)
++include(cmake/FollyConfigChecks.cmake)
++
++configure_package_config_file(cmake/config.cmake
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
++        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} NO_SET_AND_CHECK_MACRO) # share/
++
++# Version
++write_basic_package_version_file(
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
++        VERSION 0.0.1
++        COMPATIBILITY SameMajorVersion)
++
++# Install Config & Version
++install(FILES
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake # cmake_build-debug/
++        DESTINATION
++        ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}) # share/
++
++# Create export set to enable import in other CMake Projects
++install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets # create export set
++        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
++        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include/
+ )
 -
 -# Define FOLLY_XLOG_STRIP_PREFIXES when compiling our sources so that
 -# folly/logging will automatically choose the correct log category names,
@@ -2153,8 +2300,42 @@ index fc9f56350..fc93f0c6f 100644
 -  PROPERTY
 -  COMPILE_DEFINITIONS
 -  "FOLLY_XLOG_STRIP_PREFIXES=\"${CMAKE_SOURCE_DIR}:${CMAKE_BINARY_DIR}\""
--)
--
++# Install Export Set
++install(EXPORT ${PROJECT_NAME}-targets
++        NAMESPACE folly::
++        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
++
++
++set(header_path "folly")
++set(header
++        ${header_path}/SharedMutex.h
++        ${header_path}/Synchronized.h
++        ${header_path}/MPMCQueue.h
++        ${header_path}/Function.h
++        ${header_path}/Traits.h
++        ${header_path}/CppAttributes.h
++        ${header_path}/Portability.h
++        ${header_path}/SingletonThreadLocal.h
++        ${header_path}/CPortability.h
++        ${header_path}/Indestructible.h
++        ${header_path}/Preprocessor.h
++        ${header_path}/Utility.h
++        ${header_path}/Likely.h
++        ${header_path}/Hash.h
++        ${header_path}/Memory.h
++        ${header_path}/ConstexprMath.h
++        ${header_path}/Unit.h
++        ${header_path}/Optional.h
++        ${header_path}/Executor.h
++        ${header_path}/Range.h
++        ${header_path}/CpuId.h
++        ${header_path}/ThreadLocal.h
++        ${header_path}/ScopeGuard.h
++        ${header_path}/Exception.h
++        ${header_path}/Conv.h
++        ${header_path}/FBString.h
+ )
+ 
 -# We currently build the main libfolly library by finding all sources
 -# and header files.  We then exclude specific files below.
 -#
@@ -2188,7 +2369,7 @@ index fc9f56350..fc93f0c6f 100644
 -  ${FOLLY_DIR}/python/fibers.h
 -  ${FOLLY_DIR}/python/GILAwareManualExecutor.h
 -)
--
+ 
 -# Explicitly include utility library code from inside
 -# test subdirs
 -list(APPEND files
@@ -2219,8 +2400,19 @@ index fc9f56350..fc93f0c6f 100644
 -  ${FOLLY_DIR}/test/DeterministicSchedule.h
 -  ${FOLLY_DIR}/test/JsonTestUtil.h
 -  ${FOLLY_DIR}/test/TestUtils.h
--)
--
++set(header_path "folly/portability")
++set(portability
++        ${header_path}/Config.h
++        ${header_path}/Builtins.h
++        ${header_path}/Malloc.h
++        ${header_path}/Asm.h
++        ${header_path}/Unistd.h
++        ${header_path}/SysResource.h
++        ${header_path}/Constexpr.h
++        ${header_path}/PThread.h
++        ${header_path}/SysTypes.h
+ )
+ 
 -# Exclude specific sources if we do not have third-party libraries
 -# required to build them.
 -if (NOT ${LIBAIO_FOUND})
@@ -2343,12 +2535,15 @@ index fc9f56350..fc93f0c6f 100644
 -    ${FOLLY_DIR}/poly/Regular.h
 -  )
 -endif()
--
+ 
 -set(PCLMUL_FILES
 -  ${FOLLY_DIR}/hash/detail/ChecksumDetail.cpp
 -  ${FOLLY_DIR}/hash/detail/Crc32CombineDetail.cpp
 -  ${FOLLY_DIR}/hash/detail/Crc32cDetail.cpp
--)
++set(header_path "folly/memory")
++set(memory
++        ${header_path}/Malloc.h
+ )
 -check_cxx_compiler_flag(-mpclmul COMPILER_HAS_M_PCLMUL)
 -if (COMPILER_HAS_M_PCLMUL)
 -  message(
@@ -2367,11 +2562,14 @@ index fc9f56350..fc93f0c6f 100644
 -    "compiler does not have flag pclmul, skipping setting compile flags for ${PCLMUL_FILES}"
 -  )
 -endif()
--
+ 
 -add_library(folly_base OBJECT
 -  ${files} ${hfiles}
 -  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
--)
++set(header_path "folly/memory/detail")
++set(memory_detail
++        ${header_path}/MallocImpl.h
+ )
 -if (BUILD_SHARED_LIBS)
 -  set_property(TARGET folly_base PROPERTY POSITION_INDEPENDENT_CODE ON)
 -endif()
@@ -2379,7 +2577,7 @@ index fc9f56350..fc93f0c6f 100644
 -apply_folly_compile_options_to_target(folly_base)
 -# Add the generated files to the correct source group.
 -source_group("folly" FILES ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h)
--
+ 
 -# Generate pkg-config variables from folly_deps before we add our own
 -# build/install-time include directory generator expressions
 -include(GenPkgConfig)
@@ -2394,8 +2592,13 @@ index fc9f56350..fc93f0c6f 100644
 -target_include_directories(folly_deps
 -  INTERFACE
 -    $<INSTALL_INTERFACE:include>
--)
--
++set(header_path "folly/concurrency")
++set(concurrency
++        ${header_path}/CacheLocality.h
++        ${header_path}/UnboundedQueue.h
++        ${header_path}/DynamicBoundedQueue.h
+ )
+ 
 -target_include_directories(folly_base
 -  PUBLIC
 -    $<TARGET_PROPERTY:folly_deps,INTERFACE_INCLUDE_DIRECTORIES>
@@ -2403,26 +2606,57 @@ index fc9f56350..fc93f0c6f 100644
 -target_compile_definitions(folly_base
 -  PUBLIC
 -    $<TARGET_PROPERTY:folly_deps,INTERFACE_COMPILE_DEFINITIONS>
--)
--
++set(header_path "folly/functional")
++set(functional
++        ${header_path}/Invoke.h
++        ${header_path}/ApplyTuple.h
+ )
+ 
 -set(FOLLY_INSTALL_TARGETS folly folly_deps)
 -
 -option(PYTHON_EXTENSIONS
 -  "Build Python Bindings for Folly, requires Cython and (BUILD_SHARED_LIBS=ON)"
 -  OFF
-+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
-+        ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
++set(header_path "folly/lang")
++set(lang
++        ${header_path}/CustomizationPoint.h
++        ${header_path}/StaticConst.h
++        ${header_path}/Align.h
++        ${header_path}/Exception.h
++        ${header_path}/CArray.h
++        ${header_path}/CString.h
++        ${header_path}/TypeInfo.h
++        ${header_path}/Thunk.h
++        ${header_path}/Bits.h
++        ${header_path}/Assume.h
++        ${header_path}/Assume-inl.h
++        ${header_path}/CheckedMath.h
++        ${header_path}/UncaughtExceptions.h
  )
- 
- add_library(folly
+-
+-add_library(folly
 -  $<TARGET_OBJECTS:folly_base>
--)
++set(header_path "folly/detail")
++set(detail
++        ${header_path}/StaticSingletonManager.h
++        ${header_path}/Singleton.h
++        ${header_path}/TurnSequencer.h
++        ${header_path}/Futex.h
++        ${header_path}/MemoryIdler.h
++        ${header_path}/Iterators.h
++        ${header_path}/UniqueInstance.h
++        ${header_path}/ThreadLocalDetail.h
++        ${header_path}/RangeCommon.h
++        ${header_path}/AtFork.h
++        ${header_path}/RangeSse42.h
++        ${header_path}/Futex-inl.h
+ )
 -set_property(TARGET folly PROPERTY VERSION ${PACKAGE_VERSION})
 -apply_folly_compile_options_to_target(folly)
 -target_compile_features(folly INTERFACE cxx_generic_lambdas)
--
+ 
 -target_link_libraries(folly PUBLIC folly_deps)
--
+ 
 -# Test utilities exported for use by downstream projects
 -add_library(folly_test_util
 -  ${FOLLY_DIR}/test/DeterministicSchedule.cpp
@@ -2434,37 +2668,30 @@ index fc9f56350..fc93f0c6f 100644
 -    ${BOOST_LIBRARIES}
 -    folly
 -    ${LIBGMOCK_LIBRARIES}
--)
++set(header_path "folly/synchronization")
++set(synchronization
++        ${header_path}/RelaxedAtomic.h
++        ${header_path}/ParkingLot.h
++        ${header_path}/Lock.h
++        ${header_path}/AtomicStruct.h
++        ${header_path}/Hazptr.h
++        ${header_path}/Hazptr-fwd.h
++        ${header_path}/HazptrDomain.h
++        ${header_path}/HazptrObj.h
++        ${header_path}/HazptrObjLinked.h
++        ${header_path}/HazptrHolder.h
++        ${header_path}/HazptrRec.h
++        ${header_path}/HazptrThrLocal.h
++        ${header_path}/SanitizeThread.h
++        ${header_path}/MicroSpinLock.h
++        ${header_path}/SaturatingSemaphore.h
++        ${header_path}/AsymmetricMemoryBarrier.h
++        ${header_path}/WaitOptions.h
++        ${header_path}/AtomicUtil.h
++        ${header_path}/AtomicUtil-inl.h
+ )
 -apply_folly_compile_options_to_target(folly_test_util)
 -list(APPEND FOLLY_INSTALL_TARGETS folly_test_util)
-+        folly/SharedMutex.cpp
-+        folly/ScopeGuard.cpp
-+        folly/concurrency/CacheLocality.cpp
-+        folly/detail/Futex.cpp
-+        folly/detail/ThreadLocalDetail.cpp
-+        folly/detail/StaticSingletonManager.cpp
-+        folly/detail/AtFork.cpp
-+        folly/system/ThreadId.cpp
-+        folly/synchronization/ParkingLot.cpp
-+        folly/synchronization/SanitizeThread.cpp
-+
-+        # Required for MPMC
-+        folly/synchronization/AsymmetricMemoryBarrier.cpp
-+        folly/synchronization/Hazptr.cpp
-+        folly/detail/MemoryIdler.cpp
-+        folly/detail/UniqueInstance.cpp
-+        folly/executors/QueuedImmediateExecutor.cpp
-+        folly/Executor.cpp
-+        folly/portability/SysMembarrier.cpp
-+        folly/memory/MallctlHelper.cpp
-+        folly/memory/detail/MallocImpl.cpp
-+)
-+
-+target_compile_features(folly PRIVATE cxx_std_20)
-+
-+target_include_directories(folly PUBLIC
-+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/config>)
  
 -install(TARGETS ${FOLLY_INSTALL_TARGETS}
 -  EXPORT folly
@@ -2478,13 +2705,18 @@ index fc9f56350..fc93f0c6f 100644
 -  FILES ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
 -  DESTINATION ${INCLUDE_INSTALL_DIR}/folly
 -  COMPONENT dev
--)
--
++set(header_path "folly/synchronization/detail")
++set(synchronization_detail
++        ${header_path}/Sleeper.h
++        ${header_path}/AtomicUtils.h
++        ${header_path}/HazptrUtils.h
++        ${header_path}/Spin.h
+ )
+ 
 -# Generate the folly-config.cmake file for installation so that
 -# downstream projects that use on folly can easily depend on it in their CMake
 -# files using "find_package(folly CONFIG)"
-+include(GNUInstallDirs)
- include(CMakePackageConfigHelpers)
+-include(CMakePackageConfigHelpers)
 -configure_package_config_file(
 -  CMake/folly-config.cmake.in
 -  folly-config.cmake
@@ -2504,15 +2736,24 @@ index fc9f56350..fc93f0c6f 100644
 -  NAMESPACE Folly::
 -  FILE folly-targets.cmake
 -  COMPONENT dev
--)
--
++set(header_path "folly/hash")
++set(hash
++        ${header_path}/Hash.h
++        ${header_path}/SpookyHashV1.h
++        ${header_path}/SpookyHashV2.h
+ )
+ 
 -# Generate a pkg-config file so that downstream projects that don't use
 -# CMake can depend on folly using pkg-config.
 -configure_file(
 -  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/libfolly.pc.in
 -  ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc.gen
 -  @ONLY
--)
++set(header_path "folly/executors")
++set(executors
++        ${header_path}/QueuedImmediateExecutor.h
++        ${header_path}/InlineExecutor.h
+ )
 -
 -# Specify target to allow resolving generator expressions requiring
 -# a target for CMake >=3.19. See #1414.
@@ -2526,13 +2767,25 @@ index fc9f56350..fc93f0c6f 100644
 -  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc
 -  INPUT ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc.gen
 -  ${target_arg}
--)
++set(header_path "folly/container")
++set(container
++        ${header_path}/Foreach.h
++        ${header_path}/Foreach-inl.h
++        ${header_path}/Access.h
+ )
 -install(
 -  FILES ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc
 -  DESTINATION ${LIB_INSTALL_DIR}/pkgconfig
 -  COMPONENT dev
--)
--
++set(header_path "folly/system")
++set(system
++        ${header_path}/ThreadId.h
++)
++set(header_path "folly/chrono")
++set(chrono
++        ${header_path}/Hardware.h
+ )
+ 
 -option(BUILD_TESTS "If enabled, compile the tests." OFF)
 -option(BUILD_BROKEN_TESTS "If enabled, compile tests that are known to be broken." OFF)
 -option(BUILD_HANGING_TESTS "If enabled, compile tests that are known to hang." OFF)
@@ -3048,199 +3301,8 @@ index fc9f56350..fc93f0c6f 100644
 -        TEST singleton_thread_local_test SOURCES SingletonThreadLocalTest.cpp)
 -  endif()
 -endif()
- 
+-
 -add_subdirectory(folly)
-+include(cmake/FollyConfigChecks.cmake)
-+
-+configure_package_config_file(cmake/config.cmake
-+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
-+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} NO_SET_AND_CHECK_MACRO) # share/
-+
-+# Version
-+write_basic_package_version_file(
-+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-+        VERSION 0.0.1
-+        COMPATIBILITY SameMajorVersion)
-+
-+# Install Config & Version
-+install(FILES
-+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
-+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake # cmake_build-debug/
-+        DESTINATION
-+        ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}) # share/
-+
-+# Create export set to enable import in other CMake Projects
-+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets # create export set
-+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
-+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
-+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include/
-+)
-+# Install Export Set
-+install(EXPORT ${PROJECT_NAME}-targets
-+        NAMESPACE folly::
-+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
-+
-+
-+set(header_path "folly")
-+set(header
-+        ${header_path}/SharedMutex.h
-+        ${header_path}/Synchronized.h
-+        ${header_path}/MPMCQueue.h
-+        ${header_path}/Function.h
-+        ${header_path}/Traits.h
-+        ${header_path}/CppAttributes.h
-+        ${header_path}/Portability.h
-+        ${header_path}/SingletonThreadLocal.h
-+        ${header_path}/CPortability.h
-+        ${header_path}/Indestructible.h
-+        ${header_path}/Preprocessor.h
-+        ${header_path}/Utility.h
-+        ${header_path}/Likely.h
-+        ${header_path}/Hash.h
-+        ${header_path}/Memory.h
-+        ${header_path}/ConstexprMath.h
-+        ${header_path}/Unit.h
-+        ${header_path}/Optional.h
-+        ${header_path}/Executor.h
-+        ${header_path}/Range.h
-+        ${header_path}/CpuId.h
-+        ${header_path}/ThreadLocal.h
-+        ${header_path}/ScopeGuard.h
-+        ${header_path}/Exception.h
-+        ${header_path}/Conv.h
-+        ${header_path}/FBString.h
-+)
-+
-+
-+set(header_path "folly/portability")
-+set(portability
-+        ${header_path}/Config.h
-+        ${header_path}/Builtins.h
-+        ${header_path}/Malloc.h
-+        ${header_path}/Asm.h
-+        ${header_path}/Unistd.h
-+        ${header_path}/SysResource.h
-+        ${header_path}/Constexpr.h
-+        ${header_path}/PThread.h
-+        ${header_path}/SysTypes.h
-+)
-+
-+
-+set(header_path "folly/memory")
-+set(memory
-+        ${header_path}/Malloc.h
-+)
-+
-+set(header_path "folly/memory/detail")
-+set(memory_detail
-+        ${header_path}/MallocImpl.h
-+)
-+
-+set(header_path "folly/concurrency")
-+set(concurrency
-+        ${header_path}/CacheLocality.h
-+        ${header_path}/UnboundedQueue.h
-+        ${header_path}/DynamicBoundedQueue.h
-+)
-+
-+set(header_path "folly/functional")
-+set(functional
-+        ${header_path}/Invoke.h
-+        ${header_path}/ApplyTuple.h
-+)
-+
-+set(header_path "folly/lang")
-+set(lang
-+        ${header_path}/CustomizationPoint.h
-+        ${header_path}/StaticConst.h
-+        ${header_path}/Align.h
-+        ${header_path}/Exception.h
-+        ${header_path}/CArray.h
-+        ${header_path}/CString.h
-+        ${header_path}/TypeInfo.h
-+        ${header_path}/Thunk.h
-+        ${header_path}/Bits.h
-+        ${header_path}/Assume.h
-+        ${header_path}/Assume-inl.h
-+        ${header_path}/CheckedMath.h
-+        ${header_path}/UncaughtExceptions.h
-+)
-+
-+set(header_path "folly/detail")
-+set(detail
-+        ${header_path}/StaticSingletonManager.h
-+        ${header_path}/Singleton.h
-+        ${header_path}/TurnSequencer.h
-+        ${header_path}/Futex.h
-+        ${header_path}/MemoryIdler.h
-+        ${header_path}/Iterators.h
-+        ${header_path}/UniqueInstance.h
-+        ${header_path}/ThreadLocalDetail.h
-+        ${header_path}/RangeCommon.h
-+        ${header_path}/AtFork.h
-+        ${header_path}/RangeSse42.h
-+        ${header_path}/Futex-inl.h
-+)
-+
-+
-+set(header_path "folly/synchronization")
-+set(synchronization
-+        ${header_path}/RelaxedAtomic.h
-+        ${header_path}/ParkingLot.h
-+        ${header_path}/Lock.h
-+        ${header_path}/AtomicStruct.h
-+        ${header_path}/Hazptr.h
-+        ${header_path}/Hazptr-fwd.h
-+        ${header_path}/HazptrDomain.h
-+        ${header_path}/HazptrObj.h
-+        ${header_path}/HazptrObjLinked.h
-+        ${header_path}/HazptrHolder.h
-+        ${header_path}/HazptrRec.h
-+        ${header_path}/HazptrThrLocal.h
-+        ${header_path}/SanitizeThread.h
-+        ${header_path}/MicroSpinLock.h
-+        ${header_path}/SaturatingSemaphore.h
-+        ${header_path}/AsymmetricMemoryBarrier.h
-+        ${header_path}/WaitOptions.h
-+        ${header_path}/AtomicUtil.h
-+        ${header_path}/AtomicUtil-inl.h
-+)
-+
-+set(header_path "folly/synchronization/detail")
-+set(synchronization_detail
-+        ${header_path}/Sleeper.h
-+        ${header_path}/AtomicUtils.h
-+        ${header_path}/HazptrUtils.h
-+        ${header_path}/Spin.h
-+)
-+
-+set(header_path "folly/hash")
-+set(hash
-+        ${header_path}/Hash.h
-+        ${header_path}/SpookyHashV1.h
-+        ${header_path}/SpookyHashV2.h
-+)
-+
-+set(header_path "folly/executors")
-+set(executors
-+        ${header_path}/QueuedImmediateExecutor.h
-+        ${header_path}/InlineExecutor.h
-+)
-+set(header_path "folly/container")
-+set(container
-+        ${header_path}/Foreach.h
-+        ${header_path}/Foreach-inl.h
-+        ${header_path}/Access.h
-+)
-+set(header_path "folly/system")
-+set(system
-+        ${header_path}/ThreadId.h
-+)
-+set(header_path "folly/chrono")
-+set(chrono
-+        ${header_path}/Hardware.h
-+)
-+
 +# Install Headers
 +set(include_dest ${CMAKE_INSTALL_INCLUDEDIR}/folly)
 +# in src/CMakeLists.txt
@@ -3261,260 +3323,6 @@ index fc9f56350..fc93f0c6f 100644
 +install(FILES ${memory_detail} DESTINATION "${include_dest}/memory/detail")
 +install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h" DESTINATION "${include_dest}")
 +install(FILES "folly/stub/logging.h" DESTINATION "${include_dest}/stub")
-diff --git a/cmake/FollyConfigChecks.cmake b/cmake/FollyConfigChecks.cmake
-new file mode 100644
-index 000000000..57b9e3f05
---- /dev/null
-+++ b/cmake/FollyConfigChecks.cmake
-@@ -0,0 +1,182 @@
-+# Copyright (c) Meta Platforms, Inc. and affiliates.
-+#
-+# Licensed under the Apache License, Version 2.0 (the "License");
-+# you may not use this file except in compliance with the License.
-+# You may obtain a copy of the License at
-+#
-+#     http://www.apache.org/licenses/LICENSE-2.0
-+#
-+# Unless required by applicable law or agreed to in writing, software
-+# distributed under the License is distributed on an "AS IS" BASIS,
-+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+# See the License for the specific language governing permissions and
-+# limitations under the License.
-+
-+include(CheckCXXSourceCompiles)
-+include(CheckCXXSourceRuns)
-+include(CheckFunctionExists)
-+include(CheckIncludeFileCXX)
-+include(CheckSymbolExists)
-+include(CheckTypeSize)
-+include(CheckCXXCompilerFlag)
-+
-+if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-+    CHECK_INCLUDE_FILE_CXX(malloc_np.h FOLLY_USE_JEMALLOC)
-+else()
-+    CHECK_INCLUDE_FILE_CXX(jemalloc/jemalloc.h FOLLY_USE_JEMALLOC)
-+endif()
-+
-+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-+    # clang only rejects unknown warning flags if -Werror=unknown-warning-option
-+    # is also specified.
-+    check_cxx_compiler_flag(
-+            -Werror=unknown-warning-option
-+            COMPILER_HAS_UNKNOWN_WARNING_OPTION)
-+    if (COMPILER_HAS_UNKNOWN_WARNING_OPTION)
-+        set(CMAKE_REQUIRED_FLAGS
-+                "${CMAKE_REQUIRED_FLAGS} -Werror=unknown-warning-option")
-+    endif()
-+
-+    check_cxx_compiler_flag(-Wshadow-local COMPILER_HAS_W_SHADOW_LOCAL)
-+    check_cxx_compiler_flag(
-+            -Wshadow-compatible-local
-+            COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
-+    if (COMPILER_HAS_W_SHADOW_LOCAL AND COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
-+        set(FOLLY_HAVE_SHADOW_LOCAL_WARNINGS ON)
-+        list(APPEND FOLLY_CXX_FLAGS -Wshadow-compatible-local)
-+    endif()
-+
-+    check_cxx_compiler_flag(-Wnoexcept-type COMPILER_HAS_W_NOEXCEPT_TYPE)
-+    if (COMPILER_HAS_W_NOEXCEPT_TYPE)
-+        list(APPEND FOLLY_CXX_FLAGS -Wno-noexcept-type)
-+    endif()
-+
-+    check_cxx_compiler_flag(
-+            -Wnullability-completeness
-+            COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
-+    if (COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
-+        list(APPEND FOLLY_CXX_FLAGS -Wno-nullability-completeness)
-+    endif()
-+
-+    check_cxx_compiler_flag(
-+            -Winconsistent-missing-override
-+            COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
-+    if (COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
-+        list(APPEND FOLLY_CXX_FLAGS -Wno-inconsistent-missing-override)
-+    endif()
-+
-+    check_cxx_compiler_flag(-faligned-new COMPILER_HAS_F_ALIGNED_NEW)
-+    if (COMPILER_HAS_F_ALIGNED_NEW)
-+        list(APPEND FOLLY_CXX_FLAGS -faligned-new)
-+    endif()
-+
-+    check_cxx_compiler_flag(-fopenmp COMPILER_HAS_F_OPENMP)
-+    if (COMPILER_HAS_F_OPENMP)
-+        list(APPEND FOLLY_CXX_FLAGS -fopenmp)
-+    endif()
-+endif()
-+
-+set(FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
-+string(REGEX REPLACE
-+        "-std=(c|gnu)\\+\\+.."
-+        ""
-+        CMAKE_REQUIRED_FLAGS
-+        "${CMAKE_REQUIRED_FLAGS}")
-+
-+check_symbol_exists(pthread_atfork pthread.h FOLLY_HAVE_PTHREAD_ATFORK)
-+
-+list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-+check_symbol_exists(accept4 sys/socket.h FOLLY_HAVE_ACCEPT4)
-+check_symbol_exists(getrandom sys/random.h FOLLY_HAVE_GETRANDOM)
-+check_symbol_exists(preadv sys/uio.h FOLLY_HAVE_PREADV)
-+check_symbol_exists(pwritev sys/uio.h FOLLY_HAVE_PWRITEV)
-+check_symbol_exists(clock_gettime time.h FOLLY_HAVE_CLOCK_GETTIME)
-+check_symbol_exists(pipe2 unistd.h FOLLY_HAVE_PIPE2)
-+check_symbol_exists(sendmmsg sys/socket.h FOLLY_HAVE_SENDMMSG)
-+check_symbol_exists(recvmmsg sys/socket.h FOLLY_HAVE_RECVMMSG)
-+
-+check_function_exists(malloc_usable_size FOLLY_HAVE_MALLOC_USABLE_SIZE)
-+
-+set(CMAKE_REQUIRED_FLAGS "${FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS}")
-+
-+check_cxx_source_compiles("
-+  #pragma GCC diagnostic error \"-Wattributes\"
-+  extern \"C\" void (*test_ifunc(void))() { return 0; }
-+  void func() __attribute__((ifunc(\"test_ifunc\")));
-+  int main() { return 0; }"
-+        FOLLY_HAVE_IFUNC
-+)
-+check_cxx_source_runs("
-+  int main(int, char**) {
-+    char buf[64] = {0};
-+    unsigned long *ptr = (unsigned long *)(buf + 1);
-+    *ptr = 0xdeadbeef;
-+    return (*ptr & 0xff) == 0xef ? 0 : 1;
-+  }"
-+        FOLLY_HAVE_UNALIGNED_ACCESS
-+)
-+check_cxx_source_compiles("
-+  int main(int argc, char** argv) {
-+    unsigned size = argc;
-+    char data[size];
-+    return 0;
-+  }"
-+        FOLLY_HAVE_VLA
-+)
-+check_cxx_source_runs("
-+  extern \"C\" int folly_example_undefined_weak_symbol() __attribute__((weak));
-+  int main(int argc, char** argv) {
-+    auto f = folly_example_undefined_weak_symbol; // null pointer
-+    return f ? f() : 0; // must compile, link, and run with null pointer
-+  }"
-+        FOLLY_HAVE_WEAK_SYMBOLS
-+)
-+check_cxx_source_runs("
-+  #include <dlfcn.h>
-+  int main() {
-+    void *h = dlopen(\"linux-vdso.so.1\", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+    if (h == nullptr) {
-+      return -1;
-+    }
-+    dlclose(h);
-+    return 0;
-+  }"
-+        FOLLY_HAVE_LINUX_VDSO
-+)
-+
-+check_cxx_source_runs("
-+  #include <cstddef>
-+  #include <cwchar>
-+  int main(int argc, char** argv) {
-+    return wcstol(L\"01\", nullptr, 10) == 1 ? 0 : 1;
-+  }"
-+        FOLLY_HAVE_WCHAR_SUPPORT
-+)
-+
-+check_cxx_source_compiles("
-+  #include <ext/random>
-+  int main(int argc, char** argv) {
-+    __gnu_cxx::sfmt19937 rng;
-+    return 0;
-+  }"
-+        FOLLY_HAVE_EXTRANDOM_SFMT19937
-+)
-+
-+check_cxx_source_runs("
-+  #include <stdarg.h>
-+  #include <stdio.h>
-+
-+  int call_vsnprintf(const char* fmt, ...) {
-+    char buf[256];
-+    va_list ap;
-+    va_start(ap, fmt);
-+    int result = vsnprintf(buf, sizeof(buf), fmt, ap);
-+    va_end(ap);
-+    return result;
-+  }
-+
-+  int main(int argc, char** argv) {
-+    return call_vsnprintf(\"%\", 1) < 0 ? 0 : 1;
-+  }"
-+        HAVE_VSNPRINTF_ERRORS
-+)
-\ No newline at end of file
-diff --git a/cmake/config.cmake b/cmake/config.cmake
-new file mode 100644
-index 000000000..0e267af7f
---- /dev/null
-+++ b/cmake/config.cmake
-@@ -0,0 +1,5 @@
-+@PACKAGE_INIT@
-+
-+include(${CMAKE_CURRENT_LIST_DIR}/folly-targets.cmake)
-+
-+check_required_components(folly)
-diff --git a/CMake/folly-config.h.cmake b/cmake/folly-config.h.cmake
-similarity index 74%
-rename from CMake/folly-config.h.cmake
-rename to cmake/folly-config.h.cmake
-index ec6706a45..3572d73eb 100644
---- a/CMake/folly-config.h.cmake
-+++ b/cmake/folly-config.h.cmake
-@@ -1,24 +1,24 @@
- /*
-- * Copyright (c) Facebook, Inc. and its affiliates.
-- *
-- * Licensed under the Apache License, Version 2.0 (the "License");
-- * you may not use this file except in compliance with the License.
-- * You may obtain a copy of the License at
-- *
-- *     http://www.apache.org/licenses/LICENSE-2.0
-- *
-- * Unless required by applicable law or agreed to in writing, software
-- * distributed under the License is distributed on an "AS IS" BASIS,
-- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-- * See the License for the specific language governing permissions and
-- * limitations under the License.
-- */
-+* Copyright (c) Facebook, Inc. and its affiliates.
-+*
-+* Licensed under the Apache License, Version 2.0 (the "License");
-+* you may not use this file except in compliance with the License.
-+* You may obtain a copy of the License at
-+*
-+*     http://www.apache.org/licenses/LICENSE-2.0
-+*
-+* Unless required by applicable law or agreed to in writing, software
-+* distributed under the License is distributed on an "AS IS" BASIS,
-+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+* See the License for the specific language governing permissions and
-+* limitations under the License.
-+*/
- 
- #pragma once
- 
- #if !defined(FOLLY_MOBILE)
- #if defined(__ANDROID__) || \
--    (defined(__APPLE__) &&  \
-+(defined(__APPLE__) &&  \
-      (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
- #define FOLLY_MOBILE 1
- #else
-@@ -86,4 +86,4 @@
- 
- #cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
- 
--#cmakedefine01 FOLLY_HAVE_LIBRT
-+#cmakedefine01 FOLLY_HAVE_LIBRT
-\ No newline at end of file
 diff --git a/folly/Exception.h b/folly/Exception.h
 index d446e29bf..db51d0fa3 100644
 --- a/folly/Exception.h
@@ -4166,35 +3974,6 @@ index 2af9ab403..4a032e715 100644
 +        }
 +    } // namespace detail
  } // namespace folly
-diff --git a/folly/stub/logging.h b/folly/stub/logging.h
-new file mode 100644
-index 000000000..b57ca58c6
---- /dev/null
-+++ b/folly/stub/logging.h
-@@ -0,0 +1,23 @@
-+#ifndef LOGGING_H
-+#define LOGGING_H
-+#include <cassert>
-+#include <iostream>
-+
-+#define DCHECK_LE(a,b) assert((a) <= (b))
-+#define DCHECK_LT(a,b) assert((a) < (b))
-+#define DCHECK_GE(a,b) assert((a) >= (b))
-+#define DCHECK_GT(a,b) assert((a) > (b))
-+#define DCHECK_EQ(a,b) assert((a)==(b))
-+#define DCHECK_NE(a,b) assert((a)!=(b))
-+#define DCHECK(exp) assert(exp)
-+
-+#define CHECK_LE(a,b) assert((a) <= (b))
-+#define CHECK_LT(a,b) assert((a) < (b))
-+#define CHECK_GE(a,b) assert((a) >= (b))
-+#define CHECK_GT(a,b) assert((a) > (b))
-+#define CHECK_EQ(a,b) assert((a)==(b))
-+#define CHECK_NE(a,b) assert((a)!=(b))
-+
-+#define LOG(...) std::cerr
-+
-+#endif //LOGGING_H
 diff --git a/folly/synchronization/HazptrDomain.h b/folly/synchronization/HazptrDomain.h
 index 8b1a81eca..9a5f5777e 100644
 --- a/folly/synchronization/HazptrDomain.h
@@ -4341,5 +4120,5 @@ index 2a974ec3d..63d6affe6 100644
  #include <folly/Portability.h>
  #include <folly/synchronization/detail/Sleeper.h>
 -- 
-2.45.2
+2.50.0
 

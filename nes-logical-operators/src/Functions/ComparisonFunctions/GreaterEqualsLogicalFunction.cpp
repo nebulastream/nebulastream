@@ -18,9 +18,10 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,7 +34,8 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
 {
 }
 
@@ -58,21 +60,21 @@ DataType GreaterEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp(
+            "Can only apply greater equals to two functions with numeric data types, but got left: {}, right: {}",
+            copy.left,
+            copy.right);
     }
-    return this->withChildren(newChildren);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
+
 };
 
 std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
@@ -111,7 +113,7 @@ LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalF
     {
         throw CannotDeserialize("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+    return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

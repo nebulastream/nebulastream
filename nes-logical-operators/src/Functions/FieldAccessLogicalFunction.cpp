@@ -18,25 +18,23 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)) { };
-
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(std::move(dataType)) { };
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(Field field) : field(std::move(field)) { };
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -49,9 +47,7 @@ bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) c
 
 bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
 {
-    const bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
-    const bool dataTypesMatch = rhs.dataType == lhs.dataType;
-    return fieldNamesMatch and dataTypesMatch;
+    return lhs.field == rhs.field;
 }
 
 bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
@@ -59,15 +55,15 @@ bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalF
     return !(lhs == rhs);
 }
 
-std::string FieldAccessLogicalFunction::getFieldName() const
+Field FieldAccessLogicalFunction::getField() const
 {
-    return fieldName;
+    return field;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
+LogicalFunction FieldAccessLogicalFunction::withField(Field field) const
 {
     auto copy = *this;
-    copy.fieldName = std::move(fieldName);
+    copy.field = std::move(field);
     return copy;
 }
 
@@ -75,36 +71,28 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FieldAccessLogicalFunction({}{})", fieldName, dataType);
+        return fmt::format("FieldAccessLogicalFunction({})", field);
     }
-    return fieldName;
+    return fmt::format("{}", field);
 }
 
 LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    const auto existingField = schema.getFieldByName(fieldName);
-    if (!existingField)
+    const auto newField = schema.getFieldByName(field.getLastName());
+    if (!newField)
     {
-        throw CannotInferSchema("field {} is not part of the schema {}", fieldName, schema);
+        throw CannotInferSchema("field {} is not part of the schema {}", field.getLastName(), schema);
     }
 
     auto copy = *this;
-    copy.dataType = existingField.value().dataType;
-    copy.fieldName = existingField.value().name;
+    copy.field = newField.value();
     return copy;
 }
 
 DataType FieldAccessLogicalFunction::getDataType() const
 {
-    return dataType;
+    return field.getDataType();
 };
-
-LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-}
 
 std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
 {
@@ -126,11 +114,14 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
 
-    const DescriptorConfig::ConfigType configVariant = getFieldName();
-    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
-    (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
+    const DescriptorConfig::ConfigType configVariant = field.getLastName();
+    const SerializableVariantDescriptor fieldNameVariant = descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())[ConfigParameters::FIELD_NAME] = fieldNameVariant;
+    const SerializableVariantDescriptor fromOperatorVariant
+        = descriptorConfigTypeToProto(DescriptorConfig::ConfigType{field.getProducedBy().getId().getRawValue()});
+    (*serializedFunction.mutable_config())[ConfigParameters::FROM_OPERATOR] = fromOperatorVariant;
 
-    DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());
+    DataTypeSerializationUtil::serializeDataType(field.getDataType(), serializedFunction.mutable_data_type());
 
     return serializedFunction;
 }
@@ -138,18 +129,36 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (not arguments.config.contains("FieldName"))
+    const auto& fieldNameIter = arguments.config.find(std::string{FieldAccessLogicalFunction::ConfigParameters::FIELD_NAME});
+    if (fieldNameIter == arguments.config.end())
     {
-        throw CannotDeserialize(
+        throw CannotDeserialize("FieldAccessLogicalFunction requires a FieldName in its config");
+    }
+    const auto fieldName = std::get<Identifier>(fieldNameIter->second);
 
-            "FieldAccessLogicalFunction requires a FieldName in its config");
-    }
-    auto fieldName = get<std::string>(arguments.config["FieldName"]);
-    if (fieldName.empty())
+    const auto& operatorIdIter = arguments.config.find(std::string{FieldAccessLogicalFunction::ConfigParameters::FROM_OPERATOR});
+    if (operatorIdIter == arguments.config.end() || !std::holds_alternative<uint64_t>(operatorIdIter->second))
     {
-        throw CannotDeserialize("FieldName cannot be empty");
+        throw CannotDeserialize("FieldAccessLogicalFunction requires an operator id in its config");
     }
-    return FieldAccessLogicalFunction(arguments.dataType, fieldName);
+    const auto field = arguments.schema.getFieldByName(fieldName);
+    if (!field)
+    {
+        throw CannotDeserialize("FieldAccessLogicalFunction requires a FieldName that is part of the schema");
+    }
+
+    /// TODO enable this check when we removed operator ids from the model and made it serialization only
+    /// const uint64_t foundOperatorId = std::get<uint64_t>(operatorIdIter->second);
+    /// if (field.value().getProducedBy().getId().getRawValue() != foundOperatorId)
+    /// {
+    ///     throw CannotDeserialize("Operator id in config does not match the operator id of the field of FieldAccessLogicalFunction");
+    /// }
+    return FieldAccessLogicalFunction(field.value());
 }
 
+}
+
+std::size_t std::hash<NES::FieldAccessLogicalFunction>::operator()(const NES::FieldAccessLogicalFunction& fieldAccessFunction) const noexcept
+{
+    return std::hash<NES::Field>()(fieldAccessFunction.getField());
 }

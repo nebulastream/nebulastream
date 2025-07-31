@@ -17,8 +17,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -60,10 +60,6 @@ DataType LogicalFunction::getDataType() const
     return self->getDataType();
 }
 
-LogicalFunction LogicalFunction::withDataType(const DataType& dataType) const
-{
-    return self->withDataType(std::move(dataType));
-}
 
 SerializableFunction LogicalFunction::serialize() const
 {

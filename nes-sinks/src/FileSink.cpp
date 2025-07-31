@@ -49,13 +49,14 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
+    const auto schema = get<std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>>>(sinkDescriptor.getSchema());
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {
         case InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+            formatter = std::make_unique<CSVFormat>(*schema);
             break;
         case InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+            formatter = std::make_unique<JSONFormat>(*schema);
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));

@@ -18,6 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -27,6 +28,10 @@
 #include <RewriteRuleRegistry.hpp>
 #include <UnionPhysicalOperator.hpp>
 #include <UnionRenamePhysicalOperator.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
@@ -35,19 +40,30 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 {
     PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
-    const auto source = logicalOperator.getAs<UnionLogicalOperator>();
-    auto inputSchemas = logicalOperator.getInputSchemas();
-    auto outputSchema = logicalOperator.getOutputSchema();
+    const auto unionOp = logicalOperator.getAs<UnionLogicalOperator>();
+
+    const auto traitSet = unionOp->getTraitSet();
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
-    auto renames = inputSchemas
+
+    const auto outputSchema = createPhysicalOutputSchema(traitSet);
+
+    auto renames = unionOp.getChildren()
         | std::views::transform(
-                       [&](const auto& schema)
+                       [&](const auto& childOperator)
                        {
+                           const auto childTraitSet = childOperator->getTraitSet();
+                           const auto childOutputSchema = createPhysicalOutputSchema(childTraitSet);
+                           constexpr auto extractNames = [](const UnboundOrderedSchema& schema)
+                           {
+                               return schema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+                                   | std::ranges::to<std::vector>();
+                           };
+
                            return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
-                               schema,
+                               UnionRenamePhysicalOperator{extractNames(childOutputSchema), extractNames(outputSchema)},
+                               childOutputSchema,
                                outputSchema,
                                memoryLayoutType,
                                memoryLayoutType,
@@ -57,8 +73,8 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
-        source.getOutputSchema(),
-        logicalOperator.getOutputSchema(),
+        outputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         std::nullopt,

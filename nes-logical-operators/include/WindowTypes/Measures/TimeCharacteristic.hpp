@@ -18,57 +18,95 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include "Functions/UnboundFieldAccessLogicalFunction.hpp"
+#include "Identifiers/Identifier.hpp"
+
 
 namespace NES::Windowing
 {
+struct IngestionTimeCharacteristic
+{
+    [[nodiscard]] constexpr bool operator==(const IngestionTimeCharacteristic&) { return true; }
+
+    friend std::ostream& operator<<(std::ostream& os, const IngestionTimeCharacteristic& timeCharacteristic);
+};
+
+struct UnboundEventTimeCharacteristic
+{
+    UnboundFieldAccessLogicalFunction field;
+    TimeUnit unit{1};
+    [[nodiscard]] bool operator==(const UnboundEventTimeCharacteristic& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const IngestionTimeCharacteristic& timeCharacteristic);
+};
+
+struct BoundEventTimeCharacteristic
+{
+    FieldAccessLogicalFunction field;
+    TimeUnit unit{1};
+    [[nodiscard]] bool operator==(const BoundEventTimeCharacteristic& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const IngestionTimeCharacteristic& timeCharacteristic);
+};
+
+using UnboundTimeCharacteristic = std::variant<IngestionTimeCharacteristic, UnboundEventTimeCharacteristic>;
+using BoundTimeCharacteristic = std::variant<IngestionTimeCharacteristic, BoundEventTimeCharacteristic>;
+using TimeCharacteristic = std::variant<UnboundTimeCharacteristic, BoundTimeCharacteristic>;
 
 /// @brief The timestamp characteristic implements time information for windowed operators
-class TimeCharacteristic final
+class TimeCharacteristicWrapper final
 {
 public:
-    constexpr static auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
-
     enum class Type : uint8_t
     {
         IngestionTime,
         EventTime
     };
-    explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, Schema::Field field, const TimeUnit& unit);
 
-    /// @brief Factory to create a time characteristic for ingestion time window
-    /// @param unit the time unit of the ingestion time
-    /// @return std::shared_ptr<TimeCharacteristic>
-    static TimeCharacteristic createIngestionTime();
-
-    /// @brief Factory to create a event time window with an time extractor on a specific field.
-    /// @param unit the time unit of the EventTime, defaults to milliseconds
-    /// @param field the field from which we want to extract the time.
-    /// @return std::shared_ptr<TimeCharacteristic>
-    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit);
-    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& fieldAccess);
+    explicit TimeCharacteristicWrapper(std::variant<UnboundTimeCharacteristic, BoundTimeCharacteristic> timeCharacteristic);
+    static IngestionTimeCharacteristic createIngestionTime();
+    static UnboundEventTimeCharacteristic createEventTime(UnboundFieldAccessLogicalFunction field, const TimeUnit& unit = TimeUnit{1});
+    static BoundEventTimeCharacteristic createEventTime(FieldAccessLogicalFunction field, const TimeUnit& unit = TimeUnit{1});
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;
 
-    [[nodiscard]] bool operator==(const TimeCharacteristic& other) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
+    [[nodiscard]] bool operator==(const TimeCharacteristicWrapper& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristicWrapper& timeCharacteristic);
 
     [[nodiscard]] std::string getTypeAsString() const;
-    [[nodiscard]] TimeUnit getTimeUnit() const;
+    [[nodiscard]] TimeCharacteristic getUnderlying() const;
+    [[nodiscard]] TimeCharacteristic&& getUnderlying() &&;
+    operator const TimeCharacteristic&() const;
 
-    void setTimeUnit(const TimeUnit& unit);
-
-    Schema::Field field;
+    [[nodiscard]] BoundTimeCharacteristic withInferredSchema(const Schema& schema) const;
 
 private:
-    Type type;
-    TimeUnit unit;
+    TimeCharacteristic underlying;
 };
+
 }
 
 FMT_OSTREAM(NES::Windowing::TimeCharacteristic);
+
+template <>
+struct std::hash<NES::Windowing::IngestionTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::IngestionTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+
+template <>
+struct std::hash<NES::Windowing::UnboundEventTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::UnboundEventTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+
+template <>
+struct std::hash<NES::Windowing::BoundEventTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::BoundEventTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+

@@ -20,24 +20,24 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <fmt/format.h>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema>(schema))
+LogicalSource::LogicalSource(Identifier logicalSourceName, const SchemaBase<UnboundFieldBase<1>, true>& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<SchemaBase<UnboundFieldBase<1>, true>>(schema))
 {
 }
 
-std::shared_ptr<const Schema> LogicalSource::getSchema() const
+std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>> LogicalSource::getSchema() const
 {
     return schema;
 }
 
-std::string LogicalSource::getLogicalSourceName() const
+Identifier LogicalSource::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
@@ -55,7 +55,7 @@ bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
 
 uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& logicalSource) const noexcept
 {
-    return std::hash<std::string>()(logicalSource.getLogicalSourceName());
+    return std::hash<NES::Identifier>()(logicalSource.getLogicalSourceName());
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSource)

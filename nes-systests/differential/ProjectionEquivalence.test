@@ -14,4 +14,4 @@ CREATE SINK projectionSink(out_id UINT64, out_value UINT64, out_timestamp UINT64
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream INTO projectionSink;
 ====
-SELECT stream.id AS out_id, stream.value AS out_value, stream.timestamp AS out_timestamp FROM stream INTO projectionSink;
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream INTO projectionSink;

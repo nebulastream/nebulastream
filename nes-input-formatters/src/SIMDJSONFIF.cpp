@@ -88,7 +88,7 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
 void SIMDJSONFIF::writeValueToRecord(
     const DataType::Type physicalType,
     Record& record,
-    const std::string& fieldName,
+    const IdentifierList& fieldName,
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<const SIMDJSONMetaData*>& metaData,

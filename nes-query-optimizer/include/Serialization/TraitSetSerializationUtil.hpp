@@ -16,6 +16,7 @@
 
 #include <Traits/TraitSet.hpp>
 #include <SerializableTrait.pb.h>
+#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {
@@ -23,6 +24,6 @@ class TraitSetSerializationUtil
 {
 public:
     static SerializableTraitSet* serialize(const NES::TraitSet& traitSet, SerializableTraitSet* traitSetPtr);
-    static TraitSet deserialize(const SerializableTraitSet* traitSetPtr);
+    static TraitSet deserialize(const SerializableTraitSet* traitSetPtr, LogicalOperator logicalOperator);
 };
 }

@@ -17,10 +17,10 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
@@ -30,45 +30,34 @@ class WindowAggregationLogicalFunction
 public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
-
-    void setInputStamp(DataType inputStamp);
-    void setPartialAggregateStamp(DataType partialAggregateStamp);
-    void setFinalAggregateStamp(DataType finalAggregateStamp);
-    void setOnField(FieldAccessLogicalFunction onField);
-    void setAsField(FieldAccessLogicalFunction asField);
+    [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] LogicalFunction getInputFunction() const;
 
     [[nodiscard]] std::string toString() const;
     bool operator==(const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const;
 
     /// @brief Infers the dataType of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(const Schema& schema) = 0;
+    [[nodiscard]] virtual std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) = 0;
 
     [[nodiscard]] virtual SerializableAggregationFunction serialize() const = 0;
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
-
 protected:
-    explicit WindowAggregationLogicalFunction(
-        DataType inputStamp,
-        DataType partialAggregateStamp,
-        DataType finalAggregateStamp,
-        FieldAccessLogicalFunction onField,
-        FieldAccessLogicalFunction asField);
+    explicit WindowAggregationLogicalFunction(DataType aggregateType, LogicalFunction inputFunction);
+    explicit WindowAggregationLogicalFunction(LogicalFunction inputFunction);
 
-    explicit WindowAggregationLogicalFunction(
-        DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
-
-private:
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
+    DataType aggregateType;
+    LogicalFunction inputFunction;
 };
 }
+
+
+template <>
+struct std::hash<NES::WindowAggregationLogicalFunction>
+{
+    size_t operator()(const NES::WindowAggregationLogicalFunction& windowAggregationLogicalFunction) const
+    {
+        return std::hash<std::string_view>{}(windowAggregationLogicalFunction.getName());
+    }
+};

@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -25,7 +26,6 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <static.hpp>
 
@@ -51,8 +51,8 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     Record joinedRecord;
 
     /// Writing the window start, end, and key field
-    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
-    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+    joinedRecord.write(windowMetaData.startField.getFullyQualifiedName(), windowStart.convertToValue());
+    joinedRecord.write(windowMetaData.endField.getFullyQualifiedName(), windowEnd.convertToValue());
 
     /// Writing the outerSchema fields, expect the join schema to have the fields in the same order then the outer schema
     for (const auto& fieldName : nautilus::static_iterable(projectionsOuter))

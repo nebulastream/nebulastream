@@ -20,8 +20,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -35,11 +35,9 @@ namespace NES
 
 struct SinkLogicalOperator final
 {
-    /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    explicit SinkLogicalOperator(std::string sinkName);
-    explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
+    explicit SinkLogicalOperator(Identifier sinkName);
+    explicit SinkLogicalOperator(const SinkDescriptor& sinkDescriptor);
 
     [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -49,23 +47,23 @@ struct SinkLogicalOperator final
 
     [[nodiscard]] SinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SinkLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] SinkLogicalOperator withInferredSchema() const;
 
-    [[nodiscard]] std::string getSinkName() const noexcept;
+    [[nodiscard]] Identifier getSinkName() const noexcept;
     [[nodiscard]] std::optional<SinkDescriptor> getSinkDescriptor() const;
 
     [[nodiscard]] SinkLogicalOperator withSinkDescriptor(SinkDescriptor sinkDescriptor) const;
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SINK_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> SINK_NAME{
             "SinkName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SINK_NAME, config); }};
@@ -74,19 +72,29 @@ struct SinkLogicalOperator final
             = DescriptorConfig::createConfigParameterContainerMap(SINK_NAME);
     };
 
+public:
+    WeakLogicalOperator self;
+
 private:
     static constexpr std::string_view NAME = "Sink";
 
-    std::vector<LogicalOperator> children;
     TraitSet traitSet;
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 
-    std::string sinkName;
+    Identifier sinkName;
     std::optional<SinkDescriptor> sinkDescriptor;
+    std::optional<LogicalOperator> child;
 
     friend class OperatorSerializationUtil;
+    friend struct std::hash<SinkLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::SinkLogicalOperator>
+{
+    size_t operator()(const NES::SinkLogicalOperator& sinkLogicalOperator) const noexcept;
+};

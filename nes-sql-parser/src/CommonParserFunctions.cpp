@@ -33,34 +33,48 @@
 
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier)
+Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* identifier)
 {
     return bindIdentifier(identifier->strictIdentifier());
 }
 
-std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier)
+Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier)
 {
-    if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(strictIdentifier))
+    const auto idOpt = [&strictIdentifier]
     {
-        std::string text = unquotedIdentifier->getText();
-        return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
-            | std::ranges::to<std::string>();
-    }
-    if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(strictIdentifier))
+        if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(strictIdentifier))
+        {
+            return Identifier::tryParse(unquotedIdentifier->getText());
+        }
+        if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(strictIdentifier))
+        {
+            const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
+            auto withoutMarks = withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+            return Identifier::tryParse(fmt::format("\"{}\"", withoutMarks));
+        }
+        INVARIANT(
+            false,
+            "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
+            "passed?");
+        std::unreachable();
+    }();
+    if (not idOpt.has_value())
     {
-        const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
-        return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+        throw idOpt.error();
     }
-    INVARIANT(
-        false,
-        "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
-        "passed?");
-    std::unreachable();
+    return idOpt.value();
+}
+
+IdentifierList bindIdentifierList(AntlrSQLParser::IdentifierChainContext* identifierList)
+{
+    return identifierList->strictIdentifier()
+        | std::views::transform([](AntlrSQLParser::StrictIdentifierContext* identifier) { return bindIdentifier(identifier); })
+        | std::ranges::to<IdentifierList>();
 }
 
 /// TODO #764 use identifier lists instead of map of maps
@@ -75,9 +89,9 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
         }
         const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier().at(0));
         auto optionName = bindIdentifier(configOption->name->strictIdentifier().at(1));
-        boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<std::string, std::variant<Literal, Schema>>{});
+        boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<Identifier, std::variant<Literal, SchemaBase<UnboundFieldBase<1>, true>>>{});
 
-        std::variant<Literal, Schema> value{};
+        std::variant<Literal, SchemaBase<UnboundFieldBase<1>, true>> value{};
 
         if (configOption->constant() != nullptr)
         {
@@ -96,45 +110,49 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
     return boundConfigOptions;
 }
 
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
+std::unordered_map<Identifier, std::string> getParserConfig(const ConfigMap& configOptions)
 {
-    auto parserConfig = std::unordered_map<std::string, std::string>{};
+    auto parserConfig = std::unordered_map<Identifier, std::string>{};
 
-    if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
+    if (const auto parserConfigIter = configOptions.find(Identifier::parse("PARSER")); parserConfigIter != configOptions.end())
     {
         parserConfig = parserConfigIter->second
             | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform([](auto& pair)
-                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-            | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform(
+                           [](auto& pair)
+                           { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+            | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
     return parserConfig;
 }
 
-std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)
+std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)
 {
-    std::unordered_map<std::string, std::string> sourceOptions{};
-    if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
+    std::unordered_map<Identifier, std::string> sourceOptions{};
+    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
     {
         sourceOptions = sourceConfigIter->second
             | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform([](auto& pair)
-                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-            | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform(
+                            [](auto& pair)
+                            { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+            | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
 
     return sourceOptions;
 }
 
-std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions)
+std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)
 {
-    std::unordered_map<std::string, std::string> sinkOptions{};
-    if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())
+    std::unordered_map<Identifier, std::string> sinkOptions{};
+    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SINK")); sourceConfigIter != configOptions.end())
     {
+
         sinkOptions = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform([](auto& pair)
-                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-            | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform(
+                          [](auto& pair)
+                          { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+            | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
 
     return sinkOptions;
@@ -142,15 +160,16 @@ std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& conf
 
 namespace
 {
-std::optional<Schema> getSchema(ConfigMap configOptions, const std::string& configName)
+std::optional<SchemaBase<UnboundFieldBase<1>, true>> getSchema(ConfigMap configOptions, const Identifier& configName)
 {
     if (const auto sourceConfigIter = configOptions.find(configName); sourceConfigIter != configOptions.end())
     {
-        if (const auto schemaIter = sourceConfigIter->second.find("SCHEMA"); schemaIter != sourceConfigIter->second.end())
+        if (const auto schemaIter = sourceConfigIter->second.find(Identifier::parse("SCHEMA"));
+            schemaIter != sourceConfigIter->second.end())
         {
-            if (std::holds_alternative<Schema>(schemaIter->second))
+            if (std::holds_alternative<SchemaBase<UnboundFieldBase<1>, true>>(schemaIter->second))
             {
-                return std::get<Schema>(schemaIter->second);
+                return std::get<SchemaBase<UnboundFieldBase<1>, true>>(schemaIter->second);
             }
         }
     }
@@ -158,14 +177,14 @@ std::optional<Schema> getSchema(ConfigMap configOptions, const std::string& conf
 }
 }
 
-std::optional<Schema> getSourceSchema(ConfigMap configOptions)
+std::optional<SchemaBase<UnboundFieldBase<1>, true>> getSourceSchema(ConfigMap configOptions)
 {
-    return getSchema(std::move(configOptions), "SOURCE");
+    return getSchema(std::move(configOptions), Identifier::parse("SOURCE"));
 }
 
-std::optional<Schema> getSinkSchema(ConfigMap configOptions)
+std::optional<SchemaBase<UnboundFieldBase<1>, true>> getSinkSchema(ConfigMap configOptions)
 {
-    return getSchema(std::move(configOptions), "SINK");
+    return getSchema(std::move(configOptions), Identifier::parse("SINK"));
 }
 
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral)
@@ -265,23 +284,17 @@ Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST)
     std::unreachable();
 }
 
-Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
+SchemaBase<UnboundFieldBase<1>, true> bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
 {
-    Schema schema{};
+    std::vector<UnboundFieldBase<1>> fields{};
 
     for (auto* const column : schemaDefAST->columnDefinition())
     {
-        auto dataType = bindDataType(column->typeDefinition());
-        /// TODO #764 Remove qualification of column names in schema declarations, it's only needed as a hack now to make it work with the per-operator-lexical-scopes.
-        std::stringstream qualifiedAttributeName;
-        for (const auto& unboundIdentifier : column->identifierChain()->strictIdentifier())
-        {
-            qualifiedAttributeName << bindIdentifier(unboundIdentifier) << "$";
-        }
-        const auto fullName = qualifiedAttributeName.str().substr(0, qualifiedAttributeName.str().size() - 1);
-        schema.addField(fullName, dataType);
+        const auto dataType = bindDataType(column->typeDefinition());
+        auto columnName = bindIdentifier(column->strictIdentifier());
+        fields.push_back(UnboundFieldBase<1>{columnName, dataType});
     }
-    return schema;
+    return fields | std::ranges::to<SchemaBase<UnboundFieldBase<1>, true>>();
 }
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST)

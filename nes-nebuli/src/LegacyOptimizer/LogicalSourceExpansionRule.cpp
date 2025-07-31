@@ -28,48 +28,55 @@
 namespace NES
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+namespace
 {
-    for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
+LogicalOperator applyRecursive(LogicalOperator visiting, const SourceCatalog& sourceCatalog)
+{
+    auto children = visiting.getChildren()
+        | std::views::transform([&sourceCatalog](const auto& child) { return applyRecursive(child, sourceCatalog); });
+    if (const auto sourceNameOperator = visiting.tryGetAs<SourceNameLogicalOperator>())
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
+        const auto logicalSourceOpt = sourceCatalog.getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
-            throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
+            throw UnknownSourceName("{}", sourceNameOperator.value()->getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
+        const auto entriesOpt = sourceCatalog.getPhysicalSources(logicalSource);
 
         if (not entriesOpt.has_value())
         {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp->getLogicalSourceName());
+            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceNameOperator.value()->getLogicalSourceName());
         }
         const auto& entries = entriesOpt.value();
         if (entries.empty())
         {
-            throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp->getLogicalSourceName());
+            throw UnknownSourceName(
+                "No physical sources present for logical source \"{}\"", sourceNameOperator.value()->getLogicalSourceName());
+        }
+        if (std::ranges::size(children) != 0 && std::ranges::size(entries) != 1)
+        {
+            throw UnknownSourceName("LogicalSource must either have no children or only expand to one physical source");
         }
 
         auto expandedSourceOperators = entries
-            | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
+            | std::views::transform(
+                                           [&children](const auto& entry) -> LogicalOperator
+                                           {
+                                               return TypedLogicalOperator<SourceDescriptorLogicalOperator>{entry}.withChildren(
+                                                   children | std::ranges::to<std::vector>());
+                                           })
             | std::ranges::to<std::vector>();
 
-        INVARIANT(getParents(queryPlan, sourceOp).size() == 1, "Source name operator must have exactly one parent");
-        auto parent = getParents(queryPlan, sourceOp).front();
-        INVARIANT(
-            parent.getChildren().size() == 1 && parent.getChildren().front() == sourceOp,
-            "Parent of source name operator must have exactly one child, the source itself");
-
-        auto newParent = parent.withChildren({UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators))});
-        auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
-
-        INVARIANT(
-            replaceResult.has_value(),
-            "Failed to replace operator {} with {}",
-            parent.explain(ExplainVerbosity::Debug),
-            newParent.explain(ExplainVerbosity::Debug));
-        queryPlan = std::move(replaceResult.value());
+        return TypedLogicalOperator<UnionLogicalOperator>{}.withChildren(std::move(expandedSourceOperators));
     }
+    return visiting->withChildren(children | std::ranges::to<std::vector>());
+}
 }
 
+void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+{
+    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
+    queryPlan = LogicalPlan{applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)};
+}
 }

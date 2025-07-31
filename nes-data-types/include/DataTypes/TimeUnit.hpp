@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <string>
 
+#include "Util/Logger/Formatter.hpp"
+
 namespace NES::Windowing
 {
 
@@ -44,3 +46,14 @@ private:
 };
 
 }
+
+FMT_OSTREAM(NES::Windowing::TimeUnit);
+
+template <>
+struct std::hash<NES::Windowing::TimeUnit>
+{
+    size_t operator()(const NES::Windowing::TimeUnit& timeUnit) const noexcept
+    {
+        return std::hash<uint64_t>{}(timeUnit.getMillisecondsConversionMultiplier());
+    }
+};

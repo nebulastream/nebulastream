@@ -23,9 +23,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp> /// NOLINT(misc-include-cleaner)
@@ -39,6 +40,7 @@
 
 namespace
 {
+
 NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
     try
@@ -119,25 +121,40 @@ struct convert<NES::CLI::QueryConfig>
 
 namespace NES::CLI
 {
-
-
-CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
+namespace
 {
+std::unordered_map<Identifier, std::string> bindConfigMap(const std::unordered_map<std::string, std::string>& config)
+{
+    return config
+        | std::views::transform(
+               [](const auto& pair)
+               {
+                   auto identifierExp = Identifier::tryParse(pair.first);
+                   if (!identifierExp.has_value())
+                   {
+                       throw identifierExp.error();
+                   }
+                   return std::make_pair(identifierExp.value(), pair.second);
+               })
+        | std::ranges::to<std::unordered_map<Identifier, std::string>>();
 }
-
-CLI::SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
-{
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
+SchemaBase<UnboundFieldBase<1>, true> YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
 {
-    Schema schema;
-    for (const auto& [name, type] : attributeFields)
-    {
-        schema.addField(name, type);
-    }
-    return schema;
+    auto fields = attributeFields
+        | std::views::transform(
+                      [](const auto& field)
+                      {
+                          auto expectedIdentifier = Identifier::tryParse(field.name);
+                          if (expectedIdentifier.has_value())
+                          {
+                              return UnboundFieldBase<1>{expectedIdentifier.value(), field.type};
+                          }
+                          throw expectedIdentifier.error();
+                      });
+    return fields | std::ranges::to<SchemaBase<UnboundFieldBase<1>, true>>();
 }
 
 std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
@@ -147,8 +164,14 @@ std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {
         auto schema = bindSchema(schemaFields);
+        auto expectedName = Identifier::tryParse(logicalSourceName);
+        if (not expectedName.has_value())
+        {
+            throw expectedName.error();
+        }
         NES_INFO("Adding logical source: {}", logicalSourceName);
-        if (const auto registeredSource = sourceCatalog->addLogicalSource(logicalSourceName, schema); registeredSource.has_value())
+        if (const auto registeredSource = sourceCatalog->addLogicalSource(std::move(expectedName).value(), schema);
+            registeredSource.has_value())
         {
             boundSources.push_back(registeredSource.value());
         }
@@ -166,14 +189,23 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalSourceName, sourceType, parserConfig, sourceConfig] : unboundSources)
     {
-        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        auto expectedName = Identifier::tryParse(logicalSourceName);
+        auto expectedSourceType = Identifier::tryParse(sourceType);
+        if (not expectedName.has_value())
+        {
+            throw expectedName.error();
+        }
+        if (not expectedSourceType.has_value()) {
+            throw expectedSourceType.error();
+        }
+        auto logicalSource = sourceCatalog->getLogicalSource(expectedName.value());
         if (not logicalSource.has_value())
         {
             throw UnknownSourceName("{}", logicalSourceName);
         }
-        NES_DEBUG("Source type is: {}", sourceType);
+        NES_DEBUG("Source type is: {}", expectedSourceType->asCanonicalString());
 
-        const auto sourceDescriptorOpt = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
+        const auto sourceDescriptorOpt = sourceCatalog->addPhysicalSource(logicalSource.value(), expectedSourceType.value(), bindConfigMap(sourceConfig), bindConfigMap(parserConfig));
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());
@@ -189,8 +221,18 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
     {
         auto schema = bindSchema(schemaFields);
+        auto config = bindConfigMap(sinkConfig);
+        auto expectedName = Identifier::tryParse(sinkName);
+        auto expectedSinkType = Identifier::tryParse(sinkType);
+        if (!expectedName.has_value()) {
+            throw expectedName.error();
+        }
+        if (!expectedSinkType.has_value()) {
+            throw expectedSinkType.error();
+        }
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, sinkConfig); sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(expectedName.value(), schema, expectedSinkType.value(), std::move(config));
+            sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }

@@ -17,95 +17,47 @@
 #include <memory>
 #include <string>
 #include <utility>
+
+#include "DataTypes/DataTypeProvider.hpp"
+
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <fmt/format.h>
+#include "Functions/LogicalFunction.hpp"
+#include "Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp"
 
 namespace NES
 {
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
-    : WindowAggregationLogicalFunction(
-          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(DataType aggregateType, LogicalFunction inputFunction)
+    : aggregateType(std::move(aggregateType)), inputFunction(std::move(inputFunction))
 {
 }
-
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    DataType inputStamp,
-    DataType partialAggregateStamp,
-    DataType finalAggregateStamp,
-    FieldAccessLogicalFunction onField,
-    FieldAccessLogicalFunction asField)
-    : inputStamp(std::move(inputStamp))
-    , partialAggregateStamp(std::move(partialAggregateStamp))
-    , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(std::move(onField))
-    , asField(std::move(asField))
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(LogicalFunction inputFunction) : inputFunction(std::move(inputFunction))
 {
+    aggregateType = this->inputFunction.getDataType();
+}
+
+LogicalFunction WindowAggregationLogicalFunction::getInputFunction() const
+{
+    return inputFunction;
 }
 
 std::string WindowAggregationLogicalFunction::toString() const
 {
-    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
+    return fmt::format("WindowAggregation: input={}", inputFunction);
 }
 
-DataType WindowAggregationLogicalFunction::getInputStamp() const
+DataType WindowAggregationLogicalFunction::getAggregateType() const
 {
-    return inputStamp;
-}
-
-DataType WindowAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType WindowAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
-FieldAccessLogicalFunction WindowAggregationLogicalFunction::getOnField() const
-{
-    return onField;
-}
-
-FieldAccessLogicalFunction WindowAggregationLogicalFunction::getAsField() const
-{
-    return asField;
-}
-
-void WindowAggregationLogicalFunction::setInputStamp(DataType inputStamp)
-{
-    this->inputStamp = std::move(inputStamp);
-}
-
-void WindowAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
-{
-    this->partialAggregateStamp = std::move(partialAggregateStamp);
-}
-
-void WindowAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
-{
-    this->finalAggregateStamp = std::move(finalAggregateStamp);
-}
-
-void WindowAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
-{
-    this->onField = std::move(onField);
-}
-
-void WindowAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
-{
-    this->asField = std::move(asField);
+    return aggregateType;
 }
 
 bool WindowAggregationLogicalFunction::operator==(
     const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const
 {
     return this->getName() == otherWindowAggregationLogicalFunction->getName()
-        && this->onField == otherWindowAggregationLogicalFunction->onField
-        && this->asField == otherWindowAggregationLogicalFunction->asField;
+        && this->inputFunction == otherWindowAggregationLogicalFunction->inputFunction;
 }
 
 }

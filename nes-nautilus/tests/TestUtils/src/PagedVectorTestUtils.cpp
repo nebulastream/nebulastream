@@ -19,7 +19,7 @@
 #include <memory>
 #include <numeric>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -41,7 +41,7 @@ namespace NES::TestUtils
 
 void runStoreTest(
     PagedVector& pagedVector,
-    const Schema& testSchema,
+    const UnboundOrderedSchema& testSchema,
     const MemoryLayoutType& memoryLayout,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -96,7 +96,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     PagedVector& pagedVector,
-    const Schema& testSchema,
+    const UnboundOrderedSchema& testSchema,
     const MemoryLayoutType& memoryLayout,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -108,7 +108,7 @@ void runRetrieveTest(
     const uint64_t numberOfExpectedTuples = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), numberOfExpectedTuples);
-    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeOfSchemaInBytes());
+    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeInBytes());
     ASSERT_TRUE(outputBufferVal.has_value());
     auto outputBuffer = outputBufferVal.value();
 
@@ -172,7 +172,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const Schema& schema,
+    const UnboundOrderedSchema& schema,
     const MemoryLayoutType& memoryLayout,
     const uint64_t entrySize,
     const uint64_t pageSize,

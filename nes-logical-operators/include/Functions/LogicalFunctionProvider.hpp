@@ -17,9 +17,12 @@
 #include <string>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 
 namespace NES::LogicalFunctionProvider
 {
-LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunction> arguments);
-std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments);
+
+LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunction> arguments, Schema schema);
+std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments, Schema schema);
+
 }

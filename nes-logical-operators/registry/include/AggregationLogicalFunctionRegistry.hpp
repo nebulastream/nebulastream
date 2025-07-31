@@ -28,7 +28,7 @@ using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggre
 
 struct AggregationLogicalFunctionRegistryArguments
 {
-    std::vector<FieldAccessLogicalFunction> fields;
+    std::vector<LogicalFunction> on;
 };
 
 class AggregationLogicalFunctionRegistry : public BaseRegistry<

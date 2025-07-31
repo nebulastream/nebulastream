@@ -31,7 +31,7 @@
 namespace NES
 {
 
-static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
+static constexpr auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("file_path");
 
 class FileSource final : public Source
 {
@@ -67,7 +67,7 @@ private:
 struct ConfigParametersCSV
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        std::string(SYSTEST_FILE_PATH_PARAMETER),
+        SYSTEST_FILE_PATH_PARAMETER.asCanonicalString(),
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 

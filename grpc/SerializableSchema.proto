@@ -14,21 +14,33 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
+import "SerializableIdentifier.proto";
 package NES;
 
-message SerializableSchema{
+message SerializableField {
+  SerializableIdentifier name = 1;
+  SerializableDataType type = 2;
+  uint64 operator_id = 3;
+}
+
+message SerializableUnboundField {
+  SerializableIdentifier name = 1;
+  SerializableDataType type = 2;
+}
+
+message SerializableUnboundSchema {
+  repeated SerializableUnboundField fields = 1;
+}
+
+message SerializableSchema {
 
   enum MemoryLayoutType {
     ROW_LAYOUT = 0;
     COL_LAYOUT = 1;
   }
 
-  message SerializableField{
-    string name = 1;
-    SerializableDataType type = 2;
-  }
-
   repeated SerializableField fields = 1;
-  MemoryLayoutType layoutType = 2;
+  map<uint64, SerializableIdentifierList> aliases = 2;
+  MemoryLayoutType layoutType = 3;
 }
 

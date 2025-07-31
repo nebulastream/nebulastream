@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
@@ -43,8 +43,8 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(const Schema& schema);
-    explicit CSVFormat(const Schema& schema, bool escapeStrings);
+    explicit CSVFormat(const SchemaBase<UnboundFieldBase<1>, true>& schema);
+    explicit CSVFormat(const SchemaBase<UnboundFieldBase<1>, true>& schema, bool escapeStrings);
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

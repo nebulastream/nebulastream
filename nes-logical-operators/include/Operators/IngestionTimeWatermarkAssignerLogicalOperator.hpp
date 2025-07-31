@@ -18,21 +18,24 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/Trait.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include "Configurations/Descriptor.hpp"
 
 namespace NES
 {
 
-class IngestionTimeWatermarkAssignerLogicalOperator final
+class IngestionTimeWatermarkAssignerLogicalOperator
 {
 public:
     IngestionTimeWatermarkAssignerLogicalOperator();
+    /// I do not understand why, but if we just pass the child in an explicit constructor,
+    /// this class stops being convertible to itself (how is that even a thing) and thus doesn't fulfill the concept.
+    IngestionTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config);
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -42,25 +45,37 @@ public:
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema() const;
 
+public:
+    WeakLogicalOperator self;
 
 protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
-    std::vector<LogicalOperator> children;
+    /// TOOD make non-optional once all ctors require children
+    std::optional<LogicalOperator> child;
+
+    /// Set during schema inference
+    std::optional<SchemaBase<UnboundFieldBase<1>, false>> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema;
-    Schema outputSchema;
+
+    friend struct std::hash<IngestionTimeWatermarkAssignerLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    uint64_t operator()(const NES::IngestionTimeWatermarkAssignerLogicalOperator& op) const noexcept;
+};

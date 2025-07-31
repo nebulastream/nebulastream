@@ -28,9 +28,9 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -47,14 +47,84 @@ enum class InputFormat : uint8_t
     JSON
 };
 
-class SinkDescriptor final : public Descriptor
+class NamedSinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
 
 public:
-    ~SinkDescriptor() = default;
+    ~NamedSinkDescriptor() = default;
 
+    [[nodiscard]] SerializableSinkDescriptor serialize() const;
+    friend std::ostream& operator<<(std::ostream& out, const NamedSinkDescriptor& sinkDescriptor);
+    friend bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs);
+
+    [[nodiscard]] std::string_view getFormatType() const;
+    [[nodiscard]] std::string getSinkType() const;
+    [[nodiscard]] std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>> getSchema() const;
+    [[nodiscard]] Identifier getSinkName() const;
+
+private:
+    explicit NamedSinkDescriptor(
+        Identifier name,
+        SchemaBase<UnboundFieldBase<1>, true> nameWithSchema,
+        std::string_view sinkType,
+        DescriptorConfig::Config config);
+
+    Identifier name;
+    std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>> schema;
+    std::string sinkType;
+};
+
+class InlineSinkDescriptor final : public Descriptor
+{
+    friend SinkCatalog;
+    friend OperatorSerializationUtil;
+    friend struct SinkLogicalOperator;
+    friend class CalcTargetOrderPhase;
+public:
+    ~InlineSinkDescriptor() = default;
+
+
+    [[nodiscard]] SerializableSinkDescriptor serialize() const;
+    friend std::ostream& operator<<(std::ostream& out, const InlineSinkDescriptor& sinkDescriptor);
+    friend bool operator==(const InlineSinkDescriptor& lhs, const InlineSinkDescriptor& rhs);
+
+    [[nodiscard]] std::string_view getFormatType() const;
+    [[nodiscard]] std::string getSinkType() const;
+    [[nodiscard]] std::variant<
+        std::monostate,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, false>>,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>>>
+    getSchema() const;
+    [[nodiscard]] uint64_t getSinkId() const;
+
+private:
+    explicit InlineSinkDescriptor(
+        uint64_t sinkId,
+        std::variant<std::monostate, SchemaBase<UnboundFieldBase<1>, false>, SchemaBase<UnboundFieldBase<1>, true>> schema,
+        std::string_view sinkType,
+        DescriptorConfig::Config config);
+
+    InlineSinkDescriptor withSchemaOrder(const SchemaBase<UnboundFieldBase<1>, true>& newSchema) const;
+
+    uint64_t sinkId;
+    std::variant<
+        std::monostate,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, false>>,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>>>
+        schema;
+    std::string sinkType;
+};
+
+class SinkDescriptor final : public Descriptor
+{
+    friend SinkCatalog;
+    friend OperatorSerializationUtil;
+    friend class CalcTargetOrderPhase;
+
+public:
+    ~SinkDescriptor() = default;
 
     [[nodiscard]] SerializableSinkDescriptor serialize() const;
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
@@ -62,17 +132,18 @@ public:
 
     [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
-    [[nodiscard]] std::string getSinkName() const;
+    [[nodiscard]]
+    std::variant<
+        std::monostate,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, false>>,
+        std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>>> getSchema() const;
+    [[nodiscard]] Identifier getSinkName() const;
     [[nodiscard]] bool isInline() const;
+    [[nodiscard]] const std::variant<NamedSinkDescriptor, InlineSinkDescriptor>& getUnderlying() const;
 
 private:
-    explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
-
-    std::variant<std::string, uint64_t> sinkName;
-    std::shared_ptr<const Schema> schema;
-    std::string sinkType;
+    explicit SinkDescriptor(std::variant<NamedSinkDescriptor, InlineSinkDescriptor> underlying);
+    std::variant<NamedSinkDescriptor, InlineSinkDescriptor> underlying;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -100,7 +171,7 @@ public:
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static std::optional<DescriptorConfig::Config>
-    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
+    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs);
 
     friend struct SinkLogicalOperator;
 };
@@ -111,7 +182,7 @@ struct std::hash<NES::SinkDescriptor>
 {
     size_t operator()(const NES::SinkDescriptor& sinkDescriptor) const noexcept
     {
-        return std::hash<std::string>{}(sinkDescriptor.getSinkName());
+        return std::hash<NES::Identifier>{}(sinkDescriptor.getSinkName());
     }
 };
 

@@ -17,22 +17,25 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <fmt/format.h>
+#include <folly/Hash.h>
+#include "Util/Locks.hpp"
+
 
 namespace NES::Windowing
 {
 
-SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide))
+SlidingWindow::SlidingWindow(TimeMeasure size, TimeMeasure slide, Private) : size(std::move(size)), slide(std::move(slide))
 {
 }
 
-std::shared_ptr<WindowType> SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+std::shared_ptr<WindowType> SlidingWindow::of(TimeMeasure size, TimeMeasure slide)
 {
-    return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
+    return std::make_shared<SlidingWindow>(std::move(size), std::move(slide), Private{});
 }
 
 TimeMeasure SlidingWindow::getSize()
@@ -47,17 +50,26 @@ TimeMeasure SlidingWindow::getSlide()
 
 std::string SlidingWindow::toString() const
 {
-    return fmt::format("SlidingWindow: size={} slide={} timeCharacteristic={}", size.getTime(), slide.getTime(), timeCharacteristic);
+    return fmt::format("SlidingWindow: size={} slide={}", size.getTime(), slide.getTime());
+}
+
+size_t SlidingWindow::hash() const
+{
+    return std::hash<SlidingWindow>{}(*this);
 }
 
 bool SlidingWindow::operator==(const WindowType& otherWindowType) const
 {
     if (const auto* otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {
-        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide)
-            && (this->timeCharacteristic == (otherSlidingWindow->timeCharacteristic));
+        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide);
     }
     return false;
 }
 
+}
+
+std::size_t std::hash<NES::Windowing::SlidingWindow>::operator()(const NES::Windowing::SlidingWindow& window) const noexcept
+{
+    return folly::hash::hash_combine(window.size, window.slide);
 }

@@ -47,8 +47,8 @@
 #include <BailErrorStrategy.h>
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -80,7 +80,7 @@ public:
     ~Impl() = default;
 
     /// TODO #897 replace with normal comparison binding
-    std::pair<std::string, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST) const
+    std::pair<Identifier, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST) const
     {
         return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
     }
@@ -117,7 +117,17 @@ public:
             throw UnknownSourceName("{}", logicalSourceName);
         }
         /// TODO #764 use normal identifiers for types
-        const std::string type = physicalSourceDefAST->type->getText();
+        const Identifier type = [&]
+        {
+            if (const auto idOpt = Identifier::tryParse(physicalSourceDefAST->type->getText()))
+            {
+                return *idOpt;
+            }
+            else
+            {
+                throw idOpt.error();
+            }
+        }();
         auto configOptions = [&]()
         {
             if (physicalSourceDefAST->options != nullptr)
@@ -137,7 +147,17 @@ public:
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
-        const auto sinkType = sinkDefAST->type->getText();
+        const Identifier sinkType = [&]
+        {
+            if (const auto idOpt = Identifier::tryParse(sinkDefAST->type->getText()))
+            {
+                return *idOpt;
+            }
+            else
+            {
+                throw idOpt.error();
+            }
+        }();
         const auto configOptions = [&]()
         {
             if (sinkDefAST->options != nullptr)
@@ -146,14 +166,15 @@ public:
             }
             return ConfigMap{};
         }();
-        std::unordered_map<std::string, std::string> sinkOptions{};
-        if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
+        std::unordered_map<Identifier, std::string> sinkOptions{};
+        static constexpr auto sinkIdentifier = Identifier::parse("SINK");
+        if (const auto sinkConfigIter = configOptions.find(sinkIdentifier); sinkConfigIter != configOptions.end())
         {
-            sinkOptions
-                = sinkConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-                | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            sinkOptions = sinkConfigIter->second
+                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::transform([](auto& pair)
+                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
         return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
@@ -186,7 +207,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static constexpr auto nameIdentifier = Identifier::parse("NAME");
+            if (attr != nameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW LOGICAL SOURCES must be on name attribute");
             }
@@ -194,7 +216,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW LOGICAL SOURCES must be a string");
             }
-            return ShowLogicalSourcesStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowLogicalSourcesStatement{.name = Identifier::parse(std::get<std::string>(value)), .format = format};
         }
         return ShowLogicalSourcesStatement{.name = std::nullopt, .format = format};
     }
@@ -219,7 +241,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static constexpr auto idIdentifier = Identifier::parse("ID");
+            if (attr != idIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW PHYSICAL SOURCES must be on id attribute");
             }
@@ -240,7 +263,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static constexpr auto nameIdentifier = Identifier::parse("NAME");
+            if (attr != nameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW SINKS must be on name attribute");
             }
@@ -248,7 +272,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW SINKS must be a string");
             }
-            return ShowSinksStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowSinksStatement{.name = Identifier::parse(std::get<std::string>(value)), .format = format};
         }
         return ShowSinksStatement{.name = std::nullopt, .format = format};
     }
@@ -261,7 +285,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static constexpr auto idIdentifier = Identifier::parse("ID");
+            if (attr != idIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }

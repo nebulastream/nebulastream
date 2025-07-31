@@ -23,6 +23,7 @@ target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
@@ -30,3 +31,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 create_registries_for_component(RewriteRule Trait)
+add_tests_if_enabled(test)

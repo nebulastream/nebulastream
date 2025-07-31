@@ -30,14 +30,14 @@
 namespace NES::FunctionSerializationUtil
 {
 
-LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction)
+LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction, const Schema& schema)
 {
     const auto& functionType = serializedFunction.function_type();
 
     std::vector<LogicalFunction> deserializedChildren;
     for (const auto& child : serializedFunction.children())
     {
-        deserializedChildren.emplace_back(deserializeFunction(child));
+        deserializedChildren.emplace_back(deserializeFunction(child, schema));
     }
 
     auto dataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.data_type());
@@ -48,7 +48,7 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
         functionDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
-    auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, dataType);
+    auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, dataType, schema);
 
     if (auto function = LogicalFunctionRegistry::instance().create(functionType, argument))
     {
@@ -58,24 +58,21 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
-deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction)
+deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction, const Schema& schema)
 {
     const auto& type = serializedFunction.type();
-    auto onField = deserializeFunction(serializedFunction.on_field());
-    auto asField = deserializeFunction(serializedFunction.as_field());
-
-    if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>())
+    std::vector<LogicalFunction> onFields;
+    for (const auto& serializedOnField : serializedFunction.on_fields())
     {
-        if (auto asFieldAccess = asField.tryGet<FieldAccessLogicalFunction>())
-        {
-            AggregationLogicalFunctionRegistryArguments args;
-            args.fields = {fieldAccess.value(), asFieldAccess.value()};
+        onFields.push_back(deserializeFunction(serializedOnField, schema));
+    }
 
-            if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args))
-            {
-                return function.value();
-            }
-        }
+    AggregationLogicalFunctionRegistryArguments args;
+    args.on = onFields;
+
+    if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args))
+    {
+        return function.value();
     }
     throw UnknownLogicalOperator();
 }

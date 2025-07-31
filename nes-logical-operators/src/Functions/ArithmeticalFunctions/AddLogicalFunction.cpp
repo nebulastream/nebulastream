@@ -19,20 +19,21 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right) : left(left), right(right)
 {
 }
 
@@ -41,21 +42,18 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction AddLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    AddLogicalFunction copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+
+    copy.dataType = copy.left.getDataType().join(copy.right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Can only apply addition to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
     }
-    return this->withChildren(newChildren);
+    return copy;
 }
 
 std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
@@ -115,7 +113,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAdd
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
-    return AddLogicalFunction(arguments.children[0], arguments.children[1]);
+    return AddLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

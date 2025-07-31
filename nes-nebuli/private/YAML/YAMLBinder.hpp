@@ -21,8 +21,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sinks/SinkDescriptor.hpp>
@@ -88,8 +88,7 @@ public:
 
     LogicalPlan parseAndBind(std::istream& inputStream);
 
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    [[nodiscard]] Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
+    [[nodiscard]] SchemaBase<UnboundFieldBase<1>, true> bindSchema(const std::vector<SchemaField>& attributeFields) const;
     std::vector<NES::LogicalSource>
     bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);

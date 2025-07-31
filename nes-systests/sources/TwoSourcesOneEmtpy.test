@@ -12,8 +12,8 @@ CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;
 ATTACH INLINE
 1
 
-CREATE SINK noTupleSink(noTuple.field_1 UINT64)  TYPE File;
-CREATE SINK oneTupleSink(oneTuple.field_1 UINT64)  TYPE File;
+CREATE SINK noTupleSink(field_1 UINT64)  TYPE File;
+CREATE SINK oneTupleSink(field_1 UINT64)  TYPE File;
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM noTuple INTO noTupleSink;

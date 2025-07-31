@@ -36,7 +36,7 @@ PhysicalSourceConfig SourceDataProvider::provideFileDataSource(
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.type, fileDataArgs))
+    if (auto physicalSourceConfig = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.type.asCanonicalString(), fileDataArgs))
     {
         return physicalSourceConfig.value();
     }
@@ -54,7 +54,7 @@ PhysicalSourceConfig SourceDataProvider::provideInlineDataSource(
         .tuples = std::move(tuples),
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.type, inlineDataArgs))
+    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.type.asCanonicalString(), inlineDataArgs))
     {
         return physicalSourceConfig.value();
     }

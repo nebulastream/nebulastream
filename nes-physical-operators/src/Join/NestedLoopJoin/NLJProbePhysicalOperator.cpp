@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <../../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -34,7 +35,6 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

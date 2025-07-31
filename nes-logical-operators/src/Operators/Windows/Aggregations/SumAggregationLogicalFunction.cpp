@@ -17,24 +17,25 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <DataTypes/Schema.hpp>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataType.hpp"
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(LogicalFunction inputFunction)
+    : WindowAggregationLogicalFunction(std::move(inputFunction))
 {
 }
 
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(
-    const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(LogicalFunction inputFunction, DataType aggregateType): WindowAggregationLogicalFunction(std::move(aggregateType), std::move(inputFunction))
 {
 }
 
@@ -43,33 +44,30 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
+
+std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::withInferredType(const Schema& schema)
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
-    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
-    if (not this->getOnField().getDataType().isNumeric())
-    {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", this->getOnField().getDataType());
-    }
+    const auto newInputFunction = inputFunction.withInferredDataType(schema);
 
-    ///Set fully qualified name for the as Field
-    const auto onFieldName = this->getOnField().getFieldName();
-    const auto asFieldName = this->getAsField().getFieldName();
+    const DataType outputType = [&]
+    {
+        if (newInputFunction.getDataType().isSignedInteger())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::INT64);
+        }
+        if (newInputFunction.getDataType().isInteger())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+        }
+        if (newInputFunction.getDataType().isFloat())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+        }
+        throw CannotInferStamp("aggregations on non numeric fields is not supported.", newInputFunction.getDataType().isNumeric());
+    }();
 
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
-    }
-    else
-    {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
-    }
-    this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+    SumAggregationLogicalFunction newFunction{inputFunction, outputType};
+    return std::make_shared<SumAggregationLogicalFunction>(newFunction);
 }
 
 SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
@@ -77,24 +75,20 @@ SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
     SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+    auto inputFunc = SerializableFunction();
+    inputFunc.CopyFrom(inputFunction.serialize());
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
+    serializedAggregationFunction.mutable_on_fields()->Add()->CopyFrom(inputFunc);
     return serializedAggregationFunction;
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.fields.size() != 2)
+    if(arguments.on.size() != 1)
     {
-        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    return std::make_shared<SumAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<SumAggregationLogicalFunction>(arguments.on.at(0));
 }
 }

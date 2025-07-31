@@ -15,11 +15,11 @@ ATTACH INLINE
 1,2,3,4,5,6,7,8,9,10,g,325
 2,3,4,5,6,7,8,9,10,11,h,350
 
-CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i8_out INT8, stream.i16_out INT16, stream.i32_out INT32, stream.i64_out INT64, stream.u8_out UINT8, stream.u16_out UINT16, stream.u32_out UINT32, stream.u64_out UINT64, stream.f32_out FLOAT32, stream.f64_out FLOAT64)  TYPE File;
-CREATE SINK sinkStreamAllU64(stream.start UINT64, stream.end UINT64, stream.i8_out UINT64, stream.i16_out UINT64, stream.i32_out UINT64, stream.i64_out UINT64, stream.u8_out UINT64, stream.u16_out UINT64, stream.u32_out UINT64, stream.u64_out UINT64, stream.f32_out UINT64, stream.f64_out UINT64, stream.c_out UINT64)  TYPE File;
-CREATE SINK sinkStreamAllF64(stream.start UINT64, stream.end UINT64, stream.i8_out FLOAT64, stream.i16_out FLOAT64, stream.i32_out FLOAT64, stream.i64_out FLOAT64, stream.u8_out FLOAT64, stream.u16_out FLOAT64, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out FLOAT64, stream.f64_out FLOAT64)  TYPE File;
-CREATE SINK sinkStreamAllAggsTW(stream.start UINT64, stream.end UINT64, stream.i8_out FLOAT64, stream.i16_out INT16, stream.i32_out INT32, stream.i64_out INT64, stream.u8_out UINT8, stream.u16_out UINT16, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out UINT64, stream.f64_out FLOAT64)  TYPE File;
-CREATE SINK sinkStreamAllAggsSW(stream.start UINT64, stream.end UINT64, stream.i8_out INT8, stream.i16_out INT16, stream.i32_out FLOAT64, stream.i64_out INT64, stream.u8_out UINT64, stream.u16_out UINT16, stream.u32_out UINT64, stream.u64_out FLOAT64, stream.f32_out FLOAT32, stream.f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStream(start UINT64, end UINT64, i8_out INT8, i16_out INT16, i32_out INT32, i64_out INT64, u8_out UINT8, u16_out UINT16, u32_out UINT32, u64_out UINT64, f32_out FLOAT32, f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllU64(start UINT64, end UINT64, i8_out UINT64, i16_out UINT64, i32_out UINT64, i64_out UINT64, u8_out UINT64, u16_out UINT64, u32_out UINT64, u64_out UINT64, f32_out UINT64, f64_out UINT64, c_out UINT64)  TYPE File;
+CREATE SINK sinkStreamAllF64(start UINT64, end UINT64, i8_out FLOAT64, i16_out FLOAT64, i32_out FLOAT64, i64_out FLOAT64, u8_out FLOAT64, u16_out FLOAT64, u32_out FLOAT64, u64_out FLOAT64, f32_out FLOAT64, f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllAggsTW(start UINT64, end UINT64, i8_out FLOAT64, i16_out INT16, i32_out INT32, i64_out INT64, u8_out UINT8, u16_out UINT16, u32_out FLOAT64, u64_out FLOAT64, f32_out UINT64, f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllAggsSW(start UINT64, end UINT64, i8_out INT8, i16_out INT16, i32_out FLOAT64, i64_out INT64, u8_out UINT64, u16_out UINT16, u32_out UINT64, u64_out FLOAT64, f32_out FLOAT32, f64_out FLOAT64)  TYPE File;
 
 # Checking if a count over a tumbling window works for all data types
 SELECT start, end, COUNT(i8) as i8_out, COUNT(i16) as i16_out, COUNT(i32) as i32_out, COUNT(i64) as i64_out,

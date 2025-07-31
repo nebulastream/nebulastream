@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 
 #include <memory>
+#include <optional>
 #include <ranges>
 
 #include <Operators/LogicalOperator.hpp>
@@ -27,31 +28,36 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SourcePhysicalOperator.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
 
 RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
+    const auto traitSet = source->getTraitSet();
 
-    const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
-    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
+    const auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
+    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIds[0]);
 
-    const auto inputSchemas = logicalOperator.getInputSchemas();
-    PRECONDITION(
-        inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait.memoryLayout;
+
+    const auto outputFieldOrdering = traitSet.get<FieldOrderingTrait>();
+    const auto outputFieldMapping = traitSet.get<FieldMappingTrait>();
+
+    for (const auto& [field, mappedTo] : outputFieldMapping.getUnderlying())
+    {
+        PRECONDITION(field.getFullyQualifiedName() == mappedTo, "Field mapping is not allowed to rename source attributes");
+    }
+    const UnboundOrderedSchema outputSchema = createSchemaFromTraits(outputFieldMapping.getUnderlying(), outputFieldOrdering.getOrderedFields());
+
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        inputSchemas[0],
-        logicalOperator.getOutputSchema(),
-        memoryLayoutType,
-        memoryLayoutType,
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, outputSchema, memoryLayoutType, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 

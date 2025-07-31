@@ -14,6 +14,7 @@ add_subdirectory(RewriteRules)
 add_subdirectory(Traits)
 add_subdirectory(Phases)
 add_subdirectory(Serialization)
+add_subdirectory(Util)
 
 add_source_files(nes-query-optimizer
         PhysicalPlanBuilder.cpp

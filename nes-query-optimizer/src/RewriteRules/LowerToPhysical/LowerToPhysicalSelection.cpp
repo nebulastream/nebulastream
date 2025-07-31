@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -24,24 +25,32 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
 
 RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
     const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait.memoryLayout;
+
+    const UnboundOrderedSchema outputSchema = createPhysicalOutputSchema(traitSet);
+    const UnboundOrderedSchema inputSchema = createPhysicalOutputSchema(selection->getChild()->getTraitSet());
+
     auto physicalOperator = SelectionPhysicalOperator(func);
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
-        logicalOperator.getOutputSchema(),
+        inputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

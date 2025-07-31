@@ -15,12 +15,12 @@ CREATE LOGICAL SOURCE consumers(consumerId INT32, sectorId INT32, consumedPower 
 CREATE PHYSICAL SOURCE FOR consumers TYPE File;
 ATTACH FILE large/debs/CONSUMERS_TOPIC_1G.csv
 
-CREATE SINK consumersChecksum(consumers.consumerId INT32, consumers.sectorId INT32, consumers.consumedPower FLOAT64, consumers.consumerType VARSIZED, consumers.timestamp UINT64)  TYPE Checksum;
-CREATE SINK solarPanelsChecksum(solarPanels.producerId INT32, solarPanels.groupId INT32, solarPanels.producedPower FLOAT64, solarPanels.timestamp UINT64)  TYPE Checksum;
+CREATE SINK consumersChecksum(consumerId INT32, sectorId INT32, consumedPower FLOAT64, consumerType VARSIZED, timestamp UINT64)  TYPE Checksum;
+CREATE SINK solarPanelsChecksum(producerId INT32, groupId INT32, producedPower FLOAT64, timestamp UINT64)  TYPE Checksum;
 CREATE SINK q4Checksum(consumedPower FLOAT64)  TYPE Checksum;
 CREATE SINK q5Checksum(producerId INT32, groupId INT32, producedPower FLOAT64, ts UINT64)  TYPE Checksum;
 CREATE SINK q6Checksum(source UINT64, producerId INT32, groupId INT32, producedPower FLOAT64, ts UINT64)  TYPE Checksum;
-CREATE SINK winPowerProductionChecksum(solarPanels.start UINT64, solarPanels.end UINT64, solarPanels.groupId INT32, solarPanels.producedPower FLOAT64)  TYPE Checksum;
+CREATE SINK winPowerProductionChecksum(start UINT64, end UINT64, groupId INT32, producedPower FLOAT64)  TYPE Checksum;
 
 # Query 0a - Simple Source Sink with consumers stream
 SELECT * FROM consumers INTO consumersChecksum;

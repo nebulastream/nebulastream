@@ -19,7 +19,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
@@ -30,23 +30,23 @@ class SinkCatalog
 {
 public:
     std::optional<SinkDescriptor> addSinkDescriptor(
-        std::string sinkName, const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+        Identifier sinkName, const SchemaBase<UnboundFieldBase<1>, true>& schema, const Identifier& sinkType, std::unordered_map<Identifier, std::string> config);
 
-    std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
+    std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
     [[nodiscard]] std::optional<SinkDescriptor>
-    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config) const;
+    getInlineSink(const SchemaBase<UnboundFieldBase<1>, true>& schema, const Identifier& sinkType, std::unordered_map<Identifier, std::string> config) const;
 
-    bool removeSinkDescriptor(const std::string& sinkName);
+    bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
 
-    bool containsSinkDescriptor(const std::string& sinkName) const;
+    bool containsSinkDescriptor(const Identifier& sinkName) const;
     bool containsSinkDescriptor(const SinkDescriptor& sinkDescriptor) const;
 
     std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
     mutable std::atomic<InlineSinkId::Underlying> nextInlineSinkId{INITIAL_INLINE_SINK_ID.getRawValue()};
-    folly::Synchronized<std::unordered_map<std::string, SinkDescriptor>> sinks;
+    folly::Synchronized<std::unordered_map<Identifier, SinkDescriptor>> sinks;
 };
 }

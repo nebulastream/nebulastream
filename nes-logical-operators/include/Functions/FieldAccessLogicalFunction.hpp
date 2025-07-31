@@ -20,13 +20,15 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {
@@ -38,11 +40,10 @@ class FieldAccessLogicalFunction : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "FieldAccess";
 
-    explicit FieldAccessLogicalFunction(std::string fieldName);
-    FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
+    explicit FieldAccessLogicalFunction(Field field);
 
-    [[nodiscard]] std::string getFieldName() const;
-    [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
+    [[nodiscard]] Field getField() const;
+    [[nodiscard]] LogicalFunction withField(Field fieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
@@ -51,7 +52,6 @@ public:
     friend bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
 
     [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
@@ -62,20 +62,31 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> FIELD_NAME{
             "fieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_NAME, config); }};
+
+        static inline const DescriptorConfig::ConfigParameter<uint64_t> FROM_OPERATOR{
+            "fromOperator",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FROM_OPERATOR, config); }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);
     };
 
 private:
-    std::string fieldName;
-    DataType dataType;
+    Field field;
+    friend struct std::hash<FieldAccessLogicalFunction>;
 };
 
 }
 
 FMT_OSTREAM(NES::FieldAccessLogicalFunction);
+
+template <>
+struct std::hash<NES::FieldAccessLogicalFunction>
+{
+    size_t operator()(const NES::FieldAccessLogicalFunction& fieldAccessFunction) const noexcept;
+};

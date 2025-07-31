@@ -84,7 +84,7 @@ OutputOriginIdsTrait::OutputOriginIdsTrait(std::vector<OriginId> originIds) : or
 std::string OutputOriginIdsTrait::explain(ExplainVerbosity) const
 {
     return fmt::format(
-        "OutputOriginIdsTrait: {}",
+        "OutputOriginIdsTrait({})",
         fmt::join(originIds | std::views::transform([](const auto& originId) { return originId.getRawValue(); }), ", "));
 }
 

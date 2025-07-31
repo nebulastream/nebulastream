@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -36,11 +36,11 @@ public:
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
-        std::vector<std::string> names;
+        std::vector<IdentifierList> names;
         std::vector<DataType> physicalTypes;
     };
 
-    explicit JSONFormat(const Schema& schema);
+    explicit JSONFormat(const SchemaBase<UnboundFieldBase<1>, true>& schema);
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

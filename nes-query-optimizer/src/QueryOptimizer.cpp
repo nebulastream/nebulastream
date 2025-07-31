@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Phases/DecideFieldMappings.hpp"
+
+
 #include <QueryOptimizer.hpp>
 
 #include <Phases/DecideJoinTypes.hpp>
@@ -34,7 +37,9 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
+    optimizedPlan = DecideFieldMappings{}.apply(optimizedPlan);
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
+
     return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
 }
 

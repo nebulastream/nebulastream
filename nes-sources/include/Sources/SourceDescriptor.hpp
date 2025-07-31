@@ -26,7 +26,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -48,7 +47,7 @@ struct ParserConfig
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
+    static ParserConfig create(std::unordered_map<Identifier, std::string> configMap);
 };
 
 class SourceDescriptor final : public Descriptor

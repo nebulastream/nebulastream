@@ -20,7 +20,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,7 +33,8 @@ namespace NES
 {
 
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
 {
 }
 
@@ -56,21 +57,20 @@ DataType LessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction LessLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction LessLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp(
+            "Can only apply less than to two functions with numeric data types, but got left: {}, right: {}",
+            copy.left,
+            copy.right);
     }
-    return withChildren(newChildren);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 };
 
 std::vector<LogicalFunction> LessLogicalFunction::getChildren() const
@@ -108,7 +108,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLes
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return LessLogicalFunction(arguments.children[0], arguments.children[1]);
+    return LessLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

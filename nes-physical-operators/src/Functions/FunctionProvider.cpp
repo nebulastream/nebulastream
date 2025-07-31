@@ -49,7 +49,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessFunction = logicalFunction.tryGet<FieldAccessLogicalFunction>())
     {
-        return FieldAccessPhysicalFunction(fieldAccessFunction->getFieldName());
+        return FieldAccessPhysicalFunction(fieldAccessFunction->getField().getLastName());
     }
     if (const auto constantValueFunction = logicalFunction.tryGet<ConstantValueLogicalFunction>())
     {

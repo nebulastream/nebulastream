@@ -20,32 +20,18 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
-          field)
-{
-}
-
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
-          std::move(field),
-          std::move(asField))
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(LogicalFunction inputFunction)
+    : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(finalAggregateStampType), std::move(inputFunction))
 {
 }
 
@@ -54,34 +40,10 @@ std::string_view CountAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
+std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::withInferredType(const Schema& schema)
 {
-    if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
-    {
-        const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
-        const auto asFieldName = this->getAsField().getFieldName();
-
-        ///If on and as field name are different then append the attribute name resolver from on field to the as field
-        if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-        {
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
-        }
-        else
-        {
-            const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
-        }
-
-        /// a count aggregation is always on an uint 64
-        this->setOnField(
-            this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
-        this->setAsField(
-            this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
-    }
-    else
-    {
-        throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
-    }
+    auto newInputFunction = inputFunction.withInferredDataType(schema);
+    return std::make_shared<CountAggregationLogicalFunction>(newInputFunction);
 }
 
 SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
@@ -89,24 +51,20 @@ SerializableAggregationFunction CountAggregationLogicalFunction::serialize() con
     SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+    auto inputFunc = SerializableFunction();
+    inputFunc.CopyFrom(inputFunction.serialize());
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
+    serializedAggregationFunction.mutable_on_fields()->Add()->CopyFrom(inputFunc);
     return serializedAggregationFunction;
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.fields.size() != 2)
+    if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+        throw CannotDeserialize("CountAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    return std::make_shared<CountAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<CountAggregationLogicalFunction>(arguments.on.at(0));
 }
 }

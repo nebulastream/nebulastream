@@ -207,7 +207,7 @@ ATTACH INLINE
 1,1,1,1,1,1,1,1
 2,2,2,2,2,2,2,2
 
-CREATE SINK out(multiBuffer.field_1 UINT64, multiBuffer.field_2 UINT64, multiBuffer.field_3 UINT64, multiBuffer.field_4 UINT64, multiBuffer.field_5 UINT64, multiBuffer.field_6 UINT64, multiBuffer.field_7 UINT64, multiBuffer.field_8 UINT64)  TYPE File;
+CREATE SINK out(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64)  TYPE File;
 
 # Description: Checks if we the formatter correctly handles data that exactly fits one raw buffer.
 # Source contains 4096 bytes.

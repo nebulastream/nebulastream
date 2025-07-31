@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
@@ -32,21 +32,21 @@ class LogicalSource
 {
     friend SourceCatalog;
     friend OperatorSerializationUtil;
-    explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
+    explicit LogicalSource(Identifier logicalSourceName, const SchemaBase<UnboundFieldBase<1>, true>& schema);
 
 public:
-    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>> getSchema() const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalSource& logicalSource);
 
     friend bool operator==(const LogicalSource& lhs, const LogicalSource& rhs);
     friend bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs);
 
 private:
-    std::string logicalSourceName;
+    Identifier logicalSourceName;
     /// Keep schemas in logical sources dynamically allocated to avoid unnecessary copies
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const SchemaBase<UnboundFieldBase<1>, true>> schema;
 };
 
 }

@@ -22,40 +22,50 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <Util/Hash.hpp>
 
 namespace NES
 {
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+
+InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+    Identifier sinkType, SchemaBase<UnboundFieldBase<1>, true> schema, std::unordered_map<Identifier, std::string> config)
+    : targetSchema(std::move(schema)), sinkType(std::move(sinkType)), sinkConfig(std::move(config))
 {
-    PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
-    return *this;
 }
 
-std::string InlineSinkLogicalOperator::getSinkType() const
+InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
+    std::unreachable();
+}
+
+Identifier InlineSinkLogicalOperator::getSinkType() const
 {
     return sinkType;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getSinkConfig() const
+std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getSinkConfig() const
 {
     return sinkConfig;
 }
 
-Schema InlineSinkLogicalOperator::getSchema() const
+SchemaBase<UnboundFieldBase<1>, true> InlineSinkLogicalOperator::getTargetSchema() const
 {
-    return schema;
+    return targetSchema;
 }
 
 bool InlineSinkLogicalOperator::operator==(const InlineSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->schema == rhs.schema && this->sinkConfig == rhs.sinkConfig;
+    return this->sinkType == rhs.sinkType && this->targetSchema == rhs.targetSchema&& this->sinkConfig == rhs.sinkConfig;
 }
 
 std::string InlineSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -91,14 +101,10 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> InlineSinkLogicalOperator::getInputSchemas() const
-{
-    return {schema};
-};
-
 Schema InlineSinkLogicalOperator::getOutputSchema() const
 {
-    return schema;
+    INVARIANT(false, "SinkLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
@@ -106,15 +112,14 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
     return children;
 }
 
-InlineSinkLogicalOperator::InlineSinkLogicalOperator(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> config)
-    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config))
-{
-}
-
 void InlineSinkLogicalOperator::serialize(SerializableOperator&)
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
 }
 
+}
+
+uint64_t std::hash<NES::InlineSinkLogicalOperator>::operator()(const NES::InlineSinkLogicalOperator& op) const noexcept
+{
+    return folly::hash::hash_combine(op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
 }

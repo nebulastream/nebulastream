@@ -20,9 +20,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -31,14 +31,16 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
+#include "Serialization/IdentifierSerializationUtil.hpp"
+#include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
 
-ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
+ParserConfig ParserConfig::create(std::unordered_map<Identifier, std::string> configMap)
 {
     ParserConfig created{};
-    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
+    if (const auto parserType = configMap.find(Identifier::parse("type")); parserType != configMap.end())
     {
         created.parserType = parserType->second;
     }
@@ -46,7 +48,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
+    if (const auto tupleDelimiter = configMap.find(Identifier::parse("tuple_delimiter")); tupleDelimiter != configMap.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
@@ -57,7 +59,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
         NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
         created.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
+    if (const auto fieldDelimiter = configMap.find(Identifier::parse("field_delimiter")); fieldDelimiter != configMap.end())
     {
         created.fieldDelimiter = fieldDelimiter->second;
     }
@@ -144,8 +146,9 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
+    UnboundSchemaSerializationUtil::serializeUnboundSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
+    IdentifierSerializationUtil::serializeIdentifier(
+        logicalSource.getLogicalSourceName(), serializableSourceDescriptor.mutable_logicalsourcename());
     serializableSourceDescriptor.set_sourcetype(sourceType);
 
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());

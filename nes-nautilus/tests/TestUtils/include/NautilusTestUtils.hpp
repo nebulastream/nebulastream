@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -139,32 +139,28 @@ public:
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
     /// For example, the call createSchemaFromBasicTypes({DataType::Type::INT_32, DataType::Type::FLOAT}, 1) will create a schema with the fields field1 and field2
-    static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes);
-    static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
+    static UnboundOrderedSchema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes);
+    static UnboundOrderedSchema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema,
-        const MemoryLayoutType& memoryLayout,
+        const UnboundOrderedSchema& schema,
+        const MemoryLayoutType layoutType,
         uint64_t numberOfTuples,
         BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema,
-        const MemoryLayoutType& memoryLayout,
-        uint64_t numberOfTuples,
-        BufferManager& bufferManager,
-        uint64_t minSizeVarSizedData);
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema, const MemoryLayoutType& memoryLayout, uint64_t numberOfTuples, BufferManager& bufferManager);
+        const UnboundOrderedSchema& schema, const MemoryLayoutType layoutType, uint64_t numberOfTuples, BufferManager& bufferManager, uint64_t minSizeVarSizedData);
+    std::vector<TupleBuffer>
+    createMonotonicallyIncreasingValues(const UnboundOrderedSchema& schema, MemoryLayoutType layoutType, uint64_t numberOfTuples, BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,
         ExecutionMode backend,
         nautilus::engine::Options& options,
-        const Schema& schema,
+        const UnboundOrderedSchema& schema,
         const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt

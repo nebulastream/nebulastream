@@ -17,12 +17,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -33,7 +35,7 @@ namespace NES
 class InlineSinkLogicalOperator
 {
 public:
-    explicit InlineSinkLogicalOperator(std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
+    explicit InlineSinkLogicalOperator(Identifier sinkType, SchemaBase<UnboundFieldBase<1>, true> schema, std::unordered_map<Identifier, std::string> config);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
     static void serialize(SerializableOperator&);
@@ -44,17 +46,19 @@ public:
     [[nodiscard]] InlineSinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSinkLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] InlineSinkLogicalOperator withInferredSchema() const;
 
-    [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSinkConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] Identifier getSinkType() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getSinkConfig() const;
+    [[nodiscard]] SchemaBase<UnboundFieldBase<1>, true> getTargetSchema() const;
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "InlineSink";
@@ -62,10 +66,16 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
 
-    Schema schema;
-    std::string sinkType;
-    std::unordered_map<std::string, std::string> sinkConfig;
+    SchemaBase<UnboundFieldBase<1>, true> targetSchema;
+    Identifier sinkType;
+    std::unordered_map<Identifier, std::string> sinkConfig;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::InlineSinkLogicalOperator>
+{
+    uint64_t operator()(const NES::InlineSinkLogicalOperator& op) const noexcept;
+};

@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -162,39 +162,51 @@ std::string PhysicalOperator::toString() const
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundOrderedSchema> inputSchema,
+    std::optional<UnboundOrderedSchema> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType)
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , pipelineLocation(PipelineLocation::INTERMEDIATE)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundOrderedSchema> inputSchema,
     MemoryLayoutType inputMemoryLayoutType,
-    MemoryLayoutType outputMemoryLayoutType,
     const PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
-    , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
     , pipelineLocation(pipelineLocation)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundOrderedSchema> inputSchema,
+    std::optional<UnboundOrderedSchema> outputSchema,
+    MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType outputMemoryLayoutType,
+    const PipelineLocation pipelineLocation)
+    : physicalOperator(std::move(physicalOperator))
+    , inputMemoryLayoutType(inputMemoryLayoutType)
+    , outputMemoryLayoutType(outputMemoryLayoutType)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
+    , pipelineLocation(pipelineLocation)
+{
+}
+
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator,
+    std::optional<UnboundOrderedSchema> inputSchema,
+    std::optional<UnboundOrderedSchema> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -203,8 +215,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     : physicalOperator(std::move(std::move(physicalOperator)))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , handler(std::move(handler))
     , handlerId(std::move(handlerId))
     , pipelineLocation(pipelineLocation)
@@ -213,8 +225,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundOrderedSchema> inputSchema,
+    std::optional<UnboundOrderedSchema> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -224,8 +236,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     : physicalOperator(std::move(std::move(physicalOperator)))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , children(std::move(children))
     , handler(std::move(handler))
     , handlerId(std::move(handlerId))
@@ -257,12 +269,12 @@ const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
     return physicalOperator;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getInputSchema() const
+const std::optional<UnboundOrderedSchema>& PhysicalOperatorWrapper::getInputSchema() const
 {
     return inputSchema;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getOutputSchema() const
+const std::optional<UnboundOrderedSchema>& PhysicalOperatorWrapper::getOutputSchema() const
 {
     return outputSchema;
 }

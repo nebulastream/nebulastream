@@ -18,7 +18,6 @@ add_library(nes-memory
         TaggedPointer.cpp
         UnpooledChunksManager.cpp
         VariableSizedAccess.cpp
-        ${MEMORY_LAYOUT_SOURCES}
 )
 
 target_include_directories(nes-memory

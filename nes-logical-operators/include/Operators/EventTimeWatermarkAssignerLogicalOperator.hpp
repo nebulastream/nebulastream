@@ -21,11 +21,11 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -39,9 +39,8 @@ class EventTimeWatermarkAssignerLogicalOperator
 {
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config config);
 
-    LogicalFunction onField;
-    Windowing::TimeUnit unit;
 
     [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -51,14 +50,16 @@ public:
 
     [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema() const;
+    [[nodiscard]] LogicalFunction getOnField() const;
+    [[nodiscard]] Windowing::TimeUnit getUnit() const;
 
     struct ConfigParameters
     {
@@ -75,14 +76,30 @@ public:
             = DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
     };
 
+public:
+    WeakLogicalOperator self;
+
 private:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
-    std::vector<LogicalOperator> children;
+    Windowing::TimeUnit unit;
+    LogicalFunction onField;
+
+    /// TOOD make non-optional once all ctors require children
+    std::optional<LogicalOperator> child;
+    /// Set during schema inference
+    std::optional<SchemaBase<UnboundFieldBase<1>, false>> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+
+    friend struct std::hash<EventTimeWatermarkAssignerLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>
+{
+    uint64_t operator()(const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept;
+};

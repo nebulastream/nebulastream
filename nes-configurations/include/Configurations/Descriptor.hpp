@@ -37,6 +37,7 @@
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
@@ -74,9 +75,15 @@ public:
         EnumWrapper,
         FunctionList,
         AggregationFunctionList,
-        WindowInfos,
+        SerializableWindowType,
+        SerializableTimeCharacteristic,
         ProjectionList,
-        UInt64List>;
+        IdentifierList,
+        Identifier,
+        UInt64List,
+        SerializableFieldMapping,
+        SerializableUnboundSchema,
+        SerializableOrderedFields>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
