@@ -142,8 +142,7 @@ public:
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
+Sources::SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
