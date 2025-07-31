@@ -23,6 +23,8 @@
 #include <Util/Reflection/UnorderedMapReflection.hpp>
 #include <Util/Reflection/VariantReflection.hpp>
 #include <Util/Reflection/VectorReflection.hpp>
+#include <Util/Reflection/StringViewReflection.hpp>
+#include <Util/Reflection/NESStrongTypeReflection.hpp>
 #include <Util/ReflectionFwd.hpp>
 #include <rfl/Generic.hpp>
 #include <rfl/Tuple.hpp>

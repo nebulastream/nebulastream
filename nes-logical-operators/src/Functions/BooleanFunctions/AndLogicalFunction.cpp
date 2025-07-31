@@ -20,8 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -34,20 +35,13 @@ namespace NES
 {
 
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : left(std::move(std::move(left))), right(std::move(std::move(right)))
 {
 }
 
 DataType AndLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-AndLogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
 };
 
 std::vector<LogicalFunction> AndLogicalFunction::getChildren() const
@@ -81,23 +75,19 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction AndLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& node : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+
+    if (!(copy.left.getDataType().isType(DataType::Type::BOOLEAN) or !copy.right.getDataType().isType(DataType::Type::BOOLEAN)))
     {
-        newChildren.push_back(node.withInferredDataType(schema));
+        throw CannotInferStamp("Can only apply and to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
     }
-    /// check if children dataType is correct
-    if (not newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", newChildren.at(0).getDataType());
-    }
-    if (not newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", newChildren.at(1).getDataType());
-    }
-    return this->withChildren(newChildren);
+
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 }
 
 Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const

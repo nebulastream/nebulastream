@@ -19,8 +19,9 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -28,11 +29,12 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : child(child)
 {
 }
 
@@ -41,17 +43,26 @@ DataType AbsoluteLogicalFunction::getDataType() const
     return dataType;
 };
 
-AbsoluteLogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
+    AbsoluteLogicalFunction copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply absolute function on non-numeric input function {}", copy.child);
+    }
 
-LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChild = child.withInferredDataType(schema);
-    return withDataType(newChild.getDataType()).withChildren({newChild});
+    copy.dataType = [&]
+    {
+        if (copy.child.getDataType().isSignedInteger())
+        {
+            /// TODO select appropriately narrow data type
+            return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+        }
+        return copy.child.getDataType();
+    }();
+
+    return copy;
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const

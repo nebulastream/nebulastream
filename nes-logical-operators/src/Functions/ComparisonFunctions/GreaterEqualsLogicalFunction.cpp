@@ -18,9 +18,10 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -34,7 +35,8 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
 {
 }
 
@@ -55,21 +57,21 @@ DataType GreaterEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp(
+            "Can only apply greater equals to two functions with numeric data types, but got left: {}, right: {}",
+            copy.left,
+            copy.right);
     }
-    return this->withChildren(newChildren);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
+
 };
 
 std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const

@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "../private/Phases/DecideFieldMappings.hpp"
+
+
 #include <QueryOptimizer.hpp>
 
 #include <Phases/DecideJoinTypes.hpp>
@@ -19,6 +22,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <OptimizedPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include "Phases/DecideFieldOrder.hpp"
 
 namespace NES
 {
@@ -35,6 +39,10 @@ OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptim
     DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
+    optimizedPlan = DecideFieldMappings{}.apply(optimizedPlan);
+    optimizedPlan = DecideFieldOrder{}.apply(optimizedPlan);
+    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
+
     return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
 }
 

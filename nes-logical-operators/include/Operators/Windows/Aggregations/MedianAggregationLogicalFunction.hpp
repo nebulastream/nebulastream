@@ -18,8 +18,8 @@
 #include <string>
 #include <string_view>
 
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
@@ -31,45 +31,22 @@ namespace NES
 class MedianAggregationLogicalFunction
 {
 public:
-    /// Creates a new MedianAggregationLogicalFunction
-    /// @param onField field on which the aggregation should be performed
-    /// @param asField function describing how the aggregated field should be called
-    MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    ~MedianAggregationLogicalFunction() = default;
+    explicit MedianAggregationLogicalFunction(AggregationFieldAccess inputFunction);
+    MedianAggregationLogicalFunction(AggregationFieldAccess inputFunction, DataType aggregateType);
 
-    [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] MedianAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
-
-    [[nodiscard]] MedianAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
-    [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& otherMedianAggregationLogicalFunction) const;
-
+    [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& other) const;
 
 private:
+    AggregationFieldAccess inputFunction;
+    DataType aggregateType;
     static constexpr std::string_view NAME = "Median";
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
-
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
 };
-
-static_assert(WindowAggregationFunctionConcept<MedianAggregationLogicalFunction>);
 
 template <>
 struct Reflector<MedianAggregationLogicalFunction>
@@ -84,11 +61,10 @@ struct Unreflector<MedianAggregationLogicalFunction>
 };
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::MedianAggregationLogicalFunction>
 {
-struct ReflectedMedianAggregationLogicalFunction
-{
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
+    size_t operator()(const NES::MedianAggregationLogicalFunction& aggregationFunction) const noexcept;
 };
-}
+
+static_assert(NES::WindowAggregationFunctionConcept<NES::MedianAggregationLogicalFunction>);

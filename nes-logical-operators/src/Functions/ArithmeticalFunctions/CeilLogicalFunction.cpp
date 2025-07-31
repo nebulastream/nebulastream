@@ -17,10 +17,12 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -28,6 +30,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
@@ -39,18 +42,23 @@ DataType CeilLogicalFunction::getDataType() const
     return dataType;
 };
 
-CeilLogicalFunction CeilLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    auto copy = *this;
-    copy.dataType = dataType;
+    CeilLogicalFunction copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply ceil function on non-numeric input function {}", copy.child);
+    }
+    copy.dataType = [&]
+    {
+        if (copy.child.getDataType().isFloat())
+        {
+            return DataTypeProvider::provideDataType(DataType::Type::INT64);
+        }
+        return copy.child.getDataType();
+    }();
     return copy;
-};
-
-LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChild = child.withInferredDataType(schema);
-    const auto childDataType = newChild.getDataType();
-    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const

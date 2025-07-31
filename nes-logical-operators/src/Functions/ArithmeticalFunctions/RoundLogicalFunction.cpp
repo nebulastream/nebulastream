@@ -20,8 +20,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -29,11 +30,12 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : child(child) { };
 
 bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
@@ -54,18 +56,24 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
-RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply round function on non-numeric input function {}", copy.child);
+    }
 
-LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChild = child.withInferredDataType(schema);
-    const auto childDataType = newChild.getDataType();
-    return withDataType(childDataType).withChildren({newChild});
+    if (copy.child.getDataType().isType(DataType::Type::FLOAT32))
+    {
+        copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
+    }
+    else
+    {
+        copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    }
+    return copy;
 };
 
 std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const

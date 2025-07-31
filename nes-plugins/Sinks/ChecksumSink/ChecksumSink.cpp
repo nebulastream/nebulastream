@@ -27,6 +27,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -40,7 +41,9 @@ ChecksumSink::ChecksumSink(BackpressureController backpressureController, const 
     : Sink(std::move(backpressureController))
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
-    , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
+    , formatter(
+          std::make_unique<CSVFormat>(
+              *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema()), true))
 {
 }
 
@@ -76,7 +79,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "S$Count:UINT64,S$Checksum:UINT64" << '\n';
+    outputFileStream << "Count:UINT64,Checksum:UINT64" << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;

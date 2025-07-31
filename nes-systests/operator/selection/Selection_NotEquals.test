@@ -51,8 +51,8 @@ ATTACH INLINE
 6,4,test1,test2
 8,5,test1,test2
 
-CREATE SINK sinkStream(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkStreamWithText(streamWithText.id UINT64, streamWithText.value UINT64, streamWithText.text1 VARSIZED, streamWithText.text2 VARSIZED)  TYPE File;
+CREATE SINK sinkStream(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkStreamWithText(id UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED)  TYPE File;
 
 
 # Filter equal

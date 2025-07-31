@@ -20,8 +20,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,8 +34,7 @@
 namespace NES
 {
 
-PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right) : left(left), right(right) { };
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
@@ -53,18 +53,17 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
-PowLogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction PowLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if ((!copy.left.getDataType().isNumeric()) || (!copy.left.getDataType().isNumeric()))
+    {
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     return copy;
-};
-
-LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newLeft = left.withInferredDataType(schema);
-    const auto newRight = right.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -74,9 +73,14 @@ std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
 
 PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    if ((!children.at(0).getDataType().isNumeric()) || (!children.at(1).getDataType().isNumeric()))
+    {
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", left, right);
+    }
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     return copy;
 };
 

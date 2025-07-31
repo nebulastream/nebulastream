@@ -19,9 +19,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -45,7 +45,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ConstantValueLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

@@ -12,9 +12,9 @@ ATTACH INLINE
 12,12,1001
 1,2,1002
 
-CREATE SINK sinkSum(stream.sumValue UINT64)  TYPE File;
-CREATE SINK sinkSumSameName(stream.value UINT64)  TYPE File;
-CREATE SINK sinkSumRenamedWindowStartEnd(windowStart UINT64, windowEnd UINT64, stream.value UINT64)  TYPE File;
+CREATE SINK sinkSum(sumValue UINT64)  TYPE File;
+CREATE SINK sinkSumSameName(value UINT64)  TYPE File;
+CREATE SINK sinkSumRenamedWindowStartEnd(windowStart UINT64, windowEnd UINT64, value UINT64)  TYPE File;
 
 # window_start, end, id should not be projected by default, only the sumValue
 SELECT SUM(value) AS sumValue FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkSum;

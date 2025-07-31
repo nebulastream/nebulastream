@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <WindowTypes/Types/WindowType.hpp>
+#pragma once
+#include <Operators/LogicalOperator.hpp>
 
-namespace NES::Windowing
-{
-
-WindowType::WindowType() = default;
+namespace NES {
 
 }

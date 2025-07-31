@@ -20,8 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,7 +34,7 @@
 namespace NES
 {
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -52,13 +53,6 @@ std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
 DataType OrLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-OrLogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
 };
 
 std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
@@ -80,24 +74,17 @@ std::string_view OrLogicalFunction::getType() const
     return NAME;
 }
 
-LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction OrLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    std::vector<LogicalFunction> children;
-    /// delegate dataType inference of children
-    for (auto& node : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if (!(copy.left.getDataType().isType(DataType::Type::BOOLEAN) or !copy.right.getDataType().isType(DataType::Type::BOOLEAN)))
     {
-        children.push_back(node.withInferredDataType(schema));
+        throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
     }
-    /// check if children dataType is correct
-    INVARIANT(
-        children.at(0).getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of left child must be boolean, but was: {}",
-        children.at(0).getDataType());
-    INVARIANT(
-        children.at(1).getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        children.at(1).getDataType());
-    return this->withChildren(children);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 }
 
 Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const

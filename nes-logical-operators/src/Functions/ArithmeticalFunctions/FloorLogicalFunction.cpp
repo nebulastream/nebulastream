@@ -20,8 +20,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/FloorLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -29,29 +30,32 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : child(child) { };
 
 DataType FloorLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-FloorLogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply floor function on non-numeric input function {}", copy.child);
+    }
+    if (copy.child.getDataType().isFloat())
+    {
+        copy.dataType = DataTypeProvider::provideDataType(DataType::Type::INT64);
+    }
+    copy.dataType = copy.child.getDataType();
     return copy;
-};
-
-LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChild = child.withInferredDataType(schema);
-    const auto childDataType = newChild.getDataType();
-    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const

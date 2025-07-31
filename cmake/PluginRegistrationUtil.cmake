@@ -63,9 +63,24 @@ macro(add_plugin plugin_name plugin_registry plugin_registry_component)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 
     # Store the current source directory for deriving header path (for unreflection support)
-    # Store relative to the component directory (nes-logical-operators/src/Functions/BooleanFunctions)
-    get_filename_component(component_dir "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-    file(RELATIVE_PATH rel_dir "${component_dir}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    # Find the 'src' directory by searching upward from CMAKE_CURRENT_LIST_DIR
+    set(search_dir "${CMAKE_CURRENT_LIST_DIR}")
+    set(component_src_dir "")
+    while(NOT component_src_dir)
+        get_filename_component(parent_dir "${search_dir}" DIRECTORY)
+        get_filename_component(dir_name "${search_dir}" NAME)
+        if(dir_name STREQUAL "src")
+            set(component_src_dir "${search_dir}")
+        elseif(search_dir STREQUAL parent_dir)
+            # Reached filesystem root, fallback to old behavior
+            get_filename_component(component_src_dir "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+            break()
+        else()
+            set(search_dir "${parent_dir}")
+        endif()
+    endwhile()
+
+    file(RELATIVE_PATH rel_dir "${component_src_dir}" "${CMAKE_CURRENT_SOURCE_DIR}")
     list(GET sources 0 first_source)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_sources" "${rel_dir}/${first_source}")
 endmacro()
@@ -130,6 +145,16 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
             # AbsoluteLogicalFunction.cpp -> AbsoluteLogicalFunction
             get_filename_component(type_name "${plugin_source}" NAME_WE)
 
+            # Check if a wrapper type is configured for this registry
+            get_property(wrapper_type GLOBAL PROPERTY "${plugin_registry}_UNREFLECTION_WRAPPER_TYPE")
+
+            # Determine the type to unreflect (wrapped or bare)
+            if(wrapper_type)
+                set(unreflect_type "${wrapper_type}<${type_name}>")
+            else()
+                set(unreflect_type "${type_name}")
+            endif()
+
             # Declare the unreflector function (follows same pattern as factory functions)
             list(APPEND UNREFLECTOR_FUNCTION_DECLARATIONS "${plugin_registry}RegistryReturnType Unreflect${reg_func}${plugin_registry}(const Reflected&, const ReflectionContext&)")
 
@@ -149,7 +174,7 @@ ${plugin_registry}RegistryReturnType Unreflect${reg_func}${plugin_registry}(
     const Reflected& data,
     const ReflectionContext& context
 ) {
-    return context.unreflect<${type_name}>(data);
+    return context.unreflect<${unreflect_type}>(data);
 }
 
 } // namespace NES::${plugin_registry}GeneratedRegistrar
@@ -205,6 +230,12 @@ function(enable_unreflection_for_registries)
     foreach(plugin_registry ${ARGN})
         set_property(GLOBAL PROPERTY "${plugin_registry}_UNREFLECTION_ENABLED" TRUE)
     endforeach()
+endfunction()
+
+# Set wrapper type for unreflection (e.g., TypedLogicalOperator for LogicalOperator registry)
+# Call this BEFORE create_registries_for_component to set the wrapper type
+function(set_unreflection_wrapper_type plugin_registry wrapper_type)
+    set_property(GLOBAL PROPERTY "${plugin_registry}_UNREFLECTION_WRAPPER_TYPE" "${wrapper_type}")
 endfunction()
 
 # Disable factory function generation for registries that only need unreflection

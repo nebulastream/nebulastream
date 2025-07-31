@@ -12,7 +12,6 @@
 
 add_source_files(nes-logical-operators
         TimeBasedWindowType.cpp
-        WindowType.cpp
         SlidingWindow.cpp
         TumblingWindow.cpp
 )
