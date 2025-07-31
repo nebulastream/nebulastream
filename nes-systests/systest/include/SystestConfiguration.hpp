@@ -21,6 +21,8 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
+#include <Configurations/WrapOption.hpp>
+#include <Util/URI.h>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
@@ -54,9 +56,8 @@ public:
     SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    StringOption grpcAddressUri
+    ScalarOption<NES::URI> grpcAddressUri
         = {"grpc",
-           "",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
