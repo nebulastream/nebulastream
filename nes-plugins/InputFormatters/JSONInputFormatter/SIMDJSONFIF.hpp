@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -27,7 +28,7 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -76,7 +77,9 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
 struct SIMDJSONMetaData
 {
     explicit SIMDJSONMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
-        : fieldNamesOutput(tupleBufferRef.getAllFieldNames())
+        : fieldNamesOutput(
+              tupleBufferRef.getAllFieldNames() | std::views::transform([](const auto& idList) { return *std::ranges::rbegin(idList); })
+              | std::ranges::to<std::vector>())
         , fieldDataTypes(tupleBufferRef.getAllDataTypes())
         , tupleDelimiter(config.tupleDelimiter)
 
@@ -90,14 +93,7 @@ struct SIMDJSONMetaData
         /// We expect the names in the json file to not be source qualified
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
-            {
-                fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
-            }
-            else
-            {
-                fieldNamesInJson.emplace_back(fieldName);
-            }
+            fieldNamesInJson.emplace_back(*std::ranges::rbegin(fieldName));
         }
 
         PRECONDITION(fieldNamesInJson.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
@@ -108,15 +104,9 @@ struct SIMDJSONMetaData
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        return fieldNamesOutput[i];
-    }
+    [[nodiscard]] const Identifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesOutput[i]; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        return fieldNamesInJson[i];
-    }
+    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesInJson[i]; }
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
@@ -133,8 +123,8 @@ struct SIMDJSONMetaData
     }
 
 private:
-    std::vector<Record::RecordFieldIdentifier> fieldNamesInJson;
-    std::vector<Record::RecordFieldIdentifier> fieldNamesOutput;
+    std::vector<Identifier> fieldNamesInJson;
+    std::vector<Identifier> fieldNamesOutput;
     std::vector<DataType> fieldDataTypes;
     std::string tupleDelimiter;
 };
@@ -184,7 +174,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     void writeValueToRecord(
         DataType dataType,
         Record& record,
-        const std::string& fieldName,
+        const IdentifierList& fieldName,
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<const SIMDJSONMetaData*>& metaData) const;
@@ -242,7 +232,7 @@ public:
         simdjson::simdjson_result<T> simdJsonValue,
         simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
         const std::string_view expectedType,
-        const std::string_view expectedField)
+        const Identifier& expectedField)
     {
         if (not simdJsonValue.has_value())
         {
@@ -257,9 +247,9 @@ public:
     }
 
     static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const Identifier& fieldName)
     {
-        const auto simdJsonResult = simdJsonReference[fieldName];
+        const auto simdJsonResult = simdJsonReference[fieldName.asCanonicalString()];
         if (not simdJsonResult.has_value())
         {
             throw FieldNotFound(
@@ -317,7 +307,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     }
     else if constexpr (std::same_as<T, char>)
     {
-        const std::string_view valueSV = currentDoc[fieldName];
+        const std::string_view valueSV = currentDoc[fieldName.asCanonicalString()];
         PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
         result.value
             = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0]);

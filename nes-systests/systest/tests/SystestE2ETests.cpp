@@ -108,7 +108,6 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SystestE2ETest,
     testing::Values(
-        E2ETestParameters{"schema", "SourceNameDifference"},
         E2ETestParameters{"schema", "FieldNameDifference"},
         E2ETestParameters{"schema", "TypeDifference"},
         E2ETestParameters{"schema", "ResultsEmptyButSchemasDifferent"},

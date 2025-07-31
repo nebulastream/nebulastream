@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -23,6 +25,11 @@
 #include <variant>
 #include <vector>
 
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>
@@ -38,10 +45,15 @@
 
 namespace NES
 {
-
 SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate)
-    : ManagedByOperator(std::move(self)), predicate(std::move(predicate))
+    : ManagedByOperator(std::move(self)), predicate(std::move(std::move(predicate)))
 {
+}
+
+SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, LogicalFunction predicate)
+    : ManagedByOperator(std::move(self)), child(std::move(child)), predicate(std::move(predicate))
+{
+    inferLocalSchema();
 }
 
 std::string_view SelectionLogicalOperator::getName() const noexcept
@@ -56,8 +68,7 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
 
 bool SelectionLogicalOperator::operator==(const SelectionLogicalOperator& rhs) const
 {
-    return predicate == rhs.predicate && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return predicate == rhs.predicate && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 };
 
 std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
@@ -70,30 +81,24 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, Operat
     return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
 
-SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+void SelectionLogicalOperator::inferLocalSchema()
 {
-    auto copy = *this;
-    if (inputSchemas.empty())
-    {
-        throw CannotDeserialize("Selection should have at least one input");
-    }
-
-    const auto& firstSchema = inputSchemas.at(0);
-    for (const auto& schema : inputSchemas)
-    {
-        if (schema != firstSchema)
-        {
-            throw CannotInferSchema("All input schemas must be equal for Selection operator");
-        }
-    }
-
-    copy.predicate = predicate.withInferredDataType(firstSchema);
-    if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    const auto inputSchema = child->getOutputSchema();
+    predicate = predicate.withInferredDataType(inputSchema);
+    if (not predicate.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }
-    copy.inputSchema = firstSchema;
-    copy.outputSchema = firstSchema;
+    outputSchema = unbind(inputSchema);
+}
+
+SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    auto copy = *this;
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
     return copy;
 }
 
@@ -111,47 +116,57 @@ SelectionLogicalOperator SelectionLogicalOperator::withTraitSet(TraitSet traitSe
 
 SelectionLogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for selection, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> SelectionLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> SelectionLogicalOperator::getOutputSchema() const
 {
-    return {inputSchema};
-};
-
-Schema SelectionLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
+    INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 {
-    return children;
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
+}
+
+LogicalOperator SelectionLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 Reflected
 Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
+    return reflect(detail::ReflectedSelectionLogicalOperator{.operatorId = op.getId(), .predicate = op->getPredicate()});
+}
+
+Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
+{
 }
 
 TypedLogicalOperator<SelectionLogicalOperator>
 Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-    return TypedLogicalOperator<SelectionLogicalOperator>{predicate};
+    auto [id, predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
+    auto children = plan->getChildrenFor(id, context);
+    if (children.size() != 1)
+    {
+        throw CannotDeserialize("SelectionLogicalOperator requires exactly one child, but got {}", children.size());
+    }
+    return TypedLogicalOperator<SelectionLogicalOperator>{children.at(0), predicate};
+}
 }
 
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
+uint64_t std::hash<NES::SelectionLogicalOperator>::operator()(const NES::SelectionLogicalOperator& op) const noexcept
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<TypedLogicalOperator<SelectionLogicalOperator>>(arguments.reflected);
-    }
-    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
-    std::unreachable();
-}
+    return std::hash<NES::LogicalFunction>{}(op.getPredicate());
 }

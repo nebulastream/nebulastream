@@ -6,9 +6,9 @@
 #=====  NO Configuration  =====
 #==============================
 
-CREATE SINK noConfFileSink(noConfSourceFile.id UINT64 NOT NULL, noConfSourceFile.value UINT64 NOT NULL, noConfSourceFile.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK noConfFileSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE noConfSourceFile(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR noConfSourceFile TYPE File SET('CSV' AS PARSER.`TYPE`);
+CREATE PHYSICAL SOURCE FOR noConfSourceFile TYPE File SET('CSV' AS PARSER."TYPE");
 ATTACH FILE small/stream8.csv
 
 SELECT * FROM noConfSourceFile INTO noConfFileSink;
@@ -19,7 +19,7 @@ SELECT * FROM noConfSourceFile INTO noConfFileSink;
 1,4,45
 1,5,56
 
-CREATE SINK noConfInlineSink(noConfSourceInline.id UINT64 NOT NULL, noConfSourceInline.value UINT64 NOT NULL, noConfSourceInline.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK noConfInlineSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE noConfSourceInline(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR noConfSourceInline TYPE File;
 ATTACH INLINE
@@ -39,7 +39,7 @@ SELECT * FROM noConfSourceInline INTO noConfInlineSink;
 #===== Source Configuration =====
 #================================
 
-CREATE SINK sourceConfFileSink(sourceConfSourceFile.id UINT64 NOT NULL, sourceConfSourceFile.value UINT64 NOT NULL, sourceConfSourceFile.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sourceConfFileSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE sourceConfSourceFile(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR sourceConfSourceFile TYPE File;
 ATTACH FILE small/stream8.csv
@@ -52,7 +52,7 @@ SELECT * FROM sourceConfSourceFile INTO sourceConfFileSink;
 1,4,45
 1,5,56
 
-CREATE SINK sourceConfInlineSink(sourceConfSourceInline.id UINT64 NOT NULL, sourceConfSourceInline.value UINT64 NOT NULL, sourceConfSourceInline.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sourceConfInlineSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE sourceConfSourceInline(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR sourceConfSourceInline TYPE File;
 ATTACH INLINE
@@ -73,7 +73,7 @@ SELECT * FROM sourceConfSourceInline INTO sourceConfInlineSink;
 #===== InputFormatter Configuration =====
 #========================================
 
-CREATE SINK inputFormatterConfInlineSink(inputFormatterConfSourceInline.id UINT64 NOT NULL, inputFormatterConfSourceInline.value UINT64 NOT NULL, inputFormatterConfSourceInline.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK inputFormatterConfInlineSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE inputFormatterConfSourceInline(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR inputFormatterConfSourceInline TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
 ATTACH INLINE
@@ -94,9 +94,9 @@ SELECT * FROM inputFormatterConfSourceInline INTO inputFormatterConfInlineSink;
 #===== Source and InputFormatter Configuration =====
 #===================================================
 
-CREATE SINK sourceAndInputFormatterConfInlineSink(sourceAndInputFormatterConfSourceInline.id UINT64 NOT NULL, sourceAndInputFormatterConfSourceInline.value UINT64 NOT NULL, sourceAndInputFormatterConfSourceInline.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sourceAndInputFormatterConfInlineSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE sourceAndInputFormatterConfSourceInline(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR sourceAndInputFormatterConfSourceInline TYPE File SET("|" AS PARSER.FIELD_DELIMITER);
+CREATE PHYSICAL SOURCE FOR sourceAndInputFormatterConfSourceInline TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
 ATTACH INLINE
 1|6|67
 1|7|78

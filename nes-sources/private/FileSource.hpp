@@ -23,6 +23,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -31,7 +32,7 @@
 namespace NES
 {
 
-static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
+static constexpr auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("FILE_PATH");
 
 class FileSource final : public Source
 {
@@ -67,7 +68,7 @@ private:
 struct ConfigParametersCSV
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        std::string(SYSTEST_FILE_PATH_PARAMETER),
+        std::string{SYSTEST_FILE_PATH_PARAMETER.getOriginalString()},
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 

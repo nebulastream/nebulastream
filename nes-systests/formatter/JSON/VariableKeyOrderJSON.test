@@ -3,15 +3,15 @@
 # groups: [Formatter, JSON]
 
 CREATE LOGICAL SOURCE variableKeyOrderStream(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR variableKeyOrderStream TYPE File SET("JSON" AS PARSER.`TYPE`);
+CREATE PHYSICAL SOURCE FOR variableKeyOrderStream TYPE File SET('JSON' AS PARSER."TYPE");
 ATTACH INLINE
 {"NAME":"john", "KEY":1, "VALUE":1}
 {"VALUE":2, "KEY":1, "NAME":"max"}
 
-CREATE SINK keySink(variableKeyOrderStream.key UINT64 NOT NULL) TYPE File;
-CREATE SINK valueSink(variableKeyOrderStream.value UINT64 NOT NULL) TYPE File;
-CREATE SINK nameSink(variableKeyOrderStream.name VARSIZED NOT NULL)  TYPE File;
-CREATE SINK allFieldsSink(variableKeyOrderStream.key UINT64 NOT NULL, variableKeyOrderStream.value UINT64 NOT NULL, variableKeyOrderStream.name VARSIZED NOT NULL)  TYPE File;
+CREATE SINK keySink(key UINT64 NOT NULL) TYPE File;
+CREATE SINK valueSink(value UINT64 NOT NULL) TYPE File;
+CREATE SINK nameSink(name VARSIZED NOT NULL)  TYPE File;
+CREATE SINK allFieldsSink(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL)  TYPE File;
 
 SELECT key FROM variableKeyOrderStream INTO keySink;
 ----

@@ -18,12 +18,15 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,8 +38,7 @@
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right) { };
+SubLogicalFunction::SubLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right)) { };
 
 bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
@@ -57,25 +59,19 @@ DataType SubLogicalFunction::getDataType() const
     return dataType;
 };
 
-SubLogicalFunction SubLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction SubLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction SubLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "SubLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value())
     {
-        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+        throw CannotInferStamp("Cannot apply subtraction to input function left: {}, right: {}", copy.left, copy.right);
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    copy.dataType = std::move(newDataType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
 };
 
 std::vector<LogicalFunction> SubLogicalFunction::getChildren() const
@@ -107,7 +103,7 @@ Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& fu
 SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedSubLogicalFunction>(reflected);
-    return SubLogicalFunction{left, right};
+    return SubLogicalFunction{std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)

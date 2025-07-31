@@ -20,8 +20,10 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,8 +35,7 @@
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(child))
+NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child) : child(std::move(child))
 {
 }
 
@@ -48,28 +49,21 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    auto newChild = child.withInferredDataType(schema);
-    if (not newChild.getDataType().isType(DataType::Type::BOOLEAN))
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (not copy.child.getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType());
+        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", copy.child.getDataType());
     }
-    auto newDataType = newChild.getDataType();
-    newDataType.nullable = newChild.getDataType().nullable;
-    return withDataType(newDataType).withChildren({newChild});
+    copy.dataType = copy.child.getDataType();
+    return copy;
 }
 
 DataType NegateLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-NegateLogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
 };
 
 std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
@@ -98,11 +92,6 @@ Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFuncti
 NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [function] = context.unreflect<detail::ReflectedNegateLogicalFunction>(reflected);
-
-    if (function.getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize("requires child of type bool, but got {}", function.getDataType());
-    }
 
     return NegateLogicalFunction(std::move(function));
 }

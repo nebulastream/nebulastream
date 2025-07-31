@@ -18,12 +18,15 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,7 +38,7 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : child(std::move(child)) { };
 
 bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
@@ -56,21 +59,17 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
-RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply round function on non-numeric input function {}", copy.child);
+    }
+    copy.dataType = copy.child.getDataType();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
-
-LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 1, "RoundLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
@@ -99,7 +98,7 @@ Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction
 RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [child] = context.unreflect<detail::ReflectedRoundLogicalFunction>(reflected);
-    return RoundLogicalFunction(child);
+    return RoundLogicalFunction(std::move(child));
 }
 
 LogicalFunctionRegistryReturnType

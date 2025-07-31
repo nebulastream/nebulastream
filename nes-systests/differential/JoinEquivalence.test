@@ -2,78 +2,90 @@
 # description: Ensure differential queries agree for logically equivalent joins
 # groups: [Differential, Join]
 
-CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
-    3 AS `SOURCE`.SEED,
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 50 90 10, SEQUENCE UINT64 1000 1800 200' AS `SOURCE`.GENERATOR_SCHEMA
+    3 AS "SOURCE".SEED,
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 50 90 10, SEQUENCE UINT64 1000 1800 200' AS "SOURCE".GENERATOR_SCHEMA
 );
 
-CREATE LOGICAL SOURCE stream2(key1_s2 UINT64 NOT NULL, key2_s2 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream2(key1_s2 UINT64 NOT NULL, key2_s2 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE Generator SET(
-    2 AS `SOURCE`.SEED,
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 10 14 1, SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 100 140 10, SEQUENCE UINT64 1000 1800 200, SEQUENCE UINT64 1000 1800 200' AS `SOURCE`.GENERATOR_SCHEMA
+    2 AS "SOURCE".SEED,
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 10 14 1, SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 100 140 10, SEQUENCE UINT64 1000 1800 200, SEQUENCE UINT64 1000 1800 200' AS "SOURCE".GENERATOR_SCHEMA
 );
 
-CREATE LOGICAL SOURCE stream4(id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream4(id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream4 TYPE Generator SET(
-    4 AS `SOURCE`.SEED,
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 200 240 10, SEQUENCE UINT64 1000 1800 200' AS `SOURCE`.GENERATOR_SCHEMA
+    4 AS "SOURCE".SEED,
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 200 240 10, SEQUENCE UINT64 1000 1800 200' AS "SOURCE".GENERATOR_SCHEMA
 );
 
-CREATE LOGICAL SOURCE stream4_1(id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream4_1(id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp4_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream4_1 TYPE Generator SET(
-    5 AS `SOURCE`.SEED,
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 300 340 10, SEQUENCE UINT64 1000 1800 200' AS `SOURCE`.GENERATOR_SCHEMA
+    5 AS "SOURCE".SEED,
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 300 340 10, SEQUENCE UINT64 1000 1800 200' AS "SOURCE".GENERATOR_SCHEMA
 );
 
-CREATE SINK sinkStreamStream2Stream4Stream4_1(streamstream2stream4stream4_1.start UINT64 NOT NULL, streamstream2stream4stream4_1.end UINT64 NOT NULL, streamstream2stream4.start UINT64 NOT NULL, streamstream2stream4.end UINT64 NOT NULL, streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.key1_s2 UINT64 NOT NULL, stream2.key2_s2 UINT64 NOT NULL, stream2.id2 UINT64 NOT NULL, stream2.value2 UINT64 NOT NULL, stream2.ts UINT64 NOT NULL, stream2.timestamp UINT64 NOT NULL, stream4.id4 UINT64 NOT NULL, stream4.value4 UINT64 NOT NULL, stream4.timestamp UINT64 NOT NULL, stream4_1.id4_1 UINT64 NOT NULL, stream4_1.value4_1 UINT64 NOT NULL, stream4_1.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStreamStream2Stream4Stream4_1(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start2 UINT64 NOT NULL, end2 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, key1_s2 UINT64 NOT NULL, key2_s2 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL, id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp4_1 UINT64 NOT NULL) TYPE File;
 
-SELECT * FROM (SELECT * FROM stream)
-  INNER JOIN (SELECT * FROM stream2)
-    ON id = id2
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
-  INNER JOIN (SELECT * FROM stream4)
-    ON id = id4
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
-  INNER JOIN (SELECT * FROM stream4_1)
-    ON id = id4_1
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, key1_s2, key2_s2, id2, value2, ts, timestamp2, id4, value4, timestamp4
+    FROM (
+      SELECT * FROM (
+        SELECT start as start1, end as end1, id, value, timestamp1, key1_s2, key2_s2, id2, value2, ts, timestamp2
+        FROM (
+          SELECT * FROM (SELECT * FROM stream)
+          INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
+        )
+      )
+      INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
+    )
+  )
+  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW SLIDING (timestamp1, timestamp4_1, size 1 sec, advance by 500 ms)
+)
 INTO sinkStreamStream2Stream4Stream4_1;
 ====
-SELECT * FROM (SELECT * FROM stream)
-  INNER JOIN (SELECT * FROM stream2)
-    ON NOT (id != id2)
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
-  INNER JOIN (SELECT * FROM stream4)
-    ON NOT (id != id4)
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
-  INNER JOIN (SELECT * FROM stream4_1)
-    ON NOT (id != id4_1)
-    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, key1_s2, key2_s2, id2, value2, ts, timestamp2, id4, value4, timestamp4
+    FROM (
+      SELECT * FROM (
+        SELECT start as start1, end as end1, id, value, timestamp1, key1_s2, key2_s2, id2, value2, ts, timestamp2
+        FROM (
+          SELECT * FROM (SELECT * FROM stream)
+          INNER JOIN (SELECT * FROM stream2) ON NOT (id != id2) WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
+        )
+      )
+      INNER JOIN (SELECT * FROM stream4) ON NOT (id != id4) WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
+    )
+  )
+  INNER JOIN (SELECT * FROM stream4_1) ON NOT (id != id4_1) WINDOW SLIDING (timestamp1, timestamp4_1, size 1 sec, advance by 500 ms)
+)
 INTO sinkStreamStream2Stream4Stream4_1;
 
 
-CREATE LOGICAL SOURCE streamCSV(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE streamCSV(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampCSV UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR streamCSV TYPE File;
 ATTACH FILE small/stream.csv
 
-CREATE LOGICAL SOURCE streamCSV2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE streamCSV2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampCSV2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR streamCSV2 TYPE File;
 ATTACH FILE small/stream2.csv
 
-CREATE SINK sinkStreamStream2(streamCSVstreamCSV2.start UINT64 NOT NULL, streamCSVstreamCSV2.end UINT64 NOT NULL, streamCSV.id UINT64 NOT NULL, streamCSV.value UINT64 NOT NULL, streamCSV.timestamp UINT64 NOT NULL, streamCSV2.id2 UINT64 NOT NULL, streamCSV2.value2 UINT64 NOT NULL, streamCSV2.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestampCSV UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampCSV2 UINT64 NOT NULL) TYPE File;
 
 SELECT *
-FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec)
+FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestampCSV, timestampCSV2, size 1 sec)
 WHERE value < UINT64(15)
 INTO sinkStreamStream2;
 ====
 SELECT *
 FROM
-    (SELECT * FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec))
+    (SELECT * FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestampCSV, timestampCSV2, size 1 sec))
 WHERE value < UINT64(15)
 INTO sinkStreamStream2;

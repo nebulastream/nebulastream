@@ -18,12 +18,15 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,7 +38,7 @@
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : child(std::move(child)) { };
 
 bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
@@ -56,21 +59,17 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
-SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply sqrt function on non-numeric input function {}", copy.child);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
-
-LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 1, "SqrtLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
@@ -99,7 +98,7 @@ Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& 
 SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [child] = context.unreflect<detail::ReflectedSqrtLogicalFunction>(reflected);
-    return SqrtLogicalFunction(child);
+    return SqrtLogicalFunction(std::move(child));
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)

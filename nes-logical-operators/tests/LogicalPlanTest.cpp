@@ -13,7 +13,6 @@
 */
 
 #include <cstddef>
-#include <optional>
 #include <ranges>
 #include <sstream>
 
@@ -25,8 +24,16 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
+#include <Identifiers/Identifier.hpp>
+
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -38,38 +45,46 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
-#include <Traits/TraitSet.hpp>
-#include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
 using namespace NES;
 
 class LogicalPlanTest : public ::testing::Test
 {
-protected:
-    LogicalPlanTest()
-        : sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>{"Source"}}
-        , sourceOp2(
-              [this]
-              {
-                  const auto dummySchema = Schema{};
-                  const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
-                  const std::unordered_map<std::string, std::string> dummyParserConfig
-                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
-                  auto dummySourceDescriptor
-                      = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig).value();
-                  return LogicalOperator{TypedLogicalOperator<SourceDescriptorLogicalOperator>(std::move(dummySourceDescriptor))};
-              }())
-        , selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("logicalfunction"))}
-        , sinkOp{TypedLogicalOperator<SinkLogicalOperator>()}
+public:
+    explicit LogicalPlanTest()
+        : testFieldIdentifier(Identifier::parse("testField"))
+        , sourceOp{Identifier::parse("Source")}
+        , sourceOp2{[this]
+                    {
+                        const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
+                            UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+                        auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
+                        const std::unordered_map<Identifier, std::string> dummyParserConfig
+                            = {{Identifier::parse("type"), "CSV"},
+                               {Identifier::parse("tupelDelemiter"), "\n"},
+                               {Identifier::parse("fieldDelemiter"), ","}};
+                        return sourceCatalog /// NOLINT
+                            .addPhysicalSource(
+                                logicalSource,
+                                Identifier::parse("File"),
+                                {{Identifier::parse("file_path"), "/dev/null"}},
+                                dummyParserConfig)
+                            .value();
+                    }()}
+        , selectionOp{UnboundFieldAccessLogicalFunction{testFieldIdentifier}}
+
     {
     }
 
+protected:
+    void SetUp() override { }
+
+    Identifier testFieldIdentifier;
     SourceCatalog sourceCatalog;
-    LogicalOperator sourceOp;
-    LogicalOperator sourceOp2;
-    LogicalOperator selectionOp;
-    LogicalOperator sinkOp;
+    TypedLogicalOperator<SourceNameLogicalOperator> sourceOp;
+    TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp2;
+    TypedLogicalOperator<SelectionLogicalOperator> selectionOp;
 };
 
 TEST_F(LogicalPlanTest, SingleRootConstructor)
@@ -81,7 +96,7 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
-    const std::vector roots = {sourceOp, selectionOp};
+    const std::vector<LogicalOperator> roots = {sourceOp, selectionOp};
     const auto queryId = QueryId(1);
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
@@ -100,28 +115,28 @@ TEST_F(LogicalPlanTest, CopyConstructor)
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 {
-    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
-    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("field"))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SelectionLogicalOperator> selectionOp{UnboundFieldAccessLogicalFunction{Identifier::parse("field")}};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
-    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0], *selectionOp);
-    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0].getChildren()[0], *sourceOp);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0], selectionOp);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getChildren()[0], sourceOp);
 }
 
 TEST_F(LogicalPlanTest, ReplaceOperator)
 {
-    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
-    const LogicalOperator sourceOp2{TypedLogicalOperator<SourceNameLogicalOperator>("source2")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp2{Identifier::parse("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceOperator(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(*result->getRootOperators()[0], *sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(result->getRootOperators()[0], sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(LogicalPlanTest, replaceSubtree)
 {
-    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
-    const LogicalOperator sourceOp2{TypedLogicalOperator<SourceNameLogicalOperator>("source2")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp2{Identifier::parse("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceSubtree(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
@@ -130,30 +145,31 @@ TEST_F(LogicalPlanTest, replaceSubtree)
 
 TEST_F(LogicalPlanTest, GetParents)
 {
-    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
-    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("field"))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SelectionLogicalOperator> selectionOp{UnboundFieldAccessLogicalFunction(Identifier::parse("field"))};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
     const auto parents = getParents(promoteResult, sourceOp);
     EXPECT_EQ(parents.size(), 1);
-    EXPECT_EQ(*parents[0], *selectionOp);
+    EXPECT_EQ(parents[0], selectionOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorByType)
 {
-    const auto sourceOp = LogicalOperator{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
     const auto plan = LogicalPlan(sourceOp);
     const auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan);
     EXPECT_EQ(sourceOperators.size(), 1);
-    EXPECT_EQ(*LogicalOperator{sourceOperators[0]}, *sourceOp);
+    EXPECT_EQ(LogicalOperator{sourceOperators[0]}, sourceOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
-    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>{"TestSource"}};
-    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>{FieldAccessLogicalFunction{"fn"}}
-                                      -> withChildren({sourceOp})};
-    const LogicalOperator sinkOp{TypedLogicalOperator<SinkLogicalOperator>{"TestSink"} -> withChildren({selectionOp})};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("TestSource")};
+    const auto selectionOp
+        = TypedLogicalOperator<SelectionLogicalOperator>{UnboundFieldAccessLogicalFunction{Identifier::parse("fn")}}.withChildren(
+            std::vector<LogicalOperator>{sourceOp});
+    const LogicalOperator sinkOp{TypedLogicalOperator<SinkLogicalOperator>{Identifier::parse("TestSink")}.withChildren({selectionOp})};
     const LogicalPlan plan(sinkOp);
     const auto op1 = getOperatorById(plan, sourceOp.getId());
     EXPECT_TRUE(op1.has_value());
@@ -175,7 +191,6 @@ struct TestTrait final : DefaultTrait<TestTrait>
 
     [[nodiscard]] std::string_view getName() const override { return NAME; }
 };
-
 }
 
 template <>
@@ -193,7 +208,7 @@ struct Unreflector<TestTrait>
 TEST_F(LogicalPlanTest, AddTraits)
 {
     EXPECT_TRUE(std::ranges::empty(sourceOp.getTraitSet()));
-    const auto sourceWithTrait = sourceOp.withTraitSet(TraitSet{TestTrait{}});
+    const auto sourceWithTrait = sourceOp->withTraitSet(TraitSet{TestTrait{}});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
     EXPECT_EQ(std::ranges::size(sourceTraitSet), 1);
     EXPECT_TRUE(sourceTraitSet.tryGet<TestTrait>().has_value());
@@ -202,10 +217,10 @@ TEST_F(LogicalPlanTest, AddTraits)
 TEST_F(LogicalPlanTest, GetLeafOperators)
 {
     /// source1 -> selection -> source2
-    std::vector children = {sourceOp2};
-    selectionOp = selectionOp.withChildren(children);
+    std::vector<LogicalOperator> children = {sourceOp2};
+    selectionOp = selectionOp->withChildren(children);
     children = {selectionOp};
-    sourceOp = sourceOp.withChildren(children);
+    sourceOp = sourceOp->withChildren(children);
     const LogicalPlan plan(sourceOp);
     auto leafOperators = getLeafOperators(plan);
     EXPECT_EQ(leafOperators.size(), 1);
@@ -215,10 +230,10 @@ TEST_F(LogicalPlanTest, GetLeafOperators)
 TEST_F(LogicalPlanTest, GetAllOperators)
 {
     /// source1 -> selection -> source2
-    std::vector children = {sourceOp2};
-    selectionOp = selectionOp.withChildren(children);
+    std::vector<LogicalOperator> children = {sourceOp2};
+    selectionOp = selectionOp->withChildren(children);
     children = {selectionOp};
-    sourceOp = sourceOp.withChildren(children);
+    sourceOp = sourceOp->withChildren(children);
     const LogicalPlan plan(sourceOp);
     const auto allOperators = flatten(plan);
     EXPECT_EQ(allOperators.size(), 3);
@@ -244,100 +259,3 @@ TEST_F(LogicalPlanTest, OutputOperator)
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
 }
-
-namespace
-{
-/// Test operator that exposes the self reference for testing
-/// NOLINTBEGIN(readability-convert-member-functions-to-static)
-struct TestOperatorWithSelfAccess final : public ManagedByOperator
-{
-    explicit TestOperatorWithSelfAccess(WeakLogicalOperator self) : ManagedByOperator(std::move(self)) { };
-
-    [[nodiscard]] bool operator==(const TestOperatorWithSelfAccess& rhs) const { return this == &rhs; }
-
-    [[nodiscard]] TestOperatorWithSelfAccess withTraitSet(TraitSet traitSet) const
-    {
-        auto copy = *this;
-        copy.traitSet = std::move(traitSet);
-        return copy;
-    }
-
-    [[nodiscard]] TraitSet getTraitSet() const { return traitSet; }
-
-    [[nodiscard]] TestOperatorWithSelfAccess withChildren(std::vector<LogicalOperator> children) const
-    {
-        auto copy = *this;
-        copy.children = std::move(children);
-        return copy;
-    }
-
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return children; }
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {}; }
-
-    [[nodiscard]] Schema getOutputSchema() const { return Schema{}; }
-
-    [[nodiscard]] std::string explain(ExplainVerbosity, OperatorId id) const
-    {
-        return "TestOperator(id=" + std::to_string(id.getRawValue()) + ")";
-    }
-
-    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
-
-    [[nodiscard]] TestOperatorWithSelfAccess withInferredSchema(const std::vector<Schema>&) const { return *this; }
-
-    [[nodiscard]] std::optional<LogicalOperator> getSelf() const { return self.tryLock(); }
-
-private:
-    static constexpr std::string_view NAME = "TestOperatorWithSelfAccess";
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-};
-
-///NOLINTEND(readability-convert-member-functions-to-static)
-}
-
-template <>
-struct Reflector<TypedLogicalOperator<TestOperatorWithSelfAccess>>
-{
-    Reflected operator()(const TypedLogicalOperator<TestOperatorWithSelfAccess>&) const { return Reflected{}; };
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<TestOperatorWithSelfAccess>>
-{
-    TypedLogicalOperator<TestOperatorWithSelfAccess> operator()(const Reflected&) const
-    {
-        return TypedLogicalOperator<TestOperatorWithSelfAccess>{};
-    };
-};
-
-///NOLINTBEGIN(bugprone-unchecked-optional-access)
-TEST_F(LogicalPlanTest, WeakSelfReferenceReturnsCorrectOperator)
-{
-    const TypedLogicalOperator<TestOperatorWithSelfAccess> testOp{};
-    const auto typedOp = testOp.getAs<TestOperatorWithSelfAccess>();
-    const auto selfOpt = typedOp->getSelf();
-
-    ASSERT_TRUE(selfOpt.has_value());
-    EXPECT_EQ(selfOpt->getId(), testOp.getId());
-    EXPECT_EQ(selfOpt.value(), testOp);
-}
-
-TEST_F(LogicalPlanTest, WeakSelfReferenceAfterCopy)
-{
-    const TypedLogicalOperator<TestOperatorWithSelfAccess> originalOp{};
-    const LogicalOperator copiedOp = originalOp->withChildren({sourceOp});
-    const auto typedCopied = copiedOp.withChildren({}).getAs<TestOperatorWithSelfAccess>();
-
-    const auto selfOpt = typedCopied->getSelf();
-    ASSERT_TRUE(selfOpt.has_value());
-
-    EXPECT_EQ(typedCopied, selfOpt.value());
-    EXPECT_EQ(typedCopied.getId(), selfOpt.value().getId());
-
-    EXPECT_NE(originalOp, selfOpt.value());
-    EXPECT_NE(originalOp.getId(), selfOpt.value().getId());
-}
-
-///NOLINTEND(bugprone-unchecked-optional-access)

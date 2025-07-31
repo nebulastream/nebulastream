@@ -14,13 +14,22 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,6 +41,9 @@ class IngestionTimeWatermarkAssignerLogicalOperator final : public ManagedByOper
 {
 public:
     explicit IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self);
+    /// I do not understand why, but if we just pass the child in an explicit constructor,
+    /// this class stops being convertible to itself (how is that even a thing) and thus doesn't fulfill the concept.
+    IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalOperator child);
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
 
@@ -40,22 +52,28 @@ public:
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema() const;
 
 protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
-    std::vector<LogicalOperator> children;
+    /// TOOD make non-optional once all ctors require children
+    std::optional<LogicalOperator> child;
+
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema;
-    Schema outputSchema;
+
+    friend struct std::hash<IngestionTimeWatermarkAssignerLogicalOperator>;
 
     friend Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>;
 };
@@ -69,6 +87,9 @@ struct Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOpera
 template <>
 struct Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
     TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
     operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
@@ -76,3 +97,9 @@ struct Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOpe
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    uint64_t operator()(const NES::IngestionTimeWatermarkAssignerLogicalOperator& op) const noexcept;
+};
