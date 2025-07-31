@@ -13,9 +13,13 @@
 */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <Util/ReflectionFwd.hpp>
+
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Windowing
 {
@@ -60,3 +64,14 @@ struct Unreflector<Windowing::TimeUnit>
     Windowing::TimeUnit operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
+
+FMT_OSTREAM(NES::Windowing::TimeUnit);
+
+template <>
+struct std::hash<NES::Windowing::TimeUnit>
+{
+    size_t operator()(const NES::Windowing::TimeUnit& timeUnit) const noexcept
+    {
+        return std::hash<uint64_t>{}(timeUnit.getMillisecondsConversionMultiplier());
+    }
+};

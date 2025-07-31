@@ -42,7 +42,9 @@ concept IndexerMetaDataType
           { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
           { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
           { indexerMetaData.getFieldDataTypeAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const DataType&>;
-          { indexerMetaData.getFieldNameAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const Record::RecordFieldIdentifier&>;
+          {
+              indexerMetaData.getFieldNameAt(nautilus::static_val<uint64_t>{0})
+          } -> std::convertible_to<const Record::RecordFieldIdentifier&>;
           { indexerMetaData.getNumberOfFields() } -> std::same_as<uint64_t>;
           { indexerMetaData.getNullValues() } -> std::same_as<const std::vector<std::string>&>;
       };

@@ -23,8 +23,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -36,8 +38,7 @@
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
-    : dataType(left.getDataType()), left(left), right(std::move(right)) { };
+DivLogicalFunction::DivLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right)) { };
 
 bool DivLogicalFunction::operator==(const DivLogicalFunction& rhs) const
 {
@@ -47,27 +48,26 @@ bool DivLogicalFunction::operator==(const DivLogicalFunction& rhs) const
 DataType DivLogicalFunction::getDataType() const
 {
     return dataType;
-};
+}
 
-DivLogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction DivLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction DivLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "DivLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
-    if (not newDataType.has_value())
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
-        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+        throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", copy.left, copy.right);
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
+    if (!newDataType.has_value())
+    {
+        throw CannotInferStamp("Could not join datatypes {} and {} for division", copy.left.getDataType(), copy.right.getDataType());
+    }
+    copy.dataType = std::move(newDataType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+
+    return copy;
 };
 
 std::vector<LogicalFunction> DivLogicalFunction::getChildren() const
@@ -108,7 +108,7 @@ Reflected Reflector<DivLogicalFunction>::operator()(const DivLogicalFunction& fu
 DivLogicalFunction Unreflector<DivLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedDivLogicalFunction>(reflected);
-    return DivLogicalFunction{left, right};
+    return DivLogicalFunction{std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)

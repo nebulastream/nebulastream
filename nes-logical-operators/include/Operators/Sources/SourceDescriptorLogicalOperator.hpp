@@ -14,17 +14,28 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Operators/Reorderer.hpp>
+#include <Schema/Field.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
@@ -36,10 +47,10 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public OriginIdAssigner
+class SourceDescriptorLogicalOperator final : public OriginIdAssigner, public Reorderer
 {
 public:
-    explicit SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(WeakLogicalOperator self, SourceDescriptor sourceDescriptor);
 
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
@@ -51,36 +62,61 @@ public:
     [[nodiscard]] SourceDescriptorLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema() const;
+    [[nodiscard]] Schema<Field, Ordered> getOrderedOutputSchema(ChildOutputOrderProvider orderProvider) const override;
+    [[nodiscard]] const DynamicBase* getDynamicBase() const;
 
+    WeakLogicalOperator self;
 
 private:
-    static constexpr std::string_view NAME = "Source";
-    SourceDescriptor sourceDescriptor;
+    static constexpr std::string_view NAME = "SourceDescriptor";
 
     std::vector<LogicalOperator> children;
+    SourceDescriptor sourceDescriptor;
+
+    void inferLocalSchema();
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
     TraitSet traitSet;
+    friend struct std::hash<SourceDescriptorLogicalOperator>;
+};
+
+namespace detail
+{
+struct ReflectedSourceDescriptorLogicalOperator
+{
+    OperatorId operatorId{OperatorId::INVALID};
+    SourceDescriptor sourceDescriptor;
+};
+}
+
+template <>
+struct Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
+{
+    Reflected operator()(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const;
 };
 
 template <>
-struct Reflector<SourceDescriptorLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
 {
-    Reflected operator()(const SourceDescriptorLogicalOperator& op) const;
-};
-
-template <>
-struct Unreflector<SourceDescriptorLogicalOperator>
-{
-    SourceDescriptorLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType plan);
+    TypedLogicalOperator<SourceDescriptorLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
 
 
 }
+
+template <>
+struct std::hash<NES::SourceDescriptorLogicalOperator>
+{
+    std::size_t operator()(const NES::SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const;
+};

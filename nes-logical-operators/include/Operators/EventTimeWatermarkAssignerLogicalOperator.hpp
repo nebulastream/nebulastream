@@ -15,17 +15,25 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <DataTypes/TimeUnit.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
+#include <Serialization/LogicalOperatorReflection.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -38,10 +46,10 @@ namespace NES
 class EventTimeWatermarkAssignerLogicalOperator
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(
+        WeakLogicalOperator self, LogicalOperator child, LogicalFunction onField, const Windowing::TimeUnit& unit);
 
-    LogicalFunction onField;
-    Windowing::TimeUnit unit;
 
     [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
 
@@ -50,43 +58,68 @@ public:
 
     [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema() const;
+    [[nodiscard]] LogicalFunction getOnField() const;
+    [[nodiscard]] Windowing::TimeUnit getUnit() const;
+
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
-    std::vector<LogicalOperator> children;
+    Windowing::TimeUnit unit;
+    LogicalFunction onField;
+
+    /// TOOD make non-optional once all ctors require children
+    std::optional<LogicalOperator> child;
+
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+
+    friend struct std::hash<EventTimeWatermarkAssignerLogicalOperator>;
+};
+
+namespace detail
+{
+struct ReflectedEventTimeWatermarkAssignerLogicalOperator
+{
+    OperatorId operatorId{OperatorId::INVALID};
+    LogicalFunction onField;
+    Windowing::TimeUnit timeUnit;
+};
+}
+
+template <>
+struct Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
+{
+    Reflected operator()(const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const;
 };
 
 template <>
-struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
+struct Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const;
-};
-
-template <>
-struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
-{
-    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
+    TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>
+    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>
 {
-struct ReflectedEventTimeWatermarkAssignerLogicalOperator
-{
-    LogicalFunction onField;
-    Windowing::TimeUnit timeUnit;
+    uint64_t operator()(const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept;
 };
-}

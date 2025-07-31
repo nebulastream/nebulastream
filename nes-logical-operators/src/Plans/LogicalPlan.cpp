@@ -360,7 +360,7 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
         auto [l, r] = work.top();
         work.pop();
 
-        if (l != r)
+        if (*l != *r)
         {
             return false;
         }

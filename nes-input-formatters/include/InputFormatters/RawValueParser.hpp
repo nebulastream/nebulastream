@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -55,7 +56,7 @@ void parseRawValueIntoRecord(
     Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
+    const IdentifierList& fieldName,
     const std::vector<std::string>& nullValues,
     QuotationType quotationType);
 

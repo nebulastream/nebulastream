@@ -20,25 +20,30 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
+///NOLINTNEXTLINE(misc-include-cleaner)
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema>(schema))
+LogicalSource::LogicalSource(Identifier logicalSourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema<UnqualifiedUnboundField, Ordered>>(schema))
 {
 }
 
-std::shared_ptr<const Schema> LogicalSource::getSchema() const
+std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> LogicalSource::getSchema() const
 {
     return schema;
 }
 
-std::string LogicalSource::getLogicalSourceName() const
+Identifier LogicalSource::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
@@ -60,14 +65,14 @@ Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSourc
 
 LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [logicalSourceName, schema] = context.unreflect<std::pair<std::string, Schema>>(rfl);
+    auto [logicalSourceName, schema] = context.unreflect<std::pair<Identifier, Schema<UnqualifiedUnboundField, Ordered>>>(rfl);
     return LogicalSource{std::move(logicalSourceName), schema};
 }
 }
 
 uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& logicalSource) const noexcept
 {
-    return std::hash<std::string>()(logicalSource.getLogicalSourceName());
+    return std::hash<NES::Identifier>()(logicalSource.getLogicalSourceName());
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSource)

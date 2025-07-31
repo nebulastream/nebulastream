@@ -34,7 +34,7 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -87,7 +87,7 @@ Pipeline::Pipeline(PhysicalOperator op) : rootOperator(std::move(op)), pipelineI
 {
 }
 
-Pipeline::Pipeline(const SourcePhysicalOperator& op) : rootOperator(op), pipelineId(getNextPipelineId())
+Pipeline::Pipeline(const SourceDescriptorPhysicalOperator& op) : rootOperator(op), pipelineId(getNextPipelineId())
 {
 }
 
@@ -97,7 +97,7 @@ Pipeline::Pipeline(const SinkPhysicalOperator& op) : rootOperator(op), pipelineI
 
 bool Pipeline::isSourcePipeline() const
 {
-    return getRootOperator().tryGet<SourcePhysicalOperator>().has_value();
+    return getRootOperator().tryGet<SourceDescriptorPhysicalOperator>().has_value();
 }
 
 bool Pipeline::isOperatorPipeline() const

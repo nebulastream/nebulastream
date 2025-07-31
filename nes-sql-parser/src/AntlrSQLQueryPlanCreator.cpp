@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <array>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -31,7 +32,6 @@
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
@@ -47,9 +47,11 @@
 #include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -58,9 +60,11 @@
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -74,6 +78,7 @@
 
 namespace NES::Parsers
 {
+
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     if (sinks.empty())
@@ -88,14 +93,13 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     INVARIANT(!sinks.empty(), "Need at least one sink!");
     return std::visit(
         Overloaded{
-            [&](const std::string& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::pair<std::string, ConfigMap>& inlineSink)
+            [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
+            [&](const std::pair<Identifier, ConfigMap>& inlineSink)
             {
                 const auto& [type, configOptions] = inlineSink;
                 const auto sinkConfig = getSinkConfig(configOptions);
                 const auto schemaOpt = getSinkSchema(configOptions);
-                const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
-                return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
+                return LogicalPlanBuilder::addInlineSink(type, schemaOpt, sinkConfig, queryPlans.top());
             }},
         sinks.front());
 }
@@ -361,11 +365,7 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
     const bool isParentRuleTableAlias = (parentContext != nullptr) && parentContext->getRuleIndex() == AntlrSQLParser::RuleTableAlias;
     if (helpers.top().isFrom && !helpers.top().isJoinRelation)
     {
-        helpers.top().newSourceName = context->getText();
-    }
-    else if (helpers.top().isJoinRelation && isParentRuleTableAlias)
-    {
-        helpers.top().joinSourceRenames.emplace_back(context->getText());
+        helpers.top().newSourceName = bindIdentifier(context);
     }
     AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
@@ -386,7 +386,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
         && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(bindIdentifier(context)));
+        helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (helpers.top().isFrom and not helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -408,41 +408,34 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
             const auto attribute = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            helpers.top().addProjection(FieldIdentifier(bindIdentifier(context)), attribute);
+            helpers.top().addProjection(bindIdentifier(context), attribute);
         }
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
         const auto expression = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        if (expression.tryGetAs<FieldAccessLogicalFunction>())
+        if (expression.tryGetAs<UnboundFieldAccessLogicalFunction>())
         {
-            /// Simple case: MEDIAN(i8) AS out — use the alias as the aggregation output name.
-            const auto aggFunc = helpers.top().windowAggs.back();
+            auto aggFunc = helpers.top().windowAggs.back();
             helpers.top().windowAggs.pop_back();
-            const auto newAggFunc = std::make_shared<WindowAggregationLogicalFunction>(
-                aggFunc->withAsField(FieldAccessLogicalFunction(bindIdentifier(context))));
-            helpers.top().windowAggs.push_back(newAggFunc);
-            helpers.top().addProjection(std::nullopt, newAggFunc->getAsField());
+            aggFunc.second = bindIdentifier(context);
+            helpers.top().windowAggs.push_back(aggFunc);
+            helpers.top().addProjection(std::nullopt, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
         }
         else
         {
-            /// Expression case: MEDIAN(i8) + UINT64(1) AS out — project expression under alias.
-            helpers.top().addProjection(FieldIdentifier(bindIdentifier(context)), expression);
+            helpers.top().addProjection(bindIdentifier(context), expression);
         }
         helpers.top().hasUnnamedAggregation = false;
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().joinKeyRelationHelper.emplace_back(FieldAccessLogicalFunction(bindIdentifier(context)));
+        helpers.top().joinKeyRelationHelper.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         helpers.top().joinSources.push_back(bindIdentifier(context));
-    }
-    else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleTableAlias == parentRuleIndex)
-    {
-        helpers.top().joinSourceRenames.push_back(bindIdentifier(context));
     }
 }
 
@@ -466,9 +459,14 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         {
             return std::move(helpers.top().queryPlans[0]);
         }
-        if (helpers.top().getSource().empty())
+        if (!helpers.top().getSource().has_value())
         {
-            const auto [type, configOptions] = helpers.top().getInlineSourceConfig();
+            const auto inlineSourceConfig = helpers.top().getInlineSourceConfig();
+            if (!inlineSourceConfig.has_value())
+            {
+                throw InvalidQuerySyntax("Neither named source or inline source specified");
+            }
+            const auto [type, configOptions] = inlineSourceConfig.value();
             const auto parserConfig = getParserConfig(configOptions);
             const auto sourceConfig = getSourceConfig(configOptions);
             const auto schema = getSourceSchema(configOptions);
@@ -479,7 +477,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
 
             return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
         }
-        return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource());
+        return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource().value());
     }();
 
     for (auto whereExpr = helpers.top().getWhereClauses().rbegin(); whereExpr != helpers.top().getWhereClauses().rend(); ++whereExpr)
@@ -490,18 +488,63 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     /// Insert pre-aggregation projections for desugared expression arguments (e.g., AVG(i + UINT64(1))).
     if (!helpers.top().preAggregationProjections.empty())
     {
-        queryPlan = LogicalPlanBuilder::addProjection(helpers.top().preAggregationProjections, /*asterisk=*/true, queryPlan);
+        auto verifiedProjections = helpers.top().preAggregationProjections
+            | std::views::transform(
+                                       [](const auto& pair)
+                                       {
+                                           if (!pair.first.has_value())
+                                           {
+                                               throw InvalidQuerySyntax("Projection must have a name.");
+                                           }
+                                           return ProjectionLogicalOperator::UnboundProjection{pair.first.value(), pair.second};
+                                       });
+        queryPlan = LogicalPlanBuilder::addProjection(verifiedProjections | std::ranges::to<std::vector>(), /*asterisk=*/true, queryPlan);
     }
 
-    if (helpers.top().windowType != nullptr && helpers.top().joinKeyRelationHelper.empty())
+    auto windowTypeOpt = helpers.top().windowType;
+    if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
     {
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax(
+                "windowed aggregation requires exactly one time characteristic, got {}",
+                currentWindowTimestampOpt.has_value() ? "two" : "none");
+        }
+        auto characteristic = std::get<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value());
+        auto aggregations = helpers.top().windowAggs
+            | std::views::transform(
+                                [](auto& agg)
+                                {
+                                    if (!agg.second.has_value())
+                                    {
+                                        throw InvalidQuerySyntax("Aggregation function must have a name.");
+                                    }
+                                    return WindowedAggregationLogicalOperator::ProjectedAggregation{agg.first, agg.second.value()};
+                                });
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
-            queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
+            queryPlan,
+            windowTypeOpt.value(),
+            aggregations | std::ranges::to<std::vector>(),
+            helpers.top().groupByFields,
+            std::move(characteristic));
     }
 
-    queryPlan = LogicalPlanBuilder::addProjection(helpers.top().getProjections(), helpers.top().asterisk, queryPlan);
+    auto projections = helpers.top().getProjections()
+        | std::views::transform(
+                           [](const auto& pair)
+                           {
+                               if (!pair.first.has_value())
+                               {
+                                   return ProjectionLogicalOperator::UnboundProjection{
+                                       Identifier::parse(pair.second.explain(ExplainVerbosity::Short)), pair.second};
+                               }
+                               return ProjectionLogicalOperator::UnboundProjection{pair.first.value(), pair.second};
+                           });
+    queryPlan = LogicalPlanBuilder::addProjection(projections | std::ranges::to<std::vector>(), helpers.top().asterisk, queryPlan);
 
-    if (helpers.top().windowType != nullptr)
+    if (windowTypeOpt.has_value())
     {
         for (auto havingExpr = helpers.top().getHavingClauses().rbegin(); havingExpr != helpers.top().getHavingClauses().rend();
              ++havingExpr)
@@ -577,22 +620,42 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
 
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
-    helpers.top().timestamp = bindIdentifier(context->name);
+    if (context->IDENTIFIER().size() == 1)
+    {
+        helpers.top().windowTimestamp = Windowing::UnboundEventTimeCharacteristic{
+            .field = UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(0)->getText())}};
+    }
+    else if (context->IDENTIFIER().size() == 2)
+    {
+        helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
+            Windowing::UnboundEventTimeCharacteristic{
+                .field = UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(0)->getText())}},
+            Windowing::UnboundEventTimeCharacteristic{
+                .field = UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(1)->getText())}}};
+    }
+    else
+    {
+        throw InvalidQuerySyntax("TimestampParameter must have either one or two identifiers.");
+    }
+    AntlrSQLBaseListener::exitTimestampParameter(context);
 }
 
 /// WINDOWS
 void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindowContext* context)
 {
     const auto timeMeasure = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
-    /// We use the ingestion time if the query does not have a timestamp fieldname specified
-    if (helpers.top().timestamp.empty())
+    helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::TumblingWindow{timeMeasure}});
+    if (!helpers.top().windowTimestamp.has_value())
     {
-        helpers.top().windowType = std::make_shared<Windowing::TumblingWindow>(API::IngestionTime(), timeMeasure);
-    }
-    else
-    {
-        helpers.top().windowType = std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp)), timeMeasure);
+        if (context->timestampParameter()->IDENTIFIER().size() == 1)
+        {
+            helpers.top().windowTimestamp = Windowing::IngestionTimeCharacteristic{};
+        }
+        else if (context->timestampParameter()->IDENTIFIER().size() == 2)
+        {
+            helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
+                Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}};
+        }
     }
     AntlrSQLBaseListener::exitTumblingWindow(context);
 }
@@ -602,17 +665,7 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     const auto timeMeasure = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
     const auto slidingLength = buildTimeMeasure(helpers.top().advanceBy, helpers.top().timeUnitAdvanceBy);
     /// We use the ingestion time if the query does not have a timestamp fieldname specified
-    if (helpers.top().timestamp.empty())
-    {
-        helpers.top().windowType = Windowing::SlidingWindow::of(API::IngestionTime(), timeMeasure, slidingLength);
-    }
-    else
-    {
-        helpers.top().windowType = Windowing::SlidingWindow::of(
-            Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp)),
-            timeMeasure,
-            slidingLength);
-    }
+    helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::SlidingWindow(timeMeasure, slidingLength)});
     AntlrSQLBaseListener::exitSlidingWindow(context);
 }
 
@@ -620,10 +673,11 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 {
     AntlrSQLHelper& helper = helpers.top();
     if (context->name == nullptr and helper.functionBuilder.size() == 1
-        and helper.functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
+        and helper.functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
+        auto fieldName = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()->getFieldName();
         /// Project onto the specified field and remove the field access from the active functions.
-        helpers.top().addProjection(std::nullopt, std::move(helpers.top().functionBuilder.back()));
+        helpers.top().addProjection(std::make_optional(fieldName), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
     }
     else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())
@@ -740,10 +794,6 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().isJoinRelation = false;
-    if (helpers.top().joinSources.size() == helpers.top().joinSourceRenames.size() + 1)
-    {
-        helpers.top().joinSourceRenames.emplace_back("");
-    }
 
     /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
     if (helpers.top().queryPlans.size() != 2)
@@ -759,12 +809,28 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    if (!helpers.top().windowType)
+    auto windowTypeOpt = helpers.top().windowType;
+    if (!windowTypeOpt)
     {
         throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
     }
+
+    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+    if (!currentWindowTimestampOpt.has_value()
+        || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+    {
+        throw InvalidQuerySyntax("join requires two timestamps, but got {}", currentWindowTimestampOpt.has_value() ? "only one" : "none");
+    }
+
+    auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
     const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
+        leftQueryPlan,
+        rightQueryPlan,
+        helpers.top().joinKeyRelationHelper.at(0),
+        windowTypeOpt.value(),
+        helpers.top().joinType,
+        joinTimeCharacteristics[0],
+        joinTimeCharacteristics[1]);
     if (not helpers.empty())
     {
         /// we are in a subquery
@@ -845,15 +911,15 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         {
             throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
         }
-        if (!helpers.top().functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>())
+        if (!helpers.top().functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>())
         {
             /// Desugar: pop the expression, create a temp field, store a pre-aggregation projection,
             /// and push a FieldAccess to the temp field back onto functionBuilder.
             auto expression = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            const auto tempName = toUpperCase(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
-            helpers.top().preAggregationProjections.emplace_back(FieldIdentifier(tempName), std::move(expression));
-            helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(tempName));
+            const auto tempName = Identifier::parse(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
+            helpers.top().preAggregationProjections.emplace_back(tempName, std::move(expression));
+            helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(tempName));
         }
     };
 
@@ -862,38 +928,44 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     {
         case AntlrSQLLexer::COUNT:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                CountAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                CountAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::AVG:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                AvgAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                AvgAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MAX:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                MaxAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                MaxAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MIN:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                MinAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                MinAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::SUM:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                SumAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                SumAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         case AntlrSQLLexer::MEDIAN:
             ensureFieldAccessArgument();
-            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
-                MedianAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
+            helpers.top().windowAggs.emplace_back(
+                MedianAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
             isAggregation = true;
             break;
         default:
@@ -942,14 +1014,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     if (isAggregation)
     {
         helpers.top().hasUnnamedAggregation = true;
-        const auto& onField = helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get();
+        const auto onField = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get();
+        helpers.top().functionBuilder.pop_back();
         const auto autoName = fmt::format("{}_{}", onField.getFieldName(), funcName);
-        const auto asField = FieldAccessLogicalFunction(autoName);
-        const auto aggFunc = helpers.top().windowAggs.back();
+        const auto asField = Identifier::parse(autoName);
+        const auto [aggFunc, asName] = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
-        const auto newAggFunc = std::make_shared<WindowAggregationLogicalFunction>(aggFunc->withAsField(asField));
-        helpers.top().windowAggs.push_back(newAggFunc);
-        helpers.top().functionBuilder.back() = LogicalFunction(asField);
+        helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
+        helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
     }
 }
 

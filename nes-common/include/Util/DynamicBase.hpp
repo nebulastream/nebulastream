@@ -32,11 +32,26 @@ struct DynamicBase
 template <typename T>
 struct Castable : NES::detail::DynamicBase
 {
-    const T& get() const { return *dynamic_cast<const T*>(this); }
+    const T& get() const
+    {
+        auto casted = dynamic_cast<const T*>(this);
+        PRECONDITION(casted != nullptr, "Casting failed");
+        return *casted;
+    }
 
-    const T* operator->() const { return dynamic_cast<const T*>(this); }
+    const T* operator->() const
+    {
+        auto casted = dynamic_cast<const T*>(this);
+        PRECONDITION(casted != nullptr, "Casting failed");
+        return casted;
+    }
 
-    const T& operator*() const { return *dynamic_cast<const T*>(this); }
+    const T& operator*() const
+    {
+        auto casted = dynamic_cast<const T*>(this);
+        PRECONDITION(casted != nullptr, "Casting failed");
+        return *casted;
+    }
 
 private:
     Castable() = default;

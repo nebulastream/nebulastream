@@ -14,54 +14,61 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
+#include <array>
+#include <cstddef>
+#include <functional>
 #include <numeric>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
 
+#include <Schema/Binder.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Reprojecter.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
 
-namespace
+ProjectionLogicalOperator::ProjectionLogicalOperator(
+    WeakLogicalOperator self, std::vector<UnboundProjection> projections, Asterisk asterisk)
+    : self(std::move(self)), asterisk(asterisk.value), projections(std::move(projections))
 {
-std::string explainProjection(const ProjectionLogicalOperator::Projection& projection, ExplainVerbosity verbosity)
-{
-    std::stringstream builder;
-    builder << projection.second.explain(verbosity);
-    if (projection.first && projection.first->getFieldName() != projection.second.explain(verbosity))
-    {
-        builder << " as " << projection.first->getFieldName();
-    }
-    return builder.str();
-}
 }
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk)
-    : projections(std::move(projections)), asterisk(asterisk.value)
+ProjectionLogicalOperator::ProjectionLogicalOperator(
+    WeakLogicalOperator self, LogicalOperator child, std::vector<UnboundProjection> projections, const Asterisk asterisk)
+    : self(std::move(self)), child(std::move(child)), asterisk(asterisk.value), projections(std::move(projections))
 {
+    inferLocalSchema();
 }
 
 std::string_view ProjectionLogicalOperator::getName() const noexcept
@@ -69,49 +76,85 @@ std::string_view ProjectionLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
+std::vector<Field> ProjectionLogicalOperator::getAccessedFields() const
 {
-    if (asterisk)
+    PRECONDITION(child.has_value(), "Child not set when accessing accessed fields");
+    auto asteriskFields = [&]
     {
-        return inputSchema.getFieldNames();
-    }
+        if (asterisk)
+        {
+            return child->getOutputSchema() | std::ranges::to<std::vector>();
+        }
+        return std::vector<Field>();
+    }();
 
-    return projections | std::views::values
+    auto projectedFields = getProjections() | std::views::values
         | std::views::transform(
-               [](const LogicalFunction& function)
-               {
-                   return BFSRange(function)
-                       | std::views::filter([](const LogicalFunction& function)
-                                            { return function.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
-                       | std::views::transform([](const LogicalFunction& function)
-                                               { return function.getAs<FieldAccessLogicalFunction>()->getFieldName(); });
-               })
+                               [](const LogicalFunction& projectionFunction)
+                               {
+                                   return BFSRange(projectionFunction)
+                                       | std::views::filter([](const LogicalFunction& function)
+                                                            { return function.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
+                                       | std::views::transform([](const LogicalFunction& function)
+                                                               { return function.getAs<FieldAccessLogicalFunction>()->getField(); });
+                               })
         | std::views::join | std::ranges::to<std::vector>();
+    return std::array{asteriskFields, projectedFields} | std::views::join | std::ranges::to<std::vector>();
 }
 
-const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOperator::getProjections() const
+std::vector<ProjectionLogicalOperator::Projection> ProjectionLogicalOperator::getProjections() const
 {
-    return projections;
+    PRECONDITION(outputSchema.has_value(), "Accessed projections before inferring schema");
+    return projections | RangeBinder{self.lock()} | std::ranges::to<std::vector>();
+}
+
+std::unordered_map<Field, std::unordered_set<Field>> ProjectionLogicalOperator::getAccessedFieldsForOutput() const
+{
+    auto pairs = getProjections()
+        | std::views::filter([](const Projection& projection)
+                             { return !projection.second.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
+        | std::views::transform(
+                     [](const auto& projection)
+                     {
+                         auto fields = BFSRange{projection.second}
+                             | std::views::filter([](const LogicalFunction& function)
+                                                  { return function.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
+                             | std::views::transform([](const LogicalFunction& function)
+                                                     { return function.getAs<FieldAccessLogicalFunction>()->getField(); })
+                             | std::ranges::to<std::vector>();
+                         return std::pair{projection.first, std::unordered_set<Field>{fields.begin(), fields.end()}};
+                     })
+        | std::ranges::to<std::vector>();
+    return std::unordered_map<Field, std::unordered_set<Field>>{pairs.begin(), pairs.end()};
 }
 
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    return projections == rhs.projections && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return projections == rhs.projections && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 };
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
-    auto explainedProjections
-        = std::views::transform(projections, [&](const auto& projection) { return explainProjection(projection, verbosity); });
+    auto explainedProjections = std::views::transform(
+        projections,
+        [&](const auto& projection)
+        {
+            std::stringstream builder;
+            builder << projection.second.explain(verbosity);
+            if (fmt::format("{}", projection.first) != projection.second.explain(verbosity))
+            {
+                builder << " as " << projection.first;
+            }
+            return builder.str();
+        });
     std::stringstream builder;
     builder << "PROJECTION(";
     if (verbosity == ExplainVerbosity::Debug)
     {
         builder << "opId: " << id << ", ";
-        if (!outputSchema.getFieldNames().empty())
+        if (outputSchema.has_value() && not std::ranges::empty(outputSchema.value()))
         {
-            builder << "schema: " << outputSchema << ", ";
+            builder << "schema: " << outputSchema.value() << ", ";
         }
     }
 
@@ -119,7 +162,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     if (asterisk)
     {
         builder << "*";
-        if (!projections.empty())
+        if (projections.empty())
         {
             builder << ", ";
         }
@@ -135,58 +178,50 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     return builder.str();
 }
 
-ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+void ProjectionLogicalOperator::inferLocalSchema()
 {
-    if (inputSchemas.empty())
-    {
-        throw CannotDeserialize("Projection should have at least one input");
-    }
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    auto inputSchema = child->getOutputSchema();
+    projections = projections
+        | std::views::transform(
+                      [&inputSchema](const UnboundProjection& projection)
+                      {
+                          auto inferredFunction = projection.second.withInferredDataType(inputSchema);
+                          return UnboundProjection{projection.first, inferredFunction};
+                      })
+        | std::ranges::to<std::vector>();
 
-    const auto& firstSchema = inputSchemas[0];
-    for (const auto& schema : inputSchemas)
+    const auto fieldProjections = [&]
     {
-        if (schema != firstSchema)
+        if (asterisk)
         {
-            throw CannotInferSchema("All input schemas must be equal for Projection operator");
+            return unbind(inputSchema) | std::ranges::to<std::vector>();
         }
-    }
+        return std::vector<UnqualifiedUnboundField>();
+    }();
 
-    /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
-    /// An alias is explicit when its name differs from the auto-derived name (function.explain(Short)).
+    const auto fieldsFromProjections = this->projections
+        | std::views::transform([](const auto& projection)
+                                { return UnqualifiedUnboundField{projection.first, projection.second.getDataType()}; })
+        | std::ranges::to<std::vector>();
+    auto outputSchemaOpt = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(
+        std::vector{fieldsFromProjections, fieldProjections} | std::views::join | std::ranges::to<std::vector>());
+
+    if (!outputSchemaOpt.has_value())
+    {
+        throw CannotInferSchema(
+            "Found collisions of field names in projection: {}",
+            Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(outputSchemaOpt.error()));
+    }
+    outputSchema = std::move(outputSchemaOpt).value();
+}
+
+ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.projections.clear();
-    copy.inputSchema = firstSchema;
-    std::unordered_set<std::string> seenExplicitAliases;
-    for (const auto& projection : projections)
-    {
-        auto inferredFunction = projection.second.withInferredDataType(firstSchema);
-        const auto autoDerivedName = inferredFunction.explain(ExplainVerbosity::Short);
-        const bool hasExplicitAlias = projection.first.has_value() && projection.first->getFieldName() != autoDerivedName;
-        auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(autoDerivedName);
-        if (hasExplicitAlias && !seenExplicitAliases.insert(identifier.getFieldName()).second)
-        {
-            throw CannotInferSchema(
-                "Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", identifier.getFieldName());
-        }
-        copy.projections.emplace_back(std::move(identifier), std::move(inferredFunction));
-    }
-
-    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema.
-    auto initial = Schema{};
-    if (asterisk)
-    {
-        initial.appendFieldsFromOtherSchema(copy.inputSchema);
-    }
-    copy.outputSchema = std::accumulate(
-        copy.projections.begin(),
-        copy.projections.end(),
-        initial,
-        [](Schema schema, const auto& projection)
-        {
-            INVARIANT(projection.first.has_value(), "Projection identifier must be set after inference");
-            return schema.addField(projection.first->getFieldName(), projection.second.getDataType());
-        });
-
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
     return copy;
 }
 
@@ -204,76 +239,95 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet trait
 
 ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for projection, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> ProjectionLogicalOperator::getOutputSchema() const
 {
-    return {inputSchema};
-};
+    INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value() | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
+}
 
-Schema ProjectionLogicalOperator::getOutputSchema() const
+Schema<Field, Ordered> ProjectionLogicalOperator::getOrderedOutputSchema(const ChildOutputOrderProvider orderProvider) const
 {
-    return outputSchema;
+    INVARIANT(child.has_value(), "Child not set when trying to get ordered output schema");
+    std::vector<UnqualifiedUnboundField> fields;
+    if (asterisk)
+    {
+        fields = orderProvider(child.value()) | RangeUnbinder{} | std::ranges::to<std::vector>();
+    }
+    for (const auto& [name, function] : projections)
+    {
+        fields.emplace_back(name, function.getDataType());
+    }
+    return fields | RangeBinder{self.lock()} | std::ranges::to<Schema<Field, Ordered>>();
 }
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
 {
-    return children;
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
-Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& op) const
+const detail::DynamicBase* ProjectionLogicalOperator::getDynamicBase() const
 {
-    detail::ReflectedProjectionLogicalOperator reflected;
+    return static_cast<const Reprojecter*>(this);
+}
 
-    for (auto [identifierOpt, function] : op.getProjections())
+LogicalOperator ProjectionLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
+}
+
+bool ProjectionLogicalOperator::hasAsterisk() const
+{
+    return asterisk;
+}
+
+Reflected
+Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const
+{
+    auto projections = op->getProjections()
+        | std::views::transform([](const auto& projection) { return std::pair{projection.first.getLastName(), projection.second}; })
+        | std::ranges::to<std::vector>();
+    return reflect(
+        detail::ReflectedProjectionLogicalOperator{.operatorId = op.getId(), .asterisk = op->hasAsterisk(), .projections = projections});
+}
+
+Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
+{
+}
+
+TypedLogicalOperator<ProjectionLogicalOperator>
+Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    auto [id, asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
+    auto children = plan->getChildrenFor(id, context);
+    if (children.size() != 1)
     {
-        /// Only serialize identifiers that differ from the auto-derived name (i.e. explicit AS aliases).
-        std::optional<std::string> identifier;
-        if (identifierOpt.has_value())
-        {
-            const auto autoDerived = function.explain(ExplainVerbosity::Short);
-            if (identifierOpt->getFieldName() != autoDerived)
-            {
-                identifier = identifierOpt->getFieldName();
-            }
-        }
-        reflected.projections.emplace_back(identifier, function);
+        throw CannotDeserialize("ProjectionLogicalOperator must have exactly one child, but got {}", children.size());
     }
 
-    reflected.asterisk = op.asterisk;
-
-    return reflect(reflected);
+    return TypedLogicalOperator<ProjectionLogicalOperator>{
+        children.at(0),
+        std::move(projections),
+        ProjectionLogicalOperator::Asterisk(asterisk),
+    };
 }
 
-ProjectionLogicalOperator
-Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+}
+
+std::size_t std::hash<NES::ProjectionLogicalOperator>::operator()(const NES::ProjectionLogicalOperator& projectionOperator) const noexcept
 {
-    auto [asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
-
-    std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
-    parsedProjections.reserve(projections.size());
-
-    for (auto [identifier, function] : projections)
-    {
-        parsedProjections.emplace_back(identifier, function);
-    }
-
-    return {std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
-}
-
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
-{
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ProjectionLogicalOperator>(arguments.reflected);
-    }
-
-    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
-    std::unreachable();
-}
-
+    /// NOLINTBEGIN(readability-magic-numbers)
+    return folly::hash::commutative_hash_combine_range_generic(
+        13, folly::hash::StdHasher{}, projectionOperator.projections.begin(), projectionOperator.projections.end());
+    /// NOLINTEND(readability-magic-numbers)
 }
