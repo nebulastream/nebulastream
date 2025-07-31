@@ -101,15 +101,9 @@ void IREEBatchInferenceOperatorHandler::createNewBatch() const
     batches.emplace_back(batch);
 }
 
-Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
+void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
 {
-    tuplesSeen++;
-    if (tuplesSeen == batchSize || batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_EMITTED)
-    {
-        createNewBatch();
-        return batches.back().get();
-    }
-
+    const std::scoped_lock lock(batchesMutex);
     if (batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_PROCESSED)
     {
         auto processedBatches = batches
@@ -119,6 +113,17 @@ Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
                 });
         auto batchesCount = static_cast<size_t>(std::ranges::distance(processedBatches));
         if (batchesCount == batches.size()) batches.clear();
+        createNewBatch();
+        NES_DEBUG("Cleared {} batches", batchesCount);
+    }
+}
+
+
+Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
+{
+    tuplesSeen++;
+    if (tuplesSeen == batchSize || batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_EMITTED)
+    {
         createNewBatch();
         return batches.back().get();
     }

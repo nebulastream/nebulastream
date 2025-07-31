@@ -40,6 +40,7 @@ public:
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
     [[nodiscard]] Batch* getOrCreateNewBatch() const;
+    void garbageCollectBatches() const;
     void createNewBatch() const;
     void emitBatchesToProbe(Batch& batch,
         const SequenceData& sequenceData,
