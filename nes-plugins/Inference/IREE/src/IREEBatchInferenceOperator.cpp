@@ -76,6 +76,12 @@ nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
     return lhs < rhs ? lhs : rhs;
 }
 
+void garbageCollectBatchesProxy(void* inferModelHandler)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    handler->garbageCollectBatches();
+}
+
 IREEBatchInferenceOperator::IREEBatchInferenceOperator(
     const OperatorHandlerId operatorHandlerId,
     std::vector<PhysicalFunction> inputs,
@@ -199,6 +205,8 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
 
 void IREEBatchInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    nautilus::invoke(garbageCollectBatchesProxy, operatorHandlerMemRef);
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
