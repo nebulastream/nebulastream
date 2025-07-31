@@ -28,12 +28,21 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -68,6 +77,51 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
             and getOutputOriginIds() == rhsOperator->getOutputOriginIds() and getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
+}
+
+namespace
+{
+/// We set the join type to be a Hash-Join if the join function consists of solely functions that are FieldAccessLogicalFunction.
+/// To be more specific, we currently support only
+/// Otherwise, we use a NLJ.
+bool shallUseHashJoin(const LogicalFunction& joinFunction)
+{
+    /// Checks if the logical function is allowed to be in our join function for a hash join
+    auto allowedLogicalFunction = [](const LogicalFunction& logicalFunction)
+    {
+        return logicalFunction.tryGet<AndLogicalFunction>().has_value() or logicalFunction.tryGet<EqualsLogicalFunction>().has_value()
+            or logicalFunction.tryGet<OrLogicalFunction>().has_value() or logicalFunction.tryGet<GreaterEqualsLogicalFunction>().has_value()
+            or logicalFunction.tryGet<GreaterLogicalFunction>().has_value()
+            or logicalFunction.tryGet<LessEqualsLogicalFunction>().has_value() or logicalFunction.tryGet<LessLogicalFunction>().has_value();
+    };
+
+    std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
+    for (auto itr : BFSRange<LogicalFunction>(joinFunction))
+    {
+        /// If any child is a leaf function, we put the current function into the set
+        const auto anyChildIsLeaf
+            = std::ranges::any_of(itr.getChildren(), [](const LogicalFunction& child) { return child.getChildren().empty(); });
+
+        if (not allowedLogicalFunction(itr))
+        {
+            return false;
+        }
+
+        if (anyChildIsLeaf)
+        {
+            for (const auto& child : itr.getChildren())
+            {
+                if (child.tryGet<FieldAccessLogicalFunction>().has_value())
+                {
+                    /// If the leaf is not a FieldAccessLogicalFunction, we need to use a NLJ
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
@@ -139,6 +193,14 @@ TraitSet JoinLogicalOperator::getTraitSet() const
 {
     TraitSet result = traitSet;
     result.insert(originIdTrait);
+    if (shallUseHashJoin(joinFunction))
+    {
+        result.insert(HashJoinTrait{});
+    }
+    else
+    {
+        result.insert(NestedLoopJoinTrait{});
+    }
     return result;
 }
 

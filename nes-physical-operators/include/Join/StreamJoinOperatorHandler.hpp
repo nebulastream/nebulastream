@@ -41,7 +41,7 @@ protected:
         PipelineExecutionContext* pipelineCtx) override;
 
     /// Emits the left and right slice to the probe
-    virtual void emitSliceIdsToProbe(
+    virtual void emitSlicesToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
         const WindowInfo& windowInfo,

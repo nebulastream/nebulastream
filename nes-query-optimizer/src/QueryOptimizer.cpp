@@ -20,7 +20,7 @@
 
 namespace NES
 {
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan)
+PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
     return optimize(plan, defaultQueryExecution);
 }

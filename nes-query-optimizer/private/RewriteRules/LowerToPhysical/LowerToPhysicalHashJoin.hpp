@@ -14,33 +14,20 @@
 
 #pragma once
 
-#include <memory>
 #include <utility>
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
-#include <Sequencing/SequenceData.hpp>
-#include <Time/Timestamp.hpp>
-#include <fmt/format.h>
+#include <Operators/LogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
-
-enum class JoinBuildSideType : uint8_t
+struct LowerToPhysicalHashJoin : AbstractRewriteRule
 {
-    Right,
-    Left
+    explicit LowerToPhysicalHashJoin(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+
+private:
+    QueryExecutionConfiguration conf;
 };
 
-/// This stores the left, right and output schema for a binary join
-struct JoinSchema
-{
-    JoinSchema(Schema leftSchema, Schema rightSchema, Schema joinSchema)
-        : leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema))
-    {
-    }
-
-    Schema leftSchema;
-    Schema rightSchema;
-    Schema joinSchema;
-};
 }

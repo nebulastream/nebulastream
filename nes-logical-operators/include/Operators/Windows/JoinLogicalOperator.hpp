@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -27,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
