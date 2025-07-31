@@ -14,11 +14,11 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
@@ -26,13 +26,15 @@
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
+
 namespace NES
 {
 
 class UnionLogicalOperator
 {
 public:
-    explicit UnionLogicalOperator();
+    explicit UnionLogicalOperator(WeakLogicalOperator self);
+    explicit UnionLogicalOperator(WeakLogicalOperator self, std::vector<LogicalOperator> children);
 
     [[nodiscard]] bool operator==(const UnionLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -43,27 +45,33 @@ public:
     [[nodiscard]] UnionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] UnionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-    /// Set the schemas directly without inference used for operator registration
-    [[nodiscard]] UnionLogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
-    [[nodiscard]] UnionLogicalOperator setOutputSchema(const Schema& outputSchema) const;
+    [[nodiscard]] UnionLogicalOperator withInferredSchema() const;
 
 private:
     static constexpr std::string_view NAME = "Union";
 
     std::vector<LogicalOperator> children;
-    std::vector<Schema> inputSchemas;
-    Schema outputSchema;
+    WeakLogicalOperator self;
+
+    /// Set during schema inference
+    std::optional<SchemaBase<1, UnboundFieldBase<1>, false>> outputSchema;
+
     TraitSet traitSet;
+    friend struct std::hash<UnionLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::UnionLogicalOperator>
+{
+    uint64_t operator()(const NES::UnionLogicalOperator& op) const noexcept;
+};

@@ -28,9 +28,9 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -62,16 +62,16 @@ public:
 
     [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
-    [[nodiscard]] std::string getSinkName() const;
+    [[nodiscard]] std::shared_ptr<const UnboundOrderedSchema> getSchema() const;
+    [[nodiscard]] Identifier getSinkName() const;
     [[nodiscard]] bool isInline() const;
 
 private:
-    explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+    explicit SinkDescriptor(std::variant<Identifier, uint64_t> sinkName, const UnboundOrderedSchema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
-    std::variant<std::string, uint64_t> sinkName;
-    std::shared_ptr<const Schema> schema;
+
+    std::variant<Identifier, uint64_t> sinkName;
+    std::shared_ptr<const UnboundOrderedSchema> schema;
     std::string sinkType;
 
 public:
@@ -111,7 +111,7 @@ struct std::hash<NES::SinkDescriptor>
 {
     size_t operator()(const NES::SinkDescriptor& sinkDescriptor) const noexcept
     {
-        return std::hash<std::string>{}(sinkDescriptor.getSinkName());
+        return std::hash<NES::Identifier>{}(sinkDescriptor.getSinkName());
     }
 };
 

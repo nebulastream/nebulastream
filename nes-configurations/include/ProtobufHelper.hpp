@@ -38,9 +38,15 @@ inline std::ostream& operator<<(std::ostream& os, const AggregationFunctionList&
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const WindowInfos& infos)
+inline std::ostream& operator<<(std::ostream& os, const SerializableWindowType& infos)
 {
     os << infos.DebugString();
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const SerializableTimeCharacteristic& characteristic)
+{
+    os << characteristic.DebugString();
     return os;
 }
 
@@ -55,6 +61,21 @@ inline std::ostream& operator<<(std::ostream& os, const UInt64List& descriptor)
     return os << descriptor.DebugString();
 }
 
+inline std::ostream& operator<<(std::ostream& os, const SerializableFieldMapping& mapping)
+{
+    return os << mapping.DebugString();
+}
+
+inline std::ostream& operator<<(std::ostream& os, const SerializableUnboundSchema& schema)
+{
+    return os << schema.DebugString();
+}
+
+inline std::ostream& operator<<(std::ostream& os, const SerializableOrderedFields& orderedFields)
+{
+    return os << orderedFields.DebugString();
+}
+
 inline bool operator==(const FunctionList& lhs, const FunctionList& rhs)
 {
     /// Compare by serializing to string.
@@ -67,7 +88,13 @@ inline bool operator==(const AggregationFunctionList& lhs, const AggregationFunc
     return lhs.SerializeAsString() == rhs.SerializeAsString();
 }
 
-inline bool operator==(const WindowInfos& lhs, const WindowInfos& rhs)
+inline bool operator==(const SerializableWindowType& lhs, const SerializableWindowType& rhs)
+{
+    /// Compare by serializing to string.
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const SerializableTimeCharacteristic& lhs, const SerializableTimeCharacteristic& rhs)
 {
     /// Compare by serializing to string.
     return lhs.SerializeAsString() == rhs.SerializeAsString();
@@ -90,5 +117,19 @@ inline bool operator==(const UInt64List& lhs, const UInt64List& rhs)
     return lhs.SerializeAsString() == rhs.SerializeAsString();
 }
 
+inline bool operator==(const SerializableFieldMapping& lhs, const SerializableFieldMapping& rhs)
+{
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const SerializableUnboundSchema& lhs, const SerializableUnboundSchema& rhs)
+{
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const SerializableOrderedFields& lhs, const SerializableOrderedFields& rhs)
+{
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
 
 }

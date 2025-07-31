@@ -40,8 +40,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
-        logicalOperator.getOutputSchema(),
+        selection->getChild().getOutputSchema().unbind<std::dynamic_extent>(),
+        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

@@ -13,28 +13,23 @@
 */
 
 #pragma once
-#include <string>
-#include <utility>
 
-namespace NES
+#include <folly/hash/Hash.h>
+
+template <typename T>
+struct std::hash<std::vector<T>>
 {
-struct WindowMetaData
-{
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
-
-    WindowMetaData() = default;
-
-    WindowMetaData(std::string startName, std::string endName)
-        : windowStartFieldName(std::move(startName)), windowEndFieldName(std::move(endName))
+    size_t operator()(const std::vector<T>& vector) const noexcept
     {
+        return folly::hash::hash_range(vector.begin(), vector.end());
     }
-
-    bool operator==(const WindowMetaData& other) const
-    {
-        return windowStartFieldName == other.windowStartFieldName && windowEndFieldName == other.windowEndFieldName;
-    }
-
-    bool operator!=(const WindowMetaData& other) const { return !(*this == other); }
 };
-}
+
+template <typename T, size_t N>
+struct std::hash<std::array<T, N>>
+{
+    size_t operator()(const std::array<T, N>& array) const noexcept
+    {
+        return folly::hash::hash_range(array.begin(), array.end());
+    }
+};

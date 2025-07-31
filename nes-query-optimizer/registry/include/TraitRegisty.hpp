@@ -19,6 +19,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Registry.hpp>
+#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {
@@ -27,6 +28,7 @@ using TraitRegistryReturnType = Trait;
 
 struct TraitRegistryArguments
 {
+    LogicalOperator logicalOperator;
     DescriptorConfig::Config config;
 };
 

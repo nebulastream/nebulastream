@@ -27,7 +27,7 @@
 #include <tuple>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -82,15 +82,14 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating a combined schema with the keys and value types.
     auto inputSchemaKey = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(keyTypes);
-    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getNumberOfFields());
-    const auto fieldNamesKey = inputSchemaKey.getFieldNames();
-    const auto fieldNamesValue = inputSchemaValue.getFieldNames();
-    inputSchema = inputSchemaKey;
-    inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
+    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, std::ranges::size(inputSchemaKey));
+    const auto fieldNamesKey = inputSchemaKey | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); }) | std::ranges::to<std::vector>();
+    const auto fieldNamesValue = inputSchemaValue | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); }) | std::ranges::to<std::vector>();
+    inputSchema = UnboundOrderedSchema{std::array{inputSchemaKey, inputSchemaValue} | std::views::join | std::ranges::to<std::vector>()};
 
     /// Setting the hash map configurations
-    keySize = inputSchemaKey.getSizeOfSchemaInBytes();
-    valueSize = inputSchemaValue.getSizeOfSchemaInBytes();
+    keySize = inputSchemaKey.getSizeInBytes();
+    valueSize = inputSchemaValue.getSizeInBytes();
     entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
@@ -102,7 +101,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
     const auto bufferNeeded
-        = callsToCreateMonotonicValues * ((inputSchema.getSizeOfSchemaInBytes() * params.numberOfItems) / bufferSize + 1);
+        = callsToCreateMonotonicValues * ((inputSchema.getSizeInBytes() * params.numberOfItems) / bufferSize + 1);
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
@@ -112,8 +111,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
-    projectionKeys = inputSchemaKey.getFieldNames();
-    projectionValues = inputSchemaValue.getFieldNames();
+    projectionKeys = inputSchemaKey | std::views::transform([](const auto& field) { return field.getName(); }) | std::ranges::to<std::vector>();
+    projectionValues = inputSchemaValue | std::views::transform([](const auto& field) { return field.getName(); }) | std::ranges::to<std::vector>();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
@@ -359,10 +358,10 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeInBytes());
     if (not bufferOutputOpt)
     {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
+        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeInBytes());
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();

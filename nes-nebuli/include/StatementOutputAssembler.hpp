@@ -22,8 +22,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -57,15 +57,15 @@ concept AssemblembleStatementResult =
     /// OutputAssembler convert return type and the advertised OutputRowType match
     && std::convertible_to<detail::ConversionResultType<Result>, typename StatementOutputAssembler<Result>::OutputRowType>;
 
-using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
+using LogicalSourceOutputRowType = std::tuple<Identifier, UnboundOrderedSchema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
+    = std::tuple<PhysicalSourceId, Identifier, UnboundOrderedSchema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
+using SinkDescriptorOutputRowType = std::tuple<Identifier, UnboundOrderedSchema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;

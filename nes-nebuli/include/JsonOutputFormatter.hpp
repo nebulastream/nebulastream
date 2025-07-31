@@ -22,7 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <google/protobuf/message_lite.h>
@@ -47,9 +47,10 @@ void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 
-void to_json(nlohmann::json& jsonOutput, const Schema::Field& str);
+void to_json(nlohmann::json& jsonOutput, const UnboundField& str);
 
-void to_json(nlohmann::json& jsonOutput, const Schema& schema);
+
+void to_json(nlohmann::json& jsonOutput, const UnboundOrderedSchema& schema);
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
 
@@ -59,6 +60,15 @@ void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& co
 
 namespace nlohmann
 {
+
+template <size_t Extent>
+struct adl_serializer<NES::IdentifierBase<Extent>>
+{
+    static void to_json(json& jsonOutput, const NES::IdentifierBase<Extent>& identifier)
+    {
+        jsonOutput = identifier.asCanonicalString();
+    }
+};
 
 template <size_t N, typename... Ts>
 struct adl_serializer<std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>>

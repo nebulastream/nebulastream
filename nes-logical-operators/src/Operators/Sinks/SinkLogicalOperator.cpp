@@ -33,16 +33,17 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
 {
 
-SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, Identifier sinkName) : self(std::move(self)), sinkName(std::move(sinkName)) { };
 
-SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
-    : sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor)
+    : self(std::move(self)), sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
 {
 }
 
@@ -51,8 +52,7 @@ bool SinkLogicalOperator::operator==(const SinkLogicalOperator& rhs) const
     const bool descriptorsEqual = (not sinkDescriptor.has_value() && not rhs.sinkDescriptor.has_value())
         || (sinkDescriptor.has_value() && rhs.sinkDescriptor.has_value() && *sinkDescriptor == *rhs.sinkDescriptor);
 
-    return sinkName == rhs.sinkName && descriptorsEqual && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return sinkName == rhs.sinkName && descriptorsEqual && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -79,28 +79,24 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SinkLogicalOperator SinkLogicalOperator::withInferredSchema() const
 {
     auto copy = *this;
-    INVARIANT(!inputSchemas.empty(), "Sink should have at least one input");
+    copy.child = child->withInferredSchema();
 
-    const auto& firstSchema = inputSchemas[0];
-    for (const auto& schema : inputSchemas)
-    {
-        if (schema != firstSchema)
-        {
-            throw CannotInferSchema("All input schemas must be equal for Sink operator");
-        }
-    }
+    auto inputSchema = copy.child.getOutputSchema();
+    UnboundOrderedSchema unboundInputSchema{
+        inputSchema | std::views::transform([](const Field& field) { return UnboundField{field.getLastName(), field.getDataType()}; })
+        | std::ranges::to<std::vector>()};
 
     if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
     {
-        copy.sinkDescriptor->schema = std::make_shared<const Schema>(firstSchema);
+        copy.sinkDescriptor->schema = std::make_shared<const UnboundOrderedSchema>(unboundInputSchema);
     }
-    else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
+    else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != unboundInputSchema)
     {
         std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
-        std::vector actualFields(firstSchema.begin(), firstSchema.end());
+        std::vector<UnboundField> actualFields = unboundInputSchema | std::ranges::to<std::vector>();
 
         std::stringstream expectedFieldsString;
         std::stringstream actualFieldsString;
@@ -123,7 +119,7 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> 
         {
             if (std::ranges::find(expectedFields, field) == expectedFields.end())
             {
-                actualFieldsString << field << ", ";
+                actualFieldsString << fmt::format("UnboundField(name: {}, type: {})", field.getFullyQualifiedName(), field.getDataType()) << ", ";
             }
         }
 
@@ -150,30 +146,28 @@ TraitSet SinkLogicalOperator::getTraitSet() const
 
 SinkLogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for sink, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
-{
-    INVARIANT(!children.empty(), "Sink should have at least one child");
-    return children | std::ranges::views::transform([](const LogicalOperator& child) { return child.getOutputSchema(); })
-        | std::ranges::to<std::vector>();
-};
-
 Schema SinkLogicalOperator::getOutputSchema() const
 {
-    INVARIANT(this->sinkDescriptor.has_value(), "Logical Sink must have a valid descriptor (with a schema).");
-    return *this->sinkDescriptor.value().getSchema();
+    INVARIANT(false, "SinkLogicalOperator does not define a output schema");
 }
 
 std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
 {
-    return children;
+    return {child};
 }
 
-std::string SinkLogicalOperator::getSinkName() const noexcept
+LogicalOperator SinkLogicalOperator::getChild() const
+{
+    return child;
+}
+
+Identifier SinkLogicalOperator::getSinkName() const noexcept
 {
     return sinkName;
 }
@@ -209,4 +203,9 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
 }
+}
+
+std::size_t std::hash<NES::SinkLogicalOperator>::operator()(const NES::SinkLogicalOperator& sinkLogicalOperator) const noexcept
+{
+    return folly::hash::hash_combine(sinkLogicalOperator.sinkName, sinkLogicalOperator.sinkDescriptor);
 }

@@ -26,6 +26,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp> /// NOLINT(misc-include-cleaner)
@@ -39,6 +40,7 @@
 
 namespace
 {
+
 NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
     try
@@ -121,23 +123,21 @@ namespace NES::CLI
 {
 
 
-CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
-{
-}
-
-CLI::SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
-{
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
+UnboundOrderedSchema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
 {
-    Schema schema;
-    for (const auto& [name, type] : attributeFields)
-    {
-        schema.addField(name, type);
-    }
-    return schema;
+    auto fields = attributeFields
+        | std::views::transform(
+                      [](const auto& field)
+                      {
+                          auto expectedIdentifier = Identifier::tryParse(field.name);
+                          if (expectedIdentifier.has_value())
+                          {
+                              return UnboundField{expectedIdentifier.value(), field.type};
+                          }
+                          throw expectedIdentifier.error();
+                      });
+    return UnboundOrderedSchema{fields | std::ranges::to<std::vector>()};
 }
 
 std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
@@ -147,8 +147,13 @@ std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {
         auto schema = bindSchema(schemaFields);
+        auto expectedName = Identifier::tryParse(logicalSourceName);
+        if (not expectedName.has_value())
+        {
+            throw expectedName.error();
+        }
         NES_INFO("Adding logical source: {}", logicalSourceName);
-        if (const auto registeredSource = sourceCatalog->addLogicalSource(logicalSourceName, schema); registeredSource.has_value())
+        if (const auto registeredSource = sourceCatalog->addLogicalSource(std::move(expectedName).value(), schema); registeredSource.has_value())
         {
             boundSources.push_back(registeredSource.value());
         }
@@ -166,7 +171,12 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalSourceName, sourceType, parserConfig, sourceConfig] : unboundSources)
     {
-        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        auto expectedName = Identifier::tryParse(logicalSourceName);
+        if (not expectedName.has_value())
+        {
+            throw expectedName.error();
+        }
+        auto logicalSource = sourceCatalog->getLogicalSource(expectedName.value());
         if (not logicalSource.has_value())
         {
             throw UnknownSourceName("{}", logicalSourceName);
@@ -189,8 +199,9 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
     {
         auto schema = bindSchema(schemaFields);
+        auto expectedName = Identifier::tryParse(sinkName);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, sinkConfig); sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(expectedName.value(), schema, sinkType, sinkConfig); sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }

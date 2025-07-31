@@ -20,8 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -32,7 +33,7 @@
 namespace NES
 {
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -57,13 +58,6 @@ DataType OrLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
 {
     return {left, right};
@@ -85,20 +79,15 @@ std::string_view OrLogicalFunction::getType() const
 
 LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> children;
-    /// delegate dataType inference of children
-    for (auto& node : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if (!(copy.left.getDataType().isType(DataType::Type::BOOLEAN) or !copy.right.getDataType().isType(DataType::Type::BOOLEAN)))
     {
-        children.push_back(node.withInferredDataType(schema));
+        throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
     }
-    /// check if children dataType is correct
-    INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
-    INVARIANT(
-        right.getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
-    return this->withChildren(children);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 }
 
 SerializableFunction OrLogicalFunction::serialize() const
@@ -125,7 +114,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrL
             arguments.children[0].getDataType(),
             arguments.children[1].getDataType());
     }
-    return OrLogicalFunction(arguments.children[0], arguments.children[1]);
+    return OrLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

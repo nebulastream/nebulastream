@@ -20,3 +20,8 @@ namespace NES::Windowing
 WindowType::WindowType() = default;
 
 }
+
+std::size_t std::hash<NES::Windowing::WindowType>::operator()(const NES::Windowing::WindowType& window) const noexcept
+{
+    return window.hash();
+}

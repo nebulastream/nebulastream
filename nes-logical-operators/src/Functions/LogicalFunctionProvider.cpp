@@ -24,18 +24,21 @@
 
 namespace NES::LogicalFunctionProvider
 {
-LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunction> arguments)
+
+LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunction> arguments, Schema schema)
 {
-    if (auto function = tryProvide(functionName, std::move(arguments)))
+    if (auto function = tryProvide(functionName, std::move(arguments), std::move(schema)))
     {
         return *function;
     }
     throw FunctionNotImplemented("{} is not a registered function", functionName);
 }
 
-std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments)
+std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments, Schema schema)
 {
     return LogicalFunctionRegistry::instance().create(
-        functionName, LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}});
+        functionName,
+        LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}, .schema = std::move(schema)});
 }
+
 }

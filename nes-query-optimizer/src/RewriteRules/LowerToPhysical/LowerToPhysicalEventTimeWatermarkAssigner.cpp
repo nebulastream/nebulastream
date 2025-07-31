@@ -32,13 +32,14 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
 {
     PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
     const auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
-    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
+    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->getOnField());
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->getUnit()));
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for EventTimeWatermarkAssigner");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema(), memoryLayoutType, memoryLayoutType);
+        physicalOperator, unbind(logicalOperator.getChildren().at(0).getOutputSchema()), unbind(logicalOperator.getOutputSchema()), memoryLayoutType, memoryLayoutType);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

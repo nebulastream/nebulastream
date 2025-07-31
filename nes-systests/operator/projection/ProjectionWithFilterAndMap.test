@@ -13,7 +13,7 @@ ATTACH INLINE
 6,20,20000
 7,21,21000
 
-CREATE SINK sinkId(stream.id UINT64)  TYPE File;
+CREATE SINK sinkId(id UINT64)  TYPE File;
 CREATE SINK sinkId2(id UINT64)  TYPE File;
 CREATE SINK sinkNewId(new_id UINT64)  TYPE File;
 
@@ -40,7 +40,7 @@ SELECT id * UINT64(2) AS id FROM stream WHERE id == UINT64(1) INTO sinkId2;
 
 # It is not possible to write (without using a subquery):
 #   SELECT id * 2 AS new_id FROM stream WHERE new_id == 2
-# this is in line with the SQL standard: https://dev.mysql.com/doc/refman/8.4/en/problems-with-alias.html
+# this is in line with the SQL standard: https://mysql.com/doc/refman/8.4/en/problems-with-html
 # 4: map -> filter -> project [id]
 SELECT new_id FROM
     (SELECT id * UINT64(2) AS new_id FROM stream)

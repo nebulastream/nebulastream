@@ -18,8 +18,9 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -30,8 +31,7 @@
 namespace NES
 {
 
-ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right) : left(left), right(right)
 {
 }
 
@@ -49,21 +49,18 @@ DataType ModuloLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ModuloLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction ModuloLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    copy.dataType = copy.left.getDataType().join(copy.right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+
+    if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Cannot apply modulo to input function left: {}, right: {}", copy.left, copy.right);
     }
-    return withChildren(newChildren);
+    return copy;
 };
 
 std::vector<LogicalFunction> ModuloLogicalFunction::getChildren() const
@@ -111,7 +108,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMod
     {
         throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
+    return ModuloLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 

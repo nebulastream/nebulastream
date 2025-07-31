@@ -36,19 +36,23 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
     PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
     const auto source = logicalOperator.getAs<UnionLogicalOperator>();
-    auto inputSchemas = logicalOperator.getInputSchemas();
     auto outputSchema = logicalOperator.getOutputSchema();
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
-    auto renames = inputSchemas
+    auto renames = source.getChildren()
         | std::views::transform(
-                       [&](const auto& schema)
+                       [&](const auto& childOperator)
                        {
+                           const auto getFieldNames = [](const Schema& schema)
+                           {
+                               return schema | std::views::transform([](const auto& field) { return field.getLastName(); })
+                                   | std::ranges::to<std::vector>();
+                           };
                            return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
-                               schema,
-                               outputSchema,
+                               UnionRenamePhysicalOperator(getFieldNames(childOperator.getOutputSchema()), getFieldNames(outputSchema)),
+                               childOperator.getOutputSchema().template unbind<std::dynamic_extent>(),
+                               outputSchema.unbind<std::dynamic_extent>(),
                                memoryLayoutType,
                                memoryLayoutType,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -57,8 +61,8 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
-        source.getOutputSchema(),
-        logicalOperator.getOutputSchema(),
+        unbind(source.getOutputSchema()),
+        unbind(logicalOperator.getOutputSchema()),
         memoryLayoutType,
         memoryLayoutType,
         std::nullopt,

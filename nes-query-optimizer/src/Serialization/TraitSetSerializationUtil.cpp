@@ -33,7 +33,7 @@ SerializableTraitSet* TraitSetSerializationUtil::serialize(const NES::TraitSet& 
     return traitSetPtr;
 }
 
-TraitSet TraitSetSerializationUtil::deserialize(const SerializableTraitSet* traitSetPtr)
+TraitSet TraitSetSerializationUtil::deserialize(const SerializableTraitSet* traitSetPtr, LogicalOperator logicalOperator)
 {
     std::vector<Trait> deserializedTraits;
     for (const auto& [name, trait] : traitSetPtr->traits())
@@ -43,7 +43,7 @@ TraitSet TraitSetSerializationUtil::deserialize(const SerializableTraitSet* trai
         {
             config[key] = protoToDescriptorConfigType(value);
         }
-        auto deserializedTrait = TraitRegistry::instance().create(name, TraitRegistryArguments{config});
+        auto deserializedTrait = TraitRegistry::instance().create(name, TraitRegistryArguments{std::move(logicalOperator), config});
         if (!deserializedTrait.has_value())
         {
             throw CannotDeserialize("Failed to deserialize trait of type {}", name);

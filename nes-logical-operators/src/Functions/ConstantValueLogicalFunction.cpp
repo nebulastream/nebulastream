@@ -20,7 +20,7 @@
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -115,7 +115,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalF
         throw CannotDeserialize("ConstantValueLogicalFunction requires a constantValueAsString in its config");
     }
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
-    return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString);
+    return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString).withInferredDataType(arguments.schema);
 }
 
 }

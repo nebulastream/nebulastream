@@ -53,7 +53,7 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
 PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
-    const std::optional<Schema>& inputSchema,
+    const std::optional<UnboundOrderedSchema>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
     const uint64_t configuredBufferSize)
 {
@@ -79,7 +79,7 @@ PhysicalOperator createScanOperator(
                 provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
         }
     }
-    return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
+    return ScanPhysicalOperator(memoryProvider, *inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); }) | std::ranges::to<std::vector>());
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

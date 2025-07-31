@@ -25,8 +25,7 @@
 #include <variant>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -36,17 +35,18 @@
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
 #include <SinkValidationRegistry.hpp>
+#include "Serialization/IdentifierSerializationUtil.hpp"
+#include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
 
-SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+SinkDescriptor::SinkDescriptor(std::variant<Identifier, uint64_t> sinkName, const UnboundOrderedSchema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
+    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<UnboundOrderedSchema>(schema)), sinkType(sinkType)
 {
 }
 
-std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
+std::shared_ptr<const UnboundOrderedSchema> SinkDescriptor::getSchema() const
 {
     return schema;
 }
@@ -61,12 +61,12 @@ std::string SinkDescriptor::getSinkType() const
     return sinkType;
 }
 
-std::string SinkDescriptor::getSinkName() const
+Identifier SinkDescriptor::getSinkName() const
 {
     return std::visit(
         Overloaded{
-            [](const std::string& name) { return name; },
-            [](const uint64_t& name) { return std::to_string(name); },
+            [](const Identifier& name) { return name; },
+            [](const uint64_t& name) { return Identifier::parse(std::to_string(name)); },
         },
         sinkName);
 }
@@ -101,8 +101,8 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 SerializableSinkDescriptor SinkDescriptor::serialize() const
 {
     SerializableSinkDescriptor serializedSinkDescriptor;
-    serializedSinkDescriptor.set_sinkname(getSinkName());
-    SchemaSerializationUtil::serializeSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
+    IdentifierSerializationUtil::serializeIdentifier(getSinkName(), serializedSinkDescriptor.mutable_sinkname());
+    UnboundSchemaSerializationUtil::serializeUnboundSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
     serializedSinkDescriptor.set_sinktype(sinkType);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : getConfig())

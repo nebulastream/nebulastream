@@ -14,33 +14,25 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
+import "SerializableIdentifier.proto";
+import "SerializableSchema.proto";
+
 package NES;
 
-message WindowInfos {
-    message TimeCharacteristic {
-        enum Type {
-            Event_time = 0;
-            Ingestion_time = 1;
-        }
-        Type type = 1;
-        optional string field = 2;
-        uint64 multiplier = 3;
-    }
 
-    message TumblingWindow {
-        uint64 size = 1;
-    }
+message SerializableWindowType {
+  message TumblingWindow {
+    uint64 size = 1;
+  }
 
-    message SlidingWindow {
-        uint64 size = 1;
-        uint64 slide = 2;
-    }
-
-    TimeCharacteristic time_characteristic = 1;
-    oneof window_type {
-        TumblingWindow tumbling_window = 2;
-        SlidingWindow sliding_window = 3;
-    }
+  message SlidingWindow {
+    uint64 size = 1;
+    uint64 slide = 2;
+  }
+  oneof window_type {
+    TumblingWindow tumbling_window = 2;
+    SlidingWindow sliding_window = 3;
+  }
 }
 
 message SerializableFunction {
@@ -50,13 +42,21 @@ message SerializableFunction {
     map<string, SerializableVariantDescriptor> config = 4;
 }
 
+message SerializableTimeCharacteristic {
+  message EventTimeCharacteristic {
+    SerializableFunction field = 2;
+    uint64 multiplier = 3;
+  }
+  optional EventTimeCharacteristic eventTime = 1;
+}
+
 message FunctionList {
   repeated SerializableFunction functions = 1;
 }
 
 message ProjectionList {
   message Projection {
-    optional string identifier = 1;
+    optional SerializableIdentifier identifier = 1;
     SerializableFunction function = 2;
   }
   repeated Projection projections = 1;
@@ -64,14 +64,28 @@ message ProjectionList {
 
 message SerializableAggregationFunction {
     string type = 1;
-    SerializableFunction on_field = 2;
-    SerializableFunction as_field = 3;
+    repeated SerializableFunction on_fields = 2;
 }
 
 message AggregationFunctionList {
-  repeated SerializableAggregationFunction functions = 1;
+  message ProjectedAggregation {
+      SerializableAggregationFunction function = 1;
+      SerializableIdentifier projection_name = 2;
+  }
+  repeated ProjectedAggregation functions = 1;
 }
 
+message SerializableFieldMapping {
+  message SerializableSingleFieldMapping {
+    SerializableIdentifier logicalField = 1;
+    SerializableIdentifierList physicalField = 2;
+  }
+  repeated SerializableSingleFieldMapping fieldMappings = 1;
+}
+
+message SerializableOrderedFields {
+  repeated SerializableIdentifier fields = 1;
+}
 message SerializableEnumWrapper {
     string value = 1;
 }
@@ -94,8 +108,14 @@ message SerializableVariantDescriptor {
     SerializableEnumWrapper enum_value = 10;
     FunctionList function_list = 11;
     AggregationFunctionList aggregation_function_list = 12;
-    WindowInfos window_infos = 13;
-    ProjectionList projections = 14;
-    UInt64List ulongs = 15;
+    SerializableWindowType window_type = 13;
+    SerializableTimeCharacteristic time_characteristic = 14;
+    ProjectionList projections = 15;
+    SerializableIdentifierList identifiers = 16;
+    SerializableIdentifier identifier = 17;
+    UInt64List ulongs = 18;
+    SerializableFieldMapping fieldMapping = 19;
+    SerializableUnboundSchema unboundSchema = 20;
+    SerializableOrderedFields orderedFields = 21;
   }
 }

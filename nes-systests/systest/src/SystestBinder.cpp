@@ -37,9 +37,9 @@
 #include <variant>
 #include <vector>
 
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -63,6 +63,7 @@
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include "Operators/Sources/SourceNameLogicalOperator.hpp"
 
 namespace NES::Systest
 {
@@ -74,19 +75,19 @@ class SLTSinkFactory
 public:
     explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
+    bool registerSink(const std::string& sinkType, Identifier sinkNameInFile, const UnboundOrderedSchema& schema)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
-                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
+                Identifier assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
                 if (sinkType == "File")
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                const auto sink = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -103,27 +104,26 @@ public:
     }
 
     std::expected<SinkDescriptor, Exception>
-    createActualSink(const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
+    createActualSink(const Identifier& sinkNameInFile, Identifier assignedSinkName, const std::filesystem::path& filePath)
     {
         const auto sinkProviderIter = sinkProviders.find(sinkNameInFile);
         if (sinkProviderIter == sinkProviders.end())
         {
             throw UnknownSinkName("{}", sinkNameInFile);
         }
-        return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
+        return sinkProviderIter->second(std::move(assignedSinkName), filePath);
     }
 
-    static inline const Schema checksumSchema = []
+    static inline const UnboundOrderedSchema checksumSchema = []
     {
-        Schema checksumSinkSchema;
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return checksumSinkSchema;
+        return UnboundOrderedSchema{
+            UnboundField{Identifier::parse("COUNT"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            UnboundField{Identifier::parse("CHECKSUM"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
     }();
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
-    std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
+    std::unordered_map<Identifier, std::function<std::expected<SinkDescriptor, Exception>(Identifier, std::filesystem::path)>>
         sinkProviders;
 };
 
@@ -215,7 +215,16 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
+            sinkOutputSchema = [&]
+            {
+                /// Sinks do not have an output schema, but they are guaranteed to have only one child, from which we can take the output schema
+                const auto sink = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+                if (!sink.has_value())
+                {
+                    throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
+                }
+                return sink.value()->getChild().getOutputSchema().unbind<std::dynamic_extent>();
+            }();
         }
     }
 
@@ -317,7 +326,7 @@ private:
     std::optional<Exception> exception;
     std::optional<LogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
-    std::optional<Schema> sinkOutputSchema;
+    std::optional<UnboundOrderedSchema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
@@ -496,7 +505,7 @@ struct SystestBinder::Impl
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.getLogicalSourceName(),
+            .logical = statement.attachedTo.getLogicalSourceName().asCanonicalString(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
@@ -521,12 +530,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema;
-        for (const auto& field : statement.schema.getFields())
-        {
-            schema.addField(field.name, field.dataType);
-        }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema);
     }
 
     void createCallback(
@@ -653,8 +657,8 @@ struct SystestBinder::Impl
         const std::string sinkName = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
-
+        const auto sinkForQuery
+            = Identifier::parse(toUpperCase(sinkName.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);

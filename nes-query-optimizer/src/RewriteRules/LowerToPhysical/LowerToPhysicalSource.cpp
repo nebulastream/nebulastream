@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 
 #include <memory>
+#include <optional>
 #include <ranges>
 
 #include <Operators/LogicalOperator.hpp>
@@ -39,16 +40,13 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
     auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
-    const auto inputSchemas = logicalOperator.getInputSchemas();
-    PRECONDITION(
-        inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        inputSchemas[0],
-        logicalOperator.getOutputSchema(),
+        std::nullopt,
+        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

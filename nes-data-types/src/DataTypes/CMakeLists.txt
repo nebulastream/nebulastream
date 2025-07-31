@@ -11,10 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
-        Schema.cpp
         DataType.cpp
         DataTypeProvider.cpp
         TimeUnit.cpp
+        SchemaBase.cpp
         )
 
 # Register plugins

@@ -45,7 +45,7 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
     {
         return CreateLogicalSourceStatementResult{created.value()};
     }
-    return std::unexpected{SourceAlreadyExists(statement.name)};
+    return std::unexpected{SourceAlreadyExists(statement.name.asCanonicalString())};
 }
 
 std::expected<CreatePhysicalSourceStatementResult, Exception>
@@ -115,7 +115,7 @@ std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandle
     {
         return DropLogicalSourceStatementResult{statement.source};
     }
-    return std::unexpected{UnknownSourceName(statement.source.getLogicalSourceName())};
+    return std::unexpected{UnknownSourceName(statement.source.getLogicalSourceName().asCanonicalString())};
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropPhysicalSourceStatement& statement)
@@ -137,7 +137,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
     {
         return CreateSinkStatementResult{created.value()};
     }
-    return std::unexpected{SinkAlreadyExists(statement.name)};
+    return std::unexpected{SinkAlreadyExists(statement.name.asCanonicalString())};
 }
 
 std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operator()(const ShowSinksStatement& statement) const
@@ -164,7 +164,7 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     {
         return DropSinkStatementResult{sink.value()};
     }
-    return std::unexpected{UnknownSinkName(statement.name)};
+    return std::unexpected{UnknownSinkName(statement.name.asCanonicalString())};
 }
 
 QueryStatementHandler::QueryStatementHandler(

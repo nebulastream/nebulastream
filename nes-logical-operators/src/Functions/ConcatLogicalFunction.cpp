@@ -19,14 +19,16 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
@@ -57,21 +59,15 @@ DataType ConcatLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+
+    /// TODO clarify type inference for concat
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+    return copy;
 };
 
 std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
@@ -110,7 +106,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
     }
-    return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1));
+    return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1)).withInferredDataType(arguments.schema);
 }
 
 }

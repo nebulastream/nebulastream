@@ -20,9 +20,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -31,6 +31,8 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
+#include "Serialization/IdentifierSerializationUtil.hpp"
+#include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
@@ -144,8 +146,8 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
+    UnboundSchemaSerializationUtil::serializeUnboundSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
+    IdentifierSerializationUtil::serializeIdentifier(logicalSource.getLogicalSourceName(), serializableSourceDescriptor.mutable_logicalsourcename());
     serializableSourceDescriptor.set_sourcetype(sourceType);
 
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());

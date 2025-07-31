@@ -20,21 +20,23 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : child(child) { };
 
 bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -50,20 +52,12 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
     const auto newChild = child.withInferredDataType(schema);
     const std::string eulerNumber = "2.7182818284590452353602874713527";
     const ConstantValueLogicalFunction expConstantValue{DataTypeProvider::provideDataType(DataType::Type::FLOAT64), eulerNumber};
-    return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+    return PowLogicalFunction(expConstantValue, newChild);
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
@@ -108,6 +102,6 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExp
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return ExpLogicalFunction(arguments.children[0]);
+    return ExpLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 }

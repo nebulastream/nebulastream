@@ -20,7 +20,7 @@
 #include <ranges>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+
 #include <Functions/FunctionProvider.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -36,6 +36,7 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include "Traits/FieldMappingTrait.hpp"
 
 namespace
 {
@@ -76,18 +77,41 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.getAs<ProjectionLogicalOperator>();
-    auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
-    auto outputSchema = projectionLogicalOperator.getOutputSchema();
+    const auto traitSet = projectionLogicalOperator.getTraitSet();
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+    const auto& outputFieldMapping = outputFieldMappingOpt.value();
+
+    const auto inputFieldMappingOpt = projection->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+    PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
+    const auto& inputFieldMapping = outputFieldMappingOpt.value();
+
+    auto inputSchema = projection->getChild()->getOutputSchema();
+    auto outputSchema = projection->getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
+
+    auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema.unbind<std::dynamic_extent>());
+    auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
+    auto accessedFields = projection->getAccessedFields();
+    auto scan = ScanPhysicalOperator(
+        scanBufferRef,
+        accessedFields
+            | std::views::transform(
+                [&inputFieldMapping](const auto& field)
+                {
+                    const auto foundMapping = inputFieldMapping.getMapping(field);
+                    PRECONDITION(foundMapping.has_value(), "Expected there to be a mapping for field {}", field);
+                    return foundMapping.value();
+                })
+            | std::ranges::to<std::vector>());
 
     const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan,
-        outputSchema,
-        outputSchema,
+        scan, unbind(inputSchema), unbind(outputSchema),
         memoryLayoutType,
         memoryLayoutType,
         std::nullopt,
@@ -99,14 +123,11 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     for (const auto& [fieldName, function] : projection->getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = MapPhysicalOperator(
-            fieldName.transform([](const auto& identifier) { return identifier.getFieldName(); })
-                .value_or(function.explain(ExplainVerbosity::Short)),
-            physicalFunction);
+        auto physicalOperator = MapPhysicalOperator(fieldName.getLastName(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
-            outputSchema,
-            outputSchema,
+            inputSchema.unbind<std::dynamic_extent>(),
+            outputSchema.unbind<std::dynamic_extent>(),
             memoryLayoutType,
             memoryLayoutType,
             std::nullopt,

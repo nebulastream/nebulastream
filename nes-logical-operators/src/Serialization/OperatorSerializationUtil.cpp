@@ -38,20 +38,23 @@
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include "Serialization/IdentifierSerializationUtil.hpp"
+#include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
 
 
-LogicalOperator OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator)
+LogicalOperator
+OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator, std::vector<LogicalOperator> children)
 {
-    std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
+    std::optional<LogicalOperator> result = [&]() -> std::optional<LogicalOperator>
     {
         if (serializedOperator.has_source())
         {
             const auto& serializedSource = serializedOperator.source();
             auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
-            auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
+            auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{std::move(sourceDescriptor)};
             return sourceOperator;
         }
 
@@ -64,17 +67,20 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             {
                 config[key] = protoToDescriptorConfigType(value);
             }
-            auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
-            if (not std::holds_alternative<std::string>(sinkName))
+            auto sinkNameVariant = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
+            if (not std::holds_alternative<Identifier>(sinkNameVariant))
             {
                 throw CannotDeserialize(
-                    "Expected string for sinkName but got {} while deserializing\n{}", sinkName, serializedOperator.DebugString());
+                    "Expected identifier list for sinkName but got {} while deserializing\n{}",
+                    sinkNameVariant,
+                    serializedOperator.DebugString());
             }
+            auto sinkName = std::get<Identifier>(sinkNameVariant);
 
-            auto sinkOperator = SinkLogicalOperator();
-            sinkOperator.sinkName = std::get<std::string>(sinkName);
-            sinkOperator.sinkDescriptor
-                = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
+            auto sinkOperator = TypedLogicalOperator<SinkLogicalOperator>{sinkName}.withChildren(std::move(children));
+            serializedSinkDescriptor.transform(
+                [&sinkOperator](const auto& serialized)
+                { return sinkOperator = sinkOperator->withSinkDescriptor(deserializeSinkDescriptor(serialized)); });
 
             return sinkOperator;
         }
@@ -88,20 +94,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             }
 
             auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
-                .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
+                .children = std::move(children), /// children - will be populated from operator_().children
                 .config = config};
-
-
-            for (const auto& schema : serializedOperator.operator_().input_schemas())
-            {
-                registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
-            }
-
-            if (serializedOperator.operator_().has_output_schema())
-            {
-                registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
-            }
             return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
         }
         return std::nullopt;
@@ -109,7 +103,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
     if (result.has_value())
     {
-        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
+        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set(), result.value());
         return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
     }
 
@@ -118,8 +112,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
 {
-    auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), schema};
+    auto schema = UnboundSchemaSerializationUtil::deserializeUnboundSchema(sourceDescriptor.sourceschema());
+    const LogicalSource logicalSource{IdentifierSerializationUtil::deserializeIdentifier(sourceDescriptor.logicalsourcename()), schema};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = PhysicalSourceId{sourceDescriptor.physicalsourceid()};
@@ -145,7 +139,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
 SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    std::variant<std::string, uint64_t> sinkName;
+    std::variant<Identifier, uint64_t> sinkName;
 
     if (std::ranges::all_of(serializableSinkDescriptor.sinkname(), [](const char character) { return std::isdigit(character); }))
     {
@@ -157,6 +151,8 @@ SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const Serial
     }
 
     const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
+    auto sinkName = IdentifierSerializationUtil::deserializeIdentifier(serializableSinkDescriptor.sinkname());
+    const auto schema = UnboundSchemaSerializationUtil::deserializeUnboundSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.

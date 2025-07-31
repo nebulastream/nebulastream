@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <string_view>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -29,18 +29,15 @@ namespace NES
 class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit CountAggregationLogicalFunction(LogicalFunction inputFunction);
     ~CountAggregationLogicalFunction() override = default;
 
-    void inferStamp(const Schema& schema) override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Count";
-    static constexpr DataType::Type inputAggregateStampType = DataType::Type::UINT64;
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+    static constexpr DataType::Type finalAggregateStampType = DataType::Type::UINT64;
 };
 }

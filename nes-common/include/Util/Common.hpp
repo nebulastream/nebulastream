@@ -13,7 +13,9 @@
 */
 
 #pragma once
-#include <cstdint>
+#include <Identifiers/Identifier.hpp>
+
+
 #include <memory>
 #include <ostream>
 #include <string>
@@ -103,5 +105,23 @@ std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
     return nullptr;
 }
 
+
+template <template <typename> typename Container, typename... Args>
+using VariantContainer = std::variant<Container<Args>...>;
+
+namespace detail
+{
+template <template <typename> typename Container, typename>
+struct VariantContainerFromImpl;
+
+template <template <typename> typename Container, typename... Args>
+struct VariantContainerFromImpl<Container, std::variant<Args...>>
+{
+    using type = VariantContainer<Container, Args...>;
+};
+}
+
+template <template <typename> typename Container, typename Variant>
+using VariantContainerFrom = typename detail::VariantContainerFromImpl<Container, Variant>::type;
 
 }

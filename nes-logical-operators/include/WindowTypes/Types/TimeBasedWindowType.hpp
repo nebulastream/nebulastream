@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -27,11 +26,7 @@ namespace NES::Windowing
 class TimeBasedWindowType : public WindowType
 {
 public:
-    explicit TimeBasedWindowType(TimeCharacteristic timeCharacteristic);
-
     ~TimeBasedWindowType() override = default;
-
-    [[nodiscard]] TimeCharacteristic getTimeCharacteristic() const;
 
     /// @brief method to get the window size
     /// @return size of window
@@ -40,14 +35,12 @@ public:
     /// @brief method to get the window slide
     /// @return slide of the window
     virtual TimeMeasure getSlide() = 0;
-
-    /// @brief Infer dataType of time based window type
-    /// @param schema : the schema of the window
-    /// @return true if success else false
-    bool inferStamp(const Schema& schema) override;
-
-protected:
-    TimeCharacteristic timeCharacteristic;
 };
 
 }
+
+template <>
+struct std::hash<NES::Windowing::TimeBasedWindowType>
+{
+    std::size_t operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept;
+};

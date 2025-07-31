@@ -20,8 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -32,8 +33,7 @@
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(child))
+NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child) : child(std::move(child))
 {
 }
 
@@ -53,24 +53,19 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 
 LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    auto newChild = child.withInferredDataType(schema);
-    if (not newChild.getDataType().isType(DataType::Type::BOOLEAN))
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (not copy.child.getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType());
+        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", copy.child.getDataType());
     }
-    return withChildren({newChild});
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 }
 
 DataType NegateLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-LogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
 };
 
 std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
@@ -111,7 +106,7 @@ LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
     }
-    return NegateLogicalFunction(arguments.children[0]);
+    return NegateLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

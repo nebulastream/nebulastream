@@ -47,8 +47,6 @@
 #include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
@@ -74,6 +72,52 @@
 
 namespace NES::Parsers
 {
+
+namespace
+{
+
+Identifier parseIdentifier(AntlrSQLParser::UnquotedIdentifierContext* identifier)
+{
+    auto expectedIdentifier = Identifier::tryParse(identifier->getText());
+    if (expectedIdentifier.has_value())
+    {
+        return expectedIdentifier.value();
+    }
+    throw expectedIdentifier.error();
+}
+
+Identifier parseIdentifier(AntlrSQLParser::QuotedIdentifierAlternativeContext* identifier)
+{
+    const auto withQuotationMarks = identifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
+    const auto replacedQuotationMarks = fmt::format("\"{}\"", withQuotationMarks.substr(1, withQuotationMarks.size() - 2));
+    auto expectedIdentifier = Identifier::tryParse(replacedQuotationMarks);
+    if (expectedIdentifier.has_value())
+    {
+        return expectedIdentifier.value();
+    }
+    throw expectedIdentifier.error();
+}
+
+Identifier parseIdentifier(AntlrSQLParser::IdentifierContext* identifier)
+{
+    if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(identifier->strictIdentifier()))
+    {
+        return parseIdentifier(unquotedIdentifier);
+    }
+    if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(identifier->strictIdentifier()))
+    {
+        return parseIdentifier(quotedIdentifier);
+    }
+    INVARIANT(
+        false,
+        "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
+        "passed?");
+    std::unreachable();
+}
+
+
+}
+
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     if (sinks.empty())
@@ -359,11 +403,7 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
     const bool isParentRuleTableAlias = (parentContext != nullptr) && parentContext->getRuleIndex() == AntlrSQLParser::RuleTableAlias;
     if (helpers.top().isFrom && !helpers.top().isJoinRelation)
     {
-        helpers.top().newSourceName = context->getText();
-    }
-    else if (helpers.top().isJoinRelation && isParentRuleTableAlias)
-    {
-        helpers.top().joinSourceRenames.emplace_back(context->getText());
+        helpers.top().newSourceName = parseIdentifier(context);
     }
     AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
@@ -378,13 +418,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helpers.top().isGroupBy)
     {
-        helpers.top().groupByFields.emplace_back(bindIdentifier(context));
+        helpers.top().groupByFields.emplace_back(UnboundFieldAccessLogicalFunction{bindIdentifier(context)});
     }
     else if (
         (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
         && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(bindIdentifier(context)));
+        helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (helpers.top().isFrom and not helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -406,33 +446,29 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
             const auto attribute = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            helpers.top().addProjection(FieldIdentifier(bindIdentifier(context)), attribute);
+            helpers.top().addProjection(parseIdentifier(context), attribute);
         }
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
         auto aggFunc = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
-        aggFunc->setAsField(FieldAccessLogicalFunction(bindIdentifier(context)));
+        aggFunc.second = parseIdentifier(context);
         helpers.top().windowAggs.push_back(aggFunc);
         INVARIANT(
-            std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
+            std::nullopt != helpers.top().functionBuilder.back().tryGet<UnboundFieldAccessLogicalFunction>(),
             "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
         helpers.top().functionBuilder.pop_back();
-        helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
+        helpers.top().addProjection(std::nullopt, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
         helpers.top().hasUnnamedAggregation = false;
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().joinKeyRelationHelper.emplace_back(FieldAccessLogicalFunction(bindIdentifier(context)));
+        helpers.top().joinKeyRelationHelper.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         helpers.top().joinSources.push_back(bindIdentifier(context));
-    }
-    else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleTableAlias == parentRuleIndex)
-    {
-        helpers.top().joinSourceRenames.push_back(bindIdentifier(context));
     }
 }
 
@@ -469,7 +505,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
 
             return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
         }
-        return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource());
+        return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource().value());
     }();
 
     for (auto whereExpr = helpers.top().getWhereClauses().rbegin(); whereExpr != helpers.top().getWhereClauses().rend(); ++whereExpr)
@@ -479,11 +515,48 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
 
     if (helpers.top().isInAggFunction())
     {
+        if (!helpers.top().windowTimestamp.has_value()
+            || std::holds_alternative<Windowing::UnboundTimeCharacteristic>(helpers.top().windowTimestamp.value()))
+        {
+            throw InvalidQuerySyntax(
+                "windowed aggregation requires exactly one time characteristic, got {}",
+                helpers.top().windowTimestamp.has_value() ? "two" : "none");
+        }
+        auto characteristic = std::get<Windowing::UnboundTimeCharacteristic>(helpers.top().windowTimestamp.value());
+        auto aggregations
+            = helpers.top().windowAggs
+            | std::views::transform(
+                  [](auto& agg)
+                  {
+                      if (!agg.second.has_value())
+                      {
+                          throw InvalidQuerySyntax("Aggregation function must have a name.");
+                      }
+                      if (std::ranges::size(agg.second.value()) > 1)
+                      {
+                          throw InvalidQuerySyntax("Aggregation function can only have unqualified name, but got {}", agg.second.value());
+                      }
+                      return WindowedAggregationLogicalOperator::ProjectedAggregation{agg.first, *std::ranges::rbegin(agg.second.value())};
+                  });
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
-            queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
+            queryPlan,
+            helpers.top().windowType,
+            aggregations | std::ranges::to<std::vector>(),
+            helpers.top().groupByFields,
+            characteristic);
     }
 
-    queryPlan = LogicalPlanBuilder::addProjection(helpers.top().getProjections(), helpers.top().asterisk, queryPlan);
+    auto projections = helpers.top().getProjections()
+        | std::views::transform(
+                           [](const auto& pair)
+                           {
+                               if (!pair.first.has_value())
+                               {
+                                   throw InvalidQuerySyntax("Projection must have a name.");
+                               }
+                               return ProjectionLogicalOperator::UnboundProjection{pair.first.value(), pair.second};
+                           });
+    queryPlan = LogicalPlanBuilder::addProjection(projections | std::ranges::to<std::vector>(), helpers.top().asterisk, queryPlan);
 
     if (helpers.top().windowType != nullptr)
     {
@@ -561,22 +634,42 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
 
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
-    helpers.top().timestamp = bindIdentifier(context->name);
+    if (context->IDENTIFIER().size() == 1)
+    {
+        helpers.top().windowTimestamp = Windowing::UnboundEventTimeCharacteristic{
+            .field = UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(0)->getText())}};
+    }
+    else if (context->IDENTIFIER().size() == 2)
+    {
+        helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
+            Windowing::UnboundEventTimeCharacteristic{
+                .field = UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(0)->getText())}},
+            Windowing::UnboundEventTimeCharacteristic{
+                UnboundFieldAccessLogicalFunction{Identifier::parse(context->IDENTIFIER().at(1)->getText())}}};
+    }
+    else
+    {
+        throw InvalidQuerySyntax("TimestampParameter must have either one or two identifiers.");
+    }
+    AntlrSQLBaseListener::exitTimestampParameter(context);
 }
 
 /// WINDOWS
 void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindowContext* context)
 {
     const auto timeMeasure = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
-    /// We use the ingestion time if the query does not have a timestamp fieldname specified
-    if (helpers.top().timestamp.empty())
+    helpers.top().windowType = std::make_shared<Windowing::TumblingWindow>(timeMeasure);
+    if (!helpers.top().windowTimestamp.has_value())
     {
-        helpers.top().windowType = std::make_shared<Windowing::TumblingWindow>(API::IngestionTime(), timeMeasure);
-    }
-    else
-    {
-        helpers.top().windowType = std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp)), timeMeasure);
+        if (context->timestampParameter()->IDENTIFIER().size() == 1)
+        {
+            helpers.top().windowTimestamp = Windowing::IngestionTimeCharacteristic{};
+        }
+        else if (context->timestampParameter()->IDENTIFIER().size() == 2)
+        {
+            helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
+                Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}};
+        }
     }
     AntlrSQLBaseListener::exitTumblingWindow(context);
 }
@@ -586,17 +679,7 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     const auto timeMeasure = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
     const auto slidingLength = buildTimeMeasure(helpers.top().advanceBy, helpers.top().timeUnitAdvanceBy);
     /// We use the ingestion time if the query does not have a timestamp fieldname specified
-    if (helpers.top().timestamp.empty())
-    {
-        helpers.top().windowType = Windowing::SlidingWindow::of(API::IngestionTime(), timeMeasure, slidingLength);
-    }
-    else
-    {
-        helpers.top().windowType = Windowing::SlidingWindow::of(
-            Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp)),
-            timeMeasure,
-            slidingLength);
-    }
+    helpers.top().windowType = Windowing::SlidingWindow::of(timeMeasure, slidingLength);
     AntlrSQLBaseListener::exitSlidingWindow(context);
 }
 
@@ -604,10 +687,11 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 {
     AntlrSQLHelper& helper = helpers.top();
     if (context->name == nullptr and helper.functionBuilder.size() == 1
-        and helper.functionBuilder.back().tryGet<FieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
+        and helper.functionBuilder.back().tryGet<UnboundFieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
+        auto fieldName = helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>().getFieldName();
         /// Project onto the specified field and remove the field access from the active functions.
-        helpers.top().addProjection(std::nullopt, std::move(helpers.top().functionBuilder.back()));
+        helpers.top().addProjection(std::make_optional(*std::ranges::rbegin(fieldName)), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
     }
     else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())
@@ -619,14 +703,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     {
         const auto accessFunction = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
-        const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), toUpperCase(lastAggregation->getName()));
-        const auto asField = FieldAccessLogicalFunction(newName);
-        lastAggregation->setAsField(asField);
+        const auto fieldAccessNode = accessFunction.get<UnboundFieldAccessLogicalFunction>();
+        auto lastAggregation = helpers.top().windowAggs.back();
+        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation.first->getName());
+        const auto asField = Identifier::parse(newName);
+        lastAggregation.second = std::make_optional(asField);
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.push_back(lastAggregation);
-        helpers.top().addProjection(std::nullopt, asField);
+        helpers.top().addProjection(std::nullopt, UnboundFieldAccessLogicalFunction{asField});
         helpers.top().hasUnnamedAggregation = false;
     }
     AntlrSQLBaseListener::exitNamedExpression(context);
@@ -729,10 +813,6 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().isJoinRelation = false;
-    if (helpers.top().joinSources.size() == helpers.top().joinSourceRenames.size() + 1)
-    {
-        helpers.top().joinSourceRenames.emplace_back("");
-    }
 
     /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
     if (helpers.top().queryPlans.size() != 2)
@@ -752,8 +832,23 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
     }
+
+    if (!helpers.top().windowTimestamp.has_value()
+        || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(helpers.top().windowTimestamp.value()))
+    {
+        throw InvalidQuerySyntax(
+            "join requires two timestamps, but got {}", helpers.top().windowTimestamp.has_value() ? "only one" : "none");
+    }
+
+    auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(helpers.top().windowTimestamp.value());
     const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
+        leftQueryPlan,
+        rightQueryPlan,
+        helpers.top().joinKeyRelationHelper.at(0),
+        helpers.top().windowType,
+        helpers.top().joinType,
+        joinTimeCharacteristics[0],
+        joinTimeCharacteristics[1]);
     if (not helpers.empty())
     {
         /// we are in a subquery
@@ -834,7 +929,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<CountAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<CountAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         case AntlrSQLLexer::AVG:
             if (helpers.top().functionBuilder.empty())
@@ -842,7 +940,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<AvgAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<AvgAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         case AntlrSQLLexer::MAX:
             if (helpers.top().functionBuilder.empty())
@@ -850,7 +951,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<MaxAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<MaxAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         case AntlrSQLLexer::MIN:
             if (helpers.top().functionBuilder.empty())
@@ -858,7 +962,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<MinAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<MinAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         case AntlrSQLLexer::SUM:
             if (helpers.top().functionBuilder.empty())
@@ -866,7 +973,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<SumAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<SumAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         case AntlrSQLLexer::MEDIAN:
             if (helpers.top().functionBuilder.empty())
@@ -874,7 +984,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
             helpers.top().windowAggs.push_back(
-                std::make_shared<MedianAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_pair(
+                    std::make_shared<MedianAggregationLogicalFunction>(
+                        helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>()),
+                    std::nullopt));
             break;
         default:
             /// Check if the function is a constructor for a datatype
@@ -890,7 +1003,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
-            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
+            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder, Schema{}))
             {
                 /// Remove exactly the functions used to create the 'logicalFunction' from the back of the function builder
                 helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - logicalFunction.value().getChildren().size());

@@ -27,6 +27,8 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Identifiers/Identifier.hpp"
+#include "Serialization/IdentifierSerializationUtil.hpp"
 
 namespace NES
 {
@@ -95,13 +97,44 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
             {
                 protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
             }
-            else if constexpr (std::is_same_v<U, WindowInfos>)
+            else if constexpr (std::is_same_v<U, SerializableWindowType>)
             {
-                protoVar.mutable_window_infos()->CopyFrom(arg);
+                protoVar.mutable_window_type()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, SerializableTimeCharacteristic>)
+            {
+                protoVar.mutable_time_characteristic()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, NES::IdentifierList>)
+            {
+                for (const Identifier& identifier : arg)
+                {
+                    auto* const serializedIdentifier = protoVar.mutable_identifiers()->add_identifiers();
+                    serializedIdentifier->set_value(identifier.getOriginalString());
+                    serializedIdentifier->set_casesensitive(identifier.isCaseSensitive());
+                }
+            }
+            else if constexpr (std::is_same_v<U, Identifier>)
+            {
+                auto* const serializedIdentifier = protoVar.mutable_identifier();
+                serializedIdentifier->set_value(arg.getOriginalString());
+                serializedIdentifier->set_casesensitive(arg.isCaseSensitive());
             }
             else if constexpr (std::is_same_v<U, UInt64List>)
             {
                 protoVar.mutable_ulongs()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, SerializableFieldMapping>)
+            {
+                protoVar.mutable_fieldmapping()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, SerializableUnboundSchema>)
+            {
+                protoVar.mutable_unboundschema()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, SerializableOrderedFields>)
+            {
+                protoVar.mutable_orderedfields()->CopyFrom(arg);
             }
             else
             {
@@ -142,10 +175,22 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.aggregation_function_list();
         case SerializableVariantDescriptor::kProjections:
             return protoVar.projections();
-        case SerializableVariantDescriptor::kWindowInfos:
-            return protoVar.window_infos();
+        case SerializableVariantDescriptor::kWindowType:
+            return protoVar.window_type();
+        case SerializableVariantDescriptor::kTimeCharacteristic:
+            return protoVar.time_characteristic();
         case SerializableVariantDescriptor::kUlongs:
             return protoVar.ulongs();
+        case SerializableVariantDescriptor::kIdentifiers:
+            return IdentifierSerializationUtil::deserializeIdentifierList(protoVar.identifiers());
+        case SerializableVariantDescriptor::kIdentifier:
+            return IdentifierSerializationUtil::deserializeIdentifier(protoVar.identifier());
+        case SerializableVariantDescriptor::kFieldMapping:
+            return protoVar.fieldmapping();
+        case SerializableVariantDescriptor::kUnboundSchema:
+            return protoVar.unboundschema();
+        case SerializableVariantDescriptor::kOrderedFields:
+            return protoVar.orderedfields();
         case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
             throw CannotSerialize("Protobuf oneOf has no value");
     }

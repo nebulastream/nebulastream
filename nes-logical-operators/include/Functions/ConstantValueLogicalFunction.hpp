@@ -19,9 +19,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -46,7 +46,7 @@ public:
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;

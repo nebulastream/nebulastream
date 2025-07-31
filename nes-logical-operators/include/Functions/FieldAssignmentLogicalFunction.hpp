@@ -18,10 +18,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -35,9 +36,9 @@ class FieldAssignmentLogicalFunction final : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "FieldAssignment";
 
-    FieldAssignmentLogicalFunction(FieldAccessLogicalFunction fieldAccess, const LogicalFunction& logicalFunction);
+    FieldAssignmentLogicalFunction(Identifier projectAs, const LogicalFunction& logicalFunction);
 
-    [[nodiscard]] FieldAccessLogicalFunction getField() const;
+    [[nodiscard]] Identifier getProjectAs() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
 
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
@@ -45,7 +46,6 @@ public:
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
@@ -58,9 +58,9 @@ public:
     friend bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
 
 private:
-    DataType dataType;
-    FieldAccessLogicalFunction fieldAccess;
     LogicalFunction logicalFunction;
+    Identifier projectAs;
+    DataType dataType;
 };
 }
 

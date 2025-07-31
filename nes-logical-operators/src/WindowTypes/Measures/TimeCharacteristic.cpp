@@ -12,63 +12,69 @@
     limitations under the License.
 */
 
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include "WindowTypes/Measures/TimeCharacteristic.hpp"
 
+
+#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
+#include <folly/Hash.h>
 
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Schema/Field.hpp>
+#include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
 {
 
-TimeCharacteristic::TimeCharacteristic(const Type type) : type(type), unit(TimeUnit{1})
+
+std::ostream& operator<<(std::ostream& os, const IngestionTimeCharacteristic&)
+{
+    return os << fmt::format("IngestionTimeCharacteristic()");
+}
+
+std::ostream& operator<<(std::ostream& os, const UnboundEventTimeCharacteristic& timeCharacteristic)
+{
+    return os << fmt::format(
+               "UnboundEventTimeCharacteristic(field: {}, unit: {})", timeCharacteristic.field.getFieldName(), timeCharacteristic.unit);
+}
+
+std::ostream& operator<<(std::ostream& os, const BoundEventTimeCharacteristic& timeCharacteristic)
+{
+    return os << fmt::format(
+               "BoundEventTimeCharacteristic(field: {}, unit: {})",
+               timeCharacteristic.field.getField().getLastName(),
+               timeCharacteristic.unit);
+}
+
+IngestionTimeCharacteristic TimeCharacteristicWrapper::createIngestionTime()
+{
+    return IngestionTimeCharacteristic{};
+}
+
+UnboundEventTimeCharacteristic TimeCharacteristicWrapper::createEventTime(UnboundFieldAccessLogicalFunction field, const TimeUnit& unit)
+{
+    return UnboundEventTimeCharacteristic{.field = std::move(field), .unit = unit};
+}
+
+BoundEventTimeCharacteristic TimeCharacteristicWrapper::createEventTime(FieldAccessLogicalFunction field, const TimeUnit& unit)
+{
+    return BoundEventTimeCharacteristic{.field = std::move(field), .unit = unit};
+}
+
+TimeCharacteristicWrapper::TimeCharacteristicWrapper(std::variant<UnboundTimeCharacteristic, BoundTimeCharacteristic> timeCharacteristic)
+    : underlying{std::move(timeCharacteristic)}
 {
 }
 
-TimeCharacteristic::TimeCharacteristic(const Type type, Schema::Field field, const TimeUnit& unit)
-    : field(std::move(field)), type(type), unit(unit)
+std::string TimeCharacteristicWrapper::getTypeAsString() const
 {
-}
-
-TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess)
-{
-    return createEventTime(fieldAccess, TimeUnit(1));
-}
-
-TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit)
-{
-    auto keyField = Schema::Field(fieldAccess.getFieldName(), fieldAccess.getDataType());
-    return {Type::EventTime, keyField, unit};
-}
-
-TimeCharacteristic TimeCharacteristic::createIngestionTime()
-{
-    return TimeCharacteristic(Type::IngestionTime);
-}
-
-TimeCharacteristic::Type TimeCharacteristic::getType() const
-{
-    return type;
-}
-
-TimeUnit TimeCharacteristic::getTimeUnit() const
-{
-    return unit;
-}
-
-void TimeCharacteristic::setTimeUnit(const TimeUnit& newUnit)
-{
-    this->unit = newUnit;
-}
-
-std::string TimeCharacteristic::getTypeAsString() const
-{
-    switch (type)
+    switch (getType())
     {
         case Type::IngestionTime:
             return "IngestionTime";
@@ -79,8 +85,105 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
+TimeCharacteristicWrapper::Type TimeCharacteristicWrapper::getType() const
 {
-    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), timeCharacteristic.field);
+    return std::visit(
+        [](const auto& timeCharacteristicVar)
+        {
+            return std::visit(
+                [](const auto& timeCharacteristic)
+                {
+                    using CharacteristicType = std::decay_t<decltype(timeCharacteristic)>;
+                    if constexpr (std::is_same_v<IngestionTimeCharacteristic, CharacteristicType>)
+                    {
+                        return Type::IngestionTime;
+                    }
+                    else if constexpr (
+                        std::is_same_v<UnboundEventTimeCharacteristic, CharacteristicType>
+                        || std::is_same_v<BoundEventTimeCharacteristic, CharacteristicType>)
+                    {
+                        return Type::EventTime;
+                    }
+                    else
+                    {
+                        static_assert(false, "Missing conversion of time characteristic type to string");
+                    }
+                },
+                timeCharacteristicVar);
+        },
+        underlying);
 }
+
+BoundTimeCharacteristic TimeCharacteristicWrapper::withInferredSchema(const Schema& schema) const
+{
+    return std::visit(
+        [&schema](const auto& unboundBound)
+        {
+            return std::visit(
+                Overloaded{
+                    [](const IngestionTimeCharacteristic& ingestionTimeCharacteristic)
+                    { return BoundTimeCharacteristic{ingestionTimeCharacteristic}; },
+                    [&](const UnboundEventTimeCharacteristic& unboundEventTimeCharacteristic)
+                    {
+                        const auto erasedFieldAccess = unboundEventTimeCharacteristic.field.withInferredDataType(schema);
+                        const auto fieldAccessOpt = erasedFieldAccess.tryGet<FieldAccessLogicalFunction>();
+
+                        return BoundTimeCharacteristic{
+                            BoundEventTimeCharacteristic{.field = fieldAccessOpt.value(), .unit = unboundEventTimeCharacteristic.unit}};
+                    },
+                    [&](const BoundEventTimeCharacteristic& boundEventTimeCharacteristic)
+                    {
+                        const auto erasedFieldAccess = boundEventTimeCharacteristic.field.withInferredDataType(schema);
+                        const auto fieldAccessOpt = erasedFieldAccess.tryGet<FieldAccessLogicalFunction>();
+
+                        return BoundTimeCharacteristic{
+                            BoundEventTimeCharacteristic{.field = fieldAccessOpt.value(), .unit = boundEventTimeCharacteristic.unit}};
+                    },
+                },
+                unboundBound);
+        },
+        underlying);
+}
+
+TimeCharacteristic TimeCharacteristicWrapper::getUnderlying() const
+{
+    return underlying;
+}
+
+TimeCharacteristic&& TimeCharacteristicWrapper::getUnderlying() &&
+{
+    return std::move(underlying);
+}
+
+TimeCharacteristicWrapper::operator const std::variant<UnboundTimeCharacteristic, BoundTimeCharacteristic>&() const
+{
+    return underlying;
+}
+
+std::ostream& operator<<(std::ostream& os, const TimeCharacteristicWrapper& timeCharacteristic)
+{
+    std::visit(
+        [&](const auto& boundOrUnbound)
+        { return std::visit([&](const auto& ingestionOrEvent) { os << ingestionOrEvent; }, boundOrUnbound); },
+        timeCharacteristic.underlying);
+    return os;
+}
+}
+
+std::size_t std::hash<NES::Windowing::IngestionTimeCharacteristic>::operator()(
+    const NES::Windowing::IngestionTimeCharacteristic&) const noexcept
+{
+    return 983131;
+}
+
+std::size_t std::hash<NES::Windowing::UnboundEventTimeCharacteristic>::operator()(
+    const NES::Windowing::UnboundEventTimeCharacteristic& timeCharacteristic) const noexcept
+{
+    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
+}
+
+std::size_t std::hash<NES::Windowing::BoundEventTimeCharacteristic>::operator()(
+    const NES::Windowing::BoundEventTimeCharacteristic& timeCharacteristic) const noexcept
+{
+    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
 }

@@ -16,6 +16,7 @@ syntax = "proto3";
 import "SerializableVariantDescriptor.proto";
 import "SerializableSchema.proto";
 import "SerializableTrait.proto";
+import "SerializableIdentifier.proto";
 package NES;
 
 message SerializableParserConfig {
@@ -26,8 +27,8 @@ message SerializableParserConfig {
 
 message SerializableSinkDescriptor
 {
-  string sinkName = 1;
-  SerializableSchema sinkSchema = 2;
+  SerializableIdentifier sinkName = 1;
+  SerializableUnboundSchema sinkSchema = 2;
   string sinkType = 3;
   map<string, SerializableVariantDescriptor> config = 4;
 }
@@ -35,8 +36,8 @@ message SerializableSinkDescriptor
 message SerializableSourceDescriptor
 {
   uint64 physicalSourceId = 1;
-  string logicalSourceName = 2;
-  SerializableSchema sourceSchema = 3;
+  SerializableIdentifier logicalSourceName = 2;
+  SerializableUnboundSchema sourceSchema = 3;
   uint64 workerId = 4;
   string sourceType = 5;
   int32 maxInflightBuffers = 6;
@@ -59,7 +60,6 @@ message SerializableSinkLogicalOperator
 message SerializableLogicalOperator {
   string operator_type = 1;
   SerializableSchema output_schema = 2;
-  repeated SerializableSchema input_schemas = 3;
 }
 
 message SerializableOperator
