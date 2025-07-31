@@ -28,7 +28,7 @@
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -84,7 +84,7 @@ void verifyFlippedGraph(
     for (const auto& rootOperator : newRoots)
     {
         INVARIANT(
-            rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),
+            rootOperator->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>(),
             "Expects SourceOperators as roots after flip but got {}",
             rootOperator->getPhysicalOperator());
     }

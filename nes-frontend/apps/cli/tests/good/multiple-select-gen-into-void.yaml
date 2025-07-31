@@ -70,7 +70,7 @@ query:
 sinks:
   - name: VOID_SINK
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }

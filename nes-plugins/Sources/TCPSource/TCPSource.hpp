@@ -43,11 +43,11 @@ namespace NES
 struct ConfigParametersTCP
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "socket_host",
+        "SOCKET_HOST",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "socket_port",
+        "SOCKET_PORT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -65,7 +65,7 @@ struct ConfigParametersTCP
             return portNumber;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
-        "socket_domain",
+        "SOCKET_DOMAIN",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -83,7 +83,7 @@ struct ConfigParametersTCP
             return std::nullopt;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
-        "socket_type",
+        "SOCKET_TYPE",
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -119,24 +119,24 @@ struct ConfigParametersTCP
             return std::nullopt;
         }};
     static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tuple_delimiter",
+        "TUPLE_DELIMITER",
         '\n',
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flush_interval_ms",
+        "FLUSH_INTERVAL_MS",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socket_buffer_size",
+        "SOCKET_BUFFER_SIZE",
         1024,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytes_sed_for_socket_buffer_size_transfer",
+        "BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
         0,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "connect_timeout_seconds",
+        "CONNECT_TIMEOUT_SECONDS",
         10,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 

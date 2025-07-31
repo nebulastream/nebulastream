@@ -18,11 +18,27 @@
 #include <string>
 #include <string_view>
 #include <utility>
+
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <fmt/format.h>
+#include "Util/Overloaded.hpp"
 
 namespace NES
 {
 
+TypedLogicalFunction<FieldAccessLogicalFunction> inferFieldAccess(AggregationFieldAccess field, const Schema<Field, Unordered>& schema)
+{
+    return std::visit(
+        Overloaded{
+            [&schema](const TypedLogicalFunction<UnboundFieldAccessLogicalFunction>& unboundFieldAccessLogicalFunction)
+            {
+                const auto shouldBeFieldAccess = unboundFieldAccessLogicalFunction.withInferredDataType(schema);
+                return shouldBeFieldAccess.getAs<FieldAccessLogicalFunction>();
+            },
+            [&schema](const TypedLogicalFunction<FieldAccessLogicalFunction>& fieldAccessLogicalFunction)
+            { return fieldAccessLogicalFunction.withInferredDataType(schema).getAs<FieldAccessLogicalFunction>(); },
+        },
+        field);
+}
 }

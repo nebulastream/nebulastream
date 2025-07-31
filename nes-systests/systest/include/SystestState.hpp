@@ -39,8 +39,8 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -156,16 +156,22 @@ struct SystestQuery
     {
         LogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
-        Schema sinkOutputSchema;
+        Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
 
         PlanInfo() = delete;
 
-        PlanInfo(LogicalPlan plan, std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources, Schema sinkSchema)
+        PlanInfo(
+            LogicalPlan plan,
+            std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
+            Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
             : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
         {
         }
 
-        PlanInfo(LogicalPlan plan, Schema sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema)) { }
+        PlanInfo(LogicalPlan plan, Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
+            : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema))
+        {
+        }
 
         PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
         {

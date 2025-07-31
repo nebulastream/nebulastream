@@ -26,7 +26,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -49,7 +48,7 @@ struct ParserConfig
     bool allowCommasInStrings{};
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
+    static ParserConfig create(std::unordered_map<Identifier, std::string> configMap);
 };
 
 class SourceDescriptor final : public Descriptor
@@ -102,7 +101,7 @@ public:
     static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
-        "max_inflight_buffers",
+        "MAX_INFLIGHT_BUFFERS",
         INVALID_MAX_INFLIGHT_BUFFERS,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
 
@@ -139,7 +138,7 @@ namespace NES::detail
 {
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId = 0;
+    uint64_t physicalSourceId;
     LogicalSource logicalSource;
     std::string type;
     ParserConfig parserConfig;

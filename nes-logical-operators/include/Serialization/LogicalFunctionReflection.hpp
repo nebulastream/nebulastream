@@ -15,6 +15,7 @@
 #pragma once
 #include <concepts>
 #include <string>
+#include <type_traits>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Reflection.hpp>
 
@@ -25,6 +26,20 @@ struct ReflectedLogicalFunction
     std::string functionType;
     Reflected functionConfig;
 };
+
+// Helper to detect TypedLogicalFunction instances
+template <typename T>
+struct is_typed_logical_function : std::false_type
+{
+};
+
+template <typename Checked>
+struct is_typed_logical_function<TypedLogicalFunction<Checked>> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_typed_logical_function_v = is_typed_logical_function<T>::value;
 }
 
 namespace NES
@@ -41,7 +56,7 @@ struct Reflector<TypedLogicalFunction<Checked>>
 {
     Reflected operator()(const TypedLogicalFunction<Checked>& function) const
     {
-        return reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, reflect(*function)});
+        return reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function)});
     }
 };
 
@@ -55,6 +70,20 @@ template <>
 struct Unreflector<TypedLogicalFunction<>>
 {
     TypedLogicalFunction<> operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
+template <LogicalFunctionConcept Checked>
+struct Unreflector<TypedLogicalFunction<Checked>>
+{
+    TypedLogicalFunction<Checked> operator()(const Reflected& rfl, const ReflectionContext& context) const
+    {
+        auto erased = context.unreflect<LogicalFunction>(rfl);
+        if (auto casted = erased.tryGetAs<Checked>())
+        {
+            return casted.value();
+        }
+        throw CannotDeserialize("Expected logical function of type {}, but got {}", NAMEOF_TYPE(Checked), erased.getType());
+    }
 };
 
 static_assert(requires(LogicalFunction logicalFunction) {

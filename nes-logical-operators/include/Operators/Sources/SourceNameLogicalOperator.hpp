@@ -18,9 +18,9 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -35,15 +35,11 @@ namespace NES
 class SourceNameLogicalOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, Identifier logicalSourceName);
 
     static void inferInputOrigins();
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] SourceNameLogicalOperator withSchema(const Schema& schema) const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
@@ -54,35 +50,43 @@ public:
     [[nodiscard]] SourceNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceNameLogicalOperator withInferredSchema() const;
+
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Source";
-    std::string logicalSourceName;
 
     std::vector<LogicalOperator> children;
+    Identifier logicalSourceName;
+
     TraitSet traitSet;
-    Schema schema, inputSchema, outputSchema;
+    friend struct std::hash<SourceNameLogicalOperator>;
 };
 
 template <>
-struct Reflector<SourceNameLogicalOperator>
+struct Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>
 {
-    Reflected operator()(const SourceNameLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SourceNameLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SourceNameLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>
 {
-    SourceNameLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<SourceNameLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::SourceNameLogicalOperator>
+{
+    std::size_t operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const;
+};

@@ -24,7 +24,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -43,8 +43,8 @@ struct Pipeline
     /// Constructs a pipeline with the given PhysicalOperator as its root.
     explicit Pipeline(PhysicalOperator op);
 
-    /// Constructs a pipeline explicitly rooted with a SourcePhysicalOperator.
-    explicit Pipeline(const SourcePhysicalOperator& op);
+    /// Constructs a pipeline explicitly rooted with a SourceDescriptorPhysicalOperator.
+    explicit Pipeline(const SourceDescriptorPhysicalOperator& op);
 
     /// Constructs a pipeline explicitly rooted with a SinkPhysicalOperator.
     explicit Pipeline(const SinkPhysicalOperator& op);

@@ -21,8 +21,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -34,8 +35,7 @@
 namespace NES
 {
 
-ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right)
+ModuloLogicalFunction::ModuloLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -49,25 +49,19 @@ DataType ModuloLogicalFunction::getDataType() const
     return dataType;
 };
 
-ModuloLogicalFunction ModuloLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction ModuloLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction ModuloLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "ModuloLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value())
     {
-        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+        throw CannotInferStamp("Cannot apply modulo to input function left: {}, right: {}", copy.left, copy.right);
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    copy.dataType = std::move(newDataType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
 };
 
 std::vector<LogicalFunction> ModuloLogicalFunction::getChildren() const

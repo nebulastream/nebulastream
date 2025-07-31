@@ -21,11 +21,11 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -72,7 +72,7 @@ struct ShowSinksStatementResult
 struct DropLogicalSourceStatementResult
 {
     LogicalSourceName dropped;
-    Schema schema;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
 };
 
 struct DropPhysicalSourceStatementResult

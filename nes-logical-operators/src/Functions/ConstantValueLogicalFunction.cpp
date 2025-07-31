@@ -21,8 +21,8 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -83,7 +83,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
 {
     /// the dataType of constant value functions is defined by the constant value type.
     /// thus it is already assigned correctly when the function node is created.
@@ -99,7 +99,7 @@ ConstantValueLogicalFunction
 Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [value, dataType] = context.unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
-    return ConstantValueLogicalFunction{dataType, value};
+    return ConstantValueLogicalFunction{dataType, std::move(value)};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments)

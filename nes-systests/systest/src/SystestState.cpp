@@ -35,6 +35,9 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataTypeProvider.hpp>
+
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>

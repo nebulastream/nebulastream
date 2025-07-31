@@ -23,7 +23,6 @@
 #include <type_traits>
 #include <typeinfo>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -224,21 +223,28 @@ public:
 
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
+        MemoryLayoutType inputMemoryLayoutType,
+        PipelineLocation pipelineLocation);
+    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema, std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema);
+    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema, std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema, PipelineLocation pipelineLocation);
+    PhysicalOperatorWrapper(
+        PhysicalOperator physicalOperator,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType,
         PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType,
         std::optional<OperatorHandlerId> handlerId,
@@ -246,8 +252,8 @@ public:
         PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
+        std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType,
         std::optional<OperatorHandlerId> handlerId,
@@ -262,8 +268,8 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     [[nodiscard]] const PhysicalOperator& getPhysicalOperator() const;
-    [[nodiscard]] const std::optional<Schema>& getInputSchema() const;
-    [[nodiscard]] const std::optional<Schema>& getOutputSchema() const;
+    [[nodiscard]] const std::optional<Schema<QualifiedUnboundField, Ordered>>& getInputSchema() const;
+    [[nodiscard]] const std::optional<Schema<QualifiedUnboundField, Ordered>>& getOutputSchema() const;
     [[nodiscard]] const std::optional<MemoryLayoutType>& getInputMemoryLayoutType() const;
     [[nodiscard]] const std::optional<MemoryLayoutType>& getOutputMemoryLayoutType() const;
 
@@ -279,8 +285,8 @@ private:
     PhysicalOperator physicalOperator;
     std::optional<MemoryLayoutType> inputMemoryLayoutType;
     std::optional<MemoryLayoutType> outputMemoryLayoutType;
-    std::optional<Schema> inputSchema;
-    std::optional<Schema> outputSchema;
+    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema;
+    std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children;
 
     std::optional<std::shared_ptr<OperatorHandler>> handler;

@@ -18,33 +18,34 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 #include <utility>
-#include <DataTypes/DataType.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/Reflection.hpp>
+#include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
+MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(AggregationFieldAccess inputFunction) : inputFunction(inputFunction)
 {
 }
 
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
-    const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : onField(field), asField(std::move(asField))
-{
-}
-
-std::string_view MedianAggregationLogicalFunction::getName() noexcept
+std::string_view MedianAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
+}
+
+DataType MedianAggregationLogicalFunction::getAggregateType() const
+{
+    return DataTypeProvider::provideDataType(finalAggregateStampType);
 }
 
 bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
@@ -52,38 +53,34 @@ bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
     return true;
 }
 
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
+AggregationFieldAccess MedianAggregationLogicalFunction::getInputFunction() const
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-    if (not newOnField.getDataType().isNumeric())
-    {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getDataType());
-    }
+    return inputFunction;
+}
 
-    ///Set fully qualified name for the as Field
-    const auto onFieldName = newOnField.getFieldName();
-    const auto asFieldName = this->getAsField().getFieldName();
-
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-
-    std::string newAsFieldName;
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+std::string MedianAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
+{
+    if (verbosity == ExplainVerbosity::Short)
     {
-        newAsFieldName = attributeNameResolver + asFieldName;
+        return fmt::format("{}()", NAME);
     }
-    else
+    auto inputExplain = std::visit([verbosity](const auto& input) { return input->explain(verbosity); }, inputFunction);
+    return fmt::format("{}({})", NAME, inputExplain);
+}
+
+bool MedianAggregationLogicalFunction::operator==(const MedianAggregationLogicalFunction& other) const
+{
+    return inputFunction == other.inputFunction;
+}
+
+MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
+{
+    auto newInputFunction = inferFieldAccess(inputFunction, schema);
+    if (!newInputFunction->getDataType().isNumeric())
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        newAsFieldName = attributeNameResolver + fieldName;
+        throw CannotInferStamp("Cannot calculate median over non numeric fields.", newInputFunction->getDataType().isNumeric());
     }
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    return this->withInputStamp(newOnField.getDataType())
-        .withOnField(newOnField)
-        .withFinalAggregateStamp(newFinalAggregateStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
+    return MedianAggregationLogicalFunction{newInputFunction};
 }
 
 Reflected MedianAggregationLogicalFunction::reflect() const
@@ -93,98 +90,28 @@ Reflected MedianAggregationLogicalFunction::reflect() const
 
 Reflected Reflector<MedianAggregationLogicalFunction>::operator()(const MedianAggregationLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedMedianAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return reflect(function.getInputFunction());
 }
 
 MedianAggregationLogicalFunction
 Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = context.unreflect<detail::ReflectedMedianAggregationLogicalFunction>(reflected);
-    return MedianAggregationLogicalFunction{onField, asField};
+    return MedianAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
 AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMedianAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
+    if (arguments.on.size() != 1)
     {
-        return std::make_shared<WindowAggregationLogicalFunction>(
-            ReflectionContext{}.unreflect<MedianAggregationLogicalFunction>(arguments.reflected));
+        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    if (arguments.fields.size() != 2)
-    {
-        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
-    }
-    return std::make_shared<WindowAggregationLogicalFunction>(MedianAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+    return MedianAggregationLogicalFunction{arguments.on.at(0)};
+}
 }
 
-std::string MedianAggregationLogicalFunction::toString() const
+size_t std::hash<NES::MedianAggregationLogicalFunction>::operator()(
+    const NES::MedianAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
-}
-
-DataType MedianAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType MedianAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType MedianAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
-FieldAccessLogicalFunction MedianAggregationLogicalFunction::getOnField() const
-{
-    return onField;
-}
-
-FieldAccessLogicalFunction MedianAggregationLogicalFunction::getAsField() const
-{
-    return asField;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const
-{
-    auto copy = *this;
-    copy.onField = std::move(onField);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withAsField(FieldAccessLogicalFunction asField) const
-{
-    auto copy = *this;
-    copy.asField = std::move(asField);
-    return copy;
-}
-
-bool MedianAggregationLogicalFunction::operator==(const MedianAggregationLogicalFunction& otherMedianAggregationLogicalFunction) const
-{
-    return this->onField == otherMedianAggregationLogicalFunction.onField && this->asField == otherMedianAggregationLogicalFunction.asField;
-}
+    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
 }

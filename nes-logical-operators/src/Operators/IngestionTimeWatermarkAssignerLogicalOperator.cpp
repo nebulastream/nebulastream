@@ -15,12 +15,16 @@
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 
 #include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include <Schema/Schema.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <folly/Hash.h>
+#include "Schema/Binder.hpp"
 
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -29,11 +33,34 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include "Schema/Field.hpp"
+#include "Serialization/ReflectedOperator.hpp"
 
 namespace NES
 {
 
-IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator() = default;
+// namespace
+// {
+// Schema<Field, Unordered> inferOutputSchema(const Schema<Field, Unordered>& inputSchema, const LogicalOperator& newOperator)
+// {
+//     return Schema<Field, Unordered>{
+//         inputSchema
+//         | std::views::transform([&newOperator](const auto& field) { return Field{newOperator, field.getLastName(), field.getDataType()}; })
+//         | std::ranges::to<std::vector>()};
+// }
+// }
+
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self)
+    : self(std::move(self))
+{
+}
+
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(
+    WeakLogicalOperator self, LogicalOperator child)
+    : self(std::move(self)), child(std::move(child))
+{
+    inferLocalSchema();
+}
 
 std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
 {
@@ -44,25 +71,29 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbos
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format(
-            "INGESTIONTIMEWATERMARKASSIGNER(opId: {}, inputSchema: {}, traitSet: {})", id, inputSchema, traitSet.explain(verbosity));
+        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {}, traitSet: {})", id, traitSet.explain(verbosity));
     }
     return "INGESTION_TIME_WATERMARK_ASSIGNER";
 }
 
 bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const
 {
-    return getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 }
 
-IngestionTimeWatermarkAssignerLogicalOperator
-IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+void IngestionTimeWatermarkAssignerLogicalOperator::inferLocalSchema()
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    auto inputSchema = child->getOutputSchema();
+    outputSchema = unbind(inputSchema);
+}
+
+IngestionTimeWatermarkAssignerLogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
-    const auto& inputSchema = inputSchemas[0];
-    copy.inputSchema = inputSchema;
-    copy.outputSchema = inputSchema;
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
     return copy;
 }
 
@@ -81,42 +112,60 @@ IngestionTimeWatermarkAssignerLogicalOperator IngestionTimeWatermarkAssignerLogi
 IngestionTimeWatermarkAssignerLogicalOperator
 IngestionTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for ingestionTimeWatermarkAssigner, got {}", children.size());
     auto copy = *this;
-    copy.children = children;
+    copy.child = children.at(0);
     return copy;
 }
 
-std::vector<Schema> IngestionTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 {
-    return {inputSchema};
-};
-
-Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const
 {
-    return children;
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
-Reflected Reflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const IngestionTimeWatermarkAssignerLogicalOperator&) const
+Reflected Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
+    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const
 {
-    return Reflected{};
+    return reflect(op.getId());
 }
 
-IngestionTimeWatermarkAssignerLogicalOperator
-Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
+Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::Unreflector(ContextType operatorMapping)
+    : plan(std::move(operatorMapping))
 {
-    return IngestionTimeWatermarkAssignerLogicalOperator{};
 }
 
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
+TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
+Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto logicalOperator = IngestionTimeWatermarkAssignerLogicalOperator();
-    return logicalOperator.withInferredSchema(arguments.inputSchemas);
+    auto children = plan->getChildrenFor(context.unreflect<OperatorId>(reflected), context);
+    if (children.size() != 1)
+    {
+        throw CannotDeserialize("IngestionTimeWatermarkAssignerLogicalOperator requires exactly one child, but got {}", children.size());
+    }
+    return TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{children.at(0)};
 }
 
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
+}
+
+}
+
+uint64_t std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>::operator()(
+    const NES::IngestionTimeWatermarkAssignerLogicalOperator&) const noexcept
+{
+    return 35890319;
 }

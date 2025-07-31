@@ -87,16 +87,16 @@ private:
 struct ConfigParametersGenerator
 {
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
-        "stop_generator_when_sequence_finishes",
+        "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
             if (not optToken.has_value() || not optToken.value().asEnum<GeneratorStop>().has_value())
             {
-                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
+                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"))
                 throw InvalidConfigParameter(
-                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
+                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"));
             }
             switch (optToken.value().asEnum<GeneratorStop>().value())
             {
@@ -111,20 +111,20 @@ struct ConfigParametersGenerator
                 }
                 default: {
                     NES_ERROR(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
+                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"))
                     throw InvalidConfigParameter(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
+                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"));
                 }
             }
         }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SEED{
-        "seed",
+        "SEED",
         std::chrono::high_resolution_clock::now().time_since_epoch().count(),
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorRate::Type> GENERATOR_RATE_TYPE{
-        "generator_rate_type",
+        "GENERATOR_RATE_TYPE",
         EnumWrapper{GeneratorRate::Type::FIXED},
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -144,7 +144,7 @@ struct ConfigParametersGenerator
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
-        "generator_rate_config",
+        "GENERATOR_RATE_CONFIG",
         "emit_rate 1000",
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -162,7 +162,7 @@ struct ConfigParametersGenerator
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
-        "generator_schema",
+        "GENERATOR_SCHEMA",
         {},
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -200,7 +200,7 @@ struct ConfigParametersGenerator
         }};
 
     static inline const NES::DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
-        "flush_interval_ms",
+        "FLUSH_INTERVAL_MS",
         10,
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -210,7 +210,7 @@ struct ConfigParametersGenerator
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
-        "max_runtime_ms",
+        "MAX_RUNTIME_MS",
         -1,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
 

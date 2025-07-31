@@ -99,7 +99,7 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
 void SIMDJSONFIF::writeValueToRecord(
     const DataType dataType,
     Record& record,
-    const std::string& fieldName,
+    const IdentifierList& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<const SIMDJSONMetaData*>& metaData) const

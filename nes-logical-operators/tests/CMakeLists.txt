@@ -17,4 +17,5 @@ function(add_nes_logical_operators_test)
 endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
+add_nes_logical_operators_test(nes-schema-test "SchemaTest.cpp")
 add_nes_logical_operators_test(nes-projection-logical-operator-test "ProjectionLogicalOperatorTest.cpp")

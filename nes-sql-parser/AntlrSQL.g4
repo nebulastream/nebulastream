@@ -74,7 +74,7 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: identifierChain typeDefinition nullableDefinition?;
+columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
 typeDefinition: DATA_TYPE;
 nullableDefinition: NOT NULLTOKEN;
@@ -198,7 +198,7 @@ quotedIdentifier
     ;
 
 BACKQUOTED_IDENTIFIER
-    : '`' ( ~'`' | '``' )* '`'
+    : '"' ( ~'"' )* '"'
     ;
 
 identifierChain: strictIdentifier ('.' strictIdentifier)*;
@@ -277,6 +277,8 @@ timeWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
     ;
 
+timestampParameter: name=IDENTIFIER (',' name=IDENTIFIER)?;
+
 countWindow:
     TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
@@ -299,7 +301,6 @@ timeUnit: MS
         | DAY
         ;
 
-timestampParameter: name=identifier;
 
 functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
@@ -528,7 +529,6 @@ HAT: '^';
 
 STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
-    | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
 INTEGER_VALUE

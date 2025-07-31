@@ -25,12 +25,14 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
+#include "DataTypes/UnboundField.hpp"
 
 namespace NES
 {
@@ -60,15 +62,16 @@ concept AssemblembleStatementResult =
     /// OutputAssembler convert return type and the advertised OutputRowType match
     && std::convertible_to<detail::ConversionResultType<Result>, typename StatementOutputAssembler<Result>::OutputRowType>;
 
-using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
+using LogicalSourceOutputRowType = std::tuple<Identifier, Schema<UnqualifiedUnboundField, Ordered>>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
-using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
+using SourceDescriptorOutputRowType = std::
+    tuple<PhysicalSourceId, Identifier, Schema<UnqualifiedUnboundField, Ordered>, std::string, ParserConfig, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
+using SinkDescriptorOutputRowType
+    = std::tuple<Identifier, Schema<UnqualifiedUnboundField, Ordered>, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
@@ -132,7 +135,10 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.created.getSinkName(), *result.created.getSchema(), result.created.getSinkType(), result.created.getConfig())});
+                result.created.getSinkName(),
+                *std::get<NamedSinkDescriptor>(result.created.getUnderlying()).getSchema(),
+                result.created.getSinkType(),
+                result.created.getConfig())});
     }
 };
 
@@ -187,7 +193,8 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
         output.reserve(result.sinks.size());
         for (const auto& sink : result.sinks)
         {
-            output.emplace_back(sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig());
+            output.emplace_back(
+                sink.getSinkName(), *std::get<NamedSinkDescriptor>(sink.getUnderlying()).getSchema(), sink.getSinkType(), sink.getConfig());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -200,7 +207,7 @@ struct StatementOutputAssembler<DropLogicalSourceStatementResult>
 
     auto convert(const DropLogicalSourceStatementResult& result)
     {
-        return std::make_pair(logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped.getRawValue(), result.schema)});
+        return std::make_pair(logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped, result.schema)});
     }
 };
 
@@ -233,7 +240,10 @@ struct StatementOutputAssembler<DropSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.dropped.getSinkName(), *result.dropped.getSchema(), result.dropped.getSinkType(), result.dropped.getConfig())});
+                result.dropped.getSinkName(),
+                *std::get<NamedSinkDescriptor>(result.dropped.getUnderlying()).getSchema(),
+                result.dropped.getSinkType(),
+                result.dropped.getConfig())});
     }
 };
 

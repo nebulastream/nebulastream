@@ -14,3 +14,6 @@ add_source_files(nes-logical-operators
         InlineSinkLogicalOperator.cpp
         SinkLogicalOperator.cpp
 )
+
+add_plugin(InlineSink LogicalOperator nes-logical-operators InlineSinkLogicalOperator.cpp)
+add_plugin(Sink LogicalOperator nes-logical-operators SinkLogicalOperator.cpp)
