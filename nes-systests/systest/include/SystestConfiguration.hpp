@@ -19,12 +19,48 @@
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/WrapOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
+
+
+
 namespace NES
 {
+
+struct URI
+{
+    std::string uri;
+
+    std::string toString() const
+    {
+        return uri;
+    }
+
+    bool empty() const
+    {
+        return uri.empty();
+    }
+
+    void store(std::string uri) { this->uri = uri; }
+
+    URI() = default;
+
+    URI(std::string uri) : uri(uri) {};
+};
+
+// free function in the same namespace as URI:
+inline std::ostream& operator<<(std::ostream& os, URI const& u)
+{
+    return os << u.uri;
+}
+
+
+
+
+
 
 class SystestConfiguration final : public BaseConfiguration
 {
@@ -54,9 +90,8 @@ public:
     SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    StringOption grpcAddressUri
+    ScalarOption<URI> grpcAddressUri
         = {"grpc",
-           "",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
@@ -69,4 +104,24 @@ connections.  Valid values include dns:///localhost:1234,
 protected:
     std::vector<BaseOption*> getOptions() override;
 };
+}
+
+namespace YAML {
+
+template<>
+struct convert<NES::URI> {
+    static ::YAML::Node encode(NES::URI const& rhs)
+    {
+        ::YAML::Node node;
+        node = rhs.toString();  // store as scalar
+        return node;
+    }
+
+    static bool decode(const ::YAML::Node& node, NES::URI& rhs) {
+        if (!node.IsScalar()) return false;
+        rhs = NES::URI{ node.as<std::string>() };
+        return true;
+    }
+};
+
 }

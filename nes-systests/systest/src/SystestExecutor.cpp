@@ -284,7 +284,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     if (program.is_used("-s"))
     {
-        config.grpcAddressUri = program.get<std::string>("-s");
+        config.grpcAddressUri.setValue(program.get<std::string>("-s"));
     }
 
     if (program.is_used("-n"))
@@ -383,7 +383,7 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     {
         if (runRemote)
         {
-            return std::make_unique<Systest::RemoteWorkerQuerySubmitter>(grpcURI);
+            return std::make_unique<Systest::RemoteWorkerQuerySubmitter>(grpcURI.toString());
         }
         return std::make_unique<Systest::LocalWorkerQuerySubmitter>(singleNodeWorkerConfiguration);
     }();
@@ -522,7 +522,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
+            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI.toString());
         }
         else
         {
