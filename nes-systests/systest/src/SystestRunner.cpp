@@ -357,9 +357,9 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 }
 
 std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const URI& serverURI)
 {
-    auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
+    auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI.toString(), grpc::InsecureChannelCredentials()));
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter);
 }
