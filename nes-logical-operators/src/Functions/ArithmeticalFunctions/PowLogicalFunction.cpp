@@ -19,8 +19,9 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -31,8 +32,7 @@
 namespace NES
 {
 
-PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right) : left(left), right(right) { };
 
 bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -55,21 +55,17 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    copy.dataType = left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
     }
-    return withChildren(newChildren);
+    return copy;
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const

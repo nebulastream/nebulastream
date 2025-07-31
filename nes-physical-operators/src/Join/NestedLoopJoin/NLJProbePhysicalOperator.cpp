@@ -107,8 +107,8 @@ void NLJProbePhysicalOperator::performNLJ(
 {
     const auto outerKeyFields = outerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
     const auto innerKeyFields = innerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
-    const auto outerFields = outerMemoryProvider.getMemoryLayout()->getSchema().getFieldNames();
-    const auto innerFields = innerMemoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+    const auto outerFields = outerMemoryProvider.getMemoryLayout()->getSchema() | std::views::transform([](const UnboundField& field){ return field.getName();}) | std::ranges::to<std::vector>();
+    const auto innerFields = innerMemoryProvider.getMemoryLayout()->getSchema() | std::views::transform([](const UnboundField& field){ return field.getName();}) | std::ranges::to<std::vector>();
 
     nautilus::val<uint64_t> outerItemPos(0);
     for (auto outerIt = outerPagedVector.begin(outerKeyFields); outerIt != outerPagedVector.end(outerKeyFields); ++outerIt)

@@ -21,11 +21,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -39,10 +41,15 @@ class MemoryLayoutTupleBuffer;
 class MemoryLayout
 {
 public:
+    enum class MemoryLayoutType : uint8_t
+    {
+        ROW_LAYOUT = 0,
+        COLUMNAR_LAYOUT = 1
+    };
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, Schema schema);
+    MemoryLayout(uint64_t bufferSize, UnboundSchema schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
@@ -68,7 +75,8 @@ public:
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
-    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
+    ///TODO Argument can be changed to IdentfierList when adding support for compound data types
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const Identifier& fieldName) const;
 
     /// Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// Depending on the concrete MemoryLayout, e.g., Columnar or Row - Layout, this may result in different calculations.
@@ -81,22 +89,22 @@ public:
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
-    [[nodiscard]] const Schema& getSchema() const;
+    [[nodiscard]] const UnboundSchema& getSchema() const;
     [[nodiscard]] DataType getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
-    [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
-    void setKeyFieldNames(const std::vector<std::string>& keyFields);
+    [[nodiscard]] std::vector<Identifier> getKeyFieldNames() const;
+    void setKeyFieldNames(const std::vector<Identifier>& keyFields);
     bool operator==(const MemoryLayout& rhs) const = default;
     bool operator!=(const MemoryLayout& rhs) const = default;
 
 protected:
     uint64_t bufferSize;
-    Schema schema;
+    UnboundSchema schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<DataType> physicalTypes;
-    std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
-    std::vector<std::string> keyFieldNames;
+    std::unordered_map<Identifier, uint64_t> nameFieldIndexMap;
+    std::vector<Identifier> keyFieldNames;
 };
 }

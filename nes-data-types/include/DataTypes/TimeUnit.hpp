@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <string>
 
+#include "Util/Logger/Formatter.hpp"
+
 namespace NES::Windowing
 {
 
@@ -44,3 +46,5 @@ private:
 };
 
 }
+
+FMT_OSTREAM(NES::Windowing::TimeUnit);

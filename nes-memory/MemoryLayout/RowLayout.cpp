@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -25,7 +24,7 @@
 namespace NES
 {
 
-RowLayout::RowLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
+RowLayout::RowLayout(const uint64_t bufferSize, UnboundSchema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -40,7 +39,7 @@ RowLayout::RowLayout(const RowLayout& other)
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(uint64_t bufferSize, Schema schema)
+std::shared_ptr<RowLayout> RowLayout::create(uint64_t bufferSize, UnboundSchema schema)
 {
     return std::make_shared<RowLayout>(bufferSize, std::move(schema));
 }

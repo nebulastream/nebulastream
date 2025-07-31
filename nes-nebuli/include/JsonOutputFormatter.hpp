@@ -19,10 +19,10 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <google/protobuf/message_lite.h>
@@ -47,9 +47,9 @@ void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 
-void to_json(nlohmann::json& jsonOutput, const Schema::Field& str);
+void to_json(nlohmann::json& jsonOutput, const UnboundField& str);
 
-void to_json(nlohmann::json& jsonOutput, const Schema& schema);
+void to_json(nlohmann::json& jsonOutput, const UnboundSchema& schema);
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
 

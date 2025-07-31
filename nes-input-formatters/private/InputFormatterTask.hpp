@@ -27,8 +27,8 @@
 #include <string_view>
 #include <vector>
 
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -169,7 +169,7 @@ public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
 
     explicit InputFormatterTask(
-        FormatterType inputFormatIndexer, const Schema& schema, const QuotationType quotationType, const ParserConfig& parserConfig)
+        FormatterType inputFormatIndexer, const UnboundSchema& schema, const QuotationType quotationType, const ParserConfig& parserConfig)
 
         : inputFormatIndexer(std::move(inputFormatIndexer))
         , schemaInfo(schema)
@@ -180,8 +180,8 @@ public:
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
         , parseFunctions(
-              schema.getFields()
-              | std::views::transform([quotationType](const auto& field) { return getParseFunction(field.dataType.type, quotationType); })
+              schema
+              | std::views::transform([quotationType](const auto& field) { return getParseFunction(field.getDataType().type, quotationType); })
               | std::ranges::to<std::vector>())
     {
     }

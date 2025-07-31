@@ -22,8 +22,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>

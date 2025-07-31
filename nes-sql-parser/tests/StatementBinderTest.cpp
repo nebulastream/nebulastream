@@ -19,11 +19,10 @@
 #include <variant>
 #include <vector>
 
-
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>

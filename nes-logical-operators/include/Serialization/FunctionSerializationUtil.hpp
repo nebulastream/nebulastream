@@ -22,7 +22,7 @@
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
-LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
+LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction, const Schema& schema);
 std::shared_ptr<WindowAggregationLogicalFunction>
-deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);
+deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction, const Schema& schema);
 }

@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -33,7 +33,7 @@ namespace NES
 {
 
 DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
-    : dataType(left.getDataType()), left(left), right(std::move(std::move(right))) { };
+    : left(left), right(std::move(std::move(right))) { };
 
 bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -47,23 +47,20 @@ bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 DataType DivLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-LogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
+}
 
 LogicalFunction DivLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", left, right);
     }
-    return withChildren(newChildren);
+    copy.dataType = left.getDataType();
+
+    return copy;
 };
 
 std::vector<LogicalFunction> DivLogicalFunction::getChildren() const

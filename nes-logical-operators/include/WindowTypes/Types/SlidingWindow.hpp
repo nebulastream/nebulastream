@@ -25,8 +25,10 @@ namespace NES::Windowing
 /// A SlidingWindow assigns records to multiple overlapping windows.
 class SlidingWindow : public TimeBasedWindowType
 {
+    struct Private{};
 public:
-    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeMeasure size, TimeMeasure slide, Private);
+    static std::shared_ptr<WindowType> of(TimeMeasure size, TimeMeasure slide);
 
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
@@ -36,7 +38,6 @@ public:
     bool operator==(const WindowType& otherWindowType) const override;
 
 private:
-    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };

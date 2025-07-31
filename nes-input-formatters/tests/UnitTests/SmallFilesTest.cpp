@@ -29,10 +29,10 @@
 #include <vector>
 
 #include <Configuration/WorkerConfiguration.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -49,17 +49,17 @@
 
 namespace
 {
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
+std::vector<size_t> getVarSizedFieldOffsets(const NES::UnboundSchema& schema)
 {
     size_t priorFieldOffset = 0;
     std::vector<size_t> varSizedFieldOffsets;
     for (const auto& field : schema)
     {
-        if (field.dataType.isType(NES::DataType::Type::VARSIZED))
+        if (field.getDataType().isType(NES::DataType::Type::VARSIZED))
         {
             varSizedFieldOffsets.emplace_back(priorFieldOffset);
         }
-        priorFieldOffset += field.dataType.getSizeInBytes();
+        priorFieldOffset += field.getDataType().getSizeInBytes();
     }
     return varSizedFieldOffsets;
 }
@@ -162,7 +162,8 @@ public:
 
     struct SetupResult
     {
-        Schema schema;
+        UnboundSchema schema;
+        MemoryLayout::MemoryLayoutType layoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;
         size_t numberOfRequiredFormattedBuffers;
@@ -186,7 +187,10 @@ public:
     SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
-        const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes, currentTestFile.schemaFieldNames);
+        const auto schema = InputFormatterTestUtil::createSchema(
+            currentTestFile.schemaFieldTypes,
+            currentTestFile.schemaFieldNames | std::views::transform([](const auto& name) { return Identifier(name); })
+                | std::ranges::to<std::vector>());
         const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType;
         const auto testFilePath
             = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view formatterType)
@@ -200,7 +204,7 @@ public:
         }(currentTestFile, testDirPath, testConfig.formatterType);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().bufferSizeInBytes.getValue();
-        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeOfSchemaInBytes());
+        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeInBytes());
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
@@ -225,6 +229,7 @@ public:
 
         return SetupResult{
             .schema = schema,
+            .layoutType = MemoryLayout::MemoryLayoutType::ROW_LAYOUT,
             .sizeOfFormattedBuffers = sizeOfFormattedBuffers,
             .numberOfExpectedRawBuffers = numberOfExpectedRawBuffers,
             .numberOfRequiredFormattedBuffers = numberOfRequiredFormattedBuffers,
@@ -265,7 +270,7 @@ public:
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
         auto expectedBuffers
             = Util::loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
-        return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
+        return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema, setupResult.layoutType);
     }
 
     template <bool WriteExpectedResultsFile = false>
@@ -321,79 +326,86 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Bimbo",
-        .formatterType = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Food",
-        .formatterType = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "Food",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
 {
-    runTest(TestConfig{
-        .testFileName = "Spacecraft_Telemetry",
-        .formatterType = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "Spacecraft_Telemetry",
+            .formatterType = "JSON",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
 {
-    runTest(TestConfig{
-        .testFileName = "Bimbo",
-        .formatterType = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 10,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "Bimbo",
+            .formatterType = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 10,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
 {
-    runTest(TestConfig{
-        .testFileName = "Food",
-        .formatterType = "CSV",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 1,
-        .sizeOfRawBuffers = 16});
+    runTest(
+        TestConfig{
+            .testFileName = "Food",
+            .formatterType = "CSV",
+            .hasSpanningTuples = true,
+            .numberOfIterations = 1,
+            .numberOfThreads = 1,
+            .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
@@ -410,15 +422,16 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
 /// Simple test that confirms that we forward already formatted buffers without spanning tuples correctly
 TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 {
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "Native",
-        .hasSpanningTuples = false,
-        /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
-        /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
+    runTest(
+        TestConfig{
+            .testFileName = "TwoIntegerColumns",
+            .formatterType = "Native",
+            .hasSpanningTuples = false,
+            /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
+            /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
+            .numberOfIterations = 1,
+            .numberOfThreads = 8,
+            .sizeOfRawBuffers = 4096});
 }
 }
 

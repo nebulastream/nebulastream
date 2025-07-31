@@ -36,6 +36,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
@@ -74,8 +75,10 @@ public:
         EnumWrapper,
         FunctionList,
         AggregationFunctionList,
-        WindowInfos,
+        SerializableWindowType,
+        SerializableTimeCharacteristic,
         ProjectionList,
+        IdentifierList,
         UInt64List>;
     using Config = std::unordered_map<std::string, ConfigType>;
 

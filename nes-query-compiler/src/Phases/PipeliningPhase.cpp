@@ -54,7 +54,9 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
     const auto bufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
     /// Prepend the default scan operator.
-    pipeline->prependOperator(ScanPhysicalOperator(bufferRef, schema->getFieldNames()));
+    pipeline->prependOperator(ScanPhysicalOperator(
+        bufferRef,
+        *schema | std::views::transform([](const auto& field) { return field.getName(); }) | std::ranges::to<std::vector>()));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -70,7 +72,9 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
     const auto bufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
 
-    const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(bufferRef, schema->getFieldNames()));
+    const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(
+        bufferRef,
+        *schema | std::views::transform([](const auto& field) { return field.getName(); }) | std::ranges::to<std::vector>()));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());

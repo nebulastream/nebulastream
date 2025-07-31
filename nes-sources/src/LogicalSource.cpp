@@ -20,19 +20,18 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <fmt/format.h>
 
 namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema>(schema))
+LogicalSource::LogicalSource(std::string logicalSourceName, const UnboundSchema& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<UnboundSchema>(schema))
 {
 }
 
-std::shared_ptr<const Schema> LogicalSource::getSchema() const
+std::shared_ptr<const UnboundSchema> LogicalSource::getSchema() const
 {
     return schema;
 }

@@ -18,10 +18,10 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
@@ -30,23 +30,8 @@
 
 namespace NES
 {
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
-          field)
-{
-}
-
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
-    const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
-          field,
-          std::move(asField))
+MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(LogicalFunction inputFunction)
+    : WindowAggregationLogicalFunction(std::move(inputFunction))
 {
 }
 
@@ -55,33 +40,14 @@ std::string_view MedianAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
+std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::withInferredType(const Schema& schema)
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
-    onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    if (not onField.getDataType().isNumeric())
+    auto newInputFunction = inputFunction.withInferredDataType(schema);
+    if (!newInputFunction.getDataType().isNumeric())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
+        throw CannotInferStamp("Cannot calculate median over non numeric fields.", newInputFunction.getDataType().isNumeric());
     }
-
-    ///Set fully qualified name for the as Field
-    const auto onFieldName = onField.getFieldName();
-    const auto asFieldName = asField.getFieldName();
-
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
-    }
-    else
-    {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
-    }
-    inputStamp = onField.getDataType();
-    finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
+    return std::make_shared<MedianAggregationLogicalFunction>(newInputFunction);
 }
 
 SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
@@ -89,24 +55,20 @@ SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() co
     SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(onField.serialize());
+    auto inputFunc = SerializableFunction();
+    inputFunc.CopyFrom(inputFunction.serialize());
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(asField.serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
+    serializedAggregationFunction.mutable_on_fields()->Add()->CopyFrom(inputFunc);
     return serializedAggregationFunction;
 }
 
 AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMedianAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.fields.size() != 2)
+    if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    return std::make_shared<MedianAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<MedianAggregationLogicalFunction>(arguments.on.at(0));
 }
 }

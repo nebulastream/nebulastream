@@ -19,15 +19,15 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <RawTupleBuffer.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
 template <typename T>
-concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
+concept IndexerMetaDataType = requires(ParserConfig config, UnboundSchema schema, T indexerMetaData, std::ostream& spanningTuple) {
     T(config, schema);
     /// Assumes a fixed set of symbols that separate tuples
     /// InputFormatIndexers without tuple delimiters should return an empty string

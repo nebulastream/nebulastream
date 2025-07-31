@@ -32,7 +32,7 @@ class OperatorSerializationUtil
 public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator);
+    static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator, std::vector<LogicalOperator> children);
     static SourceDescriptor deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
     static SinkDescriptor deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
     static std::shared_ptr<WindowAggregationLogicalFunction>

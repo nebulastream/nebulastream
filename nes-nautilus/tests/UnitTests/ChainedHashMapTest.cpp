@@ -100,7 +100,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
 
     /// Getting new values for updating the values in the hash map.
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
+    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayout::MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
 
     /// We are inserting the records from the random key and value buffers into a map.
     /// Thus, we can check if the provided values are correct.

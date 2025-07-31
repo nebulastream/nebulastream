@@ -26,7 +26,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>

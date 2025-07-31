@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -30,8 +29,11 @@
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
+
 namespace NES
 {
+
+class Schema;
 
 /// Combines both selecting the fields to project and renaming/mapping of fields
 class ProjectionLogicalOperator
@@ -47,8 +49,9 @@ public:
         friend ProjectionLogicalOperator;
     };
 
-    using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
+    using Projection = std::pair<Identifier, LogicalFunction>;
     ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
+    ProjectionLogicalOperator(LogicalOperator children, DescriptorConfig::Config config);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
 
@@ -60,16 +63,16 @@ public:
 
     [[nodiscard]] ProjectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] std::vector<std::string> getAccessedFields() const;
+    [[nodiscard]] std::vector<Field> getAccessedFields() const;
 
-    [[nodiscard]] ProjectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] ProjectionLogicalOperator withInferredSchema() const;
 
     struct ConfigParameters
     {
@@ -88,14 +91,18 @@ public:
             = DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME, ASTERISK);
     };
 
+
 private:
     static constexpr std::string_view NAME = "Projection";
+
+    LogicalOperator child;
+    bool asterisk = false;
     std::vector<Projection> projections;
 
-    bool asterisk = false;
-    std::vector<LogicalOperator> children;
+    /// Set during schema inference
+    std::optional<Schema> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);

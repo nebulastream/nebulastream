@@ -13,9 +13,10 @@
 */
 
 #pragma once
-#include <cstdint>
+#include <Identifiers/Identifier.hpp>
+
+
 #include <memory>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -23,34 +24,76 @@
 
 #include <ErrorHandling.hpp>
 
-namespace NES
-{
-/// Used by all `Node`s to control the verbosity of their `operator<<` method.
-enum class VerbosityLevel : uint8_t
-{
-    /// Print everything.
-    Debug = 0,
-    /// Print only the name of the Node/Function, to make the queryplan printing easier to read.
-    QueryPlan = 1,
-};
-/// Check the iword array of the passed stream for the set `VerbosityLevel` using the allocated index.
-VerbosityLevel getVerbosityLevel(std::ostream& os);
-/// Set the iword array of the passed stream to the passed `VerbosityLevel` using the allocated index.
-void setVerbosityLevel(std::ostream& os, const VerbosityLevel& level);
-/// The index for the `VerbosityLevel` into any stream's iword array.
-/// The index may only be allocated once, otherwise it will change and we won't be able to set and retrieve it correctly.
-int getIwordIndex();
-
-inline std::ostream& operator<<(std::ostream& os, const VerbosityLevel& level)
-{
-    setVerbosityLevel(os, level);
-    return os;
-}
-}
-
 namespace NES::Util
 {
+/**
+* @brief escapes all non text characters in a input string, such that the string could be processed as json.
+* @param s input string.
+* @return result sing.
+*/
+std::string escapeJson(const std::string& str);
 
+/// this method checks if the object is null
+template <typename T>
+std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, USED_IN_DEBUG const std::string& errorMessage)
+{
+    INVARIANT(ptr, "{}", errorMessage);
+    return ptr;
+}
+
+/// Truncates the file and then writes the header string as is to the file
+void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);
+
+/// Appends the row as is to the csv file
+void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
+
+/// Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
+template <typename T>
+std::vector<std::vector<T>> partition(const std::vector<T>& vec, size_t n)
+{
+    std::vector<std::vector<T>> outVec;
+    size_t length = vec.size() / n;
+    size_t remain = vec.size() % n;
+
+    size_t begin = 0;
+    size_t end = 0;
+    for (size_t i = 0; i < std::min(n, vec.size()); ++i)
+    {
+        end += (remain > 0) ? (length + !!(remain--)) : length;
+        outVec.push_back(std::vector<T>(vec.begin() + begin, vec.begin() + end));
+        begin = end;
+    }
+    return outVec;
+}
+
+/// appends newValue until the vector contains a minimum of newSize elements
+template <typename T>
+void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue)
+{
+    while (vector.size() < newSize)
+    {
+        vector.push_back(newValue);
+    }
+}
+
+/// hashes the key with murmur hash
+uint64_t murmurHash(uint64_t key);
+
+/// Counts the number of lines of a string
+uint64_t countLines(const std::string& str);
+
+/// Counts the number of lines of a stream, e.g., a file
+uint64_t countLines(std::istream& stream);
+
+/// Tries to update curVal until it succeeds or curVal is larger then newVal
+template <typename T>
+void updateAtomicMax(std::atomic<T>& curVal, const T& newVal)
+{
+    T prev_value = curVal;
+    while (prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal))
+    {
+    }
+};
 
 /// check if the given object is an instance of the specified type.
 template <typename Out, typename In>
@@ -64,12 +107,6 @@ template <typename Out, typename In>
 bool instanceOf(const In& obj)
 {
     return dynamic_cast<Out*>(&obj);
-}
-
-template <typename Derived, typename Base>
-bool instanceOf(const std::unique_ptr<Base>& ptr)
-{
-    return dynamic_cast<const Derived*>(ptr.get()) != nullptr;
 }
 
 /// cast the given object to the specified type.
@@ -119,5 +156,23 @@ std::shared_ptr<T> copyPtr(std::experimental::propagate_const<std::shared_ptr<T>
 {
     return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
 }
+
+template <template <typename> typename Container, typename... Args>
+using VariantContainer = std::variant<Container<Args>...>;
+
+namespace detail
+{
+template <template <typename> typename Container, typename>
+struct VariantContainerFromImpl;
+
+template <template <typename> typename Container, typename... Args>
+struct VariantContainerFromImpl<Container, std::variant<Args...>>
+{
+    using type = VariantContainer<Container, Args...>;
+};
+}
+
+template <template <typename> typename Container, typename Variant>
+using VariantContainerFrom = typename detail::VariantContainerFromImpl<Container, Variant>::type;
 
 }

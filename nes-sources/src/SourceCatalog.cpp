@@ -25,7 +25,6 @@
 #include <unordered_set>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -37,25 +36,12 @@
 namespace NES
 {
 
-std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
+std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const UnboundSchema& schema)
 {
-    Schema newSchema;
-    for (const auto& field : schema.getFields())
-    {
-        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
-        if (field.name.find(logicalSourceName) != std::string::npos)
-        {
-            NES_DEBUG(
-                "Trying to register logical source \"{}\" where passed field name {} already contained the source name as a prefix, which "
-                "is probably a mistake",
-                logicalSourceName,
-                field.name);
-        }
-    }
     const std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName))
     {
-        LogicalSource logicalSource{logicalSourceName, newSchema};
+        LogicalSource logicalSource{logicalSourceName, schema};
         namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);

@@ -21,6 +21,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Registry.hpp>
+#include <Schema/Schema.hpp>
 
 namespace NES
 {
@@ -32,6 +33,8 @@ struct LogicalFunctionRegistryArguments
     DescriptorConfig::Config config;
     std::vector<LogicalFunction> children;
     DataType dataType;
+    /// How this schema, that this function has available, is constructed, depends on the logical operator that uses this logical function
+    Schema schema;
 };
 
 class LogicalFunctionRegistry

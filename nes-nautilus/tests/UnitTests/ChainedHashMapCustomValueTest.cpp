@@ -169,7 +169,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         const auto numberOfRecordsExact = std::distance(recordValueExactStart, recordValueExactEnd);
 
         /// Acquiring a buffer to write the values to that has the needed size
-        const auto neededBytes = inputBufferRef->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes() * numberOfRecordsExact;
+        const auto neededBytes = inputBufferRef->getMemoryLayout()->getSchema().getSizeInBytes() * numberOfRecordsExact;
         auto outputBufferOpt = bufferManager->getUnpooledBuffer(neededBytes);
         if (not outputBufferOpt)
         {
@@ -182,7 +182,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         writeAllRecordsIntoOutputBuffer(
             std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
         const auto writtenBytes
-            = outputBuffer.getNumberOfTuples() * inputBufferRef->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
+            = outputBuffer.getNumberOfTuples() * inputBufferRef->getMemoryLayout()->getSchema().getSizeInBytes();
         ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
         ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
 

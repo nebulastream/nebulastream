@@ -16,8 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -40,7 +40,7 @@ public:
     friend bool operator==(const CastToTypeLogicalFunction& lhs, const CastToTypeLogicalFunction& rhs);
 
     [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;

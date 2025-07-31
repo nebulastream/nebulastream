@@ -23,7 +23,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
@@ -40,18 +40,12 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
-{
-}
-
 bool SourceNameLogicalOperator::operator==(const SourceNameLogicalOperator& rhs) const
 {
-    return this->getSchema() == rhs.getSchema() && this->getName() == rhs.getName() && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return this->getName() == rhs.getName() && getTraitSet() == rhs.getTraitSet();
 }
 
-SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema() const
 {
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
     return *this;
@@ -77,18 +71,6 @@ std::string_view SourceNameLogicalOperator::getName() const noexcept
     return "Source";
 }
 
-Schema SourceNameLogicalOperator::getSchema() const
-{
-    return schema;
-}
-
-SourceNameLogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
-{
-    auto copy = *this;
-    copy.schema = schema;
-    return copy;
-}
-
 SourceNameLogicalOperator SourceNameLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
@@ -108,14 +90,11 @@ SourceNameLogicalOperator SourceNameLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> SourceNameLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
 
 Schema SourceNameLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    INVARIANT(false, "SourceNameLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const

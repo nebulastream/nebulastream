@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Concepts.hpp>
@@ -34,10 +34,10 @@ using FieldIndex = uint32_t;
 class SchemaInfo
 {
 public:
-    explicit SchemaInfo(const Schema& schema) : sizeOfTupleInBytes(schema.getSizeOfSchemaInBytes())
+    explicit SchemaInfo(const UnboundSchema& schema) : sizeOfTupleInBytes(schema.getSizeInBytes())
     {
-        this->fieldSizesInBytes = schema.getFields()
-            | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytes()); })
+        this->fieldSizesInBytes = schema
+            | std::views::transform([](const auto& field) { return static_cast<size_t>(field.getDataType().getSizeInBytes()); })
             | std::ranges::to<std::vector>();
     }
 

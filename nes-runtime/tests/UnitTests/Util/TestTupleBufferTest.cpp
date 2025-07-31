@@ -19,9 +19,11 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <../../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,11 +44,11 @@ namespace NES
 using VarSizeDataTuple = std::tuple<VAR_SIZED_DATA_TYPES>;
 using FixedSizedDataTuple = std::tuple<FIXED_SIZED_DATA_TYPES>;
 
-class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
+class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<MemoryLayout::MemoryLayoutType>
 {
 public:
     std::shared_ptr<BufferManager> bufferManager;
-    Schema schema, varSizedDataSchema;
+    UnboundSchema schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
     static void SetUpTestCase()
@@ -60,23 +62,23 @@ public:
         Testing::BaseUnitTest::SetUp();
         const auto memoryLayout = GetParam();
         bufferManager = BufferManager::create(4096, 10);
-        schema = Schema{memoryLayout}
-                     .addField("test$t1", DataType::Type::UINT16)
-                     .addField("test$t2", DataType::Type::BOOLEAN)
-                     .addField("test$t3", DataType::Type::FLOAT64);
+        schema = UnboundSchema{
+            UnboundField{Identifier::parse("t1"), DataType::Type::UINT16},
+            UnboundField{Identifier::parse("t2"), DataType::Type::BOOLEAN},
+            UnboundField{Identifier::parse("t3"), DataType::Type::FLOAT64}};
 
-        varSizedDataSchema = Schema{memoryLayout}
-                                 .addField("test$t1", DataType::Type::UINT16)
-                                 .addField("test$t2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                 .addField("test$t3", DataType::Type::FLOAT64)
-                                 .addField("test$t4", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+        varSizedDataSchema = UnboundSchema{
+            UnboundField{Identifier::parse("t1"), DataType::Type::UINT16},
+            UnboundField{Identifier::parse("t2"), DataType::Type::VARSIZED},
+            UnboundField{Identifier::parse("t3"), DataType::Type::FLOAT64},
+            UnboundField{Identifier::parse("t4"), DataType::Type::VARSIZED}};
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();
 
-        testBuffer = std::make_unique<TestTupleBuffer>(TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema));
+        testBuffer = std::make_unique<TestTupleBuffer>(TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema, memoryLayout));
         testBufferVarSize
-            = std::make_unique<TestTupleBuffer>(TestTupleBuffer::createTestTupleBuffer(tupleBufferVarSizedData, varSizedDataSchema));
+            = std::make_unique<TestTupleBuffer>(TestTupleBuffer::createTestTupleBuffer(tupleBufferVarSizedData, varSizedDataSchema, memoryLayout));
     }
 };
 
@@ -145,13 +147,13 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTest)
     /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0; i < 10; ++i)
     {
-        (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
-        (*testBuffer)[i]["test$t2"].write<bool>(i % 2);
-        (*testBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
+        (*testBuffer)[i][Identifier::parse("t1")].write<uint16_t>(i);
+        (*testBuffer)[i][Identifier::parse("t2")].write<bool>(i % 2);
+        (*testBuffer)[i][Identifier::parse("t3")].write<double_t>(i * 42.0);
 
-        ASSERT_EQ((*testBuffer)[i]["test$t1"].read<uint16_t>(), i);
-        ASSERT_EQ((*testBuffer)[i]["test$t2"].read<bool>(), i % 2);
-        ASSERT_EQ((*testBuffer)[i]["test$t3"].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t1")].read<uint16_t>(), i);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t2")].read<bool>(), i % 2);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t3")].read<double_t>(), i * 42.0);
     }
 }
 
@@ -167,15 +169,15 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestVarSizeData)
     /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < 10; ++i)
     {
-        (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
-        (*testBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
-        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), *bufferManager);
-        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i][Identifier::parse("t1")].write<uint16_t>(i);
+        (*testBufferVarSize)[i][Identifier::parse("t3")].write<double_t>(i * 42.0);
+        (*testBufferVarSize)[i].writeVarSized(Identifier::parse("t2"), "" + std::to_string(i) + std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i].writeVarSized(Identifier::parse("t4"), std::to_string(i), *bufferManager);
 
-        ASSERT_EQ((*testBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
-        ASSERT_EQ((*testBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
-        ASSERT_EQ((*testBufferVarSize)[i].readVarSized("test$t2"), "" + std::to_string(i) + std::to_string(i));
-        ASSERT_EQ((*testBufferVarSize)[i].readVarSized("test$t4"), std::to_string(i));
+        ASSERT_EQ((*testBufferVarSize)[i][Identifier::parse("t1")].read<uint16_t>(), i);
+        ASSERT_EQ((*testBufferVarSize)[i][Identifier::parse("t3")].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*testBufferVarSize)[i].readVarSized(Identifier::parse("t2")), "" + std::to_string(i) + std::to_string(i));
+        ASSERT_EQ((*testBufferVarSize)[i].readVarSized(Identifier::parse("t4")), std::to_string(i));
     }
 }
 
@@ -191,13 +193,13 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBuffer)
     /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < testBuffer->getCapacity(); ++i)
     {
-        (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
-        (*testBuffer)[i]["test$t2"].write<bool>(i % 2);
-        (*testBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
+        (*testBuffer)[i][Identifier::parse("t1")].write<uint16_t>(i);
+        (*testBuffer)[i][Identifier::parse("t2")].write<bool>(i % 2);
+        (*testBuffer)[i][Identifier::parse("t3")].write<double_t>(i * 42.0);
 
-        ASSERT_EQ((*testBuffer)[i]["test$t1"].read<uint16_t>(), i);
-        ASSERT_EQ((*testBuffer)[i]["test$t2"].read<bool>(), i % 2);
-        ASSERT_EQ((*testBuffer)[i]["test$t3"].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t1")].read<uint16_t>(), i);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t2")].read<bool>(), i % 2);
+        ASSERT_EQ((*testBuffer)[i][Identifier::parse("t3")].read<double_t>(), i * 42.0);
     }
 }
 
@@ -213,15 +215,15 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBufferVarSizeData)
     /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < testBufferVarSize->getCapacity(); ++i)
     {
-        (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
-        (*testBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
-        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), *bufferManager);
-        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i][Identifier::parse("t1")].write<uint16_t>(i);
+        (*testBufferVarSize)[i][Identifier::parse("t3")].write<double_t>(i * 42.0);
+        (*testBufferVarSize)[i].writeVarSized(Identifier::parse("t2"), "" + std::to_string(i) + std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i].writeVarSized(Identifier::parse("t4"), std::to_string(i), *bufferManager);
 
-        ASSERT_EQ((*testBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
-        ASSERT_EQ((*testBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
-        ASSERT_EQ((*testBufferVarSize)[i].readVarSized("test$t2"), "" + std::to_string(i) + std::to_string(i));
-        ASSERT_EQ((*testBufferVarSize)[i].readVarSized("test$t4"), std::to_string(i));
+        ASSERT_EQ((*testBufferVarSize)[i][Identifier::parse("t1")].read<uint16_t>(), i);
+        ASSERT_EQ((*testBufferVarSize)[i][Identifier::parse("t3")].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*testBufferVarSize)[i].readVarSized(Identifier::parse("t2")), "" + std::to_string(i) + std::to_string(i));
+        ASSERT_EQ((*testBufferVarSize)[i].readVarSized(Identifier::parse("t4")), std::to_string(i));
     }
 }
 
@@ -352,6 +354,6 @@ TEST_P(TestTupleBufferTest, DynamicTupleCompareVarSizeData)
 INSTANTIATE_TEST_CASE_P(
     TestInputs,
     TestTupleBufferTest,
-    ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
+    ::testing::Values(MemoryLayout::MemoryLayoutType::COLUMNAR_LAYOUT, MemoryLayout::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<TestTupleBufferTest::ParamType>& info) { return std::string(magic_enum::enum_name(info.param)); });
 }

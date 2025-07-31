@@ -17,7 +17,7 @@
 #include <memory>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -27,7 +27,8 @@
 namespace NES
 {
 
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config)
+std::unique_ptr<InputFormatterTaskPipeline>
+provideInputFormatterTask(const UnboundSchema& schema, const ParserConfig& config)
 {
     if (auto inputFormatter
         = InputFormatIndexerRegistry::instance().create(config.parserType, InputFormatIndexerRegistryArguments(config, schema)))

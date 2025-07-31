@@ -25,14 +25,13 @@
 namespace NES::Windowing
 {
 
-SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide))
+SlidingWindow::SlidingWindow(TimeMeasure size, TimeMeasure slide, Private) : size(std::move(size)), slide(std::move(slide))
 {
 }
 
-std::shared_ptr<WindowType> SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+std::shared_ptr<WindowType> SlidingWindow::of(TimeMeasure size, TimeMeasure slide)
 {
-    return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
+    return std::make_shared<SlidingWindow>(std::move(size), std::move(slide), Private{});
 }
 
 TimeMeasure SlidingWindow::getSize()
@@ -47,15 +46,14 @@ TimeMeasure SlidingWindow::getSlide()
 
 std::string SlidingWindow::toString() const
 {
-    return fmt::format("SlidingWindow: size={} slide={} timeCharacteristic={}", size.getTime(), slide.getTime(), timeCharacteristic);
+    return fmt::format("SlidingWindow: size={} slide={}", size.getTime(), slide.getTime());
 }
 
 bool SlidingWindow::operator==(const WindowType& otherWindowType) const
 {
     if (const auto* otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {
-        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide)
-            && (this->timeCharacteristic == (otherSlidingWindow->timeCharacteristic));
+        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide);
     }
     return false;
 }

@@ -15,30 +15,112 @@
 #include <Operators/UnionLogicalOperator.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include "Schema/Field.hpp"
 
 namespace NES
 {
 
+namespace
+{
+Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const UnionLogicalOperator& unionOperator)
+{
+
+    auto inputSchemas = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); });
+    auto inputSchemaSizes = inputSchemas | std::views::transform([](const auto& schema) { return std::ranges::size(schema); });
+
+    if (std::ranges::adjacent_find(inputSchemaSizes, std::ranges::not_equal_to{}) != std::ranges::end(inputSchemaSizes))
+    {
+        throw CannotInferSchema("Union expects all children to have the same number of fields");
+    }
+
+    auto schemaSize = *std::ranges::begin(inputSchemaSizes);
+
+    std::unordered_map<uint64_t, std::vector<std::tuple<Identifier, DataType>>> fieldMismatches;
+    for (auto i : std::views::iota(0UL, schemaSize))
+    {
+        auto fieldsAtIndex = inputSchemas
+            | std::views::transform(
+                                 [i](const auto& schema) -> std::tuple<Identifier, DataType>
+                                 {
+                                     Field field = *(std::ranges::begin(schema) + i);
+                                     return std::make_tuple(field.getLastName(), field.getDataType());
+                                 });
+
+        const auto fieldsSame = std::ranges::adjacent_find(fieldsAtIndex, std::ranges::not_equal_to{}) == std::ranges::end(fieldsAtIndex);
+
+        if (!fieldsSame)
+        {
+            fieldMismatches.emplace(i, fieldsAtIndex | std::ranges::to<std::vector>());
+        }
+    }
+
+    auto mismatchToString = [&fieldMismatches]
+    {
+        return fmt::format(
+            "{}",
+            fmt::join(
+                fieldMismatches
+                    | std::views::transform(
+                        [](const std::pair<uint64_t, std::vector<std::tuple<Identifier, DataType>>>& mismatch)
+                        {
+                            return fmt::format(
+                                "at {}: ({})",
+                                mismatch.first,
+                                fmt::join(
+                                    mismatch.second
+                                        | std::views::transform(
+                                            [](const auto& field)
+                                            { return fmt::format("({} {})", std::get<Identifier>(field), std::get<DataType>(field)); }),
+                                    ", "));
+                        }),
+                ","));
+    };
+
+    if (!fieldMismatches.empty())
+    {
+        throw CannotInferSchema("Union expects all children to have the same fields, but found {}", mismatchToString());
+    }
+
+    /// For some reason, c++ doesn't convert *std::ranges::begin(inputSchemas) into a range of fields correctly
+    return Schema{(inputSchemas | std::ranges::to<std::vector<Schema>>()).at(0)
+        | std::views::transform([&unionOperator](const Field& field) { return Field{unionOperator, field.getLastName(), field.getDataType()}; })};
+}
+}
+
 UnionLogicalOperator::UnionLogicalOperator() = default;
+
+UnionLogicalOperator::UnionLogicalOperator(std::vector<LogicalOperator> children)
+{
+    PRECONDITION(!children.empty(), "Union expects at least one child");
+
+    this->children = std::move(children);
+    // Validate schema compatibility and infer output schema
+    this->outputSchema = inferOutputSchema(children, *this);
+}
 
 std::string_view UnionLogicalOperator::getName() const noexcept
 {
@@ -47,14 +129,14 @@ std::string_view UnionLogicalOperator::getName() const noexcept
 
 bool UnionLogicalOperator::operator==(const UnionLogicalOperator& rhs) const
 {
-    return getInputSchemas() == rhs.getInputSchemas() && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
+    return getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        if (!outputSchema.hasFields())
+        if (!outputSchema.has_value())
         {
             return fmt::format("UnionWith(OpId: {}, {}, traitSet: {})", id, outputSchema, traitSet.explain(verbosity));
         }
@@ -64,34 +146,16 @@ std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId
     return "UnionWith";
 }
 
-UnionLogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+UnionLogicalOperator UnionLogicalOperator::withInferredSchema() const
 {
-    PRECONDITION(!inputSchemas.empty(), "Union expects at least one child");
+    PRECONDITION(!children.empty(), "Union expects at least one child");
     auto copy = *this;
 
-    /// If all input schemas are identical including the source qualifier the union keeps the source qualifier.
-    /// Compares adjacent elements and returs the first pair where they are not equal.
-    /// If all of them are equal this returns the end iterator
-    const auto allSchemasEqualWithQualifier = std::ranges::adjacent_find(inputSchemas, std::ranges::not_equal_to{}) == inputSchemas.end();
-    if (!allSchemasEqualWithQualifier)
-    {
-        auto inputsWithoutSourceQualifier = inputSchemas | std::views::transform(withoutSourceQualifier);
-        const auto allSchemasEqualWithoutQualifier
-            = std::ranges::adjacent_find(inputsWithoutSourceQualifier, std::ranges::not_equal_to{}) == inputsWithoutSourceQualifier.end();
-        if (!allSchemasEqualWithoutQualifier)
-        {
-            throw CannotInferSchema("Missmatch between union schemas.\n{}", fmt::join(inputSchemas, "\n"));
-        }
-        /// drop the qualifier
-        copy.outputSchema = withoutSourceQualifier(inputSchemas[0]);
-    }
-    else
-    {
-        ///Input schema will be the output schema
-        copy.outputSchema = inputSchemas[0];
-    }
+    copy.children
+        = children | std::views::transform([](const auto& child) { return child.withInferredSchema(); }) | std::ranges::to<std::vector>();
 
-    copy.inputSchemas = std::move(inputSchemas);
+    copy.outputSchema = inferOutputSchema(copy.children, copy);
+
     return copy;
 }
 
@@ -114,14 +178,10 @@ UnionLogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOpera
     return copy;
 }
 
-std::vector<Schema> UnionLogicalOperator::getInputSchemas() const
-{
-    return inputSchemas;
-};
-
 Schema UnionLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return outputSchema.value();
 }
 
 std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
@@ -135,15 +195,8 @@ void UnionLogicalOperator::serialize(SerializableOperator& serializableOperator)
 
     proto.set_operator_type(NAME);
 
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-
     auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
     for (auto& child : getChildren())
     {
@@ -153,34 +206,9 @@ void UnionLogicalOperator::serialize(SerializableOperator& serializableOperator)
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-UnionLogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
+LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    if (inputSchemas.empty())
-    {
-        throw UnknownException("Expected at least input schema");
-    }
-    auto copy = *this;
-    copy.inputSchemas = std::move(inputSchemas);
-    return copy;
-}
-
-UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
-{
-    auto copy = *this;
-    copy.outputSchema.appendFieldsFromOtherSchema(outputSchema);
-    return copy;
-}
-
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
-{
-    auto logicalOperator = UnionLogicalOperator();
-    if (arguments.inputSchemas.empty())
-    {
-        throw CannotDeserialize("Union expects at least one child but got {} inputSchemas!", arguments.inputSchemas.size());
-    }
-    auto logicalOp = logicalOperator.setInputSchemas(std::move(arguments.inputSchemas)).setOutputSchema(arguments.outputSchema);
-    return logicalOp;
+    return UnionLogicalOperator{std::move(arguments.children)};
 }
 
 }

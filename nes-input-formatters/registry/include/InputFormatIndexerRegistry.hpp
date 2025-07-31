@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -37,7 +37,7 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskP
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, const Schema& schema)
+    InputFormatIndexerRegistryArguments(ParserConfig config, const UnboundSchema& schema)
         : inputFormatIndexerConfig(std::move(config)), schema(schema)
     {
     }
@@ -49,16 +49,15 @@ struct InputFormatIndexerRegistryArguments
     InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(FormatterType inputFormatter, const QuotationType quotationType)
     {
         auto inputFormatterTask
-            = InputFormatterTask<FormatterType>(std::move(inputFormatter), schema, quotationType, inputFormatIndexerConfig);
+            = InputFormatterTask<FormatterType>(std::move(inputFormatter), schema , quotationType, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
 
-    size_t getNumberOfFieldsInSchema() const { return schema.getNumberOfFields(); }
-
+    size_t getNumberOfFieldsInSchema() const { return std::ranges::size(schema); }
     ParserConfig inputFormatIndexerConfig;
 
 private:
-    Schema schema;
+    UnboundSchema schema;
 };
 
 class InputFormatIndexerRegistry : public BaseRegistry<

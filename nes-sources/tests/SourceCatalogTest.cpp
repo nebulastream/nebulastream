@@ -24,7 +24,8 @@
 #include <unordered_set>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/UnboundSchema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -55,9 +56,9 @@ public:
 TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
+        UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -67,9 +68,9 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
+        UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -126,9 +127,9 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 TEST_F(SourceCatalogTest, RemoveLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
+        UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -163,9 +164,9 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
     constexpr size_t operationsPerThread = 1000;
     constexpr unsigned int concurrentLogicalSourceNames = 3;
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
+        UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
     std::atomic_uint64_t successfulPhysicalAdds{0};
     std::atomic_uint64_t failedPhysicalAdds{0};

@@ -22,15 +22,19 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Common.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <SerializableOperator.pb.h>
@@ -39,29 +43,48 @@
 namespace NES
 {
 
+
 class WindowedAggregationLogicalOperator final : public OriginIdAssigner
 {
 public:
+    struct ProjectedAggregation
+    {
+        std::shared_ptr<WindowAggregationLogicalFunction> function;
+        Identifier name;
+
+        friend bool operator==(const ProjectedAggregation& lhs, const ProjectedAggregation& rhs)
+        {
+            return *lhs.function == rhs.function && lhs.name == rhs.name;
+        }
+    };
+
+    using GroupingKeyType = NES::Util::VariantContainer<
+        std::vector,
+        std::pair<UnboundFieldAccessLogicalFunction, std::optional<Identifier>>,
+        std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>;
+
     WindowedAggregationLogicalOperator(
-        std::vector<FieldAccessLogicalFunction> groupingKey,
-        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
-        std::shared_ptr<Windowing::WindowType> windowType);
+        WindowedAggregationLogicalOperator::GroupingKeyType groupingKey,
+        std::vector<ProjectedAggregation> aggregationFunctions,
+        std::shared_ptr<Windowing::WindowType> windowType,
+        Windowing::TimeCharacteristic timeCharacteristic);
+    explicit WindowedAggregationLogicalOperator(LogicalOperator child, DescriptorConfig::Config arguments);
 
 
-    [[nodiscard]] std::vector<std::string> getGroupByKeyNames() const;
     [[nodiscard]] bool isKeyed() const;
 
-    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> getWindowAggregation() const;
-    void setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation);
+
+    [[nodiscard]] std::vector<ProjectedAggregation> getWindowAggregation() const;
+
+    [[nodiscard]] NES::Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
+    getGroupingKeys() const;
+    [[nodiscard]] const GroupingKeyType& getGroupingKeysWithName() const;
 
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
-    void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
-
-    [[nodiscard]] std::vector<FieldAccessLogicalFunction> getGroupingKeys() const;
-
-    [[nodiscard]] std::string getWindowStartFieldName() const;
-    [[nodiscard]] std::string getWindowEndFieldName() const;
+    [[nodiscard]] Field getWindowStartField() const;
+    [[nodiscard]] Field getWindowEndField() const;
     [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
+    [[nodiscard]] std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic> getCharacteristic() const;
 
 
     [[nodiscard]] bool operator==(const WindowedAggregationLogicalOperator& rhs) const;
@@ -72,14 +95,14 @@ public:
 
     [[nodiscard]] WindowedAggregationLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema() const;
 
     struct ConfigParameters
     {
@@ -94,7 +117,7 @@ public:
             [](const std::unordered_map<std::string, std::string>& config)
             { return DescriptorConfig::tryGet(WINDOW_AGGREGATIONS, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<FunctionList> WINDOW_KEYS{
+        static inline const DescriptorConfig::ConfigParameter<ProjectionList> WINDOW_KEYS{
             "windowKeys",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_KEYS, config); }};
@@ -111,26 +134,42 @@ public:
             [](const std::unordered_map<std::string, std::string>& config)
             { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_INFOS{
+        static inline const DescriptorConfig::ConfigParameter<SerializableWindowType> WINDOW_TYPE{
             "windowInfos",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_TYPE, config); }};
+
+        static inline const DescriptorConfig::ConfigParameter<SerializableTimeCharacteristic> TIME_CHARACTERISTIC{
+            "timeCharacteristic",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return DescriptorConfig::tryGet(TIME_CHARACTERISTIC, config); }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(
-                TIME_MS, WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
+                TIME_MS,
+                WINDOW_AGGREGATIONS,
+                WINDOW_TYPE,
+                TIME_CHARACTERISTIC,
+                WINDOW_KEYS,
+                WINDOW_START_FIELD_NAME,
+                WINDOW_END_FIELD_NAME);
     };
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
-    std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<FieldAccessLogicalFunction> groupingKey;
-    WindowMetaData windowMetaData;
 
-    std::vector<LogicalOperator> children;
+    LogicalOperator child;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    GroupingKeyType groupingKey;
+    std::vector<ProjectedAggregation> aggregationFunctions;
+
+    /// Set during schema inference
+    std::optional<WindowMetaData> windowMetaData;
+    std::optional<Schema> outputSchema;
+    Windowing::TimeCharacteristic timestampField;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);

@@ -13,28 +13,29 @@
 */
 
 #pragma once
-#include <string>
+
+#include <ostream>
 #include <utility>
+#include <Schema/Field.hpp>
 
 namespace NES
 {
 struct WindowMetaData
 {
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
+    Field startField;
+    Field endField;
 
-    WindowMetaData() = default;
-
-    WindowMetaData(std::string startName, std::string endName)
-        : windowStartFieldName(std::move(startName)), windowEndFieldName(std::move(endName))
+    WindowMetaData(Field startField, Field endField)
+        : startField(std::move(startField)), endField(std::move(endField))
     {
     }
-
-    bool operator==(const WindowMetaData& other) const
+    bool operator==(const WindowMetaData& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const WindowMetaData& obj)
     {
-        return windowStartFieldName == other.windowStartFieldName && windowEndFieldName == other.windowEndFieldName;
+        return os << fmt::format("startField: {}, endField {}", obj.startField, obj.endField);
     }
-
-    bool operator!=(const WindowMetaData& other) const { return !(*this == other); }
 };
 }
+
+FMT_OSTREAM(NES::WindowMetaData);
+

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -25,6 +26,8 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include "Functions/UnboundFieldAccessLogicalFunction.hpp"
+#include "Operators/Windows/WindowedAggregationLogicalOperator.hpp"
 
 namespace NES
 {
@@ -54,8 +57,9 @@ public:
     static LogicalPlan addWindowAggregation(
         LogicalPlan queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,
-        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
-        std::vector<FieldAccessLogicalFunction> onKeys);
+        std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
+        std::vector<UnboundFieldAccessLogicalFunction> onKeys,
+        Windowing::TimeCharacteristic timeCharacteristic);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftLogicalPlan the left query plan to combine by the union
@@ -74,13 +78,15 @@ public:
         LogicalPlan rightLogicalPlan,
         const LogicalFunction& joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
-        JoinLogicalOperator::JoinType joinType);
+        JoinLogicalOperator::JoinType joinType,
+        Windowing::TimeCharacteristic leftCharacteristic,
+        Windowing::TimeCharacteristic rightCharacteristic);
 
     static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);
+    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources

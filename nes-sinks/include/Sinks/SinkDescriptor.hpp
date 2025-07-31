@@ -24,11 +24,12 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -59,15 +60,15 @@ public:
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::shared_ptr<const UnboundSchema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
 
 private:
-    explicit SinkDescriptor(std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+    explicit SinkDescriptor(std::string sinkName, const UnboundSchema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
 
     std::string sinkName;
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const UnboundSchema> schema;
     std::string sinkType;
 
 public:

@@ -33,8 +33,7 @@ void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLI
                  [](const auto& op)
                  {
                      INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
-                     INVARIANT(op.getInputSchemas().size() == 1, "Projection operator must have exactly one input schema");
-                     return op.getInputSchemas().front() == op.getOutputSchema();
+                     return op.getChildren().front().getOutputSchema() == op.getOutputSchema();
                  }))
     {
         auto child = projectionOp.getChildren().front();

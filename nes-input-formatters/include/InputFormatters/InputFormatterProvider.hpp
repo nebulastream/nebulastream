@@ -16,14 +16,13 @@
 
 #include <memory>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config);
+std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const UnboundSchema& schema, const ParserConfig& config);
 
 bool contains(const std::string& parserType);
 }

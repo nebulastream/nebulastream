@@ -20,8 +20,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -50,13 +50,12 @@ struct SinkLogicalOperator final
     [[nodiscard]] SinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SinkLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] SinkLogicalOperator withInferredSchema() const;
 
     [[nodiscard]] std::string getSinkName() const noexcept;
     [[nodiscard]] std::optional<SinkDescriptor> getSinkDescriptor() const;
@@ -77,7 +76,7 @@ struct SinkLogicalOperator final
 private:
     static constexpr std::string_view NAME = "Sink";
 
-    std::vector<LogicalOperator> children;
+    LogicalOperator child;
     TraitSet traitSet;
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;

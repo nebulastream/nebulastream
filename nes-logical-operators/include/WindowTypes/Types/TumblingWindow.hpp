@@ -33,7 +33,7 @@ public:
     /// time windows start at 0:15:00,1:15:00,2:15:00,etc.
     /// @param size
     /// @return std::shared_ptr<WindowType>
-    TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeMeasure size);
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
     [[nodiscard]] std::string toString() const override;

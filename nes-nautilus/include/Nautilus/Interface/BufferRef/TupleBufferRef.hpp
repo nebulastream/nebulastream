@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -36,7 +35,7 @@ class TupleBufferRef
 public:
     virtual ~TupleBufferRef();
 
-    static std::shared_ptr<TupleBufferRef> create(uint64_t bufferSize, const Schema& schema);
+    static std::shared_ptr<TupleBufferRef> create(uint64_t bufferSize, const UnboundSchema& schema, MemoryLayout::MemoryLayoutType layout);
 
     [[nodiscard]] virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
 

@@ -33,18 +33,22 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
 {
     const auto source = logicalOperator.getAs<UnionLogicalOperator>();
-    auto inputSchemas = logicalOperator.getInputSchemas();
     auto outputSchema = logicalOperator.getOutputSchema();
 
     PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
-    auto renames = inputSchemas
+    auto renames = source.getChildren()
         | std::views::transform(
-                       [&](const auto& schema)
+                       [&](const auto& childOperator)
                        {
+                           const auto getFieldNames = [](const Schema& schema)
+                           {
+                               return schema | std::views::transform([](const auto& field) { return field.getLastName(); })
+                                   | std::ranges::to<std::vector>();
+                           };
                            return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
-                               schema,
+                               UnionRenamePhysicalOperator(getFieldNames(childOperator.getOutputSchema()), getFieldNames(outputSchema)),
+                               childOperator.getOutputSchema(),
                                outputSchema,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
                        })

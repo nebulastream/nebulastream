@@ -35,14 +35,16 @@
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
 
 
-LogicalOperator OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator)
+LogicalOperator
+OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator, std::vector<LogicalOperator> children)
 {
-    std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
+    std::optional<LogicalOperator> result = [&]() -> std::optional<LogicalOperator>
     {
         if (serializedOperator.has_source())
         {
@@ -85,20 +87,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             }
 
             auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
-                .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
+                .children = std::move(children), /// children - will be populated from operator_().children
                 .config = config};
-
-
-            for (const auto& schema : serializedOperator.operator_().input_schemas())
-            {
-                registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
-            }
-
-            if (serializedOperator.operator_().has_output_schema())
-            {
-                registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
-            }
             return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
         }
         return std::nullopt;
@@ -106,8 +96,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
     if (result.has_value())
     {
-        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
-        return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
+        return result.value();
     }
 
     throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
@@ -115,7 +104,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
 {
-    auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
+    auto schema = UnboundSchemaSerializationUtil::deserializeUnboundSchema(sourceDescriptor.sourceschema());
     const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), schema};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
@@ -143,7 +132,7 @@ SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const Serial
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
     auto sinkName = serializableSinkDescriptor.sinkname();
-    const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
+    const auto schema = UnboundSchemaSerializationUtil::deserializeUnboundSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.

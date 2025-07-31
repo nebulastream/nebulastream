@@ -54,7 +54,7 @@ void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
 
-void AntlrSQLHelper::addProjection(std::optional<FieldIdentifier> identifier, LogicalFunction logicalFunction)
+void AntlrSQLHelper::addProjection(std::optional<Identifier> identifier, LogicalFunction logicalFunction)
 {
     this->projectionBuilder.emplace_back(std::move(identifier), std::move(logicalFunction));
 }

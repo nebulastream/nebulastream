@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -30,6 +31,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -42,10 +44,46 @@
 namespace NES
 {
 
+namespace
+{
+Schema inferOutputSchema(const Schema& inputSchema, const LogicalOperator& newOperator)
+{
+    return inputSchema
+        | std::views::transform([&newOperator](const auto& field) { return Field{newOperator, field.getLastName(), field.getDataType()}; })
+        | std::ranges::to<Schema>();
+}
+}
+
 EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
     LogicalFunction onField, const Windowing::TimeUnit& unit)
-    : onField(std::move(onField)), unit(unit)
+    : unit(unit), onField(std::move(onField))
 {
+}
+
+EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+    : unit(0)
+{
+    const auto timeVariant = config[ConfigParameters::TIME_MS];
+    const auto functionVariant = config[ConfigParameters::FUNCTION];
+
+    if (!(std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant)))
+    {
+        this->child = std::move(child);
+
+        const auto functions = std::get<FunctionList>(functionVariant).functions();
+        const auto time = Windowing::TimeUnit(std::get<uint64_t>(timeVariant));
+
+        if (functions.size() != 1)
+        {
+            throw CannotDeserialize("Expected exactly one function");
+        }
+        this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], child.getOutputSchema());
+        this->unit = time;
+
+        this->outputSchema = inferOutputSchema(child.getOutputSchema(), *this);
+    }
+
+    throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator: Unknown configuration variant");
 }
 
 std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noexcept
@@ -58,11 +96,10 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "EVENT_TIME_WATERMARK_ASSIGNER(opId: {}, onField: {}, unit: {}, inputSchema: {}, traitSet: {})",
+            "EVENT_TIME_WATERMARK_ASSIGNER(opId: {}, onField: {}, unit: {}, traitSet: {})",
             id,
             onField.explain(verbosity),
             unit.getMillisecondsConversionMultiplier(),
-            inputSchema,
             traitSet.explain(verbosity));
     }
     return "WATERMARK_ASSIGNER(Event time)";
@@ -70,22 +107,16 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
 
 bool EventTimeWatermarkAssignerLogicalOperator::operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const
 {
-    return onField == rhs.onField && unit == rhs.unit && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return onField == rhs.onField && unit == rhs.unit && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
 }
 
-EventTimeWatermarkAssignerLogicalOperator
-EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema() const
 {
     auto copy = *this;
-    if (inputSchemas.size() != 1)
-    {
-        throw CannotDeserialize("Watermark assigner should have only one input");
-    }
-    const auto& inputSchema = inputSchemas[0];
+    copy.child = copy.child.withInferredSchema();
+    const auto& inputSchema = copy.child.getOutputSchema();
     copy.onField = onField.withInferredDataType(inputSchema);
-    copy.inputSchema = inputSchema;
-    copy.outputSchema = inputSchema;
+    copy.outputSchema = inferOutputSchema(inputSchema, copy);
     return copy;
 }
 
@@ -104,24 +135,31 @@ EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOpera
 EventTimeWatermarkAssignerLogicalOperator
 EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for eventTimeWatermarkAssigner, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
 Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return outputSchema.value();
 }
 
 std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
 {
-    return children;
+    return {child};
+}
+
+LogicalFunction EventTimeWatermarkAssignerLogicalOperator::getOnField() const
+{
+    return onField;
+}
+
+Windowing::TimeUnit EventTimeWatermarkAssignerLogicalOperator::getUnit() const
+{
+    return unit;
 }
 
 void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& serializableOperator) const
@@ -130,14 +168,8 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
 
     proto.set_operator_type(NAME);
 
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
     auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
     for (auto& child : getChildren())
     {
@@ -158,23 +190,11 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto timeVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS);
-    auto functionVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION);
-
-    if (std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant))
+    if (arguments.children.size() != 1)
     {
-        const auto functions = std::get<FunctionList>(functionVariant).functions();
-        const auto time = Windowing::TimeUnit(std::get<uint64_t>(timeVariant));
-
-        if (functions.size() != 1)
-        {
-            throw CannotDeserialize("Expected exactly one function");
-        }
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-
-        auto logicalOperator = EventTimeWatermarkAssignerLogicalOperator(function, time);
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
+        throw CannotDeserialize(
+            "Expected one child for EventTimeWatermarkAssignerLogicalOperator, but found {}", arguments.children.size());
     }
-    throw UnknownLogicalOperator();
+    return EventTimeWatermarkAssignerLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 }

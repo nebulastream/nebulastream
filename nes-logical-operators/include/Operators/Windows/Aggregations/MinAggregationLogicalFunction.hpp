@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <string_view>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -27,11 +27,10 @@ namespace NES
 class MinAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit MinAggregationLogicalFunction(LogicalFunction inputFunction);
     ~MinAggregationLogicalFunction() override = default;
 
-    void inferStamp(const Schema& schema) override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 

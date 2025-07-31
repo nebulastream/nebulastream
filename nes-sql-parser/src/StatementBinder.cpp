@@ -48,8 +48,8 @@
 #include <BailErrorStrategy.h>
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -261,11 +261,10 @@ public:
         return *dataType;
     }
 
-    Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST) const
+    UnboundSchema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST) const
     {
-        Schema schema{};
 
-        for (auto* const column : schemaDefAST->columnDefinition())
+        auto fields = schemaDefAST->columnDefinition() | std::views::transform([this](auto* column)
         {
             auto dataType = bindDataType(column->typeDefinition());
             /// TODO #764 Remove qualification of column names in schema declarations, it's only needed as a hack now to make it work with the per-operator-lexical-scopes.
@@ -275,9 +274,9 @@ public:
                 qualifiedAttributeName << bindIdentifier(unboundIdentifier) << "$";
             }
             const auto fullName = qualifiedAttributeName.str().substr(0, qualifiedAttributeName.str().size() - 1);
-            schema.addField(fullName, dataType);
-        }
-        return schema;
+            return UnboundField{Identifier::parse(fullName), dataType};
+        });
+        return UnboundSchema{fields | std::ranges::to<std::vector>()};
     }
 
     CreateLogicalSourceStatement

@@ -27,6 +27,8 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Identifiers/Identifier.hpp"
+#include "Serialization/IdentifierSerializationUtil.hpp"
 
 namespace NES
 {
@@ -95,9 +97,22 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
             {
                 protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
             }
-            else if constexpr (std::is_same_v<U, WindowInfos>)
+            else if constexpr (std::is_same_v<U, SerializableWindowType>)
             {
-                protoVar.mutable_window_infos()->CopyFrom(arg);
+                protoVar.mutable_window_type()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, SerializableTimeCharacteristic>)
+            {
+                protoVar.mutable_time_characteristic()->CopyFrom(arg);
+            }
+            else if constexpr (std::is_same_v<U, NES::IdentifierList>)
+            {
+                for (const Identifier& identifier : arg)
+                {
+                    auto* const serializedIdentifier = protoVar.mutable_identifiers()->add_identifiers();
+                    serializedIdentifier->set_value(identifier.getRawValue());
+                    serializedIdentifier->set_casesensitive(identifier.isCaseSensitive());
+                }
             }
             else if constexpr (std::is_same_v<U, UInt64List>)
             {
@@ -142,10 +157,14 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.aggregation_function_list();
         case SerializableVariantDescriptor::kProjections:
             return protoVar.projections();
-        case SerializableVariantDescriptor::kWindowInfos:
-            return protoVar.window_infos();
+        case SerializableVariantDescriptor::kWindowType:
+            return protoVar.window_type();
+        case SerializableVariantDescriptor::kTimeCharacteristic:
+            return protoVar.time_characteristic();
         case SerializableVariantDescriptor::kUlongs:
             return protoVar.ulongs();
+        case SerializableVariantDescriptor::kIdentifiers:
+            return IdentifierSerializationUtil::deserializeIdentifierList(protoVar.identifiers());
         case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
             throw CannotSerialize("Protobuf oneOf has no value");
     }

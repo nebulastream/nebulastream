@@ -39,7 +39,7 @@ public:
     static inline ColumnLayoutField<T, boundaryChecks>
     create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer);
     static inline ColumnLayoutField<T, boundaryChecks>
-    create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer);
+    create(const Identifier& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer);
 
     /**
      * Accesses the value of this field for a specific record.
@@ -61,9 +61,9 @@ inline ColumnLayoutField<T, boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema().getNumberOfFields(),
+        boundaryChecks && fieldIndex < std::ranges::size(layout->getSchema()),
         "fieldIndex out of bounds {} >= {}",
-        layout->getSchema().getNumberOfFields(),
+        std::ranges::size(layout->getSchema()),
         fieldIndex);
 
     const auto offSet = layout->getFieldOffset(0, fieldIndex);
@@ -75,7 +75,7 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
 
 template <class T, bool boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>
-ColumnLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
+ColumnLayoutField<T, boundaryChecks>::create(const Identifier& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
     INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);

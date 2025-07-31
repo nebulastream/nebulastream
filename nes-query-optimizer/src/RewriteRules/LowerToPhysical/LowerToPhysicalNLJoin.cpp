@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <../../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -44,7 +44,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Watermark/TimestampField.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -58,26 +57,26 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getFieldName(); })
-        | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
-        | std::ranges::to<std::vector<std::string>>();
+        | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getField(); })
+        | std::views::filter([&](const auto& field) { return inputSchema.contains(field.getLastName()); })
+        | std::views::transform([](const auto& field) { return field.getLastName(); }) | std::ranges::to<std::vector>();
 };
 
 RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGetAs<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
-    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
+    auto children = logicalOperator.getChildren();
+    PRECONDITION(std::ranges::size(children) == 2, "Expected two children");
     auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
     auto& outputOriginIds = outputOriginIdsOpt.value();
     PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
-    PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    auto leftInputSchema = join->getLeftSchema();
-    auto rightInputSchema = join->getRightSchema();
+    auto leftInputSchema = children[0]->getOutputSchema();
+    auto rightInputSchema = children[1]->getOutputSchema();
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = outputOriginIds[0];
     auto logicalJoinFunction = join->getJoinFunction();
@@ -97,18 +96,21 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema);
+    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema, MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
     leftBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
-    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema);
+    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema, MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
     rightBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
+    const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
+    auto characteristicsAreBound = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+    PRECONDITION(characteristicsAreBound, "Expected the join time characteristics to be bound");
+    auto& [timeStampFieldLeft, timeStampFieldRight] = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
 
     auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftBufferRef);
 
     auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator

@@ -17,20 +17,23 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : child(child) { };
 
 bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -46,21 +49,16 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Cannot apply exp function on non-numeric input function {}", copy.child);
     }
-    return this->withChildren(newChildren);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    return copy;
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const

@@ -27,7 +27,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -51,6 +51,11 @@
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
 
+namespace NES
+{
+class Schema;
+}
+
 namespace NES::Nautilus::TestUtils
 {
 
@@ -60,25 +65,26 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
+    const UnboundSchema& schema, const MemoryLayout::MemoryLayoutType layoutType, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
     const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
-}
-
-std::vector<TupleBuffer>
-NautilusTestUtils::createMonotonicallyIncreasingValues(const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
-{
-    constexpr auto minSizeVarSizedData = 10;
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
+    return createMonotonicallyIncreasingValues(schema, layoutType, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema,
+    const UnboundSchema& schema, const MemoryLayout::MemoryLayoutType layoutType, const uint64_t numberOfTuples, BufferManager& bufferManager)
+{
+    constexpr auto minSizeVarSizedData = 10;
+    return createMonotonicallyIncreasingValues(schema, layoutType, numberOfTuples, bufferManager, minSizeVarSizedData);
+}
+
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+    const UnboundSchema& schema,
+    const MemoryLayout::MemoryLayoutType memoryLayoutType,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
     const uint64_t seed,
@@ -86,7 +92,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(bufferManager.getBufferSize(), schema);
+    const auto memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(bufferManager.getBufferSize(), schema, memoryLayoutType);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -143,29 +149,34 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     return buffers;
 }
 
-Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes)
+UnboundSchema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
+UnboundSchema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
 {
+    const auto fields =
+        std::views::enumerate(basicTypes)
+        | std::views::transform(
+            [&typeIdxOffset](const auto& pair)
+            {
+                const auto& [typeIdx, type] = pair;
+                const auto nameOfField = Identifier::parse("field" + std::to_string(typeIdx + typeIdxOffset));
+                return UnboundField{nameOfField, type};
+            });
+
     /// Creating a schema for the memory provider
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-    for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
-    {
-        const auto nameOfField = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset));
-        schema.addField(nameOfField, type);
-    }
-    return schema;
+    return UnboundSchema{fields | std::ranges::to<std::vector>()};
+
 }
 
 void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
     ExecutionMode backend,
     nautilus::engine::Options& options,
-    const Schema& schema,
+    const UnboundSchema& schema,
     const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -182,18 +193,18 @@ void NautilusTestUtils::compileFillBufferFunction(
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
             Record record;
-            for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema.getNumberOfFields(); ++fieldIndex)
+            for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < std::ranges::size(schema); ++fieldIndex)
             {
-                const auto field = schema.getFieldAt(fieldIndex);
-                const auto physicalType = field.dataType;
-                const auto fieldName = field.name;
-                if (not field.dataType.isType(DataType::Type::VARSIZED))
+                const auto field = *(std::ranges::begin(schema) + fieldIndex);
+                const auto physicalType = field.getDataType();
+                const auto fieldName = field.getName();
+                if (not field.getDataType().isType(DataType::Type::VARSIZED))
                 {
                     const auto varValue = Nautilus::Util::createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
-                else if (field.dataType.isType(DataType::Type::VARSIZED))
+                else if (field.getDataType().isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
                         +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
@@ -252,7 +263,7 @@ std::string NautilusTestUtils::compareRecords(
     {
         const auto& valueLeft = recordLeft.read(fieldIdentifier);
         const auto& valueRight = recordRight.read(fieldIdentifier);
-        ss << fieldIdentifier.c_str() << " (" << valueLeft;
+        ss << fieldIdentifier.getRawValue().c_str() << " (" << valueLeft;
         if (valueLeft != valueRight)
         {
             printErrorMessage = true;

@@ -25,7 +25,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -34,6 +33,7 @@
 namespace NES
 {
 
+class Schema;
 struct LogicalFunction;
 
 /// Concept defining the interface for all logical functions.
@@ -45,7 +45,6 @@ struct LogicalFunctionConcept
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
 
     [[nodiscard]] virtual DataType getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
     [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
 
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
@@ -110,7 +109,6 @@ struct LogicalFunction
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
@@ -152,9 +150,6 @@ private:
         {
             return data.withInferredDataType(schema);
         }
-
-        [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return data.withDataType(dataType); }
-
         [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))
@@ -194,30 +189,3 @@ struct hash<NES::LogicalFunction>
 }
 
 FMT_OSTREAM(NES::LogicalFunction);
-
-namespace NES
-{
-class FieldIdentifier
-{
-    std::string fieldName;
-
-public:
-    explicit FieldIdentifier(std::string fieldName) : fieldName(std::move(fieldName)) { }
-
-    [[nodiscard]] const std::string& getFieldName() const { return fieldName; }
-
-    auto operator<=>(const FieldIdentifier&) const = default;
-};
-}
-
-namespace std
-{
-template <>
-struct hash<NES::FieldIdentifier>
-{
-    std::size_t operator()(const NES::FieldIdentifier& identifier) const noexcept
-    {
-        return std::hash<std::string>{}(identifier.getFieldName());
-    }
-};
-}

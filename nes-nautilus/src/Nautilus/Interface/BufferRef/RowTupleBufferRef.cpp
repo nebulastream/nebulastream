@@ -16,9 +16,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -56,16 +56,15 @@ Record RowTupleBufferRef::readRecord(
     const auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getMemArea();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < std::ranges::size(schema); ++i)
     {
-        const auto& fieldName = schema.getFieldAt(i).name;
-        if (!includesField(projections, fieldName))
+        if (const auto& fieldName = (std::ranges::begin(schema) + i)->getName(); !includesField(projections, fieldName))
         {
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(rowMemoryLayout->getSchema().getFieldAt(i).name, value);
+        record.write((std::ranges::begin(rowMemoryLayout->getSchema()) + i)->getName(), value);
     }
     return record;
 }
@@ -82,10 +81,10 @@ void RowTupleBufferRef::writeRecord(
     const auto schema = rowMemoryLayout->getSchema();
 
     const nautilus::val<uint64_t> varSizedOffset = 0;
-    for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < std::ranges::size(schema); ++i)
     {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        const auto& value = rec.read(schema.getFieldAt(i).name);
+        const auto& value = rec.read((std::ranges::begin(schema) + i)->getName());
         storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }

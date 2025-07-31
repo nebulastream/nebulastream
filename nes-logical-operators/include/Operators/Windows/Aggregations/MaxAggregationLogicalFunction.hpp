@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <string_view>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -27,10 +27,9 @@ namespace NES
 class MaxAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit MaxAggregationLogicalFunction(LogicalFunction inputFunction);
 
-    void inferStamp(const Schema& schema) override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
     ~MaxAggregationLogicalFunction() override = default;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;

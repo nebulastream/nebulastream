@@ -38,8 +38,8 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>

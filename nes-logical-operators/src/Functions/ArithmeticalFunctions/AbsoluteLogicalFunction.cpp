@@ -19,19 +19,21 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : child(child)
 {
 }
 
@@ -40,21 +42,26 @@ DataType AbsoluteLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    AbsoluteLogicalFunction copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (!child.getDataType().isNumeric())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Cannot apply absolute function on non-numeric input function {}", copy.child);
     }
-    return this->withChildren(newChildren);
+
+    copy.dataType = [&]
+    {
+        if (child.getDataType().isSignedInteger())
+        {
+            /// TODO select appropriately narrow data type
+            return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+        }
+        return child.getDataType();
+    }();
+
+    return copy;
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const

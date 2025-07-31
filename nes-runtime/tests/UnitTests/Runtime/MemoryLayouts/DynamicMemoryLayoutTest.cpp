@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -32,13 +32,14 @@
 namespace NES
 {
 
-class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
+class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
+                                             public testing::WithParamInterface<MemoryLayout::MemoryLayoutType>
 {
 public:
     std::shared_ptr<BufferManager> bufferManager;
-    Schema schema;
+    UnboundSchema schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
-    Schema::MemoryLayoutType memoryLayoutType = GetParam();
+    MemoryLayout::MemoryLayoutType memoryLayoutType = GetParam();
 
     static void SetUpTestCase()
     {
@@ -51,11 +52,11 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = BufferManager::create(4096, 10);
 
-        schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                     .addField("t1", DataType::Type::UINT16)
-                     .addField("t2", DataType::Type::BOOLEAN)
-                     .addField("t3", DataType::Type::FLOAT64);
-        if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
+        schema = UnboundSchema{
+            UnboundField{Identifier::parse("t1"), DataType::Type::UINT16},
+            UnboundField{Identifier::parse("t2"), DataType::Type::BOOLEAN},
+            UnboundField{Identifier::parse("t3"), DataType::Type::FLOAT64}};
+        if (GetParam() == MemoryLayout::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;
             ASSERT_NO_THROW(layout = RowLayout::create(bufferManager->getBufferSize(), schema));
@@ -96,8 +97,8 @@ TEST_P(DynamicMemoryLayoutTestParameterized, iteratetestBufferTest)
     for (auto tuple : *testBuffer)
     {
         ASSERT_EQ(tuple[0].read<uint16_t>(), 42);
-        ASSERT_EQ(tuple["t2"].read<bool>(), true);
-        ASSERT_EQ(tuple["t3"].read<double>(), 42 * 2.0);
+        ASSERT_EQ(tuple[Identifier::parse("t2")].read<bool>(), true);
+        ASSERT_EQ(tuple[Identifier::parse("t3")].read<double>(), 42 * 2.0);
     }
 }
 
@@ -129,7 +130,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout)
 INSTANTIATE_TEST_CASE_P(
     TestInputs,
     DynamicMemoryLayoutTestParameterized,
-    ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
+    ::testing::Values(MemoryLayout::MemoryLayoutType::COLUMNAR_LAYOUT, MemoryLayout::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info)
     { return std::string(magic_enum::enum_name(info.param)); });
 }

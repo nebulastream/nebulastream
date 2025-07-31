@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -111,14 +110,14 @@ bool TupleBufferRef::includesField(
 
 TupleBufferRef::~TupleBufferRef() = default;
 
-std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize, const Schema& schema)
+std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize, const UnboundSchema& schema, const MemoryLayout::MemoryLayoutType layout)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    if (layout == MemoryLayout::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = std::make_shared<RowLayout>(bufferSize, schema);
         return std::make_shared<RowTupleBufferRef>(std::move(rowMemoryLayout));
     }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (layout == MemoryLayout::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = std::make_shared<ColumnLayout>(bufferSize, schema);
         return std::make_shared<ColumnTupleBufferRef>(std::move(columnMemoryLayout));

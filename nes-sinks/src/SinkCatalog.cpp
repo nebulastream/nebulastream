@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -31,7 +31,7 @@ namespace NES
 {
 
 std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
-    std::string sinkName, const Schema& schema, const std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    std::string sinkName, const UnboundSchema& schema, const std::string_view sinkType, std::unordered_map<std::string, std::string> config)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
     {

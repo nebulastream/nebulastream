@@ -16,8 +16,9 @@
 
 #include <cstdint>
 #include <memory>
-#include <DataTypes/Schema.hpp>
+
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
@@ -35,10 +36,10 @@ namespace NES
 class ColumnLayout : public MemoryLayout
 {
 public:
-    ColumnLayout(uint64_t bufferSize, Schema schema);
+    ColumnLayout(uint64_t bufferSize, UnboundSchema schema);
     ColumnLayout(const ColumnLayout& other);
 
-    static std::shared_ptr<ColumnLayout> create(uint64_t bufferSize, Schema schema);
+    static std::shared_ptr<ColumnLayout> create(uint64_t bufferSize, UnboundSchema schema);
 
     /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// For the column layout the field offset is calculated as follows:

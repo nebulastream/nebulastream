@@ -31,9 +31,9 @@
 #include <variant>
 #include <vector>
 
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>

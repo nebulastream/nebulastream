@@ -21,7 +21,7 @@
 #include <span>
 #include <sstream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -33,22 +33,22 @@
 
 namespace NES
 {
-CSVFormat::CSVFormat(const Schema& schema) : CSVFormat(schema, false)
+CSVFormat::CSVFormat(const UnboundSchema& schema) : CSVFormat(schema, false)
 {
 }
 
-CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : Format(pSchema), escapeStrings(escapeStrings)
+CSVFormat::CSVFormat(const UnboundSchema& pSchema, const bool escapeStrings) : Format(pSchema), escapeStrings(escapeStrings)
 {
-    PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
+    PRECONDITION(std::ranges::size(schema) != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;
-    for (const auto& field : schema.getFields())
+    for (const auto& field : schema)
     {
-        const auto physicalType = field.dataType;
+        const auto physicalType = field.getDataType();
         formattingContext.offsets.push_back(offset);
         offset += physicalType.getSizeInBytes();
         formattingContext.physicalTypes.emplace_back(physicalType);
     }
-    formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
+    formattingContext.schemaSizeInBytes = schema.getSizeInBytes();
 }
 
 std::string CSVFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const

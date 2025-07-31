@@ -30,7 +30,6 @@
 
 #include <span>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -58,7 +57,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
         memoryLayout->getPhysicalType(fieldIndex)};
 }
 
-DynamicField DynamicTuple::operator[](std::string fieldName) const
+DynamicField DynamicTuple::operator[](Identifier fieldName) const
 {
     const auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
@@ -74,7 +73,7 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 }
 
 void DynamicTuple::writeVarSized(
-    std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider)
+    std::variant<const uint64_t, const Identifier> field, std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     auto combinedIdxOffset
         = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(buffer, bufferProvider, std::as_bytes(std::span{value}));
@@ -83,7 +82,7 @@ void DynamicTuple::writeVarSized(
         {
             if constexpr (
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
+                || std::is_convertible_v<std::decay_t<decltype(key)>, IdentifierList>)
             {
                 *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
                     = combinedIdxOffset.getCombinedIdxOffset();
@@ -97,14 +96,14 @@ void DynamicTuple::writeVarSized(
         field);
 }
 
-std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field) const
+std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const Identifier> field) const
 {
     return std::visit(
         [this](const auto& key)
         {
             if constexpr (
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
+                || std::is_convertible_v<std::decay_t<decltype(key)>, IdentifierList>)
             {
                 const VariableSizedAccess index{(*this)[key].template read<uint64_t>()};
                 return MemoryLayout::readVarSizedDataAsString(this->buffer, index);
@@ -118,13 +117,13 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const Schema& schema) const
+std::string DynamicTuple::toString(const UnboundSchema& schema) const
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
+    for (uint32_t i = 0; i < std::ranges::size(schema); ++i)
     {
-        const auto* const fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
-        const auto dataType = schema.getFieldAt(i).dataType;
+        const auto* const fieldEnding = (i < std::ranges::size(schema) - 1) ? "|" : "";
+        const auto dataType = (std::ranges::begin(schema) + i)->getDataType();
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
         {
@@ -159,19 +158,21 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     }
 
     return std::ranges::all_of(
-        this->memoryLayout->getSchema().getFields(),
+        this->memoryLayout->getSchema(),
         [this, &other](const auto& field)
         {
-            if (!other.memoryLayout->getSchema().getFieldByName(field.name))
+            if (std::ranges::find_if(
+                    other.memoryLayout->getSchema(), [field](const UnboundField& otherField) { return otherField == field; })
+                == std::ranges::end(other.memoryLayout->getSchema()))
             {
-                NES_ERROR("Field with name {} is not contained in both tuples!", field.name);
+                NES_ERROR("Field with name {} is not contained in both tuples!", field.getName());
                 return false;
             }
 
-            auto thisDynamicField = (*this)[field.name];
-            auto otherDynamicField = other[field.name];
+            auto thisDynamicField = (*this)[field.getName()];
+            auto otherDynamicField = other[field.getName()];
 
-            if (field.dataType.isType(DataType::Type::VARSIZED))
+            if (field.getDataType().isType(DataType::Type::VARSIZED))
             {
                 const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<VariableSizedAccess::CombinedIndex>()};
                 const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<VariableSizedAccess::CombinedIndex>()};
@@ -266,19 +267,19 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema) const
+std::string TestTupleBuffer::toString(const UnboundSchema& schema) const
 {
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(const UnboundSchema& schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
     std::vector<DataType> types;
-    for (const auto& field : schema.getFields())
+    for (const auto& field : schema)
     {
-        auto physicalType = field.dataType;
+        auto physicalType = field.getDataType();
         physicalSizes.push_back(physicalType.getSizeInBytes());
         types.push_back(physicalType);
         NES_TRACE(
@@ -293,9 +294,9 @@ std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode prin
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        for (const auto& field : schema.getFields())
+        for (const auto& field : schema)
         {
-            str << field.name << ":" << magic_enum::enum_name(field.dataType.type) << "|";
+            str << field.getName() << ":" << magic_enum::enum_name(field.getDataType().type) << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;
@@ -368,21 +369,22 @@ const MemoryLayout& TestTupleBuffer::getMemoryLayout() const
     return *memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const TupleBuffer& buffer, const Schema& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(
+    const TupleBuffer& buffer, const UnboundSchema& schema, const MemoryLayout::MemoryLayoutType layoutType)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    if (layoutType == MemoryLayout::MemoryLayoutType::ROW_LAYOUT)
     {
         auto memoryLayout = std::make_shared<RowLayout>(buffer.getBufferSize(), schema);
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (layoutType == MemoryLayout::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto memoryLayout = std::make_shared<ColumnLayout>(buffer.getBufferSize(), schema);
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
     else
     {
-        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
+        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(layoutType));
     }
 }
 

@@ -42,6 +42,8 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Schema/Field.hpp"
+#include "Serialization/IdentifierSerializationUtil.hpp"
 
 namespace NES
 {
@@ -52,17 +54,85 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 {
     std::stringstream builder;
     builder << projection.second.explain(verbosity);
-    if (projection.first)
-    {
-        builder << " as " << projection.first->getFieldName();
-    }
+    builder << " as " << projection.first;
     return builder.str();
+}
+
+Schema inferOutputSchema(
+    const Schema& inputSchema,
+    const ProjectionLogicalOperator& projectionOperator,
+    const std::vector<ProjectionLogicalOperator::Projection>& inferredProjections,
+    bool asterisk)
+{
+    const auto fieldProjections = [&]
+    {
+        if (asterisk)
+        {
+            return inputSchema
+                | std::views::transform([&projectionOperator](const Field& field)
+                                        { return Field(projectionOperator, field.getLastName(), field.getDataType()); })
+                | std::ranges::to<std::vector>();
+        }
+        return std::vector<Field>();
+    }();
+
+    const auto projections = inferredProjections
+        | std::views::transform([&projectionOperator](const auto& projection)
+                                { return Field(projectionOperator, projection.first, projection.second.getDataType()); })
+        | std::ranges::to<std::vector>();
+    auto outputSchema = Schema::tryCreateCollisionFree(std::vector{projections, fieldProjections} | std::views::join);
+    if (!outputSchema.has_value())
+    {
+        throw CannotInferSchema("Found collisions of field names in projection: {}", Schema::createCollisionString(outputSchema.error()));
+    }
+    return outputSchema.value();
 }
 }
 
 ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk)
-    : projections(std::move(projections)), asterisk(asterisk.value)
+    : asterisk(asterisk.value), projections(std::move(projections))
 {
+}
+
+ProjectionLogicalOperator::ProjectionLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+{
+    const auto functionVariant = config[ConfigParameters::PROJECTION_FUNCTION_NAME];
+    const auto asteriskValue = std::get<bool>(config[ConfigParameters::ASTERISK]);
+
+    if (const auto* projection = std::get_if<NES::ProjectionList>(&functionVariant))
+    {
+        this->asterisk = asteriskValue;
+        this->child = std::move(child);
+
+        const auto& childOutputSchema = this->child.getOutputSchema();
+
+        this->projections = projection->projections()
+            | std::views::transform(
+                                [&childOutputSchema](const auto& serialized)
+                                {
+                                    return ProjectionLogicalOperator::Projection{
+                                        IdentifierSerializationUtil::deserializeIdentifier(serialized.identifier()),
+                                        FunctionSerializationUtil::deserializeFunction(serialized.function(), childOutputSchema)};
+                                })
+            | std::ranges::to<std::vector>();
+
+        // Infer projections with input schema
+        auto inferredProjections = this->projections
+            | std::views::transform(
+                                       [&childOutputSchema](const Projection& projection)
+                                       {
+                                           auto inferredFunction = projection.second.withInferredDataType(childOutputSchema);
+                                           return Projection{projection.first, inferredFunction};
+                                       })
+            | std::ranges::to<std::vector>();
+
+        this->projections = inferredProjections;
+        this->outputSchema = inferOutputSchema(childOutputSchema, *this, inferredProjections, this->asterisk);
+    }
+    else
+    {
+        throw UnknownLogicalOperator();
+    }
 }
 
 std::string_view ProjectionLogicalOperator::getName() const noexcept
@@ -70,24 +140,31 @@ std::string_view ProjectionLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
+std::vector<Field> ProjectionLogicalOperator::getAccessedFields() const
 {
-    if (asterisk)
-    {
-        return inputSchema.getFieldNames();
-    }
+    /// TODO we might want to move this to the inferSchema/constructor as well
 
-    return projections | std::views::values
+    auto asteriskFields = [&]
+    {
+        if (asterisk)
+        {
+            return child.getOutputSchema() | std::ranges::to<std::vector>();
+        }
+        return std::vector<Field>();
+    }();
+
+    auto projectedFields = projections | std::views::values
         | std::views::transform(
-               [](const LogicalFunction& function)
-               {
-                   return BFSRange(function)
-                       | std::views::filter([](const LogicalFunction& function)
-                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
-                       | std::views::transform([](const LogicalFunction& function)
-                                               { return function.get<FieldAccessLogicalFunction>().getFieldName(); });
-               })
+                               [](const LogicalFunction& function)
+                               {
+                                   return BFSRange(function)
+                                       | std::views::filter([](const LogicalFunction& function)
+                                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
+                                       | std::views::transform([](const LogicalFunction& function)
+                                                               { return function.get<FieldAccessLogicalFunction>().getField(); });
+                               })
         | std::views::join | std::ranges::to<std::vector>();
+    return std::array{asteriskFields, projectedFields} | std::views::join | std::ranges::to<std::vector>();
 }
 
 const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOperator::getProjections() const
@@ -97,8 +174,7 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
 
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    return projections == rhs.projections && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return projections == rhs.projections && outputSchema == rhs.outputSchema &&  traitSet == rhs.traitSet;
 };
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -111,9 +187,9 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     {
         builder << "opId: " << id << ", ";
     }
-    if (!outputSchema.getFieldNames().empty())
+    if (outputSchema.has_value() && not std::ranges::empty(outputSchema.value()))
     {
-        builder << "schema: " << outputSchema << ", ";
+        builder << "schema: " << outputSchema.value() << ", ";
     }
 
     builder << "fields: [";
@@ -131,54 +207,28 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     return builder.str();
 }
 
-ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema() const
 {
-    if (inputSchemas.empty())
-    {
-        throw CannotDeserialize("Projection should have at least one input");
-    }
+    auto copy = *this;
+    copy.child = copy.child.withInferredSchema();
 
-    const auto& firstSchema = inputSchemas[0];
-    for (const auto& schema : inputSchemas)
-    {
-        if (schema != firstSchema)
-        {
-            throw CannotInferSchema("All input schemas must be equal for Projection operator");
-        }
-    }
+    auto inputSchema = copy.child.getOutputSchema();
 
     /// Propagate the type inference to all projection functions and resolve projection names.
     auto inferredProjections = projections
         | std::views::transform(
-                                   [&firstSchema](const Projection& projection)
+                                   [&inputSchema](const Projection& projection)
                                    {
-                                       auto inferredFunction = projection.second.withInferredDataType(firstSchema);
+                                       auto inferredFunction = projection.second.withInferredDataType(inputSchema);
                                        /// If projection has a name use it.
-                                       if (projection.first)
-                                       {
-                                           return Projection{*projection.first, inferredFunction};
-                                       }
+                                       return Projection{projection.first, inferredFunction};
                                        /// Otherwise derive the name from the inferred function
-                                       return Projection{inferredFunction.explain(ExplainVerbosity::Short), inferredFunction};
-                                   });
+                                       // return Projection{inferredFunction.explain(ExplainVerbosity::Short), inferredFunction};
+                                   })
+        | std::ranges::to<std::vector>();
 
-    auto copy = *this;
-    copy.projections = inferredProjections | std::ranges::to<std::vector>();
-    copy.inputSchema = firstSchema;
-
-    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
-    auto initial = Schema{copy.outputSchema.memoryLayoutType};
-    if (asterisk)
-    {
-        initial.appendFieldsFromOtherSchema(copy.inputSchema);
-    }
-    copy.outputSchema = std::accumulate(
-        inferredProjections.begin(),
-        inferredProjections.end(),
-        initial,
-        [](Schema schema, const auto& projection)
-        { return schema.addField(projection.first->getFieldName(), projection.second.getDataType()); });
-
+    copy.projections = inferredProjections;
+    copy.outputSchema = inferOutputSchema(inputSchema, copy, inferredProjections, copy.asterisk);
     return copy;
 }
 
@@ -196,24 +246,26 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet trait
 
 ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for projection, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
 Schema ProjectionLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return outputSchema.value();
 }
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
 {
-    return children;
+    return {child};
+}
+
+LogicalOperator ProjectionLogicalOperator::getChild() const
+{
+    return child;
 }
 
 void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
@@ -221,13 +273,6 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-
-    const auto inputs = getInputSchemas();
-    for (size_t i = 0; i < inputs.size(); ++i)
-    {
-        auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
-    }
 
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
@@ -241,10 +286,7 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     for (const auto& [name, fn] : getProjections())
     {
         auto& proj = *projList.add_projections();
-        if (name)
-        {
-            proj.set_identifier(name->getFieldName());
-        }
+        IdentifierSerializationUtil::serializeIdentifier(name, proj.mutable_identifier());
         proj.mutable_function()->CopyFrom(fn.serialize());
     }
     (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(projList);
@@ -256,26 +298,11 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    const auto functionVariant = arguments.config.at(ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME);
-    const auto asterisk = std::get<bool>(arguments.config.at(ProjectionLogicalOperator::ConfigParameters::ASTERISK));
-
-    if (const auto* projection = std::get_if<ProjectionList>(&functionVariant))
+    if (arguments.children.size() != 1)
     {
-        auto logicalOperator = ProjectionLogicalOperator(
-            projection->projections()
-                | std::views::transform(
-                    [](const auto& serialized)
-                    {
-                        return ProjectionLogicalOperator::Projection{
-                            FieldIdentifier(serialized.identifier()),
-                            FunctionSerializationUtil::deserializeFunction(serialized.function())};
-                    })
-                | std::ranges::to<std::vector>(),
-            ProjectionLogicalOperator::Asterisk(asterisk));
-
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
+        throw CannotDeserialize("Expected one child for ProjectionLogicalOperator, but found {}", arguments.children.size());
     }
-    throw UnknownLogicalOperator();
+    return ProjectionLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 
 }

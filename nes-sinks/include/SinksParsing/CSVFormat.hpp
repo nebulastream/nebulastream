@@ -21,11 +21,11 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
@@ -43,8 +43,8 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(const Schema& schema);
-    explicit CSVFormat(const Schema& schema, bool escapeStrings);
+    explicit CSVFormat(const UnboundSchema& schema);
+    explicit CSVFormat(const UnboundSchema& schema, bool escapeStrings);
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

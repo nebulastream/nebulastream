@@ -17,14 +17,13 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-ColumnLayout::ColumnLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
+ColumnLayout::ColumnLayout(const uint64_t bufferSize, UnboundSchema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -39,7 +38,7 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(uint64_t bufferSize, Schema schema)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(uint64_t bufferSize, UnboundSchema schema)
 {
     return std::make_shared<ColumnLayout>(bufferSize, std::move(schema));
 }

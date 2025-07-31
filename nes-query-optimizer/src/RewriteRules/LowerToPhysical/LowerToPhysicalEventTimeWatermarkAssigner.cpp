@@ -31,10 +31,11 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
 {
     PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
     auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
-    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
+    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->getOnField());
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->getUnit()));
+    PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for EventTimeWatermarkAssigner");
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+        physicalOperator, logicalOperator.getChildren().at(0).getOutputSchema(), logicalOperator.getOutputSchema());
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

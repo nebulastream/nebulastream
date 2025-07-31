@@ -25,7 +25,7 @@
 #include <type_traits>
 #include <variant>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/VariableSizedAccess.hpp>
@@ -168,14 +168,14 @@ public:
 
 
     /// @throws CannotAccessBuffer if field index is invalid
-    DynamicField operator[](std::string fieldName) const;
+    DynamicField operator[](Identifier fieldName) const;
 
     void
-    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider);
+    writeVarSized(std::variant<const uint64_t, const Identifier> field, std::string_view value, AbstractBufferProvider& bufferProvider);
 
-    [[nodiscard]] std::string readVarSized(std::variant<const uint64_t, const std::string> field) const;
+    [[nodiscard]] std::string readVarSized(std::variant<const uint64_t, const Identifier> field) const;
 
-    [[nodiscard]] std::string toString(const Schema& schema) const;
+    [[nodiscard]] std::string toString(const UnboundSchema& schema) const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different
@@ -238,7 +238,7 @@ public:
     };
     explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const TupleBuffer& buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const TupleBuffer& buffer, const Schema& schema);
+    static TestTupleBuffer createTestTupleBuffer(const TupleBuffer& buffer, const UnboundSchema& schema, MemoryLayout::MemoryLayoutType layoutType);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -298,8 +298,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    [[nodiscard]] std::string toString(const Schema& schema) const;
-    [[nodiscard]] std::string toString(const Schema& schema, PrintMode printMode) const;
+    [[nodiscard]] std::string toString(const UnboundSchema& schema) const;
+    [[nodiscard]] std::string toString(const UnboundSchema& schema, PrintMode printMode) const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
@@ -392,10 +392,10 @@ public:
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
     {
         PRECONDITION(
-            (sizeof...(Types)) == memoryLayout->getSchema().getNumberOfFields(),
+            (sizeof...(Types)) == std::ranges::size(memoryLayout->getSchema()),
             "Provided tuple types: {} do not match the number of fields in the memory layout: {}",
             sizeof...(Types),
-            memoryLayout->getSchema().getNumberOfFields());
+            std::ranges::size(memoryLayout->getSchema()));
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;

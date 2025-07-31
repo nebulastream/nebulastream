@@ -267,6 +267,8 @@ timeWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
     ;
 
+timestampParameter: name=IDENTIFIER (',' name=IDENTIFIER)?;
+
 countWindow:
     TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
@@ -289,7 +291,6 @@ timeUnit: MS
         | DAY
         ;
 
-timestampParameter: name=identifier;
 
 functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 

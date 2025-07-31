@@ -23,7 +23,9 @@
 #include <gtest/gtest.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -45,7 +47,9 @@ protected:
     {
         /// Create some test operators
         sourceOp = SourceNameLogicalOperator("Source");
-        auto dummySchema = Schema{};
+        testFieldIdentifier = Identifier::parse("testField");
+        auto dummySchema
+            = UnboundSchema{UnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
         auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
         const std::unordered_map<std::string, std::string> dummyParserConfig
             = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
@@ -53,10 +57,11 @@ protected:
                                          .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
                                          .value();
         sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));
-        selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"));
+        selectionOp = SelectionLogicalOperator(UnboundFieldAccessLogicalFunction{testFieldIdentifier});
         sinkOp = SinkLogicalOperator();
     }
 
+    Identifier testFieldIdentifier;
     SourceCatalog sourceCatalog;
     LogicalOperator sourceOp;
     LogicalOperator sourceOp2;
@@ -100,7 +105,7 @@ TEST_F(LogicalPlanTest, CopyConstructor)
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 {
     const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const LogicalOperator selectionOp{SelectionLogicalOperator(UnboundFieldAccessLogicalFunction{Identifier::parse("field")})};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
     EXPECT_EQ(*promoteResultPlan.getRootOperators()[0], *selectionOp);
@@ -130,7 +135,7 @@ TEST_F(LogicalPlanTest, replaceSubtree)
 TEST_F(LogicalPlanTest, GetParents)
 {
     const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const LogicalOperator selectionOp{SelectionLogicalOperator(UnboundFieldAccessLogicalFunction(Identifier::parse("field")))};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
     const auto parents = getParents(promoteResult, sourceOp);
@@ -150,7 +155,7 @@ TEST_F(LogicalPlanTest, GetOperatorByType)
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
     const LogicalOperator sourceOp{SourceNameLogicalOperator{"TestSource"}};
-    const LogicalOperator selectionOp{SelectionLogicalOperator{FieldAccessLogicalFunction{"fn"}}.withChildren({sourceOp})};
+    const LogicalOperator selectionOp{SelectionLogicalOperator{UnboundFieldAccessLogicalFunction{Identifier::parse("fn")}}.withChildren({sourceOp})};
     const LogicalOperator sinkOp{SinkLogicalOperator{"TestSink"}.withChildren({selectionOp})};
     const LogicalPlan plan(sinkOp);
     const auto op1 = getOperatorById(plan, sourceOp.getId());

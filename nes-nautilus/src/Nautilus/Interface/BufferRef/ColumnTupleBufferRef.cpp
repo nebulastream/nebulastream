@@ -56,9 +56,9 @@ Record ColumnTupleBufferRef::readRecord(
     /// read all fields
     const auto bufferAddress = recordBuffer.getMemArea();
     Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < std::ranges::size(schema); ++i)
     {
-        const auto& fieldName = schema.getFieldAt(i).name;
+        const auto& fieldName = (std::ranges::begin(schema) + i)->getName();
         if (!includesField(projections, fieldName))
         {
             continue;
@@ -80,10 +80,10 @@ void ColumnTupleBufferRef::writeRecord(
     const auto bufferAddress = recordBuffer.getMemArea();
 
     const nautilus::val<uint64_t> varSizedOffset = 0;
-    for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < std::ranges::size(schema); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto value = rec.read(schema.getFieldAt(i).name);
+        const auto value = rec.read((std::ranges::begin(schema) + i)->getName());
         storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }

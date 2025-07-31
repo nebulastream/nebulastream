@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 
 namespace NES::Windowing
 {
@@ -30,8 +30,6 @@ public:
     virtual std::string toString() const = 0;
 
     virtual bool operator==(const WindowType& otherWindowType) const = 0;
-
-    virtual bool inferStamp(const Schema& schema) = 0;
 };
 
 }

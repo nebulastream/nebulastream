@@ -19,7 +19,6 @@
 #include <span>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -35,7 +34,7 @@ namespace NES::Nautilus::Interface::BufferRef
 {
 
 std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffsets>> ChainedEntryMemoryProvider::createFieldOffsets(
-    const Schema& schema,
+    const UnboundSchema& schema,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
 {
@@ -51,8 +50,8 @@ std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffs
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsKey.emplace_back(
-            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytes();
+            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
+        offset += fieldValue.getDataType().getSizeInBytes();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -61,8 +60,8 @@ std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffs
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsValue.emplace_back(
-            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytes();
+            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
+        offset += fieldValue.getDataType().getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
 }

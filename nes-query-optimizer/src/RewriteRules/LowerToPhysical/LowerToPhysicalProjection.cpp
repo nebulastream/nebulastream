@@ -36,14 +36,16 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.getAs<ProjectionLogicalOperator>();
-    auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
-    auto outputSchema = projectionLogicalOperator.getOutputSchema();
+    auto inputSchema = projection->getChild()->getOutputSchema();
+    auto outputSchema = projection->getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
     auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
     auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
     auto accessedFields = projection->getAccessedFields();
-    auto scan = ScanPhysicalOperator(scanBufferRef, accessedFields);
+    auto scan = ScanPhysicalOperator(
+        scanBufferRef,
+        accessedFields | std::views::transform([](const auto& field) { return field.getLastName(); }) | std::ranges::to<std::vector>());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
@@ -51,10 +53,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     for (const auto& [fieldName, function] : projection->getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = MapPhysicalOperator(
-            fieldName.transform([](const auto& identifier) { return identifier.getFieldName(); })
-                .value_or(function.explain(ExplainVerbosity::Short)),
-            physicalFunction);
+        auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
             outputSchema,

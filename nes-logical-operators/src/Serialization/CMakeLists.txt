@@ -14,4 +14,7 @@ add_source_files(nes-logical-operators
         OperatorSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
         FunctionSerializationUtil.cpp
+        SchemaSerializationUtil.cpp
+        TimeCharacteristicSerializationUtil.cpp
+        WindowTypeSerializationUtil.cpp
 )

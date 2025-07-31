@@ -17,10 +17,9 @@
 #include <memory>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
@@ -28,17 +27,15 @@ namespace NES
 class AvgAggregationLogicalFunction final : public WindowAggregationLogicalFunction
 {
 public:
-    AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
-    explicit AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit AvgAggregationLogicalFunction(LogicalFunction inputFunction);
 
-    void inferStamp(const Schema& schema) override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
     ~AvgAggregationLogicalFunction() override = default;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Avg";
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::UNDEFINED;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 }

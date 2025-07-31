@@ -18,9 +18,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -28,7 +28,7 @@ class SinkCatalog
 {
 public:
     std::optional<SinkDescriptor> addSinkDescriptor(
-        std::string sinkName, const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+        std::string sinkName, const UnboundSchema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
 
     std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
 

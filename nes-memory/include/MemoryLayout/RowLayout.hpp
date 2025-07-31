@@ -17,8 +17,9 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+
 #include <MemoryLayout/MemoryLayout.hpp>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -36,11 +37,11 @@ class RowLayout : public MemoryLayout
 {
 public:
     /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-    RowLayout(uint64_t bufferSize, Schema schema);
+    RowLayout(uint64_t bufferSize, UnboundSchema schema);
     RowLayout(const RowLayout&);
 
     /// @brief Factory to create a RowLayout
-    static std::shared_ptr<RowLayout> create(uint64_t bufferSize, Schema schema);
+    static std::shared_ptr<RowLayout> create(uint64_t bufferSize, UnboundSchema schema);
 
     /// Gets the offset in bytes of all fields within a single tuple.
     /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.

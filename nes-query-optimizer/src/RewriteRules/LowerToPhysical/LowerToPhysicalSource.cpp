@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 
 #include <memory>
+#include <optional>
 #include <ranges>
 
 #include <Operators/LogicalOperator.hpp>
@@ -42,11 +43,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
         std::ranges::size(*outputOriginIdsOpt));
     auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
-    const auto inputSchemas = logicalOperator.getInputSchemas();
-    PRECONDITION(
-        inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, std::nullopt, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 

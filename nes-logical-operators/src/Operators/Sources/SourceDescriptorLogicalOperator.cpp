@@ -14,6 +14,7 @@
 
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -22,15 +23,16 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <Schema/Field.hpp>
 
 namespace NES
 {
@@ -44,17 +46,20 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema() const
 {
-    PRECONDITION(false, "Schema is already given by SourceDescriptor. No call ot InferSchema needed");
-    return *this;
+    auto copy = *this;
+    copy.outputSchema = *sourceDescriptor.getLogicalSource().getSchema()
+        | std::views::transform([&copy](const auto& unboundField)
+                                { return Field{copy, unboundField.getName(), unboundField.getDataType()}; })
+        | std::ranges::to<Schema>();
+    return copy;
 }
 
 bool SourceDescriptorLogicalOperator::operator==(const SourceDescriptorLogicalOperator& rhs) const
 {
     const bool descriptorsEqual = sourceDescriptor == rhs.sourceDescriptor;
-    return descriptorsEqual && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return descriptorsEqual && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -85,14 +90,10 @@ SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildren(st
     return copy;
 }
 
-std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
-{
-    return {*sourceDescriptor.getLogicalSource().getSchema()};
-};
-
 Schema SourceDescriptorLogicalOperator::getOutputSchema() const
 {
-    return {*sourceDescriptor.getLogicalSource().getSchema()};
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return outputSchema.value();
 }
 
 std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() const

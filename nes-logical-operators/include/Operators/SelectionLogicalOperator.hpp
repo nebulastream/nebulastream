@@ -20,14 +20,15 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+
 
 namespace NES
 {
@@ -37,6 +38,7 @@ class SelectionLogicalOperator
 {
 public:
     explicit SelectionLogicalOperator(LogicalFunction predicate);
+    SelectionLogicalOperator(LogicalOperator child, DescriptorConfig::Config config);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 
@@ -48,14 +50,14 @@ public:
 
     [[nodiscard]] SelectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] LogicalOperator getChild() const;
     [[nodiscard]] Schema getOutputSchema() const;
+
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SelectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] SelectionLogicalOperator withInferredSchema() const;
 
     struct ConfigParameters
     {
@@ -70,12 +72,15 @@ public:
     };
 
 private:
+    /// TODO remove when moving inference to constructor, only needed for deserialization
     static constexpr std::string_view NAME = "Selection";
+    LogicalOperator child;
     LogicalFunction predicate;
 
-    std::vector<LogicalOperator> children;
+    /// Set during schema inference
+    std::optional<Schema> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);

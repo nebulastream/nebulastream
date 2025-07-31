@@ -51,8 +51,8 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     Record joinedRecord;
 
     /// Writing the window start, end, and key field
-    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
-    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+    joinedRecord.write(windowMetaData.startField.getLastName(), windowStart.convertToValue());
+    joinedRecord.write(windowMetaData.endField.getLastName(), windowEnd.convertToValue());
 
     /// Writing the outerSchema fields, expect the join schema to have the fields in the same order then the outer schema
     for (const auto& fieldName : nautilus::static_iterable(projectionsOuter))

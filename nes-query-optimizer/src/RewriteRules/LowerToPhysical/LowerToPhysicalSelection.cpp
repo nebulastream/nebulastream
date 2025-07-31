@@ -36,7 +36,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     auto physicalOperator = SelectionPhysicalOperator(func);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
+        selection->getChild().getOutputSchema(),
         logicalOperator.getOutputSchema(),
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 

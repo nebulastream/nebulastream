@@ -26,16 +26,21 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include "Serialization/IdentifierSerializationUtil.hpp"
+#include "WindowTypes/Measures/TimeCharacteristic.hpp"
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/TimeCharacteristicSerializationUtil.hpp>
+#include <Serialization/WindowTypeSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -50,12 +55,127 @@
 namespace NES
 {
 
-WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
-    std::vector<FieldAccessLogicalFunction> groupingKey,
-    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
-    std::shared_ptr<Windowing::WindowType> windowType)
-    : aggregationFunctions(std::move(aggregationFunctions)), windowType(std::move(windowType)), groupingKey(std::move(groupingKey))
+namespace
 {
+
+Schema inferSchema(const WindowedAggregationLogicalOperator& forOperator)
+{
+    std::vector<Field> outputFields{};
+
+    outputFields.push_back(forOperator.getWindowStartField());
+    outputFields.push_back(forOperator.getWindowEndField());
+
+    for (const auto& [aggFunction, name] : forOperator.getWindowAggregation())
+    {
+        outputFields.emplace_back(forOperator, name, aggFunction->getAggregateType());
+    }
+    const auto fieldsAreBound = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(
+        forOperator.getGroupingKeysWithName());
+    PRECONDITION(fieldsAreBound, "Internal schema inference of windowed aggregation called before binding grouping keys");
+    for (const auto& [aggFunction, name] :
+         std::get<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(forOperator.getGroupingKeysWithName()))
+    {
+        if (name.has_value())
+        {
+            outputFields.emplace_back(forOperator, name.value(), aggFunction.getDataType());
+        }
+    }
+
+    const auto outputSchemaOrCollisions = Schema::tryCreateCollisionFree(outputFields);
+    if (not outputSchemaOrCollisions.has_value())
+    {
+        throw CannotInferSchema("Found collisions in inpu schema: " + Schema::createCollisionString(outputSchemaOrCollisions.error()));
+    }
+
+    return outputSchemaOrCollisions.value();
+}
+}
+
+WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
+    GroupingKeyType groupingKey,
+    std::vector<ProjectedAggregation> aggregationFunctions,
+    std::shared_ptr<Windowing::WindowType> windowType,
+    Windowing::TimeCharacteristic timeCharacteristic)
+    : windowType(std::move(windowType))
+    , groupingKey(std::move(groupingKey))
+    , aggregationFunctions(std::move(aggregationFunctions))
+    , timestampField(std::move(timeCharacteristic))
+{
+}
+
+WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+{
+    auto aggregationsVariant = config[ConfigParameters::WINDOW_AGGREGATIONS];
+    auto keysVariant = config[ConfigParameters::WINDOW_KEYS];
+    auto windowTypeVariant = config[ConfigParameters::WINDOW_TYPE];
+    auto timeCharacteristicVariant = config[ConfigParameters::TIME_CHARACTERISTIC];
+    auto windowStartVariant = config[ConfigParameters::WINDOW_START_FIELD_NAME];
+    auto windowEndVariant = config[ConfigParameters::WINDOW_END_FIELD_NAME];
+
+    if (std::holds_alternative<AggregationFunctionList>(aggregationsVariant) && std::holds_alternative<FunctionList>(keysVariant)
+        && std::holds_alternative<SerializableWindowType>(windowTypeVariant)
+        && std::holds_alternative<SerializableTimeCharacteristic>(timeCharacteristicVariant)
+        && std::holds_alternative<std::string>(windowStartVariant) && std::holds_alternative<std::string>(windowEndVariant))
+    {
+        this->child = std::move(child);
+        const Schema& inputSchema = child.getOutputSchema();
+        std::vector<Field> outputFields{};
+
+        auto aggregations = std::get<AggregationFunctionList>(aggregationsVariant).functions();
+        std::vector<ProjectedAggregation> windowAggregations;
+        for (const auto& agg : aggregations)
+        {
+            auto function = FunctionSerializationUtil::deserializeWindowAggregationFunction(agg.function(), inputSchema);
+            windowAggregations.emplace_back(function, IdentifierSerializationUtil::deserializeIdentifier(agg.projection_name()));
+            outputFields.emplace_back(
+                Field{*this, IdentifierSerializationUtil::deserializeIdentifier(agg.projection_name()), function->getAggregateType()});
+        }
+        this->aggregationFunctions = windowAggregations;
+
+        std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>> keys;
+        for (const auto& pair : std::get<ProjectionList>(keysVariant).projections())
+        {
+            std::optional<Identifier> projectedName = [&] -> std::optional<Identifier>
+            {
+                if (pair.has_identifier())
+                {
+                    return IdentifierSerializationUtil::deserializeIdentifier(pair.identifier());
+                }
+                return std::nullopt;
+            }();
+
+            auto deserializedFunction = FunctionSerializationUtil::deserializeFunction(pair.function(), inputSchema);
+            auto fieldAccessOpt = deserializedFunction.tryGet<FieldAccessLogicalFunction>();
+            if (!fieldAccessOpt.has_value())
+            {
+                throw CannotDeserialize("Expected field access function, got {}", deserializedFunction.getType());
+            }
+            keys.emplace_back(std::move(fieldAccessOpt).value(), std::move(projectedName));
+        }
+        this->groupingKey = keys;
+
+        const auto serializedWindowType = std::get<SerializableWindowType>(windowTypeVariant);
+        this->windowType = WindowTypeSerializationUtil::deserializeWindowType(serializedWindowType);
+        if (!windowType)
+        {
+            throw CannotDeserialize("Unknown window type");
+        }
+        const auto deserializedCharacteristics1Opt = TimeCharacteristicSerializationUtil::deserializeBoundCharacteristic(
+            std::get<SerializableTimeCharacteristic>(timeCharacteristicVariant), inputSchema);
+
+        if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
+        {
+            windowMetaData = WindowMetaData{
+                Field{*this, Identifier{"start"}, DataType::Type::UINT64}, Field{*this, Identifier{"end"}, DataType::Type::UINT64}};
+        }
+        else
+        {
+            throw CannotInferSchema("Unsupported window type {}", getWindowType()->toString());
+        }
+
+        outputSchema = inferSchema(*this);
+    }
+    throw CannotDeserialize("Invalid variants in WindowedAggregationLogicalOperator config");
 }
 
 std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
@@ -65,6 +185,7 @@ std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
 
 std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
+    std::variant<std::vector<std::string>, std::vector<uint64_t>> myVariant{std::vector<std::string>{}};
     if (verbosity == ExplainVerbosity::Debug)
     {
         auto windowType = getWindowType();
@@ -72,12 +193,19 @@ std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosi
         return fmt::format(
             "WINDOW AGGREGATION(opId: {}, {}, window type: {})",
             id,
-            fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
+            fmt::join(
+                std::views::transform(
+                    windowAggregation, [](const auto& agg) { return fmt::format("{} as {}", agg.name, agg.function->toString()); }),
+                ", "),
             windowType->toString());
     }
     auto windowAggregation = getWindowAggregation();
     return fmt::format(
-        "WINDOW AGG({})", fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getName(); }), ", "));
+        "WINDOW AGG({})",
+        fmt::join(
+            std::views::transform(
+                windowAggregation, [](const auto& agg) { return fmt::format("{} as {}", agg.name, agg.function->toString()); }),
+            ", "));
 }
 
 bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLogicalOperator& rhs) const
@@ -87,18 +215,28 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
         return false;
     }
 
-    const auto rhsGroupingKeys = rhs.getGroupingKeys();
-    if (groupingKey.size() != rhsGroupingKeys.size())
+    if (!std::visit(
+            [](const auto& thisGroupingKey, const auto& rhsGroupingKeys)
+            {
+                if (thisGroupingKey.size() != rhsGroupingKeys.size())
+                {
+                    return false;
+                }
+
+                for (uint64_t i = 0; i < thisGroupingKey.size(); i++)
+                {
+                    if (thisGroupingKey[i].second != rhsGroupingKeys[i].second
+                        || !thisGroupingKey[i].first.operator==(rhsGroupingKeys[i].first))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            },
+            groupingKey,
+            rhs.groupingKey))
     {
         return false;
-    }
-
-    for (uint64_t i = 0; i < groupingKey.size(); i++)
-    {
-        if (groupingKey[i] != rhsGroupingKeys[i])
-        {
-            return false;
-        }
     }
 
     const auto rhsWindowAggregation = rhs.getWindowAggregation();
@@ -106,53 +244,27 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
     {
         return false;
     }
-
     for (uint64_t i = 0; i < aggregationFunctions.size(); i++)
     {
-        if (*aggregationFunctions[i] != rhsWindowAggregation[i])
+        if ((aggregationFunctions[i]) != (rhsWindowAggregation[i]))
         {
             return false;
         }
     }
 
-    return *windowType == *rhs.getWindowType() && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return *windowType == *rhs.windowType && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 }
 
-WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema() const
 {
     auto copy = *this;
-    INVARIANT(!inputSchemas.empty(), "WindowAggregation should have at least one input");
-
-    const auto& firstSchema = inputSchemas[0];
-    for (const auto& schema : inputSchemas)
-    {
-        if (schema != firstSchema)
-        {
-            throw CannotInferSchema("All input schemas must be equal for WindowAggregation operator");
-        }
-    }
-
-    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> newFunctions;
-    for (const auto& agg : getWindowAggregation())
-    {
-        agg->inferStamp(firstSchema);
-        newFunctions.push_back(agg);
-    }
-    copy.aggregationFunctions = newFunctions;
-
-    copy.windowType->inferStamp(firstSchema);
-    copy.inputSchema = firstSchema;
-    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
+    copy.child = copy.child.withInferredSchema();
+    const Schema& inputSchema = copy.child.getOutputSchema();
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
-        const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
-
-        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
-        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
+        copy.windowMetaData = WindowMetaData{
+            Field{copy, Identifier{"start"}, DataType::Type::UINT64}, Field{copy, Identifier{"end"}, DataType::Type::UINT64}};
     }
     else
     {
@@ -161,20 +273,31 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     if (isKeyed())
     {
-        auto keys = getGroupingKeys();
-        auto newKeys = std::vector<FieldAccessLogicalFunction>();
-        for (auto& key : keys)
-        {
-            auto newKey = key.withInferredDataType(firstSchema).get<FieldAccessLogicalFunction>();
-            newKeys.push_back(newKey);
-            copy.outputSchema.addField(newKey.getFieldName(), newKey.getDataType());
-        }
-        copy.groupingKey = newKeys;
+        copy.groupingKey = std::visit(
+            [&inputSchema](const auto& visitingGroupingKey)
+            {
+                return visitingGroupingKey
+                    | std::views::transform(
+                           [&](const auto& key)
+                           {
+                               return std::make_pair(
+                                   FieldAccessLogicalFunctionVariantWrapper{key.first}.withInferredDataType(inputSchema), key.second);
+                           })
+                    | std::ranges::to<std::vector>();
+            },
+            groupingKey);
     }
-    for (const auto& agg : copy.aggregationFunctions)
+
+    std::vector<ProjectedAggregation> newFunctions;
+    for (const auto& [function, identifier] : aggregationFunctions)
     {
-        copy.outputSchema.addField(agg->asField.getFieldName(), agg->asField.getDataType());
+        auto inferredFunction = function->withInferredType(inputSchema);
+        newFunctions.emplace_back(inferredFunction, identifier);
     }
+    copy.aggregationFunctions = newFunctions;
+
+    copy.timestampField = Windowing::TimeCharacteristicWrapper{std::move(copy.timestampField)}.withInferredSchema(inputSchema);
+    copy.outputSchema = inferSchema(copy);
     return copy;
 }
 
@@ -192,39 +315,36 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withTrait
 
 WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for windowedAggregation, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> WindowedAggregationLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
 Schema WindowedAggregationLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    INVARIANT(outputSchema.has_value(), "Retrieving output schema before calling schema inference");
+    return outputSchema.value();
 }
 
 std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
 {
-    return children;
+    return {child};
+}
+
+LogicalOperator WindowedAggregationLogicalOperator::getChild() const
+{
+    return child;
 }
 
 bool WindowedAggregationLogicalOperator::isKeyed() const
 {
-    return !groupingKey.empty();
+    return !std::visit([](const auto& keys) { return keys.empty(); }, groupingKey);
 }
 
-std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> WindowedAggregationLogicalOperator::getWindowAggregation() const
+std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return aggregationFunctions;
-}
-
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> wa)
-{
-    aggregationFunctions = std::move(wa);
 }
 
 std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWindowType() const
@@ -232,29 +352,45 @@ std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWi
     return windowType;
 }
 
-void WindowedAggregationLogicalOperator::setWindowType(std::shared_ptr<Windowing::WindowType> wt)
+Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
+WindowedAggregationLogicalOperator::getGroupingKeys() const
 {
-    windowType = std::move(wt);
+    return std::visit(
+        [](const auto& keys)
+        {
+            return Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>{
+                keys | std::views::transform([](const auto& key) { return key.first; }) | std::ranges::to<std::vector>()};
+        },
+        groupingKey);
 }
 
-std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getGroupingKeys() const
+const WindowedAggregationLogicalOperator::GroupingKeyType& WindowedAggregationLogicalOperator::getGroupingKeysWithName() const
 {
     return groupingKey;
 }
 
-std::string WindowedAggregationLogicalOperator::getWindowStartFieldName() const
+Field WindowedAggregationLogicalOperator::getWindowStartField() const
 {
-    return windowMetaData.windowStartFieldName;
+    INVARIANT(windowMetaData.has_value(), "Retrieving window start field before calling schema inference");
+    return windowMetaData->startField;
 }
 
-std::string WindowedAggregationLogicalOperator::getWindowEndFieldName() const
+Field WindowedAggregationLogicalOperator::getWindowEndField() const
 {
-    return windowMetaData.windowEndFieldName;
+    INVARIANT(windowMetaData.has_value(), "Retrieving window end field before calling schema inference");
+    return windowMetaData->endField;
 }
 
 const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() const
 {
-    return windowMetaData;
+    INVARIANT(windowMetaData.has_value(), "Retrieving window metadata before calling schema inference");
+    return windowMetaData.value();
+}
+
+std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic>
+WindowedAggregationLogicalOperator::getCharacteristic() const
+{
+    return timestampField;
 }
 
 void WindowedAggregationLogicalOperator::serialize(SerializableOperator& serializableOperator) const
@@ -262,13 +398,6 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-
-    const auto inputs = getInputSchemas();
-    for (size_t i = 0; i < inputs.size(); ++i)
-    {
-        auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
-    }
 
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
@@ -280,9 +409,11 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
 
     /// Serialize window aggregations
     AggregationFunctionList aggList;
-    for (const auto& agg : getWindowAggregation())
+    for (const auto& [agg, name] : getWindowAggregation())
     {
-        *aggList.add_functions() = agg->serialize();
+        auto projection = *aggList.add_functions();
+        *projection.mutable_function() = agg->serialize();
+        IdentifierSerializationUtil::serializeIdentifier(name, projection.mutable_projection_name());
     }
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = descriptorConfigTypeToProto(aggList);
 
@@ -290,41 +421,31 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     if (isKeyed())
     {
         FunctionList keyList;
-        for (const auto& key : getGroupingKeys())
-        {
-            *keyList.add_functions() = key.serialize();
-        }
+        std::visit(
+            [&keyList](const auto& keys)
+            {
+                for (const auto& key : keys)
+                {
+                    *keyList.add_functions() = key.serialize();
+                }
+            },
+            getGroupingKeys());
         (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_KEYS] = descriptorConfigTypeToProto(keyList);
     }
 
-    /// Serialize window info
-    WindowInfos windowInfo;
-    if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType))
-    {
-        auto timeChar = timeBasedWindow->getTimeCharacteristic();
-        auto timeCharProto = WindowInfos_TimeCharacteristic();
-        timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_Event_time);
-        timeCharProto.set_field(timeChar.field.name);
-        timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
-        windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
-        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType))
-        {
-            auto* tumbling = windowInfo.mutable_tumbling_window();
-            tumbling->set_size(tumblingWindow->getSize().getTime());
-        }
-        else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType))
-        {
-            auto* sliding = windowInfo.mutable_sliding_window();
-            sliding->set_size(slidingWindow->getSize().getTime());
-            sliding->set_slide(slidingWindow->getSlide().getTime());
-        }
-    }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
+    /// Serialize window type
+    SerializableWindowType windowType;
+    WindowTypeSerializationUtil::serializeWindowType(this->windowType, &windowType);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_TYPE] = descriptorConfigTypeToProto(windowType);
+
+    SerializableTimeCharacteristic timeCharacteristic;
+    TimeCharacteristicSerializationUtil::serializeCharacteristic(Windowing::TimeCharacteristic{this->timestampField}, &timeCharacteristic);
+    (*serializableOperator.mutable_config())[ConfigParameters::TIME_CHARACTERISTIC] = descriptorConfigTypeToProto(timeCharacteristic);
 
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
+        = descriptorConfigTypeToProto(windowMetaData->startField.getLastName());
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
+        = descriptorConfigTypeToProto(windowMetaData->endField.getLastName());
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
@@ -332,96 +453,11 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto aggregationsVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
-    auto keysVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
-    auto windowInfoVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];
-    auto windowStartVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
-    auto windowEndVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
-
-    if (!std::holds_alternative<AggregationFunctionList>(aggregationsVariant))
+    if (arguments.children.size() != 1)
     {
-        throw UnknownLogicalOperator();
+        throw CannotDeserialize("Expected one child for WindowedAggregationLogicalOperator, but found {}", arguments.children.size());
     }
-    auto aggregations = std::get<AggregationFunctionList>(aggregationsVariant).functions();
-    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregations;
-    for (const auto& agg : aggregations)
-    {
-        auto function = FunctionSerializationUtil::deserializeWindowAggregationFunction(agg);
-        windowAggregations.push_back(function);
-    }
-
-    std::vector<FieldAccessLogicalFunction> keys;
-    if (std::holds_alternative<FunctionList>(keysVariant))
-    {
-        auto keyFunctions = std::get<FunctionList>(keysVariant).functions();
-        for (const auto& key : keyFunctions)
-        {
-            auto function = FunctionSerializationUtil::deserializeFunction(key);
-            if (auto fieldAccess = function.tryGet<FieldAccessLogicalFunction>())
-            {
-                keys.push_back(fieldAccess.value());
-            }
-            else
-            {
-                throw UnknownLogicalOperator();
-            }
-        }
-    }
-
-    std::shared_ptr<Windowing::WindowType> windowType;
-    if (std::holds_alternative<WindowInfos>(windowInfoVariant))
-    {
-        auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
-        if (windowInfoProto.has_tumbling_window())
-        {
-            if (windowInfoProto.time_characteristic().type() == WindowInfos_TimeCharacteristic_Type_Ingestion_time)
-            {
-                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
-                windowType = std::make_shared<Windowing::TumblingWindow>(
-                    timeChar, Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
-            }
-            else
-            {
-                auto field = FieldAccessLogicalFunction(windowInfoProto.time_characteristic().field());
-                auto multiplier = windowInfoProto.time_characteristic().multiplier();
-                auto timeChar = Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier));
-                windowType = std::make_shared<Windowing::TumblingWindow>(
-                    timeChar, Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
-            }
-        }
-        else if (windowInfoProto.has_sliding_window())
-        {
-            if (windowInfoProto.time_characteristic().type() == WindowInfos_TimeCharacteristic_Type_Ingestion_time)
-            {
-                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
-                windowType = Windowing::SlidingWindow::of(
-                    timeChar,
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
-            }
-            else
-            {
-                auto field = FieldAccessLogicalFunction(windowInfoProto.time_characteristic().field());
-                auto multiplier = windowInfoProto.time_characteristic().multiplier();
-                auto timeChar = Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier));
-                windowType = Windowing::SlidingWindow::of(
-                    timeChar,
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
-            }
-        }
-    }
-    if (!windowType)
-    {
-        throw UnknownLogicalOperator();
-    }
-
-    auto logicalOperator = WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
-    if (arguments.inputSchemas.empty())
-    {
-        throw CannotDeserialize("Cannot construct WindowedAggregation");
-    }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas);
+    return WindowedAggregationLogicalOperator(std::move(arguments.children.at(0)), std::move(arguments.config));
 }
 
 }

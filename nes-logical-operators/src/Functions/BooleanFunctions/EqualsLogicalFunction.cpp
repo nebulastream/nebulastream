@@ -20,8 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -33,9 +34,7 @@ namespace NES
 {
 
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(std::move(left))), right(std::move(std::move(right)))
 {
 }
 
@@ -55,21 +54,18 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
 LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    auto copy = *this;
+    copy.left = copy.left.withInferredDataType(schema);
+    copy.right = copy.right.withInferredDataType(schema);
+    if (copy.left.getDataType() != copy.right.getDataType())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp(
+            "Can only apply equals to two functions with the same data type, but got left: {}, right: {}", copy.left, copy.right);
     }
-    return withChildren(newChildren);
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    return copy;
 };
 
 std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const

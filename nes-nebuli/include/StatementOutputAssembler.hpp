@@ -22,8 +22,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <magic_enum/magic_enum.hpp>

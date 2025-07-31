@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <../../nes-logical-operators/include/Schema/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -159,33 +159,33 @@ std::string PhysicalOperator::toString() const
     return self->id;
 }
 
-PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema)
     : physicalOperator(std::move(physicalOperator))
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , pipelineLocation(PipelineLocation::INTERMEDIATE)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineLocation pipelineLocation)
+    PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema, PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , pipelineLocation(pipelineLocation)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundSchema> inputSchema,
+    std::optional<UnboundSchema> outputSchema,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     PipelineLocation pipelineLocation)
     : physicalOperator(std::move(std::move(physicalOperator)))
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , handler(std::move(std::move(handler)))
     , handlerId(handlerId)
     , pipelineLocation(pipelineLocation)
@@ -194,15 +194,15 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    std::optional<UnboundSchema> inputSchema,
+    std::optional<UnboundSchema> outputSchema,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     PipelineLocation pipelineLocation,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
     : physicalOperator(std::move(std::move(physicalOperator)))
-    , inputSchema(inputSchema)
-    , outputSchema(outputSchema)
+    , inputSchema(std::move(inputSchema))
+    , outputSchema(std::move(outputSchema))
     , children(std::move(children))
     , handler(std::move(std::move(handler)))
     , handlerId(handlerId)
@@ -234,12 +234,12 @@ const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
     return physicalOperator;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getInputSchema() const
+const std::optional<UnboundSchema>& PhysicalOperatorWrapper::getInputSchema() const
 {
     return inputSchema;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getOutputSchema() const
+const std::optional<UnboundSchema>& PhysicalOperatorWrapper::getOutputSchema() const
 {
     return outputSchema;
 }

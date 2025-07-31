@@ -18,11 +18,12 @@
 #include <ostream>
 #include <string_view>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
@@ -31,7 +32,7 @@ constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
 {
-    explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit CSVMetaData(const ParserConfig& config, const UnboundSchema&) : tupleDelimiter(config.tupleDelimiter) { };
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 

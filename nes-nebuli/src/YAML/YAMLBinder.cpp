@@ -23,9 +23,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp> /// NOLINT(misc-include-cleaner)
@@ -39,6 +40,7 @@
 
 namespace
 {
+
 NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
     try
@@ -121,23 +123,11 @@ namespace NES::CLI
 {
 
 
-CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
-{
-}
-
-CLI::SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
-{
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
+UnboundSchema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
 {
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-    for (const auto& [name, type] : attributeFields)
-    {
-        schema.addField(name, type);
-    }
-    return schema;
+    auto fields = attributeFields | std::views::transform([](const auto& field) { return UnboundField{Identifier::parse(field.name), field.type}; });
+    return UnboundSchema{fields | std::ranges::to<std::vector>()};
 }
 
 std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)

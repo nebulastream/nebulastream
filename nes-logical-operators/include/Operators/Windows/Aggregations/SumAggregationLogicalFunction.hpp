@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <string_view>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -28,15 +28,15 @@ namespace NES
 class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
-    explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit SumAggregationLogicalFunction(LogicalFunction inputFunction);
     ~SumAggregationLogicalFunction() override = default;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
+    std::shared_ptr<WindowAggregationLogicalFunction> withInferredType(const Schema& schema) override;
+    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
+    SumAggregationLogicalFunction(LogicalFunction inputFunction, DataType aggregateType);
     static constexpr std::string_view NAME = "Sum";
 };
 }

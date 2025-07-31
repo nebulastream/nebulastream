@@ -17,7 +17,7 @@
 #include <ostream>
 #include <string_view>
 
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
@@ -30,8 +30,7 @@ namespace NES
 class NativeMetaData
 {
 public:
-    NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
-
+    NativeMetaData(const ParserConfig&, const UnboundSchema&) { /* noop */ }
     static std::string_view getTupleDelimitingBytes() { return ""; }
 };
 

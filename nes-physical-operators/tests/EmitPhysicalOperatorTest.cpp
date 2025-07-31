@@ -115,7 +115,7 @@ public:
 
     EmitPhysicalOperator createUUT()
     {
-        auto schema = Schema{}.addField("A_FIELD", DataType::Type::UINT32);
+        auto schema = UnboundSchema{UnboundField{Identifier::parse("A_FIELD"), DataType::Type::UINT32}};
         auto layout = std::make_shared<RowLayout>(512, schema);
         EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout)};
         handlers.emplace(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
