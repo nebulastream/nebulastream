@@ -38,8 +38,9 @@
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator final : public LogicalOperatorConcept
+class WindowedAggregationLogicalOperator : public LogicalOperatorHelper<WindowedAggregationLogicalOperator>
 {
+    friend class LogicalOperatorHelper<WindowedAggregationLogicalOperator>;
 public:
     WindowedAggregationLogicalOperator(
         std::vector<FieldAccessLogicalFunction> groupingKey,
@@ -62,82 +63,21 @@ public:
     [[nodiscard]] std::string getWindowEndFieldName() const;
     [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
 
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
-
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
-            "TimeMs",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<AggregationFunctionList> WINDOW_AGGREGATIONS{
-            "windowAggregations",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_AGGREGATIONS, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<FunctionList> WINDOW_KEYS{
-            "windowKeys",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_KEYS, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
-            "windowStartFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
-            "windowEndFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_INFOS{
-            "windowInfos",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(
-                TIME_MS, WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
-    };
-
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
-    std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<FieldAccessLogicalFunction> groupingKey;
-    WindowMetaData windowMetaData;
-    OriginIdAssignerTrait originIdTrait;
-
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    std::vector<OriginId> inputOriginIds;
-    Schema inputSchema, outputSchema;
-    std::vector<OriginId> outputOriginIds;
+    struct Data {
+        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
+        std::shared_ptr<Windowing::WindowType> windowType;
+        std::vector<FieldAccessLogicalFunction> groupingKey;
+        WindowMetaData windowMetaData;
+        OriginIdAssignerTrait originIdTrait;
+    };
+    Data data;
 };
-
 }
+

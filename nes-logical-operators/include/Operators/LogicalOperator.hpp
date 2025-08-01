@@ -317,7 +317,7 @@ protected:
     std::vector<LogicalOperator> children;
     TraitSet traits;
     Schema outputSchema;
-    Schema inputSchema;
+    std::vector<Schema> inputSchemas;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 
@@ -393,7 +393,7 @@ public:
     }
     [[nodiscard]] NES::TraitSet getTraitSet() const final { return traits; }
 
-    [[nodiscard]] std::vector<NES::Schema> getInputSchemas() const final { return {inputSchema}; }
+    [[nodiscard]] std::vector<NES::Schema> getInputSchemas() const final { return inputSchemas; }
     [[nodiscard]] NES::Schema getOutputSchema() const final { return outputSchema; }
     [[nodiscard]] std::vector<std::vector<NES::OriginId>> getInputOriginIds() const final { return {inputOriginIds}; }
     [[nodiscard]] std::vector<NES::OriginId> getOutputOriginIds() const final { return {outputOriginIds}; }

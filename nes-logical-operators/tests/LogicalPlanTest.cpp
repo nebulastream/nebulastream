@@ -171,14 +171,22 @@ TEST_F(LogicalPlanTest, GetOperatorsById)
     EXPECT_EQ(op3.value().getId(), sinkOp.getId());
 }
 
+struct TestTrait : public NES::DefaultTrait<TestTrait>
+{
+    static constexpr auto Name = "TestTrait";
+    int value = 0;
+};
+
+struct TestTrait : public NES::DefaultTrait<TestTrait>
+{
+    static constexpr auto Name = "TestTrait";
+    int value = 0;
+};
+
 TEST_F(LogicalPlanTest, AddTraits)
 {
-    struct TestTrait final : DefaultTrait<TestTrait>
-    {
-    };
-
     EXPECT_TRUE(sourceOp.getTraitSet().empty());
-    const auto sourceWithTrait = sourceOp.withTraitSet({TestTrait{}});
+    const auto sourceWithTrait = sourceOp.withTraitSet({Trait(TestTrait{})});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
     ASSERT_THAT(sourceTraitSet, ::testing::SizeIs(1));
     ASSERT_THAT(sourceTraitSet, ::testing::ElementsAre(TestTrait{}));

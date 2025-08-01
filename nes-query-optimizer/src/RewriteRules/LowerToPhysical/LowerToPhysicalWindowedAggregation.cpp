@@ -187,7 +187,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto& [fieldKeys, fieldValues]
         = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 
-    const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
+    const auto windowMetaData = aggregation.getWindowMetaData();
 
     const HashMapOptions hashMapOptions(
         std::make_unique<Interface::MurMur3HashFunction>(),

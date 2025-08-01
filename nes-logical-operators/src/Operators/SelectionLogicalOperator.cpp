@@ -83,7 +83,7 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }
-    copy.inputSchema = firstSchema;
+    copy.inputSchemas = inputSchemas;
     copy.outputSchema = firstSchema;
     return copy;
 }

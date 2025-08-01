@@ -36,9 +36,13 @@ namespace NES
 
 class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorHelper<EventTimeWatermarkAssignerLogicalOperator>
 {
+    friend class LogicalOperatorHelper<EventTimeWatermarkAssignerLogicalOperator>;
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
     EventTimeWatermarkAssignerLogicalOperator() = default;
+
+    [[nodiscard]] LogicalFunction getOnField() const;
+    [[nodiscard]] Windowing::TimeUnit getUnit() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;

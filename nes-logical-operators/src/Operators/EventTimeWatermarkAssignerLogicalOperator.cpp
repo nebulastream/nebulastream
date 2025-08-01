@@ -53,6 +53,14 @@ std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noex
     return NAME;
 }
 
+LogicalFunction EventTimeWatermarkAssignerLogicalOperator::getOnField() const {
+    return data.onField.value();
+}
+
+Windowing::TimeUnit EventTimeWatermarkAssignerLogicalOperator::getUnit() const {
+    return data.unit;
+}
+
 std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
@@ -67,7 +75,7 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
             id,
             data.onField.value().explain(verbosity),
             data.unit.getMillisecondsConversionMultiplier(),
-            inputSchema,
+            inputSchemas.front(),
             inputOriginIdsStr);
     }
     return "WATERMARK_ASSIGNER(Event time)";
@@ -80,7 +88,7 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(st
     PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
     const auto& inputSchema = inputSchemas[0];
     copy.data.onField = data.onField.value().withInferredDataType(inputSchema);
-    copy.inputSchema = inputSchema;
+    copy.inputSchemas = inputSchemas;
     copy.outputSchema = inputSchema;
     return copy;
 }

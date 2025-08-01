@@ -37,8 +37,9 @@ namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator final : public LogicalOperatorConcept
+class JoinLogicalOperator : public LogicalOperatorHelper<JoinLogicalOperator>
 {
+    friend class LogicalOperatorHelper<JoinLogicalOperator>;
 public:
     enum class JoinType : uint8_t
     {
@@ -55,77 +56,22 @@ public:
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
     [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
-
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+    [[nodiscard]] JoinType getJoinType() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, JoinType> JOIN_TYPE{
-            "joinType",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FunctionList> JOIN_FUNCTION{
-            "joinFunctionName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
-            "windowStartFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
-            "windowEndFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
-            "windowInfo",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(
-                JOIN_TYPE, JOIN_FUNCTION, WINDOW_INFOS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
-    };
-
 private:
     static constexpr std::string_view NAME = "Join";
-    LogicalFunction joinFunction;
-    std::shared_ptr<Windowing::WindowType> windowType;
-    WindowMetaData windowMetaData;
-    JoinType joinType;
-    OriginIdAssignerTrait originIdTrait;
-
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    std::vector<std::vector<OriginId>> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
+    struct Data {
+        LogicalFunction joinFunction;
+        std::shared_ptr<Windowing::WindowType> windowType;
+        WindowMetaData windowMetaData;
+        JoinType joinType;
+        OriginIdAssignerTrait originIdTrait;
+    };
+    Data data;
 };
 }

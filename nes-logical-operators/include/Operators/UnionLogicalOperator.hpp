@@ -28,46 +28,23 @@
 namespace NES
 {
 
-class UnionLogicalOperator : public LogicalOperatorConcept
+class UnionLogicalOperator : public LogicalOperatorHelper<UnionLogicalOperator>
 {
+    friend class LogicalOperatorHelper<UnionLogicalOperator>;
 public:
     explicit UnionLogicalOperator();
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-    /// Set the schemas directly without inference used for operator registration
-    [[nodiscard]] LogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
-    [[nodiscard]] LogicalOperator setOutputSchema(const Schema& outputSchema) const;
-
 private:
     static constexpr std::string_view NAME = "Union";
-
-    std::vector<LogicalOperator> children;
-    std::vector<Schema> inputSchemas;
-    Schema outputSchema;
-    TraitSet traitSet;
-    std::vector<std::vector<OriginId>> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
+    struct Data
+    {
+    };
+    Data data;
 };
 
 

@@ -35,6 +35,7 @@ namespace NES
 /// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
 class ProjectionLogicalOperator : public LogicalOperatorHelper<ProjectionLogicalOperator>
 {
+    friend class LogicalOperatorHelper<ProjectionLogicalOperator>;
 public:
     class Asterisk
     {
@@ -64,7 +65,6 @@ private:
     };
 
     static constexpr std::string_view NAME = "Projection";
-    std::vector<Projection> projections;
     Data data;
 };
 

@@ -45,25 +45,9 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbos
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        std::string inputOriginIdsStr;
-        if (!inputOriginIds.empty())
-        {
-            inputOriginIdsStr = fmt::format(", inputOriginIds: [{}]", fmt::join(inputOriginIds, ", "));
-        }
-        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {}, inputSchema: {}{})", id, inputSchema, inputOriginIdsStr);
+        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {})", id);
     }
     return "INGESTION_TIME_WATERMARK_ASSIGNER";
-}
-
-bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
-{
-    if (const auto* const rhsOperator = dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs))
-    {
-        return getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
-            && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
 }
 
 LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
@@ -71,126 +55,15 @@ LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchem
     auto copy = *this;
     PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
     const auto& inputSchema = inputSchemas[0];
-    copy.inputSchema = inputSchema;
+    copy.inputSchemas = inputSchemas;
     copy.outputSchema = inputSchema;
     return copy;
 }
 
-TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet() const
-{
-    return traitSet;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
-{
-    auto copy = *this;
-    copy.traitSet = traitSet;
-    return copy;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
-{
-    auto copy = *this;
-    copy.children = children;
-    return copy;
-}
-
-std::vector<Schema> IngestionTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
-Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-std::vector<std::vector<OriginId>> IngestionTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> IngestionTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    PRECONDITION(ids.size() == 1, "Watermark assigner should have only one input");
-    auto copy = *this;
-    copy.inputOriginIds = ids[0];
-    return copy;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
-std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const
-{
-    return children;
-}
-
-SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() const
-{
-    SerializableLogicalOperator proto;
-
-    proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet() | std::views::values)
-    {
-        *traitSetProto->add_traits() = trait.serialize();
-    }
-
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    for (const auto& originList : getInputOriginIds())
-    {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList)
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    SerializableOperator serializableOperator;
-    serializableOperator.set_operator_id(id.getRawValue());
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
-}
-
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
-    auto logicalOperator = IngestionTimeWatermarkAssignerLogicalOperator();
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas)
-        .withInputOriginIds(arguments.inputOriginIds)
-        .withOutputOriginIds(arguments.outputOriginIds);
+    return IngestionTimeWatermarkAssignerLogicalOperator();
 }
 
 }

@@ -53,17 +53,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     {
         const auto& sink = serializedOperator.sink();
         const auto& serializedSinkDescriptor = sink.sinkdescriptor();
-        DescriptorConfig::Config config;
-        for (const auto& [key, value] : serializedOperator.config())
-        {
-            config[key] = protoToDescriptorConfigType(value);
-        }
-        auto sinkName = config[SinkLogicalOperator::ConfigParameters::SINK_NAME];
-        INVARIANT(std::holds_alternative<std::string>(sinkName), "Expected a string");
-
         auto sinkOperator = SinkLogicalOperator();
         sinkOperator.id = OperatorId(serializedOperator.operator_id());
-        sinkOperator.sinkName = std::get<std::string>(sinkName);
 
         std::vector<std::vector<OriginId>> inputIdsVec;
         for (const auto& originList : sink.input_origin_lists())
@@ -84,7 +75,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         }
         sinkOperator = sinkOperator.withOutputOriginIds(outputIds).get<SinkLogicalOperator>();
 
-        sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+        sinkOperator.withSinkDescriptor(deserializeSinkDescriptor(serializedSinkDescriptor));
 
         return sinkOperator.withTraitSet(deserializeTraitSet(sink.trait_set()));
     }
@@ -92,10 +83,6 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     if (serializedOperator.has_operator_())
     {
         DescriptorConfig::Config config;
-        for (const auto& [key, value] : serializedOperator.config())
-        {
-            config[key] = protoToDescriptorConfigType(value);
-        }
 
         auto registryArgument = NES::LogicalOperatorRegistryArguments{
             .id = OperatorId(serializedOperator.operator_id()),

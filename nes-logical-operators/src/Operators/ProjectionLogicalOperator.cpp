@@ -74,10 +74,10 @@ std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
 {
     if (data.asterisk)
     {
-        return inputSchema.getFieldNames();
+        return inputSchemas.front().getFieldNames();
     }
 
-    return projections | std::views::values
+    return data.projections | std::views::values
         | std::views::transform(
                [](const LogicalFunction& function)
                {
@@ -92,13 +92,13 @@ std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
 
 const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOperator::getProjections() const
 {
-    return projections;
+    return data.projections;
 }
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     auto explainedProjections
-        = std::views::transform(projections, [&](const auto& projection) { return explainProjection(projection, verbosity); });
+        = std::views::transform(data.projections, [&](const auto& projection) { return explainProjection(projection, verbosity); });
     std::stringstream builder;
     builder << "PROJECTION(";
     if (verbosity == ExplainVerbosity::Debug)
@@ -114,7 +114,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     if (data.asterisk)
     {
         builder << "*";
-        if (!projections.empty())
+        if (!data.projections.empty())
         {
             builder << ", ";
         }
@@ -138,7 +138,7 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
     }
 
     /// Propagate the type inference to all projection functions and resolve projection names.
-    auto inferredProjections = projections
+    auto inferredProjections = data.projections
         | std::views::transform(
                                    [&firstSchema](const Projection& projection)
                                    {
@@ -153,14 +153,14 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
                                    });
 
     auto copy = *this;
-    copy.projections = inferredProjections | std::ranges::to<std::vector>();
-    copy.inputSchema = firstSchema;
+    copy.data.projections = inferredProjections | std::ranges::to<std::vector>();
+    copy.inputSchemas = inputSchemas;
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
     auto initial = Schema{copy.outputSchema.memoryLayoutType};
     if (data.asterisk)
     {
-        initial.appendFieldsFromOtherSchema(copy.inputSchema);
+        initial.appendFieldsFromOtherSchema(copy.inputSchemas.front());
     }
     copy.outputSchema = std::accumulate(
         inferredProjections.begin(),

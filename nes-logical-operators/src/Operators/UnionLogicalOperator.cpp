@@ -45,17 +45,6 @@ std::string_view UnionLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
-{
-    if (const auto* const rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
-    {
-        return getInputSchemas() == rhsOperator->getInputSchemas() && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
-            && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
-}
-
 std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
@@ -101,139 +90,10 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
     return copy;
 }
 
-TraitSet UnionLogicalOperator::getTraitSet() const
+LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
-    return traitSet;
-}
-
-LogicalOperator UnionLogicalOperator::withTraitSet(TraitSet traitSet) const
-{
-    auto copy = *this;
-    copy.traitSet = traitSet;
-    return copy;
-}
-
-LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
-{
-    auto copy = *this;
-    copy.children = children;
-    return copy;
-}
-
-std::vector<Schema> UnionLogicalOperator::getInputSchemas() const
-{
-    return inputSchemas;
-};
-
-Schema UnionLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-std::vector<std::vector<OriginId>> UnionLogicalOperator::getInputOriginIds() const
-{
-    return inputOriginIds;
-}
-
-std::vector<OriginId> UnionLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-LogicalOperator UnionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    PRECONDITION(!ids.empty(), "Union should have at least one input");
-    auto copy = *this;
-    copy.inputOriginIds = ids;
-    return copy;
-}
-
-LogicalOperator UnionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
-std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
-{
-    return children;
-}
-
-SerializableOperator UnionLogicalOperator::serialize() const
-{
-    SerializableLogicalOperator proto;
-
-    proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet() | std::views::values)
-    {
-        *traitSetProto->add_traits() = trait.serialize();
-    }
-
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    for (const auto& originList : getInputOriginIds())
-    {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList)
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    SerializableOperator serializableOperator;
-    serializableOperator.set_operator_id(id.getRawValue());
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
-}
-
-LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
-{
-    PRECONDITION(!inputSchemas.empty(), "Expected at least input schema");
-    auto copy = *this;
-    copy.inputSchemas = std::move(inputSchemas);
-    return copy;
-}
-
-LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
-{
-    auto copy = *this;
-    copy.outputSchema.appendFieldsFromOtherSchema(outputSchema);
-    return copy;
-}
-
-LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
-{
-    auto logicalOperator = UnionLogicalOperator();
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
-    auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
-                         .withOutputOriginIds(arguments.outputOriginIds)
-                         .get<UnionLogicalOperator>()
-                         .setInputSchemas(arguments.inputSchemas)
-                         .get<UnionLogicalOperator>()
-                         .setOutputSchema(arguments.outputSchema);
-    return logicalOp;
+    return UnionLogicalOperator();
 }
 
 }
+

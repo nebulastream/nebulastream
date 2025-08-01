@@ -28,27 +28,11 @@
 namespace NES
 {
 
-class IngestionTimeWatermarkAssignerLogicalOperator final : public LogicalOperatorConcept
+class IngestionTimeWatermarkAssignerLogicalOperator : public LogicalOperatorHelper<IngestionTimeWatermarkAssignerLogicalOperator>
 {
+    friend class LogicalOperatorHelper<IngestionTimeWatermarkAssignerLogicalOperator>;
 public:
     IngestionTimeWatermarkAssignerLogicalOperator();
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
@@ -58,13 +42,10 @@ public:
 
 protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
-
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    Schema inputSchema;
-    Schema outputSchema;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
+    struct Data
+    {
+    };
+    Data data;
 };
 
 }
