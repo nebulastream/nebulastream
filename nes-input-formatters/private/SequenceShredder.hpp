@@ -69,8 +69,9 @@ public:
         return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
     }
 
+    [[nodiscard]] uint32_t getOffsetOfFirstTupleDelimiter() const { return offsetOfFirstTupleDelimiter; }
+    [[nodiscard]] uint32_t getOffsetOfLastTupleDelimiter() const { return offsetOfLastTupleDelimiter; }
     [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
-
     [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
 
     [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }

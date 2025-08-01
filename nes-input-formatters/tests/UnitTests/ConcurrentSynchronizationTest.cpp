@@ -22,9 +22,14 @@
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <SequenceShredder.hpp>
+
+#include <ErrorHandling.hpp>
 
 /// Tests whether the SequenceShredder correctly finds spanning tuples given random orders of sequence numbers and random occurrences of
 /// tuple delimiters in the buffers that belong to the sequence numbers.
@@ -47,7 +52,9 @@ public:
 
     public:
         TestThreadPool(
-            const SequenceShredder::SequenceNumberType upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
+            const SequenceShredder::SequenceNumberType upperBound,
+            const std::optional<SequenceShredder::SequenceNumberType> fixedSeed,
+            NES::Memory::TupleBuffer dummyBuffer)
             : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
@@ -67,9 +74,13 @@ public:
                     sequenceNumberGen = std::mt19937_64{randomSeed};
                     NES_DEBUG("Initializing StreamingSequenceNumberGenerator with random seed: {}", randomSeed);
                 }
-                threads.at(i) = std::jthread(
-                    [this, i, upperBound, sequenceNumberGen = std::move(sequenceNumberGen), boolDistribution = std::move(boolDistribution)]
-                    { threadFunction(i, upperBound, sequenceNumberGen, boolDistribution); });
+                threads.at(i)
+                    = std::jthread([this,
+                                    i,
+                                    upperBound,
+                                    sequenceNumberGen = std::move(sequenceNumberGen),
+                                    boolDistribution = std::move(boolDistribution),
+                                    dummyBuffer] { threadFunction(i, upperBound, sequenceNumberGen, boolDistribution, dummyBuffer); });
             }
         }
         /// Check if at least one thread is still active
@@ -77,7 +88,7 @@ public:
 
         [[nodiscard]] SequenceShredder::SequenceNumberType getCheckSum() const
         {
-            SequenceShredder::SequenceNumberType globalCheckSum = 1;
+            SequenceShredder::SequenceNumberType globalCheckSum = 0;
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
                 globalCheckSum += threadLocalCheckSum.at(i);
@@ -96,7 +107,11 @@ public:
         std::mutex sequenceShredderMutex;
 
         void threadFunction(
-            size_t threadIdx, const size_t upperBound, std::mt19937_64 sequenceNumberGen, std::bernoulli_distribution boolDistribution)
+            size_t threadIdx,
+            const size_t upperBound,
+            std::mt19937_64 sequenceNumberGen,
+            std::bernoulli_distribution boolDistribution,
+            NES::Memory::TupleBuffer dummyBuffer)
         {
             threadLocalCheckSum.at(threadIdx) = 0;
 
@@ -115,33 +130,42 @@ public:
                     /// CAS loop implementing std::atomic_max
                 }
 
-                /// If the sequence number is not in range yet, busy wait until it is.
+                /// Wait until sequence number is in range
                 while (not sequenceShredder.isInRange(threadLocalSequenceNumber))
                 {
                 }
 
-                const auto dummyStagedBuffer
-                    = NES::InputFormatters::StagedBuffer{NES::InputFormatters::RawTupleBuffer{}, threadLocalSequenceNumber, 0, 0};
+                /// Since all threads copy the same reference, all copies of that reference point to the same buffer control block
+                /// Thus, we can't set the sequence number in that control block. Instead, we exploit the 'offset of last tuple delimiter',
+                /// of the StagedBuffer, which we create during each iteration and which is not manipulated by other threads
+                const auto dummyStagedBuffer = NES::InputFormatters::StagedBuffer{
+                    NES::InputFormatters::RawTupleBuffer{dummyBuffer},
+                    threadLocalSequenceNumber,
+                    0,
+                    static_cast<uint32_t>(threadLocalSequenceNumber)};
+
                 if (tupleDelimiter)
                 {
-                    const auto stagedBuffers
-                        = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
-                    if (stagedBuffers.size() > 1)
+                    NES::InputFormatters::SequenceShredder::SpanningTupleBuffers result
+                        = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                    if (result.stagedBuffers.size() > 1)
                     {
-                        const auto spanStart = stagedBuffers.front().getSizeOfBufferInBytes();
-                        const auto spanEnd = stagedBuffers.back().getSizeOfBufferInBytes();
+                        /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
+                        const auto spanStart = result.stagedBuffers.front().getOffsetOfLastTupleDelimiter();
+                        const auto spanEnd = result.stagedBuffers.back().getOffsetOfLastTupleDelimiter();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }
                 }
                 else
                 {
-                    const auto stagedBuffers
-                        = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
-                    if (stagedBuffers.size() > 1)
+                    NES::InputFormatters::SequenceShredder::SpanningTupleBuffers result
+                        = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber);
+                    if (result.stagedBuffers.size() > 1)
                     {
-                        const auto spanStart = stagedBuffers.front().getSizeOfBufferInBytes();
-                        const auto spanEnd = stagedBuffers.back().getSizeOfBufferInBytes();
+                        /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
+                        const auto spanStart = result.stagedBuffers.front().getOffsetOfLastTupleDelimiter();
+                        const auto spanEnd = result.stagedBuffers.back().getOffsetOfLastTupleDelimiter();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }
@@ -152,10 +176,14 @@ public:
     };
 
     template <size_t NUM_THREADS>
-    static void
-    executeTest(const SequenceShredder::SequenceNumberType upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
+    static void executeTest(const uint32_t upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
     {
-        TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS>(upperBound, fixedSeed);
+        PRECONDITION(upperBound <= std::numeric_limits<uint32_t>::max(), "Not supporting values larger than 4294967295");
+        /// To avoid (future) errors by creating a TupleBuffer without a valid control block, we create a single valid (dummy) tuple buffer
+        /// All threads share the reference to that buffer throughout this test
+        const auto testBufferManager = NES::Memory::BufferManager::create(1, 1);
+        const auto dummyBuffer = testBufferManager->getBufferBlocking();
+        TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS>(upperBound, fixedSeed, dummyBuffer);
         testThreadPool.waitForCompletion();
         const auto checkSum = testThreadPool.getCheckSum();
         ASSERT_EQ(checkSum, upperBound);
