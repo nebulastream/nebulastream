@@ -30,7 +30,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketHost: localhost
+      socketHost: keystrokes
       socketPort: 9000
       socketBufferSize: 2
-      flushIntervalMS: 100
+      flushIntervalMS: 1000

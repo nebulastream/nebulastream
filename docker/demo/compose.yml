@@ -1,0 +1,57 @@
+networks:
+  nsnet: {}
+
+services:
+  # 1. Interactive keystroke TCP source
+  keystrokes:
+    build:
+      context: ./
+      dockerfile: Keystrokes.dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - "9000:9000"
+    networks:
+      - nsnet
+    volumes:
+      - ./keystrokes.sh:/app/keystrokes.sh:ro
+    restart: unless-stopped
+
+  # 2. Single-node NebulaStream worker
+  nes_worker:
+    image: ubuntu:24.04
+    container_name: nes-singlenode
+    volumes:
+      - /home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker/nes-single-node-worker/nes-single-node-worker:/usr/local/bin/nes-single-node-worker:ro # TODO: Change to local executable in your build folder
+      - ./worker_config.yaml:/config/worker.yaml:ro
+    command:
+      - /usr/local/bin/nes-single-node-worker
+      - --configPath=/config/worker.yaml
+    networks:
+      - nsnet
+    depends_on:
+      - keystrokes
+    restart: unless-stopped
+
+  # 3. One-shot NebuLi job that registers a query, then exits
+  submit_query:
+    image: ubuntu:24.04
+    volumes:
+      - /home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker/nes-nebuli/nes-nebuli:/usr/local/bin/nes-nebuli:ro # TODO: Change to local executable in your build folder
+      - ./queries:/queries:ro
+    environment:
+      QUERY_FILE: keystrokes_all_query.yaml #TODO: Change this to use another query
+      # keystrokes_all_query.yaml
+      # filter_for_one_character.yaml
+      # keystroke_window_query.yaml
+    entrypoint: >
+      /bin/sh -c '
+        set -e;
+        echo "Registering $${QUERY_FILE} with NebuLi…";
+        cat /queries/$${QUERY_FILE} |
+        /usr/local/bin/nes-nebuli register -x -s nes_worker:8080'
+    networks:
+      - nsnet
+    depends_on:
+      - nes_worker
+    restart: "no"

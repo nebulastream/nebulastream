@@ -23,6 +23,6 @@ physical:
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: 9000
-      socketHost: localhost
+      socketHost: keystrokes
       socketBufferSize: 2
-      flushIntervalMS: 100
+      flushIntervalMS: 1000

@@ -1,12 +1,13 @@
 query: |
-  SELECT * FROM keystrokes WHERE key = 'a' INTO csv_sink;
+  SELECT start, end, key, COUNT(*) AS key_count FROM keystrokes GROUP BY key WINDOW TUMBLING(timestamp, size 1 s) INTO csv_window_sink;
 sink:
-  name: csv_sink
+  name: csv_window_sink
   type: File
   config:
     inputFormat: CSV
-    filePath: "/tmp/csv_filtered_a.csv"
+    filePath: "/tmp/csv_window_keystrokes.csv"
     append: false
+
 logical:
   - name: keystrokes
     schema:
@@ -14,6 +15,7 @@ logical:
         type: VARSIZED
       - name: timestamp
         type: UINT64
+
 physical:
   - logical: keystrokes
     parserConfig:
@@ -22,7 +24,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
+      socketHost: keystrokes
       socketPort: 9000
-      socketHost: localhost
       socketBufferSize: 2
-      flushIntervalMS: 100
+      flushIntervalMS: 1000
