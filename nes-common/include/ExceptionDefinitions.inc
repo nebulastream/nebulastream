@@ -37,6 +37,8 @@ EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
 EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
 EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported")
+EXCEPTION(InvalidIdentifier, 2009, "invalid identifier")
+EXCEPTION(InvalidLiteral, 2010, "invalid literal")
 
 /// 21XX Errors during query optimization & compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
@@ -77,6 +79,7 @@ EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+EXCEPTION(InvalidStatement, 2207, "invalid statement")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
