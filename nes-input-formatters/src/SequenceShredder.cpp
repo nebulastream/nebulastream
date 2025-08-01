@@ -87,10 +87,10 @@ bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distan
     if (IsLeading)
     {
         const auto adjustedAbaItNumber = abaItNumber - static_cast<size_t>(snRBIdx < distance);
-        return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
+        return not(bitmapState.hasTupleDelimiter()) and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
     const auto adjustedAbaItNumber = abaItNumber + static_cast<size_t>((snRBIdx + distance) >= tds.size());
-    return bitmapState.hasNoTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
+    return not(bitmapState.hasTupleDelimiter()) and bitmapState.getABAItNo() == adjustedAbaItNumber;
 }
 
 template <bool IsLeading>

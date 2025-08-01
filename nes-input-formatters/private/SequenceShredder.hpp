@@ -15,7 +15,6 @@
 #pragma once
 
 #include <atomic>
-#include <bit>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -26,7 +25,6 @@
 #include <ostream>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
@@ -109,31 +107,29 @@ class AtomicBitmapState
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
     /// 34:   000000000000000000000000000001000000000000000000000000000000000
-    static constexpr uint64_t noTupleDelimiterBit = 8589934592ULL;
+    static constexpr uint64_t claimedSpanningTupleBit = 8589934592ULL;
     /// 35:   000000000000000000000000000010000000000000000000000000000000000
     static constexpr uint64_t usedLeadingBufferBit = 17179869184ULL;
     /// 36:   000000000000000000000000000100000000000000000000000000000000000
     static constexpr uint64_t usedTrailingBufferBit = 34359738368ULL;
-    /// 37:   000000000000000000000000001000000000000000000000000000000000000
-    static constexpr uint64_t claimedSpanningTupleBit = 68719476736ULL;
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
-    /// Tag: 1, HasTupleDelimiter: True, NoTupleDelimiter: False, UsedLeading: True, UsedTrailing: False
-    static constexpr uint64_t stateOfFirstEntry = 21474836481ULL;
+    /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
+    static constexpr uint64_t defaultState = 60129542144ULL;
+    /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False
+    static constexpr uint64_t initialDummyEntry = 21474836481ULL;
 
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
     /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
-    /// [34]   : NoTupleDelimiter:     when set, threads continue spanning tuple search with next cell in ring buffer
+    /// [34]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an ST by another thread
     /// [35]   : UsedLeadingBuffer:    signals to threads that the leading buffer use was consumed already
     /// [36]   : UsedTrailingBuffer:   signals to threads that the trailing buffer use was consumed already
-    /// [37]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an ST by another thread
     class BitmapState
     {
     public:
         explicit BitmapState(const uint64_t state) : state(state) { };
         [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state); }
         [[nodiscard]] bool hasTupleDelimiter() const { return (state & hasTupleDelimiterBit) == hasTupleDelimiterBit; }
-        [[nodiscard]] bool hasNoTupleDelimiter() const { return (state & noTupleDelimiterBit) == noTupleDelimiterBit; }
         [[nodiscard]] bool hasUsedLeadingBuffer() const { return (state & usedLeadingBufferBit) == usedLeadingBufferBit; }
         [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
         [[nodiscard]] bool hasClaimedSpanningTuple() const { return (state & claimedSpanningTupleBit) == claimedSpanningTupleBit; }
@@ -147,7 +143,7 @@ class AtomicBitmapState
         [[nodiscard]] uint64_t getBitmapState() const { return state; }
         uint64_t state;
     };
-    AtomicBitmapState() : state(51539607552) { };
+    AtomicBitmapState() : state(defaultState) { };
     ~AtomicBitmapState() = default;
 
     AtomicBitmapState(const AtomicBitmapState&) = delete;
@@ -174,9 +170,9 @@ class AtomicBitmapState
         return claimedSpanningTuple;
     }
 
-    void setStateOfFirstEntry() { this->state = stateOfFirstEntry; }
+    void setStateOfFirstEntry() { this->state = initialDummyEntry; }
     void setHasTupleDelimiterState(const size_t abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber); }
-    void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = (noTupleDelimiterBit | abaItNumber); }
+    void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = abaItNumber; }
 
     [[nodiscard]] uint32_t getABAItNo() const
     {
@@ -193,9 +189,8 @@ class AtomicBitmapState
     {
         const auto loadedBitmap = atomicBitmapState.getState();
         return os << fmt::format(
-                   "[{}-{}-{}-{}-{}]",
+                   "[{}-{}-{}-{}]",
                    loadedBitmap.hasTupleDelimiter(),
-                   loadedBitmap.hasNoTupleDelimiter(),
                    loadedBitmap.getABAItNo(),
                    loadedBitmap.hasUsedLeadingBuffer(),
                    loadedBitmap.hasUsedTrailingBuffer(),
@@ -262,21 +257,16 @@ public:
     {
         if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
         {
+            // Todo: improve handling of first buffer (which is dummy)
+            // -> create BufferPool with a single (valid) buffer?
+            // -> mock buffer by mocking control block to avoid 'getNumberOfTuples' crash? <-- reinterpret_cast
             if (firstDelimiterOffset == std::numeric_limits<uint32_t>::max() and lastDelimiterOffset == 0)
             {
                 const auto dummyBuffer = StagedBuffer(RawTupleBuffer{}, 1, firstDelimiterOffset, lastDelimiterOffset);
                 this->atomicBitmapState.setUsedTrailingBuffer();
                 return {dummyBuffer};
-                // return NES::Memory::TupleBuffer{};
             }
-            // Todo: claim buffer and put into result vector
-            // --this->trailingBufferRef;
             INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
-            // const auto sizeOfBuffer = this->trailingBufferRef.getNumberOfTuples();
-            // spanningTupleVector[spanningTupleIdx]
-            //     = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-            // spanningTupleVector[spanningTupleIdx] = std::move(this->trailingBufferRef);
-            // return std::optional{std::move(this->trailingBufferRef)};
             const auto stagedBuffer
                 = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
             this->atomicBitmapState.setUsedTrailingBuffer();
@@ -287,9 +277,6 @@ public:
     void setStateOfFirstIndex()
     {
         /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
-        // this->leadingBufferRef = 0;
-        // this->trailingBufferRef = 1;
-        // Todo: need to set 'sizeOfBufferInBytes' otherwise InputFormatterTask fails
         this->atomicBitmapState.setStateOfFirstEntry();
         this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
         this->lastDelimiterOffset = 0;
@@ -297,21 +284,13 @@ public:
 
     void claimNoDelimiterBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
     {
-        /// First claim buffer uses
-        // --this->leadingBufferRef;
-        // --this->trailingBufferRef;
-        // INVARIANT(this->leadingBufferRef == 0, "Leading count expected to be 0 but was", this->leadingBufferRef);
-        // INVARIANT(this->trailingBufferRef == 0, "Trailing count expected to be 0, but was", this->trailingBufferRef);
         INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
         INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
 
+        /// First claim buffer uses
         spanningTupleVector[spanningTupleIdx]
             = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
         this->trailingBufferRef = NES::Memory::TupleBuffer{};
-        // spanningTupleVector[spanningTupleIdx]
-        //     = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, 0, firstDelimiterOffset, lastDelimiterOffset);
-        // spanningTupleVector[spanningTupleIdx] = std::move(this->leadingBufferRef);
-        // spanningTupleVector[spanningTupleIdx] = std::move(this->trailingBufferRef);
 
         /// Then atomically mark buffer as used
         this->atomicBitmapState.setUsedLeadingAndTrailingBuffer();
@@ -320,18 +299,12 @@ public:
     void claimLeadingBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
     {
         INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
-
         spanningTupleVector[spanningTupleIdx]
             = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-        // spanningTupleVector[spanningTupleIdx] = std::move(this->leadingBufferRef);
-        // --this->leadingBufferRef;
-        // INVARIANT(this->leadingBufferRef == 0, "Leading count expected to be 0, but was", this->leadingBufferRef);
         this->atomicBitmapState.setUsedLeadingBuffer();
     }
 
     [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
-    // [[nodiscard]] int8_t getLeadingBufferRefCount() const { return this->leadingBufferRef; }
-    // [[nodiscard]] int8_t getTrailingBufferRefCount() const { return this->trailingBufferRef; }
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
