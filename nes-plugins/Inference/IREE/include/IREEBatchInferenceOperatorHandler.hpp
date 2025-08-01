@@ -40,8 +40,9 @@ public:
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
     [[nodiscard]] Batch* getOrCreateNewBatch() const;
+    [[nodiscard]] std::shared_ptr<Batch> getBatch(uint64_t batchId) const;
+    [[nodiscard]] std::shared_ptr<Batch> createNewBatch() const;
     void garbageCollectBatches() const;
-    void createNewBatch() const;
     void emitBatchesToProbe(Batch& batch,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx,
@@ -53,10 +54,9 @@ public:
         PipelineExecutionContext*) override { /*noop*/ };
 
     uint64_t batchSize;
+    mutable uint64_t batchId = 0;
     mutable uint64_t tuplesSeen = 0;
-    mutable std::vector<std::shared_ptr<Batch>> batches;
-    mutable std::mutex batchesMutex;
-
+    mutable folly::Synchronized<std::map<uint64_t, std::shared_ptr<Batch>>> batches;
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
@@ -87,7 +87,7 @@ public:
 
     void combinePagedVectors()
     {
-        const std::scoped_lock lock(pagedVectorsMutex);
+        const std::scoped_lock lock(batchMutex);
         if (pagedVectors.size() > 1)
         {
             for (uint64_t i = 1; i < pagedVectors.size(); ++i)
@@ -112,10 +112,15 @@ public:
         return pagedVectors.size();
     }
 
+    void setState(BatchState state)
+    {
+        this->state = state;
+    }
+
     uint64_t batchId;
-    mutable std::atomic<BatchState> state;
+    mutable BatchState state;
 private:
-    std::mutex pagedVectorsMutex;
+    std::mutex batchMutex;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> pagedVectors;
 };
 

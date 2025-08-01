@@ -43,8 +43,6 @@ void IREEBatchInferenceOperatorHandler::start(PipelineExecutionContext& pipeline
         threadLocalAdapters.emplace_back(IREEAdapter::create());
         threadLocalAdapters.back()->initializeModel(model);
     }
-
-    createNewBatch();
 }
 
 void IREEBatchInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
@@ -82,7 +80,7 @@ void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
     bufferMemory->batchId = batch.batchId;
 
     pipelineCtx->emitBuffer(tupleBuffer);
-    batch.state.store(BatchState::MARKED_AS_EMITTED, std::memory_order_release);
+    batch.setState(BatchState::MARKED_AS_EMITTED);
 
     NES_DEBUG(
         "Emitted batch {} with watermarkTs {} sequenceNumber {} originId {} tuples {}",
@@ -93,42 +91,61 @@ void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
         tupleBuffer.getNumberOfTuples());
 }
 
-void IREEBatchInferenceOperatorHandler::createNewBatch() const
+std::shared_ptr<Batch> IREEBatchInferenceOperatorHandler::createNewBatch() const
 {
     tuplesSeen = 0;
-    auto batch = std::make_shared<Batch>(batches.size(), 1);
-    batch->state.store(BatchState::MARKED_AS_CREATED, std::memory_order_release);
-    batches.emplace_back(batch);
+    ++batchId;
+    auto batch = std::make_shared<Batch>(batchId, 1);
+    batch->setState(BatchState::MARKED_AS_CREATED);
+    return batch;
+}
+
+std::shared_ptr<Batch> IREEBatchInferenceOperatorHandler::getBatch(uint64_t batchId) const
+{
+    return batches.rlock()->at(batchId);
+}
+
+Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
+{
+    auto batchesWriteLock = batches.wlock();
+    tuplesSeen++;
+    if (tuplesSeen == batchSize || !batchesWriteLock->contains(batchId) ||
+        (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_EMITTED))
+    {
+        std::shared_ptr<Batch> batch = createNewBatch();
+        batchesWriteLock->insert(std::make_pair(batchId, batch));
+        return batch.get();
+    }
+
+    return batchesWriteLock->at(batchId).get();
 }
 
 void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
 {
-    const std::scoped_lock lock(batchesMutex);
-    if (batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_PROCESSED)
+    auto batchesWriteLock = batches.wlock();
+
+    if (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_PROCESSED)
     {
-        auto processedBatches = batches
-            | std::views::filter([](const std::shared_ptr<Batch>& batch)
+        NES_DEBUG("Top batch ID {} state {}", batchId, static_cast<uint8_t>(batchesWriteLock->at(batchId)->state))
+        auto processedBatches = *batchesWriteLock
+            | std::views::filter([](const auto& pair)
                 {
-                    return batch && batch->state.load() == BatchState::MARKED_AS_PROCESSED;
+                    const auto& batch = pair.second;
+                    return batch && batch->state == BatchState::MARKED_AS_PROCESSED;
+                })
+            | std::views::transform([](const auto& pair)
+                {
+                    return pair.first;
                 });
         auto batchesCount = static_cast<size_t>(std::ranges::distance(processedBatches));
-        if (batchesCount == batches.size()) batches.clear();
-        createNewBatch();
-        NES_DEBUG("Cleared {} batches", batchesCount);
+        NES_DEBUG("Batches to clear {}, total {}", batchesCount, batchesWriteLock->size());
+
+        std::vector batchesToErase(processedBatches.begin(), processedBatches.end());
+        for (const uint64_t batchId : batchesToErase)
+        {
+            batchesWriteLock->erase(batchId);
+        }
     }
-}
-
-
-Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
-{
-    tuplesSeen++;
-    if (tuplesSeen == batchSize || batches.back()->state.load(std::memory_order_acquire) == BatchState::MARKED_AS_EMITTED)
-    {
-        createNewBatch();
-        return batches.back().get();
-    }
-
-    return batches.back().get();
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
