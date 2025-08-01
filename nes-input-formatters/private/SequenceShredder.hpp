@@ -21,9 +21,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <ostream>
-#include <string_view>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -37,6 +35,13 @@
 
 namespace NES::InputFormatters
 {
+
+struct SequenceShredderResult
+{
+    bool isInRange;
+    size_t indexOfInputBuffer;
+    std::vector<StagedBuffer> spanningBuffers;
+};
 
 class SequenceShredder
 {

@@ -251,27 +251,7 @@ private:
 template <size_t N>
 class SequenceRingBuffer
 {
-public:
-    enum RangeSearchState
-    {
-        NONE,
-        LEADING_ST,
-        TRAILING_ST,
-        LEADING_AND_TRAILING_ST
-    };
-
-    struct RangeSearchResult
-    {
-        RangeSearchState state = NONE;
-        std::optional<StagedBuffer> leadingStartBuffer;
-        std::optional<StagedBuffer> trailingStartBuffer;
-        uint32_t leadingStartSN{};
-        uint32_t trailingStartSN{};
-    };
-
-
-    SequenceRingBuffer() { ringBuffer[0].setStateOfFirstIndex(); }
-
+private:
     template <bool IsLeading>
     bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance)
     {
@@ -302,19 +282,7 @@ public:
         return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
 
-    void setCompletedFlags(
-        const size_t firstDelimiter, const size_t lastDelimiter, std::vector<StagedBuffer>& spanningTupleBuffers, size_t spanningTupleIdx)
-    {
-        size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
-        while (nextDelimiter != lastDelimiter)
-        {
-            ringBuffer[nextDelimiter].claimNoDelimiterBuffer(spanningTupleBuffers, spanningTupleIdx);
-            ++spanningTupleIdx;
-            nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
-        }
-        ringBuffer[lastDelimiter].claimLeadingBuffer(spanningTupleBuffers, spanningTupleIdx);
-    }
-
+public:
     // Todo: could also just return TupleBuffer (and get SN from buffer), but initial dummy buffer is problem
     // -> could honestly think about creating struct that mimics buffer (and control block) and reinterpet_casting it to TupleBuffer
     std::optional<uint32_t>
@@ -339,6 +307,7 @@ public:
                                                                     : std::nullopt;
     };
 
+private:
     std::pair<std::optional<StagedBuffer>, SequenceNumberType>
     leadingDelimiterSearch(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType currentSequenceNumber)
     {
@@ -380,6 +349,82 @@ public:
         }
         return std::make_pair(std::nullopt, 0);
     };
+
+public:
+    enum class NonClaimingRangeSearchState : uint8_t
+    {
+        NONE,
+        LEADING_AND_TRAILING_ST
+    };
+    enum class RangeSearchState : uint8_t
+    {
+        NONE,
+        LEADING_ST,
+        TRAILING_ST,
+        LEADING_AND_TRAILING_ST
+    };
+
+    struct NonClaimingRangeSearchResult
+    {
+        NonClaimingRangeSearchState state = RangeSearchState::NONE;
+        SequenceNumberType leadingStartSN{};
+        SequenceNumberType trailingStartSN{};
+    };
+
+    struct RangeSearchResult
+    {
+        RangeSearchState state = RangeSearchState::NONE;
+        std::optional<StagedBuffer> leadingStartBuffer;
+        std::optional<StagedBuffer> trailingStartBuffer;
+        SequenceNumberType leadingStartSN{};
+        SequenceNumberType trailingStartSN{};
+    };
+
+
+    SequenceRingBuffer() { ringBuffer[0].setStateOfFirstIndex(); }
+
+    NonClaimingRangeSearchResult
+    searchWithoutClaimingBuffers(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType sequenceNumber)
+    {
+        if (const auto firstBufferSN = nonClaimingLeadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber))
+        {
+            if (const auto secondBufferSN = nonClaimingTrailingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber))
+            {
+                return NonClaimingRangeSearchResult{
+                    .state = NonClaimingRangeSearchState::LEADING_AND_TRAILING_ST,
+                    .leadingStartSN = firstBufferSN.value(),
+                    .trailingStartSN = secondBufferSN.value()};
+            }
+        }
+        return NonClaimingRangeSearchResult{.state = NonClaimingRangeSearchState::NONE};
+    }
+
+    RangeSearchResult searchAndClaimBuffers(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType sequenceNumber)
+    {
+        const auto [firstBuffer, firstBufferSN] = leadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber);
+        const auto [secondBuffer, secondBufferSN] = trailingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber, snRBIdx, abaItNumber);
+        const auto rangeState = static_cast<RangeSearchState>(
+            (static_cast<uint8_t>(secondBuffer.has_value()) << 1UL) + static_cast<uint8_t>(firstBuffer.has_value()));
+        return RangeSearchResult{
+            .state = rangeState,
+            .leadingStartBuffer = std::move(firstBuffer),
+            .trailingStartBuffer = std::move(secondBuffer),
+            .leadingStartSN = firstBufferSN,
+            .trailingStartSN = secondBufferSN};
+    }
+
+    void setCompletedFlags(
+        const size_t firstDelimiter, const size_t lastDelimiter, std::vector<StagedBuffer>& spanningTupleBuffers, size_t spanningTupleIdx)
+    {
+        size_t nextDelimiter = (firstDelimiter + 1) % ringBuffer.size();
+        while (nextDelimiter != lastDelimiter)
+        {
+            ringBuffer[nextDelimiter].claimNoDelimiterBuffer(spanningTupleBuffers, spanningTupleIdx);
+            ++spanningTupleIdx;
+            nextDelimiter = (nextDelimiter + 1) % ringBuffer.size();
+        }
+        ringBuffer[lastDelimiter].claimLeadingBuffer(spanningTupleBuffers, spanningTupleIdx);
+    }
 
     template <bool HasTupleDelimiter>
     bool rangeCheck(const size_t snRBIdx, const uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer)

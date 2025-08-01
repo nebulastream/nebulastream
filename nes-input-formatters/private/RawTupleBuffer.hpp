@@ -123,11 +123,4 @@ protected:
     uint32_t offsetOfLastTupleDelimiter{};
 };
 
-struct SequenceShredderResult
-{
-    bool isInRange;
-    size_t indexOfInputBuffer;
-    std::vector<StagedBuffer> spanningBuffers;
-};
-
 }
