@@ -50,7 +50,12 @@ public:
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     /// For details on the inner workings of this function, read the description of the class above.
     template <bool HasTupleDelimiter>
-    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
+    requires(HasTupleDelimiter);
+
+    template <bool HasTupleDelimiter>
+    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
+    requires(not HasTupleDelimiter);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 

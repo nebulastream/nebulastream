@@ -33,6 +33,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include "RawTupleBuffer.hpp"
 #include "Util/Ranges.hpp"
 
 #include <Identifiers/Identifiers.hpp>
@@ -53,80 +54,75 @@ SequenceShredder::~SequenceShredder()
     }
 };
 
-uint32_t getABAItNumber(const size_t sequenceNumber, const size_t rbSize)
-{
-    return static_cast<uint32_t>(sequenceNumber / rbSize) + 1;
-}
-
-// Todo: either also use 'requires' approach here, instead of if constexpr
-//      -> or combine (but combining is probably not a good idea <-- rather use helper functions to abstract away similar behavior
 template <bool HasTupleDelimiter>
 SequenceShredderResult SequenceShredder::processSequenceNumber(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
+requires(HasTupleDelimiter)
 {
-    const auto abaItNumber = getABAItNumber(sequenceNumber, SIZE_OF_RING_BUFFER);
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
 
-    // Todo: streamline both cases better
-    if constexpr (HasTupleDelimiter)
+    if (not ringBuffer.rangeCheck<true>(snRBIdx, abaItNumber, indexedRawBuffer))
     {
-        if (not ringBuffer.rangeCheck<true>(snRBIdx, abaItNumber, indexedRawBuffer))
-        {
-            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
-        }
-
-        const auto [firstBuffer, firstBufferSN] = ringBuffer.leadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber);
-        const auto [secondBuffer, secondBufferSN]
-            = ringBuffer.trailingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber, snRBIdx, abaItNumber);
-        /// Neither a leading, nor a trailing spanning tuple found, return empty vector
-        if (not(firstBuffer.has_value()) and not(secondBuffer.has_value()))
-        {
-            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
-        }
-        if (firstBuffer.has_value() and not(secondBuffer.has_value()))
-        {
-            const auto sizeOfSpanningTuple = sequenceNumber - firstBufferSN + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            spanningTupleBuffers[0] = firstBuffer.value();
-            const auto firstIndex = firstBufferSN % SIZE_OF_RING_BUFFER;
-            ringBuffer.setCompletedFlags(firstIndex, snRBIdx, spanningTupleBuffers, 1);
-            return SequenceShredderResult{
-                .isInRange = true, .indexOfInputBuffer = sizeOfSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
-        if (not(firstBuffer.has_value()) and secondBuffer.has_value())
-        {
-            const auto sizeOfSpanningTuple = secondBufferSN - sequenceNumber + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            spanningTupleBuffers[0] = secondBuffer.value();
-            const auto lastIndex = secondBufferSN % SIZE_OF_RING_BUFFER;
-            ringBuffer.setCompletedFlags(snRBIdx, lastIndex, spanningTupleBuffers, 1);
-            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
-        if (firstBuffer.has_value() and secondBuffer.has_value())
-        {
-            const auto sizeOfFirstSpanningTuple = sequenceNumber - firstBufferSN + 1;
-            const auto sizeOfBothSpanningTuples = secondBufferSN - firstBufferSN + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSpanningTuples);
-            spanningTupleBuffers[0] = firstBuffer.value();
-            const auto firstIndex = firstBufferSN % SIZE_OF_RING_BUFFER;
-            ringBuffer.setCompletedFlags(firstIndex, snRBIdx, spanningTupleBuffers, 1);
-            const auto lastIndex = secondBufferSN % SIZE_OF_RING_BUFFER;
-            ringBuffer.setCompletedFlags(snRBIdx, lastIndex, spanningTupleBuffers, sizeOfFirstSpanningTuple);
-            return SequenceShredderResult{
-                .isInRange = true, .indexOfInputBuffer = sizeOfFirstSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
+        return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
 
+    const auto [firstBuffer, firstBufferSN] = ringBuffer.leadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber);
+    const auto [secondBuffer, secondBufferSN]
+        = ringBuffer.trailingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber, snRBIdx, abaItNumber);
+
+    /// Neither a leading, nor a trailing spanning tuple found, return empty vector
+    if (not(firstBuffer.has_value()) and not(secondBuffer.has_value()))
+    {
+        return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
+    }
+    if (firstBuffer.has_value() and not(secondBuffer.has_value()))
+    {
+        const auto sizeOfSpanningTuple = sequenceNumber - firstBufferSN + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        spanningTupleBuffers[0] = firstBuffer.value();
+        const auto firstIndex = firstBufferSN % SIZE_OF_RING_BUFFER;
+        ringBuffer.setCompletedFlags(firstIndex, snRBIdx, spanningTupleBuffers, 1);
+        return SequenceShredderResult{
+            .isInRange = true, .indexOfInputBuffer = sizeOfSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
+    }
+    if (not(firstBuffer.has_value()) and secondBuffer.has_value())
+    {
+        const auto sizeOfSpanningTuple = secondBufferSN - sequenceNumber + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        spanningTupleBuffers[0] = secondBuffer.value();
+        const auto lastIndex = secondBufferSN % SIZE_OF_RING_BUFFER;
+        ringBuffer.setCompletedFlags(snRBIdx, lastIndex, spanningTupleBuffers, 1);
+        return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = std::move(spanningTupleBuffers)};
+    }
+    if (firstBuffer.has_value() and secondBuffer.has_value())
+    {
+        const auto sizeOfFirstSpanningTuple = sequenceNumber - firstBufferSN + 1;
+        const auto sizeOfBothSpanningTuples = secondBufferSN - firstBufferSN + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSpanningTuples);
+        spanningTupleBuffers[0] = firstBuffer.value();
+        const auto firstIndex = firstBufferSN % SIZE_OF_RING_BUFFER;
+        ringBuffer.setCompletedFlags(firstIndex, snRBIdx, spanningTupleBuffers, 1);
+        const auto lastIndex = secondBufferSN % SIZE_OF_RING_BUFFER;
+        ringBuffer.setCompletedFlags(snRBIdx, lastIndex, spanningTupleBuffers, sizeOfFirstSpanningTuple);
+        return SequenceShredderResult{
+            .isInRange = true, .indexOfInputBuffer = sizeOfFirstSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
+    }
+    std::unreachable();
+}
+
+template <bool HasTupleDelimiter>
+SequenceShredderResult SequenceShredder::processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
+requires(not HasTupleDelimiter)
+{
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
+    const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
+
     // No Tuple Delimiter
-    // if (not ringBuffer[snRBIdx].isInRange<false>(abaItNumber, indexedRawBuffer))
     if (not ringBuffer.rangeCheck<false>(snRBIdx, abaItNumber, indexedRawBuffer))
     {
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
-    // TODO: must not try to claim during first search
-    // -> we want to claim the tuple delimiter buffer that we find during the leading search
-    // -> Two options:
-    //      1. leading search -> successful -> trailing search -> successful -> claim leading
-    //      2. trailing search -> successful -> try-claim leading search
+
     const auto firstDelimiter = ringBuffer.nonClaimingLeadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber);
     if (not firstDelimiter.has_value())
     {
