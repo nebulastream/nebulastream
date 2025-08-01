@@ -62,7 +62,7 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer index
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
 
-    if (not ringBuffer.rangeCheck<true>(snRBIdx, abaItNumber, indexedRawBuffer))
+    if (not ringBuffer.rangeCheckWithDelimiter(snRBIdx, abaItNumber, indexedRawBuffer))
     {
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
@@ -111,7 +111,7 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer in
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
 
-    if (not ringBuffer.rangeCheck<false>(snRBIdx, abaItNumber, indexedRawBuffer))
+    if (not ringBuffer.rangeCheckWithoutDelimiter(snRBIdx, abaItNumber, indexedRawBuffer))
     {
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }

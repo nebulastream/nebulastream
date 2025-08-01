@@ -13,6 +13,7 @@
 add_source_files(nes-input-formatters
         InputFormatterProvider.cpp
         SequenceShredder.cpp
+        SequenceRingBuffer.cpp
         RawValueParser.cpp
         FieldOffsets.cpp
         InputFormatterTaskPipeline.cpp

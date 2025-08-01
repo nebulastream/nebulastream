@@ -39,10 +39,13 @@
 namespace NES::InputFormatters
 {
 
-/// Forward declare to make friend
 class SSMetaData;
+
 class AtomicBitmapState
 {
+    // Todo: try to not expose the AtomicBitmapState out of SSMetaData and then make functions public (instead of friend)
+    friend class SSMetaData;
+
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
     /// 34:   000000000000000000000000000001000000000000000000000000000000000
@@ -90,51 +93,19 @@ class AtomicBitmapState
     void operator=(const AtomicBitmapState& other) = delete;
     void operator=(const AtomicBitmapState&& other) = delete;
 
+    bool tryClaimSpanningTuple(uint32_t abaItNumber);
+
+    [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state.load()); }
     [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
-
-    friend SSMetaData;
-    bool tryClaimSpanningTuple(const uint32_t abaItNumber)
-    {
-        auto atomicFirstDelimiter = getState();
-        auto desiredFirstDelimiter = atomicFirstDelimiter;
-        desiredFirstDelimiter.claimSpanningTuple();
-
-        bool claimedSpanningTuple = false;
-        while (atomicFirstDelimiter.getABAItNo() == abaItNumber and not atomicFirstDelimiter.hasClaimedSpanningTuple()
-               and not claimedSpanningTuple)
-        {
-            desiredFirstDelimiter.updateLeading(atomicFirstDelimiter);
-            claimedSpanningTuple = this->state.compare_exchange_weak(atomicFirstDelimiter.state, desiredFirstDelimiter.state);
-        }
-        return claimedSpanningTuple;
-    }
 
     void setStateOfFirstEntry() { this->state = initialDummyEntry; }
     void setHasTupleDelimiterState(const size_t abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber); }
     void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = abaItNumber; }
-
-    [[nodiscard]] uint32_t getABAItNo() const
-    {
-        /// The first 32 bits are the ABA number
-        return static_cast<uint32_t>(state.load());
-    }
-
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
     void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
     void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
 
-
-    friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState)
-    {
-        const auto loadedBitmap = atomicBitmapState.getState();
-        return os << fmt::format(
-                   "[{}-{}-{}-{}]",
-                   loadedBitmap.hasTupleDelimiter(),
-                   loadedBitmap.getABAItNo(),
-                   loadedBitmap.hasUsedLeadingBuffer(),
-                   loadedBitmap.hasUsedTrailingBuffer(),
-                   loadedBitmap.hasClaimedSpanningTuple());
-    }
+    friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState);
 
     std::atomic<uint64_t> state;
 };
@@ -144,94 +115,25 @@ class SSMetaData
 public:
     SSMetaData() { };
 
-    template <bool HasTupleDelimiter>
-    bool isInRange(const size_t abaItNumber, const StagedBuffer& indexedBuffer)
-    {
-        // Todo: claiming the entry with a single CAS is difficult, since it is difficult to set all bits correctly
-        // -> did the prior entry have a delimiter, what was the other meta data (if we have more meta data in the future)
-        const auto currentEntry = this->getState();
-        const auto currentABAItNo = currentEntry.getABAItNo();
-        const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
-        const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
-        const auto priorEntryIsUsed = currentABAItNo == (abaItNumber - 1) and currentHasCompletedLeading and currentHasCompletedTrailing;
-        if (priorEntryIsUsed)
-        {
-            if (HasTupleDelimiter)
-            {
-                this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-                this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-                this->firstDelimiterOffset = indexedBuffer.getOffsetOfFirstTupleDelimiter();
-                this->lastDelimiterOffset = indexedBuffer.getOffsetOfLastTupleDelimiter();
-                this->atomicBitmapState.setHasTupleDelimiterState(abaItNumber);
-            }
-            else
-            {
-                this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-                this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-                this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
-                this->lastDelimiterOffset = std::numeric_limits<uint32_t>::max();
-                this->atomicBitmapState.setNoTupleDelimiterState(abaItNumber);
-            }
-        }
-        return priorEntryIsUsed;
-    }
+    void setStateOfFirstIndex();
 
-    std::optional<StagedBuffer> tryClaimSpanningTuple(const uint32_t abaItNumber)
-    {
-        if (this->atomicBitmapState.tryClaimSpanningTuple(abaItNumber))
-        {
-            // Todo: improve handling of first buffer (which is dummy)
-            // -> create BufferPool with a single (valid) buffer?
-            // -> mock buffer by mocking control block to avoid 'getNumberOfTuples' crash? <-- reinterpret_cast
-            if (firstDelimiterOffset == std::numeric_limits<uint32_t>::max() and lastDelimiterOffset == 0)
-            {
-                const auto dummyBuffer = StagedBuffer(RawTupleBuffer{}, 1, firstDelimiterOffset, lastDelimiterOffset);
-                this->atomicBitmapState.setUsedTrailingBuffer();
-                return {dummyBuffer};
-            }
-            INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
-            const auto stagedBuffer
-                = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-            this->atomicBitmapState.setUsedTrailingBuffer();
-            return {stagedBuffer};
-        }
-        return std::nullopt;
-    }
-    void setStateOfFirstIndex()
-    {
-        /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
-        this->atomicBitmapState.setStateOfFirstEntry();
-        this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
-        this->lastDelimiterOffset = 0;
-    }
+    // Todo: documentation on functions
+    [[nodiscard]] bool isPriorEntryUsed(size_t abaItNumber) const;
 
-    void claimNoDelimiterBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
-    {
-        INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
-        INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
+    void copyFromStagedBuffer(const StagedBuffer& indexedBuffer);
 
-        /// First claim buffer uses
-        spanningTupleVector[spanningTupleIdx]
-            = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-        this->trailingBufferRef = NES::Memory::TupleBuffer{};
+    bool tryClaimWithDelimiter(size_t abaItNumber, const StagedBuffer& indexedBuffer);
+    bool tryClaimWithoutDelimiter(size_t abaItNumber, const StagedBuffer& indexedBuffer);
 
-        /// Then atomically mark buffer as used
-        this->atomicBitmapState.setUsedLeadingAndTrailingBuffer();
-    }
-
-    void claimLeadingBuffer(std::vector<StagedBuffer>& spanningTupleVector, const size_t spanningTupleIdx)
-    {
-        INVARIANT(this->leadingBufferRef.getBuffer() != nullptr, "Tried to claim a leading buffer with a nullptr");
-        spanningTupleVector[spanningTupleIdx]
-            = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-        this->atomicBitmapState.setUsedLeadingBuffer();
-    }
+    std::optional<StagedBuffer> tryClaimSpanningTuple(uint32_t abaItNumber);
+    void claimNoDelimiterBuffer(std::vector<StagedBuffer>& spanningTupleVector, size_t spanningTupleIdx);
+    void claimLeadingBuffer(std::vector<StagedBuffer>& spanningTupleVector, size_t spanningTupleIdx);
 
     [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
-    // Todo: validation functions
+    /// Functions used for validation
     bool isLeadingBufferRefNull() const { return this->leadingBufferRef.getBuffer() == nullptr; }
     bool isTrailingBufferRefNull() const { return this->trailingBufferRef.getBuffer() == nullptr; }
 
@@ -251,7 +153,7 @@ private:
 template <size_t N>
 class SequenceRingBuffer
 {
-private:
+    // Todo: make private functions free functions
     template <bool IsLeading>
     bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance)
     {
@@ -282,7 +184,6 @@ private:
         return bitmapState.hasTupleDelimiter() and bitmapState.getABAItNo() == adjustedAbaItNumber;
     }
 
-public:
     // Todo: could also just return TupleBuffer (and get SN from buffer), but initial dummy buffer is problem
     // -> could honestly think about creating struct that mimics buffer (and control block) and reinterpet_casting it to TupleBuffer
     std::optional<uint32_t>
@@ -307,7 +208,6 @@ public:
                                                                     : std::nullopt;
     };
 
-private:
     std::pair<std::optional<StagedBuffer>, SequenceNumberType>
     leadingDelimiterSearch(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType currentSequenceNumber)
     {
@@ -380,7 +280,6 @@ public:
         SequenceNumberType trailingStartSN{};
     };
 
-
     SequenceRingBuffer() { ringBuffer[0].setStateOfFirstIndex(); }
 
     NonClaimingRangeSearchResult
@@ -426,11 +325,14 @@ public:
         ringBuffer[lastDelimiter].claimLeadingBuffer(spanningTupleBuffers, spanningTupleIdx);
     }
 
-    template <bool HasTupleDelimiter>
-    bool rangeCheck(const size_t snRBIdx, const uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer)
+    bool rangeCheckWithDelimiter(const size_t snRBIdx, const uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer)
     {
-        SSMetaData& ssMetaData = ringBuffer[snRBIdx];
-        return ssMetaData.isInRange<HasTupleDelimiter>(abaItNumber, indexedRawBuffer);
+        return ringBuffer[snRBIdx].tryClaimWithDelimiter(abaItNumber, indexedRawBuffer);
+    }
+
+    bool rangeCheckWithoutDelimiter(const size_t snRBIdx, const uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer)
+    {
+        return ringBuffer[snRBIdx].tryClaimWithoutDelimiter(abaItNumber, indexedRawBuffer);
     }
 
     std::optional<StagedBuffer> tryClaimSpanningTuple(const size_t firstDelimiterIdx, const uint32_t abaItNumberOfFirstDelimiter)
@@ -456,8 +358,6 @@ public:
             }
         }
     }
-
-
 private:
     std::array<SSMetaData, N> ringBuffer{};
 };
