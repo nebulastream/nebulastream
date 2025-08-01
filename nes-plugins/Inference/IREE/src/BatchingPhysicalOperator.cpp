@@ -37,16 +37,25 @@ void emitBatchesProxy(
     auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
     ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
 
-    auto batchesToBeEmitted = opHandler->batches
-        | std::views::filter([](const std::shared_ptr<Batch>& batch)
-            {
-                return batch && batch->state.load() == BatchState::MARKED_AS_CREATED;
-            });
-    auto batchesCount = static_cast<size_t>(std::ranges::distance(batchesToBeEmitted));
+    std::vector<std::shared_ptr<Batch>> batchesToBeEmitted;
+    {
+        auto batchesReadLock = opHandler->batches.rlock();
+        auto batchesToBeEmittedView = *batchesReadLock
+            | std::views::filter([](const auto& pair)
+                {
+                    const auto& batch = pair.second;
+                    return batch && batch->state == BatchState::MARKED_AS_CREATED;
+                })
+            | std::views::transform([](const auto& pair)
+                {
+                    return pair.second;
+                });
+        batchesToBeEmitted = {batchesToBeEmittedView.begin(), batchesToBeEmittedView.end()};
+    }
 
     for (const auto& batch : batchesToBeEmitted)
     {
-        const bool lastChunk = chunkNumber == batchesCount;
+        const bool lastChunk = chunkNumber == batchesToBeEmitted.size();
         const SequenceData sequenceData{sequenceNumber, ChunkNumber(chunkNumber), lastChunk};
 
         opHandler->emitBatchesToProbe(*batch, sequenceData, pipelineCtx, watermarkTs);
@@ -100,6 +109,7 @@ void BatchingPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffe
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber);
+    NES_DEBUG("Lock should be released")
 }
 
 }

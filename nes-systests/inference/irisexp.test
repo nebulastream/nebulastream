@@ -10,6 +10,61 @@ CONFIG/sources/generator_iris.yaml
 
 SINK classificationThreeSeparate FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 
+MODEL iris1 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 1
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris1, (p1,p2,p3,p4)) FROM generatorIris)
+INTO CHECKSUM
+----
+10000000,12690002022
+
+MODEL iris2 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 2
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris2, (p1,p2,p3,p4)) FROM generatorIris)
+INTO CHECKSUM
+----
+10000000,12690002022
+
+MODEL iris4 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 4
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM generatorIris)
+INTO CHECKSUM
+----
+10000000,12690002022
+
+MODEL iris8 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 8
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris8, (p1,p2,p3,p4)) FROM generatorIris)
+INTO CHECKSUM
+----
+10000000,12690002022
+
+MODEL iris16 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 16
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris16, (p1,p2,p3,p4)) FROM generatorIris)
+INTO CHECKSUM
+----
+10000000,12690002022
+
 MODEL iris32 TESTDATA/model/model.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica

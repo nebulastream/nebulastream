@@ -179,7 +179,7 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
-            std::shared_ptr<Batch> batch = opHandler->batches[currentBatch->batchId];
+            std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
             return batch.get();
         }, operatorHandlerMemRef, emittedBatch);
 
@@ -198,8 +198,8 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
-            std::shared_ptr<Batch> batch = opHandler->batches[currentBatch->batchId];
-            batch->state.store(BatchState::MARKED_AS_PROCESSED, std::memory_order_release);
+            std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
+            batch->setState(BatchState::MARKED_AS_PROCESSED);
         }, operatorHandlerMemRef, emittedBatch);
 }
 
