@@ -54,8 +54,9 @@ public:
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     /// For details on the inner workings of this function, read the description of the class above.
-    SequenceShredderResult processBufferWithDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
-    SequenceShredderResult processBufferWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
+
+    SequenceShredderResult findSTsWithDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 

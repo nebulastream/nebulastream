@@ -364,7 +364,7 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processBufferWithDelimiter(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->findSTsWithDelimiter(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
@@ -443,7 +443,7 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processBufferWithoutDelimiter(
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->findSTsWithoutDelimiter(
             StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),

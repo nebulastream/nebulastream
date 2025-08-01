@@ -30,9 +30,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include "RawTupleBuffer.hpp"
-#include "SequenceRingBuffer.hpp"
-#include "Util/Ranges.hpp"
+#include <RawTupleBuffer.hpp>
+#include <SequenceRingBuffer.hpp>
+#include <Util/Ranges.hpp>
 
 #include <Identifiers/Identifiers.hpp>
 #include <ErrorHandling.hpp>
@@ -57,7 +57,7 @@ SequenceShredder::~SequenceShredder()
 // - clean up validation
 // - implement logging
 
-SequenceShredderResult SequenceShredder::processBufferWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
+SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
@@ -106,7 +106,7 @@ SequenceShredderResult SequenceShredder::processBufferWithDelimiter(StagedBuffer
     std::unreachable();
 }
 
-SequenceShredderResult SequenceShredder::processBufferWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
+SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
@@ -118,6 +118,9 @@ SequenceShredderResult SequenceShredder::processBufferWithoutDelimiter(StagedBuf
 
     switch (const auto searchResult = ringBuffer.searchWithoutClaimingBuffers(snRBIdx, abaItNumber, sequenceNumber); searchResult.state)
     {
+        case SequenceRingBuffer<SIZE_OF_RING_BUFFER>::NonClaimingRangeSearchState::NONE: {
+            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
+        }
         case SequenceRingBuffer<SIZE_OF_RING_BUFFER>::NonClaimingRangeSearchState::LEADING_AND_TRAILING_ST: {
             const auto firstDelimiterIdx = searchResult.leadingStartSN % SIZE_OF_RING_BUFFER;
             const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > snRBIdx);
@@ -132,8 +135,6 @@ SequenceShredderResult SequenceShredder::processBufferWithoutDelimiter(StagedBuf
                 return SequenceShredderResult{
                     .isInRange = true, .indexOfInputBuffer = currentBufferIdx, .spanningBuffers = std::move(spanningTupleBuffers)};
             }
-        }
-        case SequenceRingBuffer<SIZE_OF_RING_BUFFER>::NonClaimingRangeSearchState::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
     }
