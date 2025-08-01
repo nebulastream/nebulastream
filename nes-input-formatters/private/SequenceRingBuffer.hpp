@@ -252,14 +252,26 @@ template <size_t N>
 class SequenceRingBuffer
 {
 public:
+    enum RangeSearchState
+    {
+        NONE,
+        LEADING_ST,
+        TRAILING_ST,
+        LEADING_AND_TRAILING_ST
+    };
+
+    struct RangeSearchResult
+    {
+        RangeSearchState state = NONE;
+        std::optional<StagedBuffer> leadingStartBuffer;
+        std::optional<StagedBuffer> trailingStartBuffer;
+        uint32_t leadingStartSN{};
+        uint32_t trailingStartSN{};
+    };
+
+
     SequenceRingBuffer() { ringBuffer[0].setStateOfFirstIndex(); }
 
-    // Todo(When replacing sequence shredder impl): convert 'hasNoTD' to function on 'SSMetaData' object
-    // -> 'RingBuffer' should be its own class and expose the functions below and the lambda functions
-    // -> make sure to hide implementation details to the outside, the interface should potentially be a single function
-    //    -> 'resolveSpanningTuple()' that either returns an empty spanning tuple (fail) or a spanning tuple with at least 2 buffers
-    //      -> gets rid of 'isInRange()', evaluating lazily, might mean we already indexed an buffer
-    //          -> if it becomes performance critical, implement 'stashed' queue that threads (that otherwise did not do any work?) complete
     template <bool IsLeading>
     bool hasNoTD(const size_t snRBIdx, const size_t abaItNumber, const size_t distance)
     {
@@ -313,8 +325,7 @@ public:
         {
             ++leadingDistance;
         }
-        return hasTD<true>(snRBIdx, abaItNumber, leadingDistance) ? std::optional{currentSequenceNumber - leadingDistance}
-                                                                              : std::nullopt;
+        return hasTD<true>(snRBIdx, abaItNumber, leadingDistance) ? std::optional{currentSequenceNumber - leadingDistance} : std::nullopt;
     }
     std::optional<uint32_t>
     nonClaimingTrailingDelimiterSearch(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType currentSequenceNumber)
@@ -325,8 +336,9 @@ public:
             ++trailingDistance;
         }
         return hasTD<false>(snRBIdx, abaItNumber, trailingDistance) ? std::optional{currentSequenceNumber + trailingDistance}
-                                                                                : std::nullopt;
+                                                                    : std::nullopt;
     };
+
     std::pair<std::optional<StagedBuffer>, SequenceNumberType>
     leadingDelimiterSearch(const size_t snRBIdx, const size_t abaItNumber, const SequenceNumberType currentSequenceNumber)
     {
@@ -363,15 +375,10 @@ public:
         {
             const auto leadingSequenceNumber = currentSequenceNumber + trailingDistance;
 
-            /// Todo Problem:
-            /// - we adjust the ABAItNumber based on the end of the spanning tuple, but we want to claim the start of the spanning tuple
-            /// - the 'spanningTupleStartIdx'
             return std::make_pair(
                 ringBuffer[spanningTupleStartIdx].tryClaimSpanningTuple(abaItNumberSpanningTupleStart), leadingSequenceNumber);
         }
         return std::make_pair(std::nullopt, 0);
-        // return hasTD<false>(snRBIdx, abaItNumber, trailingDistance, ringBuffer) ? std::optional{currentSequenceNumber + trailingDistance}
-        //                                                                         : std::nullopt;
     };
 
     template <bool HasTupleDelimiter>

@@ -53,10 +53,14 @@ SequenceShredder::~SequenceShredder()
         NES_ERROR("Validation failed unexpectedly.");
     }
 };
+// Todo:
+// - strong types for SN, ABA, other indexes
+// - clean up validation
+// - implement
+// - enum return
 
-template <bool HasTupleDelimiter>
-SequenceShredderResult SequenceShredder::processSequenceNumber(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
-requires(HasTupleDelimiter)
+// Todo: instead of template and requires, simply create different functions that are not templated
+SequenceShredderResult SequenceShredder::processBufferWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
@@ -66,6 +70,8 @@ requires(HasTupleDelimiter)
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
 
+    // Todo: since the two searches differ from the 'no delimiter' searches anyway
+    // -> perform a combined 'claiming' search that returns an enum, which we use below to determine what to do
     const auto [firstBuffer, firstBufferSN] = ringBuffer.leadingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber);
     const auto [secondBuffer, secondBufferSN]
         = ringBuffer.trailingDelimiterSearch(snRBIdx, abaItNumber, sequenceNumber, snRBIdx, abaItNumber);
@@ -110,9 +116,7 @@ requires(HasTupleDelimiter)
     std::unreachable();
 }
 
-template <bool HasTupleDelimiter>
-SequenceShredderResult SequenceShredder::processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
-requires(not HasTupleDelimiter)
+SequenceShredderResult SequenceShredder::processBufferWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto snRBIdx = sequenceNumber % SIZE_OF_RING_BUFFER;
@@ -148,9 +152,6 @@ requires(not HasTupleDelimiter)
     }
     return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
 }
-/// Instantiate processSequenceNumber for both 'true' and 'false' so that the linker knows which templates to generate.
-template SequenceShredderResult SequenceShredder::processSequenceNumber<true>(StagedBuffer, SequenceNumberType);
-template SequenceShredderResult SequenceShredder::processSequenceNumber<false>(StagedBuffer, SequenceNumberType);
 
 
 std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder)

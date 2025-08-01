@@ -49,18 +49,12 @@ public:
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     /// For details on the inner workings of this function, read the description of the class above.
-    template <bool HasTupleDelimiter>
-    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
-    requires(HasTupleDelimiter);
-
-    template <bool HasTupleDelimiter>
-    SequenceShredderResult processSequenceNumber(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber)
-    requires(not HasTupleDelimiter);
+    SequenceShredderResult processBufferWithDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult processBufferWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    // Todo: make 'RingBuffer' its own class (in its own file) <-- SequenceShredder should be thin wrapper around RingBuffer (if possible, with a single function)
     SequenceRingBuffer<SIZE_OF_RING_BUFFER> ringBuffer;
 };
 
