@@ -96,22 +96,29 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
 
     if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
     {
-        std::unordered_set expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
+        std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
         std::vector actualFields(firstSchema.begin(), firstSchema.end());
 
         std::stringstream expectedFieldsString;
         std::stringstream actualFieldsString;
 
-        for (const auto& field : firstSchema)
+        for (unsigned int i = 0; i < expectedFields.size(); ++i)
         {
-            if (std::ranges::find(expectedFields, field) == expectedFields.end())
+            const auto& field = expectedFields.at(i);
+            auto foundIndex = std::ranges::find(actualFields, field);
+
+            if (foundIndex == actualFields.end())
             {
                 expectedFieldsString << field << ", ";
             }
+            else if (auto foundOffset = foundIndex - std::ranges::begin(actualFields); foundOffset != i)
+            {
+                expectedFieldsString << fmt::format("Field {} at {}, but was at {},", field, i, foundOffset);
+            }
         }
-        for (const auto& field : *copy.sinkDescriptor.value().getSchema())
+        for (const auto& field : actualFields)
         {
-            if (std::ranges::find(actualFields, field) == actualFields.end())
+            if (std::ranges::find(expectedFields, field) == expectedFields.end())
             {
                 actualFieldsString << field << ", ";
             }
