@@ -20,6 +20,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -27,6 +28,7 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#include "Traits/ImplementationTrait.hpp"
 
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -40,8 +42,10 @@ namespace NES::Systest
 std::expected<QueryId, Exception> LocalWorkerQuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
     /// Make sure the queryplan is passed through serialization logic.
+    INVARIANT(hasTrait<ImplementationTrait>(plan), "Should have implementation");
     const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
     const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+    INVARIANT(hasTrait<ImplementationTrait>(deserialized), "Should have implementation");
     if (deserialized == plan)
     {
         return worker.registerQuery(deserialized);

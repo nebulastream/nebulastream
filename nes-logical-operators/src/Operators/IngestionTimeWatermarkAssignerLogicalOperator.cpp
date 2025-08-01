@@ -141,7 +141,7 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
 
     proto.set_operator_type(NAME);
     auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
+    for (const auto& trait : getTraitSet() | std::views::values)
     {
         *traitSetProto->add_traits() = trait.serialize();
     }

@@ -121,5 +121,17 @@ template <typename... TraitTypes>
 /// Returns a set of all operators
 [[nodiscard]] std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan);
 
+template <IsTrait T>
+bool hasTrait(const LogicalPlan& plan)
+{
+    return std::ranges::all_of(
+        plan.getRootOperators(),
+        [](const auto& rootOperator)
+        {
+            return std::ranges::all_of(
+                DFSRange(rootOperator), [](const LogicalOperator& logicalOperator) { return hasTrait<T>(logicalOperator.getTraitSet()); });
+        });
+}
+
 }
 FMT_OSTREAM(NES::LogicalPlan);

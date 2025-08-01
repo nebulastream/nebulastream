@@ -20,18 +20,23 @@
 #include <iterator>
 #include <queue>
 #include <ranges>
+#include <stack>
 #include <ErrorHandling.hpp>
-
-#include <Iterators/DFSIterator.hpp>
 
 namespace NES
 {
 
+/// Requires a function getChildren() and ==operator
+template <typename T>
+concept HasChildren = requires(T t) {
+    { t.getChildren() } -> std::ranges::range;
+} && std::equality_comparable<T>;
+
 /// Defines a Breadth-first iterator on classes defining `getChildren()`
 /// Example usage:
-/// for (auto i : BFSRange(ClassWithChildren))
+/// for (auto i : DFSRange(ClassWithChildren))
 template <HasChildren T>
-class BFSIterator
+class DFSIterator
 {
 public:
     using value_type = T;
@@ -41,16 +46,16 @@ public:
     using pointer = T*;
     using reference = T&;
 
-    BFSIterator& operator++()
+    DFSIterator& operator++()
     {
-        if (!nodeQueue.empty())
+        if (!nodeStack.empty())
         {
-            auto current = nodeQueue.front();
-            nodeQueue.pop();
+            auto current = nodeStack.top();
+            nodeStack.pop();
 
             for (const auto& child : current.getChildren())
             {
-                nodeQueue.push(child);
+                nodeStack.push(child);
             }
         }
         return *this;
@@ -58,47 +63,47 @@ public:
 
     void operator++(int) { ++(*this); }
 
-    bool operator==(std::default_sentinel_t) const noexcept { return nodeQueue.empty(); }
+    bool operator==(std::default_sentinel_t) const noexcept { return nodeStack.empty(); }
 
-    friend bool operator==(std::default_sentinel_t sentinel, const BFSIterator& iterator) noexcept { return iterator == sentinel; }
+    friend bool operator==(std::default_sentinel_t sentinel, const DFSIterator& iterator) noexcept { return iterator == sentinel; }
 
     [[nodiscard]] value_type operator*() const
     {
-        INVARIANT(!nodeQueue.empty(), "Attempted to dereference end iterator");
-        return nodeQueue.front();
+        INVARIANT(!nodeStack.empty(), "Attempted to dereference end iterator");
+        return nodeStack.top();
     }
 
-    friend bool operator==(const BFSIterator& lhs, const BFSIterator& rhs) noexcept
+    friend bool operator==(const DFSIterator& lhs, const DFSIterator& rhs) noexcept
     {
-        if (lhs.nodeQueue.empty() and rhs.nodeQueue.empty())
+        if (lhs.nodeStack.empty() and rhs.nodeStack.empty())
         {
             return true;
         }
-        if (lhs.nodeQueue.empty() or rhs.nodeQueue.empty())
+        if (lhs.nodeStack.empty() or rhs.nodeStack.empty())
         {
             return false;
         }
-        return lhs.nodeQueue.front() == rhs.nodeQueue.front();
+        return lhs.nodeStack.top() == rhs.nodeStack.top();
     }
 
-    friend bool operator!=(const BFSIterator& lhs, const BFSIterator& rhs) noexcept { return !(lhs == rhs); }
+    friend bool operator!=(const DFSIterator& lhs, const DFSIterator& rhs) noexcept { return !(lhs == rhs); }
 
 private:
     template <typename>
-    friend class BFSRange;
-    BFSIterator() = default;
-    explicit BFSIterator(T root) { nodeQueue.push(root); }
+    friend class DFSRange;
+    DFSIterator() = default;
+    explicit DFSIterator(T root) { nodeStack.push(root); }
 
-    std::queue<T> nodeQueue;
+    std::stack<T> nodeStack;
 };
 
 template <typename T>
-class BFSRange : public std::ranges::view_interface<BFSRange<T>>
+class DFSRange : public std::ranges::view_interface<DFSRange<T>>
 {
 public:
-    explicit BFSRange(T root) : root(root) { }
+    explicit DFSRange(T root) : root(root) { }
 
-    BFSIterator<T> begin() const { return BFSIterator<T>(root); }
+    DFSIterator<T> begin() const { return DFSIterator<T>(root); }
     [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
 
 private:

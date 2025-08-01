@@ -16,9 +16,11 @@ include_directories(tests/include)
 add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
+find_package(reflectcpp CONFIG REQUIRED)
+find_package(flatbuffers CONFIG REQUIRED)
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-nautilus nes-logical-operators nes-physical-operators nes-physical-operators-registry)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-nautilus nes-logical-operators nes-physical-operators nes-physical-operators-registry reflectcpp::reflectcpp flatbuffers::flatbuffers)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)

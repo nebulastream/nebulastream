@@ -32,6 +32,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -214,6 +215,12 @@ SerializableOperator SinkLogicalOperator::serialize() const
         proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
     }
 
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (const auto& trait : getTraitSet() | std::views::values)
+    {
+        *traitSetProto->add_traits() = trait.serialize();
+    }
+
     for (const auto& originList : getInputOriginIds())
     {
         auto* olist = proto.add_input_origin_lists();
@@ -230,7 +237,13 @@ SerializableOperator SinkLogicalOperator::serialize() const
 
     SerializableOperator serializableOperator;
     const DescriptorConfig::ConfigType timeVariant = sinkName;
-    (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
+    struct Data
+    {
+        std::string sinkName;
+    };
+    Data data{sinkName};
+    auto buffer = rfl::flexbuf::write(data);
+    serializableOperator.set_data(buffer.begin(), buffer.end());
 
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())

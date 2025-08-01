@@ -16,6 +16,8 @@
 #include <Traits/Trait.hpp>
 #include <SerializableTrait.pb.h>
 
+#include "TraitRegisty.hpp"
+
 namespace NES
 {
 
@@ -34,9 +36,37 @@ Trait& Trait::operator=(const Trait& other)
     return *this;
 }
 
-SerializableTrait Trait::serialize() const
+void Trait::deserialize(const SerializableTrait& trait)
 {
-    return self->serialize();
+    self->generalDeserialize(trait);
 }
 
+SerializableTrait Trait::serialize() const
+{
+    return self->generalSerialize();
+}
+
+TraitSet addTrait(TraitSet&& traits, Trait t)
+{
+    traits.try_emplace(t.getTypeIndex(), std::move(t));
+    return traits;
+}
+TraitSet deserializeTraitSet(const SerializableTraitSet& traitSet)
+{
+    TraitSet traits;
+    for (const auto& trait : traitSet.traits())
+    {
+        auto t = TraitRegistry::instance().create(trait.trait_type(), TraitRegistryArguments{}).value();
+        t.deserialize(trait);
+        traits = addTrait(std::move(traits), t);
+    }
+    return traits;
+}
+void serializeTraitSet(const TraitSet& traitSet, SerializableTraitSet& traitSetProto)
+{
+    for (const auto& trait : traitSet | std::views::values)
+    {
+        *traitSetProto.add_traits() = trait.serialize();
+    }
+}
 }

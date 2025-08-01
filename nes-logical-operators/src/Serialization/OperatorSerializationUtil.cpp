@@ -45,7 +45,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
         auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
         sourceOperator.id = OperatorId(serializedOperator.operator_id());
-        return sourceOperator.withOutputOriginIds({{OriginId(serializedSource.sourceoriginid())}});
+        return sourceOperator.withOutputOriginIds({{OriginId(serializedSource.sourceoriginid())}})
+            .withTraitSet(deserializeTraitSet(serializedSource.trait_set()));
     }
 
     if (serializedOperator.has_sink())
@@ -85,7 +86,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
         sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
 
-        return sinkOperator;
+        return sinkOperator.withTraitSet(deserializeTraitSet(sink.trait_set()));
     }
 
     if (serializedOperator.has_operator_())
@@ -135,7 +136,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             = LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
             logicalOperator.has_value())
         {
-            return logicalOperator.value();
+            return logicalOperator.value().withTraitSet(deserializeTraitSet(serializedOperator.operator_().trait_set()));
         }
     }
 

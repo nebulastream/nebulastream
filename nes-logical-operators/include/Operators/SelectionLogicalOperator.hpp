@@ -32,56 +32,27 @@ namespace NES
 {
 
 /// Selection operator, which contains an function as a predicate.
-class SelectionLogicalOperator : public LogicalOperatorConcept
+class SelectionLogicalOperator : public LogicalOperatorHelper<SelectionLogicalOperator>
 {
 public:
     explicit SelectionLogicalOperator(LogicalFunction predicate);
+    explicit SelectionLogicalOperator() = default;
 
     [[nodiscard]] LogicalFunction getPredicate() const;
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-
-    struct ConfigParameters
+    struct Data
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{
-            "selectionFunctionName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(SELECTION_FUNCTION_NAME, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
+        std::optional<LogicalFunction> predicate;
     };
 
 private:
+    friend class LogicalOperatorHelper;
+    Data data{};
     static constexpr std::string_view NAME = "Selection";
-    LogicalFunction predicate;
-
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    Schema inputSchema, outputSchema;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
 };
 }

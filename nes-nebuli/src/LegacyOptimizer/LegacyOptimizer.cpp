@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Traits/ImplementationTrait.hpp"
+
+
 #include <LegacyOptimizer.hpp>
 
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
@@ -21,6 +24,7 @@
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/ImplementationSelectionPhase.hpp>
 
 namespace NES::CLI
 {
@@ -34,6 +38,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
     constexpr auto redundantUnionRemovalRule = NES::LegacyOptimizer::RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = NES::LegacyOptimizer::RedundantProjectionRemovalRule{};
+    auto implementationSelectionPhase = NES::LegacyOptimizer::ImplementationSelectionPhase{configuration};
 
     sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
@@ -48,6 +53,8 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
+    implementationSelectionPhase.apply(newPlan);
+    INVARIANT(hasTrait<ImplementationTrait>(newPlan), "Should");
     return newPlan;
 }
 }

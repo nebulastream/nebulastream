@@ -34,58 +34,23 @@
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
+class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorHelper<EventTimeWatermarkAssignerLogicalOperator>
 {
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
-
-    LogicalFunction onField;
-    Windowing::TimeUnit unit;
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+    EventTimeWatermarkAssignerLogicalOperator() = default;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
-
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
-            "TimeMs",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
-        static inline const DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
-            "Function",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FUNCTION, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
-    };
-
-private:
+protected:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
-
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-    Schema inputSchema, outputSchema;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
+    struct Data
+    {
+        std::optional<LogicalFunction> onField;
+        Windowing::TimeUnit unit = Windowing::TimeUnit::Milliseconds();
+    };
+    Data data{};
 };
 }

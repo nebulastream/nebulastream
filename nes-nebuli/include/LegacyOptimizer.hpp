@@ -15,8 +15,8 @@
 #pragma once
 #include <memory>
 #include <utility>
-
 #include <Plans/LogicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
@@ -30,13 +30,17 @@ class LegacyOptimizer
 public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
-    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit LegacyOptimizer(
+        std::shared_ptr<const SourceCatalog> sourceCatalog,
+        std::shared_ptr<const SinkCatalog> sinkCatalog,
+        QueryExecutionConfiguration configuration)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), configuration(std::move(configuration))
     {
     }
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    QueryExecutionConfiguration configuration;
 };
 }

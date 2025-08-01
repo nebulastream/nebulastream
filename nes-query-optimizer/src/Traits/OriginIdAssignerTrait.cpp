@@ -13,8 +13,14 @@
 */
 
 #include <Traits/OriginIdAssignerTrait.hpp>
+#include <TraitRegisty.hpp>
 
 namespace NES
 {
 /// Required for plugin registration, no implementation necessary
+}
+
+NES::Trait NES::TraitGeneratedRegistrar::RegisterOriginIdAssignerTrait(NES::TraitRegistryArguments)
+{
+    return OriginIdAssignerTrait{};
 }

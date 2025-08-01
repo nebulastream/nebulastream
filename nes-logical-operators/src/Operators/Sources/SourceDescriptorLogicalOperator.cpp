@@ -80,9 +80,7 @@ LogicalOperator SourceDescriptorLogicalOperator::withTraitSet(TraitSet traitSet)
 
 TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
 {
-    TraitSet result = traitSet;
-    result.insert(originIdTrait);
-    return result;
+    return addTrait<OriginIdAssignerTrait>(traitSet);
 }
 
 LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
@@ -144,6 +142,12 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
     INVARIANT(sourceOriginIds.size() == 1, "Expected one originId, got '{}' instead", sourceOriginIds.size());
     proto.set_sourceoriginid(sourceOriginIds[0].getRawValue());
     proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
+
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (const auto& trait : getTraitSet() | std::views::values)
+    {
+        *traitSetProto->add_traits() = trait.serialize();
+    }
 
     SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());

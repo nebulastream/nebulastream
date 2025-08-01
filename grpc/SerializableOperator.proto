@@ -47,17 +47,19 @@ message SerializableSourceDescriptor
 message SerializableSourceDescriptorLogicalOperator
 {
   uint64 sourceOriginId = 1;
-  SerializableSourceDescriptor sourceDescriptor = 2;
+  SerializableTraitSet trait_set = 2;
+  SerializableSourceDescriptor sourceDescriptor = 3;
 }
 
 message SerializableSinkLogicalOperator
 {
   SerializableSinkDescriptor sinkDescriptor = 1;
+  SerializableTraitSet trait_set = 2;
   message OriginList {
     repeated uint64 origin_ids = 1;
   }
-  repeated OriginList input_origin_lists = 2;
-  repeated uint64 output_origin_ids = 3;
+  repeated OriginList input_origin_lists = 3;
+  repeated uint64 output_origin_ids = 4;
 }
 
 message SerializableLogicalOperator {
@@ -76,7 +78,7 @@ message SerializableOperator
 {
   uint64 operator_id = 1;
   repeated uint64 children_ids = 2;
-  map<string, SerializableVariantDescriptor> config = 3;
+  bytes data = 3;
   oneof value {
     SerializableSourceDescriptorLogicalOperator source = 4;
     SerializableSinkLogicalOperator sink = 5;

@@ -12,22 +12,16 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <Traits/Trait.hpp>
-#include <SerializableTrait.pb.h>
+#include <Traits/ImplementationTrait.hpp>
+#include <TraitRegisty.hpp>
+#include "Traits/OriginIdAssignerTrait.hpp"
 
 namespace NES
 {
+/// Required for plugin registration, no implementation necessary
+}
 
-/// Marks if a join operator should be translated/lowered to a hash join
-struct HashJoinTrait final : DefaultTrait<HashJoinTrait>
+NES::Trait NES::TraitGeneratedRegistrar::RegisterImplementationTrait(NES::TraitRegistryArguments)
 {
-};
-
-
-/// Marks if a join operator should be translated/lowered to a netsed loop join
-struct NestedLoopJoinTrait final : DefaultTrait<NestedLoopJoinTrait>
-{
-};
+    return ImplementationTrait{""};
 }

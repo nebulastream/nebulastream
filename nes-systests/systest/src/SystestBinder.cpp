@@ -266,7 +266,7 @@ struct SystestBinder::Impl
     {
     }
 
-    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles, const QueryExecutionConfiguration& queryExecutionConfiguration)
     {
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
@@ -276,7 +276,7 @@ struct SystestBinder::Impl
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
             {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : testsForFile)
+                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile, queryExecutionConfiguration); auto& query : testsForFile)
                 {
                     queries.emplace_back(std::move(query));
                 }
@@ -292,7 +292,7 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
+    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile, const QueryExecutionConfiguration& queryExecutionConfiguration)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
@@ -306,13 +306,13 @@ struct SystestBinder::Impl
                                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
                                  })
             | std::ranges::views::transform(
-                                 [&testfile, &foundQueries](auto& systest)
+                                 [&testfile, &foundQueries, &queryExecutionConfiguration](auto& systest)
                                  {
                                      foundQueries.insert(systest.getSystemTestQueryId());
 
                                      if (systest.getBoundPlan().has_value())
                                      {
-                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, queryExecutionConfiguration};
                                          try
                                          {
                                              systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
@@ -651,9 +651,9 @@ SystestBinder::SystestBinder(
 {
 }
 
-std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const TestFileMap& discoveredTestFiles, const QueryExecutionConfiguration& queryExecutionConfig)
 {
-    return impl->loadOptimizeQueries(discoveredTestFiles);
+    return impl->loadOptimizeQueries(discoveredTestFiles, queryExecutionConfig);
 }
 SystestBinder::~SystestBinder() = default;
 

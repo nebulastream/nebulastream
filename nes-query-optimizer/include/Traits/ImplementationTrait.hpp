@@ -12,9 +12,27 @@
     limitations under the License.
 */
 
-#include <Traits/JoinImplementationTypeTrait.hpp>
+#pragma once
+
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
+
+/// Marks if a join operator should be translated/lowered to a netsed loop join
+struct ImplementationTrait final : DefaultTrait<ImplementationTrait>
+{
+    static constexpr std::string_view Name = "Implementation";
+    struct Data
+    {
+        std::string implementation;
+    };
+
+    Data data;
+
+    const std::string& implementation() const { return data.implementation; }
+
+    explicit ImplementationTrait(std::string implementation) : data(std::move(implementation)) { }
+};
 }

@@ -34,7 +34,7 @@ public:
         const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir);
 
     /// @return the loaded systest queries and the number of loaded files
-    [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles);
+    [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles, const QueryExecutionConfiguration& queryExecutionConfig);
 
     ~SystestBinder();
 

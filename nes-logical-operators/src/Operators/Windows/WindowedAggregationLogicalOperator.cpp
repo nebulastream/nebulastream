@@ -183,9 +183,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
 
 TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
-    TraitSet result = traitSet;
-    result.insert(originIdTrait);
-    return result;
+    return addTrait<OriginIdAssignerTrait>(traitSet);
 }
 
 LogicalOperator WindowedAggregationLogicalOperator::withTraitSet(TraitSet traitSet) const
@@ -294,7 +292,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
 
     proto.set_operator_type(NAME);
     auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
+    for (const auto& trait : getTraitSet() | std::views::values)
     {
         *traitSetProto->add_traits() = trait.serialize();
     }

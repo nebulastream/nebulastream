@@ -24,6 +24,7 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
@@ -31,6 +32,9 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include "Functions/LogicalFunction.hpp"
+#include "Serialization/FunctionSerializationUtil.hpp"
+#include "Serialization/SchemaSerializationUtil.hpp"
 
 namespace NES
 {
@@ -275,4 +279,136 @@ struct hash<NES::LogicalOperator>
 };
 }
 
+namespace rfl
+{
+template <>
+struct Reflector<NES::LogicalFunction>
+{
+    struct ReflType
+    {
+        std::vector<char> data;
+    };
+
+    static NES::LogicalFunction to(const ReflType& refl) noexcept
+    {
+        NES::LogicalFunction function;
+        NES::SerializableFunction functionProto;
+        functionProto.ParseFromArray(refl.data.data(), refl.data.size());
+        return NES::FunctionSerializationUtil::deserializeFunction(functionProto);
+    }
+
+    static ReflType from(const NES::LogicalFunction& v)
+    {
+        auto function = v.serialize();
+        ReflType proto;
+        proto.data.resize(function.ByteSizeLong());
+        function.SerializePartialToArray(proto.data.data(), proto.data.size());
+        return proto;
+    }
+};
+}
+
+namespace NES
+{
+template <typename Derived>
+class LogicalOperatorHelper : public NES::LogicalOperatorConcept
+{
+protected:
+    std::vector<LogicalOperator> children;
+    TraitSet traits;
+    Schema outputSchema;
+    Schema inputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
+
+public:
+    [[nodiscard]] std::vector<struct NES::LogicalOperator> getChildren() const final { return children; }
+    [[nodiscard]] NES::LogicalOperator withChildren(std::vector<NES::LogicalOperator>) const final
+    {
+        auto copy = *static_cast<const Derived*>(this);
+        copy.children = std::move(children);
+        return copy;
+    }
+
+    [[nodiscard]] NES::LogicalOperator withTraitSet(NES::TraitSet) const final
+    {
+        auto copy = *static_cast<const Derived*>(this);
+        copy.traits = traits;
+        return copy;
+    }
+
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const final
+    {
+        if (const auto* p = dynamic_cast<const Derived*>(&rhs))
+        {
+            return getOutputSchema() == p->getOutputSchema() && getInputSchemas() == p->getInputSchemas()
+                && getInputOriginIds() == p->getInputOriginIds() && getOutputOriginIds() == p->getOutputOriginIds()
+                && getTraitSet() == p->getTraitSet() && objects_equal(static_cast<const Derived*>(this)->data, p->data);
+        }
+        return false;
+    }
+
+    [[nodiscard]] NES::SerializableOperator serialize() const final
+    {
+        SerializableLogicalOperator proto;
+        proto.set_operator_type(getName());
+        serializeTraitSet(getTraitSet(), *proto.mutable_trait_set());
+
+        for (const auto& inputSchema : getInputSchemas())
+        {
+            auto* schProto = proto.add_input_schemas();
+            SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+        }
+
+        for (const auto& originList : getInputOriginIds())
+        {
+            auto* olist = proto.add_input_origin_lists();
+            for (auto originId : originList)
+            {
+                olist->add_origin_ids(originId.getRawValue());
+            }
+        }
+
+        for (auto outId : getOutputOriginIds())
+        {
+            proto.add_output_origin_ids(outId.getRawValue());
+        }
+
+        auto* outSch = proto.mutable_output_schema();
+        SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+
+        SerializableOperator serializableOperator;
+        serializableOperator.set_operator_id(id.getRawValue());
+        for (const auto& child : getChildren())
+        {
+            serializableOperator.add_children_ids(child.getId().getRawValue());
+        }
+
+        serializableOperator.mutable_operator_()->CopyFrom(proto);
+
+        const auto bytes = rfl::flexbuf::write(static_cast<const Derived*>(this)->data);
+        serializableOperator.set_data(bytes.data(), bytes.size());
+
+        return serializableOperator;
+    }
+    [[nodiscard]] NES::TraitSet getTraitSet() const final { return traits; }
+
+    [[nodiscard]] std::vector<NES::Schema> getInputSchemas() const final { return {inputSchema}; }
+    [[nodiscard]] NES::Schema getOutputSchema() const final { return outputSchema; }
+    [[nodiscard]] std::vector<std::vector<NES::OriginId>> getInputOriginIds() const final { return {inputOriginIds}; }
+    [[nodiscard]] std::vector<NES::OriginId> getOutputOriginIds() const final { return {outputOriginIds}; }
+    [[nodiscard]] NES::LogicalOperator withInputOriginIds(std::vector<std::vector<NES::OriginId>>) const final
+    {
+        auto copy = *static_cast<const Derived*>(this);
+        copy.inputOriginIds = std::move(inputOriginIds);
+        return copy;
+    }
+    [[nodiscard]] NES::LogicalOperator withOutputOriginIds(std::vector<NES::OriginId>) const final
+    {
+        auto copy = *static_cast<const Derived*>(this);
+        copy.outputOriginIds = std::move(outputOriginIds);
+        return copy;
+    }
+};
+}
 FMT_OSTREAM(NES::LogicalOperator);

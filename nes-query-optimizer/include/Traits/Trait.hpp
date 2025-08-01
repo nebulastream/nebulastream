@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -22,10 +23,14 @@
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
 #include <unordered_set>
-
+#include <fmt/ranges.h>
+#include <folly/hash/Hash.h>
+#include <rfl/flexbuf.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
+#include <rfl.hpp>
 
 namespace NES
 {
@@ -40,36 +45,119 @@ struct TraitConcept
     /// Returns the type information of this trait.
     /// @return const std::type_info& The type information of this trait.
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
+    [[nodiscard]] virtual std::string_view getName() const = 0;
 
     /// Serializes this trait to a protobuf message.
     /// @return SerializableTrait The serialized trait.
-    [[nodiscard]] virtual SerializableTrait serialize() const = 0;
+    [[nodiscard]] virtual SerializableTrait generalSerialize() const = 0;
 
-    /// Compares this trait with another trait for equality.
-    /// @param other The trait to compare with.
-    /// @return bool True if the traits are equal, false otherwise.
-    virtual bool operator==(const TraitConcept& other) const = 0;
+    /// Deserializes this trait from a protobuf message.
+    virtual void generalDeserialize(const SerializableTrait&) = 0;
+
+    virtual bool equals(const TraitConcept& other) const = 0;
 
     /// Computes the hash value for this trait.
     /// @return size_t The hash value.
-    [[nodiscard]] virtual size_t hash() const = 0;
+    [[nodiscard]] virtual size_t generalHash() const = 0;
 };
+
+template <class T>
+std::size_t generate_hash(const T& obj)
+{
+    std::size_t hash = 0;
+
+    // Create a view of the object and apply hash function to each field
+    const auto view = rfl::to_view(obj);
+    view.apply(
+        [&hash](const auto& field)
+        {
+            // field.value() gives us a pointer to the actual field value
+            hash = folly::hash::hash_combine(hash, *field.value());
+        });
+
+    return hash;
+}
+
+
+template <class T>
+bool objects_equal(const T& lhs, const T& rhs)
+{
+    // Create views of both objects
+    const auto lhs_view = rfl::to_view(lhs);
+    const auto rhs_view = rfl::to_view(rhs);
+
+    // Compare field by field
+    bool are_equal = true;
+
+    return rfl::apply(
+        [&]<typename... AFields>(AFields... aFields)
+        { return rfl::apply([&]<typename... BFields>(BFields... bFields) { return ((*aFields == *bFields) && ...); }, rhs_view.values()); },
+        lhs_view.values());
+}
 
 /// Base class providing default implementations for traits without custom data
 template <typename Derived>
 struct DefaultTrait : TraitConcept
 {
-    bool operator==(const TraitConcept& other) const final { return typeid(other) == typeid(Derived); }
+    static constexpr bool HasData = requires(Derived d) {
+        { d.data };
+        requires std::is_standard_layout_v<decltype(d.data)>;
+    };
 
-    [[nodiscard]] size_t hash() const final { return std::type_index(typeid(Derived)).hash_code(); }
+    bool equals(const TraitConcept& other) const final
+    {
+        if (auto p = dynamic_cast<const Derived*>(&other))
+        {
+            if constexpr (HasData)
+            {
+                return objects_equal(static_cast<const Derived*>(this)->data, p->data);
+            }
+            else
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    [[nodiscard]] size_t generalHash() const final
+    {
+        auto hash = std::type_index(typeid(Derived)).hash_code();
+        if constexpr (HasData)
+        {
+            hash = folly::hash::hash_combine(hash, generate_hash(static_cast<const Derived*>(this)->data));
+        }
+        return hash;
+    }
 
     [[nodiscard]] const std::type_info& getType() const final { return typeid(Derived); }
+    [[nodiscard]] std::string_view getName() const final { return Derived::Name; }
 
-    [[nodiscard]] SerializableTrait serialize() const final
+    [[nodiscard]] SerializableTrait generalSerialize() const final
     {
         SerializableTrait trait;
-        trait.set_trait_type(getType().name());
+        if constexpr (HasData)
+        {
+            const auto bytes = rfl::flexbuf::write(static_cast<const Derived*>(this)->data);
+            trait.set_data(bytes.data(), bytes.size());
+        }
+
+        trait.set_trait_type(getName());
         return trait;
+    }
+
+    void generalDeserialize(const SerializableTrait& serializable) final
+    {
+        INVARIANT(serializable.trait_type() == getName(), "trait type mismatch");
+        if constexpr (HasData)
+        {
+            auto result = rfl::flexbuf::read<decltype(Derived::data)>(serializable.data().data(), serializable.data().size());
+            if (!result)
+            {
+                throw CannotDeserialize("Trait deserialization failed for '{}'", getName());
+            }
+            static_cast<Derived*>(this)->data = *result;
+        }
     }
 };
 
@@ -98,7 +186,7 @@ struct Trait
 
     bool operator==(const Trait& other) const { return self->equals(*other.self); }
 
-    [[nodiscard]] size_t hash() const { return self->hash(); }
+    [[nodiscard]] size_t hash() const { return self->generalHash(); }
 
     /// Attempts to get the underlying trait as type TraitType.
     /// @tparam TraitType The type to try to get the trait as.
@@ -132,12 +220,13 @@ struct Trait
     /// Serializes this trait to a protobuf message.
     /// @return SerializableTrait The serialized trait.
     [[nodiscard]] SerializableTrait serialize() const;
+    void deserialize(const SerializableTrait&);
+    std::type_index getTypeIndex() const { return self->getType(); }
 
 private:
     struct Concept : TraitConcept
     {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
-        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 
     template <IsTrait TraitType>
@@ -148,34 +237,27 @@ private:
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data); }
 
-        bool operator==(const TraitConcept& other) const override
+        bool equals(const TraitConcept& other) const override
         {
-            if (auto p = dynamic_cast<const Model*>(&other))
+            if (auto model = dynamic_cast<const Model*>(&other))
             {
-                return data.operator==(p->data);
+                return data.equals(model->data);
             }
             return false;
         }
 
-        [[nodiscard]] bool equals(const Concept& other) const override
-        {
-            if (auto p = dynamic_cast<const Model*>(&other))
-            {
-                return data.operator==(p->data);
-            }
-            return false;
-        }
-
-        [[nodiscard]] size_t hash() const override { return data.hash(); }
+        [[nodiscard]] size_t generalHash() const override { return data.generalHash(); }
 
         [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
-        [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
+        [[nodiscard]] std::string_view getName() const override { return data.getName(); }
+        [[nodiscard]] SerializableTrait generalSerialize() const override { return data.generalSerialize(); }
+        void generalDeserialize(const SerializableTrait& trait) override { data.generalDeserialize(trait); }
     };
 
     std::unique_ptr<Concept> self;
 };
 
-using TraitSet = std::unordered_set<Trait>;
+using TraitSet = std::unordered_map<std::type_index, Trait>;
 
 }
 
@@ -185,34 +267,51 @@ struct std::hash<NES::Trait>
     size_t operator()(const NES::Trait& trait) const noexcept { return trait.hash(); }
 };
 
-template <typename T>
+namespace NES
+{
+template <IsTrait T>
 std::optional<T> getTrait(const NES::TraitSet& traitSet)
 {
-    for (const auto& trait : traitSet)
+    auto it = traitSet.find(std::type_index(typeid(T)));
+    if (it != traitSet.end())
     {
-        if (trait.tryGet<T>())
-        {
-            return {trait.get<T>()};
-        }
+        return it->second.get<T>();
     }
     return std::nullopt;
 }
 
-template <typename T>
+template <IsTrait T, typename... Args>
+requires(std::is_constructible_v<T, Args...>)
+TraitSet addTrait(const NES::TraitSet& traits, Args&&... args)
+{
+    TraitSet copy = traits;
+    copy.try_emplace(typeid(T), T(std::forward<Args>(args)...));
+    return copy;
+}
+
+template <IsTrait T, typename... Args>
+requires(std::is_constructible_v<T, Args...>)
+TraitSet addTrait(NES::TraitSet&& traits, Args&&... args)
+{
+    traits.try_emplace(typeid(T), T(std::forward<Args>(args)...));
+    return traits;
+}
+
+TraitSet addTrait(TraitSet&& traits, Trait t);
+
+template <IsTrait T>
 bool hasTrait(const NES::TraitSet& traitSet)
 {
-    for (const auto& trait : traitSet)
-    {
-        if (trait.tryGet<T>())
-        {
-            return true;
-        }
-    }
-    return false;
+    return traitSet.contains(std::type_index(typeid(T)));
 }
 
 template <typename... TraitTypes>
 bool hasTraits(const NES::TraitSet& traitSet)
 {
     return (hasTrait<TraitTypes>(traitSet) && ...);
+}
+
+TraitSet deserializeTraitSet(const SerializableTraitSet& traitSet);
+void serializeTraitSet(const TraitSet& traitSet, SerializableTraitSet& traitSetProto);
+
 }

@@ -19,7 +19,7 @@ import "SerializableVariantDescriptor.proto";
 
 message SerializableTrait {
   string trait_type = 1;
-  map<string, SerializableVariantDescriptor> config = 2;
+  bytes data = 2;
 }
 
 message SerializableTraitSet {

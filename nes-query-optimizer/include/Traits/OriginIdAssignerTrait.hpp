@@ -22,6 +22,7 @@ namespace NES
 /// Marks an operator as creator of new origin ids
 struct OriginIdAssignerTrait final : DefaultTrait<OriginIdAssignerTrait>
 {
+    static constexpr std::string_view Name = "OriginIdAssigner";
 };
 
 }

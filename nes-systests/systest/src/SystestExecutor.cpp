@@ -486,8 +486,18 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
+        auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
+        if (not config.workerConfig.getValue().empty())
+        {
+            singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+        }
+        else if (config.singleNodeWorkerConfig.has_value())
+        {
+            singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
+        }
+
         Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
-        auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
+        auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles, singleNodeWorkerConfiguration.workerConfiguration.defaultQueryExecution);
         if (loadedFiles != discoveredTestFiles.size())
         {
             return {
@@ -526,15 +536,7 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         }
         else
         {
-            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-            if (not config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-            }
-            else if (config.singleNodeWorkerConfig.has_value())
-            {
-                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-            }
+
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
