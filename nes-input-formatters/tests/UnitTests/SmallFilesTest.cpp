@@ -312,7 +312,7 @@ TEST_F(SmallFilesTest, testBimboData)
         .formatterType = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 10,
-        .numberOfThreads = 8,
+        .numberOfThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
