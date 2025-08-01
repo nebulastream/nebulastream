@@ -21,7 +21,6 @@
 
 namespace NES::Memory::MemoryLayouts
 {
-
 /**
  * @brief Implements a columnar layout, that maps all tuples in a tuple buffer to a column-wise layout.
  * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
@@ -34,11 +33,10 @@ namespace NES::Memory::MemoryLayouts
  */
 class ColumnLayout : public MemoryLayout
 {
-public:
-    ColumnLayout(uint64_t bufferSize, Schema schema);
-    ColumnLayout(const ColumnLayout& other);
+    friend MemoryLayout;
 
-    static std::shared_ptr<ColumnLayout> create(uint64_t bufferSize, Schema schema);
+public:
+    ColumnLayout(const ColumnLayout& other);
 
     /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// For the column layout the field offset is calculated as follows:
@@ -50,7 +48,10 @@ public:
     [[nodiscard]] uint64_t getColumnOffset(uint64_t fieldIndex) const;
 
 private:
+    ColumnLayout(uint64_t bufferSize, Schema schema);
+
+    static std::shared_ptr<ColumnLayout> create(uint64_t bufferSize, const Schema& schema);
+
     std::vector<uint64_t> columnOffsets;
 };
-
 }
