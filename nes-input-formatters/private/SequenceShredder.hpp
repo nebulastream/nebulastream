@@ -36,6 +36,14 @@
 namespace NES::InputFormatters
 {
 
+/// Acronyms:
+/// idx/Idx <-> Index
+/// SN <-> Sequence Number
+/// RB <-> Ring Buffer
+/// STuple/sTuple <-> Spanning Tuple
+/// ABA <-> ABA Problem (https: //en.wikipedia.org/wiki/ABA_problem)
+/// abaItNo/ABAItNo <-> ABA Iteration Number
+
 struct SequenceShredderResult
 {
     bool isInRange;
