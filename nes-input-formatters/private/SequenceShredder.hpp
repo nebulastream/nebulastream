@@ -66,7 +66,7 @@ class SequenceShredder
     static constexpr size_t SIZE_OF_RING_BUFFER = 1024;
 
 public:
-    explicit SequenceShredder() = default;
+    explicit SequenceShredder() : ringBuffer(SIZE_OF_RING_BUFFER) {};
     ~SequenceShredder();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
@@ -77,7 +77,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    SequenceRingBuffer<SIZE_OF_RING_BUFFER> ringBuffer;
+    SequenceRingBuffer ringBuffer;
 };
 
 }

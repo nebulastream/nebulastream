@@ -198,7 +198,6 @@ private:
     uint32_t lastDelimiterOffset{};
 };
 
-template <size_t N>
 class SequenceRingBuffer
 {
     /// Result of trying to claim a buffer (with a specific SN) as the start of a spanning tuple.
@@ -225,7 +224,7 @@ public:
 
     struct NonClaimingRangeSearchResult
     {
-        NonClaimingRangeSearchState state = RangeSearchState::NONE;
+        NonClaimingRangeSearchState state = NonClaimingRangeSearchState::NONE;
         SequenceNumberType leadingStartSN{};
         SequenceNumberType trailingStartSN{};
     };
@@ -239,7 +238,10 @@ public:
         SequenceNumberType trailingStartSN{};
     };
 
-    SequenceRingBuffer() { ringBuffer[0].setStateOfFirstIndex(); }
+    explicit SequenceRingBuffer(const size_t initialSize) : ringBuffer(std::vector<SSMetaData>(initialSize)), N(initialSize)
+    {
+        ringBuffer[0].setStateOfFirstIndex();
+    }
 
     ///
     std::optional<StagedBuffer> tryClaimSpanningTuple(const size_t firstDelimiterIdx, const uint32_t abaItNumberOfFirstDelimiter)
@@ -322,10 +324,11 @@ public:
     }
 
 private:
-    std::array<SSMetaData, N> ringBuffer{};
+    std::vector<SSMetaData> ringBuffer{};
+    size_t N{};
 
     // Todo: could think about making below functions 'free functions'
-    std::pair<SSMetaData::EntryState, size_t> searchLeading(const size_t rbIdxOfSN, const size_t abaItNumber)
+    std::pair<SSMetaData::EntryState, size_t> searchLeading(const size_t rbIdxOfSN, const size_t abaItNumber) const
     {
         size_t leadingDistance = 1;
         auto isPriorIteration = static_cast<size_t>(rbIdxOfSN < leadingDistance);
@@ -411,4 +414,4 @@ private:
 };
 }
 
-FMT_OSTREAM(NES::InputFormatters::SequenceRingBuffer<1024>);
+FMT_OSTREAM(NES::InputFormatters::SequenceRingBuffer);
