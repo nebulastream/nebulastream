@@ -158,6 +158,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     stateToTransfer = mergedBuffers;
     // NES_ERROR("Finished serializing at {}", endTime);
+    NES_ERROR("Buffers to send {}", mergedBuffers.size());
     return mergedBuffers;
 }
 
