@@ -2,10 +2,10 @@ services:
   worker-1:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080", "--bind=0.0.0.0:9090", "--connection=worker-1:9090", "--worker.queryEngine.numberOfWorkerThreads=4" , "--worker.defaultQueryExecution.executionMode=COMPILER"]
-    image: worker-image
-    ports:
-      - "8080:8080"
+    command: [ "--grpc=0.0.0.0:8080", "--bind=0.0.0.0:9090", "--connection=worker-1:9090", "--worker.queryEngine.numberOfWorkerThreads=4" , "--worker.defaultQueryExecution.executionMode=COMPILER" ]
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: ..
       dockerfile: demo/SingleNodeWorker.dockerfile
@@ -15,10 +15,12 @@ services:
   worker-10:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-10:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-10:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
     ports:
       - "8089:8080"
@@ -26,89 +28,105 @@ services:
   worker-9:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-9:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-9:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8088:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-8:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-8:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-8:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8087:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-7:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-7:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-7:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8086:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-6:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-6:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-6:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8085:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-5:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-5:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-5:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8084:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-4:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-4:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-4:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8083:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-3:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-3:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-3:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8082:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   worker-2:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-2:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-2:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8081:8080"
     depends_on:
       - worker-1
-    image: worker-image
+    image: worker-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     pull_policy: never
 
   datagen:
