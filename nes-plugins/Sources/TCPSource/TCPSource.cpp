@@ -256,7 +256,7 @@ bool TCPSource::fillBuffer(Memory::TupleBuffer& tupleBuffer, size_t& numReceived
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
                  >= flushIntervalInMs))
         {
-            NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_TRACE("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }

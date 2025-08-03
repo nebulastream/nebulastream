@@ -271,6 +271,7 @@ async fn control_socket(
                 let receiver_span = receiver_span.clone();
                 let ports = vec![listener_port.local_addr().unwrap().port()];
                 loop {
+                    info!("Listening for connection to {bind_address}");
                     let Ok((stream, addr)) = listener_port.accept().await else {
                         error!("Control socket was closed");
                         return;
