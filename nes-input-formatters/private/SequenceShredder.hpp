@@ -43,6 +43,7 @@ namespace NES::InputFormatters
 /// STuple/sTuple <-> Spanning Tuple
 /// ABA <-> ABA Problem (https: //en.wikipedia.org/wiki/ABA_problem)
 /// abaItNo/ABAItNo <-> ABA Iteration Number
+/// rbIdxOfSN <-> ring buffer index of sequence number
 
 struct SequenceShredderResult
 {
@@ -50,6 +51,15 @@ struct SequenceShredderResult
     size_t indexOfInputBuffer;
     std::vector<StagedBuffer> spanningBuffers;
 };
+
+// Todo:
+// - 'std::vector' instead of array, then hide impl details of ring buffer
+// - strong types for SN, ABA, other indexes
+// - impl(.cpp) for SequenceRingBuffer (<-- rename to SpanningRingBuffer?)
+
+// Todo (optional):
+// - resizing
+// - verbose logging
 
 class SequenceShredder
 {
@@ -60,9 +70,7 @@ public:
     ~SequenceShredder();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
-    /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
-    /// For details on the inner workings of this function, read the description of the class above.
-
+    /// Todo: Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
     SequenceShredderResult findSTsWithDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
     SequenceShredderResult findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
 
