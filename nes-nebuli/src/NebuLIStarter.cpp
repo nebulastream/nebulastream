@@ -48,6 +48,7 @@ constexpr auto CMD_STOP = "stop";
 constexpr auto CMD_UNREGISTER = "unregister";
 constexpr auto CMD_DUMP = "dump";
 constexpr auto CMD_STATUS = "status";
+constexpr auto CMD_QUERY_STATUS = "query";
 
 /// argument names
 constexpr auto ARG_DEBUG_SHORT = "-d";
@@ -154,6 +155,37 @@ void handleStart(const argparse::ArgumentParser& startArgs)
     executeForEachQuery(startArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId) { client->start(queryId); });
 }
 
+void handleQueryStatus(const argparse::ArgumentParser& statusArgs)
+{
+    std::vector<QueryStatus> query_statuses;
+    executeForEachQuery(
+        statusArgs.get<std::string>(ARG_QUERY_ID),
+        [&](std::shared_ptr<NES::GRPCClient>& client, const auto& queryId)
+        {
+            auto status = client->status(queryId);
+            query_statuses.push_back(status);
+        });
+    auto running = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Running; });
+    auto stopped = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Stopped; });
+    auto failed = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Failed; });
+    if (failed > 0)
+    {
+        std::cout << "failed" << std::endl;
+    }
+    else if (stopped == 0 && running > 0)
+    {
+        std::cout << "running" << std::endl;
+    }
+    else if (stopped > 0 && running > 0)
+    {
+        std::cout << "partially running" << std::endl;
+    }
+    else if (stopped > 0 && running == 0)
+    {
+        std::cout << "stopped" << std::endl;
+    }
+}
+
 void handleStop(const argparse::ArgumentParser& stopArgs)
 {
     executeForEachQuery(stopArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId) { client->stop(queryId); });
@@ -170,7 +202,7 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
     std::vector<NES::Distributed::QueryId::ConnectionQueryIdPair> queryFragments;
     const bool autoStart = registerArgs.is_used(ARG_AUTO_START);
 
-    for (const auto& [grpcAddr, plan] : decomposedPlan)
+    for (const auto& [grpcAddr, plans] : decomposedPlan)
     {
         try
         {
@@ -178,16 +210,17 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
                 = grpc::CreateChannel(grpcAddr, grpc::InsecureChannelCredentials()); /// TODO: use grpc address instead of host addr
             const auto client = std::make_shared<NES::GRPCClient>(std::move(channel));
 
-            const auto queryId = client->registerQuery(plan);
-            queryFragments.emplace_back(grpcAddr, queryId.getRawValue());
-
-            if (autoStart)
+            for (const auto& plan : plans)
             {
-                client->start(queryId);
-                NES_INFO("Started query {} on host {}", queryId.getRawValue(), grpcAddr);
-            }
+                const auto queryId = client->registerQuery(plan);
+                queryFragments.emplace_back(grpcAddr, queryId.getRawValue());
 
-            std::cout << queryId.getRawValue() << '\n';
+                if (autoStart)
+                {
+                    client->start(queryId);
+                    NES_INFO("Started query {} on host {}", queryId.getRawValue(), grpcAddr);
+                }
+            }
         }
         catch (const std::exception& e)
         {
@@ -196,7 +229,8 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
         }
     }
 
-    NES::Distributed::QueryId::save(NES::Distributed::QueryId{queryFragments});
+    auto id = NES::Distributed::QueryId::save(NES::Distributed::QueryId{queryFragments});
+    std::cout << id << '\n';
     NES_INFO("Successfully registered {} query fragments", queryFragments.size());
 }
 
@@ -209,6 +243,7 @@ struct ArgParsers
     argparse::ArgumentParser unregisterParser{CMD_UNREGISTER};
     argparse::ArgumentParser dumpParser{CMD_DUMP};
     argparse::ArgumentParser statusParser{CMD_STATUS};
+    argparse::ArgumentParser queryStatusParser{CMD_QUERY_STATUS};
 };
 
 void setupArgParsers(argparse::ArgumentParser& program, ArgParsers& parsers)
@@ -224,15 +259,15 @@ void setupArgParsers(argparse::ArgumentParser& program, ArgParsers& parsers)
     program.add_subparser(parsers.registerParser);
 
     /// Start subcommand
-    parsers.startParser.add_argument(ARG_QUERY_ID).scan<'i', size_t>().help("ID of the query to start");
+    parsers.startParser.add_argument(ARG_QUERY_ID).help("ID of the query to start");
     program.add_subparser(parsers.startParser);
 
     /// Stop subcommand
-    parsers.stopParser.add_argument(ARG_QUERY_ID).scan<'i', size_t>().help("ID of the query to stop");
+    parsers.stopParser.add_argument(ARG_QUERY_ID).help("ID of the query to stop");
     program.add_subparser(parsers.stopParser);
 
     /// Unregister subcommand
-    parsers.unregisterParser.add_argument(ARG_QUERY_ID).scan<'i', size_t>().help("ID of the query to unregister");
+    parsers.unregisterParser.add_argument(ARG_QUERY_ID).help("ID of the query to unregister");
     program.add_subparser(parsers.unregisterParser);
 
     /// Dump subcommand
@@ -249,6 +284,10 @@ void setupArgParsers(argparse::ArgumentParser& program, ArgParsers& parsers)
     parsers.statusParser.add_argument(ARG_AFTER).scan<'i', size_t>().default_value(size_t{0}).help(
         "Request only status updates after this unix timestamp");
     program.add_subparser(parsers.statusParser);
+
+    /// QueryStatus subcommand
+    parsers.queryStatusParser.add_argument(ARG_QUERY_ID).required();
+    program.add_subparser(parsers.queryStatusParser);
 }
 }
 
@@ -275,7 +314,13 @@ int main(const int argc, char** argv)
         }
 
         std::vector<std::reference_wrapper<argparse::ArgumentParser>> subcommands{
-            parsers.registerParser, parsers.startParser, parsers.stopParser, parsers.unregisterParser, parsers.dumpParser};
+            parsers.registerParser,
+            parsers.startParser,
+            parsers.stopParser,
+            parsers.unregisterParser,
+            parsers.dumpParser,
+            parsers.statusParser,
+            parsers.queryStatusParser};
 
         if (!std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); }))
         {
@@ -298,6 +343,10 @@ int main(const int argc, char** argv)
             if (program.is_subcommand_used(CMD_STATUS))
             {
                 handleStatus(program.at<argparse::ArgumentParser>(CMD_STATUS));
+            }
+            else if (program.is_subcommand_used(CMD_QUERY_STATUS))
+            {
+                handleQueryStatus(program.at<argparse::ArgumentParser>(CMD_QUERY_STATUS));
             }
             else if (program.is_subcommand_used(CMD_START))
             {
@@ -324,7 +373,10 @@ int main(const int argc, char** argv)
                 {
                     for (const auto& nodePlan : decomposedPlan | std::views::values)
                     {
-                        handleDump(subparser, nodePlan);
+                        for (const auto& plan : nodePlan)
+                        {
+                            handleDump(subparser, plan);
+                        }
                     }
                 }
                 else

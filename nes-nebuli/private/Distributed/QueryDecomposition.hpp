@@ -121,7 +121,7 @@ public:
     QueryDecomposer& operator=(const QueryDecomposer&) = delete;
     QueryDecomposer& operator=(QueryDecomposer&&) = delete;
 
-    using DecomposedLogicalPlan = std::unordered_map<CLI::HostAddr, LogicalPlan>;
+    using DecomposedLogicalPlan = std::unordered_map<CLI::HostAddr, std::vector<LogicalPlan>>;
     DecomposedLogicalPlan decompose() &&;
 
 private:
