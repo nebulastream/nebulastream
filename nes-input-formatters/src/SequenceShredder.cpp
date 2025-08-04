@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -37,8 +38,11 @@
 namespace NES::InputFormatters
 {
 
-SequenceShredder::SequenceShredder() : spanningTupleBuffer(std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER))
+SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
 {
+    auto dummyBuffer = Memory::BufferManager::create(1, 1)->getBufferBlocking();
+    dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
+    this->spanningTupleBuffer = std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER, std::move(dummyBuffer));
 }
 
 SequenceShredder::~SequenceShredder()

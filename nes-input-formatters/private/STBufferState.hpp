@@ -147,7 +147,7 @@ public:
     STBufferEntry() = default;
 
     /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
-    void setStateOfFirstIndex();
+    void setStateOfFirstIndex(Memory::TupleBuffer dummyBuffer);
 
     /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (ST).
     /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the ST.
