@@ -188,6 +188,9 @@ SequenceRingBuffer::searchWithoutClaimingBuffers(const size_t pivotSN, const siz
 {
     if (const auto firstBufferSN = nonClaimingLeadingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
     {
+        /// Can't use 'claimingTrailingDelimiterSearch', since the start of the ST and start of the search (sequenceNumber+1) are different
+        // Todo: could create 'claimingTrailingDelimiterSearch' that takes different vals for start of search and first SN
+        // -> then overload and call more complex function from simpler version
         if (const auto secondBufferSN = nonClaimingTrailingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
         {
             const auto sTupleStartBufferIdx = firstBufferSN.value() % bufferSize;

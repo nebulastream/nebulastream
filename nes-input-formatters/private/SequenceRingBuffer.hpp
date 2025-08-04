@@ -220,7 +220,7 @@ public:
         };
 
         State state = State::NONE;
-        std::optional<StagedBuffer> startBuffer{};
+        std::optional<StagedBuffer> startBuffer = std::nullopt;
         SequenceNumberType startBufferSN{};
         SequenceNumberType endBufferSN{};
     };
