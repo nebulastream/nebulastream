@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpStream, lookup_host};
 use tokio_serde::Framed;
-use tokio_serde::formats::Json;
+use tokio_serde::formats::Cbor;
 use tokio_util::codec::LengthDelimitedCodec;
 use tokio_util::codec::{FramedRead, FramedWrite};
 
@@ -108,50 +108,50 @@ pub type DataChannelSenderReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     DataChannelResponse,
     DataChannelResponse,
-    Json<DataChannelResponse, DataChannelResponse>,
+    Cbor<DataChannelResponse, DataChannelResponse>,
 >;
 pub type DataChannelSenderWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Json<DataChannelRequest, DataChannelRequest>,
+    Cbor<DataChannelRequest, DataChannelRequest>,
 >;
 pub type DataChannelReceiverReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Json<DataChannelRequest, DataChannelRequest>,
+    Cbor<DataChannelRequest, DataChannelRequest>,
 >;
 pub type DataChannelReceiverWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     DataChannelResponse,
     DataChannelResponse,
-    Json<DataChannelResponse, DataChannelResponse>,
+    Cbor<DataChannelResponse, DataChannelResponse>,
 >;
 
 pub type ControlChannelSenderReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     ControlChannelResponse,
     ControlChannelResponse,
-    Json<ControlChannelResponse, ControlChannelResponse>,
+    Cbor<ControlChannelResponse, ControlChannelResponse>,
 >;
 pub type ControlChannelSenderWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     ControlChannelRequest,
     ControlChannelRequest,
-    Json<ControlChannelRequest, ControlChannelRequest>,
+    Cbor<ControlChannelRequest, ControlChannelRequest>,
 >;
 pub type ControlChannelReceiverReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     ControlChannelRequest,
     ControlChannelRequest,
-    Json<ControlChannelRequest, ControlChannelRequest>,
+    Cbor<ControlChannelRequest, ControlChannelRequest>,
 >;
 pub type ControlChannelReceiverWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     ControlChannelResponse,
     ControlChannelResponse,
-    Json<ControlChannelResponse, ControlChannelResponse>,
+    Cbor<ControlChannelResponse, ControlChannelResponse>,
 >;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -168,25 +168,25 @@ pub type IdentificationSenderReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     IdentificationResponse,
     IdentificationResponse,
-    Json<IdentificationResponse, IdentificationResponse>,
+    Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 pub type IdentificationSenderWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     IdentificationRequest,
     IdentificationRequest,
-    Json<IdentificationRequest, IdentificationRequest>,
+    Cbor<IdentificationRequest, IdentificationRequest>,
 >;
 pub type IdentificationReceiverReader = Framed<
     FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
     IdentificationRequest,
     IdentificationRequest,
-    Json<IdentificationRequest, IdentificationRequest>,
+    Cbor<IdentificationRequest, IdentificationRequest>,
 >;
 pub type IdentificationReceiverWriter = Framed<
     FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
     IdentificationResponse,
     IdentificationResponse,
-    Json<IdentificationResponse, IdentificationResponse>,
+    Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 
 pub fn data_channel_sender(
@@ -196,13 +196,13 @@ pub fn data_channel_sender(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<DataChannelResponse, DataChannelResponse>::default(),
+        Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<DataChannelRequest, DataChannelRequest>::default(),
+        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
     (read, write)
@@ -215,13 +215,13 @@ pub fn data_channel_receiver(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<DataChannelRequest, DataChannelRequest>::default(),
+        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<DataChannelResponse, DataChannelResponse>::default(),
+        Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
     (read, write)
@@ -234,13 +234,13 @@ pub fn control_channel_sender(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<ControlChannelResponse, ControlChannelResponse>::default(),
+        Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<ControlChannelRequest, ControlChannelRequest>::default(),
+        Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
     (read, write)
@@ -253,13 +253,13 @@ pub fn control_channel_receiver(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<ControlChannelRequest, ControlChannelRequest>::default(),
+        Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<ControlChannelResponse, ControlChannelResponse>::default(),
+        Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
     (read, write)
@@ -272,13 +272,13 @@ pub fn identification_sender(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<IdentificationResponse, IdentificationResponse>::default(),
+        Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<IdentificationRequest, IdentificationRequest>::default(),
+        Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
     (read, write)
@@ -291,13 +291,13 @@ pub fn identification_receiver(
     let read = FramedRead::new(read, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<IdentificationRequest, IdentificationRequest>::default(),
+        Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
     let write = FramedWrite::new(write, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<IdentificationResponse, IdentificationResponse>::default(),
+        Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
     (read, write)
