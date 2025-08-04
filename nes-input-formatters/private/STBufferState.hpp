@@ -150,7 +150,6 @@ public:
     bool trySetWithoutDelimiter(ABAItNo abaItNumber, const StagedBuffer& indexedBuffer);
 
     /// Claim a buffer without a delimiter (that connects two buffers with delimiters), taking both buffers and atomically setting both uses at once
-    // Todo: create extra strong type for spanning tuple idx?
     void claimNoDelimiterBuffer(std::span<StagedBuffer> spanningTupleVector, size_t spanningTupleIdx);
 
     /// Claim the leading use of a buffer with a delimiter, only taking the leading buffer atomically setting the leading use

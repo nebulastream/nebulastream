@@ -40,6 +40,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
+#include <RawTupleBuffer.hpp>
 
 
 namespace NES::InputFormatters
