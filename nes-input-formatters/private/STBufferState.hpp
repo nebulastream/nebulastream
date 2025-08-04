@@ -31,6 +31,9 @@
 namespace NES::InputFormatters
 {
 
+using STBufferIdx = NESStrongType<uint32_t, struct STBufferIdx_, 0, 1>;
+using ABAItNo = NESStrongType<uint32_t, struct ABAItNo_, 0, 1>;
+
 class STBufferEntry;
 
 /// (Implementation detail of the STBufferEntry)
@@ -75,7 +78,7 @@ class AtomicState
     {
     public:
         explicit BitmapState(const uint64_t state) : state(state) { };
-        [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state); }
+        [[nodiscard]] ABAItNo getABAItNo() const { return ABAItNo{static_cast<uint32_t>(state)}; }
         [[nodiscard]] bool hasTupleDelimiter() const { return (state & hasTupleDelimiterBit) == hasTupleDelimiterBit; }
         [[nodiscard]] bool hasUsedLeadingBuffer() const { return (state & usedLeadingBufferBit) == usedLeadingBufferBit; }
         [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
@@ -94,14 +97,14 @@ class AtomicState
     AtomicState() : state(defaultState) { };
     ~AtomicState() = default;
 
-    bool tryClaimSpanningTuple(uint32_t abaItNumber);
+    bool tryClaimSpanningTuple(ABAItNo abaItNumber);
 
-    [[nodiscard]] uint32_t getABAItNo() const { return static_cast<uint32_t>(state.load()); }
+    [[nodiscard]] ABAItNo getABAItNo() const { return static_cast<ABAItNo>(state.load()); }
     [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
 
     void setStateOfFirstEntry() { this->state = initialDummyEntry; }
-    void setHasTupleDelimiterState(const size_t abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber); }
-    void setNoTupleDelimiterState(const size_t abaItNumber) { this->state = abaItNumber; }
+    void setHasTupleDelimiterState(const ABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
+    void setNoTupleDelimiterState(const ABAItNo abaItNumber) { this->state = abaItNumber.getRawValue(); }
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
     void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
     void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
@@ -134,31 +137,32 @@ public:
     /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (ST).
     /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the ST.
     /// Only the succeeding thread receives a valid 'StagedBuffer', all other threads receive a 'nullopt'.
-    std::optional<StagedBuffer> tryClaimSpanningTuple(uint32_t abaItNumber);
+    std::optional<StagedBuffer> tryClaimSpanningTuple(ABAItNo abaItNumber);
 
     /// Checks if the current entry was used to construct both a leading and trailing spanning tuple (given it matches abaItNumber - 1)
-    [[nodiscard]] bool isCurrentEntryUsedUp(size_t abaItNumber) const;
+    [[nodiscard]] bool isCurrentEntryUsedUp(ABAItNo abaItNumber) const;
 
     /// Sets the TupleBuffer of the staged buffer for both uses (leading/spanning) and copies the offsets
     void setBuffersAndOffsets(const StagedBuffer& indexedBuffer);
 
     /// Sets the indexed buffer as the new entry, if the prior entry is used up and its expected ABA iteration number is (abaItNumber - 1)
-    bool trySetWithDelimiter(size_t abaItNumber, const StagedBuffer& indexedBuffer);
-    bool trySetWithoutDelimiter(size_t abaItNumber, const StagedBuffer& indexedBuffer);
+    bool trySetWithDelimiter(ABAItNo abaItNumber, const StagedBuffer& indexedBuffer);
+    bool trySetWithoutDelimiter(ABAItNo abaItNumber, const StagedBuffer& indexedBuffer);
 
     /// Claim a buffer without a delimiter (that connects two buffers with delimiters), taking both buffers and atomically setting both uses at once
+    // Todo: create extra strong type for spanning tuple idx?
     void claimNoDelimiterBuffer(std::span<StagedBuffer> spanningTupleVector, size_t spanningTupleIdx);
 
     /// Claim the leading use of a buffer with a delimiter, only taking the leading buffer atomically setting the leading use
     void claimLeadingBuffer(std::span<StagedBuffer> spanningTupleVector, size_t spanningTupleIdx);
 
     /// Atomically loads the state of an entry, checks if its ABA iteration number matches the expected and if it has a tuple delimiter
-    [[nodiscard]] EntryState getEntryState(size_t expectedABAItNo) const;
+    [[nodiscard]] EntryState getEntryState(ABAItNo expectedABAItNo) const;
 
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
-    [[nodiscard]] bool validateFinalState(size_t bufferIdx, const STBufferEntry& nextEntry, size_t lastIdxOfBuffer) const;
+    [[nodiscard]] bool validateFinalState(STBufferIdx bufferIdx, const STBufferEntry& nextEntry, STBufferIdx lastIdxOfBuffer) const;
 
 private:
     // 24 Bytes (TupleBuffer)

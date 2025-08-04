@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <utility>
@@ -26,6 +27,7 @@
 #include <RawTupleBuffer.hpp>
 
 #include <ErrorHandling.hpp>
+#include "Identifiers/NESStrongType.hpp"
 
 
 class ConcurrentSynchronizationTest;
@@ -38,16 +40,6 @@ namespace NES::InputFormatters
 /// SN <-> Sequence Number
 /// ABA <-> ABA Problem (https: //en.wikipedia.org/wiki/ABA_problem)
 /// abaItNo/ABAItNo <-> ABA Iteration Number
-
-// Todo:
-// strong types for:
-// - SN
-// - ABA
-// - buffer index (vs. SN)
-// -
-
-// Todo (optional):
-// - resizing
 
 /// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
 /// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
@@ -93,8 +85,8 @@ private:
 
     /// Enable 'ConcurrentSynchronizationTest' to used mocked buffer and provide 'sequenceNumber' as additional argument
     friend ConcurrentSynchronizationTest;
-    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
-    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
 };
 
 }

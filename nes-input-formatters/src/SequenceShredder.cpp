@@ -64,14 +64,14 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findSTsWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber().getRawValue());
+    return findSTsWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findSTsWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber().getRawValue());
+    return findSTsWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 
-SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumberType sequenceNumber)
+SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
     if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]
@@ -85,8 +85,7 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer
     }
 }
 
-SequenceShredderResult
-SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumberType sequenceNumber)
+SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
     if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]

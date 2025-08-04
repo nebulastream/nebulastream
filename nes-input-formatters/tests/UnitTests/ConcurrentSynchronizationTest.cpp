@@ -143,10 +143,10 @@ public:
                 if (tupleDelimiter)
                 {
                     NES::InputFormatters::SequenceShredderResult result
-                        = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
+                        = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     while (not result.isInRange)
                     {
-                        result = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
+                        result = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
                     if (result.spanningBuffers.size() > 1)
                     {
@@ -160,10 +160,11 @@ public:
                 else
                 {
                     NES::InputFormatters::SequenceShredderResult result
-                        = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
+                        = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     while (not result.isInRange)
                     {
-                        result = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
+                        result
+                            = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
                     if (result.spanningBuffers.size() > 1)
                     {

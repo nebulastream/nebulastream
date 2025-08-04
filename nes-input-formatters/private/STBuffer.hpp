@@ -14,17 +14,13 @@
 
 #pragma once
 
-#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <ostream>
 #include <span>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -36,11 +32,12 @@
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
 #include <STBufferState.hpp>
-
-#include "SequenceShredder.hpp"
+#include <SequenceShredder.hpp>
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::InputFormatters
 {
+
 
 /// The STBuffer enables threads to concurrently resolve spanning tuples.
 /// Spanning tuples (STs) are tuples that span over two or more buffers.
@@ -72,7 +69,7 @@ class STBuffer
     struct ClaimedSpanningTuple
     {
         std::optional<StagedBuffer> firstBuffer;
-        SequenceNumberType snOfLastBuffer{};
+        SequenceNumber snOfLastBuffer = INVALID<SequenceNumber>;
     };
 
 public:
@@ -89,8 +86,8 @@ public:
         Type type = Type::NONE;
         std::optional<StagedBuffer> leadingSTupleStartBuffer = std::nullopt;
         std::optional<StagedBuffer> trailingSTupleStartBuffer = std::nullopt;
-        SequenceNumberType sTupleStartSN{};
-        SequenceNumberType sTupleEndSN{};
+        SequenceNumber sTupleStartSN = INVALID<SequenceNumber>;
+        SequenceNumber sTupleEndSN = INVALID<SequenceNumber>;
     };
 
     explicit STBuffer(size_t initialSize);
@@ -99,12 +96,14 @@ public:
     /// If not, returns as 'NOT_IN_RANGE'
     /// Otherwise, searches for valid spanning tuples and on finding a spanning tuple, tries to claim the first buffer of the spanning tuple
     /// for the calling thread, which claims the entire spanning tuple.
-    [[nodiscard]] SequenceShredderResult tryFindSTsForBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-    [[nodiscard]] SequenceShredderResult tryFindSTsForBufferWithoutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] SequenceShredderResult
+    tryFindSTsForBufferWithDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] SequenceShredderResult
+    tryFindSTsForBufferWithoutDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
     /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back
-    void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
+    void claimSTupleBuffers(SequenceNumber sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
 
     [[nodiscard]] bool validate() const;
 
@@ -113,30 +112,30 @@ public:
 private:
     std::vector<STBufferEntry> buffer;
 
-    [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
+    [[nodiscard]] std::pair<STBufferIdx, ABAItNo> getBufferIdxAndABAItNo(SequenceNumber sequenceNumber) const;
 
     /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
     /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumberType sequenceNumber);
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumber sequenceNumber);
 
     /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
     /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumberType sequenceNumber);
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumber sequenceNumber);
 
     /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
     /// 'Reachable' means there is a path from 'searchStartBufferIdx' to the buffer that traverses 0 or more buffers without delimiters and
     /// valid ABA iteration numbers and that the target buffer has a delimiter and a valid ABA iteration number
     /// Returns distance to 'reachable buffer', if it succeeds in finding one
-    [[nodiscard]] std::optional<size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
+    [[nodiscard]] std::optional<size_t> searchLeading(STBufferIdx searchStartBufferIdx, ABAItNo abaItNumber) const;
     /// Analog to 'searchLeading', but searches in trailing direction (larger SNs)
-    [[nodiscard]] std::optional<size_t> searchTrailing(size_t searchStartBufferIdx, size_t abaItNumber) const;
+    [[nodiscard]] std::optional<size_t> searchTrailing(STBufferIdx searchStartBufferIdx, ABAItNo abaItNumber) const;
 
     /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
     /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.
     /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
     /// On finding a valid starting buffer, threads compete to claim that buffer (and thereby all buffers of the ST).
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumberType spanningTupleEndSN);
+    [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumber spanningTupleEndSN);
 
 
     /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
@@ -144,10 +143,10 @@ private:
     /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
     /// On finding a valid terminating buffer, threads compete to claim the first buffer of the ST(spanningTupleStartSN) and thereby the ST.
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType sTupleStartSN, SequenceNumberType searchStartSN);
+    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumber sTupleStartSN, SequenceNumber searchStartSN);
 
     /// Calls claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN) <-- sTuple start is also where search should start
-    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType sTupleStartSN);
+    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumber sTupleStartSN);
 };
 }
 

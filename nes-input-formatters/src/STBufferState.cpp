@@ -19,7 +19,7 @@ namespace NES::InputFormatters
 //==--------------------------------------------------------------------------------------------------------==//
 //==---------------------------------------- Atomic Bitmap State -----------------------------------------------==//
 //==--------------------------------------------------------------------------------------------------------==//
-bool AtomicState::tryClaimSpanningTuple(const uint32_t abaItNumber)
+bool AtomicState::tryClaimSpanningTuple(const ABAItNo abaItNumber)
 {
     auto atomicFirstDelimiter = getState();
     auto desiredFirstDelimiter = atomicFirstDelimiter;
@@ -50,13 +50,14 @@ std::ostream& operator<<(std::ostream& os, const AtomicState& atomicBitmapState)
 //==--------------------------------------------------------------------------------------------------------==//
 //==---------------------------------------- BufferEntry -----------------------------------------------==//
 //==--------------------------------------------------------------------------------------------------------==//
-bool STBufferEntry::isCurrentEntryUsedUp(const size_t abaItNumber) const
+bool STBufferEntry::isCurrentEntryUsedUp(const ABAItNo abaItNumber) const
 {
     const auto currentEntry = this->atomicState.getState();
     const auto currentABAItNo = currentEntry.getABAItNo();
     const auto currentHasCompletedLeading = currentEntry.hasUsedLeadingBuffer();
     const auto currentHasCompletedTrailing = currentEntry.hasUsedTrailingBuffer();
-    const auto priorEntryIsUsed = currentABAItNo == (abaItNumber - 1) and currentHasCompletedLeading and currentHasCompletedTrailing;
+    const auto priorEntryIsUsed
+        = currentABAItNo.getRawValue() == (abaItNumber.getRawValue() - 1) and currentHasCompletedLeading and currentHasCompletedTrailing;
     return priorEntryIsUsed;
 }
 
@@ -68,7 +69,7 @@ void STBufferEntry::setBuffersAndOffsets(const StagedBuffer& indexedBuffer)
     this->lastDelimiterOffset = indexedBuffer.getOffsetOfLastTupleDelimiter();
 }
 
-bool STBufferEntry::trySetWithDelimiter(const size_t abaItNumber, const StagedBuffer& indexedBuffer)
+bool STBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, const StagedBuffer& indexedBuffer)
 {
     if (isCurrentEntryUsedUp(abaItNumber))
     {
@@ -79,7 +80,7 @@ bool STBufferEntry::trySetWithDelimiter(const size_t abaItNumber, const StagedBu
     return false;
 }
 
-bool STBufferEntry::trySetWithoutDelimiter(const size_t abaItNumber, const StagedBuffer& indexedBuffer)
+bool STBufferEntry::trySetWithoutDelimiter(const ABAItNo abaItNumber, const StagedBuffer& indexedBuffer)
 {
     if (isCurrentEntryUsedUp(abaItNumber))
     {
@@ -90,7 +91,7 @@ bool STBufferEntry::trySetWithoutDelimiter(const size_t abaItNumber, const Stage
     return false;
 }
 
-std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const uint32_t abaItNumber)
+std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const ABAItNo abaItNumber)
 {
     if (this->atomicState.tryClaimSpanningTuple(abaItNumber))
     {
@@ -142,14 +143,14 @@ void STBufferEntry::claimLeadingBuffer(std::span<StagedBuffer> spanningTupleVect
     this->atomicState.setUsedLeadingBuffer();
 }
 
-STBufferEntry::EntryState STBufferEntry::getEntryState(const size_t expectedABAItNo) const
+STBufferEntry::EntryState STBufferEntry::getEntryState(const ABAItNo expectedABAItNo) const
 {
     const auto currentState = this->atomicState.getState();
     const bool isCorrectABA = expectedABAItNo == currentState.getABAItNo();
     const bool hasDelimiter = currentState.hasTupleDelimiter();
     return EntryState{.hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter};
 }
-bool STBufferEntry::validateFinalState(const size_t bufferIdx, const STBufferEntry& nextEntry, const size_t lastIdxOfBuffer) const
+bool STBufferEntry::validateFinalState(const STBufferIdx bufferIdx, const STBufferEntry& nextEntry, const STBufferIdx lastIdxOfBuffer) const
 {
     bool isValidFinalState = true;
     const auto state = this->atomicState.getState();
@@ -165,7 +166,8 @@ bool STBufferEntry::validateFinalState(const size_t bufferIdx, const STBufferEnt
     }
 
     /// Add '1' to the ABA iteration number, if the current entry is the last index of the ring buffer and the next entry wraps around
-    if (state.getABAItNo() + static_cast<size_t>(bufferIdx == lastIdxOfBuffer) == nextEntry.atomicState.getABAItNo())
+    if (state.getABAItNo().getRawValue() + static_cast<size_t>(bufferIdx == lastIdxOfBuffer)
+        == nextEntry.atomicState.getABAItNo().getRawValue())
     {
         if (not state.hasUsedTrailingBuffer())
         {
