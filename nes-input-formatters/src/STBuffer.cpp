@@ -37,9 +37,10 @@
 namespace NES
 {
 
-STBuffer::STBuffer(const size_t initialSize) : buffer(std::vector<STBufferEntry>(initialSize))
+STBuffer::STBuffer(const size_t initialSize, TupleBuffer dummyBuffer) : buffer(std::vector<STBufferEntry>(initialSize))
 {
-    buffer[0].setStateOfFirstIndex();
+    PRECONDITION(initialSize > 0, "Constructing an STBuffer with an initial size of 0 is not allowed");
+    buffer.at(0).setStateOfFirstIndex(std::move(dummyBuffer));
 }
 
 STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingST(const SequenceNumber sequenceNumber)
