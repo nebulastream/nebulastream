@@ -183,25 +183,28 @@ SequenceRingBuffer::SequenceRingBuffer(const size_t initialSize) : ringBuffer(st
     ringBuffer[0].setStateOfFirstIndex();
 }
 
-SequenceRingBuffer::NonClaimingSearchResult
-SequenceRingBuffer::searchWithoutClaimingBuffers(const size_t pivotSN, const size_t abaItNumber, const SequenceNumberType sequenceNumber)
+// Todo: rename to something more appropriate <-- single buffer can be found
+SequenceRingBuffer::ClaimingSearchResult SequenceRingBuffer::searchAndTryClaimLeadingBuffer(const SequenceNumberType sequenceNumber)
 {
-    if (const auto sTupleStartSN = nonClaimingLeadingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
+    const auto [sequenceNumberBufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
+    if (const auto sTupleStartSN = nonClaimingLeadingDelimiterSearch(sequenceNumberBufferIdx, abaItNumber, sequenceNumber))
     {
         if (auto [startBuffer, sTupleEndSN] = claimingTrailingDelimiterSearch(sTupleStartSN.value(), sequenceNumber);
             startBuffer.has_value())
         {
-            return NonClaimingSearchResult{
-                .state = NonClaimingSearchResult::State::LEADING_AND_TRAILING_ST,
-                .sTupleStartBuffer = std::move(startBuffer),
+            return ClaimingSearchResult{
+                .state = ClaimingSearchResult::State::LEADING_ST,
+                .leadingSTupleStartBuffer = std::move(startBuffer),
+                .trailingSTupleStartBuffer = std::nullopt,
                 .sTupleStartSN = sTupleStartSN.value(),
                 .sTupleEndSN = sTupleEndSN};
         }
     }
-    return NonClaimingSearchResult{.state = NonClaimingSearchResult::State::NONE};
+    return ClaimingSearchResult{.state = ClaimingSearchResult::State::NONE};
 }
 
-SequenceRingBuffer::ClaimingSearchResult SequenceRingBuffer::searchAndClaimBuffers(const SequenceNumberType sequenceNumber)
+SequenceRingBuffer::ClaimingSearchResult
+SequenceRingBuffer::searchAndTryClaimLeadingAndTrailingBuffer(const SequenceNumberType sequenceNumber)
 {
     auto [firstSTStartBuffer, firstSTFinalSN] = claimingLeadingDelimiterSearch(sequenceNumber);
     auto [secondSTStartBuffer, secondSTFinalSN] = claimingTrailingDelimiterSearch(sequenceNumber);
@@ -209,10 +212,10 @@ SequenceRingBuffer::ClaimingSearchResult SequenceRingBuffer::searchAndClaimBuffe
         (static_cast<uint8_t>(secondSTStartBuffer.has_value()) << 1UL) + static_cast<uint8_t>(firstSTStartBuffer.has_value()));
     return ClaimingSearchResult{
         .state = rangeState,
-        .leadingStartBuffer = std::move(firstSTStartBuffer),
-        .trailingStartBuffer = std::move(secondSTStartBuffer),
-        .leadingStartSN = firstSTFinalSN,
-        .trailingStartSN = secondSTFinalSN};
+        .leadingSTupleStartBuffer = std::move(firstSTStartBuffer),
+        .trailingSTupleStartBuffer = std::move(secondSTStartBuffer),
+        .sTupleStartSN = firstSTFinalSN,
+        .sTupleEndSN = secondSTFinalSN};
 }
 
 void SequenceRingBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<StagedBuffer> spanningTupleBuffers)
@@ -257,6 +260,12 @@ std::ostream& operator<<(std::ostream& os, const SequenceRingBuffer& sequenceRin
 }
 
 
+std::pair<SequenceNumberType, uint32_t> SequenceRingBuffer::getBufferIdxAndABAItNo(const SequenceNumberType sequenceNumber) const
+{
+    const auto sequenceNumberBufferIdx = sequenceNumber % ringBuffer.size();
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / ringBuffer.size()) + 1;
+    return std::make_pair(sequenceNumberBufferIdx, abaItNumber);
+}
 std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchLeading(const size_t rbIdxOfSN, const size_t abaItNumber) const
 {
     size_t leadingDistance = 1;
@@ -272,7 +281,7 @@ std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchLeading(cons
 }
 
 std::optional<uint32_t> SequenceRingBuffer::nonClaimingLeadingDelimiterSearch(
-    const size_t rbIdxOfSN, const size_t abaItNumber, const SequenceNumberType sequenceNumber)
+    const size_t rbIdxOfSN, const size_t abaItNumber, const SequenceNumberType sequenceNumber) const
 {
     /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
     const auto [cellState, leadingDistance] = searchLeading(rbIdxOfSN, abaItNumber);
@@ -281,23 +290,21 @@ std::optional<uint32_t> SequenceRingBuffer::nonClaimingLeadingDelimiterSearch(
 
 SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingLeadingDelimiterSearch(const SequenceNumberType spanningTupleEndSN)
 {
-    const auto spanningTupleStartIdx = spanningTupleEndSN % ringBuffer.size();
-    const auto abaItNumberSpanningTupleStart = static_cast<uint32_t>(spanningTupleEndSN / ringBuffer.size()) + 1;
-    if (const auto [cellState, leadingDistance] = searchLeading(spanningTupleStartIdx, abaItNumberSpanningTupleStart);
-        cellState.isCorrectABA)
+    const auto [sTupleEndBufferIdx, sTupleEndAbaItNo] = getBufferIdxAndABAItNo(spanningTupleEndSN);
+    if (const auto [cellState, leadingDistance] = searchLeading(sTupleEndBufferIdx, sTupleEndAbaItNo); cellState.isCorrectABA)
     {
-        const auto sTupleSN = spanningTupleEndSN - leadingDistance;
-        const auto sTupleIdx = sTupleSN % ringBuffer.size();
-        const auto isPriorIteration = static_cast<size_t>(spanningTupleStartIdx < leadingDistance);
+        const auto sTupleStartSN = spanningTupleEndSN - leadingDistance;
+        const auto sTupleStartBufferIdx = sTupleStartSN % ringBuffer.size();
+        const auto isPriorIteration = static_cast<size_t>(sTupleEndBufferIdx < sTupleStartBufferIdx);
         return ClaimedSpanningTuple{
-            .firstBuffer = ringBuffer[sTupleIdx].tryClaimSpanningTuple(abaItNumberSpanningTupleStart - isPriorIteration),
-            .snOfLastBuffer = sTupleSN,
+            .firstBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleEndAbaItNo - isPriorIteration),
+            .snOfLastBuffer = sTupleStartSN,
         };
     }
     return ClaimedSpanningTuple{std::nullopt, 0};
 }
 
-std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchTrailing(const size_t rbIdxOfSN, const size_t abaItNumber)
+std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchTrailing(const size_t rbIdxOfSN, const size_t abaItNumber) const
 {
     size_t trailingDistance = 1;
     auto isNextIteration = static_cast<size_t>((rbIdxOfSN + trailingDistance) >= ringBuffer.size());
@@ -311,32 +318,22 @@ std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchTrailing(con
     return std::make_pair(cellState, trailingDistance);
 }
 
-std::optional<uint32_t> SequenceRingBuffer::nonClaimingTrailingDelimiterSearch(
-    const size_t rbIdxOfSN, const size_t abaItNumber, const SequenceNumberType currentSequenceNumber)
+SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType sTupleStartSN)
 {
-    const auto [cellState, trailingDistance] = searchTrailing(rbIdxOfSN, abaItNumber);
-    return (cellState.isCorrectABA) ? std::optional{currentSequenceNumber + trailingDistance} : std::nullopt;
-}
-
-SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType spanningTupleStartSN)
-{
-    return claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN);
+    return claimingTrailingDelimiterSearch(sTupleStartSN, sTupleStartSN);
 }
 
 SequenceRingBuffer::ClaimedSpanningTuple
-SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType spanningTupleStartSN, const SequenceNumberType searchStartSN)
+SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType sTupleStartSN, const SequenceNumberType searchStartSN)
 {
-    // Todo: put aba calc and idx calc in dedicated func?
-    const auto spanningTupleStartIdx = spanningTupleStartSN % ringBuffer.size();
-    const auto abaItNumberSpanningTupleStart = static_cast<uint32_t>(spanningTupleStartSN / ringBuffer.size()) + 1;
-    const auto searchStartIdx = searchStartSN % ringBuffer.size();
-    const auto abaItNumberSearchStart = static_cast<uint32_t>(searchStartSN / ringBuffer.size()) + 1;
+    const auto [sTupleStartBufferIdx, sTupleStartABAItNo] = getBufferIdxAndABAItNo(sTupleStartSN);
+    const auto [searchStartBufferIdx, searchStartABAItNo] = getBufferIdxAndABAItNo(searchStartSN);
 
-    if (const auto [cellState, trailingDistance] = searchTrailing(searchStartIdx, abaItNumberSearchStart); cellState.isCorrectABA)
+    if (const auto [cellState, trailingDistance] = searchTrailing(searchStartBufferIdx, searchStartABAItNo); cellState.isCorrectABA)
     {
         const auto leadingSequenceNumber = searchStartSN + trailingDistance;
         return ClaimedSpanningTuple{
-            .firstBuffer = ringBuffer[spanningTupleStartIdx].tryClaimSpanningTuple(abaItNumberSpanningTupleStart),
+            .firstBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleStartABAItNo),
             .snOfLastBuffer = leadingSequenceNumber,
         };
     }
