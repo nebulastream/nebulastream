@@ -84,6 +84,7 @@ public:
 
     void emplace(SequenceData sequenceData, T newValue)
     {
+        INVARIANT(getCurrentValue() <= newValue, "New value is smaller than current value: {} < {}", newValue, getCurrentValue());
         if (auto opt = chunks.collect(sequenceData, Timestamp(newValue)))
         {
             auto [sequenceNumber, value] = *opt;
