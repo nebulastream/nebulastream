@@ -14,13 +14,7 @@
 
 #pragma once
 
-#include <atomic>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <limits>
 #include <memory>
-#include <mutex>
 #include <ostream>
 #include <utility>
 #include <vector>
@@ -83,9 +77,8 @@ public:
     SequenceShredder(SequenceShredder&&) = default;
     SequenceShredder& operator=(SequenceShredder&&) = default;
 
-    /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
-    /// Uses the STBuffer to determine whether the 'indexedRawBuffer' with the given 'sequenceNumber' completes spanning tuples and
-    /// whether the calling thread is the first to claim the individual spanning tuples
+    /// Uses the STBuffer to thread-safely determine whether the 'indexedRawBuffer' with the given 'sequenceNumber'
+    /// completes spanning tuples and whether the calling thread is the first to claim the individual spanning tuples
     SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer);
     SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
 

@@ -149,33 +149,33 @@ STBufferEntry::EntryState STBufferEntry::getEntryState(const size_t expectedABAI
     const bool hasDelimiter = currentState.hasTupleDelimiter();
     return EntryState{.hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter};
 }
-bool STBufferEntry::validateFinalState(const size_t idx, const STBufferEntry& nextEntry, const size_t lastIdxOfRB) const
+bool STBufferEntry::validateFinalState(const size_t bufferIdx, const STBufferEntry& nextEntry, const size_t lastIdxOfBuffer) const
 {
     bool isValidFinalState = true;
     const auto state = this->atomicState.getState();
     if (not state.hasUsedLeadingBuffer())
     {
         isValidFinalState = false;
-        NES_ERROR("Buffer at index {} does still claim to own leading buffer", idx);
+        NES_ERROR("Buffer at index {} does still claim to own leading buffer", bufferIdx);
     }
     if (this->leadingBufferRef.getBuffer() != nullptr)
     {
         isValidFinalState = false;
-        NES_ERROR("Buffer at index {} still owns a leading buffer reference", idx);
+        NES_ERROR("Buffer at index {} still owns a leading buffer reference", bufferIdx);
     }
 
     /// Add '1' to the ABA iteration number, if the current entry is the last index of the ring buffer and the next entry wraps around
-    if (state.getABAItNo() + static_cast<size_t>(idx == lastIdxOfRB) == nextEntry.atomicState.getABAItNo())
+    if (state.getABAItNo() + static_cast<size_t>(bufferIdx == lastIdxOfBuffer) == nextEntry.atomicState.getABAItNo())
     {
         if (not state.hasUsedTrailingBuffer())
         {
             isValidFinalState = false;
-            NES_ERROR("Buffer at index {} does still claim to own leading buffer", idx);
+            NES_ERROR("Buffer at index {} does still claim to own leading buffer", bufferIdx);
         }
         if (this->trailingBufferRef.getBuffer() != nullptr)
         {
             isValidFinalState = false;
-            NES_ERROR("Buffer at index {} still owns a trailing buffer reference", idx);
+            NES_ERROR("Buffer at index {} still owns a trailing buffer reference", bufferIdx);
         }
     }
     return isValidFinalState;

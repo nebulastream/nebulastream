@@ -31,8 +31,22 @@
 namespace NES::InputFormatters
 {
 
-
 class STBufferEntry;
+
+/// (Implementation detail of the STBufferEntry)
+/// The AtomicState consists a 64-bit-wide atomic bitmap that allows the STBuffer to thread-safely determine whether a specific
+/// STBufferEntry may overwrite a prior entry or whether it connects to a neighbour-entry and whether the connecting entries form an ST
+/// Central to the AtomicState are the first 32 bits, which represent the 'ABA iteration number' (abaItNo)
+/// The abaItNo protects against the ABA problem, but more importantly, it allows the STBuffer to determine which iteration an STBufferEntry
+/// belongs to (see header documentation of STBuffer)
+/// Furthermore, the bitmap denotes whether an entry (with a specific abaItNo) has a delimiter, whether it was claimed as the first buffer
+/// in a spanning tuple, and whether the leading/trailing buffer of the STBufferEntry were moved out already
+/// If both the 'usedLeadingBufferBit' and the 'usedTrailingBufferBit' are set, then the buffer has no more uses and it is safe to replace
+/// it with the buffer that has a sequence number that corresponds to the same STBufferEntry and that has the next higher abaItNo
+/// (Planned) Some of the (currently) 28 unused bits will be used to model uncertainty. If a delimiter is larger than a byte a thread may
+///           be uncertain whether the first/last few bytes of its buffer form a valid tuple delimiter. Additionally, it may be impossible
+///           for a thread to determine if its buffer starts in an escape sequence or not. We can model these additional pieces of
+///           information as states using the remaning bits and (potentially) perform state transitions as (atomic) bitwise operations.
 class AtomicState
 {
     friend STBufferEntry;
@@ -97,6 +111,12 @@ class AtomicState
     std::atomic<uint64_t> state;
 };
 
+/// Cache-line-size-aligned entry of spanning tuple buffer (STBuffer) that contains:
+/// - (48B): two buffer references, since buffers with delimeters can be used to complete both a leading and a trailing spanning tuple (ST)
+///     - since only one thread can find an ST, threads can safely move the buffer reference out of the STBufferEntry without synchronization
+/// - (8B) : the atomic state of the entry, that allows the STBuffer to determine valid spanning tuples and to synchronize between threads
+/// - (4B) : the offset of first delimiter in buffer, which the InputFormatterTask uses to construct a spanning tuple
+/// - (4B) : offset of last delimiter in buffer, which the InputFormatterTask uses to construct a spanning tuple
 class alignas(64) STBufferEntry /// NOLINT(readability-magic-numbers)
 {
 public:
@@ -138,8 +158,7 @@ public:
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
-    // Todo: rename args?
-    [[nodiscard]] bool validateFinalState(size_t idx, const STBufferEntry& nextEntry, size_t lastIdxOfRB) const;
+    [[nodiscard]] bool validateFinalState(size_t bufferIdx, const STBufferEntry& nextEntry, size_t lastIdxOfBuffer) const;
 
 private:
     // 24 Bytes (TupleBuffer)

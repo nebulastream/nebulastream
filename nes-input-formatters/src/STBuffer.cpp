@@ -33,10 +33,11 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Ranges.hpp>
 #include <RawTupleBuffer.hpp>
+#include <STBufferState.hpp>
+#include <SequenceShredder.hpp>
 
 #include <ErrorHandling.hpp>
 
-#include "SequenceShredder.hpp"
 
 namespace NES::InputFormatters
 {
@@ -46,7 +47,6 @@ STBuffer::STBuffer(const size_t initialSize) : buffer(std::vector<STBufferEntry>
     buffer[0].setStateOfFirstIndex();
 }
 
-// Todo: rename to something more appropriate <-- single buffer can be found
 STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingSTuple(const SequenceNumberType sequenceNumber)
 {
     const auto [sequenceNumberBufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
@@ -94,6 +94,7 @@ void STBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<St
 
 SequenceShredderResult STBuffer::tryFindSTsForBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
+    /// Try to set 'indexedRawBuffer' at corresponding index in buffer. Return as 'out-of-range' buffer, if setting the buffer fails
     const auto [bufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
     if (buffer[bufferIdx].trySetWithDelimiter(abaItNumber, indexedRawBuffer))
     {
@@ -136,6 +137,7 @@ SequenceShredderResult STBuffer::tryFindSTsForBufferWithDelimiter(const size_t s
 }
 SequenceShredderResult STBuffer::tryFindSTsForBufferWithoutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
+    /// Try to set 'indexedRawBuffer' at corresponding index in buffer. Return as 'out-of-range' buffer, if setting the buffer fails
     const auto [bufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
     if (buffer[bufferIdx].trySetWithoutDelimiter(abaItNumber, indexedRawBuffer))
     {
