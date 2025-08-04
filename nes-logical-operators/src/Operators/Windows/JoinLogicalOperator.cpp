@@ -350,6 +350,10 @@ LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOpera
                     Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
                     Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
             }
+            else
+            {
+                throw CannotDeserialize("Neither tumling nor sliding window");
+            }
         }
         if (!windowType)
         {
