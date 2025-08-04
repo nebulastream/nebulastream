@@ -1,36 +1,40 @@
 query: |
-  SELECT id FROM (
-  SELECT * FROM (SELECT * FROM stream)
-  INNER JOIN (SELECT * FROM stream2)
-  ON id = id2
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream3)
-  ON id2 = id3
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream4)
-  ON id3 = id4
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream5)
-  ON id4 = id5
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream6)
-  ON id5 = id6
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream7)
-  ON id6 = id7
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream8)
-  ON id7 = id8
-  WINDOW TUMBLING (timestamp, size 1 sec)
+  SELECT start, end, id FROM (
+    SELECT * FROM (SELECT * FROM stream)
+    INNER JOIN (SELECT * FROM stream2)
+    ON id = id2
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream3)
+    ON id2 = id3
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream4)
+    ON id3 = id4
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream5)
+    ON id4 = id5
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream6)
+    ON id5 = id6
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream7)
+    ON id6 = id7
+    WINDOW TUMBLING (timestamp, size 1 sec)
+    INNER JOIN (SELECT * FROM stream8)
+    ON id7 = id8
+    WINDOW TUMBLING (timestamp, size 1 sec)
   )
   INTO sink;
-
 sinks:
   - name: sink
-    type: Print
+    type: File
     config:
+      filePath: REPLACE_ME
       inputFormat: CSV
     schema:
+      - name: streamstream2stream3stream4stream5stream6stream7stream8$start
+        dataType: UINT64
+      - name: streamstream2stream3stream4stream5stream6stream7stream8$end
+        dataType: UINT64
       - name: stream$id
         dataType: UINT64
     host: host.docker.internal:9090
@@ -100,6 +104,14 @@ logicalSources:
         name: value
       - dataType: UINT64
         name: timestamp
+    - name: stream9
+      schema:
+        - dataType: UINT64
+          name: id9
+        - dataType: UINT64
+          name: value
+        - dataType: UINT64
+          name: timestamp
 
 physicalSources:
   - logicalSource: stream
@@ -146,7 +158,7 @@ physicalSources:
       flushIntervalMS: 1
       socketType: SOCK_STREAM
       socketDomain: AF_INET
-  - logicalSource: stream4
+  - logicalSource: stream5
     host: worker-6:9090
     parserConfig:
       type: CSV
@@ -157,7 +169,7 @@ physicalSources:
       flushIntervalMS: 1
       socketType: SOCK_STREAM
       socketDomain: AF_INET
-  - logicalSource: stream5
+  - logicalSource: stream6
     host: worker-7:9090
     parserConfig:
       type: CSV
@@ -168,7 +180,7 @@ physicalSources:
       socketType: SOCK_STREAM
       flushIntervalMS: 1
       socketDomain: AF_INET
-  - logicalSource: stream6
+  - logicalSource: stream7
     host: worker-8:9090
     parserConfig:
       type: CSV
@@ -179,7 +191,7 @@ physicalSources:
       socketType: SOCK_STREAM
       flushIntervalMS: 1
       socketDomain: AF_INET
-  - logicalSource: stream7
+  - logicalSource: stream8
     host: worker-9:9090
     parserConfig:
       type: CSV
@@ -190,7 +202,7 @@ physicalSources:
       socketType: SOCK_STREAM
       socketDomain: AF_INET
       flushIntervalMS: 1
-  - logicalSource: stream8
+  - logicalSource: stream9
     host: worker-10:9090
     parserConfig:
       type: CSV

@@ -53,6 +53,7 @@ public:
     FillTupleBufferResult fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<Memory::AbstractBufferProvider> provider) override;
     void close() override;
+    [[nodiscard]] bool addsMetadata() const override {return true;}
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

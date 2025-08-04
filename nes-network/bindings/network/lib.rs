@@ -99,11 +99,10 @@ struct ReceiverDataChannel {
 fn init_sender_service(connection_addr: String) -> Result<(), String> {
     SENDER.get_or_init(move || {
         let runtime = tokio::runtime::Builder::new_multi_thread()
-            .thread_name("net-receiver")
+            .thread_name("net-sender")
             .worker_threads(2)
             .enable_io()
             .enable_time()
-            .worker_threads(2)
             .build()
             .unwrap();
         sender::NetworkService::start(runtime, ThisConnectionIdentifier::from(connection_addr))
@@ -118,10 +117,9 @@ fn init_receiver_service(bind_addr: String, connection_addr: String) -> Result<(
 
     RECEIVER.get_or_init(move || {
         let runtime = tokio::runtime::Builder::new_multi_thread()
-            .thread_name("net-sender")
+            .thread_name("net-receiver")
             .worker_threads(2)
             .enable_io()
-            .worker_threads(2)
             .enable_time()
             .build()
             .unwrap();
