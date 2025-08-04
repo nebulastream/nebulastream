@@ -91,17 +91,25 @@ void STBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<St
     buffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
 }
 
-bool STBuffer::trySetNewBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
+STBuffer::ClaimingSearchResult STBuffer::trySetNewBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
     const auto rbIdxOfSN = sequenceNumber % buffer.size();
-    return buffer[rbIdxOfSN].trySetWithDelimiter(abaItNumber, indexedRawBuffer);
+    if (buffer[rbIdxOfSN].trySetWithDelimiter(abaItNumber, indexedRawBuffer))
+    {
+        return searchAndTryClaimLeadingAndTrailingSTuple(sequenceNumber);
+    }
+    return ClaimingSearchResult{.type = ClaimingSearchResult::Type::NOT_IN_RANGE};
 }
-bool STBuffer::trySetNewBufferWithOutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
+STBuffer::ClaimingSearchResult STBuffer::trySetNewBufferWithOutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
     const auto rbIdxOfSN = sequenceNumber % buffer.size();
-    return buffer[rbIdxOfSN].trySetWithoutDelimiter(abaItNumber, indexedRawBuffer);
+    if (buffer[rbIdxOfSN].trySetWithoutDelimiter(abaItNumber, indexedRawBuffer))
+    {
+        return searchAndTryClaimLeadingSTuple(sequenceNumber);
+    }
+    return ClaimingSearchResult{.type = ClaimingSearchResult::Type::NOT_IN_RANGE};
 }
 
 bool STBuffer::validate() const

@@ -63,7 +63,8 @@ public:
             NONE,
             LEADING_ST_ONLY,
             TRAILING_ST_ONLY,
-            LEADING_AND_TRAILING_ST
+            LEADING_AND_TRAILING_ST,
+            NOT_IN_RANGE,
         };
 
         Type type = Type::NONE;
@@ -75,23 +76,13 @@ public:
 
     explicit STBuffer(size_t initialSize);
 
-    /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
-    /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumberType sequenceNumber);
-
-    /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
-    /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumberType sequenceNumber);
-
     /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
     void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
 
     /// Checks if the current entry at the ring buffer index has the prior aba iteration number and if both its leading and trailing buffer
     /// were used already. Returns false, if it is not the case, indicating that the caller needs to try again later
-    // Todo: think about merging below with 'searchAndTryClaimLeadingAndTrailingSTuple'
-    [[nodiscard]] bool trySetNewBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-    // Todo: think about merging below with 'searchAndTryClaimLeadingSTuple'
-    [[nodiscard]] bool trySetNewBufferWithOutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] ClaimingSearchResult trySetNewBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] ClaimingSearchResult trySetNewBufferWithOutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     [[nodiscard]] bool validate() const;
 
@@ -101,6 +92,14 @@ private:
     std::vector<STBufferEntry> buffer;
 
     [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
+
+    /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
+    /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumberType sequenceNumber);
+
+    /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
+    /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumberType sequenceNumber);
 
     /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
     /// 'Reachable' means there is a path from 'searchStartBufferIdx' to the buffer that traverses 0 or more buffers without delimiters and

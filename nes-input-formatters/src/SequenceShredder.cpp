@@ -61,13 +61,12 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
-    if (not ringBuffer.trySetNewBufferWithDelimiter(sequenceNumber, indexedRawBuffer))
+    switch (auto searchAndClaimResult = ringBuffer.trySetNewBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
+            searchAndClaimResult.type)
     {
-        return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
-    }
-
-    switch (auto searchAndClaimResult = ringBuffer.searchAndTryClaimLeadingAndTrailingSTuple(sequenceNumber); searchAndClaimResult.type)
-    {
+        case STBuffer::ClaimingSearchResult::Type::NOT_IN_RANGE: {
+            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
+        }
         case STBuffer::ClaimingSearchResult::Type::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
@@ -103,13 +102,12 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer index
 
 SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
-    if (not ringBuffer.trySetNewBufferWithOutDelimiter(sequenceNumber, indexedRawBuffer))
+    switch (auto searchAndClaimResult = ringBuffer.trySetNewBufferWithOutDelimiter(sequenceNumber, indexedRawBuffer);
+            searchAndClaimResult.type)
     {
-        return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
-    }
-
-    switch (auto searchAndClaimResult = ringBuffer.searchAndTryClaimLeadingSTuple(sequenceNumber); searchAndClaimResult.type)
-    {
+        case STBuffer::ClaimingSearchResult::Type::NOT_IN_RANGE: {
+            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
+        }
         case STBuffer::ClaimingSearchResult::Type::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
