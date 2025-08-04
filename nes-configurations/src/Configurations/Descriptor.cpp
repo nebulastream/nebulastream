@@ -140,14 +140,8 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.projections();
         case SerializableVariantDescriptor::kWindowInfos:
             return protoVar.window_infos();
-        default:
-            std::string protoVarAsJson;
-            /// Log proto variable as json, in exception, if possible.
-            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(protoVar, &protoVarAsJson); conversionResult.ok())
-            {
-                throw CannotSerialize(fmt::format("Unknown variant type: {}", protoVarAsJson));
-            }
-            throw CannotSerialize("Unknown variant type.");
+        case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
+            throw CannotSerialize("Protobuf oneOf has no value");
     }
 }
 
