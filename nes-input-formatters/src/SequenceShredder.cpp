@@ -61,16 +61,12 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
-    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
-    const auto rbIdxOfSN = sequenceNumber % SIZE_OF_RING_BUFFER;
-
-    if (not ringBuffer.trySetNewBufferWithDelimiter(rbIdxOfSN, abaItNumber, indexedRawBuffer))
+    if (not ringBuffer.trySetNewBufferWithDelimiter(sequenceNumber, indexedRawBuffer))
     {
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
 
-    switch (auto searchAndClaimResult = ringBuffer.searchAndClaimBuffers(rbIdxOfSN, abaItNumber, sequenceNumber);
-            searchAndClaimResult.state)
+    switch (auto searchAndClaimResult = ringBuffer.searchAndClaimBuffers(sequenceNumber); searchAndClaimResult.state)
     {
         case SequenceRingBuffer::ClaimingSearchResult::State::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
@@ -110,7 +106,7 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer in
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / SIZE_OF_RING_BUFFER) + 1;
     const auto rbIdxOfSN = sequenceNumber % SIZE_OF_RING_BUFFER;
 
-    if (not ringBuffer.trySetNewBufferWithOutDelimiter(rbIdxOfSN, abaItNumber, indexedRawBuffer))
+    if (not ringBuffer.trySetNewBufferWithOutDelimiter(sequenceNumber, indexedRawBuffer))
     {
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
