@@ -106,12 +106,6 @@ std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const ABAItNo a
 {
     if (this->atomicState.tryClaimSpanningTuple(abaItNumber))
     {
-        if (firstDelimiterOffset == std::numeric_limits<uint32_t>::max() and lastDelimiterOffset == 0)
-        {
-            const auto dummyBuffer = StagedBuffer(RawTupleBuffer{}, 1, firstDelimiterOffset, lastDelimiterOffset);
-            this->atomicState.setUsedTrailingBuffer();
-            return {dummyBuffer};
-        }
         INVARIANT(this->trailingBufferRef.getReferenceCounter() != 0, "Tried to claim a trailing buffer with a nullptr");
         const auto stagedBuffer
             = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
@@ -121,11 +115,12 @@ std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const ABAItNo a
     return std::nullopt;
 }
 
-void STBufferEntry::setStateOfFirstIndex()
+void STBufferEntry::setStateOfFirstIndex(TupleBuffer dummyBuffer)
 {
     /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
+    this->trailingBufferRef = std::move(dummyBuffer);
     this->atomicState.setStateOfFirstEntry();
-    this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
+    this->firstDelimiterOffset = 0;
     this->lastDelimiterOffset = 0;
 }
 

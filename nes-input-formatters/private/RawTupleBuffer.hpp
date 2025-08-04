@@ -80,8 +80,9 @@ public:
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 };
 
-/// A staged buffer represents a raw buffer together with the locations of the first and last tuple delimiter.
-/// Thus, the SequenceShredder can determine the spanning tuple(s) starting/ending in or containing the StagedBuffer.
+/// A staged buffer represents a raw buffer that the input formatter cannot process independently, because it contains spanning tuples.
+/// The input formatter keeps the buffer staged, together with the locations of the first and last tuple delimiter, until it can determine
+/// all spanning tuple(s) starting/ending in or containing the StagedBuffer.
 struct StagedBuffer
 {
 private:
@@ -126,8 +127,6 @@ public:
     [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
 
     [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
-
-    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
 
