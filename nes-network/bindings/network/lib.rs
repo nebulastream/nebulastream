@@ -13,7 +13,7 @@ use std::sync::Arc;
 pub mod ffi {
     enum SendResult {
         Ok,
-        Error,
+        Closed,
         Full,
     }
 
@@ -238,7 +238,7 @@ fn try_send_on_channel(
     {
         Ok(()) => ffi::SendResult::Ok,
         Err(TrySendError::Full(_)) => ffi::SendResult::Full,
-        Err(TrySendError::Closed(_)) => ffi::SendResult::Error,
+        Err(TrySendError::Closed(_)) => ffi::SendResult::Closed,
     }
 }
 
