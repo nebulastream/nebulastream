@@ -44,9 +44,10 @@
 namespace NES::InputFormatters
 {
 
-STBuffer::STBuffer(const size_t initialSize) : buffer(std::vector<STBufferEntry>(initialSize))
+STBuffer::STBuffer(const size_t initialSize, Memory::TupleBuffer dummyBuffer)
+    : buffer(std::vector<STBufferEntry>(initialSize))
 {
-    buffer[0].setStateOfFirstIndex();
+    buffer[0].setStateOfFirstIndex(std::move(dummyBuffer));
 }
 
 STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingSTuple(const SequenceNumber sequenceNumber)

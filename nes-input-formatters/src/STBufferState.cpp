@@ -12,7 +12,17 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <cstddef>
+#include <optional>
+#include <limits>
+#include <utility>
+#include <ostream>
+#include <fmt/format.h>
+
 #include <STBufferState.hpp>
+#include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
 
 namespace NES::InputFormatters
 {
@@ -95,15 +105,6 @@ std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const ABAItNo a
 {
     if (this->atomicState.tryClaimSpanningTuple(abaItNumber))
     {
-        // Todo: improve handling of first buffer (which is dummy)
-        // -> create BufferPool with a single (valid) buffer?
-        // -> mock buffer by mocking control block to avoid 'getNumberOfTuples' crash? <-- reinterpret_cast
-        if (firstDelimiterOffset == std::numeric_limits<uint32_t>::max() and lastDelimiterOffset == 0)
-        {
-            const auto dummyBuffer = StagedBuffer(RawTupleBuffer{}, 1, firstDelimiterOffset, lastDelimiterOffset);
-            this->atomicState.setUsedTrailingBuffer();
-            return {dummyBuffer};
-        }
         INVARIANT(this->trailingBufferRef.getBuffer() != nullptr, "Tried to claim a trailing buffer with a nullptr");
         const auto stagedBuffer
             = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
@@ -113,11 +114,12 @@ std::optional<StagedBuffer> STBufferEntry::tryClaimSpanningTuple(const ABAItNo a
     return std::nullopt;
 }
 
-void STBufferEntry::setStateOfFirstIndex()
+void STBufferEntry::setStateOfFirstIndex(Memory::TupleBuffer dummyBuffer)
 {
     /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
+    this->trailingBufferRef = std::move(dummyBuffer);
     this->atomicState.setStateOfFirstEntry();
-    this->firstDelimiterOffset = std::numeric_limits<uint32_t>::max();
+    this->firstDelimiterOffset = 0;
     this->lastDelimiterOffset = 0;
 }
 
