@@ -311,8 +311,8 @@ TEST_F(SmallFilesTest, testBimboData)
         .testFileName = "Bimbo_1_1000",
         .formatterType = "CSV",
         .hasSpanningTuples = true,
-        .numberOfIterations = 10,
-        .numberOfThreads = 1,
+        .numberOfIterations = 100,
+        .numberOfThreads = 8,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
@@ -324,7 +324,7 @@ TEST_F(SmallFilesTest, testFoodData)
         .formatterType = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
-        .numberOfThreads = 2,
+        .numberOfThreads = 8,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }

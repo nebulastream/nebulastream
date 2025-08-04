@@ -40,12 +40,12 @@
 namespace NES::InputFormatters
 {
 
-class SSMetaData;
+class BufferEntry;
 
 class AtomicBitmapState
 {
-    // Todo: try to not expose the AtomicBitmapState out of SSMetaData and then make functions public (instead of friend)
-    friend class SSMetaData;
+    // Todo: try to not expose the AtomicBitmapState out of BufferEntry and then make functions public (instead of friend)
+    friend class BufferEntry;
 
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
@@ -112,15 +112,16 @@ class AtomicBitmapState
 };
 
 // Todo: rename <-- try to get rid of SequenceShredder -> SS acronym in general (stringstream is worse enough already)
-class SSMetaData
+// Todo: move into .cpp entirely and forward ref (implementation detail)
+class BufferEntry
 {
 public:
     struct EntryState
     {
-        bool isCorrectABA = false;
+        bool hasCorrectABA = false;
         bool hasDelimiter = false;
     };
-    SSMetaData() { };
+    BufferEntry() { };
 
     /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
     void setStateOfFirstIndex();
@@ -149,41 +150,11 @@ public:
     /// Atomically loads the state of an entry, checks if its ABA iteration number matches the expected and if it has a tuple delimiter
     [[nodiscard]] EntryState getEntryState(size_t expectedABAItNo) const;
 
-    // [[nodiscard]] AtomicBitmapState::BitmapState getState() const { return this->atomicBitmapState.getState(); }
     [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
-    [[nodiscard]] bool validateFinalState(const size_t idx, const SSMetaData& nextEntry, const size_t lastIdxOfRB) const
-    {
-        bool isValidFinalState = true;
-        const auto state = this->atomicBitmapState.getState();
-        if (not state.hasUsedLeadingBuffer())
-        {
-            isValidFinalState = false;
-            NES_ERROR("Buffer at index {} does still claim to own leading buffer", idx);
-        }
-        if (this->leadingBufferRef.getBuffer() != nullptr)
-        {
-            isValidFinalState = false;
-            NES_ERROR("Buffer at index {} still owns a leading buffer reference", idx);
-        }
-
-        /// Add '1' to the ABA iteration number, if the current entry is the last index of the ring buffer and the next entry wraps around
-        if (state.getABAItNo() + static_cast<size_t>(idx == lastIdxOfRB) == nextEntry.atomicBitmapState.getABAItNo())
-        {
-            if (not state.hasUsedTrailingBuffer())
-            {
-                isValidFinalState = false;
-                NES_ERROR("Buffer at index {} does still claim to own leading buffer", idx);
-            }
-            if (this->trailingBufferRef.getBuffer() != nullptr)
-            {
-                isValidFinalState = false;
-                NES_ERROR("Buffer at index {} still owns a trailing buffer reference", idx);
-            }
-        }
-        return isValidFinalState;
-    }
+    // Todo: rename args?
+    [[nodiscard]] bool validateFinalState(size_t idx, const BufferEntry& nextEntry, size_t lastIdxOfRB) const;
 
 private:
     // 24 Bytes (TupleBuffer)
@@ -212,11 +183,12 @@ class SequenceRingBuffer
 public:
     struct ClaimingSearchResult
     {
+        // Todo: rename 'state'?
         enum class State : uint8_t
         {
             NONE,
-            LEADING_ST,
-            TRAILING_ST,
+            LEADING_ST_ONLY,
+            TRAILING_ST_ONLY,
             LEADING_AND_TRAILING_ST
         };
 
@@ -250,7 +222,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SequenceRingBuffer& sequenceRingBuffer);
 
 private:
-    std::vector<SSMetaData> ringBuffer;
+    std::vector<BufferEntry> ringBuffer;
 
     [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
 
