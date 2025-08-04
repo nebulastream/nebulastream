@@ -37,7 +37,7 @@ sinks:
         dataType: UINT64
       - name: stream$id
         dataType: UINT64
-    host: host.docker.internal:9090
+    host: worker-1:9090
 
 logicalSources:
     - name: stream
@@ -215,51 +215,51 @@ physicalSources:
       socketDomain: AF_INET
 
 workerNodes:
-  - host: host.docker.internal:9090
+  - host: worker-1:9090
     grpc: 127.0.0.1:8080
     capacity: 100
   - host: worker-2:9090
     grpc: 127.0.0.1:8081
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-3:9090
     grpc: 127.0.0.1:8082
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-4:9090
     grpc: 127.0.0.1:8083
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-5:9090
     grpc: 127.0.0.1:8084
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-6:9090
     grpc: 127.0.0.1:8085
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-7:9090
     grpc: 127.0.0.1:8086
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-8:9090
     grpc: 127.0.0.1:8087
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-9:9090
     grpc: 127.0.0.1:8088
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090
   - host: worker-10:9090
     grpc: 127.0.0.1:8089
     capacity: 0
     downstreamNodes:
-      - host.docker.internal:9090
+      - worker-1:9090

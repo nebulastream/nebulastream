@@ -4,6 +4,8 @@ services:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
     command: [ "--grpc=0.0.0.0:8080", "--bind=0.0.0.0:9090", "--connection=worker-1:9090", "--worker.queryEngine.numberOfWorkerThreads=4" , "--worker.defaultQueryExecution.executionMode=COMPILER" ]
     image: worker-local
+    ports:
+      - "8080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
