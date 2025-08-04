@@ -85,7 +85,7 @@ public:
         SequenceNumber sTupleEndSN = INVALID<SequenceNumber>;
     };
 
-    explicit STBuffer(size_t initialSize);
+    explicit STBuffer(size_t initialSize, Memory::TupleBuffer dummyBuffer);
 
     /// First, checks if the prior entry at the index of 'sequenceNumber' contains the expected prior ABA iteration number and is used up
     /// If not, returns as 'NOT_IN_RANGE'

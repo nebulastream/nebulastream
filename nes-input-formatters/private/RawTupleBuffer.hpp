@@ -123,8 +123,6 @@ public:
 
     [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
 
-    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }
-
     void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
 
 
