@@ -134,6 +134,7 @@ SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
     {
         sourceDescriptorConfig[key] = NES::protoToDescriptorConfigType(value);
     }
+    sourceDescriptorConfig["filePath"] = "/dev/random";
 
     return SourceDescriptor{physicalSourceId, logicalSource, sourceType, (std::move(sourceDescriptorConfig)), deserializedParserConfig};
 }
