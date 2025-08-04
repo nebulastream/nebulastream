@@ -40,7 +40,11 @@
 namespace NES::InputFormatters
 {
 
-// Todo: rename, is not a ring buffer anymore
+/// The Spanning Tuple Buffer (STBuffer) enables threads to concurrently resolve spanning tuples.
+/// Spanning tuples (STs) are tuples that span over two or more buffers.
+/// The buffers that form the ST may be processed by multiple threads at different times.
+/// Exactly one thread must process an ST, otherwise we miss an ST or we produce duplicate STs.
+/// The STBuffer
 class STBuffer
 {
     /// Result of trying to claim a buffer (with a specific SN) as the start of a spanning tuple.
@@ -54,8 +58,7 @@ class STBuffer
 public:
     struct ClaimingSearchResult
     {
-        // Todo: rename 'state'?
-        enum class State : uint8_t
+        enum class Type : uint8_t
         {
             NONE,
             LEADING_ST_ONLY,
@@ -63,7 +66,7 @@ public:
             LEADING_AND_TRAILING_ST
         };
 
-        State state = State::NONE;
+        Type type = Type::NONE;
         std::optional<StagedBuffer> leadingSTupleStartBuffer = std::nullopt;
         std::optional<StagedBuffer> trailingSTupleStartBuffer = std::nullopt;
         SequenceNumberType sTupleStartSN{};
@@ -85,7 +88,9 @@ public:
 
     /// Checks if the current entry at the ring buffer index has the prior aba iteration number and if both its leading and trailing buffer
     /// were used already. Returns false, if it is not the case, indicating that the caller needs to try again later
+    // Todo: think about merging below with 'searchAndTryClaimLeadingAndTrailingSTuple'
     [[nodiscard]] bool trySetNewBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    // Todo: think about merging below with 'searchAndTryClaimLeadingSTuple'
     [[nodiscard]] bool trySetNewBufferWithOutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     [[nodiscard]] bool validate() const;
@@ -93,7 +98,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const STBuffer& sequenceRingBuffer);
 
 private:
-    std::vector<STBufferEntry> ringBuffer;
+    std::vector<STBufferEntry> buffer;
 
     [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
 

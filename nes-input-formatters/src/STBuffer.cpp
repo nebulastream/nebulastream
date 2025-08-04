@@ -39,9 +39,9 @@
 namespace NES::InputFormatters
 {
 
-STBuffer::STBuffer(const size_t initialSize) : ringBuffer(std::vector<STBufferEntry>(initialSize))
+STBuffer::STBuffer(const size_t initialSize) : buffer(std::vector<STBufferEntry>(initialSize))
 {
-    ringBuffer[0].setStateOfFirstIndex();
+    buffer[0].setStateOfFirstIndex();
 }
 
 // Todo: rename to something more appropriate <-- single buffer can be found
@@ -54,14 +54,14 @@ STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingSTuple(const Se
         if (auto [startBuffer, sTupleEndSN] = claimingTrailingDelimiterSearch(sTupleStartSN, sequenceNumber); startBuffer.has_value())
         {
             return ClaimingSearchResult{
-                .state = ClaimingSearchResult::State::LEADING_ST_ONLY,
+                .type = ClaimingSearchResult::Type::LEADING_ST_ONLY,
                 .leadingSTupleStartBuffer = std::move(startBuffer),
                 .trailingSTupleStartBuffer = std::nullopt,
                 .sTupleStartSN = sTupleStartSN,
                 .sTupleEndSN = sTupleEndSN};
         }
     }
-    return ClaimingSearchResult{.state = ClaimingSearchResult::State::NONE};
+    return ClaimingSearchResult{.type = ClaimingSearchResult::Type::NONE};
 }
 
 STBuffer::ClaimingSearchResult
@@ -69,10 +69,10 @@ STBuffer::searchAndTryClaimLeadingAndTrailingSTuple(const SequenceNumberType seq
 {
     auto [firstSTStartBuffer, firstSTFinalSN] = claimingLeadingDelimiterSearch(sequenceNumber);
     auto [secondSTStartBuffer, secondSTFinalSN] = claimingTrailingDelimiterSearch(sequenceNumber);
-    const auto rangeState = static_cast<ClaimingSearchResult::State>(
+    const auto rangeState = static_cast<ClaimingSearchResult::Type>(
         (static_cast<uint8_t>(secondSTStartBuffer.has_value()) << 1UL) + static_cast<uint8_t>(firstSTStartBuffer.has_value()));
     return ClaimingSearchResult{
-        .state = rangeState,
+        .type = rangeState,
         .leadingSTupleStartBuffer = std::move(firstSTStartBuffer),
         .trailingSTupleStartBuffer = std::move(secondSTStartBuffer),
         .sTupleStartSN = firstSTFinalSN,
@@ -84,47 +84,47 @@ void STBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<St
     const auto lastOffset = spanningTupleBuffers.size() - 1;
     for (size_t offset = 1; offset < lastOffset; ++offset)
     {
-        const auto nextBufferIdx = (sTupleStartSN + offset) % ringBuffer.size();
-        ringBuffer[nextBufferIdx].claimNoDelimiterBuffer(spanningTupleBuffers, offset);
+        const auto nextBufferIdx = (sTupleStartSN + offset) % buffer.size();
+        buffer[nextBufferIdx].claimNoDelimiterBuffer(spanningTupleBuffers, offset);
     }
-    const auto lastBufferIdx = (sTupleStartSN + lastOffset) % ringBuffer.size();
-    ringBuffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
+    const auto lastBufferIdx = (sTupleStartSN + lastOffset) % buffer.size();
+    buffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
 }
 
 bool STBuffer::trySetNewBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
-    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / ringBuffer.size()) + 1;
-    const auto rbIdxOfSN = sequenceNumber % ringBuffer.size();
-    return ringBuffer[rbIdxOfSN].trySetWithDelimiter(abaItNumber, indexedRawBuffer);
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
+    const auto rbIdxOfSN = sequenceNumber % buffer.size();
+    return buffer[rbIdxOfSN].trySetWithDelimiter(abaItNumber, indexedRawBuffer);
 }
 bool STBuffer::trySetNewBufferWithOutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
-    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / ringBuffer.size()) + 1;
-    const auto rbIdxOfSN = sequenceNumber % ringBuffer.size();
-    return ringBuffer[rbIdxOfSN].trySetWithoutDelimiter(abaItNumber, indexedRawBuffer);
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
+    const auto rbIdxOfSN = sequenceNumber % buffer.size();
+    return buffer[rbIdxOfSN].trySetWithoutDelimiter(abaItNumber, indexedRawBuffer);
 }
 
 bool STBuffer::validate() const
 {
     bool isValid = true;
-    const auto lastIdxOfRB = ringBuffer.size() - 1;
-    for (const auto& [idx, metaData] : ringBuffer | NES::views::enumerate)
+    const auto lastIdxOfRB = buffer.size() - 1;
+    for (const auto& [idx, metaData] : buffer | NES::views::enumerate)
     {
-        isValid &= metaData.validateFinalState(idx, ringBuffer.at((idx + 1) % ringBuffer.size()), lastIdxOfRB);
+        isValid &= metaData.validateFinalState(idx, buffer.at((idx + 1) % buffer.size()), lastIdxOfRB);
     }
     return isValid;
 }
 
 std::ostream& operator<<(std::ostream& os, const STBuffer& sequenceRingBuffer)
 {
-    return os << fmt::format("RingBuffer({})", sequenceRingBuffer.ringBuffer.size());
+    return os << fmt::format("RingBuffer({})", sequenceRingBuffer.buffer.size());
 }
 
 
 std::pair<SequenceNumberType, uint32_t> STBuffer::getBufferIdxAndABAItNo(const SequenceNumberType sequenceNumber) const
 {
-    const auto sequenceNumberBufferIdx = sequenceNumber % ringBuffer.size();
-    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / ringBuffer.size()) + 1;
+    const auto sequenceNumberBufferIdx = sequenceNumber % buffer.size();
+    const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
     return std::make_pair(sequenceNumberBufferIdx, abaItNumber);
 }
 
@@ -133,13 +133,13 @@ std::optional<size_t> STBuffer::searchLeading(const size_t searchStartBufferIdx,
     size_t leadingDistance = 1;
     auto isPriorIteration = static_cast<size_t>(searchStartBufferIdx < leadingDistance);
     auto cellState
-        = this->ringBuffer[(searchStartBufferIdx - leadingDistance) % ringBuffer.size()].getEntryState(abaItNumber - isPriorIteration);
+        = this->buffer[(searchStartBufferIdx - leadingDistance) % buffer.size()].getEntryState(abaItNumber - isPriorIteration);
     while (cellState.hasCorrectABA and not(cellState.hasDelimiter))
     {
         ++leadingDistance;
         isPriorIteration = static_cast<size_t>(searchStartBufferIdx < leadingDistance);
         cellState
-            = this->ringBuffer[(searchStartBufferIdx - leadingDistance) % ringBuffer.size()].getEntryState(abaItNumber - isPriorIteration);
+            = this->buffer[(searchStartBufferIdx - leadingDistance) % buffer.size()].getEntryState(abaItNumber - isPriorIteration);
     }
     return (cellState.hasCorrectABA) ? std::optional{leadingDistance} : std::nullopt;
 }
@@ -147,15 +147,15 @@ std::optional<size_t> STBuffer::searchLeading(const size_t searchStartBufferIdx,
 std::optional<size_t> STBuffer::searchTrailing(const size_t searchStartBufferIdx, const size_t abaItNumber) const
 {
     size_t trailingDistance = 1;
-    auto isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
+    auto isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= buffer.size());
     auto cellState
-        = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
+        = this->buffer[(searchStartBufferIdx + trailingDistance) % buffer.size()].getEntryState(abaItNumber + isNextIteration);
     while (cellState.hasCorrectABA and not(cellState.hasDelimiter))
     {
         ++trailingDistance;
-        isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
+        isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= buffer.size());
         cellState
-            = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
+            = this->buffer[(searchStartBufferIdx + trailingDistance) % buffer.size()].getEntryState(abaItNumber + isNextIteration);
     }
     return (cellState.hasCorrectABA) ? std::optional{trailingDistance} : std::nullopt;
 }
@@ -166,10 +166,10 @@ STBuffer::ClaimedSpanningTuple STBuffer::claimingLeadingDelimiterSearch(const Se
     if (const auto leadingDistance = searchLeading(sTupleEndBufferIdx, sTupleEndAbaItNo))
     {
         const auto sTupleStartSN = spanningTupleEndSN - leadingDistance.value();
-        const auto sTupleStartBufferIdx = sTupleStartSN % ringBuffer.size();
+        const auto sTupleStartBufferIdx = sTupleStartSN % buffer.size();
         const auto isPriorIteration = static_cast<size_t>(sTupleEndBufferIdx < sTupleStartBufferIdx);
         return ClaimedSpanningTuple{
-            .firstBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleEndAbaItNo - isPriorIteration),
+            .firstBuffer = buffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleEndAbaItNo - isPriorIteration),
             .snOfLastBuffer = sTupleStartSN,
         };
     }
@@ -191,7 +191,7 @@ STBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType sTupleStartSN
     {
         const auto leadingSequenceNumber = searchStartSN + trailingDistance.value();
         return ClaimedSpanningTuple{
-            .firstBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleStartABAItNo),
+            .firstBuffer = buffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleStartABAItNo),
             .snOfLastBuffer = leadingSequenceNumber,
         };
     }

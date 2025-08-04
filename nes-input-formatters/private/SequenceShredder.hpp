@@ -53,9 +53,7 @@ struct SequenceShredderResult
 };
 
 // Todo:
-// - 'std::vector' instead of array, then hide impl details of ring buffer
 // - strong types for SN, ABA, other indexes
-// - impl(.cpp) for SequenceRingBuffer (<-- rename to SpanningRingBuffer?)
 
 // Todo (optional):
 // - resizing
