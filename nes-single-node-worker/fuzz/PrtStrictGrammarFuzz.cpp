@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 
@@ -61,7 +62,7 @@ DataType toDt(const SerializableDataType& type)
     return DataTypeSerializationUtil::deserializeDataType(type);
 }
 
-LogicalFunction toLv(const FValue& val)
+std::optional<LogicalFunction> toLv(const FValue& val)
 {
     if (val.has_fieldaccess())
     {
@@ -72,31 +73,39 @@ LogicalFunction toLv(const FValue& val)
     {
         return ConstantValueLogicalFunction(toDt(val.const_().datatype()), val.const_().valasstr());
     }
-    throw CannotDeserialize("foo");
+    return {};
 }
 
-LogicalFunction toFn(const FPredicate& pred)
+std::optional<LogicalFunction> toFn(const FPredicate& pred)
 {
     auto left = toLv(pred.left());
+    if (!left)
+    {
+        return {};
+    }
     auto right = toLv(pred.right());
+    if (!right)
+    {
+        return {};
+    }
     const auto& type = pred.type();
     if (type == FPredicate_Type::FPredicate_Type_LT)
     {
-        return LessLogicalFunction(left, right);
+        return LessLogicalFunction(*left, *right);
     }
     if (type == FPredicate_Type::FPredicate_Type_LE)
     {
-        return LessEqualsLogicalFunction(left, right);
+        return LessEqualsLogicalFunction(*left, *right);
     }
     if (type == FPredicate_Type::FPredicate_Type_GE)
     {
-        return GreaterEqualsLogicalFunction(left, right);
+        return GreaterEqualsLogicalFunction(*left, *right);
     }
     if (type == FPredicate_Type::FPredicate_Type_GT)
     {
-        return GreaterLogicalFunction(left, right);
+        return GreaterLogicalFunction(*left, *right);
     }
-    throw CannotDeserialize("foo");
+    return {};
 }
 
 SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
@@ -151,7 +160,7 @@ SinkLogicalOperator toSn(const FSinkDscrtr& serializableSinkDescriptor)
     return SinkLogicalOperator{s};
 }
 
-LogicalOperator toOp(const FOp& op)
+std::optional<LogicalOperator> toOp(const FOp& op)
 {
     if (op.has_source())
     {
@@ -166,24 +175,32 @@ LogicalOperator toOp(const FOp& op)
         if (unop.has_select())
         {
             const auto& pred = unop.select().predicate();
-            return SelectionLogicalOperator(toFn(pred));
+            if (auto fn = toFn(pred); fn.has_value())
+            {
+                return SelectionLogicalOperator(*toFn(pred));
+            }
+            return {};
         }
     }
     if (op.has_binop())
     {
     }
-    throw CannotDeserialize("foo");
+    return {};
 }
 
-LogicalPlan toPlan(const FQueryPlan& plan)
+std::optional<LogicalPlan> toPlan(const FQueryPlan& plan)
 {
     const auto& root = plan.rootoperator();
 
     auto schema = SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
     auto child = toOp(plan.rootoperator().child());
+    if (!child)
+    {
+        return {};
+    }
 
     auto sink = toSn(root.sinkdescriptor());
-    return LogicalPlan{sink.withChildren({child})};
+    return LogicalPlan{sink.withChildren({*child})};
 }
 
 DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
@@ -193,14 +210,26 @@ DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
     CPPTRACE_TRY
     {
         auto dqp = toPlan(sqp);
+        if (!dqp)
+        {
+            return;
+        }
         SingleNodeWorker snw{SingleNodeWorkerConfiguration{}};
-        auto qid = snw.registerQuery(dqp);
+        auto qid = snw.registerQuery(*dqp);
         if (!qid)
         {
             throw qid.error();
         }
-        snw.startQuery(*qid);
-        snw.stopQuery(*qid, QueryTerminationType::Graceful);
+        auto r1 = snw.startQuery(*qid);
+        if (!r1.has_value())
+        {
+            return;
+        }
+        auto r2 = snw.stopQuery(*qid, QueryTerminationType::Graceful);
+        if (!r2.has_value())
+        {
+            return;
+        }
         while (true)
         {
             if (snw.getQuerySummary(*qid)->currentStatus <= QueryStatus::Running)
