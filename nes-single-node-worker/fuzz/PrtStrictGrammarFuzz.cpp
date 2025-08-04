@@ -226,6 +226,7 @@ DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
         {
             return;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         auto r2 = snw.stopQuery(*qid, QueryTerminationType::Graceful);
         if (!r2.has_value())
         {
