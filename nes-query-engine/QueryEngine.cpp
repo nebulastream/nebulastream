@@ -353,7 +353,7 @@ private:
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask pendingPipelineStop) const;
-        bool operator()(const StopPipelineTask& stopPipelineTask) const;
+        bool operator()(StopPipelineTask& stopPipelineTask) const;
         bool operator()(const StopSourceTask& stopSource) const;
         bool operator()(const FailSourceTask& failSource) const;
 
@@ -560,7 +560,7 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelin
     return true;
 }
 
-bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTask) const
+bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) const
 {
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     DefaultPEC pec(
@@ -576,6 +576,14 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                 return true;
             }
 
+            if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
+            {
+                pool.emitPipelineStop(stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline),
+                std::move(stopPipelineTask.onCompletion),
+                std::move(stopPipelineTask.onError));
+                return true;
+            }
+
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
@@ -587,8 +595,10 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    auto pipelineId = stopPipelineTask.pipeline->id;
+    auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id});
+    pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
 
