@@ -39,6 +39,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
             throw qid.error();
         }
         snw.startQuery(*qid);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         snw.stopQuery(*qid, NES::QueryTerminationType::Graceful);
         while (true)
         {
