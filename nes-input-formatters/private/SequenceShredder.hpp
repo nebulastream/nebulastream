@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <utility>
@@ -39,8 +40,11 @@ namespace NES::InputFormatters
 /// abaItNo/ABAItNo <-> ABA Iteration Number
 
 // Todo:
-// - strong types for SN, ABA, other indexes
-// - adapt README.md document
+// strong types for:
+// - SN
+// - ABA
+// - buffer index (vs. SN)
+// -
 
 // Todo (optional):
 // - resizing
