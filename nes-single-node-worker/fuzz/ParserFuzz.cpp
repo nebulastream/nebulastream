@@ -35,6 +35,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             throw qid.error();
         }
         snw.startQuery(*qid);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         snw.stopQuery(*qid, NES::QueryTerminationType::Graceful);
         while (true)
         {
