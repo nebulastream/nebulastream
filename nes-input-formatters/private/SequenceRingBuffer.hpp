@@ -291,9 +291,8 @@ private:
     /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
     /// On finding a valid terminating buffer, threads compete to claim the first buffer of the ST(spanningTupleStartSN) and thereby the ST.
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    // [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(
-    //     size_t spanningTupleStartIdx, size_t abaItNumberSpanningTupleStart, SequenceNumberType spanningTupleStartSN);
     [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType spanningTupleStartSN);
+    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType spanningTupleStartSN, SequenceNumberType searchStartSN);
 };
 }
 
