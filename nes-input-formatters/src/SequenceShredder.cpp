@@ -72,7 +72,7 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer index
     switch (auto searchAndClaimResult = ringBuffer.searchAndClaimBuffers(rbIdxOfSN, abaItNumber, sequenceNumber);
             searchAndClaimResult.state)
     {
-                case SequenceRingBuffer::ClaimingSearchResult::State::NONE: {
+        case SequenceRingBuffer::ClaimingSearchResult::State::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
         case SequenceRingBuffer::ClaimingSearchResult::State::LEADING_ST: {
@@ -115,21 +115,19 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer in
         return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
     }
 
-    switch (const auto searchResult = ringBuffer.searchWithoutClaimingBuffers(rbIdxOfSN, abaItNumber, sequenceNumber); searchResult.state)
+    switch (auto searchResult = ringBuffer.searchWithoutClaimingBuffers(rbIdxOfSN, abaItNumber, sequenceNumber); searchResult.state)
     {
         case SequenceRingBuffer::NonClaimingSearchResult::State::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
         case SequenceRingBuffer::NonClaimingSearchResult::State::LEADING_AND_TRAILING_ST: {
-            const auto firstDelimiterIdx = searchResult.leadingStartSN % SIZE_OF_RING_BUFFER;
-            const auto abaItNumberOfFirstDelimiter = abaItNumber - static_cast<size_t>(firstDelimiterIdx > rbIdxOfSN);
-            if (auto optStagedBuffer = ringBuffer.tryClaimSpanningTuple(firstDelimiterIdx, abaItNumberOfFirstDelimiter))
+            if (searchResult.startBuffer.has_value())
             {
-                const auto sizeOfSpanningTuple = searchResult.trailingStartSN - searchResult.leadingStartSN + 1;
+                const auto sizeOfSpanningTuple = searchResult.endBufferSN - searchResult.startBufferSN + 1;
                 std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-                spanningTupleBuffers[0] = std::move(optStagedBuffer.value());
-                ringBuffer.claimSTupleBuffers(searchResult.leadingStartSN, spanningTupleBuffers);
-                const auto currentBufferIdx = sequenceNumber - searchResult.leadingStartSN;
+                spanningTupleBuffers[0] = std::move(searchResult.startBuffer.value());
+                ringBuffer.claimSTupleBuffers(searchResult.startBufferSN, spanningTupleBuffers);
+                const auto currentBufferIdx = sequenceNumber - searchResult.endBufferSN;
                 return SequenceShredderResult{
                     .isInRange = true, .indexOfInputBuffer = currentBufferIdx, .spanningBuffers = std::move(spanningTupleBuffers)};
             }

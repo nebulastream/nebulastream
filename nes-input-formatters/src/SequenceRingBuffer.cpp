@@ -178,15 +178,9 @@ SSMetaData::EntryState SSMetaData::getEntryState(const size_t expectedABAItNo) c
 //==--------------------------------------------------------------------------------------------------------==//
 //==---------------------------------------- SEQUENCE BUFFER -----------------------------------------------==//
 //==--------------------------------------------------------------------------------------------------------==//
-SequenceRingBuffer::SequenceRingBuffer(const size_t initialSize) : ringBuffer(std::vector<SSMetaData>(initialSize)), N(initialSize)
+SequenceRingBuffer::SequenceRingBuffer(const size_t initialSize) : ringBuffer(std::vector<SSMetaData>(initialSize)), bufferSize(initialSize)
 {
     ringBuffer[0].setStateOfFirstIndex();
-}
-
-std::optional<StagedBuffer>
-SequenceRingBuffer::tryClaimSpanningTuple(const size_t firstDelimiterIdx, const uint32_t abaItNumberOfFirstDelimiter)
-{
-    return ringBuffer[firstDelimiterIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter);
 }
 
 SequenceRingBuffer::NonClaimingSearchResult
@@ -196,10 +190,13 @@ SequenceRingBuffer::searchWithoutClaimingBuffers(const size_t pivotSN, const siz
     {
         if (const auto secondBufferSN = nonClaimingTrailingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
         {
+            const auto sTupleStartBufferIdx = firstBufferSN.value() % bufferSize;
+            const auto abaItNumberOfFirstDelimiter = static_cast<uint32_t>(firstBufferSN.value() / bufferSize) + 1;
             return NonClaimingSearchResult{
                 .state = NonClaimingSearchResult::State::LEADING_AND_TRAILING_ST,
-                .leadingStartSN = firstBufferSN.value(),
-                .trailingStartSN = secondBufferSN.value()};
+                .startBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter),
+                .startBufferSN = firstBufferSN.value(),
+                .endBufferSN = secondBufferSN.value()};
         }
     }
     return NonClaimingSearchResult{.state = NonClaimingSearchResult::State::NONE};
@@ -263,12 +260,12 @@ std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchLeading(cons
 {
     size_t leadingDistance = 1;
     auto isPriorIteration = static_cast<size_t>(rbIdxOfSN < leadingDistance);
-    auto cellState = this->ringBuffer[(rbIdxOfSN - leadingDistance) % N].getEntryState(abaItNumber - isPriorIteration);
+    auto cellState = this->ringBuffer[(rbIdxOfSN - leadingDistance) % bufferSize].getEntryState(abaItNumber - isPriorIteration);
     while (cellState.isCorrectABA and not(cellState.hasDelimiter))
     {
         ++leadingDistance;
         isPriorIteration = static_cast<size_t>(rbIdxOfSN < leadingDistance);
-        cellState = this->ringBuffer[(rbIdxOfSN - leadingDistance) % N].getEntryState(abaItNumber - isPriorIteration);
+        cellState = this->ringBuffer[(rbIdxOfSN - leadingDistance) % bufferSize].getEntryState(abaItNumber - isPriorIteration);
     }
     return std::make_pair(cellState, leadingDistance);
 }
@@ -287,7 +284,7 @@ SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingLeadingDeli
     if (const auto [cellState, leadingDistance] = searchLeading(rbIdxOfSN, abaItNumber); cellState.isCorrectABA)
     {
         const auto sTupleSN = spanningTupleEndSN - leadingDistance;
-        const auto sTupleIdx = sTupleSN % N;
+        const auto sTupleIdx = sTupleSN % bufferSize;
         const auto isPriorIteration = static_cast<size_t>(rbIdxOfSN < leadingDistance);
         return ClaimedSpanningTuple{
             .firstBuffer = ringBuffer[sTupleIdx].tryClaimSpanningTuple(abaItNumber - isPriorIteration),
@@ -300,13 +297,13 @@ SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingLeadingDeli
 std::pair<SSMetaData::EntryState, size_t> SequenceRingBuffer::searchTrailing(const size_t rbIdxOfSN, const size_t abaItNumber)
 {
     size_t trailingDistance = 1;
-    auto isNextIteration = static_cast<size_t>((rbIdxOfSN + trailingDistance) >= N);
-    auto cellState = this->ringBuffer[(rbIdxOfSN + trailingDistance) % N].getEntryState(abaItNumber + isNextIteration);
+    auto isNextIteration = static_cast<size_t>((rbIdxOfSN + trailingDistance) >= bufferSize);
+    auto cellState = this->ringBuffer[(rbIdxOfSN + trailingDistance) % bufferSize].getEntryState(abaItNumber + isNextIteration);
     while (cellState.isCorrectABA and not(cellState.hasDelimiter))
     {
         ++trailingDistance;
-        isNextIteration = static_cast<size_t>((rbIdxOfSN + trailingDistance) >= N);
-        cellState = this->ringBuffer[(rbIdxOfSN + trailingDistance) % N].getEntryState(abaItNumber + isNextIteration);
+        isNextIteration = static_cast<size_t>((rbIdxOfSN + trailingDistance) >= bufferSize);
+        cellState = this->ringBuffer[(rbIdxOfSN + trailingDistance) % bufferSize].getEntryState(abaItNumber + isNextIteration);
     }
     return std::make_pair(cellState, trailingDistance);
 }

@@ -210,6 +210,7 @@ class SequenceRingBuffer
     };
 
 public:
+    // Todo: rename into 'ClaimSingleST' and 'ClaimTwoSTs' or similar
     struct NonClaimingSearchResult
     {
         enum class State : uint8_t
@@ -219,8 +220,9 @@ public:
         };
 
         State state = State::NONE;
-        SequenceNumberType leadingStartSN{};
-        SequenceNumberType trailingStartSN{};
+        std::optional<StagedBuffer> startBuffer{};
+        SequenceNumberType startBufferSN{};
+        SequenceNumberType endBufferSN{};
     };
 
     struct ClaimingSearchResult
@@ -242,47 +244,47 @@ public:
 
     explicit SequenceRingBuffer(size_t initialSize);
 
-    ///
-    std::optional<StagedBuffer> tryClaimSpanningTuple(size_t firstDelimiterIdx, uint32_t abaItNumberOfFirstDelimiter);
-
     /// Searches for spanning tuples both in leading and trailing direction of the 'pivotSN'
     /// Does not try to claim the spanning tuples, but simply returns their SNs.
-    NonClaimingSearchResult searchWithoutClaimingBuffers(size_t pivotSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
+    [[nodiscard]] NonClaimingSearchResult
+    searchWithoutClaimingBuffers(size_t pivotSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
 
     /// Searches for spanning tuples both in leading and trailing direction of the 'pivotSN'
     /// Tries to claim the start of a spanning tuple (and thereby the ST) if it finds a valid ST.
-    ClaimingSearchResult searchAndClaimBuffers(size_t pivotSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
+    [[nodiscard]] ClaimingSearchResult searchAndClaimBuffers(size_t pivotSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
 
     /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
     void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
 
     /// Checks if the current entry at the ring buffer index has the prior aba iteration number and if both its leading and trailing buffer
     /// were used already. Returns false, if it is not the case, indicating that the caller needs to try again later
-    bool trySetNewBufferWithDelimiter(size_t rbIdxOfSN, uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer);
-    bool trySetNewBufferWithOutDelimiter(size_t rbIdxOfSN, uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] bool trySetNewBufferWithDelimiter(size_t rbIdxOfSN, uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] bool trySetNewBufferWithOutDelimiter(size_t rbIdxOfSN, uint32_t abaItNumber, const StagedBuffer& indexedRawBuffer);
 
-    bool validate() const;
+    [[nodiscard]] bool validate() const;
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceRingBuffer& sequenceRingBuffer);
 
 private:
-    std::vector<SSMetaData> ringBuffer{};
-    size_t N{};
+    std::vector<SSMetaData> ringBuffer;
+    size_t bufferSize{};
 
-    std::pair<SSMetaData::EntryState, size_t> searchLeading(size_t rbIdxOfSN, size_t abaItNumber) const;
+    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchLeading(size_t rbIdxOfSN, size_t abaItNumber) const;
 
-    std::optional<uint32_t> nonClaimingLeadingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
+    [[nodiscard]] std::optional<uint32_t>
+    nonClaimingLeadingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType sequenceNumber);
 
     /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
     /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.
     /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
     /// On finding a valid starting buffer, threads compete to claim that buffer (and thereby all buffers of the ST).
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    ClaimedSpanningTuple claimingLeadingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType spanningTupleEndSN);
+    [[nodiscard]] ClaimedSpanningTuple
+    claimingLeadingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType spanningTupleEndSN);
 
-    std::pair<SSMetaData::EntryState, size_t> searchTrailing(size_t rbIdxOfSN, size_t abaItNumber);
+    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchTrailing(size_t rbIdxOfSN, size_t abaItNumber);
 
-    std::optional<uint32_t>
+    [[nodiscard]] std::optional<uint32_t>
     nonClaimingTrailingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType currentSequenceNumber);
 
     /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
@@ -290,7 +292,7 @@ private:
     /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
     /// On finding a valid terminating buffer, threads compete to claim the first buffer of the ST(spanningTupleStartSN) and thereby the ST.
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    ClaimedSpanningTuple claimingTrailingDelimiterSearch(
+    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(
         size_t spanningTupleStartIdx, size_t abaItNumberSpanningTupleStart, SequenceNumberType spanningTupleStartSN);
 };
 }
