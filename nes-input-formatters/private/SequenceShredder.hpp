@@ -32,6 +32,8 @@
 
 #include <ErrorHandling.hpp>
 
+
+class ConcurrentSynchronizationTest;
 namespace NES::InputFormatters
 {
 
@@ -48,10 +50,6 @@ namespace NES::InputFormatters
 
 // Todo (optional):
 // - resizing
-// - verbose logging
-
-/// Todo: documentation
-/// - sits on to
 
 /// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
 /// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
@@ -66,9 +64,6 @@ struct SequenceShredderResult
 
 /// Forward referencing 'STBuffer' to hide implementation details
 class STBuffer;
-
-// Todo: documentation <-- think about the level of detail, probably defer to 'STBuffer' for technical details'
-// - stay high level and focus on resizing aspect / dealing with out of range tuples
 
 /// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (STBuffer) to determine whether
 /// the provided buffer completes spanning tuples with buffers that (usually) other threads processed
@@ -91,14 +86,18 @@ public:
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Uses the STBuffer to determine whether the 'indexedRawBuffer' with the given 'sequenceNumber' completes spanning tuples and
     /// whether the calling thread is the first to claim the individual spanning tuples
-    // Todo: replace with only 'indexedRawBuffer' as input and make current functions private and ConcurrentSynchronizationTest friend
-    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
-    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer);
+    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
     std::unique_ptr<STBuffer> spanningTupleBuffer;
+
+    /// Enable 'ConcurrentSynchronizationTest' to used mocked buffer and provide 'sequenceNumber' as additional argument
+    friend ConcurrentSynchronizationTest;
+    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
 };
 
 }

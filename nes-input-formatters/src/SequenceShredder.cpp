@@ -62,6 +62,15 @@ SequenceShredder::~SequenceShredder()
     }
 };
 
+SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer)
+{
+    return findSTsWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber().getRawValue());
+}
+SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
+{
+    return findSTsWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber().getRawValue());
+}
+
 SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
     if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);

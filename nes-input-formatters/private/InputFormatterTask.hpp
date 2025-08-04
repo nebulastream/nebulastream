@@ -369,8 +369,7 @@ private:
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
-                fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
-            rawBuffer.getSequenceNumber().getRawValue());
+                fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
@@ -448,8 +447,7 @@ private:
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
-                fieldIndexFunction.getOffsetOfLastTupleDelimiter()},
-            rawBuffer.getSequenceNumber().getRawValue());
+                fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);

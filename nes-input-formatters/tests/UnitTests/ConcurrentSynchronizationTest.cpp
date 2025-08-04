@@ -27,6 +27,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 
 #include <ErrorHandling.hpp>
@@ -36,14 +37,14 @@
 /// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current
 /// request has a tuple delimiter or not, calls the 'processSequenceNumber' function of the SequenceShredder and tracks the resulting spanning tuples.
 /// We check whether the range of all produces sequence numbers matches the expected range.
-class StreamingMultiThreadedAutomatedSequenceShredderTest : public ::testing::Test
+class ConcurrentSynchronizationTest : public ::testing::Test
 {
     using SequenceShredder = NES::InputFormatters::SequenceShredder;
 
 public:
-    void SetUp() override { NES_INFO("Setting up StreamingMultiThreadedAutomatedSequenceShredderTest."); }
+    void SetUp() override { NES_INFO("Setting up ConcurrentSynchronizationTest."); }
 
-    void TearDown() override { NES_INFO("Tear down StreamingMultiThreadedAutomatedSequenceShredderTest class."); }
+    void TearDown() override { NES_INFO("Tear down ConcurrentSynchronizationTest class."); }
 
     template <size_t NUM_THREADS>
     class TestThreadPool
@@ -52,8 +53,8 @@ public:
 
     public:
         TestThreadPool(
-            const SequenceShredder::SequenceNumberType upperBound,
-            const std::optional<SequenceShredder::SequenceNumberType> fixedSeed,
+            const NES::InputFormatters::SequenceNumberType upperBound,
+            const std::optional<NES::InputFormatters::SequenceNumberType> fixedSeed,
             NES::Memory::TupleBuffer dummyBuffer)
             : sequenceShredder(SequenceShredder{}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
@@ -70,7 +71,7 @@ public:
                     std::random_device rd;
                     std::mt19937_64 seedGen{rd()};
                     std::uniform_int_distribution<size_t> dis{0, SIZE_MAX};
-                    const SequenceShredder::SequenceNumberType randomSeed = dis(seedGen);
+                    const NES::InputFormatters::SequenceNumberType randomSeed = dis(seedGen);
                     sequenceNumberGen = std::mt19937_64{randomSeed};
                     NES_DEBUG("Initializing StreamingSequenceNumberGenerator with random seed: {}", randomSeed);
                 }
@@ -86,9 +87,9 @@ public:
         /// Check if at least one thread is still active
         void waitForCompletion() const { completionLatch.wait(); }
 
-        [[nodiscard]] SequenceShredder::SequenceNumberType getCheckSum() const
+        [[nodiscard]] NES::InputFormatters::SequenceNumberType getCheckSum() const
         {
-            SequenceShredder::SequenceNumberType globalCheckSum = 0;
+            NES::InputFormatters::SequenceNumberType globalCheckSum = 0;
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
                 globalCheckSum += threadLocalCheckSum.at(i);
@@ -99,9 +100,9 @@ public:
     private:
         SequenceShredder sequenceShredder;
         std::atomic<size_t> currentSequenceNumber;
-        std::atomic<SequenceShredder::SequenceNumberType> indexOfLastDetectedTupleDelimiter;
+        std::atomic<NES::InputFormatters::SequenceNumberType> indexOfLastDetectedTupleDelimiter;
         std::array<std::jthread, NUM_THREADS> threads;
-        std::array<SequenceShredder::SequenceNumberType, NUM_THREADS> threadLocalCheckSum;
+        std::array<NES::InputFormatters::SequenceNumberType, NUM_THREADS> threadLocalCheckSum;
         std::array<bool, NUM_THREADS> threadIsActive;
         std::latch completionLatch;
         std::mutex sequenceShredderMutex;
@@ -142,10 +143,10 @@ public:
                 if (tupleDelimiter)
                 {
                     NES::InputFormatters::SequenceShredderResult result
-                        = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                        = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
                     while (not result.isInRange)
                     {
-                        result = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                        result = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
                     }
                     if (result.spanningBuffers.size() > 1)
                     {
@@ -159,10 +160,10 @@ public:
                 else
                 {
                     NES::InputFormatters::SequenceShredderResult result
-                        = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber);
+                        = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
                     while (not result.isInRange)
                     {
-                        result = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber);
+                        result = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, threadLocalSequenceNumber);
                     }
                     if (result.spanningBuffers.size() > 1)
                     {
@@ -179,7 +180,7 @@ public:
     };
 
     template <size_t NUM_THREADS>
-    static void executeTest(const uint32_t upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
+    static void executeTest(const uint32_t upperBound, const std::optional<NES::InputFormatters::SequenceNumberType> fixedSeed)
     {
         PRECONDITION(upperBound <= std::numeric_limits<uint32_t>::max(), "Not supporting values larger than 4294967295");
         /// To avoid (future) errors by creating a TupleBuffer without a valid control block, we create a single valid (dummy) tuple buffer
@@ -193,11 +194,11 @@ public:
     }
 };
 
-TEST_F(StreamingMultiThreadedAutomatedSequenceShredderTest, multiThreadedExhaustiveTest)
+TEST_F(ConcurrentSynchronizationTest, multiThreadedExhaustiveTest)
 {
     constexpr size_t numIterations = 1;
     for (size_t iteration = 0; iteration < numIterations; ++iteration)
     {
-        executeTest<16>(100000, std::nullopt);
+        executeTest<16>(1000000, std::nullopt);
     }
 }
