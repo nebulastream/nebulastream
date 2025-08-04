@@ -120,6 +120,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
     const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source, bufferProvider);
+    const bool requiresMetadata = !source.addsMetadata();
     while (ingestion.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -148,7 +149,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer->setNumberOfTuples(numberOfTuples->numTuples);
-            emit(*emptyBuffer, true);
+            emit(*emptyBuffer, requiresMetadata);
         }
         else
         {
