@@ -40,11 +40,8 @@
 namespace NES::InputFormatters
 {
 
-/// The Spanning Tuple Buffer (STBuffer) enables threads to concurrently resolve spanning tuples.
-/// Spanning tuples (STs) are tuples that span over two or more buffers.
-/// The buffers that form the ST may be processed by multiple threads at different times.
-/// Exactly one thread must process an ST, otherwise we miss an ST or we produce duplicate STs.
-/// The STBuffer
+/// The STBuffer enables the SequenceShredder to:
+/// 1.
 class STBuffer
 {
     /// Result of trying to claim a buffer (with a specific SN) as the start of a spanning tuple.
@@ -76,13 +73,16 @@ public:
 
     explicit STBuffer(size_t initialSize);
 
-    /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
-    void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
+    /// First, checks if the prior entry at the index of 'sequenceNumber' contains the expected prior ABA iteration number and is used up
+    /// If not, returns as 'NOT_IN_RANGE'
+    /// Otherwise, searches for valid spanning tuples and on finding a spanning tuple, tries to claim the first buffer of the spanning tuple
+    /// for the calling thread, which claims the entire spanning tuple.
+    [[nodiscard]] ClaimingSearchResult tryFindSTsForBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] ClaimingSearchResult tryFindSTsForBufferWithoutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
-    /// Checks if the current entry at the ring buffer index has the prior aba iteration number and if both its leading and trailing buffer
-    /// were used already. Returns false, if it is not the case, indicating that the caller needs to try again later
-    [[nodiscard]] ClaimingSearchResult trySetNewBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-    [[nodiscard]] ClaimingSearchResult trySetNewBufferWithOutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
+    /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back
+    void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
 
     [[nodiscard]] bool validate() const;
 

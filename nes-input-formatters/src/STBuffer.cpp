@@ -91,7 +91,7 @@ void STBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<St
     buffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
 }
 
-STBuffer::ClaimingSearchResult STBuffer::trySetNewBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
+STBuffer::ClaimingSearchResult STBuffer::tryFindSTsForBufferWithDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
     const auto rbIdxOfSN = sequenceNumber % buffer.size();
@@ -101,7 +101,7 @@ STBuffer::ClaimingSearchResult STBuffer::trySetNewBufferWithDelimiter(const size
     }
     return ClaimingSearchResult{.type = ClaimingSearchResult::Type::NOT_IN_RANGE};
 }
-STBuffer::ClaimingSearchResult STBuffer::trySetNewBufferWithOutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
+STBuffer::ClaimingSearchResult STBuffer::tryFindSTsForBufferWithoutDelimiter(const size_t sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     const auto abaItNumber = static_cast<uint32_t>(sequenceNumber / buffer.size()) + 1;
     const auto rbIdxOfSN = sequenceNumber % buffer.size();

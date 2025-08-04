@@ -29,7 +29,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
-#include <STBuffer.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -54,17 +53,28 @@ struct SequenceShredderResult
 
 // Todo:
 // - strong types for SN, ABA, other indexes
+// - adapt README.md document
 
 // Todo (optional):
 // - resizing
 // - verbose logging
 
+/// The SequenceShredder enables threads to concurrently resolve spanning tuples.
+/// Spanning tuples (STs) are tuples that span over two or more buffers.
+/// The buffers that form the ST may be processed by multiple threads concurrently.
+/// The SequenceShredder makes sure that exactly one thread processes an ST (avoiding to miss an ST or to produce duplicate STs)
+///
+/// Todo: STBuffer, atomic state, intuition
+
+// Todo: make 'STBuffer' a unique_ptr <-- allowing to swap it out with a larger buffer and to hide the impl detail
+
+class STBuffer;
 class SequenceShredder
 {
     static constexpr size_t SIZE_OF_RING_BUFFER = 1024;
 
 public:
-    explicit SequenceShredder() : ringBuffer(SIZE_OF_RING_BUFFER) {};
+    explicit SequenceShredder();
     ~SequenceShredder();
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
@@ -75,7 +85,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    STBuffer ringBuffer;
+    std::unique_ptr<STBuffer> ringBuffer;
 };
 
 }
