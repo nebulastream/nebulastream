@@ -127,8 +127,7 @@ void processSpanningTuple(
     spanningTupleStringStream << indexerMetaData.getTupleDelimitingBytes();
 
     const auto& firstBuffer = stagedBuffersSpan.front();
-    const auto firstSpanningTuple
-        = (firstBuffer.isValidRawBuffer()) ? firstBuffer.getTrailingBytes(indexerMetaData.getTupleDelimitingBytes().size()) : "";
+    const auto firstSpanningTuple = firstBuffer.getTrailingBytes(indexerMetaData.getTupleDelimitingBytes().size());
     spanningTupleStringStream << firstSpanningTuple;
 
     /// Process all buffers in-between the first and the last
@@ -176,7 +175,7 @@ public:
         , schemaInfo(schema)
         , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>() : nullptr)
+        , sequenceShredder(hasSpanningTuple() ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr)
 
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
