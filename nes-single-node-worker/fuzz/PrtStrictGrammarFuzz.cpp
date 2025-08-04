@@ -235,7 +235,7 @@ DEFINE_PROTO_FUZZER(const FQueryPlan& sqp)
         {
             if (snw.getQuerySummary(*qid)->currentStatus <= QueryStatus::Running)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
             else
