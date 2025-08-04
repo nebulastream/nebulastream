@@ -230,14 +230,12 @@ public:
     explicit SequenceRingBuffer(size_t initialSize);
 
     /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
-    /// Tries to claim the the spanning tuple, if search is successful
-    // Todo: rename again <-- highlight nature of ST, instead of 'leading buffer'
-    // Todo: Fuse results?
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingBuffer(SequenceNumberType sequenceNumber);
+    /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumberType sequenceNumber);
 
-    /// Searches for spanning tuples both in leading and trailing direction of the 'pivotSN'
-    /// Tries to claim the start of a spanning tuple (and thereby the ST) if it finds a valid ST.
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingBuffer(SequenceNumberType sequenceNumber);
+    /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
+    /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
+    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumberType sequenceNumber);
 
     /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
     void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
@@ -256,11 +254,14 @@ private:
 
     [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
 
-    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchLeading(size_t rbIdxOfSN, size_t abaItNumber) const;
-
-    /// Todo:
-    [[nodiscard]] std::optional<uint32_t>
-    nonClaimingLeadingDelimiterSearch(size_t rbIdxOfSN, size_t abaItNumber, SequenceNumberType sequenceNumber) const;
+    /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
+    /// 'Reachable' means there is a path from 'searchStartBufferIdx' to the buffer that traverses 0 or more buffers without delimiters and
+    /// valid ABA iteration numbers and that the target buffer has a delimiter and a valid ABA iteration number
+    /// Returns distance to 'reachable buffer', if it succeeds in finding one
+    [[nodiscard]] std::optional<size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
+    // [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
+    /// Analog to 'searchLeading', but searches in trailing direction (larger SNs)
+    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchTrailing(size_t searchStartBufferIdx, size_t abaItNumber) const;
 
     /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
     /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.
@@ -269,7 +270,6 @@ private:
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
     [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumberType spanningTupleEndSN);
 
-    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchTrailing(size_t rbIdxOfSN, size_t abaItNumber) const;
 
     /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
     /// Searches in trailing direction (larger SNs) for a buffer with a delimiter that terminates the spanning tuple.
