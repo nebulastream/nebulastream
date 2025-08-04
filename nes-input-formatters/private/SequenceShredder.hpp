@@ -29,7 +29,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
-#include <SequenceRingBuffer.hpp>
+#include <STBuffer.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -77,7 +77,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    SequenceRingBuffer ringBuffer;
+    STBuffer ringBuffer;
 };
 
 }

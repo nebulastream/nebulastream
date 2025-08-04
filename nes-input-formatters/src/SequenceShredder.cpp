@@ -32,7 +32,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <RawTupleBuffer.hpp>
-#include <SequenceRingBuffer.hpp>
+#include <STBuffer.hpp>
 
 #include <Identifiers/Identifiers.hpp>
 #include <ErrorHandling.hpp>
@@ -68,10 +68,10 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer index
 
     switch (auto searchAndClaimResult = ringBuffer.searchAndTryClaimLeadingAndTrailingSTuple(sequenceNumber); searchAndClaimResult.state)
     {
-        case SequenceRingBuffer::ClaimingSearchResult::State::NONE: {
+        case STBuffer::ClaimingSearchResult::State::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
-        case SequenceRingBuffer::ClaimingSearchResult::State::LEADING_ST_ONLY: {
+        case STBuffer::ClaimingSearchResult::State::LEADING_ST_ONLY: {
             const auto sizeOfSpanningTuple = sequenceNumber - searchAndClaimResult.sTupleStartSN + 1;
             std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
             spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTupleStartBuffer.value());
@@ -79,14 +79,14 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer index
             return SequenceShredderResult{
                 .isInRange = true, .indexOfInputBuffer = sizeOfSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
         }
-        case SequenceRingBuffer::ClaimingSearchResult::State::TRAILING_ST_ONLY: {
+        case STBuffer::ClaimingSearchResult::State::TRAILING_ST_ONLY: {
             const auto sizeOfSpanningTuple = searchAndClaimResult.sTupleEndSN - sequenceNumber + 1;
             std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
             spanningTupleBuffers[0] = std::move(searchAndClaimResult.trailingSTupleStartBuffer.value());
             ringBuffer.claimSTupleBuffers(sequenceNumber, spanningTupleBuffers);
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = std::move(spanningTupleBuffers)};
         }
-        case SequenceRingBuffer::ClaimingSearchResult::State::LEADING_AND_TRAILING_ST: {
+        case STBuffer::ClaimingSearchResult::State::LEADING_AND_TRAILING_ST: {
             const auto sizeOfFirstST = sequenceNumber - searchAndClaimResult.sTupleStartSN + 1;
             const auto sizeOfBothSTs = searchAndClaimResult.sTupleEndSN - searchAndClaimResult.sTupleStartSN + 1;
             std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSTs);
@@ -110,10 +110,10 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer in
 
     switch (auto searchAndClaimResult = ringBuffer.searchAndTryClaimLeadingSTuple(sequenceNumber); searchAndClaimResult.state)
     {
-        case SequenceRingBuffer::ClaimingSearchResult::State::NONE: {
+        case STBuffer::ClaimingSearchResult::State::NONE: {
             return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
         }
-        case SequenceRingBuffer::ClaimingSearchResult::State::LEADING_ST_ONLY: {
+        case STBuffer::ClaimingSearchResult::State::LEADING_ST_ONLY: {
             const auto sizeOfSpanningTuple = searchAndClaimResult.sTupleEndSN - searchAndClaimResult.sTupleStartSN + 1;
             std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
             spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTupleStartBuffer.value());
@@ -122,8 +122,8 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer in
             return SequenceShredderResult{
                 .isInRange = true, .indexOfInputBuffer = currentBufferIdx, .spanningBuffers = std::move(spanningTupleBuffers)};
         }
-        case SequenceRingBuffer::ClaimingSearchResult::State::TRAILING_ST_ONLY:
-        case SequenceRingBuffer::ClaimingSearchResult::State::LEADING_AND_TRAILING_ST:
+        case STBuffer::ClaimingSearchResult::State::TRAILING_ST_ONLY:
+        case STBuffer::ClaimingSearchResult::State::LEADING_AND_TRAILING_ST:
             INVARIANT(false, "A buffer without a delimiter can only find one spanning tuple in leading direction.");
     }
     std::unreachable();

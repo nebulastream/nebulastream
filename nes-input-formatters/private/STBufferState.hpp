@@ -15,37 +15,27 @@
 #pragma once
 
 #include <atomic>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <ostream>
 #include <span>
-#include <string_view>
-#include <utility>
-#include <vector>
-
-#include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
+#include <fmt/format.h>
 #include <RawTupleBuffer.hpp>
-#include "Util/Ranges.hpp"
 
 #include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
 {
 
-class BufferEntry;
 
-class AtomicBitmapState
+class STBufferEntry;
+class AtomicState
 {
-    // Todo: try to not expose the AtomicBitmapState out of BufferEntry and then make functions public (instead of friend)
-    friend class BufferEntry;
+    friend STBufferEntry;
 
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = 4294967296ULL;
@@ -82,17 +72,13 @@ class AtomicBitmapState
         void claimSpanningTuple() { this->state |= claimedSpanningTupleBit; }
 
     private:
-        friend class AtomicBitmapState;
+        friend class AtomicState;
         [[nodiscard]] uint64_t getBitmapState() const { return state; }
         uint64_t state;
     };
-    AtomicBitmapState() : state(defaultState) { };
-    ~AtomicBitmapState() = default;
 
-    AtomicBitmapState(const AtomicBitmapState&) = delete;
-    AtomicBitmapState(const AtomicBitmapState&&) = delete;
-    void operator=(const AtomicBitmapState& other) = delete;
-    void operator=(const AtomicBitmapState&& other) = delete;
+    AtomicState() : state(defaultState) { };
+    ~AtomicState() = default;
 
     bool tryClaimSpanningTuple(uint32_t abaItNumber);
 
@@ -106,14 +92,12 @@ class AtomicBitmapState
     void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
     void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
 
-    friend std::ostream& operator<<(std::ostream& os, const AtomicBitmapState& atomicBitmapState);
+    friend std::ostream& operator<<(std::ostream& os, const AtomicState& atomicBitmapState);
 
     std::atomic<uint64_t> state;
 };
 
-// Todo: rename <-- try to get rid of SequenceShredder -> SS acronym in general (stringstream is worse enough already)
-// Todo: move into .cpp entirely and forward ref (implementation detail)
-class BufferEntry
+class alignas(64) STBufferEntry /// NOLINT(readability-magic-numbers)
 {
 public:
     struct EntryState
@@ -121,7 +105,8 @@ public:
         bool hasCorrectABA = false;
         bool hasDelimiter = false;
     };
-    BufferEntry() { };
+
+    STBufferEntry() : atomicState(AtomicState{}) { };
 
     /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
     void setStateOfFirstIndex();
@@ -154,7 +139,7 @@ public:
     [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
 
     // Todo: rename args?
-    [[nodiscard]] bool validateFinalState(size_t idx, const BufferEntry& nextEntry, size_t lastIdxOfRB) const;
+    [[nodiscard]] bool validateFinalState(size_t idx, const STBufferEntry& nextEntry, size_t lastIdxOfRB) const;
 
 private:
     // 24 Bytes (TupleBuffer)
@@ -162,96 +147,10 @@ private:
     // 48 Bytes (TupleBuffer)
     Memory::TupleBuffer trailingBufferRef;
     // 56 Bytes (Atomic state)
-    AtomicBitmapState atomicBitmapState;
+    AtomicState atomicState;
     // 60 Bytes (meta data)
     uint32_t firstDelimiterOffset{};
     // 64 Bytes (meta data)
     uint32_t lastDelimiterOffset{};
 };
-
-// Todo: rename, is not a ring buffer anymore
-class SequenceRingBuffer
-{
-    /// Result of trying to claim a buffer (with a specific SN) as the start of a spanning tuple.
-    /// Multiple threads may try to claim a specific buffer. Only the thread that wins the race gets 'firstBuffer' with a value.
-    struct ClaimedSpanningTuple
-    {
-        std::optional<StagedBuffer> firstBuffer;
-        SequenceNumberType snOfLastBuffer{};
-    };
-
-public:
-    struct ClaimingSearchResult
-    {
-        // Todo: rename 'state'?
-        enum class State : uint8_t
-        {
-            NONE,
-            LEADING_ST_ONLY,
-            TRAILING_ST_ONLY,
-            LEADING_AND_TRAILING_ST
-        };
-
-        State state = State::NONE;
-        std::optional<StagedBuffer> leadingSTupleStartBuffer = std::nullopt;
-        std::optional<StagedBuffer> trailingSTupleStartBuffer = std::nullopt;
-        SequenceNumberType sTupleStartSN{};
-        SequenceNumberType sTupleEndSN{};
-    };
-
-    explicit SequenceRingBuffer(size_t initialSize);
-
-    /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
-    /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingSTuple(SequenceNumberType sequenceNumber);
-
-    /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
-    /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumberType sequenceNumber);
-
-    /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
-    void claimSTupleBuffers(size_t sTupleStartSN, std::span<StagedBuffer> spanningTupleBuffers);
-
-    /// Checks if the current entry at the ring buffer index has the prior aba iteration number and if both its leading and trailing buffer
-    /// were used already. Returns false, if it is not the case, indicating that the caller needs to try again later
-    [[nodiscard]] bool trySetNewBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-    [[nodiscard]] bool trySetNewBufferWithOutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-
-    [[nodiscard]] bool validate() const;
-
-    friend std::ostream& operator<<(std::ostream& os, const SequenceRingBuffer& sequenceRingBuffer);
-
-private:
-    std::vector<BufferEntry> ringBuffer;
-
-    [[nodiscard]] std::pair<SequenceNumberType, uint32_t> getBufferIdxAndABAItNo(SequenceNumberType sequenceNumber) const;
-
-    /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
-    /// 'Reachable' means there is a path from 'searchStartBufferIdx' to the buffer that traverses 0 or more buffers without delimiters and
-    /// valid ABA iteration numbers and that the target buffer has a delimiter and a valid ABA iteration number
-    /// Returns distance to 'reachable buffer', if it succeeds in finding one
-    [[nodiscard]] std::optional<size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
-    /// Analog to 'searchLeading', but searches in trailing direction (larger SNs)
-    [[nodiscard]] std::optional<size_t> searchTrailing(size_t searchStartBufferIdx, size_t abaItNumber) const;
-
-    /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
-    /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.
-    /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
-    /// On finding a valid starting buffer, threads compete to claim that buffer (and thereby all buffers of the ST).
-    /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumberType spanningTupleEndSN);
-
-
-    /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
-    /// Searches in trailing direction (larger SNs) for a buffer with a delimiter that terminates the spanning tuple.
-    /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
-    /// On finding a valid terminating buffer, threads compete to claim the first buffer of the ST(spanningTupleStartSN) and thereby the ST.
-    /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType sTupleStartSN, SequenceNumberType searchStartSN);
-
-    /// Calls claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN) <-- sTuple start is also where search should start
-    [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumberType sTupleStartSN);
-};
 }
-
-FMT_OSTREAM(NES::InputFormatters::SequenceRingBuffer);
