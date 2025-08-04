@@ -102,6 +102,10 @@ LogicalFunction toFn(const FPredicate& pred)
 SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
 {
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
+    if (schema.getNumberOfFields() == 0)
+    {
+        schema.addField("dummy", DataType::Type::BOOLEAN);
+    }
     const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), schema};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
@@ -125,24 +129,26 @@ SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
     return SourceDescriptor{physicalSourceId, logicalSource, sourceType, (std::move(sourceDescriptorConfig)), deserializedParserConfig};
 }
 
-std::unique_ptr<Sinks::SinkDescriptor> toSn(const FSinkDscrtr& serializableSinkDescriptor)
+SinkLogicalOperator toSn(const FSinkDscrtr& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
     auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
+    if (schema.getNumberOfFields() == 0)
+    {
+        schema.addField("dummy", DataType::Type::BOOLEAN);
+    }
     auto addTimestamp = serializableSinkDescriptor.addtimestamp();
     const auto* sinkType = "File";
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
-    NES::Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
+    NES::DescriptorConfig::Config sinkDescriptorConfig{};
     for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
     {
-        sinkDescriptorConfig[key] = ::NES::Configurations::protoToDescriptorConfigType(desciptor);
+        sinkDescriptorConfig[key] = ::NES::protoToDescriptorConfigType(desciptor);
     }
 
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
-    sinkDescriptor->schema = schema;
-    return sinkDescriptor;
+    SinkDescriptor s{"foo", schema, sinkType, sinkDescriptorConfig};
+    return SinkLogicalOperator{s};
 }
 
 LogicalOperator toOp(const FOp& op)
@@ -176,8 +182,7 @@ LogicalPlan toPlan(const FQueryPlan& plan)
     auto schema = SchemaSerializationUtil::deserializeSchema(root.sinkdescriptor().sinkschema());
     auto child = toOp(plan.rootoperator().child());
 
-    auto sink = SinkLogicalOperator("foo");
-    sink.sinkDescriptor = toSn(root.sinkdescriptor());
+    auto sink = toSn(root.sinkdescriptor());
     return LogicalPlan{sink.withChildren({child})};
 }
 
