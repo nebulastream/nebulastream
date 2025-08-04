@@ -220,9 +220,9 @@ public:
         };
 
         State state = State::NONE;
-        std::optional<StagedBuffer> startBuffer = std::nullopt;
-        SequenceNumberType startBufferSN{};
-        SequenceNumberType endBufferSN{};
+        std::optional<StagedBuffer> sTupleStartBuffer = std::nullopt;
+        SequenceNumberType sTupleStartSN{};
+        SequenceNumberType sTupleEndSN{};
     };
 
     struct ClaimingSearchResult

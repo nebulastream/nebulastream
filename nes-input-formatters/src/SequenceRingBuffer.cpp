@@ -186,20 +186,16 @@ SequenceRingBuffer::SequenceRingBuffer(const size_t initialSize) : ringBuffer(st
 SequenceRingBuffer::NonClaimingSearchResult
 SequenceRingBuffer::searchWithoutClaimingBuffers(const size_t pivotSN, const size_t abaItNumber, const SequenceNumberType sequenceNumber)
 {
-    if (const auto firstBufferSN = nonClaimingLeadingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
+    if (const auto sTupleStartSN = nonClaimingLeadingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
     {
-        /// Can't use 'claimingTrailingDelimiterSearch', since the start of the ST and start of the search (sequenceNumber+1) are different
-        // Todo: could create 'claimingTrailingDelimiterSearch' that takes different vals for start of search and first SN
-        // -> then overload and call more complex function from simpler version
-        if (const auto secondBufferSN = nonClaimingTrailingDelimiterSearch(pivotSN, abaItNumber, sequenceNumber))
+        if (auto [startBuffer, sTupleEndSN] = claimingTrailingDelimiterSearch(sTupleStartSN.value(), sequenceNumber);
+            startBuffer.has_value())
         {
-            const auto sTupleStartBufferIdx = firstBufferSN.value() % ringBuffer.size();
-            const auto abaItNumberOfFirstDelimiter = static_cast<uint32_t>(firstBufferSN.value() / ringBuffer.size()) + 1;
             return NonClaimingSearchResult{
                 .state = NonClaimingSearchResult::State::LEADING_AND_TRAILING_ST,
-                .startBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(abaItNumberOfFirstDelimiter),
-                .startBufferSN = firstBufferSN.value(),
-                .endBufferSN = secondBufferSN.value()};
+                .sTupleStartBuffer = std::move(startBuffer),
+                .sTupleStartSN = sTupleStartSN.value(),
+                .sTupleEndSN = sTupleEndSN};
         }
     }
     return NonClaimingSearchResult{.state = NonClaimingSearchResult::State::NONE};
@@ -218,6 +214,7 @@ SequenceRingBuffer::ClaimingSearchResult SequenceRingBuffer::searchAndClaimBuffe
         .leadingStartSN = firstSTFinalSN,
         .trailingStartSN = secondSTFinalSN};
 }
+
 void SequenceRingBuffer::claimSTupleBuffers(const size_t sTupleStartSN, const std::span<StagedBuffer> spanningTupleBuffers)
 {
     const auto lastOffset = spanningTupleBuffers.size() - 1;
@@ -323,12 +320,21 @@ std::optional<uint32_t> SequenceRingBuffer::nonClaimingTrailingDelimiterSearch(
 
 SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType spanningTupleStartSN)
 {
+    return claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN);
+}
+
+SequenceRingBuffer::ClaimedSpanningTuple
+SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType spanningTupleStartSN, const SequenceNumberType searchStartSN)
+{
+    // Todo: put aba calc and idx calc in dedicated func?
     const auto spanningTupleStartIdx = spanningTupleStartSN % ringBuffer.size();
     const auto abaItNumberSpanningTupleStart = static_cast<uint32_t>(spanningTupleStartSN / ringBuffer.size()) + 1;
-    if (const auto [cellState, trailingDistance] = searchTrailing(spanningTupleStartIdx, abaItNumberSpanningTupleStart);
-        cellState.isCorrectABA)
+    const auto searchStartIdx = searchStartSN % ringBuffer.size();
+    const auto abaItNumberSearchStart = static_cast<uint32_t>(searchStartSN / ringBuffer.size()) + 1;
+
+    if (const auto [cellState, trailingDistance] = searchTrailing(searchStartIdx, abaItNumberSearchStart); cellState.isCorrectABA)
     {
-        const auto leadingSequenceNumber = spanningTupleStartSN + trailingDistance;
+        const auto leadingSequenceNumber = searchStartSN + trailingDistance;
         return ClaimedSpanningTuple{
             .firstBuffer = ringBuffer[spanningTupleStartIdx].tryClaimSpanningTuple(abaItNumberSpanningTupleStart),
             .snOfLastBuffer = leadingSequenceNumber,
