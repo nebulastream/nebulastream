@@ -86,6 +86,7 @@ private:
     std::optional<rust::Box<SenderDataChannel>> channel;
     std::string channelId;
     std::string connectionAddr;
+    std::atomic_bool closed;
 };
 
 struct ConfigParametersNetworkSink

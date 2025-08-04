@@ -123,15 +123,18 @@ void NetworkSink::start(PipelineExecutionContext&)
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
 {
-    INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
-
-    /// Check if the sender network service has pending buffers to send
-    /// If yes, keep the pipeline alive by emitting an empty buffer
-    if (sender_writes_pending(**this->channel))
+    if (!closed)
     {
-        pec.emitBuffer({}, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-        // NES_WARNING("Cannot shutdown Network Sink. Network Channel Flush is ongoing");
-        return;
+        INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
+
+        /// Check if the sender network service has pending buffers to send
+        /// If yes, keep the pipeline alive by emitting an empty buffer
+        if (sender_writes_pending(**this->channel))
+        {
+            pec.emitBuffer({}, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            // NES_WARNING("Cannot shut down Network Sink. Network Channel Flush is ongoing");
+            return;
+        }
     }
 
     close_sender_channel(*std::move(this->channel));
@@ -140,6 +143,9 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
 
 void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
+    if (closed)
+        return;
+
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
     /// Set buffer header
     const SerializedTupleBuffer metadata{
@@ -168,9 +174,11 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
 
     switch (sendResult)
     {
-        case SendResult::Error: {
-            /// This cannot be the case currently, as the sender queue is not closed from anywhere on the cxx side
-            throw CannotOpenSink("Sender channel closed");
+        case SendResult::Closed: {
+            this->closed = true;
+            auto _ = backpressureHandler.onFull(inputBuffer, valve);
+            NES_INFO("Network Sink was closed");
+            return;
         }
         case SendResult::Ok: {
             // NES_INFO("Sent buffer with SeqNum({})", inputBuffer.getSequenceNumber());

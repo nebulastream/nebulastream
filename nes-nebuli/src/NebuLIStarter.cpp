@@ -157,32 +157,32 @@ void handleStart(const argparse::ArgumentParser& startArgs)
 
 void handleQueryStatus(const argparse::ArgumentParser& statusArgs)
 {
-    std::vector<QueryStatus> query_statuses;
+    std::vector<NES::QueryStatus> queryStatuses;
     executeForEachQuery(
         statusArgs.get<std::string>(ARG_QUERY_ID),
         [&](std::shared_ptr<NES::GRPCClient>& client, const auto& queryId)
         {
             auto status = client->status(queryId);
-            query_statuses.push_back(status);
+            queryStatuses.push_back(status.currentStatus);
         });
-    auto running = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Running; });
-    auto stopped = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Stopped; });
-    auto failed = std::ranges::count_if(query_statuses, [](const auto& qs) { return qs == Failed; });
+    auto running = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Running; });
+    auto stopped = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Stopped; });
+    auto failed = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Failed; });
     if (failed > 0)
     {
-        std::cout << "failed" << std::endl;
+        std::cout << "FAILED" << std::endl;
     }
     else if (stopped == 0 && running > 0)
     {
-        std::cout << "running" << std::endl;
+        std::cout << "RUNNING" << std::endl;
     }
     else if (stopped > 0 && running > 0)
     {
-        std::cout << "partially running" << std::endl;
+        std::cout << "PARTIALLY RUNNING" << std::endl;
     }
     else if (stopped > 0 && running == 0)
     {
-        std::cout << "stopped" << std::endl;
+        std::cout << "COMPLETED" << std::endl;
     }
 }
 
