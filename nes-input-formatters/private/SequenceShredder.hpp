@@ -36,20 +36,11 @@ namespace NES::InputFormatters
 {
 
 /// Acronyms:
-/// idx/Idx <-> Index
-/// SN <-> Sequence Number
-/// RB <-> Ring Buffer
+/// ST <-> Spanning Tuple
 /// STuple/sTuple <-> Spanning Tuple
+/// SN <-> Sequence Number
 /// ABA <-> ABA Problem (https: //en.wikipedia.org/wiki/ABA_problem)
 /// abaItNo/ABAItNo <-> ABA Iteration Number
-/// rbIdxOfSN <-> ring buffer index of sequence number
-
-struct SequenceShredderResult
-{
-    bool isInRange;
-    size_t indexOfInputBuffer;
-    std::vector<StagedBuffer> spanningBuffers;
-};
 
 // Todo:
 // - strong types for SN, ABA, other indexes
@@ -59,33 +50,55 @@ struct SequenceShredderResult
 // - resizing
 // - verbose logging
 
-/// The SequenceShredder enables threads to concurrently resolve spanning tuples.
-/// Spanning tuples (STs) are tuples that span over two or more buffers.
-/// The buffers that form the ST may be processed by multiple threads concurrently.
-/// The SequenceShredder makes sure that exactly one thread processes an ST (avoiding to miss an ST or to produce duplicate STs)
-///
-/// Todo: STBuffer, atomic state, intuition
+/// Todo: documentation
+/// - sits on to
 
-// Todo: make 'STBuffer' a unique_ptr <-- allowing to swap it out with a larger buffer and to hide the impl detail
+/// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
+/// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
+/// matches the buffer that the calling thread provided to search for spanning tuples
+/// May return 'false' for 'isInRange', if the calling thread provides a sequence number that the spanning tuple buffer can't process yet
+struct SequenceShredderResult
+{
+    bool isInRange;
+    size_t indexOfInputBuffer;
+    std::vector<StagedBuffer> spanningBuffers;
+};
 
+/// Forward referencing 'STBuffer' to hide implementation details
 class STBuffer;
+
+// Todo: documentation <-- think about the level of detail, probably defer to 'STBuffer' for technical details'
+// - stay high level and focus on resizing aspect / dealing with out of range tuples
+
+/// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (STBuffer) to determine whether
+/// the provided buffer completes spanning tuples with buffers that (usually) other threads processed
+/// (Planned) The SequenceShredder keeps track of sequence numbers that were not in range of the STBuffer
+/// (Planned) Given enough out-of-range requests, the SequenceShredder doubles the size of the STBuffer
 class SequenceShredder
 {
-    static constexpr size_t SIZE_OF_RING_BUFFER = 1024;
+    static constexpr size_t INITIAL_SIZE_OF_ST_BUFFER = 1024;
 
 public:
     explicit SequenceShredder();
+    /// Destructor validates (final) state of spanning tuple buffer
     ~SequenceShredder();
 
+    SequenceShredder(const SequenceShredder&) = delete;
+    SequenceShredder& operator=(const SequenceShredder&) = delete;
+    SequenceShredder(SequenceShredder&&) = default;
+    SequenceShredder& operator=(SequenceShredder&&) = default;
+
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
-    /// Todo: Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
-    SequenceShredderResult findSTsWithDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
-    SequenceShredderResult findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, SequenceNumberType sequenceNumber);
+    /// Uses the STBuffer to determine whether the 'indexedRawBuffer' with the given 'sequenceNumber' completes spanning tuples and
+    /// whether the calling thread is the first to claim the individual spanning tuples
+    // Todo: replace with only 'indexedRawBuffer' as input and make current functions private and ConcurrentSynchronizationTest friend
+    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
+    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumberType sequenceNumber);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    std::unique_ptr<STBuffer> ringBuffer;
+    std::unique_ptr<STBuffer> spanningTupleBuffer;
 };
 
 }

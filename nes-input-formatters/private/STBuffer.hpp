@@ -32,16 +32,20 @@
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <RawTupleBuffer.hpp>
 #include <Util/Ranges.hpp>
-#include <STBufferState.hpp>
 #include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
+#include <STBufferState.hpp>
+
+#include "SequenceShredder.hpp"
 
 namespace NES::InputFormatters
 {
 
-/// The STBuffer enables the SequenceShredder to:
-/// 1.
+/// The STBuffer enables threads to concurrently resolve spanning tuples.
+/// Spanning tuples (STs) are tuples that span over two or more buffers.
+/// The buffers that form the ST may be processed by multiple threads concurrently.
+/// The STBuffer makes sure that exactly one thread processes an ST (avoiding to miss an ST or to produce duplicate STs)
 class STBuffer
 {
     /// Result of trying to claim a buffer (with a specific SN) as the start of a spanning tuple.
@@ -61,7 +65,6 @@ public:
             LEADING_ST_ONLY,
             TRAILING_ST_ONLY,
             LEADING_AND_TRAILING_ST,
-            NOT_IN_RANGE,
         };
 
         Type type = Type::NONE;
@@ -77,8 +80,8 @@ public:
     /// If not, returns as 'NOT_IN_RANGE'
     /// Otherwise, searches for valid spanning tuples and on finding a spanning tuple, tries to claim the first buffer of the spanning tuple
     /// for the calling thread, which claims the entire spanning tuple.
-    [[nodiscard]] ClaimingSearchResult tryFindSTsForBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
-    [[nodiscard]] ClaimingSearchResult tryFindSTsForBufferWithoutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] SequenceShredderResult tryFindSTsForBufferWithDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] SequenceShredderResult tryFindSTsForBufferWithoutDelimiter(size_t sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     /// Claims all trailing buffers of a STuple (all buffers except the first, which the thread must have claimed already to claim the rest)
     /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back

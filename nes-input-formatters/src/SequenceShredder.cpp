@@ -40,12 +40,14 @@
 namespace NES::InputFormatters
 {
 
-SequenceShredder::SequenceShredder() : ringBuffer(std::make_unique<STBuffer>(SIZE_OF_RING_BUFFER)) {}
+SequenceShredder::SequenceShredder() : spanningTupleBuffer(std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER))
+{
+}
 SequenceShredder::~SequenceShredder()
 {
     try
     {
-        if (ringBuffer->validate())
+        if (spanningTupleBuffer->validate())
         {
             NES_INFO("Successfully validated SequenceShredder");
         }
@@ -60,77 +62,38 @@ SequenceShredder::~SequenceShredder()
     }
 };
 
-SequenceShredderResult SequenceShredder::findSTsWithDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
+SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
-    switch (auto searchAndClaimResult = ringBuffer->tryFindSTsForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
-            searchAndClaimResult.type)
+    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
+        stSearchResult.isInRange) [[likely]]
     {
-        case STBuffer::ClaimingSearchResult::Type::NOT_IN_RANGE: {
-            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
-        }
-        case STBuffer::ClaimingSearchResult::Type::NONE: {
-            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
-        }
-        case STBuffer::ClaimingSearchResult::Type::LEADING_ST_ONLY: {
-            const auto sizeOfSpanningTuple = sequenceNumber - searchAndClaimResult.sTupleStartSN + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTupleStartBuffer.value());
-            ringBuffer->claimSTupleBuffers(searchAndClaimResult.sTupleStartSN, spanningTupleBuffers);
-            return SequenceShredderResult{
-                .isInRange = true, .indexOfInputBuffer = sizeOfSpanningTuple - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
-        case STBuffer::ClaimingSearchResult::Type::TRAILING_ST_ONLY: {
-            const auto sizeOfSpanningTuple = searchAndClaimResult.sTupleEndSN - sequenceNumber + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.trailingSTupleStartBuffer.value());
-            ringBuffer->claimSTupleBuffers(sequenceNumber, spanningTupleBuffers);
-            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
-        case STBuffer::ClaimingSearchResult::Type::LEADING_AND_TRAILING_ST: {
-            const auto sizeOfFirstST = sequenceNumber - searchAndClaimResult.sTupleStartSN + 1;
-            const auto sizeOfBothSTs = searchAndClaimResult.sTupleEndSN - searchAndClaimResult.sTupleStartSN + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSTs);
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTupleStartBuffer.value());
-            /// Claim the remaining buffers of both STs (separately, to not double claim the trailing buffer of the entry at 'rbIdxOfSN')
-            ringBuffer->claimSTupleBuffers(searchAndClaimResult.sTupleStartSN, std::span{spanningTupleBuffers}.subspan(0, sizeOfFirstST));
-            ringBuffer->claimSTupleBuffers(sequenceNumber, std::span{spanningTupleBuffers}.subspan(sizeOfFirstST - 1));
-            return SequenceShredderResult{
-                .isInRange = true, .indexOfInputBuffer = sizeOfFirstST - 1, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
+        return stSearchResult;
     }
-    std::unreachable();
+    else
+    {
+        NES_WARNING("Sequence number: {} was out of range of STBuffer", sequenceNumber);
+        return stSearchResult;
+    }
 }
 
-SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(StagedBuffer indexedRawBuffer, const SequenceNumberType sequenceNumber)
+SequenceShredderResult
+SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumberType sequenceNumber)
 {
-    switch (auto searchAndClaimResult = ringBuffer->tryFindSTsForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
-            searchAndClaimResult.type)
+    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
+        stSearchResult.isInRange) [[likely]]
     {
-        case STBuffer::ClaimingSearchResult::Type::NOT_IN_RANGE: {
-            return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
-        }
-        case STBuffer::ClaimingSearchResult::Type::NONE: {
-            return SequenceShredderResult{.isInRange = true, .indexOfInputBuffer = 0, .spanningBuffers = {indexedRawBuffer}};
-        }
-        case STBuffer::ClaimingSearchResult::Type::LEADING_ST_ONLY: {
-            const auto sizeOfSpanningTuple = searchAndClaimResult.sTupleEndSN - searchAndClaimResult.sTupleStartSN + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTupleStartBuffer.value());
-            ringBuffer->claimSTupleBuffers(searchAndClaimResult.sTupleStartSN, spanningTupleBuffers);
-            const auto currentBufferIdx = sequenceNumber - searchAndClaimResult.sTupleEndSN;
-            return SequenceShredderResult{
-                .isInRange = true, .indexOfInputBuffer = currentBufferIdx, .spanningBuffers = std::move(spanningTupleBuffers)};
-        }
-        case STBuffer::ClaimingSearchResult::Type::TRAILING_ST_ONLY:
-        case STBuffer::ClaimingSearchResult::Type::LEADING_AND_TRAILING_ST:
-            INVARIANT(false, "A buffer without a delimiter can only find one spanning tuple in leading direction.");
+        return stSearchResult;
     }
-    std::unreachable();
+    else
+    {
+        NES_WARNING("Sequence number: {} was out of range of STBuffer", sequenceNumber);
+        return stSearchResult;
+    }
 }
 
 
 std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder)
 {
-    return os << fmt::format("SequenceShredder({})", *sequenceShredder.ringBuffer);
+    return os << fmt::format("SequenceShredder({})", *sequenceShredder.spanningTupleBuffer);
 }
 }
