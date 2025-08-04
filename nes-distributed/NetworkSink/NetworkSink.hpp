@@ -49,6 +49,7 @@ class BackpressureHandler
 public:
     std::optional<Memory::TupleBuffer> onFull(Memory::TupleBuffer buffer, Valve& valve);
     std::optional<Memory::TupleBuffer> onSuccess(Valve& valve);
+    bool empty() const;
 };
 
 class NetworkSink final : public Sink

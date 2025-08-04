@@ -1,0 +1,49 @@
+query: |
+  SELECT * FROM stream INTO sink;
+sinks:
+  - name: sink
+    type: File
+    config:
+      filePath: REPLACE_ME
+      inputFormat: CSV
+    schema:
+      - name: stream$id
+        dataType: UINT64
+      - name: stream$value
+        dataType: UINT64
+      - name: stream$timestamp
+        dataType: UINT64
+    host: 127.0.0.1:9090
+
+logicalSources:
+    - name: stream
+      schema:
+        - dataType: UINT64
+          name: id
+        - dataType: UINT64
+          name: value
+        - dataType: UINT64
+          name: timestamp
+
+physicalSources:
+  - logicalSource: stream
+    host: 127.0.0.1:9091
+    parserConfig:
+      type: CSV
+    type: TCP
+    sourceConfig:
+      socketHost: 127.0.0.1
+      socketPort: 9999
+      flushIntervalMS: 1
+      socketType: SOCK_STREAM
+      socketDomain: AF_INET
+
+workerNodes:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 100
+  - host: 127.0.0.1:9091
+    grpc: 127.0.0.1:8081
+    capacity: 0
+    downstreamNodes:
+      - 127.0.0.1:9090

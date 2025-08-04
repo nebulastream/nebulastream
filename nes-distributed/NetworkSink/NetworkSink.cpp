@@ -23,8 +23,8 @@
 #include <ostream>
 #include <string>
 #include <thread>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <fmt/format.h>
@@ -64,13 +64,13 @@ std::optional<Memory::TupleBuffer> BackpressureHandler::onFull(Memory::TupleBuff
 
         const auto wstate = rstate.moveFromUpgradeToWrite();
         wstate->buffered.emplace_back(std::move(buffer));
-        NES_WARNING("Backpressure Level: {}", wstate->buffered.size());
+        // NES_WARNING("Backpressure Level: {}", wstate->buffered.size());
         return {};
     }
 
     /// Apply backpressure now on the valve, leading to blocked ingestion threads until pressure is released again onSuccess.
     const auto wstate = rstate.moveFromUpgradeToWrite();
-    NES_WARNING("Applying backpressure");
+    // NES_WARNING("Applying backpressure");
     valve.applyPressure();
     wstate->hasBackpressure = true;
     wstate->pendingSequenceNumber = buffer.getSequenceNumber();
@@ -96,10 +96,14 @@ std::optional<Memory::TupleBuffer> BackpressureHandler::onSuccess(Valve& valve)
     {
         auto nextBuffer = std::move(state->buffered.front());
         state->buffered.pop_front();
-        NES_WARNING("Backpressure Level: {}", state->buffered.size());
+        // NES_WARNING("Backpressure Level: {}", state->buffered.size());
         return {nextBuffer};
     }
     return {};
+}
+bool BackpressureHandler::empty() const
+{
+    return stateLock.rlock()->buffered.empty();
 }
 
 NetworkSink::NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor)
@@ -117,14 +121,17 @@ void NetworkSink::start(PipelineExecutionContext&)
     NES_DEBUG("Sender channel registered: {}", channelId);
 }
 
-void NetworkSink::stop(PipelineExecutionContext& /*pec*/)
+void NetworkSink::stop(PipelineExecutionContext& pec)
 {
+    INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
+
     /// Check if the sender network service has pending buffers to send
     /// If yes, keep the pipeline alive by emitting an empty buffer
-    while (sender_writes_pending(**this->channel))
+    if (sender_writes_pending(**this->channel))
     {
-        // pec.emitBuffer({}, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-        // return;
+        pec.emitBuffer({}, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+        // NES_WARNING("Cannot shutdown Network Sink. Network Channel Flush is ongoing");
+        return;
     }
 
     close_sender_channel(*std::move(this->channel));
@@ -166,7 +173,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
             throw CannotOpenSink("Sender channel closed");
         }
         case SendResult::Ok: {
-            NES_INFO("Sent buffer with SeqNum({})", inputBuffer.getSequenceNumber());
+            // NES_INFO("Sent buffer with SeqNum({})", inputBuffer.getSequenceNumber());
             /// Sent a buffer, check the backpressure handler to send another one
             if (const auto nextBuffer = backpressureHandler.onSuccess(valve))
             {
@@ -181,7 +188,6 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
         case SendResult::Full: {
             if (const auto emit = backpressureHandler.onFull(inputBuffer, valve))
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 pec.emitBuffer(*emit, PipelineExecutionContext::ContinuationPolicy::REPEAT);
             }
         }
