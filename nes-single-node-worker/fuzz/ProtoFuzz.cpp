@@ -44,7 +44,7 @@ DEFINE_PROTO_FUZZER(const NES::SerializableQueryPlan& sqp)
         {
             if (snw.getQuerySummary(*qid)->currentStatus <= NES::QueryStatus::Running)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
             else
