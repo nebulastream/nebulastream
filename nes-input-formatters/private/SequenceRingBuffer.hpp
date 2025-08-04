@@ -259,9 +259,8 @@ private:
     /// valid ABA iteration numbers and that the target buffer has a delimiter and a valid ABA iteration number
     /// Returns distance to 'reachable buffer', if it succeeds in finding one
     [[nodiscard]] std::optional<size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
-    // [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchLeading(size_t searchStartBufferIdx, size_t abaItNumber) const;
     /// Analog to 'searchLeading', but searches in trailing direction (larger SNs)
-    [[nodiscard]] std::pair<SSMetaData::EntryState, size_t> searchTrailing(size_t searchStartBufferIdx, size_t abaItNumber) const;
+    [[nodiscard]] std::optional<size_t> searchTrailing(size_t searchStartBufferIdx, size_t abaItNumber) const;
 
     /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
     /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.

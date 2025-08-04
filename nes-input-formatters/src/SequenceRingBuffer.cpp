@@ -267,8 +267,7 @@ std::pair<SequenceNumberType, uint32_t> SequenceRingBuffer::getBufferIdxAndABAIt
     return std::make_pair(sequenceNumberBufferIdx, abaItNumber);
 }
 
-std::optional<size_t>
-SequenceRingBuffer::searchLeading(const size_t searchStartBufferIdx, const size_t abaItNumber) const
+std::optional<size_t> SequenceRingBuffer::searchLeading(const size_t searchStartBufferIdx, const size_t abaItNumber) const
 {
     size_t leadingDistance = 1;
     auto isPriorIteration = static_cast<size_t>(searchStartBufferIdx < leadingDistance);
@@ -282,6 +281,22 @@ SequenceRingBuffer::searchLeading(const size_t searchStartBufferIdx, const size_
             = this->ringBuffer[(searchStartBufferIdx - leadingDistance) % ringBuffer.size()].getEntryState(abaItNumber - isPriorIteration);
     }
     return (cellState.isCorrectABA) ? std::optional{leadingDistance} : std::nullopt;
+}
+
+std::optional<size_t> SequenceRingBuffer::searchTrailing(const size_t searchStartBufferIdx, const size_t abaItNumber) const
+{
+    size_t trailingDistance = 1;
+    auto isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
+    auto cellState
+        = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
+    while (cellState.isCorrectABA and not(cellState.hasDelimiter))
+    {
+        ++trailingDistance;
+        isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
+        cellState
+            = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
+    }
+    return (cellState.isCorrectABA) ? std::optional{trailingDistance} : std::nullopt;
 }
 
 SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingLeadingDelimiterSearch(const SequenceNumberType spanningTupleEndSN)
@@ -300,23 +315,6 @@ SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingLeadingDeli
     return ClaimedSpanningTuple{std::nullopt, 0};
 }
 
-std::pair<SSMetaData::EntryState, size_t>
-SequenceRingBuffer::searchTrailing(const size_t searchStartBufferIdx, const size_t abaItNumber) const
-{
-    size_t trailingDistance = 1;
-    auto isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
-    auto cellState
-        = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
-    while (cellState.isCorrectABA and not(cellState.hasDelimiter))
-    {
-        ++trailingDistance;
-        isNextIteration = static_cast<size_t>((searchStartBufferIdx + trailingDistance) >= ringBuffer.size());
-        cellState
-            = this->ringBuffer[(searchStartBufferIdx + trailingDistance) % ringBuffer.size()].getEntryState(abaItNumber + isNextIteration);
-    }
-    return std::make_pair(cellState, trailingDistance);
-}
-
 SequenceRingBuffer::ClaimedSpanningTuple SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType sTupleStartSN)
 {
     return claimingTrailingDelimiterSearch(sTupleStartSN, sTupleStartSN);
@@ -328,9 +326,9 @@ SequenceRingBuffer::claimingTrailingDelimiterSearch(const SequenceNumberType sTu
     const auto [sTupleStartBufferIdx, sTupleStartABAItNo] = getBufferIdxAndABAItNo(sTupleStartSN);
     const auto [searchStartBufferIdx, searchStartABAItNo] = getBufferIdxAndABAItNo(searchStartSN);
 
-    if (const auto [cellState, trailingDistance] = searchTrailing(searchStartBufferIdx, searchStartABAItNo); cellState.isCorrectABA)
+    if (const auto trailingDistance = searchTrailing(searchStartBufferIdx, searchStartABAItNo))
     {
-        const auto leadingSequenceNumber = searchStartSN + trailingDistance;
+        const auto leadingSequenceNumber = searchStartSN + trailingDistance.value();
         return ClaimedSpanningTuple{
             .firstBuffer = ringBuffer[sTupleStartBufferIdx].tryClaimSpanningTuple(sTupleStartABAItNo),
             .snOfLastBuffer = leadingSequenceNumber,
