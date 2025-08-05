@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::net::SocketAddr;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpStream, lookup_host};
 use tokio_serde::Framed;
 use tokio_serde::formats::Cbor;
 use tokio_util::codec::LengthDelimitedCodec;
 use tokio_util::codec::{FramedRead, FramedWrite};
+use crate::channel::Channel;
 
 pub type ChannelIdentifier = String;
 
@@ -189,17 +191,16 @@ pub type IdentificationReceiverWriter = Framed<
     Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 
-pub fn data_channel_sender(
-    stream: TcpStream,
+pub fn data_channel_sender<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (DataChannelSenderReader, DataChannelSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<DataChannelRequest, DataChannelRequest>::default(),
@@ -208,17 +209,16 @@ pub fn data_channel_sender(
     (read, write)
 }
 
-pub fn data_channel_receiver(
-    stream: TcpStream,
+pub fn data_channel_receiver<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (DataChannelReceiverReader, DataChannelReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<DataChannelResponse, DataChannelResponse>::default(),
@@ -227,17 +227,16 @@ pub fn data_channel_receiver(
     (read, write)
 }
 
-pub fn control_channel_sender(
-    stream: TcpStream,
+pub fn control_channel_sender<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (ControlChannelSenderReader, ControlChannelSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
@@ -246,17 +245,16 @@ pub fn control_channel_sender(
     (read, write)
 }
 
-pub fn control_channel_receiver(
-    stream: TcpStream,
+pub fn control_channel_receiver<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (ControlChannelReceiverReader, ControlChannelReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
@@ -265,17 +263,16 @@ pub fn control_channel_receiver(
     (read, write)
 }
 
-pub fn identification_sender(
-    stream: TcpStream,
+pub fn identification_sender<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (IdentificationSenderReader, IdentificationSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<IdentificationRequest, IdentificationRequest>::default(),
@@ -284,17 +281,16 @@ pub fn identification_sender(
     (read, write)
 }
 
-pub fn identification_receiver(
-    stream: TcpStream,
+pub fn identification_receiver<R: AsyncRead, W: AsyncWrite>(
+    stream: Channel<R, W>,
 ) -> (IdentificationReceiverReader, IdentificationReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<IdentificationResponse, IdentificationResponse>::default(),
