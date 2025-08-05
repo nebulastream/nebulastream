@@ -24,14 +24,15 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Pointers.hpp>
+#include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <StatisticPrinter.hpp>
 
 namespace NES
 {
-struct CompositeStatisticListener;
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
@@ -39,7 +40,7 @@ struct CompositeStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    SharedPtr<PrintingStatisticListener> listener;
+    SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
