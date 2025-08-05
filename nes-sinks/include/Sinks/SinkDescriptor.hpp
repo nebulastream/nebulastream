@@ -61,10 +61,9 @@ public:
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
 
-private:
     explicit SinkDescriptor(std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
-
+private:
     std::string sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
