@@ -249,18 +249,41 @@ std::string escapeSpecialCharacters(const std::string_view input)
     }
     return result;
 }
+
+std::string snakeToCamelCase(const std::string_view snakeCase)
+{
+    PRECONDITION(isAsciiString(snakeCase), "Support for non-ascii character not implemented");
+    if (snakeCase.empty())
     {
-        if (auto it = specialCharacters.find(value); it != specialCharacters.end())
+        return std::string{snakeCase};
+    }
+
+    std::string camelCase;
+    camelCase.reserve(snakeCase.length());
+
+    bool capitalizeNext = false;
+
+    for (const char character : snakeCase)
+    {
+        if (character == '_')
         {
-            escapedString += it->second;
+            capitalizeNext = true;
         }
         else
         {
-            escapedString += value;
+            if (capitalizeNext)
+            {
+                camelCase.push_back(static_cast<char>(std::toupper(character)));
+                capitalizeNext = false;
+            }
+            else
+            {
+                camelCase.push_back(static_cast<char>(std::tolower(character)));
+            }
         }
     }
 
-    return escapedString;
+    return camelCase;
 }
 
 std::string toUpperCase(std::string_view input)

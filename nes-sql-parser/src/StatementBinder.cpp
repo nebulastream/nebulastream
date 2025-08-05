@@ -27,6 +27,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <Util/Strings.hpp>
 
 #include <unordered_map>
 #include <utility>
@@ -58,54 +59,6 @@
 namespace NES
 {
 
-namespace
-{
-std::string snakeToCamelCase(const std::string_view snakeCase)
-{
-    if (snakeCase.empty())
-    {
-        return std::string{snakeCase};
-    }
-
-    std::string camelCase;
-    camelCase.reserve(snakeCase.length());
-
-    bool capitalizeNext = false;
-
-    for (const char character : snakeCase)
-    {
-        if (character == '_')
-        {
-            capitalizeNext = true;
-        }
-        else
-        {
-            if (capitalizeNext)
-            {
-                const int capitalized = std::toupper(character);
-                if (capitalized < 0 || capitalized > CHAR_MAX)
-                {
-                    throw InvalidIdentifier("Trying to uppercase invalid character of value {}, outside of valid char range", capitalized);
-                }
-                camelCase.push_back(static_cast<char>(capitalized));
-                capitalizeNext = false;
-            }
-            else
-            {
-                const int lowered = std::tolower(character);
-                if (lowered < 0 || lowered > CHAR_MAX)
-                {
-                    throw InvalidIdentifier("Trying to lowercase invalid character of value {}", lowered);
-                }
-                camelCase.push_back(static_cast<char>(lowered));
-            }
-        }
-    }
-
-    return camelCase;
-}
-
-}
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
@@ -150,43 +103,7 @@ public:
     std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral) const
     {
         PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
-        bool inEscapeSequence = false;
-        std::stringstream ss;
-        for (uint32_t i = 1; i < stringLiteral->getText().size() - 1; i++)
-        {
-            const char character = stringLiteral->getText()[i];
-            if (inEscapeSequence)
-            {
-                switch (character)
-                {
-                    case 'n':
-                        ss << '\n';
-                        break;
-                    case 'r':
-                        ss << '\r';
-                        break;
-                    case 't':
-                        ss << '\t';
-                        break;
-                    case '\\':
-                        ss << '\\';
-                    default:
-                        throw InvalidLiteral(R"(invalid escape sequence '\{}' in literal "{}")", character, stringLiteral->getText());
-                }
-            }
-            else
-            {
-                if (character == '\\')
-                {
-                    inEscapeSequence = true;
-                }
-                else
-                {
-                    ss << character;
-                }
-            }
-        }
-        return ss.str();
+        return Util::escapeSpecialCharacters(stringLiteral->getText());
     }
 
     int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral) const { return std::stoi(integerLiteral->getText()); }
@@ -384,14 +301,14 @@ public:
         const ParserConfig parserConfig = ParserConfig::create(
             parserConfigIter->second
             | std::views::transform([this](const auto& pair)
-                                    { return std::make_pair(snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                    { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>());
 
         if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
         {
             sourceOptions = sourceConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
 
@@ -419,7 +336,7 @@ public:
         {
             sinkOptions = sinkConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         if (not Sinks::SinkDescriptor::validateAndFormatConfig(sinkType, sinkOptions).has_value())
