@@ -14,10 +14,12 @@
 
 #pragma once
 #include <array>
+#include <concepts>
 #include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
@@ -33,13 +35,27 @@ namespace NES
 template <typename T>
 struct StatementOutputAssembler;
 
+namespace detail
+{
+/// A StatementOutputAssembler has a `.convert(Result)` function which converts the internal result representation into a named tuples.
+/// Return type of the .convert() function
+/// Assuming the result type of the conversion is a std::pair<TupleLike, Range<TupleLike>>
+template <typename Result>
+using ConversionType = std::invoke_result_t<decltype(&StatementOutputAssembler<Result>::convert), StatementOutputAssembler<Result>, Result>;
+template <typename Result>
+using ConversionNamesType = decltype(ConversionType<Result>::first);
+template <typename Result>
+using ConversionResultType = std::ranges::range_value_t<decltype(ConversionType<Result>::second)>;
+}
 
 template <typename Result>
-concept AssemblembleStatementResult = requires(Result result, StatementOutputAssembler<Result> assembler) {
-    { StatementOutputAssembler<Result>{} };
-} && std::tuple_size_v<decltype(std::declval<StatementOutputAssembler<Result>>().convert(std::declval<Result>()).first)> == std::tuple_size_v<typename StatementOutputAssembler<Result>::OutputRowType>
-&& std::ranges::input_range<decltype(std::declval<StatementOutputAssembler<Result>>().convert(std::declval<Result>()).second)>
-&& std::is_same_v<std::ranges::range_value_t<decltype(std::declval<StatementOutputAssembler<Result>>().convert(std::declval<Result>()).second)>, typename StatementOutputAssembler<Result>::OutputRowType>;
+concept AssemblembleStatementResult =
+    /// StatementOutputAssembler specialization
+    std::is_default_constructible_v<StatementOutputAssembler<Result>>
+    /// There must be a name for every type result field
+    && std::tuple_size_v<detail::ConversionNamesType<Result>> == std::tuple_size_v<detail::ConversionResultType<Result>>
+    /// OutputAssembler convert return type and the advertised OutputRowType match
+    && std::convertible_to<detail::ConversionResultType<Result>, typename StatementOutputAssembler<Result>::OutputRowType>;
 
 using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
@@ -51,7 +67,6 @@ constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
 
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
-
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};

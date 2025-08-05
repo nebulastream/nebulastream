@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <expected>
 #include <memory>
 #include <mutex>
@@ -117,14 +118,14 @@ class StatementHandler
 
 public:
     template <typename Statement>
-    requires(requires(const HandlerImpl handler, const Statement& statement) { handler(statement); })
+    requires(std::invocable<HandlerImpl, const Statement&>)
     [[nodiscard]] auto apply(const Statement& statement) const noexcept -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
     }
 
     template <typename Statement>
-    requires(requires(HandlerImpl handler, const Statement& statement) { handler(statement); })
+    requires(std::invocable<HandlerImpl, const Statement&>)
     auto apply(const Statement& statement) noexcept -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
@@ -146,10 +147,6 @@ public:
     std::expected<DropLogicalSourceStatementResult, Exception> operator()(const DropLogicalSourceStatement& statement);
     std::expected<DropPhysicalSourceStatementResult, Exception> operator()(const DropPhysicalSourceStatement& statement);
 };
-
-static_assert(requires(SourceStatementHandler sourceHandler, const DropPhysicalSourceStatement& createLogicalSourceStatement) {
-    sourceHandler.apply(createLogicalSourceStatement);
-});
 
 class SinkStatementHandler final : public StatementHandler<SinkStatementHandler>
 {
