@@ -216,52 +216,56 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         {
             config.directlySpecifiedTestFiles = testFilePath;
         }
-
-        const auto findAllInTree
-            = [](const std::filesystem::path& wanted, const std::filesystem::path& root) -> std::vector<std::filesystem::path>
+        else
         {
-            std::vector<std::filesystem::path> hits;
-            for (const auto& entry :
-                 std::filesystem::recursive_directory_iterator(root, std::filesystem::directory_options::skip_permission_denied))
+            /// The given path is neither a path to a directory nor a path to a file.
+            /// We now check if this name belongs to a test file in nes-systests by searching through the nes-systests directory manually.
+            const auto findAllInTree
+                = [](const std::filesystem::path& wanted, const std::filesystem::path& root) -> std::vector<std::filesystem::path>
             {
-                if (entry.is_regular_file() && entry.path().filename() == wanted)
+                std::vector<std::filesystem::path> hits;
+                for (const auto& entry :
+                     std::filesystem::recursive_directory_iterator(root, std::filesystem::directory_options::skip_permission_denied))
                 {
-                    hits.emplace_back(entry.path());
+                    if (entry.is_regular_file() && entry.path().filename() == wanted)
+                    {
+                        hits.emplace_back(entry.path());
+                    }
                 }
-            }
-            return hits;
-        };
+                return hits;
+            };
 
-        const auto resolveTestArg
-            = [&](const std::filesystem::path& arg, const std::filesystem::path& discoverRoot) -> std::vector<std::filesystem::path>
-        {
-            if (exists(arg))
+            const auto resolveTestArg
+                = [&](const std::filesystem::path& arg, const std::filesystem::path& discoverRoot) -> std::vector<std::filesystem::path>
             {
-                return {canonical(arg)};
-            }
-            return findAllInTree(arg.filename(), discoverRoot);
-        };
-
-        const std::filesystem::path discoverRoot = config.testsDiscoverDir.getValue();
-        const auto matches = resolveTestArg(testFilePath, discoverRoot);
-
-        switch (matches.size())
-        {
-            case 0:
-                std::cerr << '\'' << testFilePath << "' could not be located under '" << discoverRoot << "'.\n";
-                std::exit(EXIT_FAILURE);
-
-            case 1:
-                config.directlySpecifiedTestFiles = matches.front();
-                break;
-
-            default:
-                std::cerr << "Ambiguous test name '" << testFilePath << "':\n";
-                for (const auto& p : matches)
+                if (exists(arg))
                 {
-                    std::cerr << "  • " << p << '\n';
+                    return {canonical(arg)};
                 }
-                std::exit(EXIT_FAILURE); /// NOLINT(concurrency-mt-unsafe)
+                return findAllInTree(arg.filename(), discoverRoot);
+            };
+
+            const std::filesystem::path discoverRoot = config.testsDiscoverDir.getValue();
+            const auto matches = resolveTestArg(testFilePath, discoverRoot);
+
+            switch (matches.size())
+            {
+                case 0:
+                    std::cerr << '\'' << testFilePath << "' could not be located under '" << discoverRoot << "'.\n";
+                    std::exit(EXIT_FAILURE);
+
+                case 1:
+                    config.directlySpecifiedTestFiles = matches.front();
+                    break;
+
+                default:
+                    std::cerr << "Ambiguous test name '" << testFilePath << "':\n";
+                    for (const auto& p : matches)
+                    {
+                        std::cerr << "  • " << p << '\n';
+                    }
+                    std::exit(EXIT_FAILURE); /// NOLINT(concurrency-mt-unsafe)
+            }
         }
     }
 
