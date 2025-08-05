@@ -215,18 +215,40 @@ void toLowerCaseInplace(std::string& modified)
 
 std::string escapeSpecialCharacters(const std::string_view input)
 {
-    const std::unordered_map<char, std::string> specialCharacters = {
-        {'\a', "\\a"},
-        {'\b', "\\b"},
-        {'\f', "\\f"},
-        {'\n', "\\n"},
-        {'\r', "\\r"},
-        {'\t', "\\t"},
-        {'\v', "\\v"},
-    };
-    std::string escapedString;
-    escapedString.reserve(input.size());
-    for (const auto value : input)
+    std::string result;
+    result.reserve(input.length());
+    for (const char c : input)
+    {
+        switch (c)
+        {
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            default:
+                result += c;
+                break;
+        }
+    }
+    return result;
+}
     {
         if (auto it = specialCharacters.find(value); it != specialCharacters.end())
         {
