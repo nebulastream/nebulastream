@@ -18,7 +18,6 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -27,7 +26,6 @@
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <google/protobuf/message_lite.h>
-#include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
@@ -38,52 +36,24 @@ template <>
 struct adl_serializer<NES::EnumWrapper>
 {
     ///NOLINTNEXTLINE(readability-identifier-naming)
-    static void to_json(json& jsonOutput, const NES::EnumWrapper& enumWrapper) { jsonOutput = enumWrapper.getValue(); }
+    static void to_json(json& jsonOutput, const NES::EnumWrapper& enumWrapper);
 };
 }
 
 namespace NES
 {
 
-inline void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig)
-{
-    jsonOutput = nlohmann::json{
-        {"type", parserConfig.parserType},
-        {"fieldDelimiter", parserConfig.fieldDelimiter},
-        {"tupleDelimiter", parserConfig.tupleDelimiter}};
-}
+void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
 
-inline void to_json(nlohmann::json& jsonOutput, const DataType& dataType)
-{
-    jsonOutput = magic_enum::enum_name(dataType.type);
-}
+void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 
-inline void to_json(nlohmann::json& jsonOutput, const Schema::Field& str)
-{
-    jsonOutput = nlohmann::json{{"name", str.name}, {"type", str.dataType}};
-}
+void to_json(nlohmann::json& jsonOutput, const Schema::Field& str);
 
-inline void to_json(nlohmann::json& jsonOutput, const Schema& schema)
-{
-    jsonOutput = nlohmann::json{schema.getFields()};
-}
+void to_json(nlohmann::json& jsonOutput, const Schema& schema);
 
-inline void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos)
-{
-    jsonOutput = windowInfos.SerializeAsString();
-}
+void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
 
-inline void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& config)
-{
-    std::vector<nlohmann::json> jsonEntries;
-    for (const auto& [key, val] : config)
-    {
-        nlohmann::json jsonValue = std::visit([](auto&& arg) { return nlohmann::json(arg); }, val);
-        jsonEntries.push_back(nlohmann::json{{key, jsonValue}});
-    }
-    jsonOutput = jsonEntries;
-}
-
+void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& config);
 
 }
 
