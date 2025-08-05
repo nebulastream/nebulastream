@@ -128,4 +128,9 @@ struct QueryEngineStatisticListener
     virtual void onEvent(Event event) = 0;
 };
 
+struct NoOpStatisticListener final : QueryEngineStatisticListener
+{
+    void onEvent(Event) override { }
+};
+
 }

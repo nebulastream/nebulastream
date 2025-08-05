@@ -31,6 +31,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryEngineStatisticListener.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
@@ -43,10 +44,7 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
-    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
+    : optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
     , configuration(configuration)
 {
@@ -58,6 +56,15 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
     }
+
+    this->systemEvents = std::make_shared<PrintingStatisticListener>(
+        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+    std::shared_ptr<QueryEngineStatisticListener> queryEngineStatsListener = std::make_shared<NoOpStatisticListener>();
+    if (configuration.workerConfiguration.engineStats.getValue())
+    {
+        queryEngineStatsListener = std::dynamic_pointer_cast<QueryEngineStatisticListener>(this->systemEvents);
+    }
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, this->systemEvents, queryEngineStatsListener).build();
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
@@ -70,7 +77,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     {
         plan.setQueryId(QueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        systemEvents->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();
         auto result = compiler->compileQuery(std::move(request));

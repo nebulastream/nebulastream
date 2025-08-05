@@ -39,7 +39,7 @@ struct PrintingStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    std::shared_ptr<PrintingStatisticListener> listener;
+    std::shared_ptr<SystemEventListener> systemEvents;
     std::shared_ptr<NodeEngine> nodeEngine;
     std::unique_ptr<QueryOptimizer> optimizer;
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
