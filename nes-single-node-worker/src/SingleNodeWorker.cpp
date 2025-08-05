@@ -48,7 +48,8 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration) : configuration(configuration), listener(std::make_shared<CompositeStatisticListener>())
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
+    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     auto printingStatisticsListener = std::make_shared<PrintingStatisticListener>(
         fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
