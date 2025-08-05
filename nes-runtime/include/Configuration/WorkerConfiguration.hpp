@@ -60,6 +60,8 @@ public:
            DumpMode::NONE,
            fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
 
+    BoolOption engineStats = {"engineStats", "false", "Write query engine events to file"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -69,6 +71,7 @@ private:
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersInSourceLocalPools,
             &bufferSizeInBytes,
+            &engineStats,
             &dumpQueryCompilationIntermediateRepresentations};
     }
 };
