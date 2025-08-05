@@ -21,13 +21,12 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <RawTupleBuffer.hpp>
-
 #include <ErrorHandling.hpp>
-#include "Identifiers/NESStrongType.hpp"
+#include <RawTupleBuffer.hpp>
 
 
 class ConcurrentSynchronizationTest;
@@ -35,11 +34,14 @@ namespace NES::InputFormatters
 {
 
 /// Acronyms:
-/// ST <-> Spanning Tuple
-/// STuple/sTuple <-> Spanning Tuple
+/// ST/sTuple <-> Spanning Tuple
 /// SN <-> Sequence Number
-/// ABA <-> ABA Problem (https: //en.wikipedia.org/wiki/ABA_problem)
+/// ABA <-> ABA Problem (en.wikipedia.org/wiki/ABA_problem)
 /// abaItNo/ABAItNo <-> ABA Iteration Number
+
+
+/// Forward referencing 'STBuffer' to hide implementation details
+class STBuffer;
 
 /// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
 /// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
@@ -51,9 +53,6 @@ struct SequenceShredderResult
     size_t indexOfInputBuffer;
     std::vector<StagedBuffer> spanningBuffers;
 };
-
-/// Forward referencing 'STBuffer' to hide implementation details
-class STBuffer;
 
 /// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (STBuffer) to determine whether
 /// the provided buffer completes spanning tuples with buffers that (usually) other threads processed

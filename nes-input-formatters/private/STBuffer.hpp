@@ -25,6 +25,7 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -33,11 +34,9 @@
 #include <RawTupleBuffer.hpp>
 #include <STBufferState.hpp>
 #include <SequenceShredder.hpp>
-#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::InputFormatters
 {
-
 
 /// The STBuffer enables threads to concurrently resolve spanning tuples.
 /// Spanning tuples (STs) are tuples that span over two or more buffers.
@@ -123,8 +122,8 @@ private:
     [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingSTuple(SequenceNumber sequenceNumber);
 
     /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
-    /// 'Reachable' means there is a path from 'searchStartBufferIdx' to the buffer that traverses 0 or more buffers without delimiters and
-    /// valid ABA iteration numbers and that the target buffer has a delimiter and a valid ABA iteration number
+    /// 'Reachable' means that there is a path from 'searchStartBufferIdx' to a buffer that traverses 0 or more buffers without delimiters
+    /// and valid ABA iteration numbers and that the final buffer has a delimiter and a valid ABA iteration number
     /// Returns distance to 'reachable buffer', if it succeeds in finding one
     [[nodiscard]] std::optional<size_t> searchLeading(STBufferIdx searchStartBufferIdx, ABAItNo abaItNumber) const;
     /// Analog to 'searchLeading', but searches in trailing direction (larger SNs)
@@ -132,17 +131,11 @@ private:
 
     /// Assumes spanningTupleEndSN as the end of a potential spanning tuple.
     /// Searches in leading direction (smaller SNs) for a buffer with a delimiter that can start the spanning tuple.
-    /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
+    /// Aborts as soon as it finds a non-connecting ABA iteration number (different abaItNo and not first/last element of ring buffer).
     /// On finding a valid starting buffer, threads compete to claim that buffer (and thereby all buffers of the ST).
     /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
-    [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumber spanningTupleEndSN);
-
-
-    /// Assumes spanningTupleStartSN as the start of a potential spanning tuple.
-    /// Searches in trailing direction (larger SNs) for a buffer with a delimiter that terminates the spanning tuple.
-    /// Aborts as soon as it finds a non-connecting ABA iteration number (different and not first/last element of ring buffer).
-    /// On finding a valid terminating buffer, threads compete to claim the first buffer of the ST(spanningTupleStartSN) and thereby the ST.
-    /// Only one thread can succeed in claiming the first buffer (ClaimedSpanningTuple::firstBuffer != nullopt).
+    [[nodiscard]] ClaimedSpanningTuple claimingLeadingDelimiterSearch(SequenceNumber sTupleEndSN);
+    /// Analog to 'claimingLeadingDelimiterSearch', but traverses in trailing direction (larger SNs)
     [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumber sTupleStartSN, SequenceNumber searchStartSN);
 
     /// Calls claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN) <-- sTuple start is also where search should start

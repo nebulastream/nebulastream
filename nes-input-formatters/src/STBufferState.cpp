@@ -12,23 +12,24 @@
     limitations under the License.
 */
 
-#include <cstdint>
+#include <STBufferState.hpp>
+
 #include <cstddef>
-#include <optional>
+#include <cstdint>
 #include <limits>
-#include <utility>
+#include <optional>
 #include <ostream>
+#include <utility>
 #include <fmt/format.h>
 
-#include <STBufferState.hpp>
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
 
 namespace NES::InputFormatters
 {
-//==--------------------------------------------------------------------------------------------------------==//
-//==---------------------------------------- Atomic Bitmap State -----------------------------------------------==//
-//==--------------------------------------------------------------------------------------------------------==//
+///==--------------------------------------------------------------------------------------------------------==//
+///==------------------------------------------- Atomic State -----------------------------------------------==//
+///==--------------------------------------------------------------------------------------------------------==//
 bool AtomicState::tryClaimSpanningTuple(const ABAItNo abaItNumber)
 {
     auto atomicFirstDelimiter = getState();
@@ -57,9 +58,9 @@ std::ostream& operator<<(std::ostream& os, const AtomicState& atomicBitmapState)
                loadedBitmap.hasClaimedSpanningTuple());
 }
 
-//==--------------------------------------------------------------------------------------------------------==//
-//==---------------------------------------- BufferEntry -----------------------------------------------==//
-//==--------------------------------------------------------------------------------------------------------==//
+///==--------------------------------------------------------------------------------------------------------==//
+///==------------------------------------------- Buffer Entry -----------------------------------------------==//
+///==--------------------------------------------------------------------------------------------------------==//
 bool STBufferEntry::isCurrentEntryUsedUp(const ABAItNo abaItNumber) const
 {
     const auto currentEntry = this->atomicState.getState();

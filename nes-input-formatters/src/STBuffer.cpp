@@ -44,8 +44,7 @@
 namespace NES::InputFormatters
 {
 
-STBuffer::STBuffer(const size_t initialSize, Memory::TupleBuffer dummyBuffer)
-    : buffer(std::vector<STBufferEntry>(initialSize))
+STBuffer::STBuffer(const size_t initialSize, Memory::TupleBuffer dummyBuffer) : buffer(std::vector<STBufferEntry>(initialSize))
 {
     buffer[0].setStateOfFirstIndex(std::move(dummyBuffer));
 }
@@ -139,6 +138,7 @@ SequenceShredderResult STBuffer::tryFindSTsForBufferWithDelimiter(const Sequence
     }
     return SequenceShredderResult{.isInRange = false, .indexOfInputBuffer = 0, .spanningBuffers = {}};
 }
+
 SequenceShredderResult
 STBuffer::tryFindSTsForBufferWithoutDelimiter(const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
@@ -199,47 +199,47 @@ std::optional<size_t> STBuffer::searchLeading(const STBufferIdx searchStartBuffe
 {
     const auto searchStartBufferIdxV = searchStartBufferIdx.getRawValue();
     size_t leadingDistance = 1;
-    auto isPriorIteration = static_cast<size_t>(searchStartBufferIdxV < leadingDistance);
-    auto cellState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
-        static_cast<ABAItNo>(abaItNumber.getRawValue() - isPriorIteration));
-    while (cellState.hasCorrectABA and not(cellState.hasDelimiter))
+    auto isPriorIteration = searchStartBufferIdxV < leadingDistance;
+    auto entryState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
+        static_cast<ABAItNo>(abaItNumber.getRawValue() - static_cast<size_t>(isPriorIteration)));
+    while (entryState.hasCorrectABA and not(entryState.hasDelimiter))
     {
         ++leadingDistance;
-        isPriorIteration = static_cast<size_t>(searchStartBufferIdxV < leadingDistance);
-        cellState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
-            static_cast<ABAItNo>(abaItNumber.getRawValue() - isPriorIteration));
+        isPriorIteration = searchStartBufferIdxV < leadingDistance;
+        entryState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
+            static_cast<ABAItNo>(abaItNumber.getRawValue() - static_cast<size_t>(isPriorIteration)));
     }
-    return (cellState.hasCorrectABA) ? std::optional{leadingDistance} : std::nullopt;
+    return (entryState.hasCorrectABA) ? std::optional{leadingDistance} : std::nullopt;
 }
 
 std::optional<size_t> STBuffer::searchTrailing(const STBufferIdx searchStartBufferIdx, const ABAItNo abaItNumber) const
 {
     const auto searchStartBufferIdxV = searchStartBufferIdx.getRawValue();
     size_t trailingDistance = 1;
-    auto isNextIteration = static_cast<size_t>((searchStartBufferIdxV + trailingDistance) >= buffer.size());
-    auto cellState = this->buffer[(searchStartBufferIdxV + trailingDistance) % buffer.size()].getEntryState(
-        static_cast<ABAItNo>(abaItNumber.getRawValue() + isNextIteration));
-    while (cellState.hasCorrectABA and not(cellState.hasDelimiter))
+    auto isNextIteration = (searchStartBufferIdxV + trailingDistance) >= buffer.size();
+    auto entryState = this->buffer[(searchStartBufferIdxV + trailingDistance) % buffer.size()].getEntryState(
+        static_cast<ABAItNo>(abaItNumber.getRawValue() + static_cast<size_t>(isNextIteration)));
+    while (entryState.hasCorrectABA and not(entryState.hasDelimiter))
     {
         ++trailingDistance;
-        isNextIteration = static_cast<size_t>((searchStartBufferIdxV + trailingDistance) >= buffer.size());
-        cellState = this->buffer[(searchStartBufferIdxV + trailingDistance) % buffer.size()].getEntryState(
-            static_cast<ABAItNo>(abaItNumber.getRawValue() + isNextIteration));
+        isNextIteration = (searchStartBufferIdxV + trailingDistance) >= buffer.size();
+        entryState = this->buffer[(searchStartBufferIdxV + trailingDistance) % buffer.size()].getEntryState(
+            static_cast<ABAItNo>(abaItNumber.getRawValue() + static_cast<size_t>(isNextIteration)));
     }
-    return (cellState.hasCorrectABA) ? std::optional{trailingDistance} : std::nullopt;
+    return (entryState.hasCorrectABA) ? std::optional{trailingDistance} : std::nullopt;
 }
 
-STBuffer::ClaimedSpanningTuple STBuffer::claimingLeadingDelimiterSearch(const SequenceNumber spanningTupleEndSN)
+STBuffer::ClaimedSpanningTuple STBuffer::claimingLeadingDelimiterSearch(const SequenceNumber sTupleEndSN)
 {
-    const auto [sTupleEndBufferIdx, sTupleEndAbaItNo] = getBufferIdxAndABAItNo(spanningTupleEndSN);
+    const auto [sTupleEndBufferIdx, sTupleEndAbaItNo] = getBufferIdxAndABAItNo(sTupleEndSN);
     if (const auto leadingDistance = searchLeading(sTupleEndBufferIdx, sTupleEndAbaItNo))
     {
-        const auto sTupleStartSN = spanningTupleEndSN.getRawValue() - leadingDistance.value();
+        const auto sTupleStartSN = sTupleEndSN.getRawValue() - leadingDistance.value();
         const auto sTupleStartBufferIdx = sTupleStartSN % buffer.size();
-        const auto isPriorIteration = static_cast<size_t>(sTupleEndBufferIdx.getRawValue() < sTupleStartBufferIdx);
+        const auto isPriorIteration = sTupleEndBufferIdx.getRawValue() < sTupleStartBufferIdx;
         return ClaimedSpanningTuple{
-            .firstBuffer
-            = buffer[sTupleStartBufferIdx].tryClaimSpanningTuple(static_cast<ABAItNo>(sTupleEndAbaItNo.getRawValue() - isPriorIteration)),
+            .firstBuffer = buffer[sTupleStartBufferIdx].tryClaimSpanningTuple(
+                static_cast<ABAItNo>(sTupleEndAbaItNo.getRawValue() - static_cast<size_t>(isPriorIteration))),
             .snOfLastBuffer = SequenceNumber{sTupleStartSN},
         };
     }

@@ -38,9 +38,9 @@
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <RawTupleBuffer.hpp>
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
-#include <RawTupleBuffer.hpp>
 
 
 namespace NES::InputFormatters
@@ -213,11 +213,6 @@ public:
         if constexpr (hasSpanningTuple())
         {
             INVARIANT(sequenceShredder != nullptr, "The SequenceShredder handles spanning tuples, thus it must not be null.");
-            // Todo: assuming that we call 'validate' during destructor of InputFormatterTask anyway, which should ALWAYS follow a 'stopTask'
-            // if (not sequenceShredder->validateState())
-            // {
-            //     throw FormattingError("Failed to validate SequenceShredder.");
-            // }
         }
     }
 
@@ -250,16 +245,6 @@ public:
     void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
     requires(FormatterType::IsFormattingRequired and hasSpanningTuple())
     {
-        /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
-        /// If not (should very rarely be the case), we put the task back.
-        /// After enough out-of-range requests, the SequenceShredder increases the size of its ring buffer.
-        // Todo: make sure that we can retry at another point in time
-        // if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
-        // {
-        //     rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-        //     return;
-        // }
-
         /// Get field delimiter indices of the raw buffer by using the InputFormatIndexer implementation
         auto fieldIndexFunction = typename FormatterType::FieldIndexFunctionType(*pec.getBufferManager());
         inputFormatIndexer.indexRawBuffer(fieldIndexFunction, rawBuffer, indexerMetaData);
@@ -363,12 +348,11 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->findSTsWithDelimiter(
-            StagedBuffer{
-                rawBuffer,
-                rawBuffer.getNumberOfBytes(),
-                fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
-                fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->findSTsWithDelimiter(StagedBuffer{
+            rawBuffer,
+            rawBuffer.getNumberOfBytes(),
+            fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
+            fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
@@ -441,8 +425,8 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->findSTsWithoutDelimiter(
-            StagedBuffer{
+        const auto [isInRange, indexOfSequenceNumberInStagedBuffers, stagedBuffers]
+            = sequenceShredder->findSTsWithoutDelimiter(StagedBuffer{
                 rawBuffer,
                 rawBuffer.getNumberOfBytes(),
                 fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),

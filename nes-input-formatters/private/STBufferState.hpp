@@ -64,10 +64,13 @@ class AtomicState
     static constexpr uint64_t usedTrailingBufferBit = 34359738368ULL;
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = 51539607552ULL;
+
+    /// The STBuffer initializes all STBufferEntries, except for the very first entry, with the 'defaultState'
     /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
     static constexpr uint64_t defaultState = 60129542144ULL;
+    /// The STBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading ST
     /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False
-    static constexpr uint64_t initialDummyEntry = 21474836481ULL;
+    static constexpr uint64_t firstEntryDummy = 21474836481ULL;
 
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
     /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
@@ -97,12 +100,14 @@ class AtomicState
     AtomicState() : state(defaultState) { };
     ~AtomicState() = default;
 
+    /// CAS loop that attempts to set the 'ClaimedSpanningTuple', if and only if the current atomic state has the expected abaItNumber and
+    /// the 'ClaimedSpanningTuple' bit is not set yet. Thus, guarantees that only one thread can claim a spanning tuple
     bool tryClaimSpanningTuple(ABAItNo abaItNumber);
 
     [[nodiscard]] ABAItNo getABAItNo() const { return static_cast<ABAItNo>(state.load()); }
     [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
 
-    void setStateOfFirstEntry() { this->state = initialDummyEntry; }
+    void setStateOfFirstEntry() { this->state = firstEntryDummy; }
     void setHasTupleDelimiterState(const ABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
     void setNoTupleDelimiterState(const ABAItNo abaItNumber) { this->state = abaItNumber.getRawValue(); }
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
@@ -114,12 +119,12 @@ class AtomicState
     std::atomic<uint64_t> state;
 };
 
-/// Cache-line-size-aligned entry of spanning tuple buffer (STBuffer) that contains:
-/// - (48B): two buffer references, since buffers with delimeters can be used to complete both a leading and a trailing spanning tuple (ST)
-///     - since only one thread can find an ST, threads can safely move the buffer reference out of the STBufferEntry without synchronization
-/// - (8B) : the atomic state of the entry, that allows the STBuffer to determine valid spanning tuples and to synchronize between threads
-/// - (4B) : the offset of first delimiter in buffer, which the InputFormatterTask uses to construct a spanning tuple
-/// - (4B) : offset of last delimiter in buffer, which the InputFormatterTask uses to construct a spanning tuple
+/// Entry of spanning tuple buffer (STBuffer). Is cache-line-size-aligned (64B) to avoid false sharing and contains:
+/// - (48B): two buffer references, buffers with delimiters can be used to complete both a leading and a trailing spanning tuple (ST)
+///     - since only one thread can find an ST, threads can safely move their buffer reference out of the STBufferEntry without synchronization
+/// - (8B) : the atomic state of the entry, which allows the STBuffer to determine valid spanning tuples and to synchronize between threads
+/// - (4B) : the offset of the first delimiter in the buffer, which the InputFormatterTask uses to construct a spanning tuple
+/// - (4B) : the offset of the last delimiter in the buffer, which the InputFormatterTask uses to construct a spanning tuple
 class alignas(64) STBufferEntry /// NOLINT(readability-magic-numbers)
 {
 public:
@@ -158,21 +163,23 @@ public:
     /// Atomically loads the state of an entry, checks if its ABA iteration number matches the expected and if it has a tuple delimiter
     [[nodiscard]] EntryState getEntryState(ABAItNo expectedABAItNo) const;
 
-    [[nodiscard, maybe_unused]] uint32_t getFirstDelimiterOffset() const { return this->firstDelimiterOffset; }
-    [[nodiscard, maybe_unused]] uint32_t getLastDelimiterOffset() const { return this->lastDelimiterOffset; }
-
+    /// Iterates over all STBufferEntries, checking that they don't hold any buffer references if they should not and that their atomic
+    /// bitmap state is correct. Logs errors and returns 'false' if at least one entry is in an invalid state
     [[nodiscard]] bool validateFinalState(STBufferIdx bufferIdx, const STBufferEntry& nextEntry, STBufferIdx lastIdxOfBuffer) const;
 
 private:
-    // 24 Bytes (TupleBuffer)
+    /// 24 Bytes (TupleBuffer)
     Memory::TupleBuffer leadingBufferRef;
-    // 48 Bytes (TupleBuffer)
+    /// 48 Bytes (TupleBuffer)
     Memory::TupleBuffer trailingBufferRef;
-    // 56 Bytes (Atomic state)
+    /// 56 Bytes (Atomic state)
     AtomicState atomicState;
-    // 60 Bytes (meta data)
+    /// 60 Bytes (meta data)
     uint32_t firstDelimiterOffset{};
-    // 64 Bytes (meta data)
+    /// 64 Bytes (meta data)
     uint32_t lastDelimiterOffset{};
 };
+
+static_assert(sizeof(STBufferEntry) % 64 == 0); /// NOLINT(readability-magic-numbers)
+static_assert(alignof(STBufferEntry) % 64 == 0); /// NOLINT(readability-magic-numbers)
 }

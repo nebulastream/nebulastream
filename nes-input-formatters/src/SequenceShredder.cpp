@@ -27,16 +27,15 @@
 #include <utility>
 #include <vector>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
 #include <STBuffer.hpp>
-#include "Runtime/BufferManager.hpp"
-
-#include <Identifiers/Identifiers.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
 {
@@ -47,6 +46,7 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
     dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
     this->spanningTupleBuffer = std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER, std::move(dummyBuffer));
 }
+
 SequenceShredder::~SequenceShredder()
 {
     try
@@ -70,6 +70,7 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer
 {
     return findSTsWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
+
 SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
     return findSTsWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
@@ -84,6 +85,10 @@ SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer
     }
     else
     {
+        /// (Planned) Atomically count the number of out of range attempts
+        /// (Planned) Thread that increases atomic counter to threshold blocks access to the current STBUffer, allocates new STBuffer
+        /// (Planned) with double the size, copies over the current state, swaps out the pointer to the STBuffer, and then enables other
+        /// (Planned) threads to access the new STBuffer
         NES_WARNING("Sequence number: {} was out of range of STBuffer", sequenceNumber);
         return stSearchResult;
     }
@@ -102,7 +107,6 @@ SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuf
         return stSearchResult;
     }
 }
-
 
 std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder)
 {
