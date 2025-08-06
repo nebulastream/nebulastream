@@ -1,21 +1,23 @@
+use crate::channel::{Channel, Communication, CommunicationListener};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::HashMap;
-use std::net::SocketAddr;
+use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::net::{TcpListener, TcpStream};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::runtime::Runtime;
 use tokio::select;
-use tokio::sync::oneshot;
 use tokio::sync::RwLock;
+use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::{error, info, info_span, warn, Instrument, Span};
+use tracing::{Instrument, Span, error, info, info_span, warn};
 
-pub struct NetworkService {
+pub struct NetworkService<L: Communication> {
     sender: NetworkingServiceController,
     runtime: Mutex<Option<Runtime>>,
+    listener: PhantomData<L>,
 }
 
 enum NetworkingServiceControl {
@@ -34,20 +36,22 @@ enum ChannelHandlerError {
     Network(Error),
 }
 
-pub enum ConnectionIdentification {
+pub enum ConnectionIdentification<R: AsyncRead, W: AsyncWrite> {
     Connection(
-        ControlChannelReceiverReader,
-        ControlChannelReceiverWriter,
+        ControlChannelReceiverReader<R>,
+        ControlChannelReceiverWriter<W>,
         ConnectionIdentifier,
     ),
     Channel(
-        DataChannelReceiverReader,
-        DataChannelReceiverWriter,
+        DataChannelReceiverReader<R>,
+        DataChannelReceiverWriter<W>,
         ConnectionIdentifier,
         ChannelIdentifier,
     ),
 }
-pub async fn identify_connection(stream: TcpStream) -> Result<ConnectionIdentification> {
+pub async fn identify_connection<R: AsyncRead + Unpin + Send, W: AsyncWrite + Unpin + Send>(
+    stream: Channel<R, W>,
+) -> Result<ConnectionIdentification<R, W>> {
     let (mut read, mut write) = identification_receiver(stream);
     let response = read
         .next()
@@ -56,11 +60,10 @@ pub async fn identify_connection(stream: TcpStream) -> Result<ConnectionIdentifi
 
     write.send(IdentificationResponse::Ok).await?;
 
-    let stream = read
-        .into_inner()
-        .into_inner()
-        .reunite(write.into_inner().into_inner())
-        .expect("Could not reunite streams");
+    let stream = Channel {
+        writer: write.into_inner().into_inner(),
+        reader: read.into_inner().into_inner(),
+    };
 
     match response {
         IdentificationRequest::IAmConnection(identifier) => {
@@ -84,20 +87,20 @@ pub async fn identify_connection(stream: TcpStream) -> Result<ConnectionIdentifi
 }
 
 type RegisteredChannels = Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, CancellationToken)>>>;
-type OpenedChannels = Arc<
+type OpenedChannels<R, W> = Arc<
     RwLock<
         HashMap<
             (ConnectionIdentifier, ChannelIdentifier),
-            oneshot::Sender<(DataChannelReceiverReader, DataChannelReceiverWriter)>,
+            oneshot::Sender<(DataChannelReceiverReader<R>, DataChannelReceiverWriter<W>)>,
         >,
     >,
 >;
 
-async fn channel_handler(
+async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
     queue: &mut DataQueue,
-    mut reader: DataChannelReceiverReader,
-    mut writer: DataChannelReceiverWriter,
+    mut reader: DataChannelReceiverReader<R>,
+    mut writer: DataChannelReceiverWriter<W>,
 ) -> core::result::Result<(), ChannelHandlerError> {
     let mut pending_buffer: Option<TupleBuffer> = None;
     loop {
@@ -139,16 +142,20 @@ async fn channel_handler(
     }
 }
 
-async fn create_channel_handler(
+async fn create_channel_handler<
+    R: AsyncRead + Unpin + Send + 'static,
+    W: AsyncWrite + Unpin + Send + 'static,
+>(
     connector_identifier: ConnectionIdentifier,
     channel_id: ChannelIdentifier,
-    opened_channels: OpenedChannels,
+    opened_channels: OpenedChannels<R, W>,
     mut queue: DataQueue,
     channel_cancellation_token: CancellationToken,
     control: NetworkingServiceController,
 ) {
     tokio::spawn({
         let channel = channel_id.clone();
+        let opened_channels = opened_channels.clone();
         async move {
             let (tx, rx) = oneshot::channel();
             {
@@ -201,13 +208,16 @@ async fn create_channel_handler(
     });
 }
 
-async fn control_socket_handler(
-    mut reader: ControlChannelReceiverReader,
-    mut writer: ControlChannelReceiverWriter,
+async fn control_socket_handler<
+    R: AsyncRead + Unpin + Send + 'static,
+    W: AsyncWrite + Unpin + Send + 'static,
+>(
+    mut reader: ControlChannelReceiverReader<R>,
+    mut writer: ControlChannelReceiverWriter<W>,
     connection_identification: ConnectionIdentifier,
     ports: &Vec<u16>,
     channels: RegisteredChannels,
-    opened_channels: OpenedChannels,
+    opened_channels: OpenedChannels<R, W>,
     control: NetworkingServiceController,
 ) -> Result<ControlChannelRequest> {
     let mut active_connection_channels = vec![];
@@ -254,11 +264,14 @@ async fn control_socket_handler(
 async fn control_socket(
     listener: NetworkingServiceControlListener,
     controller: NetworkingServiceController,
-    bind_address: SocketAddr,
     connection_identifier: ThisConnectionIdentifier,
+    mut communication: impl Communication + 'static,
 ) -> Result<()> {
     info!("Starting control socket: {}", connection_identifier);
-    let listener_port = TcpListener::bind(bind_address).await?;
+    let mut communication_listener = communication
+        .bind(connection_identifier)
+        .await
+        .expect("Failed to bind control socket");
     let registered_channels = Arc::new(RwLock::new(HashMap::default()));
     let opened_channels = Arc::new(RwLock::new(HashMap::default()));
     let receiver_span = Span::current();
@@ -269,14 +282,12 @@ async fn control_socket(
             let opened_channels = opened_channels.clone();
             async move {
                 let receiver_span = receiver_span.clone();
-                let ports = vec![listener_port.local_addr().unwrap().port()];
+                let ports = vec![9090];
                 loop {
-                    info!("Listening for connection to {bind_address}");
-                    let Ok((stream, addr)) = listener_port.accept().await else {
+                    let Ok(stream) = communication_listener.listen().await else {
                         error!("Control socket was closed");
                         return;
                     };
-                    info!("Received connection from {}", addr);
                     let identification = match identify_connection(stream).await {
                         Ok(identification) => identification,
                         Err(e) => {
@@ -305,11 +316,11 @@ async fn control_socket(
                                             opened_channels.clone(),
                                             controller.clone(),
                                         )
-                                        .await;
+                                            .await;
                                         info!("Control socket handler terminated: {:?}", result);
                                     }
                                 }
-                                .instrument(info_span!(parent: receiver_span.clone(), "connection_handler",  other = %connection)),
+                                    .instrument(info_span!(parent: receiver_span.clone(), "connection_handler",  other = %connection)),
                             );
                         }
                         ConnectionIdentification::Channel(r, w, c, channel) => {
@@ -329,7 +340,7 @@ async fn control_socket(
                 }
             }
         }
-        .instrument(info_span!("control_socket", bind_address = %bind_address)),
+            .instrument(info_span!("control_socket")),
     );
 
     loop {
@@ -369,16 +380,17 @@ async fn control_socket(
     }
 }
 
-impl NetworkService {
+impl<L: Communication + 'static> NetworkService<L> {
     pub fn start(
         runtime: Runtime,
-        bind_addr: SocketAddr,
         connection_addr: ThisConnectionIdentifier,
-    ) -> Arc<NetworkService> {
+        communication: L,
+    ) -> Arc<NetworkService<L>> {
         let (tx, rx) = async_channel::bounded(10);
         let service = Arc::new(NetworkService {
             sender: tx.clone(),
             runtime: Mutex::new(Some(runtime)),
+            listener: Default::default(),
         });
 
         service
@@ -392,14 +404,11 @@ impl NetworkService {
                     let listener = rx;
                     let controller = tx;
                     let connection_id = connection_addr.clone();
+                    let communication = communication;
                     async move {
-                        let control_socket_result = control_socket(
-                            listener,
-                            controller,
-                            bind_addr,
-                            connection_id,
-                        )
-                        .await;
+                        let control_socket_result =
+                            control_socket(listener, controller, connection_id, communication)
+                                .await;
                         match control_socket_result {
                             Ok(_) => {
                                 warn!("Control stopped")
@@ -417,7 +426,7 @@ impl NetworkService {
     }
 
     pub fn register_channel(
-        self: &Arc<NetworkService>,
+        self: &Arc<NetworkService<L>>,
         channel: ChannelIdentifier,
     ) -> Result<async_channel::Receiver<TupleBuffer>> {
         let (data_queue_sender, data_queue_receiver) = async_channel::bounded(10);
@@ -437,7 +446,7 @@ impl NetworkService {
         Ok(data_queue_receiver)
     }
 
-    pub fn shutdown(self: Arc<NetworkService>) -> Result<()> {
+    pub fn shutdown(self: Arc<NetworkService<L>>) -> Result<()> {
         self.sender.close();
         let runtime = self
             .runtime

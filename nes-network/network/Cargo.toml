@@ -17,3 +17,5 @@ serde = { version = "1.0.217", features = ["derive"] }
 tokio-stream = "0.1.17"
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
 futures = "0.3.31"
+once_cell = "1.21.3"
+url = { version = "2.5.4", features = ["serde"] }

@@ -41,9 +41,9 @@ namespace NES::Sources
 {
 
 NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
-    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL)), receiverServer(receiver_instance())
+    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
+    , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
 {
-
 }
 
 std::ostream& NetworkSource::toString(std::ostream& str) const

@@ -111,12 +111,13 @@ NetworkSink::NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor)
     , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CONNECTION))
+    , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
 {
 }
 
 void NetworkSink::start(PipelineExecutionContext&)
 {
-    this->server = sender_instance();
+    this->server = sender_instance(thisConnection);
     this->channel = register_sender_channel(**server, connectionAddr, rust::String(channelId));
     NES_DEBUG("Sender channel registered: {}", channelId);
 }
