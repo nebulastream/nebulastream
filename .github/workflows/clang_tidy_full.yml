@@ -33,6 +33,9 @@ jobs:
         run: cmake --build build
       - name: Run clang-tidy
         id: run-clang-tidy
+        # we explicitely set bash to have pipefail
+        # (c.f. https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#exit-codes-and-error-action-preference)
+        shell: bash
         # do not run clang-tidy on generated files, i.e. files from dirs matching .*_generated_src/
         # (c.f. https://stackoverflow.com/a/1240365 for regex explanation)
         run: run-clang-tidy-19 -p build '^(?!.*_generated_src/).+$' 2> /dev/null | tee clang-tidy.log
