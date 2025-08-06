@@ -73,7 +73,6 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 }
 
-
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
