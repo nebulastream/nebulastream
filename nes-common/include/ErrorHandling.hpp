@@ -138,6 +138,40 @@ private:
                 std::terminate(); \
             } \
         } while (false)
+#elif defined(FUZZING)
+    #define USED_IN_DEBUG
+
+/// does not print trace
+
+    #define PRECONDITION(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, ""); \
+                if (auto logger = NES::Logger::getInstance()) \
+                { \
+                    logger->shutdown(); \
+                } \
+                std::terminate(); \
+            } \
+        } while (false)
+
+    #define NOXARIANT INVARIANT
+
+    #define INVARIANT(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, ""); \
+                if (auto logger = NES::Logger::getInstance()) \
+                { \
+                    logger->shutdown(); \
+                } \
+                std::terminate(); \
+            } \
+        } while (false)
 #else
     #define USED_IN_DEBUG
     /// Note:
