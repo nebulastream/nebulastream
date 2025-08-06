@@ -50,9 +50,6 @@ std::jthread shutdownHook(grpc::Server& server)
 }
 }
 
-extern void init_receiver_service(std::string bindAddr, std::string connectionAddr);
-extern void init_sender_service(std::string connectionAddr);
-
 int main(const int argc, const char* argv[])
 {
     signal(SIGINT, signalHandler);
@@ -66,11 +63,6 @@ int main(const int argc, const char* argv[])
         if (!configuration)
         {
             return 0;
-        }
-        if (!configuration->bind.getValue().empty() && !configuration->connection.getValue().empty())
-        {
-            init_receiver_service(configuration->bind.getValue(), configuration->connection.getValue());
-            init_sender_service(configuration->connection.getValue());
         }
         {
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};

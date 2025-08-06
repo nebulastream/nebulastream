@@ -36,6 +36,9 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
 
+extern void init_receiver_service(std::string connectionAddr);
+extern void init_sender_service(std::string connectionAddr);
+
 namespace NES
 {
 
@@ -55,6 +58,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
+    }
+
+    if (!configuration.connection.getValue().empty())
+    {
+        init_receiver_service(configuration.connection.getValue());
+        init_sender_service(configuration.connection.getValue());
     }
 
     this->systemEvents = std::make_shared<PrintingStatisticListener>(
