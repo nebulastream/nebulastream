@@ -152,7 +152,8 @@ void executeForEachQuery(const std::string& queryIdStr, Func&& func)
 
 void handleStart(const argparse::ArgumentParser& startArgs)
 {
-    executeForEachQuery(startArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId, const auto&) { client->start(queryId); });
+    executeForEachQuery(
+        startArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId, const auto&) { client->start(queryId); });
 }
 
 void handleQueryStatus(const argparse::ArgumentParser& statusArgs)
@@ -167,11 +168,7 @@ void handleQueryStatus(const argparse::ArgumentParser& statusArgs)
             if (perWorker)
             {
                 fmt::println(
-                    std::cout,
-                    "Query {} on worker {}: {}",
-                    queryId.getRawValue(),
-                    connection,
-                    magic_enum::enum_name(status.currentStatus));
+                    std::cout, "Query {} on worker {}: {}", queryId.getRawValue(), connection, magic_enum::enum_name(status.currentStatus));
             }
             queryStatuses.push_back(status.currentStatus);
         });
@@ -379,7 +376,7 @@ int main(const int argc, char** argv)
                 const auto& subparser = program.at<argparse::ArgumentParser>(command);
                 const auto inputPath = subparser.get<std::string>(ARG_INPUT_SHORT);
 
-                auto decomposedPlan = NES::QueryPlanner::plan(inputPath);
+                auto [decomposedPlan, _] = NES::QueryPlanner::plan(inputPath);
 
                 if (command == CMD_DUMP)
                 {
