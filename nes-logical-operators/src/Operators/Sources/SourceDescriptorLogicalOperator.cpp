@@ -117,7 +117,7 @@ LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<
     PRECONDITION(ids.size() == 1, "Source should have one input");
     PRECONDITION(ids[0].size() == 1, "Source should have one originId, but has {}", ids[0].size());
     auto copy = *this;
-    copy.sourceOriginIds = ids[0];
+    copy.sourceOriginIds = ids.at(0);
     return copy;
 }
 
