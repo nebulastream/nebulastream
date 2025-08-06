@@ -226,7 +226,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vect
 {
     PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one input");
     auto copy = *this;
-    copy.inputOriginIds = ids[0];
+    copy.inputOriginIds = ids.at(0);
     return copy;
 }
 
