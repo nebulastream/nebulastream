@@ -25,7 +25,7 @@
 #include <fmt/format.h>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
-#include <ProtobufHelper.hpp> /// NOLINT
+#include <ProtobufHelper.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
