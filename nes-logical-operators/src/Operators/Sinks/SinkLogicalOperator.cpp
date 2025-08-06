@@ -178,7 +178,7 @@ std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
 LogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     auto copy = *this;
-    copy.inputOriginIds = ids[0];
+    copy.inputOriginIds = ids.at(0);
     return copy;
 }
 
