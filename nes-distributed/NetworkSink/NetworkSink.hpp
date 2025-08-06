@@ -86,6 +86,7 @@ private:
     std::optional<rust::Box<SenderDataChannel>> channel;
     std::string channelId;
     std::string connectionAddr;
+    std::string thisConnection;
     std::atomic_bool closed;
 };
 
@@ -96,13 +97,18 @@ struct ConfigParametersNetworkSink
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECTION, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
+        "bind",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
         "channel",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CONNECTION, CHANNEL);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CONNECTION, CHANNEL, BIND);
 };
 
 }

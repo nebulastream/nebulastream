@@ -2,4 +2,5 @@
 pub mod protocol;
 pub mod receiver;
 pub mod sender;
-mod channel;
+pub mod channel;
+mod memcom;

@@ -26,9 +26,9 @@
 #include <ErrorHandling.hpp>
 
 
-void init_receiver_service(std::string bindAddr, std::string connectionAddr)
+void init_receiver_service(std::string connectionAddr)
 {
-    init_receiver_service(rust::String(std::move(bindAddr)), rust::String(std::move(connectionAddr)));
+    init_receiver_service(rust::String(std::move(connectionAddr)));
 }
 
 void init_sender_service(std::string connectionAddr)

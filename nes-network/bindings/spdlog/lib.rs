@@ -51,7 +51,7 @@ impl SpdlogLayer {
 // Helper to extract the message field
 struct MessageExtractor<'a>(&'a mut String);
 
-impl<'a> tracing::field::Visit for MessageExtractor<'a> {
+impl tracing::field::Visit for MessageExtractor<'_> {
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
         if field.name() == "message" {
             write!(self.0, "{:?}", value).unwrap();

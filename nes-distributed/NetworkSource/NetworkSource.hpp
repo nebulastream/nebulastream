@@ -53,7 +53,7 @@ public:
     FillTupleBufferResult fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<Memory::AbstractBufferProvider> provider) override;
     void close() override;
-    [[nodiscard]] bool addsMetadata() const override {return true;}
+    [[nodiscard]] bool addsMetadata() const override { return true; }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -75,8 +75,11 @@ struct ConfigParametersNetworkSource
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
+        "bind", "", [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND);
 };
 
 }

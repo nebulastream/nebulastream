@@ -146,8 +146,9 @@ static LogicalOperator addChild(const LogicalOperator& op, LogicalOperator&& chi
 LogicalOperator QueryDecomposer::createNetworkSource(const NetworkChannel& channel) const
 {
     const auto upstreamOp = findOperatorById(channel.upstreamOp);
-    const auto downstreamOp = findOperatorById(channel.upstreamOp);
+    const auto downstreamOp = findOperatorById(channel.downstreamOp);
     const auto downstreamNode = *getPlacementFor(downstreamOp);
+    const auto upstreamNode = *getPlacementFor(upstreamOp);
 
     const auto logicalSource
         = sourceCatalog->addLogicalSource(fmt::format("Net:{}-{}", channel.upstreamOp, channel.downstreamOp), upstreamOp.getOutputSchema())
@@ -157,9 +158,10 @@ LogicalOperator QueryDecomposer::createNetworkSource(const NetworkChannel& chann
                           ->addPhysicalSource(
                               logicalSource,
                               "Network",
-                              downstreamNode,
+                              upstreamNode,
                               {
                                   {"channel", channel.id},
+                                  {"bind", downstreamNode},
                               },
                               ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""})
                           .value();
@@ -182,7 +184,7 @@ LogicalOperator QueryDecomposer::createNetworkSink(const NetworkChannel& channel
         upstreamOp.getOutputSchema(),
         "Network",
         upstreamNode,
-        {{"channel", channel.id}, {"connection", downstreamNode}});
+        {{"channel", channel.id}, {"connection", downstreamNode}, {"bind", upstreamNode}});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     return SinkLogicalOperator{std::move(*networkSinkDescriptor)}
