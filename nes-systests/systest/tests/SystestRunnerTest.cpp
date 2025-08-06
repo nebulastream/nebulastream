@@ -69,14 +69,14 @@ NES::Systest::SystestQuery makeQuery(
     std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected)
 {
     return NES::Systest::SystestQuery{
-        "test_query",
-        NES::INVALID<NES::Systest::SystestQueryId>,
-        SYSTEST_DATA_DIR "filter.dummy",
-        NES::SystestConfiguration{}.workingDir.getValue(),
-        "SELECT * FROM test",
-        planInfoOrException,
-        std::move(expected),
-        std::make_shared<std::vector<std::jthread>>()};
+        .testName = "test_query",
+        .queryIdInFile = NES::INVALID<NES::Systest::SystestQueryId>,
+        .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
+        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
+        .queryDefinition = "SELECT * FROM test",
+        .planInfoOrException = planInfoOrException,
+        .expectedResultsOrExpectedError = std::move(expected),
+        .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>()};
 }
 }
 
