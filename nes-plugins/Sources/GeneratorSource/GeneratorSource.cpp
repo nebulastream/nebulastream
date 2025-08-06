@@ -63,7 +63,7 @@ void GeneratorSource::close()
 
 Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
-    NES_INFO("Filling buffer in GeneratorSource.");
+    NES_TRACE("Filling buffer in GeneratorSource.");
     try
     {
         size_t writtenBytes = 0;
@@ -98,7 +98,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(NES::Memory::Tupl
         tuplesStream.read(tupleBuffer.getBuffer<char>(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
-        NES_INFO("Wrote {} bytes", writtenBytes);
+        NES_TRACE("Wrote {} bytes", writtenBytes);
         return FillTupleBufferResult(writtenBytes);
     }
     catch (const std::exception& e)
