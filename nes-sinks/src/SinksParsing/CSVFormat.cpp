@@ -24,7 +24,6 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <SinksParsing/CSVFormat.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>

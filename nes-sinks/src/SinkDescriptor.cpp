@@ -24,7 +24,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>

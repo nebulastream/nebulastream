@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
-#include <DataTypes/TimeUnit.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing

@@ -21,7 +21,6 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
-#include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/json/json.h>

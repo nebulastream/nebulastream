@@ -13,7 +13,6 @@
 */
 #include <Pipeline.hpp>
 
-#include <Pipeline.hpp>
 
 #include <atomic>
 #include <cstdint>

@@ -13,7 +13,6 @@
 */
 #include <PipelinedQueryPlan.hpp>
 
-#include <PipelinedQueryPlan.hpp>
 
 #include <cstddef>
 #include <memory>
