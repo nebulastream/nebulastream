@@ -22,10 +22,11 @@
 #include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/basic.hpp>
+#include <cpptrace/exceptions.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-#include <from_current.hpp>
 
 /// formater for cpptrace::nullable
 namespace fmt
@@ -165,7 +166,8 @@ Exception wrapExternalException()
     }
     catch (const std::exception& e)
     {
-        return UnknownException(e.what());
+        auto trace = cpptrace::raw_trace_from_current_exception();
+        return {e.what(), ErrorCode::UnknownException, std::move(trace)};
     }
     catch (...)
     {
