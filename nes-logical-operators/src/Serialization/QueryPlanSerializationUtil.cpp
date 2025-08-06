@@ -80,7 +80,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         }
     }
 
-    if (deserializeExceptions.size() != 0U)
+    if (!deserializeExceptions.empty())
     {
         throw CannotDeserialize(
             "Deserialization of {} out of {} operators failed!", deserializeExceptions.size(), serializedQueryPlan.operatormap_size());
