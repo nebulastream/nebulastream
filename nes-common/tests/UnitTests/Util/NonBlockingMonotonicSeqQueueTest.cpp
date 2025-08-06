@@ -24,7 +24,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/LogLevel.hpp>
