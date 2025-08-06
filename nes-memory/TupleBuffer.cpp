@@ -194,7 +194,7 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
-    INVARIANT(controlBlock != control, "Cannot attach buffer to self");
+    NOXARIANT(controlBlock != control, "Cannot attach buffer to self");
     auto index = controlBlock->storeChildBuffer(control);
     std::swap(empty, buffer);
     return index;
@@ -204,7 +204,7 @@ TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const
 {
     TupleBuffer childBuffer;
     auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
-    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
+    NOXARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
     return childBuffer;
 }
 

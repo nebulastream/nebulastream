@@ -49,7 +49,7 @@ HashMapSlice::HashMapSlice(
 
 HashMapSlice::~HashMapSlice()
 {
-    INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
+    NOXARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
 
     /// As we assume that each hashmap of an input stream lie one after the other.
     /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
