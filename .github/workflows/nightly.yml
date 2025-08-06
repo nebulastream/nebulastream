@@ -540,3 +540,4 @@ jobs:
             cov/
             cov.dot
             cov.svg
+            gcovr.json
