@@ -24,7 +24,7 @@ namespace NES
 class QueryPlanner
 {
 public:
-    static QueryDecomposer::DecomposedLogicalPlan plan(const std::string& inputPath);
+    static std::tuple<QueryDecomposer::DecomposedLogicalPlan, TopologyGraph, NodeCatalog> plan(const std::string& inputPath);
 };
 
 }

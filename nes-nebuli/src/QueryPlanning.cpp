@@ -25,7 +25,7 @@
 namespace NES
 {
 
-QueryDecomposer::DecomposedLogicalPlan QueryPlanner::plan(const std::string& inputPath)
+std::tuple<QueryDecomposer::DecomposedLogicalPlan, TopologyGraph, NodeCatalog> QueryPlanner::plan(const std::string& inputPath)
 {
     // Load and process query configuration
     auto queryConfig = CLI::YAMLLoader::load(inputPath);
@@ -41,13 +41,13 @@ QueryDecomposer::DecomposedLogicalPlan QueryPlanner::plan(const std::string& inp
     QueryDecomposer::DecomposedLogicalPlan decomposedPlan
         = QueryDecomposer::from(std::move(placedPlan), topology, sourceCatalog, sinkCatalog).decompose();
 
-    return std::views::transform(
+    return {std::views::transform(
                decomposedPlan,
                [nodeCatalog](const auto& nodePlan)
                {
                    auto& [hostAddr, plan] = nodePlan;
                    return std::make_pair(nodeCatalog.getGrpcAddressFor(std::move(hostAddr)), std::move(plan));
                })
-        | std::ranges::to<QueryDecomposer::DecomposedLogicalPlan>();
+        | std::ranges::to<QueryDecomposer::DecomposedLogicalPlan>(), topology, nodeCatalog};
 }
 }
