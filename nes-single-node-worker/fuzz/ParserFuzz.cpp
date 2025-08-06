@@ -52,7 +52,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     CPPTRACE_CATCH(...)
     {
-        NES::tryLogCurrentException();
         return 0;
     }
     return 0;
