@@ -68,7 +68,8 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
 
     /// 2) Recursive builder to attach all children
     std::unordered_map<OperatorId::Underlying, LogicalOperator> builtOps;
-    std::function<LogicalOperator(OperatorId::Underlying)> build = [&](OperatorId::Underlying id) -> LogicalOperator
+    std::function<LogicalOperator(OperatorId::Underlying, const std::set<OperatorId::Underlying>&)> build
+        = [&](OperatorId::Underlying id, const std::set<OperatorId::Underlying>& ancestors) -> LogicalOperator
     {
         if (const auto memoIt = builtOps.find(id); memoIt != builtOps.end())
         {
@@ -79,11 +80,21 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
         const LogicalOperator op = baseIt->second;
 
+        if (!serializedQueryPlan.operatormap().contains(id))
+        {
+            throw CannotDeserialize("serialized query plan does not contain expected id {}", 0);
+        }
         const auto& serializedOp = serializedQueryPlan.operatormap().at(id);
         std::vector<LogicalOperator> children;
+        auto anc = ancestors;
+        anc.insert(id);
         for (const auto childId : serializedOp.children_ids())
         {
-            children.push_back(build(childId));
+            if (ancestors.contains(childId))
+            {
+                throw CannotDeserialize("Cycle in operator graph! Operator {} has operator {} as child and ancestor!", id, childId);
+            }
+            children.push_back(build(childId, anc));
         }
 
         LogicalOperator withKids = op.withChildren(std::move(children));
@@ -95,7 +106,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     std::vector<LogicalOperator> rootOperators;
     for (auto rootId : serializedQueryPlan.rootoperatorids())
     {
-        rootOperators.push_back(build(rootId));
+        rootOperators.push_back(build(rootId, {}));
     }
 
     /// 4) Finalize plan
