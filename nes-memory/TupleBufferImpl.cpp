@@ -75,7 +75,7 @@ MemorySegment::~MemorySegment()
         ///      the release function in general. Do you agree?).
         {
             const auto refCnt = controlBlock->getReferenceCount();
-            INVARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
+            NOXARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
         }
 
         /// Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only

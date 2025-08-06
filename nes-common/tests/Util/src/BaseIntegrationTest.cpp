@@ -99,8 +99,8 @@ std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
 
 BaseIntegrationTest::~BaseIntegrationTest()
 {
-    INVARIANT(setUpCalled, "SetUp not called for test {}", typeid(*this).name());
-    INVARIANT(tearDownCalled, "TearDown not called for test {}", typeid(*this).name());
+    NOXARIANT(setUpCalled, "SetUp not called for test {}", typeid(*this).name());
+    NOXARIANT(tearDownCalled, "TearDown not called for test {}", typeid(*this).name());
 }
 
 void BaseIntegrationTest::TearDown()

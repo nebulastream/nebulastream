@@ -63,3 +63,9 @@ if (USE_MULL)
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fpass-plugin=/usr/lib/mull-ir-frontend-18 -g -grecord-command-line")
 endif ()
+
+
+option(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION OFF)
+if (NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
+    add_compile_definitions(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
+endif()
