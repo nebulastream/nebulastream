@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -x
 
 # Check if exactly 6 arguments are provided
 if [ $# -ne 6 ]; then

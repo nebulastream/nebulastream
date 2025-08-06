@@ -16,11 +16,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <vector>
-#include <QueryManager/QueryManager.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -40,6 +35,7 @@ class Repl
 {
     struct Impl;
     std::unique_ptr<Impl> impl;
+    std::istream& inputStream;
 
 public:
     explicit Repl(
@@ -49,7 +45,7 @@ public:
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,
         StatementOutputFormat defaultOutputFormat,
-        bool interactiveMode);
+        std::istream& inputStream);
     void run();
     ~Repl();
 };

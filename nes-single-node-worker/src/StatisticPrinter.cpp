@@ -49,8 +49,7 @@ void threadRoutine(
         }
         std::visit(
             Overloaded{
-                [&](SubmitQuerySystemEvent startQuery)
-                {
+                [&](SubmitQuerySystemEvent startQuery) {
                     file << fmt::format(
                         "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
                 },
@@ -92,14 +91,14 @@ void threadRoutine(
 }
 }
 
-void PrintingStatisticListener::onEvent(Event event)
+void PrintingStatisticListener::onEvent(Event)
 {
-    events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
+    return;
 }
 
-void PrintingStatisticListener::onEvent(SystemEvent event)
+void PrintingStatisticListener::onEvent(SystemEvent)
 {
-    events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
+    return;
 }
 
 PrintingStatisticListener::PrintingStatisticListener(const std::filesystem::path& path)

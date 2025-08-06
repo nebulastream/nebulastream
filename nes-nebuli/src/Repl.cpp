@@ -275,7 +275,7 @@ struct Repl::Impl
         return false;
     }
 
-    [[nodiscard]] std::string readMultiLineQuery() const
+    [[nodiscard]] std::string readMultiLineQuery(std::istream& inputStream) const
     {
         std::string query;
         std::string line;
@@ -288,8 +288,8 @@ struct Repl::Impl
             if (!interactiveMode)
             {
                 /// Use std::getline for non-interactive mode
-                std::getline(std::cin, line);
-                if (std::cin.eof())
+                std::getline(inputStream, line);
+                if (inputStream.eof())
                 {
                     break;
                 }
@@ -404,8 +404,7 @@ struct Repl::Impl
             {
                 case NES::StatementOutputFormat::TEXT:
                     std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
+                        [](const auto& statementResult) {
                             return toText(
                                 StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
                         },
@@ -427,7 +426,7 @@ struct Repl::Impl
         return true;
     }
 
-    void run()
+    void run(std::istream& inputStream)
     {
         if (interactiveMode)
         {
@@ -443,8 +442,8 @@ struct Repl::Impl
                 if (!interactiveMode)
                 {
                     /// Use std::getline for non-interactive mode to avoid terminal issues
-                    std::getline(std::cin, input);
-                    if (std::cin.eof())
+                    std::getline(inputStream, input);
+                    if (inputStream.eof())
                     {
                         break;
                     }
@@ -498,7 +497,7 @@ struct Repl::Impl
                 }
                 else
                 {
-                    const std::string fullQuery = input + "\n" + readMultiLineQuery();
+                    const std::string fullQuery = input + "\n" + readMultiLineQuery(inputStream);
                     executeQuery(fullQuery);
                 }
             }
@@ -526,7 +525,7 @@ Repl::Repl(
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
     StatementOutputFormat defaultOutputFormat,
-    bool interactiveMode)
+    std::istream& stream)
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
@@ -534,13 +533,14 @@ Repl::Repl(
           std::move(binder),
           errorBehaviour,
           defaultOutputFormat,
-          interactiveMode))
+          false))
+    , inputStream(stream)
 {
 }
 
 void Repl::run()
 {
-    impl->run();
+    impl->run(inputStream);
 }
 
 Repl::~Repl() = default;

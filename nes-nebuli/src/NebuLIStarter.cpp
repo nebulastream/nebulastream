@@ -82,6 +82,7 @@ int main(int argc, char** argv)
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
         program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string{"localhost:8080"});
         program.add_argument("-w", "--wait").help("Wait for the query to finish").flag();
+        program.add_argument("-i", "--input").nargs(1).help("Path to query file");
 
         program.add_argument("-e", "--error-behaviour")
             .choices("FAIL_FAST", "RECOVER", "CONTINUE_AND_FAIL")
@@ -162,10 +163,9 @@ int main(int argc, char** argv)
         auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
         auto optimizer = std::make_shared<NES::CLI::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
-        auto binder = NES::StatementBinder{
-            sourceCatalog,
-            sinkCatalog,
-            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+        auto binder = NES::StatementBinder{sourceCatalog, sinkCatalog, [](auto&& pH1) {
+                                               return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1));
+                                           }};
 
         if (program.is_used("-s"))
         {
@@ -207,15 +207,45 @@ int main(int argc, char** argv)
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
             auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
-            NES::Repl replClient(
-                std::move(sourceStatementHandler),
-                std::move(sinkStatementHandler),
-                queryStatementHandler,
-                std::move(binder),
-                errorBehaviour,
-                defaultOutputFormat,
-                interactiveMode);
-            replClient.run();
+            if (program.is_used("-i"))
+            {
+                auto path = program.get<std::string>("-i");
+                if (!std::filesystem::exists(path))
+                {
+                    NES_ERROR("File does not exist");
+                    return 1;
+                }
+
+                std::ifstream ifs(path);
+                if (!ifs)
+                {
+                    NES_ERROR("Cannot open file");
+                    return 1;
+                }
+
+                NES::Repl replClient(
+                    std::move(sourceStatementHandler),
+                    std::move(sinkStatementHandler),
+                    queryStatementHandler,
+                    std::move(binder),
+                    errorBehaviour,
+                    defaultOutputFormat,
+                    ifs);
+
+                replClient.run();
+            }
+            else
+            {
+                NES::Repl replClient(
+                    std::move(sourceStatementHandler),
+                    std::move(sinkStatementHandler),
+                    queryStatementHandler,
+                    std::move(binder),
+                    errorBehaviour,
+                    defaultOutputFormat,
+                    std::cin);
+                replClient.run();
+            }
 
             if (program.is_used("-w"))
             {
