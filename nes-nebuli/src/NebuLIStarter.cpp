@@ -139,7 +139,7 @@ void executeForEachQuery(const std::string& queryIdStr, Func&& func)
         {
             auto channel = grpc::CreateChannel(connection, grpc::InsecureChannelCredentials());
             auto client = std::make_shared<NES::GRPCClient>(std::move(channel));
-            func(client, NES::QueryId{queryId});
+            func(client, NES::QueryId{queryId}, connection);
             NES_INFO("Successfully executed command for query {} on host {}", queryId, connection);
         }
         catch (const std::exception& e)
@@ -152,49 +152,60 @@ void executeForEachQuery(const std::string& queryIdStr, Func&& func)
 
 void handleStart(const argparse::ArgumentParser& startArgs)
 {
-    executeForEachQuery(startArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId) { client->start(queryId); });
+    executeForEachQuery(startArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId, const auto&) { client->start(queryId); });
 }
 
 void handleQueryStatus(const argparse::ArgumentParser& statusArgs)
 {
+    const bool perWorker = statusArgs.get<bool>("--per-worker");
     std::vector<NES::QueryStatus> queryStatuses;
     executeForEachQuery(
         statusArgs.get<std::string>(ARG_QUERY_ID),
-        [&](std::shared_ptr<NES::GRPCClient>& client, const auto& queryId)
+        [&](std::shared_ptr<NES::GRPCClient>& client, const auto& queryId, const auto& connection)
         {
             auto status = client->status(queryId);
+            if (perWorker)
+            {
+                fmt::println(
+                    std::cout,
+                    "Query {} on worker {}: {}",
+                    queryId.getRawValue(),
+                    connection,
+                    magic_enum::enum_name(status.currentStatus));
+            }
             queryStatuses.push_back(status.currentStatus);
         });
+
     auto running = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Running; });
     auto stopped = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Stopped; });
     auto failed = std::ranges::count_if(queryStatuses, [](const auto& qs) { return qs == NES::QueryStatus::Failed; });
     if (failed > 0)
     {
-        std::cout << "FAILED" << std::endl;
+        fmt::println(std::cout, "FAILED");
     }
     else if (stopped == 0 && running > 0)
     {
-        std::cout << "RUNNING" << std::endl;
+        fmt::println(std::cout, "RUNNING");
     }
     else if (stopped > 0 && running > 0)
     {
-        std::cout << "PARTIALLY RUNNING" << std::endl;
+        fmt::println(std::cout, "PARTIALLY RUNNING");
     }
     else if (stopped > 0 && running == 0)
     {
-        std::cout << "COMPLETED" << std::endl;
+        fmt::println(std::cout, "COMPLETED");
     }
 }
 
 void handleStop(const argparse::ArgumentParser& stopArgs)
 {
-    executeForEachQuery(stopArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId) { client->stop(queryId); });
+    executeForEachQuery(stopArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId, const auto&) { client->stop(queryId); });
 }
 
 void handleUnregister(const argparse::ArgumentParser& unregisterArgs)
 {
     executeForEachQuery(
-        unregisterArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId) { client->unregister(queryId); });
+        unregisterArgs.get<std::string>(ARG_QUERY_ID), [](auto& client, const auto& queryId, const auto&) { client->unregister(queryId); });
 }
 
 void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::QueryDecomposer::DecomposedLogicalPlan& decomposedPlan)
@@ -287,6 +298,7 @@ void setupArgParsers(argparse::ArgumentParser& program, ArgParsers& parsers)
 
     /// QueryStatus subcommand
     parsers.queryStatusParser.add_argument(ARG_QUERY_ID).required();
+    parsers.queryStatusParser.add_argument("-p", "--per-worker").flag().help("Show per worker status instead of combined status");
     program.add_subparser(parsers.queryStatusParser);
 }
 }
