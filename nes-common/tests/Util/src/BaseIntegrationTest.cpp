@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
+
 #include <filesystem>
 #include <ios>
 #include <random>
 #include <sstream>
 #include <string>
 #include <Util/Logger/Logger.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #if defined(__linux__)
