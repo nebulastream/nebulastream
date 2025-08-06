@@ -119,7 +119,7 @@ LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInputOriginId
 {
     PRECONDITION(ids.size() == 1, "Watermark assigner should have only one input");
     auto copy = *this;
-    copy.inputOriginIds = ids[0];
+    copy.inputOriginIds = ids.at(0);
     return copy;
 }
 
