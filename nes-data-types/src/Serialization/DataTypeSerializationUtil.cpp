@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <SerializableDataType.pb.h>
 

@@ -55,7 +55,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>

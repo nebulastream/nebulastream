@@ -25,7 +25,6 @@
 #include <Exceptions.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 

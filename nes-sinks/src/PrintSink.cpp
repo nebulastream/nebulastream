@@ -24,7 +24,6 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/PrintSink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <fmt/format.h>
