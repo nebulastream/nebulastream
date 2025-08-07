@@ -79,7 +79,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Memory::TupleBuffer&&, bool addBufferMetadata)>;
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -149,7 +149,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer->setNumberOfTuples(numberOfTuples->numTuples);
-            emit(*emptyBuffer, requiresMetadata);
+            emit(*std::move(emptyBuffer), requiresMetadata);
         }
         else
         {

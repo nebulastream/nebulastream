@@ -246,7 +246,7 @@ public:
             qid,
             node->id,
             node,
-            buffer,
+            std::move(buffer),
             injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
             injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
