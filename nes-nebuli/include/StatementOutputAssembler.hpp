@@ -244,7 +244,7 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
         output.reserve(result.queries.size());
         for (const auto& [id, query] : result.queries)
         {
-            output.emplace_back(id, magic_enum::enum_name(query.currentStatus));
+            output.emplace_back(id, magic_enum::enum_name(query.state));
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }

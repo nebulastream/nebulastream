@@ -171,20 +171,20 @@ std::vector<RunningQuery> runQueries(
 
     while (startMoreQueries() or not(active.empty() and pending.empty()))
     {
-        for (const auto& summary : querySubmitter.finishedQueries())
+        for (const auto& queryStatus : querySubmitter.finishedQueries())
         {
-            auto it = active.find(summary.queryId);
+            auto it = active.find(queryStatus.queryId);
             if (it == active.end())
             {
-                throw TestException("received unregistered queryId: {}", summary.queryId);
+                throw TestException("received unregistered queryId: {}", queryStatus.queryId);
             }
 
             auto& runningQuery = it->second;
 
-            if (summary.currentStatus == QueryStatus::Failed)
+            if (queryStatus.state == QueryState::Failed)
             {
-                INVARIANT(summary.runs.back().error, "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, summary.runs.back().error);
+                INVARIANT(queryStatus.metrics.error.has_value(), "A query that failed must have a corresponding error.");
+                processQueryWithError(it->second, finished, queries.size(), failed, queryStatus.metrics.error);
             }
             else
             {
@@ -201,7 +201,7 @@ std::vector<RunningQuery> runQueries(
                                 "expected error {} but query succeeded",
                                 std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
                         }
-                        runningQuery->querySummary = summary;
+                        runningQuery->queryStatus = queryStatus;
                         if (auto err = checkResult(*runningQuery))
                         {
                             return *err;

@@ -80,6 +80,6 @@ public:
     /// Complete history of query status changes.
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.
-    [[nodiscard]] std::expected<QuerySummary, Exception> getQuerySummary(QueryId queryId) const noexcept;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(QueryId queryId) const noexcept;
 };
 }
