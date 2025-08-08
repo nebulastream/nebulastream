@@ -19,49 +19,61 @@
 namespace NES
 {
 
-AsyncLogger::AsyncLogger(const std::string& path)
-    : file(path, std::ios::out | std::ios::app), thread(&AsyncLogger::processLogs, this, std::stop_token{})
+AsyncLogger::AsyncLogger(const std::vector<std::string>& paths) : running(true)
 {
-    if (not file.is_open())
+    for (const auto& path : paths)
     {
-        throw std::runtime_error("Failed to open log file: " + path);
+        threads.emplace_back(&AsyncLogger::processLogs, this, path);
     }
 }
 
 AsyncLogger::~AsyncLogger()
 {
-    thread.request_stop();
-    thread.join();
+    running = false;
+    for (auto& thread : threads)
+    {
+        if (thread.joinable())
+        {
+            thread.join();
+        }
+    }
 }
 
 void AsyncLogger::log(LoggingParams params)
 {
-    if (not queue.writeIfNotFull(std::move(params)))
+    while (not queue.writeIfNotFull(std::move(params)))
     {
         //throw std::runtime_error("Log queue is full, dropping log entry\n");
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
-void AsyncLogger::processLogs(const std::stop_token& token)
+void AsyncLogger::processLogs(const std::string& path)
 {
-    LoggingParams params;
-    while (not token.stop_requested())
+    std::ofstream file;
+    file.open(path, std::ios::out | std::ios::app);
+    if (not file.is_open())
     {
-        if (queue.read(params))
+        throw std::runtime_error("Failed to open log file: " + path);
+    }
+
+    LoggingParams params;
+    while (running)
+    {
+        if (queue.readIfNotEmpty(params))
         {
             file << fmt::format(
-                "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}",
+                "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}\n",
                 params.timestamp,
                 magic_enum::enum_name<FileOperation>(params.operation),
                 magic_enum::enum_name<OperationStatus>(params.status),
                 params.sliceEnd);
-            file.flush();
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
+    file.flush();
 }
 }

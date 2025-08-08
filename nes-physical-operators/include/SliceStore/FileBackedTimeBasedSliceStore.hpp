@@ -125,8 +125,6 @@ private:
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes);
 
-    void writeSliceOperationToFile(WorkerThreadId threadId, FileOperation operation, OperationStatus status, SliceEnd sliceEnd) const;
-
     static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
     {
         return static_cast<uint64_t>(execTimeFunction.first * dataSize + execTimeFunction.second);

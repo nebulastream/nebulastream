@@ -87,7 +87,8 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 {
     const auto workerThread = WorkerThreadId(threadId % numberOfWorkerThreads);
     const auto slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
-    writeSliceOperationToFile(workerThread, FileOperation::READ, OperationStatus::START, sliceEnd);
+    logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd});
+
     if (slice.has_value())
     {
         readSliceFromFiles(
@@ -189,18 +190,11 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
 
     /// Initialise files to keep track of slice operations
-    /*logger.reserve(numberOfWorkerThreads);
-    for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
-    {
-        const auto loggers = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_{}.stats", std::chrono::system_clock::now(), i)};
-        logger[i] = std::make_shared<AsyncLogger>(loggers);
-    }*/
-    /*const auto loggers
-        = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_0.stats", std::chrono::system_clock::now()),
-           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_1.stats", std::chrono::system_clock::now()),
-           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_2.stats", std::chrono::system_clock::now()),
-           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_3.stats", std::chrono::system_clock::now())};*/
-    logger = std::make_shared<AsyncLogger>(fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now()));
+    const auto loggerPaths
+        = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now())};
+        //= {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_0.stats", std::chrono::system_clock::now()),
+        //   fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_1.stats", std::chrono::system_clock::now())};
+    logger = std::make_shared<AsyncLogger>(loggerPaths);
 
     /// Initialise memory controller and measure execution times for reading and writing
     /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data
@@ -359,7 +353,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                     timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
                 >= sliceEnd)
         {
-            writeSliceOperationToFile(threadId, FileOperation::READ, OperationStatus::START, sliceEnd);
+            logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd});
             /// Slice should be read back now as it will be triggered once the read operation has finished
             slicesToUpdate.emplace_back(slice, FileOperation::READ);
         }
@@ -372,7 +366,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                         + sliceStoreInfo.predictionTimeDelta)
                 < sliceEnd)
         {
-            writeSliceOperationToFile(threadId, FileOperation::WRITE, OperationStatus::START, sliceEnd);
+            logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::START, sliceEnd});
             /// Slice should be written out as it will not be triggered before write and read operations have finished
             slicesToUpdate.emplace_back(slice, FileOperation::WRITE);
         }
@@ -407,7 +401,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     nljSlice->releaseCombinePagedVectorsLock();
     // TODO handle wrong predictions
 
-    writeSliceOperationToFile(threadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd());
+    logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd()});
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -438,7 +432,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         }
     }
 
-    writeSliceOperationToFile(workerThreadId, FileOperation::READ, OperationStatus::END, slice->getSliceEnd());
+    logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::END, slice->getSliceEnd()});
 }
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
@@ -517,12 +511,6 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
     const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
     const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
     readExecTimeFunction = {readSlope, readIntercept};
-}
-
-void FileBackedTimeBasedSliceStore::writeSliceOperationToFile(
-    const WorkerThreadId, const FileOperation operation, const OperationStatus status, const SliceEnd sliceEnd) const
-{
-    logger->log({std::chrono::system_clock::now(), operation, status, sliceEnd});
 }
 
 }

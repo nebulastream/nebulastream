@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <fstream>
 #include <thread>
 #include <SliceStore/Slice.hpp>
 
@@ -45,20 +44,17 @@ public:
         SliceEnd sliceEnd = SliceEnd(SliceEnd::INVALID_VALUE);
     };
 
-    explicit AsyncLogger(const std::string& path);
+    explicit AsyncLogger(const std::vector<std::string>& paths);
     ~AsyncLogger();
 
     void log(LoggingParams params);
 
 private:
-    void processLogs(const std::stop_token& token);
+    void processLogs(const std::string& path);
 
-    std::ofstream file;
-    folly::MPMCQueue<LoggingParams> queue{100000};
-    std::jthread thread;
-
-    //std::queue<LoggingParams> logQueue;
-    //std::mutex queueMutex;
+    folly::MPMCQueue<LoggingParams> queue{1000000};
+    std::vector<std::thread> threads;
+    std::atomic<bool> running;
 };
 
 }
