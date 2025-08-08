@@ -21,14 +21,14 @@
 #include <utility>
 #include <unistd.h>
 
+#include <fmt/format.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/Common.hpp>
-#include <Util/DumpMode.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
@@ -133,7 +133,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::expected<QuerySummary, Exception> SingleNodeWorker::getQuerySummary(QueryId queryId) const noexcept
+std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
     CPPTRACE_TRY
     {
@@ -157,26 +157,22 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     WorkerStatus status;
     for (auto& summary : summaries)
     {
-        INVARIANT(!summary.runs.empty(), "Query should at least contain a single run");
-        if (summary.currentStatus == QueryStatus::Running)
+        if (summary.state == QueryState::Running)
         {
-            INVARIANT(summary.runs.back().running.has_value(), "If query is running it should have a running timestamp");
-            if (summary.runs.back().running.value() >= after)
+            INVARIANT(summary.metrics.running.has_value(), "If query is running, it should have a running timestamp");
+            if (summary.metrics.running.value() >= after)
             {
-                status.activeQueries.emplace_back(summary.queryId, summary.runs.back().running.value());
+                status.activeQueries.emplace_back(summary.queryId, summary.metrics.running.value());
             }
         }
-        else if (summary.currentStatus == QueryStatus::Stopped)
+        else if (summary.state == QueryState::Stopped)
         {
-            INVARIANT(summary.runs.back().running.has_value(), "If query is stopped it should have a running timestamp");
-            INVARIANT(summary.runs.back().stop.has_value(), "If query is stopped it should have a stopped timestamp");
-            if (summary.runs.back().stop.value() >= after)
+            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
+            if (summary.metrics.stop.value() >= after)
             {
                 status.terminatedQueries.emplace_back(
-                    summary.queryId,
-                    summary.runs.back().running.value(),
-                    summary.runs.back().stop.value(),
-                    std::move(summary.runs.back().error));
+                    summary.queryId, summary.metrics.running.value(), summary.metrics.stop.value(), std::move(summary.metrics.error));
             }
         }
     }
