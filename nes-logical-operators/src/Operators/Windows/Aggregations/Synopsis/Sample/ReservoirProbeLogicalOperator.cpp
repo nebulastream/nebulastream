@@ -21,10 +21,12 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
@@ -39,7 +41,7 @@
 namespace NES
 {
 
-ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField): asField(asField)
+ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField) : asField(asField)
 {
 }
 
@@ -56,12 +58,26 @@ bool ReservoirProbeLogicalOperator::operator==(const LogicalOperatorConcept& rhs
 
 LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    INVARIANT(inputSchemas.size() == 1, "ReservoirProbe should have one input but got {}", inputSchemas.size());
+    INVARIANT(inputSchemas.size() == 1, "ReservoirProbe should have one input schema but got {}", inputSchemas.size());
 
     auto copy = *this;
 
     copy.inputSchema = inputSchemas[0];
-    copy.outputSchema = inputSchemas[0];
+    for (auto field : copy.inputSchema)
+    {
+        if (field.name != asField.getFieldName())
+        {
+            copy.outputSchema.addField(field.name, field.dataType);
+        }
+    }
+    /// Accessing the last time the stream was not yet "sampled".
+    /// TODO This might not be a great solution.
+    auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
+    for (auto field : aggSchema.getFields())
+    {
+        copy.outputSchema.addField(field.name, field.dataType);
+    }
+
 
     return copy;
 }

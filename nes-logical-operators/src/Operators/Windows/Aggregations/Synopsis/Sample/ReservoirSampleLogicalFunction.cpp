@@ -18,7 +18,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <AggregationLogicalFunctionRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -27,6 +26,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -72,15 +72,14 @@ std::string_view ReservoirSampleLogicalFunction::getName() const noexcept
 
 void ReservoirSampleLogicalFunction::inferStamp(const Schema& schema)
 {
-    // TODO use schema!
-    (void)schema;
-    /// TODO We probably don't need to do most of this, especially if we remove the onField, which we should!
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    ///Set fully qualified name for the as Field
+    /// We infer the datatype on the onField only to get the `attributeNameResolver`. Otherwise the onField is unused.
+    onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     const auto onFieldName = onField.getFieldName();
     const auto asFieldName = asField.getFieldName();
 
-    const auto attributeNameResolver = "stream$";
+    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    ;
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -91,7 +90,8 @@ void ReservoirSampleLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    inputStamp = onField.getDataType();
+    /// TODO input is the whole record. What should we use as inputStamp then?
+    inputStamp = DataType(DataType::Type::VARSIZED);
     finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
