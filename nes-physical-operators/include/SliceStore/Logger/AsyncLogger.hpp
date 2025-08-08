@@ -52,7 +52,7 @@ public:
 private:
     void processLogs(const std::string& path);
 
-    folly::MPMCQueue<LoggingParams> queue{1000000};
+    folly::MPMCQueue<LoggingParams> queue{100000};
     std::vector<std::thread> threads;
     std::atomic<bool> running;
 };
