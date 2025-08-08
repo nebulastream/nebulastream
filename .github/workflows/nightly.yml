@@ -413,7 +413,7 @@ jobs:
           mkdir /merged_corpus_wip
       - name: minimize corpus
         run: |
-          $fuzzer -merge=1 /merged_corpus_wip nes-corpora/${{ inputs.fuzzer }}/corpus
+          $fuzzer -merge=1 -timeout=600 /merged_corpus_wip nes-corpora/${{ inputs.fuzzer }}/corpus
           rm -rf nes-corpora/${{ inputs.fuzzer }}/corpus
           mv /merged_corpus_wip nes-corpora/${{ inputs.fuzzer }}/corpus
       - name: push corpus
