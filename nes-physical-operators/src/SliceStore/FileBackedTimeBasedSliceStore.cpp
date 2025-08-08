@@ -522,7 +522,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 void FileBackedTimeBasedSliceStore::writeSliceOperationToFile(
     const WorkerThreadId, const FileOperation operation, const OperationStatus status, const SliceEnd sliceEnd) const
 {
-    logger->log({.timestamp = std::chrono::system_clock::now(), .operation = operation, .status = status, .sliceEnd = sliceEnd});
+    logger->log({std::chrono::system_clock::now(), operation, status, sliceEnd});
 }
 
 }

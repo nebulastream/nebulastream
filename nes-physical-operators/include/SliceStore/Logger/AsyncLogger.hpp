@@ -14,10 +14,7 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <fstream>
-#include <mutex>
-#include <queue>
 #include <thread>
 #include <SliceStore/Slice.hpp>
 
@@ -32,32 +29,36 @@ class AsyncLogger
 public:
     struct LoggingParams
     {
-        const std::chrono::system_clock::time_point timestamp;
-        const FileOperation operation;
-        const OperationStatus status;
-        const SliceEnd sliceEnd;
+        LoggingParams(
+            const std::chrono::system_clock::time_point timestamp,
+            const FileOperation operation,
+            const OperationStatus status,
+            const SliceEnd sliceEnd)
+            : timestamp(timestamp), operation(operation), status(status), sliceEnd(sliceEnd)
+        {
+        }
+        LoggingParams() = default;
+
+        std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
+        FileOperation operation = static_cast<FileOperation>(0);
+        OperationStatus status = static_cast<OperationStatus>(0);
+        SliceEnd sliceEnd = SliceEnd(SliceEnd::INVALID_VALUE);
     };
 
     explicit AsyncLogger(const std::string& path);
-    //~AsyncLogger();
+    ~AsyncLogger();
 
-    void log(const LoggingParams& params);
+    void log(LoggingParams params);
 
 private:
     void processLogs(const std::stop_token& token);
 
-    /*std::vector<std::queue<std::string>> logQueues;
-    std::vector<std::mutex> queueMutexes;
-    std::vector<std::condition_variable> cvs;
-    std::vector<std::thread> loggingThreads;*/
-    std::queue<LoggingParams> logQueue;
-    std::mutex queueMutex;
-    //std::condition_variable cv;
-    //std::thread loggingThread;
-    std::jthread loggingThread;
-    //std::atomic<bool> stopLogging;
-    //std::atomic<size_t> nextQueue;
     std::ofstream file;
+    folly::MPMCQueue<LoggingParams> queue{100000};
+    std::jthread thread;
+
+    //std::queue<LoggingParams> logQueue;
+    //std::mutex queueMutex;
 };
 
 }

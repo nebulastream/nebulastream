@@ -20,74 +20,47 @@ namespace NES
 {
 
 AsyncLogger::AsyncLogger(const std::string& path)
-    : loggingThread([this](const std::stop_token& stopToken) { processLogs(stopToken); }), file(path, std::ios::out | std::ios::app)
-//, stopLogging(false)
-//, nextQueue(0)
+    : file(path, std::ios::out | std::ios::app), thread(&AsyncLogger::processLogs, this, std::stop_token{})
 {
-    /*logQueues.resize(fileNames.size());
-    queueMutexes = std::vector<std::mutex>(fileNames.size());
-    cvs = std::vector<std::condition_variable>(fileNames.size());
-    for (size_t i = 0; i < fileNames.size(); ++i)
-    {
-        loggingThreads.emplace_back(&AsyncLogger::processLogs, this, fileNames[i], i);
-    }*/
-    //loggingThread = std::thread(&AsyncLogger::processLogs, this, fileNames[0], 0);
-
     if (not file.is_open())
     {
         throw std::runtime_error("Failed to open log file: " + path);
     }
 }
 
-void AsyncLogger::log(const LoggingParams& params)
+AsyncLogger::~AsyncLogger()
 {
-    /*const size_t queueIndex = nextQueue++ % loggingThreads.size();
-    {
-        const std::lock_guard lock(queueMutexes[queueIndex]);
-        logQueues[queueIndex].push(message);
-    }
-    cvs[queueIndex].notify_one();*/
+    thread.request_stop();
+    thread.join();
+}
 
-    const std::lock_guard lock(queueMutex);
-    logQueue.push(params);
+void AsyncLogger::log(LoggingParams params)
+{
+    if (not queue.writeIfNotFull(std::move(params)))
+    {
+        //throw std::runtime_error("Log queue is full, dropping log entry\n");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
 
 void AsyncLogger::processLogs(const std::stop_token& token)
 {
-    /*while (not stopLogging or not logQueues[queueIndex].empty())
-    {
-        std::string message;
-
-        std::unique_lock lock(queueMutexes[queueIndex]);
-        cvs[queueIndex].wait(lock, [this, queueIndex] { return stopLogging or not logQueues[queueIndex].empty(); });
-        if (not logQueues[queueIndex].empty())
-        {
-            message = std::move(logQueues[queueIndex].front());
-            logQueues[queueIndex].pop();
-        }
-        lock.unlock();
-
-        if (not message.empty())
-        {
-            logFile << message << '\n';
-        }
-    }*/
+    LoggingParams params;
     while (not token.stop_requested())
     {
-        std::string message;
-
-        const std::lock_guard lock(queueMutex);
-        while (not logQueue.empty())
+        if (queue.read(params))
         {
-            const auto [timestamp, operation, status, sliceEnd] = std::move(logQueue.front());
-            logQueue.pop();
-            message = fmt::format(
+            file << fmt::format(
                 "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}",
-                timestamp,
-                magic_enum::enum_name<FileOperation>(operation),
-                magic_enum::enum_name<OperationStatus>(status),
-                sliceEnd);
-            file << message << '\n';
+                params.timestamp,
+                magic_enum::enum_name<FileOperation>(params.operation),
+                magic_enum::enum_name<OperationStatus>(params.status),
+                params.sliceEnd);
+            file.flush();
+        }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
