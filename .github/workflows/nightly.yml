@@ -89,8 +89,6 @@ jobs:
           mkdir /work_dir
       - name: check for broken inputs
         shell: bash
-        timeout-minutes: 60
-        continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           for input in $(find ../../corpus -type f | shuf)
