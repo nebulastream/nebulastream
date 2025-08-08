@@ -55,18 +55,22 @@ SQL_CONTENT=$(cat "$SQL_FILE" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKD
 echo "$SQL_CONTENT" > "$GEN_OUT_PATH"/"$(basename "$SQL_FILE" .sql)"_gen.sql
 EXPECTED_OUTPUT_1=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g")
 EXPECTED_OUTPUT_2=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g" | sed "s|Running|Registered|g")
-echo "$EXPECTED_OUTPUT_1" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH_1" .sql)"_gen.sql
-echo "$EXPECTED_OUTPUT_2" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH_2" .sql)"_gen.sql
+EXPECTED_OUTPUT_3=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g" | sed "s|Running|Started|g")
+echo "$EXPECTED_OUTPUT_1" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH" .sql)"_gen1.sql
+echo "$EXPECTED_OUTPUT_2" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH" .sql)"_gen2.sql
+echo "$EXPECTED_OUTPUT_3" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH" .sql)"_gen3.sql
 
 # Run the binary and pipe the modified SQL content as stdin
 ACTUAL_OUTPUT=$(echo "$SQL_CONTENT" | "$BINARY_PATH" -w -f JSON )
 
-if [[ "$ACTUAL_OUTPUT" == "$EXPECTED_OUTPUT_1" || "$ACTUAL_OUTPUT" == "$EXPECTED_OUTPUT_2" ]]; then
+if [[ "$ACTUAL_OUTPUT" == "$EXPECTED_OUTPUT_1" || "$ACTUAL_OUTPUT" == "$EXPECTED_OUTPUT_2" || "$ACTUAL_OUTPUT" == "$EXPECTED_OUTPUT_3" ]]; then
   exit 0
 else
   echo "Actual output does not match expected, diff 1 was:"
   echo "$(diff <(echo "$EXPECTED_OUTPUT_1") <(echo "$ACTUAL_OUTPUT"))"
   echo "Actual output does not match expected, diff 2 was:"
   echo "$(diff <(echo "$EXPECTED_OUTPUT_2") <(echo "$ACTUAL_OUTPUT"))"
+  echo "Actual output does not match expected, diff 3 was:"
+  echo "$(diff <(echo "$EXPECTED_OUTPUT_3") <(echo "$ACTUAL_OUTPUT"))"
   exit 1
 fi

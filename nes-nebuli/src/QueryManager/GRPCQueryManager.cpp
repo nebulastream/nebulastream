@@ -20,15 +20,17 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Util/Logger/Logger.hpp>
+
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/support/status.h>
 #include <magic_enum/magic_enum.hpp>
+
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 /// Both are needed, clang-tidy complains otherwise
 #include <Identifiers/Identifiers.hpp>
@@ -95,15 +97,15 @@ std::expected<void, Exception> GRPCQueryManager::start(const QueryId queryId) no
     }
 }
 
-std::expected<NES::QuerySummary, Exception> GRPCQueryManager::status(const QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryId queryId) const noexcept
 {
     try
     {
         grpc::ClientContext context;
-        QuerySummaryRequest request;
+        QueryStatusRequest request;
         request.set_queryid(queryId.getRawValue());
-        QuerySummaryReply response;
-        if (const auto status = stub->RequestQuerySummary(&context, request, &response); status.ok())
+        QueryStatusReply response;
+        if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
         {
             NES_DEBUG("Status was successful.");
         }
@@ -111,7 +113,7 @@ std::expected<NES::QuerySummary, Exception> GRPCQueryManager::status(const Query
         {
             if (status.error_code() == grpc::StatusCode::NOT_FOUND)
             {
-                /// separate exception so that the embedded worker query mananager can give back the same exception
+                /// separate exception so that the embedded worker query manager can give back the same exception
                 return std::unexpected{NES::QueryNotFound("{}", queryId)};
             }
             return std::unexpected{NES::QueryStatusFailed(
@@ -123,29 +125,37 @@ std::expected<NES::QuerySummary, Exception> GRPCQueryManager::status(const Query
         }
 
         /// Convert the gRPC object to a C++ one
-        std::vector<NES::QueryRunSummary> runs;
-        for (const auto& run : response.runs())
-        {
-            const std::chrono::system_clock::time_point startTimePoint(std::chrono::milliseconds(run.startunixtimeinms()));
-            const std::chrono::system_clock::time_point runningTimePoint(std::chrono::milliseconds(run.runningunixtimeinms()));
-            const std::chrono::system_clock::time_point stopTimePoint(std::chrono::milliseconds(run.stopunixtimeinms()));
-            /// Creating a new QueryRunSummary
-            runs.emplace_back();
-            runs.back().start = startTimePoint;
-            runs.back().running = runningTimePoint;
-            runs.back().stop = stopTimePoint;
+        /// Creating a new local query status
+        LocalQueryStatus queryStatus;
 
-            if (run.has_error())
-            {
-                const auto& runError = run.error();
-                const NES::Exception exception(runError.message(), runError.code());
-                runs.back().error = exception;
-            }
+        const auto responseMetrics = response.metrics();
+        if (responseMetrics.has_startunixtimeinms())
+        {
+            const std::chrono::system_clock::time_point startTimePoint{std::chrono::milliseconds{response.metrics().startunixtimeinms()}};
+            queryStatus.metrics.start = startTimePoint;
         }
-        /// First, we need to cast the gRPC enum value to an int and then to the C++ enum
-        const auto queryStatus(static_cast<NES::QueryStatus>(static_cast<uint8_t>(response.status())));
-        NES::QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
-        return querySummary;
+
+        if (responseMetrics.has_runningunixtimeinms())
+        {
+            const std::chrono::system_clock::time_point runningTimePoint{std::chrono::milliseconds{responseMetrics.runningunixtimeinms()}};
+            queryStatus.metrics.running = runningTimePoint;
+        }
+
+        if (responseMetrics.has_stopunixtimeinms())
+        {
+            const std::chrono::system_clock::time_point stopTimePoint{std::chrono::milliseconds{responseMetrics.stopunixtimeinms()}};
+            queryStatus.metrics.running = stopTimePoint;
+        }
+
+        if (responseMetrics.has_error())
+        {
+            const auto err = response.metrics().error();
+            const Exception exception{err.message(), err.code()};
+            queryStatus.metrics.error = exception;
+        }
+
+        queryStatus.state = magic_enum::enum_cast<QueryState>(response.state()).value(); /// Invalid state will throw
+        return queryStatus;
     }
     catch (std::exception& e)
     {
