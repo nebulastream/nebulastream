@@ -41,10 +41,10 @@ public:
     void startQuery(QueryId query);
     void stopQuery(QueryId query);
     void unregisterQuery(QueryId query);
-    QuerySummary waitForQueryTermination(QueryId query);
+    LocalQueryStatus waitForQueryTermination(QueryId query);
 
     /// Blocks until atleast one query has finished (or potentially failed)
-    std::vector<QuerySummary> finishedQueries();
+    std::vector<LocalQueryStatus> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;

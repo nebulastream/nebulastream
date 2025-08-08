@@ -31,7 +31,7 @@ public:
     std::expected<void, Exception> start(QueryId queryId) noexcept override;
     std::expected<void, Exception> stop(QueryId queryId) noexcept override;
     std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
-    [[nodiscard]] std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
 
 private:
     SingleNodeWorker worker;

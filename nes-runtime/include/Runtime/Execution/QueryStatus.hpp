@@ -20,7 +20,7 @@
 
 namespace NES
 {
-enum class QueryStatus : uint8_t
+enum class QueryState : uint8_t
 {
     Registered,
     Started,
@@ -29,10 +29,10 @@ enum class QueryStatus : uint8_t
     Failed,
 };
 
-inline std::ostream& operator<<(std::ostream& ostream, const QueryStatus& status)
+inline std::ostream& operator<<(std::ostream& ostream, const QueryState& status)
 {
     return ostream << magic_enum::enum_name(status);
 }
 }
 
-FMT_OSTREAM(NES::QueryStatus);
+FMT_OSTREAM(NES::QueryState);
