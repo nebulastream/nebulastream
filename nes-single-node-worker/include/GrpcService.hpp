@@ -33,7 +33,7 @@ public:
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 
-    grpc::Status RequestQuerySummary(grpc::ServerContext*, const QuerySummaryRequest*, QuerySummaryReply*) override;
+    grpc::Status RequestQueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*) override;
 
     grpc::Status RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* response) override;
 

@@ -26,12 +26,9 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/Common.hpp>
-#include <Util/DumpMode.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
-#include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -57,7 +54,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build();
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build();
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
@@ -141,16 +138,16 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::expected<QuerySummary, Exception> SingleNodeWorker::getQuerySummary(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
-        auto summary = nodeEngine->getQueryLog()->getQuerySummary(queryId);
-        if (not summary.has_value())
+        auto status = nodeEngine->getQueryLog()->getQueryStatus(queryId);
+        if (not status.has_value())
         {
             return std::unexpected{QueryNotFound("{}", queryId)};
         }
-        return summary.value();
+        return status.value();
     }
     CPPTRACE_CATCH(...)
     {

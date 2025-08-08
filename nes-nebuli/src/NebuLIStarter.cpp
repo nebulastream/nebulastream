@@ -222,8 +222,8 @@ int main(int argc, char** argv)
                 for (const auto& query : queryStatementHandler->getRunningQueries())
                 {
                     auto status = queryManager->status(query);
-                    while (status.has_value() && status.value().currentStatus != NES::QueryStatus::Stopped
-                           && status.value().currentStatus != NES::QueryStatus::Failed)
+                    while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                           && status.value().state != NES::QueryState::Failed)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds(50));
                         status = queryManager->status(query);
@@ -335,8 +335,8 @@ int main(int argc, char** argv)
             if (startedQuery.has_value())
             {
                 auto status = queryManager->status(startedQuery.value());
-                while (status.has_value() && status.value().currentStatus != NES::QueryStatus::Stopped
-                       && status.value().currentStatus != NES::QueryStatus::Failed)
+                while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                       && status.value().state != NES::QueryState::Failed)
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
                     status = queryManager->status(startedQuery.value());
