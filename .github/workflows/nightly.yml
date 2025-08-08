@@ -648,6 +648,9 @@ jobs:
       - name: generate callgraph .svg
         run: |
           neato -Tsvg cov.dot > cov.svg
+      - if: ${{ github.event.act }}
+        run: |
+          apt install -y nodejs
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
