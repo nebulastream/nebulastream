@@ -39,8 +39,8 @@ jobs:
       ref: ${{ github.sha }}
       branch-name: ${{ github.ref_name }}
   
-  update-corpus:
-    name: "update corpus ${{inputs.fuzzer}}"
+  check-sanitizer-specifity:
+    name: "check sanitizer specifity ${{inputs.fuzzer}}"
     needs: [ get-dev-images ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-none
@@ -170,7 +170,7 @@ jobs:
 
   run-fuzzer:
     name: "${{inputs.fuzzer}}: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    needs: [ get-dev-images, update-corpus ]
+    needs: [ get-dev-images, check-sanitizer-specifity ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-${{matrix.sanitizer}}
       volumes:
