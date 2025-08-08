@@ -145,7 +145,7 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(st
 {
     PRECONDITION(ids.size() == 1, "Assigner should have one input");
     auto copy = *this;
-    copy.inputOriginIds = ids[0];
+    copy.inputOriginIds = ids.at(0);
     return copy;
 }
 
