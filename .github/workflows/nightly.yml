@@ -91,13 +91,8 @@ jobs:
         shell: bash
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in $(find ../../corpus -type f | shuf)
-          do
-            if ! $fuzzer $input
-            then
-              git mv -f $input crash-$(basename $input)
-            fi
-          done
+          echo checking $(find ../../corpus -type f | wc -l) files.
+          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {} 2> /dev/null; then git mv -f {} crash-$(basename {}); fi"
       - name: commit corpus
         run: |
           cd nes-corpora
@@ -240,13 +235,8 @@ jobs:
         # as we just checked that, but maybe for the other sanitizers
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in $(find ../../corpus -type f | shuf)
-          do
-            if ! $fuzzer $input
-            then
-              git mv -f $input crash-$(basename $input)
-            fi
-          done
+          echo checking $(find ../../corpus -type f | wc -l) files.
+          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {} 2> /dev/null; then git mv -f {} crash-$(basename {}); fi"
       - name: cull garbage files
         run: |
           find nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }} -name "*.log"   -delete
