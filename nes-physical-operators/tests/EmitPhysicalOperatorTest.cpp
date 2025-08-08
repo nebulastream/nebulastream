@@ -41,12 +41,14 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
+
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
@@ -113,8 +115,10 @@ public:
     EmitPhysicalOperator createUUT()
     {
         auto schema = Schema{}.addField("A_FIELD", DataType::Type::UINT32);
-        auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(512, schema);
-        EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout)};
+        EmitPhysicalOperator emit{
+            OperatorHandlerId(0),
+            NES::Util::as<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+                Interface::MemoryProvider::TupleBufferMemoryProvider::create(512, schema))};
         handlers.emplace(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
         return emit;
     }
