@@ -99,6 +99,10 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(NES::Memory::Tupl
         ++generatedBuffers;
         tuplesStream.str("");
         NES_TRACE("Wrote {} bytes", writtenBytes);
+        if (writtenBytes == 0)
+        {
+            return FillTupleBufferResult(); /// End of Stream
+        }
         return FillTupleBufferResult(writtenBytes);
     }
     catch (const std::exception& e)
