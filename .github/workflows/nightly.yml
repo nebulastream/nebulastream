@@ -39,9 +39,134 @@ jobs:
       ref: ${{ github.sha }}
       branch-name: ${{ github.ref_name }}
   
+  check-for-broken-inputs:
+    name: "${{inputs.fuzzer}}: check broken inputs"
+    needs: [ get-dev-images ]
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-none
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ 'RelWithDebInfo' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: nes
+      - name: clone corpus
+        run: |
+          rm -rf nes-corpora
+          git clone https://fwc:${{ secrets.FWC_NES_CORPORA }}@github.com/fwc/nes-corpora.git
+      - name: configure
+        run: |
+          cd nes
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=WARN -DUSE_LIBFUZZER=ON
+      - name: build
+        shell: bash
+        run: |
+          cd nes
+          cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
+      - name: setup
+        run: |
+          echo in_pwd="$(pwd)" >> $GITHUB_ENV
+          cd nes/build
+          echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
+      - name: mkdir
+        run: |
+          cd nes-corpora
+          mkdir -p ${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
+          mkdir -p ${{ inputs.fuzzer }}/corpus
+          mkdir /corpus_wip
+          mkdir /work_dir
+      - name: check for broken inputs
+        shell: bash
+        timeout-minutes: 60
+        continue-on-error: true
+        run: |
+          cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
+          for input in $(find ../../corpus -type f | shuf)
+          do
+            if ! $fuzzer $input
+            then
+              git mv -f $input crash-$(basename $input)
+            fi
+          done
+      - name: commit corpus
+        run: |
+          cd nes-corpora
+
+          cat << EOF > /msg.txt
+          ci run ${{ inputs.fuzzer }} min non-sanit specififc
+
+          sut_sha: ${{ github.sha }}
+          fuzzer: ${{ inputs.fuzzer}}
+          duration: ${{ inputs.duration_in_min }}
+          arch: x64
+          stdlib: ${{ inputs.stdlib }}
+          build_type: ${{ matrix.build_type }}
+          sanitizer: ${{ matrix.sanitizer }}
+          run_id: ${{ github.run_id }}
+          attempt: ${{ github.run_attempt}}
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ${{ inputs.fuzzer }}
+          if ! git commit -F /msg.txt
+          then
+            exit
+          fi
+      - name: push corpus
+        continue-on-error: true
+        run: |
+          cd nes-corpora
+          exp_backoff=1
+          for try in $(seq 5)
+          do
+            if ! git pull --rebase
+            then
+              while git status | grep "interactive rebase in progress" > /dev/null
+              do
+                echo "git pull --rebase has conflict, trying to resolve"
+                git status | grep "both deleted" | awk '{ system("git rm " $NF ) }'
+                git status | grep "deleted by" | awk '{ system("git rm " $NF ) }'
+                if git status | grep "added by" | grep none > /dev/null
+                then
+                  git status | grep "added by"  | grep none | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by"  |             awk '{ system("git rm " $NF ) }'
+                else
+                  git status | grep "added by us"   | awk '{ system("git add " $NF ) }'
+                  git status | grep "added by them" | awk '{ system("git rm " $NF ) }'
+                fi
+                git commit -m "resolve conflict"
+                git rebase --continue
+              done
+            fi
+            if git push
+            then
+              exit
+            fi
+            echo push failed, sleeping for $exp_backoff
+            sleep $exp_backoff
+            exp_backoff=$(( exp_backoff * 2 ))
+          done
+
+          git checkout -b run-${{ github.run_id }}-${{ github.run_attempt }}
+          git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
+
   run-fuzzer:
     name: "${{inputs.fuzzer}}: ${{matrix.arch}}-${{inputs.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, check-for-broken-inputs ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ inputs.stdlib }}-${{matrix.sanitizer}}
       volumes:
@@ -114,6 +239,8 @@ jobs:
         shell: bash
         timeout-minutes: 60
         continue-on-error: true
+        # we don't expect do find just-broken inputs for none,
+        # as we just checked that, but maybe for the other sanitizers
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           for input in $(find ../../corpus -type f | shuf)
