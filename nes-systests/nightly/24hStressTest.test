@@ -1,0 +1,11 @@
+# name: nightly/24hStressTest.test
+# description: 24h Stress test
+# groups: [Nightly]
+
+Source generatorInline FLOAT64 field1 GENERATOR seed 1, stopGeneratorWhenSequenceFinishes NONE
+field1 NORMAL_DISTRIBUTION FLOAT64 0 1
+
+SINK generator_sink_inline TYPE Checksum FLOAT64 generatorInline$field1
+SELECT * FROM generatorInline INTO generator_sink_inline
+----
+1 1
