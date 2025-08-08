@@ -230,7 +230,6 @@ jobs:
       - name: check for fixed inputs
         shell: bash
         timeout-minutes: 60
-        continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if $fuzzer {}; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi"
