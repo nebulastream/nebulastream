@@ -80,7 +80,7 @@ public:
     /// Complete history of query status changes.
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.
-    [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
+    [[nodiscard]] std::optional<LocalQueryStatus> getQuerySummary(QueryId queryId) const;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }

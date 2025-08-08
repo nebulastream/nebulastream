@@ -20,15 +20,16 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
+
+#include <fmt/format.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/DumpMode.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
@@ -43,8 +44,9 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
-    : listener(std::make_shared<PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
+    : listener(
+          std::make_shared<PrintingStatisticListener>(
+              fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
@@ -98,36 +100,33 @@ void SingleNodeWorker::unregisterQuery(QueryId queryId)
     nodeEngine->unregisterQuery(queryId);
 }
 
-std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
+std::optional<LocalQueryStatus> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getQuerySummary(queryId);
 }
+
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
     auto summaries = nodeEngine->getQueryLog()->getSummary();
     WorkerStatus status;
     for (auto& summary : summaries)
     {
-        INVARIANT(!summary.runs.empty(), "Query should at least contain a single run");
-        if (summary.currentStatus == QueryStatus::Running)
+        if (summary.state == QueryState::Running)
         {
-            INVARIANT(summary.runs.back().running.has_value(), "If query is running it should have a running timestamp");
-            if (summary.runs.back().running.value() >= after)
+            INVARIANT(summary.metrics.running.has_value(), "If query is running, it should have a running timestamp");
+            if (summary.metrics.running.value() >= after)
             {
-                status.activeQueries.emplace_back(summary.queryId, summary.runs.back().running.value());
+                status.activeQueries.emplace_back(summary.queryId, summary.metrics.running.value());
             }
         }
-        else if (summary.currentStatus == QueryStatus::Stopped)
+        else if (summary.state == QueryState::Stopped)
         {
-            INVARIANT(summary.runs.back().running.has_value(), "If query is stopped it should have a running timestamp");
-            INVARIANT(summary.runs.back().stop.has_value(), "If query is stopped it should have a stopped timestamp");
-            if (summary.runs.back().stop.value() >= after)
+            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
+            if (summary.metrics.stop.value() >= after)
             {
                 status.terminatedQueries.emplace_back(
-                    summary.queryId,
-                    summary.runs.back().running.value(),
-                    summary.runs.back().stop.value(),
-                    std::move(summary.runs.back().error));
+                    summary.queryId, summary.metrics.running.value(), summary.metrics.stop.value(), std::move(summary.metrics.error));
             }
         }
     }
