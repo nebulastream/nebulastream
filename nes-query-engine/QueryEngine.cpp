@@ -786,7 +786,7 @@ void QueryCatalog::start(
                         return Terminated{Terminated::Failed};
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
-                listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
+                listener->logQueryStatusChange(queryId, QueryState::Running, timestamp);
             }
         }
 
@@ -852,7 +852,7 @@ void QueryCatalog::start(
                     });
                 if (didTransition)
                 {
-                    listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
+                    listener->logQueryStatusChange(queryId, QueryState::Stopped, timestamp);
                     statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
                 }
             }
@@ -875,7 +875,7 @@ void QueryCatalog::start(
     if (state->transition([&](Reserved&&)
                           { return Starting{std::move(runningQueryPlan)}; })) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
     {
-        listener->logQueryStatusChange(queryId, QueryStatus::Started, startTimestamp);
+        listener->logQueryStatusChange(queryId, QueryState::Started, startTimestamp);
     }
     else
     {
