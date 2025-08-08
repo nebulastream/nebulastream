@@ -73,6 +73,8 @@ INGORED_ENDINGS = {
     "zip",
     "bin",
     "sql"
+    "nix",
+    "lock"
 }
 
 VENDORED_FILES = {

@@ -211,3 +211,89 @@ If you intend to use the docker image with libstdc++ you can get the development
 ```shell
 docker pull nebulastream/nes-development:latest-libstdcxx
 ```
+
+## Building with Nix and NixOS
+
+NebulaStream provides Nix support for reproducible builds and development environments. This approach is particularly 
+useful for NixOS users or developers.
+
+### Building with Nix
+
+The project includes a `flake.nix` for declarative development environments and helper scripts in the `.nix/` directory 
+that wrap build tools to run inside the Nix development shell.
+
+#### Setting up the Nix environment
+
+1. **Enter the development shell**:
+   ```shell
+   nix develop
+   ```
+   This provides all necessary tools and sets up environment variables.
+
+2. **Create tool symlinks** (first time only):
+   The `.nix/` directory contains wrapper scripts that ensure build tools run with the correct Nix environment.
+   Create symlinks for the tools you need inside the nix environment. Typically they are:
+   ```shell
+   cd .nix
+   ln -s nix-run.sh cc
+   ln -s nix-run.sh c++
+   ln -s nix-run.sh ninja
+   ...
+   ```
+
+3. **Configure the project** using the Nix-wrapped CMake:
+   ```shell
+   CMAKE_TOOLCHAIN_FILE=/path/to/vcpkg-repository/scripts/buildsystems/vcpkg.cmake \
+   ./.nix/nix-cmake.sh \
+     -DCMAKE_BUILD_TYPE=Debug \
+     -DCMAKE_C_COMPILER=./.nix/cc \
+     -DCMAKE_CXX_COMPILER=./.nix/c++ \
+     -DUSE_LOCAL_MLIR=ON \
+     -DUSE_CCACHE_IF_AVAILABLE=ON \
+     -S . -B cmake-build-debug
+   ```
+
+4. **Build the project** using the Nix-wrapped ninja:
+   ```shell
+   ./.nix/nix-cmake.sh -C cmake-build-debug
+   ```
+
+### CLion Integration with Nix
+
+To use the Nix development environment with CLion:
+
+1. **Create tool symlinks** (first time only):
+   The `.nix/` directory contains wrapper scripts that ensure build tools run with the correct Nix environment.
+   Create symlinks for the tools you need:
+   ```shell
+   cd .nix
+   ln -s nix-run.sh cc
+   ln -s nix-run.sh c++
+   ln -s nix-run.sh ninja
+   ...
+   ```
+
+2. **Configure a custom toolchain** in CLion:
+   - Go to Settings → Build, Execution, Deployment → Toolchains
+   - Add a new toolchain and set:
+     - C Compiler: `/path/to/project/.nix/cc`
+     - C++ Compiler: `/path/to/project/.nix/c++`
+     - CMake: `/path/to/project/.nix/nix-cmake.sh`
+
+3. **Set up the CMake profile**:
+   - Go to Settings → Build, Execution, Deployment → CMake
+   - Create a new profile with:
+     - Toolchain: Select the Nix toolchain created above
+     - CMake options:
+       ```
+       -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg-repository/scripts/buildsystems/vcpkg.cmake
+       -DUSE_LOCAL_MLIR=ON
+       -DUSE_CCACHE_IF_AVAILABLE=ON
+       ```
+
+4. **Run CLion from Nix shell**:
+   ```shell
+   nix develop -c clion
+   ```
+   This launches CLion in the Nix environment such that build targets started via clion link to the correct shared
+   libraries.
