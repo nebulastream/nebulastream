@@ -230,7 +230,8 @@ jobs:
         timeout-minutes: 60
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if $fuzzer {}; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi"
+          echo checking $(find -type f | wc -l) files.
+          find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if $fuzzer {} 2> /dev/null; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi"
       - name: check for broken inputs
         shell: bash
         timeout-minutes: 60
