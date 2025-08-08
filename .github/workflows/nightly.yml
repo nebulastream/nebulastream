@@ -624,7 +624,8 @@ jobs:
         shell: bash
         run: |
           cd nes
-          cmake --build build --target ${{ inputs.fuzzer }} -j -- -k 0
+          # build everything, so that all intermediate files are created for coverage
+          cmake --build build -j -- -k 0
       - name: setup
         run: |
           cd nes/build
