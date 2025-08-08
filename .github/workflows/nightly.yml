@@ -530,7 +530,7 @@ jobs:
           gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --root nes
       - name: generate callgraph .dot
         run: |
-          python3 nes/gen_callgraph.py nes/build/compile_commands.json gcovr.json >> $GITHUB_STEP_SUMMARY
+          python3 nes/gen_callgraph.py nes/build/compile_commands.json gcovr.json
       - name: generate callgraph .svg
         run: |
           neato -Tsvg cov.dot > cov.svg
