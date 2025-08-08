@@ -108,14 +108,7 @@ jobs:
         continue-on-error: true
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
-          for input in $(find -type f | shuf)
-          do
-            if $fuzzer $input
-            then
-              # no git mv or -f since we mv into just-created /corpus_wip
-              mv -f $input /corpus_wip/$(echo $input | awk -F- '{ print $NF }')
-            fi
-          done
+          find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if $fuzzer {}; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi"
       - name: check for broken inputs
         shell: bash
         timeout-minutes: 60
