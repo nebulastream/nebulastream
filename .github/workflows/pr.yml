@@ -82,3 +82,9 @@ jobs:
       ref: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       runtime_seconds: '$((1*60))'
+
+  nix-build:
+    name: "Run Nix Build"
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      ref: ${{ github.event.pull_request.head.ref }}
