@@ -1,9 +1,6 @@
-# name: sources/FileSource.test
-# description: Simple map tests with an add function
+# name: sources/FileMultiple.test
+# description: Combine two files sources with different input formatter configurations
 # groups: [Sources]
-
-# Description:
-# Combine two files sources with different input formatter configurations
 
 Source combinedSource UINT64 id UINT64 value UINT64 timestamp
 Attach File CSV combinedSource FILE

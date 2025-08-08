@@ -1,6 +1,6 @@
-# name: projection/Projection.test
-# description: Simple map tests with an add function
-# groups: [Projection]
+# name: sources/Mixed.test
+# description: Mixed sources data forwarding query
+# groups: [Sources]
 
 Source stream UINT64 id UINT64 value UINT64 timestamp
 Attach TCP CSV CONFIG/inputFormatters/csv_pipe_delimiter.yaml stream INLINE
