@@ -243,7 +243,11 @@ add_custom_target(build_all_plugins)
 # of shared functionality used by all components of nes
 file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 foreach (NES_DIR ${NES_DIRECTORIES})
-    add_subdirectory(${NES_DIR})
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR}/CMakeLists.txt")
+        add_subdirectory(${NES_DIR})
+    else()
+        message(STATUS "Skipping ${NES_DIR} - no CMakeLists.txt found")
+    endif()
 endforeach ()
 
 # Other configurations

@@ -40,6 +40,6 @@ public:
     virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
     virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
     virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
-    [[nodiscard]] virtual std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept = 0;
 };
 }
