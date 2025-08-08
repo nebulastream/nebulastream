@@ -418,13 +418,9 @@ jobs:
           cd /work_dir
           for sanitizer in asan ubsan tsan
           do
-            for input in $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f | shuf)
-            do
-              if ! $fuzzer $input
-              then
-                mv -f $input $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none
-              fi
-            done
+            echo checking $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f | wc -l) files in $sanitizer
+            find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f -print0 | \
+              xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {}; then echo mv to none {}; mv -f {} $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none; fi"
           done
       - name: commit corpus
         run: |
