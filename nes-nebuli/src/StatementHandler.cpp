@@ -205,7 +205,7 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
     if (not statement.id.has_value())
     {
         auto allQueryState = runningQueries | std::views::transform([this](auto queryId) { return queryManager->status(queryId); })
-            | std::views::filter([](const std::expected<QuerySummary, Exception>& statusResult) { return statusResult.has_value(); })
+            | std::views::filter([](const std::expected<LocalQueryStatus, Exception>& statusResult) { return statusResult.has_value(); })
             | std::views::transform([](const auto& statusResult) { return statusResult.value(); }) | std::ranges::to<std::vector>();
         auto newRunningQueries = allQueryState | std::views::transform([](const auto& querySummary) { return querySummary.queryId; })
             | std::ranges::to<std::vector>();
@@ -213,11 +213,11 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
         return ShowQueriesStatementResult{
             allQueryState
             | std::views::transform([](const auto& querySummary) { return std::make_pair(querySummary.queryId, querySummary); })
-            | std::ranges::to<std::unordered_map<QueryId, QuerySummary>>()};
+            | std::ranges::to<std::unordered_map<QueryId, LocalQueryStatus>>()};
     }
     if (const auto statusOpt = queryManager->status(statement.id.value()); statusOpt.has_value())
     {
-        return ShowQueriesStatementResult{std::unordered_map<QueryId, QuerySummary>{{statement.id.value(), statusOpt.value()}}};
+        return ShowQueriesStatementResult{std::unordered_map<QueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
     }
     return ShowQueriesStatementResult{.queries = {}};
 }

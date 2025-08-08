@@ -14,24 +14,30 @@
 
 #include <Listeners/QueryLog.hpp>
 
-#include <algorithm>
 #include <chrono>
-#include <cstddef>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange)
+QueryStateChange::QueryStateChange(Exception exception, std::chrono::system_clock::time_point timestamp)
+    : state(QueryState::Failed), timestamp(timestamp), exception(exception)
+{
+}
+
+inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange)
 {
     os << magic_enum::enum_name(statusChange.state) << " : " << std::chrono::system_clock::to_time_t(statusChange.timestamp);
     if (statusChange.exception.has_value())
@@ -47,32 +53,29 @@ bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType, std
     return true; /// nop
 }
 
-bool QueryLog::logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryFailure(const QueryId queryId, const Exception exception, const std::chrono::system_clock::time_point timestamp)
 {
-    QueryStatusChange statusChange(std::move(exception), timestamp);
+    QueryStateChange statusChange(exception, timestamp);
 
-    const auto log = queryStatusLog.wlock();
-    if (log->contains(queryId))
+    if (const auto log = queryStatusLog.wlock(); log->contains(queryId))
     {
         auto& changes = (*log)[queryId];
         const auto pos = std::ranges::upper_bound(
-            changes,
-            statusChange,
-            [](const QueryStatusChange& lhs, const QueryStatusChange& rhs) { return lhs.timestamp < rhs.timestamp; });
+            changes, statusChange, [](const QueryStateChange& lhs, const QueryStateChange& rhs) { return lhs.timestamp < rhs.timestamp; });
         changes.emplace(pos, std::move(statusChange));
         return true;
     }
     return false;
 }
 
-bool QueryLog::logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryState status, const std::chrono::system_clock::time_point timestamp)
 {
-    QueryStatusChange statusChange(std::move(status), timestamp);
+    QueryStateChange statusChange(std::move(status), timestamp);
 
     const auto log = queryStatusLog.wlock();
     auto& changes = (*log)[queryId];
     const auto pos = std::ranges::upper_bound(
-        changes, statusChange, [](const QueryStatusChange& lhs, const QueryStatusChange& rhs) { return lhs.timestamp < rhs.timestamp; });
+        changes, statusChange, [](const QueryStateChange& lhs, const QueryStateChange& rhs) { return lhs.timestamp < rhs.timestamp; });
     changes.emplace(pos, std::move(statusChange));
     return true;
 }
@@ -87,77 +90,80 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
     return std::nullopt;
 }
 
-///NOLINTBEGIN(readability-function-cognitive-complexity)
-std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId) const
+namespace
 {
-    const auto log = queryStatusLog.rlock();
+std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId queryId)
+{
     if (const auto queryLog = log->find(queryId); queryLog != log->end())
     {
-        /// Unfortunatly the multithreaded nature of the query engine cannot guarantee that a `Running` event always comes before the `Stopped` event.
-        /// For now, we count the number of Running and Stopped events to determine the number of restarts and if the query is currently running.
-        /// Failures are counting towards the number of stops. If a query has equally (or more) Stopped than Running events, the QueryLog
-        /// assumes it to be in the Stopped state.
-        std::vector<QueryRunSummary> runs;
+        /// Unfortunately the multithreaded nature of the query engine cannot guarantee event ordering.
+        /// We handle out-of-order events by keeping the most recent timestamp for each event type.
+        /// Final state is determined by priority: Failed > Stopped > Running > Started > Registered.
+        LocalQueryStatus status;
+        status.queryId = queryId;
+
         for (const auto& statusChange : queryLog->second)
         {
-            if (statusChange.state == QueryStatus::Failed)
+            switch (statusChange.state)
             {
-                if (runs.empty() || runs.back().stop)
-                {
-                    runs.emplace_back();
-                }
-                runs.back().stop = statusChange.timestamp;
-                runs.back().error = statusChange.exception;
-            }
-            else if (statusChange.state == QueryStatus::Stopped)
-            {
-                if (runs.empty() || runs.back().stop)
-                {
-                    runs.emplace_back();
-                }
-                runs.back().stop = statusChange.timestamp;
-            }
-            else if (statusChange.state == QueryStatus::Started)
-            {
-                if (runs.empty() || runs.back().start)
-                {
-                    runs.emplace_back();
-                }
-                runs.back().start = statusChange.timestamp;
-            }
-            else if (statusChange.state == QueryStatus::Running)
-            {
-                if (runs.empty() || runs.back().running)
-                {
-                    runs.emplace_back();
-                }
-                runs.back().running = statusChange.timestamp;
+                case QueryState::Failed:
+                    status.metrics.stop = statusChange.timestamp;
+                    status.metrics.error = statusChange.exception;
+                    break;
+                case QueryState::Stopped:
+                    status.metrics.stop = statusChange.timestamp;
+                    break;
+                case QueryState::Started:
+                    status.metrics.start = statusChange.timestamp;
+                    break;
+                case QueryState::Running:
+                    status.metrics.running = statusChange.timestamp;
+                    break;
+                case QueryState::Registered:
+                    break;
             }
         }
 
-        QuerySummary summary = {.queryId = queryId, .currentStatus = QueryStatus::Registered, .runs = std::move(runs)};
-
-        if (summary.runs.empty())
+        /// Determine state based on available metrics and timestamps
+        auto state = QueryState::Registered;
+        if (status.metrics.error.has_value())
         {
-            summary.currentStatus = QueryStatus::Registered;
+            state = QueryState::Failed;
         }
-        else if (!summary.runs.back().stop)
+        else if (status.metrics.stop.has_value())
         {
-            summary.currentStatus = QueryStatus::Running;
+            state = QueryState::Stopped;
         }
-        else if (summary.runs.back().error)
+        else if (status.metrics.running.has_value())
         {
-            summary.currentStatus = QueryStatus::Failed;
+            state = QueryState::Running;
         }
-        else
+        else if (status.metrics.start.has_value())
         {
-            summary.currentStatus = QueryStatus::Stopped;
+            state = QueryState::Started;
         }
-
-        return summary;
+        status.state = state;
+        return status;
     }
     return std::nullopt;
 }
+}
 
-///NOLINTEND(readability-function-cognitive-complexity)
+std::optional<LocalQueryStatus> QueryLog::getQueryStatus(const QueryId queryId) const
+{
+    const auto log = queryStatusLog.rlock();
+    return getQueryStatusImpl(log, queryId);
+}
+
+std::vector<LocalQueryStatus> QueryLog::getStatus() const
+{
+    const auto queryStatusLogLocked = queryStatusLog.rlock();
+    std::vector<LocalQueryStatus> summaries;
+    summaries.reserve(queryStatusLogLocked->size());
+    for (const auto id : std::views::keys(*queryStatusLogLocked))
+    {
+        summaries.emplace_back(getQueryStatusImpl(queryStatusLogLocked, id).value());
+    }
+    return summaries;
+}
 }
