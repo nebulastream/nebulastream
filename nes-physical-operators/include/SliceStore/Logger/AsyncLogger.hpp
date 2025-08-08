@@ -19,27 +19,45 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <SliceStore/Slice.hpp>
 
 namespace NES
 {
 
+enum class FileOperation : uint8_t;
+enum class OperationStatus : uint8_t;
+
 class AsyncLogger
 {
 public:
-    explicit AsyncLogger(const std::vector<std::string>& fileNames);
-    ~AsyncLogger();
+    struct LoggingParams
+    {
+        const std::chrono::system_clock::time_point timestamp;
+        const FileOperation operation;
+        const OperationStatus status;
+        const SliceEnd sliceEnd;
+    };
 
-    void log(const std::string& message);
+    explicit AsyncLogger(const std::string& path);
+    //~AsyncLogger();
+
+    void log(const LoggingParams& params);
 
 private:
-    void processLogs(const std::string& fileName, size_t queueIndex);
+    void processLogs(const std::stop_token& token);
 
-    std::vector<std::queue<std::string>> logQueues;
+    /*std::vector<std::queue<std::string>> logQueues;
     std::vector<std::mutex> queueMutexes;
     std::vector<std::condition_variable> cvs;
-    std::vector<std::thread> loggingThreads;
-    std::atomic<bool> stopLogging;
-    std::atomic<size_t> nextQueue;
+    std::vector<std::thread> loggingThreads;*/
+    std::queue<LoggingParams> logQueue;
+    std::mutex queueMutex;
+    //std::condition_variable cv;
+    //std::thread loggingThread;
+    std::jthread loggingThread;
+    //std::atomic<bool> stopLogging;
+    //std::atomic<size_t> nextQueue;
+    std::ofstream file;
 };
 
 }

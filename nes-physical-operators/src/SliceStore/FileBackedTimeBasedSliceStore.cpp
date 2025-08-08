@@ -192,15 +192,15 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     /*logger.reserve(numberOfWorkerThreads);
     for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
     {
-        logger[i] = std::make_shared<AsyncLogger>(
-            fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_{}.stats", std::chrono::system_clock::now(), i));
+        const auto loggers = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_{}.stats", std::chrono::system_clock::now(), i)};
+        logger[i] = std::make_shared<AsyncLogger>(loggers);
     }*/
-    const auto loggers
+    /*const auto loggers
         = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_0.stats", std::chrono::system_clock::now()),
            fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_1.stats", std::chrono::system_clock::now()),
            fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_2.stats", std::chrono::system_clock::now()),
-           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_3.stats", std::chrono::system_clock::now())};
-    logger = std::make_shared<AsyncLogger>(loggers);
+           fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_3.stats", std::chrono::system_clock::now())};*/
+    logger = std::make_shared<AsyncLogger>(fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now()));
 
     /// Initialise memory controller and measure execution times for reading and writing
     /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data
@@ -522,13 +522,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 void FileBackedTimeBasedSliceStore::writeSliceOperationToFile(
     const WorkerThreadId, const FileOperation operation, const OperationStatus status, const SliceEnd sliceEnd) const
 {
-    logger->log(
-        fmt::format(
-            "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}",
-            std::chrono::system_clock::now(),
-            magic_enum::enum_name<FileOperation>(operation),
-            magic_enum::enum_name<OperationStatus>(status),
-            sliceEnd));
+    logger->log({.timestamp = std::chrono::system_clock::now(), .operation = operation, .status = status, .sliceEnd = sliceEnd});
 }
 
 }
