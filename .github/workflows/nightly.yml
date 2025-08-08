@@ -299,9 +299,8 @@ jobs:
           do
             for input in $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f | shuf)
             do
-              if $fuzzer $input
+              if ! $fuzzer $input
               then
-                # no git mv or -f since we mv into just-created /corpus_wip
                 mv -f $input $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none
               fi
             done
