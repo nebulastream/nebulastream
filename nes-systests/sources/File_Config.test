@@ -1,5 +1,5 @@
-# name: sources/FileSource.test
-# description: Simple map tests with an add function
+# name: sources/FileConfig.test
+# description: Forwarding queries with and without configurations
 # groups: [Sources]
 
 #==============================
