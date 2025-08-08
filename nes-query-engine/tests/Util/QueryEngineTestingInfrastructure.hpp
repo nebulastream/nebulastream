@@ -151,7 +151,7 @@ class QueryStatusListener final : public AbstractQueryStatusListener
 public:
     MOCK_METHOD(bool, logSourceTermination, (QueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point), (override));
     MOCK_METHOD(bool, logQueryFailure, (QueryId, Exception, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, QueryStatus, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, QueryState, std::chrono::system_clock::time_point), (override));
 };
 
 /// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal
@@ -452,7 +452,7 @@ struct TestingHarness
     std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
-    void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states);
+    void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states);
 
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
     void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);

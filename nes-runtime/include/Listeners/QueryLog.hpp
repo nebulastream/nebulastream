@@ -29,7 +29,7 @@
 namespace NES
 {
 
-struct QueryRunSummary
+struct QueryMetrics
 {
     std::optional<std::chrono::system_clock::time_point> start;
     std::optional<std::chrono::system_clock::time_point> running;
@@ -38,47 +38,50 @@ struct QueryRunSummary
 };
 
 /// Summary structure of the query log for a query
-struct QuerySummary
+struct LocalQueryStatus
 {
-    /// In the future, this will be extended to include more information such as the query plan, etc.
     QueryId queryId = INVALID_QUERY_ID;
-    QueryStatus currentStatus;
-    std::vector<QueryRunSummary> runs;
+    QueryState state = QueryState::Registered;
+    QueryMetrics metrics{};
+};
+
+struct QueryStatus
+{
+    std::vector<LocalQueryStatus> localStatusSnapshots;
 };
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
-struct QueryStatusChange
+struct QueryStateChange
 {
-    QueryStatusChange(QueryStatus state, std::chrono::system_clock::time_point timestamp) : state(state), timestamp(timestamp) { };
+    QueryStateChange(const QueryState state, const std::chrono::system_clock::time_point timestamp) : state(state), timestamp(timestamp) { }
 
-    QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp)
-        : state(QueryStatus::Failed), timestamp(timestamp), exception(exception) { };
+    QueryStateChange(Exception exception, std::chrono::system_clock::time_point timestamp);
 
-    friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
+    friend std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange);
 
-    QueryStatus state;
+    QueryState state;
     std::chrono::system_clock::time_point timestamp;
     std::optional<Exception> exception;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
+inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange);
 
 /// The query log keeps track of query status changes. We want to keep it as lightweight as possible to reduce overhead inflicted to
 /// the query manager.
 struct QueryLog : AbstractQueryStatusListener
 {
-    using Log = std::vector<QueryStatusChange>;
-    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStatusChange>>;
+    using Log = std::vector<QueryStateChange>;
+    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStateChange>>;
 
     /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
     bool logSourceTermination(
         QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
     bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
-    [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
-    [[nodiscard]] std::vector<QuerySummary> getSummary();
+    [[nodiscard]] std::optional<LocalQueryStatus> getQuerySummary(QueryId queryId) const;
+    [[nodiscard]] std::vector<LocalQueryStatus> getSummary();
 
 private:
     folly::Synchronized<QueryStatusLog> queryStatusLog;

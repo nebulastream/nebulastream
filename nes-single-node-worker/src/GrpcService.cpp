@@ -20,8 +20,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/Strings.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Strings.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -131,34 +131,33 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
 {
     CPPTRACE_TRY
     {
-        auto queryId = QueryId(request->queryid());
-        auto summary = delegate.getQuerySummary(queryId);
-        if (summary.has_value())
+        const auto queryId = QueryId{request->queryid()};
+        reply->set_queryid(queryId.getRawValue());
+        if (const auto summary = delegate.getQuerySummary(queryId); summary.has_value())
         {
-            reply->set_status(::QueryStatus(summary->currentStatus));
-            for (const auto& [start, running, stop, error] : summary->runs)
+            auto& metrics = summary->metrics;
+            reply->set_status(static_cast<::QueryStatus>(summary->state));
+            reply->mutable_metrics()->set_startunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+            reply->mutable_metrics()->set_runningunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.running.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+            reply->mutable_metrics()->set_stopunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+
+            if (metrics.error.has_value())
             {
-                auto* const replyRun = reply->add_runs();
-                replyRun->set_startunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                replyRun->set_runningunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        running.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                replyRun->set_stopunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                if (error.has_value())
-                {
-                    auto* const runError = replyRun->mutable_error();
-                    runError->set_message(error->what());
-                    runError->set_stacktrace(error->trace().to_string());
-                    runError->set_code(error->code());
-                    runError->set_location(std::string(error->where()->filename) + ":" + std::to_string(error->where()->line.value_or(0)));
-                }
+                auto error = reply->mutable_metrics()->error();
+                const Exception exception(metrics.error.value());
+                error.set_message(exception.what());
+                error.set_stacktrace(exception.trace().to_string());
+                error.set_code(exception.code());
+                error.set_location(std::string{exception.where()->filename} + ":" + std::to_string(exception.where()->line.value_or(0)));
             }
             return grpc::Status::OK;
         }
