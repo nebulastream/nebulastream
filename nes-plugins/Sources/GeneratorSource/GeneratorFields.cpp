@@ -24,8 +24,13 @@
 #include <string_view>
 #include <variant>
 #include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::GeneratorFields
@@ -45,10 +50,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
             throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
-    auto view = rawSchemaLine | std::ranges::views::split(' ')
-        | std::views::transform([](const auto& subView) { return std::string_view(subView); });
-    const std::vector parameters(view.begin(), view.end());
-
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
         throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
@@ -58,33 +60,90 @@ void SequenceField::validate(std::string_view rawSchemaLine)
     const auto end = parameters[3];
     const auto step = parameters[4];
 
-    if (type != "FLOAT64" && type != "FLOAT32" && type != "INT64" && type != "UINT64")
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
+    if (not dataType.has_value())
     {
         throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);
     }
-    if (type == "FLOAT64")
+    switch (dataType.value().type)
     {
-        validateParameter.operator()<double>(start, "start");
-        validateParameter.operator()<double>(end, "end");
-        validateParameter.operator()<double>(step, "step");
-    }
-    else if (type == "FLOAT32")
-    {
-        validateParameter.operator()<float>(start, "start");
-        validateParameter.operator()<float>(end, "end");
-        validateParameter.operator()<float>(step, "step");
-    }
-    else if (type == "INT64")
-    {
-        validateParameter.operator()<int64_t>(start, "start");
-        validateParameter.operator()<int64_t>(end, "end");
-        validateParameter.operator()<int64_t>(step, "step");
-    }
-    else if (type == "UINT64")
-    {
-        validateParameter.operator()<uint64_t>(start, "start");
-        validateParameter.operator()<uint64_t>(end, "end");
-        validateParameter.operator()<uint64_t>(step, "step");
+        case DataType::Type::UINT8: {
+            validateParameter.operator()<uint8_t>(start, "start");
+            validateParameter.operator()<uint8_t>(end, "end");
+            validateParameter.operator()<uint8_t>(step, "step");
+            break;
+        }
+        case DataType::Type::UINT16: {
+            validateParameter.operator()<uint16_t>(start, "start");
+            validateParameter.operator()<uint16_t>(end, "end");
+            validateParameter.operator()<uint16_t>(step, "step");
+            break;
+        }
+        case DataType::Type::UINT32: {
+            validateParameter.operator()<uint32_t>(start, "start");
+            validateParameter.operator()<uint32_t>(end, "end");
+            validateParameter.operator()<uint32_t>(step, "step");
+            break;
+        }
+        case DataType::Type::UINT64: {
+            validateParameter.operator()<uint64_t>(start, "start");
+            validateParameter.operator()<uint64_t>(end, "end");
+            validateParameter.operator()<uint64_t>(step, "step");
+            break;
+        }
+        case DataType::Type::INT8: {
+            validateParameter.operator()<int8_t>(start, "start");
+            validateParameter.operator()<int8_t>(end, "end");
+            validateParameter.operator()<int8_t>(step, "step");
+            break;
+        }
+        case DataType::Type::INT16: {
+            validateParameter.operator()<int16_t>(start, "start");
+            validateParameter.operator()<int16_t>(end, "end");
+            validateParameter.operator()<int16_t>(step, "step");
+            break;
+        }
+        case DataType::Type::INT32: {
+            validateParameter.operator()<int32_t>(start, "start");
+            validateParameter.operator()<int32_t>(end, "end");
+            validateParameter.operator()<int32_t>(step, "step");
+            break;
+        }
+        case DataType::Type::INT64: {
+            validateParameter.operator()<int64_t>(start, "start");
+            validateParameter.operator()<int64_t>(end, "end");
+            validateParameter.operator()<int64_t>(step, "step");
+            break;
+        }
+        case DataType::Type::FLOAT32: {
+            validateParameter.operator()<float>(start, "start");
+            validateParameter.operator()<float>(end, "end");
+            validateParameter.operator()<float>(step, "step");
+            break;
+        }
+        case DataType::Type::FLOAT64: {
+            validateParameter.operator()<double>(start, "start");
+            validateParameter.operator()<double>(end, "end");
+            validateParameter.operator()<double>(step, "step");
+            break;
+        }
+        case DataType::Type::BOOLEAN: {
+            validateParameter.operator()<bool>(start, "start");
+            validateParameter.operator()<bool>(end, "end");
+            validateParameter.operator()<bool>(step, "step");
+            break;
+        }
+        case DataType::Type::CHAR: {
+            validateParameter.operator()<char>(start, "start");
+            validateParameter.operator()<char>(end, "end");
+            validateParameter.operator()<char>(step, "step");
+            break;
+        }
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP: {
+            throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
+        }
     }
 }
 
@@ -103,34 +162,71 @@ void SequenceField::parse(std::string_view start, std::string_view end, std::str
 
 SequenceField::SequenceField(std::string_view rawSchemaLine)
 {
-    auto view = rawSchemaLine | std::ranges::views::split(' ')
-        | std::views::transform([](const auto& subView) { return std::string_view(subView); });
-    const std::vector parameters(view.begin(), view.end());
-
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto start = parameters[2];
     const auto end = parameters[3];
     const auto step = parameters[4];
-
-    if (type == "FLOAT64")
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
+    if (not dataType.has_value())
     {
-        parse<double>(start, end, step);
+        throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);
     }
-    else if (type == "FLOAT32")
+    switch (dataType.value().type)
     {
-        parse<float>(start, end, step);
-    }
-    else if (type == "INT64")
-    {
-        parse<int64_t>(start, end, step);
-    }
-    else if (type == "UINT64")
-    {
-        parse<uint64_t>(start, end, step);
-    }
-    else
-    {
-        throw InvalidConfigParameter("Unknown Type \"{}\" in: {}", type, rawSchemaLine);
+        case DataType::Type::UINT8: {
+            parse<uint8_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::UINT16: {
+            parse<uint16_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::UINT32: {
+            parse<uint32_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::UINT64: {
+            parse<uint64_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::INT8: {
+            parse<int8_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::INT16: {
+            parse<int16_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::INT32: {
+            parse<int32_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::INT64: {
+            parse<int64_t>(start, end, step);
+            break;
+        }
+        case DataType::Type::FLOAT32: {
+            parse<float>(start, end, step);
+            break;
+        }
+        case DataType::Type::FLOAT64: {
+            parse<double>(start, end, step);
+            break;
+        }
+        case DataType::Type::BOOLEAN: {
+            parse<bool>(start, end, step);
+            break;
+        }
+        case DataType::Type::CHAR: {
+            parse<char>(start, end, step);
+            break;
+        }
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP: {
+            INVARIANT(false, "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
+        }
     }
     this->stop = false;
 }
@@ -140,14 +236,19 @@ std::ostream& SequenceField::generate(std::ostream& os, std::default_random_engi
     std::visit(
         [&]<typename T>(T& pos)
         {
-            if (this->sequencePosition >= this->sequenceEnd)
+            if constexpr (std::is_same_v<T, uint8_t> or std::is_same_v<T, int8_t>)
             {
-                os << pos;
+                /// Need to cast it to an int32, as we would get 'NULL' and not '0'
+                os << static_cast<int32_t>(pos);
             }
             else
             {
-                const auto& step = std::get<T>(sequenceStepSize);
                 os << pos;
+            }
+
+            if (this->sequencePosition < this->sequenceEnd)
+            {
+                const auto& step = std::get<T>(sequenceStepSize);
                 pos += step;
             }
         },
@@ -159,49 +260,119 @@ std::ostream& SequenceField::generate(std::ostream& os, std::default_random_engi
     return os;
 }
 
-NormalDistributionField::NormalDistributionField(const double mean, const double stddev)
+namespace
 {
-    this->distribution = std::normal_distribution(mean, stddev);
+template <typename T, typename U = double>
+NormalDistributionField::DistributionVariant createDistribution(const std::string_view mean, const std::string_view stdDev)
+{
+    const auto parsedMean = Util::from_chars<T>(mean);
+    const auto parsedStdDev = Util::from_chars<U>(stdDev);
+    INVARIANT(parsedMean.has_value(), "Could not parse mean from {}", mean);
+    INVARIANT(parsedStdDev.has_value(), "Could not parse std dev from {}", stdDev);
+
+    if constexpr (std::is_same_v<T, double> or std::is_same_v<T, float>)
+    {
+        return std::normal_distribution<T>(*parsedMean, *parsedStdDev);
+    }
+    else
+    {
+        return std::binomial_distribution<T>(*parsedMean, *parsedStdDev);
+    }
+};
 }
 
 NormalDistributionField::NormalDistributionField(const std::string_view rawSchemaLine)
 {
-    auto view = rawSchemaLine | std::ranges::views::split(' ')
-        | std::views::transform([](const auto& subView) { return std::string_view(subView); });
-    const std::vector parameters(view.begin(), view.end());
-
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto type = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
-    const auto parsedMean = Util::from_chars<double>(mean);
-    const auto parsedStdDev = Util::from_chars<double>(stddev);
 
-    this->distribution = std::normal_distribution<double>(*parsedMean, *parsedStdDev);
+    outputType.type = magic_enum::enum_cast<NES::DataType::Type>(type).value();
+    switch (outputType.type)
+    {
+        case DataType::Type::UINT8:
+            distribution = createDistribution<uint8_t>(mean, stddev);
+            break;
+        case DataType::Type::UINT16:
+            distribution = createDistribution<uint16_t>(mean, stddev);
+            break;
+        case DataType::Type::UINT32:
+            distribution = createDistribution<uint32_t>(mean, stddev);
+            break;
+        case DataType::Type::UINT64:
+            distribution = createDistribution<uint64_t>(mean, stddev);
+            break;
+        case DataType::Type::INT8:
+            distribution = createDistribution<int8_t>(mean, stddev);
+            break;
+        case DataType::Type::INT16:
+            distribution = createDistribution<int16_t>(mean, stddev);
+            break;
+        case DataType::Type::INT32:
+            distribution = createDistribution<int32_t>(mean, stddev);
+            break;
+        case DataType::Type::INT64:
+            distribution = createDistribution<int64_t>(mean, stddev);
+            break;
+        case DataType::Type::FLOAT32:
+            distribution = createDistribution<float, float>(mean, stddev);
+            break;
+        case DataType::Type::FLOAT64:
+            distribution = createDistribution<double, double>(mean, stddev);
+
+        /// We require an integer for binomial_distribution
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+            INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
+
+        /// Getting a var sized from a normal_distribution is possible but we might want to do something different than solely converting
+        /// the value to a string
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP:
+            INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
+    }
 }
 
 std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_random_engine& randEng)
 {
-    os << std::fixed << std::setprecision(2) << this->distribution(randEng);
+    std::visit(
+        [&os, &randEng, copyOfOutputType = outputType.type](auto& distribution)
+        {
+            if (copyOfOutputType == DataType::Type::UINT8 or copyOfOutputType == DataType::Type::INT8)
+            {
+                /// Need to cast it to an int32_t, as we would get 'NULL' and not '0'
+                os << static_cast<int32_t>(distribution(randEng));
+            }
+            else
+            {
+                os << distribution(randEng);
+            }
+        },
+        distribution);
     return os;
 }
 
 void NormalDistributionField::validate(std::string_view rawSchemaLine)
 {
-    auto view = rawSchemaLine | std::ranges::views::split(' ')
-        | std::views::transform([](const auto& subView) { return std::string_view(subView); });
-    const std::vector parameters(view.begin(), view.end());
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
         throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
     }
 
-    const auto type = parameters[1];
+    const auto typeParam = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
-    if (type != "FLOAT64" || type == "FLOAT32")
+    if (const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam); not type.has_value())
     {
-        throw InvalidConfigParameter("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
+        constexpr auto allDataTypes = magic_enum::enum_names<DataType::Type>();
+        NES_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only {} {}", fmt::join(allDataTypes, ","), rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
     }
     const auto parsedMean = Util::from_chars<double>(mean);
     const auto parsedStdDev = Util::from_chars<double>(stddev);
