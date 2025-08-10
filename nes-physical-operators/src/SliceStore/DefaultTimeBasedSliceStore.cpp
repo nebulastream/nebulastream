@@ -74,15 +74,18 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     /// At this moment, we can be sure that no slice exists and we can insert the newly created slice into the slice store
     auto newSlice = newSlices[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
+    slicesWriteLocked.unlock();
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : sliceAssigner.getAllWindowsForSlice(*newSlice))
     {
-        auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
+        const auto numberOfExpectedSlices = sliceAssigner.getWindowSize() / sliceAssigner.getWindowSlide();
+        const auto [it, success] = windowsWriteLocked->try_emplace(windowInfo, numberOfExpectedSlices);
         INVARIANT(
-            windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
-        windowState = WindowInfoState::WINDOW_FILLING;
-        windowSlices.emplace_back(newSlice);
+            it->second.windowState != WindowInfoState::EMITTED_TO_PROBE,
+            "We should not add slices to a window that has already been triggered.");
+        it->second.windowState = WindowInfoState::WINDOW_FILLING;
+        it->second.windowSlices.emplace_back(newSlice);
     }
 
     return {newSlice};
