@@ -33,7 +33,7 @@ static constexpr std::string_view SEQUENCE_IDENTIFIER = "SEQUENCE";
 static constexpr std::string_view NORMAL_DISTRIBUTION_IDENTIFIER = "NORMAL_DISTRIBUTION";
 
 /// @brief Variant containing the types that a field can generate
-using FieldType = std::variant<uint64_t, int64_t, float, double>;
+using FieldType = std::variant<uint64_t, uint32_t, uint16_t, uint8_t, int64_t, int32_t, int16_t, int8_t, float, double>;
 
 /// @brief Base class for all types of fields for the generator
 class BaseGeneratorField
@@ -104,8 +104,14 @@ static const std::array<FieldValidator, 2> Validators
 /// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
 /// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
 static const std::unordered_multimap<std::string_view, DataType::Type> FieldNameToAcceptedTypes
-    = {{SEQUENCE_IDENTIFIER, DataType::Type::UINT64},
-       {SEQUENCE_IDENTIFIER, DataType::Type::INT64},
+    = {{SEQUENCE_IDENTIFIER, DataType::Type::INT64},
+       {SEQUENCE_IDENTIFIER, DataType::Type::INT32},
+       {SEQUENCE_IDENTIFIER, DataType::Type::INT16},
+       {SEQUENCE_IDENTIFIER, DataType::Type::INT8},
+       {SEQUENCE_IDENTIFIER, DataType::Type::UINT64},
+       {SEQUENCE_IDENTIFIER, DataType::Type::UINT32},
+       {SEQUENCE_IDENTIFIER, DataType::Type::UINT16},
+       {SEQUENCE_IDENTIFIER, DataType::Type::UINT8},
        {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT64},
        {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT32},
        {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT64},
