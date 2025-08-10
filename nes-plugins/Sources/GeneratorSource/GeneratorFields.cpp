@@ -26,6 +26,9 @@
 #include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::GeneratorFields
@@ -159,10 +162,6 @@ std::ostream& SequenceField::generate(std::ostream& os, std::default_random_engi
     return os;
 }
 
-NormalDistributionField::NormalDistributionField(const double mean, const double stddev)
-{
-    this->distribution = std::normal_distribution(mean, stddev);
-}
 
 NormalDistributionField::NormalDistributionField(const std::string_view rawSchemaLine)
 {
@@ -170,6 +169,7 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
         | std::views::transform([](const auto& subView) { return std::string_view(subView); });
     const std::vector parameters(view.begin(), view.end());
 
+    const auto type = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
@@ -177,11 +177,58 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
     const auto parsedStdDev = Util::from_chars<double>(stddev);
 
     this->distribution = std::normal_distribution<double>(*parsedMean, *parsedStdDev);
+    this->outputType.type = magic_enum::enum_cast<NES::DataType::Type>(type).value();
 }
 
 std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_random_engine& randEng)
 {
-    os << std::fixed << std::setprecision(2) << this->distribution(randEng);
+    const auto randValue = this->distribution(randEng);
+    switch (outputType.type)
+    {
+        case DataType::Type::UINT8:
+            os << std::fixed << static_cast<uint8_t>(randValue);
+            break;
+        case DataType::Type::UINT16:
+            os << std::fixed << static_cast<uint16_t>(randValue);
+            break;
+        case DataType::Type::UINT32:
+            os << std::fixed << static_cast<uint32_t>(randValue);
+            break;
+        case DataType::Type::UINT64:
+            os << std::fixed << static_cast<uint64_t>(randValue);
+            break;
+        case DataType::Type::INT8:
+            os << std::fixed << static_cast<int8_t>(randValue);
+            break;
+        case DataType::Type::INT16:
+            os << std::fixed << static_cast<int16_t>(randValue);
+            break;
+        case DataType::Type::INT32:
+            os << std::fixed << static_cast<int32_t>(randValue);
+            break;
+        case DataType::Type::INT64:
+            os << std::fixed << static_cast<int64_t>(randValue);
+            break;
+        case DataType::Type::FLOAT32:
+            os << std::fixed << std::setprecision(2) << static_cast<float>(randValue);
+            break;
+        case DataType::Type::FLOAT64:
+            os << std::fixed << std::setprecision(2) << randValue;
+            break;
+        case DataType::Type::BOOLEAN:
+            os << static_cast<bool>(randValue);
+            break;
+        case DataType::Type::CHAR:
+            os << static_cast<char>(randValue);
+            break;
+
+        /// Getting a var sized from a normal_distribution is possible but we might want to do something different than solely converting
+        /// the value to a string
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented();
+    }
     return os;
 }
 
@@ -195,13 +242,16 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
         throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
     }
 
-    const auto type = parameters[1];
+    const auto typeParam = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
-    if (type != "FLOAT64" || type == "FLOAT32")
+    if (const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam); not type.has_value())
     {
-        throw InvalidConfigParameter("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
+        constexpr auto allDataTypes = magic_enum::enum_names<DataType::Type>();
+        NES_FATAL_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only {} {}", fmt::join(allDataTypes, ","), rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
     }
     const auto parsedMean = Util::from_chars<double>(mean);
     const auto parsedStdDev = Util::from_chars<double>(stddev);
