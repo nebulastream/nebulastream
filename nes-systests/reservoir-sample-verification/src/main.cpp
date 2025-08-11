@@ -243,7 +243,7 @@ int main(int argc, char** argv)
         for (auto record : windowReservoir.getReservoir())
         {
             std::cout << fmt::format(
-                "{}, {}, ({}, {}, {})\n",
+                "{} {} {} {} {}\n",
                 windowStart,
                 windowStart + sampleStore.getWindowSizeMSec(),
                 std::get<0>(record),
