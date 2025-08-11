@@ -74,28 +74,29 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
-void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
+void WindowProbePhysicalOperator::setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const
 {
     /// Giving child operators the change to setup
-    setupChild(executionCtx, engine);
-    invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+    setupChild(executionContext, compilationContext);
+    invoke(setupProxy, executionContext.getGlobalOperatorHandler(operatorHandlerId), executionContext.pipelineContext);
 }
 
-void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowProbePhysicalOperator::close(
+    ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// Update the watermark for the probe and delete all slices that can be deleted
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    const auto operatorHandlerMemRef = executionContext.getGlobalOperatorHandler(operatorHandlerId);
     invoke(
         garbageCollectSlicesProxy,
         operatorHandlerMemRef,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
+        executionContext.watermarkTs,
+        executionContext.sequenceNumber,
+        executionContext.chunkNumber,
+        executionContext.lastChunk,
+        executionContext.originId);
 
     /// Now close for all children
-    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::close(executionContext, compilationContext, recordBuffer);
 }
 
 std::optional<PhysicalOperator> WindowProbePhysicalOperator::getChild() const
@@ -108,9 +109,9 @@ void WindowProbePhysicalOperator::setChild(PhysicalOperator child)
     this->child = std::move(child);
 }
 
-void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::terminate(ExecutionContext& executionContext) const
 {
-    nautilus::invoke(terminateProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
-    terminateChild(executionCtx);
+    nautilus::invoke(terminateProxy, executionContext.getGlobalOperatorHandler(operatorHandlerId), executionContext.pipelineContext);
+    terminateChild(executionContext);
 }
 }

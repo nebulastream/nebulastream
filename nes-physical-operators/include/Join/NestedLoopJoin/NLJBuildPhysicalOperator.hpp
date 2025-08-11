@@ -40,6 +40,6 @@ public:
 
     NLJBuildPhysicalOperator(const NLJBuildPhysicalOperator& other) = default;
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const override;
 };
 }

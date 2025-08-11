@@ -41,7 +41,7 @@ public:
         std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
         std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const override;
 
 protected:
     void performNLJ(
@@ -50,6 +50,7 @@ protected:
         Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
         Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
         ExecutionContext& executionCtx,
+        CompilationContext& compilationContext,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
     std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider;

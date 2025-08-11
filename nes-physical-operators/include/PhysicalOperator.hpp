@@ -31,6 +31,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <boost/core/demangle.hpp>
+#include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 
@@ -61,33 +62,33 @@ struct PhysicalOperatorConcept
 
     /// This is called once before the operator starts processing records.
     /// We pass the nautilus::engine  give the possibility to the operator to create custom executable nautilus functions
-    virtual void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
+    virtual void setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const;
 
     /// Opens the operator for processing records.
     /// This is called before each batch of records is processed.
-    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
 
     /// Closes the operator after processing records.
     /// This is called after each batch of records is processed.
-    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void close(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
 
     /// Terminates the operator.
     /// This is called once after all records have been processed.
-    virtual void terminate(ExecutionContext& executionCtx) const;
+    virtual void terminate(ExecutionContext& executionContext) const;
 
     /// Executes the operator on the given record.
-    virtual void execute(ExecutionContext& executionCtx, Record& record) const;
+    virtual void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const;
 
     /// Unique identifier for this operator.
     const OperatorId id = INVALID_OPERATOR_ID;
 
 protected:
     /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
-    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void executeChild(ExecutionContext& executionCtx, Record& record) const;
-    void terminateChild(ExecutionContext& executionCtx) const;
+    void setupChild(ExecutionContext& executionContext, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const;
+    void terminateChild(ExecutionContext& executionContext) const;
 };
 
 /// A type-erased wrapper for physical operators.
@@ -117,13 +118,13 @@ struct PhysicalOperator
     PhysicalOperator& operator=(const PhysicalOperator& other);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
+    void setChild(PhysicalOperator child) const;
 
-    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void terminate(ExecutionContext& executionCtx) const;
-    void execute(ExecutionContext& executionCtx, Record& record) const;
+    void setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const;
+    void open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& executionContext) const;
+    void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const;
     [[nodiscard]] std::string toString() const;
 
     [[nodiscard]] OperatorId getId() const;
@@ -156,18 +157,9 @@ struct PhysicalOperator
     }
 
 private:
-    /// Constructs a PhysicalOperator from a concrete operator type.
-    /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
-    /// @param op The operator to wrap.
-    template <IsPhysicalOperator T>
-    PhysicalOperator(std::shared_ptr<T> op) : self(std::move(op)) /// NOLINT
-    {
-    }
-
     struct Concept : PhysicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : PhysicalOperatorConcept(existingId) { }
-
         [[nodiscard]] virtual std::shared_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual std::string toString() const = 0;
     };
@@ -187,18 +179,27 @@ private:
 
         void setChild(PhysicalOperator child) override { data.setChild(child); }
 
-        void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override
+        void setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const override
         {
-            data.setup(executionCtx, engine);
+            data.setup(executionContext, compilationContext);
         }
 
-        void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
+        void open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const override
+        {
+            data.open(executionContext, compilationContext, recordBuffer);
+        }
 
-        void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.close(executionCtx, recordBuffer); }
+        void close(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const override
+        {
+            data.close(executionContext, compilationContext, recordBuffer);
+        }
 
-        void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
+        void terminate(ExecutionContext& executionContext) const override { data.terminate(executionContext); }
 
-        void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
+        void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const override
+        {
+            data.execute(executionContext, compilationContext, record);
+        }
 
         [[nodiscard]] std::string toString() const override
         {
@@ -207,7 +208,7 @@ private:
         }
     };
 
-    std::shared_ptr<const Concept> self;
+    std::shared_ptr<Concept> self;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PhysicalOperator& op)
@@ -273,5 +274,4 @@ private:
     PipelineLocation pipelineLocation;
 };
 }
-
 FMT_OSTREAM(NES::PhysicalOperator);

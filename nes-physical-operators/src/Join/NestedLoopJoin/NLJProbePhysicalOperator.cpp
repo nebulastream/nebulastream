@@ -101,7 +101,8 @@ void NLJProbePhysicalOperator::performNLJ(
     const Interface::PagedVectorRef& innerPagedVector,
     Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
     Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
-    ExecutionContext& executionCtx,
+    ExecutionContext& executionContext,
+    CompilationContext& compilationContext,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const
 {
@@ -117,12 +118,12 @@ void NLJProbePhysicalOperator::performNLJ(
         for (auto innerIt = innerPagedVector.begin(innerKeyFields); innerIt != innerPagedVector.end(innerKeyFields); ++innerIt)
         {
             const auto joinedKeyFields = createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, outerKeyFields, innerKeyFields);
-            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            if (joinFunction.execute(joinedKeyFields, executionContext.pipelineMemoryProvider.arena))
             {
                 auto outerRecord = outerPagedVector.readRecord(outerItemPos, outerFields);
                 auto innerRecord = innerPagedVector.readRecord(innerItemPos, innerFields);
                 auto joinedRecord = createJoinedRecord(outerRecord, innerRecord, windowStart, windowEnd, outerFields, innerFields);
-                executeChild(executionCtx, joinedRecord);
+                executeChild(executionContext, compilationContext, joinedRecord);
             }
 
             ++innerItemPos;
@@ -131,15 +132,16 @@ void NLJProbePhysicalOperator::performNLJ(
     }
 }
 
-void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void NLJProbePhysicalOperator::open(
+    ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    openChild(executionCtx, recordBuffer);
+    executionContext.watermarkTs = recordBuffer.getWatermarkTs();
+    executionContext.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionContext.chunkNumber = recordBuffer.getChunkNumber();
+    executionContext.lastChunk = recordBuffer.isLastChunk();
+    executionContext.originId = recordBuffer.getOriginId();
+    openChild(executionContext, compilationContext, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
@@ -154,7 +156,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
 
     /// Getting the left and right paged vector
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    const auto operatorHandlerMemRef = executionContext.getGlobalOperatorHandler(operatorHandlerId);
     const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
     const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
 
@@ -185,11 +187,27 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     /// Outer loop should have more no. tuples
     if (numberOfTuplesLeft < numberOfTuplesRight)
     {
-        performNLJ(leftPagedVector, rightPagedVector, *leftMemoryProvider, *rightMemoryProvider, executionCtx, windowStart, windowEnd);
+        performNLJ(
+            leftPagedVector,
+            rightPagedVector,
+            *leftMemoryProvider,
+            *rightMemoryProvider,
+            executionContext,
+            compilationContext,
+            windowStart,
+            windowEnd);
     }
     else
     {
-        performNLJ(rightPagedVector, leftPagedVector, *rightMemoryProvider, *leftMemoryProvider, executionCtx, windowStart, windowEnd);
+        performNLJ(
+            rightPagedVector,
+            leftPagedVector,
+            *rightMemoryProvider,
+            *leftMemoryProvider,
+            executionContext,
+            compilationContext,
+            windowStart,
+            windowEnd);
     }
 }
 

@@ -11,24 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <optional>
-#include <Nautilus/Interface/Record.hpp>
-#include <PhysicalOperator.hpp>
+#include <CompilationContext.hpp>
 
-namespace NES
-{
-class UnionPhysicalOperator final : public PhysicalOperatorConcept
-{
-public:
-    explicit UnionPhysicalOperator() = default;
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+namespace NES {
 
-    void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const override;
-
-private:
-    std::optional<PhysicalOperator> child;
-};
 }

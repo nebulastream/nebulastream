@@ -20,6 +20,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -28,7 +29,7 @@ namespace NES
 {
 class DumpHelper;
 
-/// A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
+/// A compiled executable pipeline stage uses nautilus-lib (https://github.com/nebulastream/nautilus) to compile a pipeline to a code snippet.
 class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
@@ -44,11 +45,13 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
-    compilePipeline(const nautilus::engine::NautilusEngine& engine) const;
-    const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, const PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+    compilePipeline();
+    std::shared_ptr<nautilus::engine::NautilusEngine> engine;
+    nautilus::engine::CallableFunction<void, const PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+        compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    CompilationContext compilationContext;
     std::shared_ptr<Pipeline> pipeline;
 };
 

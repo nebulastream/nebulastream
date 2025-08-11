@@ -34,7 +34,6 @@
 #include <ErrorHandling.hpp>
 #include <options.hpp>
 #include <static.hpp>
-
 namespace NES::Nautilus::TestUtils
 {
 
@@ -43,7 +42,6 @@ namespace NES::Nautilus::TestUtils
 struct RecordWithFields
 {
     RecordWithFields(const Record& record, std::vector<Record::RecordFieldIdentifier>& fields) : record(record), fields(fields) { }
-
     bool operator<(const RecordWithFields& other) const
     {
         for (const auto& fieldIdentifier : nautilus::static_iterable(fields))
@@ -67,7 +65,7 @@ struct RecordWithFields
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view functionName, const ExecutionMode backend)
+    NameAndNautilusBackend(std::string_view functionName, const Configurations::ExecutionMode backend)
         : functionName(std::move(functionName)), backend(backend)
     {
     }
@@ -91,7 +89,7 @@ struct NameAndNautilusBackend
     }
 
     std::string functionName;
-    ExecutionMode backend;
+    Configurations::ExecutionMode backend;
 };
 
 /// Struct that stores a min and max value.
@@ -102,6 +100,8 @@ struct MinMaxValue
     uint64_t max;
 };
 
+
+// TODO check if we can use the CompilationContext here
 /// Base function wrapper class
 class FunctionWrapperBase
 {
@@ -119,11 +119,11 @@ public:
         : FunctionWrapperBase(), func(std::move(function))
     {
     }
-
     ~FunctionWrapper() override = default;
     nautilus::engine::CallableFunction<R, FunctionArguments...> func;
 };
 
+// TODO check if we can use the CompilationContext here
 class NautilusTestUtils
 {
 public:
@@ -155,7 +155,7 @@ public:
 
     void compileFillBufferFunction(
         std::string_view functionName,
-        ExecutionMode backend,
+        Configurations::ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema& schema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer);
@@ -186,6 +186,7 @@ protected:
     /// The idea behind this map is that we can batch/(pre-)compile and trace functions and store them in this map.
     /// Allowing us to not have to recompile/trace the same function in multiple different (parameterized) tests
     /// This map can and will be filled in this class but also in the tests themselves.
+    // TODO check if we can use the CompilationContext here
     std::map<NameAndNautilusBackend, std::unique_ptr<FunctionWrapperBase>> compiledFunctions;
 };
 

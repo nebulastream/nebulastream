@@ -58,7 +58,7 @@ HashMapSlice::~HashMapSlice()
         if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
         {
             /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
+            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->callCompiledFunction(hashMaps[i].get());
         }
     }
 

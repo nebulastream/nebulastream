@@ -27,25 +27,25 @@ namespace NES
 IngestionTimeWatermarkAssignerPhysicalOperator::IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
 
-void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
-    openChild(executionCtx, recordBuffer);
-    timeFunction.open(executionCtx, recordBuffer);
+    openChild(executionContext, compilationContext, recordBuffer);
+    timeFunction.open(executionContext, compilationContext, recordBuffer);
     auto emptyRecord = Record();
-    const auto tsField = [this](ExecutionContext& executionCtx)
+    const auto tsField = [this](ExecutionContext& executionContext, CompilationContext& compilationContext)
     {
         auto emptyRecord = Record();
-        return timeFunction.getTs(executionCtx, emptyRecord);
-    }(executionCtx);
-    if (const auto currentWatermark = executionCtx.watermarkTs; tsField > currentWatermark)
+        return timeFunction.getTs(executionContext, compilationContext, emptyRecord);
+    }(executionContext, compilationContext);
+    if (const auto currentWatermark = executionContext.watermarkTs; tsField > currentWatermark)
     {
-        executionCtx.watermarkTs = tsField;
+        executionContext.watermarkTs = tsField;
     }
 }
 
-void IngestionTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
-    executeChild(executionCtx, record);
+    executeChild(executionContext, compilationContext, record);
 }
 
 std::optional<PhysicalOperator> IngestionTimeWatermarkAssignerPhysicalOperator::getChild() const

@@ -30,6 +30,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Time/Timestamp.hpp>
+
+#include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -48,13 +50,14 @@ Interface::HashMap* getHashJoinHashMapProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator)
+    const HJBuildPhysicalOperator* buildOperator,
+    CompiledFunctionWrapper<void, Interface::HashMap*>* cleanupState)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(),
+        {std::move(cleanupState)},
         buildOperator->hashMapOptions.keySize,
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
@@ -73,17 +76,15 @@ Interface::HashMap* getHashJoinHashMapProxy(
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
 
-void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const
+void HJBuildPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
-    StreamJoinBuildPhysicalOperator::setup(executionCtx, engine);
-
     /// Creating the cleanup function for the slice of current stream
     /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(engine.registerFunction(std::function(
+    auto cleanupStateCompiled = compilationContext.registerFunction<void, Nautilus::Interface::HashMap*>(
+        std::function<void(nautilus::val<Nautilus::Interface::HashMap*>)>(
             [copyOfFieldKeys = hashMapOptions.fieldKeys,
              copyOfFieldValues = hashMapOptions.fieldValues,
              copyOfEntriesPerPage = hashMapOptions.entriesPerPage,
@@ -105,27 +106,23 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, const nautil
                         },
                         state);
                 }
-            })));
+            }));
     /// NOLINTEND(performance-unnecessary-value-param)
-    const auto operatorHandler = dynamic_cast<HJOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
-    operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
-}
 
-void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
-{
     /// Getting the operator handler from the local state
-    auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
+    auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionContext.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
 
     /// Get the current slice / hash map that we have to insert the tuple into
-    const auto timestamp = timeFunction->getTs(ctx, record);
+    const auto timestamp = timeFunction->getTs(executionContext, compilationContext, record);
     const auto hashMapPtr = invoke(
         getHashJoinHashMapProxy,
         operatorHandler,
         timestamp,
-        ctx.workerThreadId,
+        executionContext.workerThreadId,
         nautilus::val<JoinBuildSideType>(joinBuildSide),
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+        nautilus::val<const HJBuildPhysicalOperator*>(this),
+        cleanupStateCompiled);
     Interface::ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
@@ -134,7 +131,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     {
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];
-        const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
+        const auto value = function.execute(record, executionContext.pipelineMemoryProvider.arena);
         record.write(fieldIdentifier, value);
     }
 
@@ -158,14 +155,14 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 },
                 state);
         },
-        ctx.pipelineMemoryProvider.bufferProvider);
+        executionContext.pipelineMemoryProvider.bufferProvider);
 
     /// Inserting the tuple into the corresponding hash entry
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef{
         hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
     auto entryMemArea = entryRef.getValueMemArea();
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
-    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionContext.pipelineMemoryProvider.bufferProvider);
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(

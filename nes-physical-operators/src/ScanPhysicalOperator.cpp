@@ -37,23 +37,23 @@ ScanPhysicalOperator::ScanPhysicalOperator(
 {
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.originId = recordBuffer.getOriginId();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionContext.watermarkTs = recordBuffer.getWatermarkTs();
+    executionContext.originId = recordBuffer.getOriginId();
+    executionContext.currentTs = recordBuffer.getCreatingTs();
+    executionContext.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionContext.chunkNumber = recordBuffer.getChunkNumber();
+    executionContext.lastChunk = recordBuffer.isLastChunk();
     /// call open on all child operators
-    openChild(executionCtx, recordBuffer);
+    openChild(executionContext, compilationContext, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-        executeChild(executionCtx, record);
+        executeChild(executionContext, compilationContext, record);
     }
 }
 

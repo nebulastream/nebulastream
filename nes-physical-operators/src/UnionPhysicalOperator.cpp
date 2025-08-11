@@ -21,10 +21,10 @@
 namespace NES
 {
 
-void UnionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void UnionPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
     /// Path-through, will be optimized out during query compilation
-    executeChild(ctx, record);
+    executeChild(executionContext, compilationContext, record);
 }
 
 std::optional<PhysicalOperator> UnionPhysicalOperator::getChild() const

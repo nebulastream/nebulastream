@@ -50,26 +50,6 @@ HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& ne
         });
 }
 
-void HJOperatorHandler::setNautilusCleanupExec(
-    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide)
-{
-    switch (buildSide)
-    {
-        case JoinBuildSideType::Right:
-            rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-        case JoinBuildSideType::Left:
-            leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-            std::unreachable();
-    }
-}
-
-std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> HJOperatorHandler::getNautilusCleanupExec() const
-{
-    return {leftCleanupStateNautilusFunction, rightCleanupStateNautilusFunction};
-}
-
 void HJOperatorHandler::emitSlicesToProbe(
     Slice& sliceLeft,
     Slice& sliceRight,

@@ -15,6 +15,7 @@ add_subdirectory(Pipelines)
 add_subdirectory(Listeners)
 
 add_source_files(nes-runtime
+        CompilationContext.cpp
         ExecutionContext.cpp
         ExecutableQueryPlan.cpp
 )

@@ -24,6 +24,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
 
@@ -32,10 +33,11 @@ namespace NES
 class HJBuildPhysicalOperator;
 Interface::HashMap* getHashJoinHashMapProxy(
     const HJOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
-    JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator);
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const JoinBuildSideType buildSide,
+    const HJBuildPhysicalOperator* buildOperator,
+    CompiledFunctionWrapper<void, Interface::HashMap*>* cleanupState);
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
@@ -48,15 +50,15 @@ public:
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
         JoinBuildSideType buildSide,
-        const HJBuildPhysicalOperator* buildOperator);
+        const HJBuildPhysicalOperator* buildOperator,
+        CompiledFunctionWrapper<void, Interface::HashMap*>* cleanupState);
     HJBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
         HashMapOptions hashMapOptions);
-    void setup(ExecutionContext& executionCtx, const nautilus::engine::NautilusEngine& engine) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const override;
 
 private:
     HashMapOptions hashMapOptions;
