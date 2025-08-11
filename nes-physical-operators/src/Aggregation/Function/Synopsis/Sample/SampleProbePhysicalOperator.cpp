@@ -22,9 +22,9 @@ namespace NES
 {
 
 SampleProbePhysicalOperator::SampleProbePhysicalOperator(
-    const Schema& sampleSchema, const Record::RecordFieldIdentifier&, WindowMetaData windowMetaData)
+    const Schema& sampleSchema, const Record::RecordFieldIdentifier& fieldIdentifier, WindowMetaData windowMetaData)
     : sampleSchema(sampleSchema)
-    , inputFieldIdentifier("stream$reservoir") // TODO Fix this
+    , inputFieldIdentifier(fieldIdentifier)
     , windowMetaData(windowMetaData)
 {
 }

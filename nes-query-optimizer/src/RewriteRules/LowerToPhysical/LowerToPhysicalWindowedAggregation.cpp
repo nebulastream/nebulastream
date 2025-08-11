@@ -19,6 +19,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
@@ -34,6 +35,7 @@
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/Synopsis/Sample/ReservoirSampleLogicalFunction.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -125,6 +127,12 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             memoryProvider);
+        if (name.contains("ReservoirSample"))
+        {
+            auto logicalReservoirSample
+                = std::static_pointer_cast<ReservoirSampleLogicalFunction>(logicalOperator.getWindowAggregation().front());
+            aggregationArguments.reservoirSize = logicalReservoirSample->getReservoirSize();
+        }
         if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
         {

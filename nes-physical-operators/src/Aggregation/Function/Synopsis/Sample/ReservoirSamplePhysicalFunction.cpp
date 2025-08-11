@@ -121,11 +121,7 @@ Record ReservoirSamplePhysicalFunction::lower(
     const auto pagedVectorPtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector);
     const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-    schema.addField("stream$id", DataType::Type::UINT64);
-    schema.addField("stream$value", DataType::Type::UINT64);
-    schema.addField("stream$timestamp", DataType::Type::UINT64);
-    auto sampleRef = SynopsisFunctionRef(schema);
+    auto sampleRef = SynopsisFunctionRef(sampleSchema);
 
     const auto curRecordIdxPtr = pagedVectorPtr + nautilus::val<uint64_t>(sizeof(Interface::PagedVector));
     const auto sampleDataSizePtr = curRecordIdxPtr + nautilus::val<uint64_t>(sizeof(uint64_t));
@@ -187,13 +183,8 @@ AggregationPhysicalFunctionRegistryReturnType
 AggregationPhysicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    /// TODO Get reservoir size and sampleSchema
-    uint64_t reservoirSize = 5;
-    Schema sampleSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-    sampleSchema.addField("stream$id", DataType::Type::UINT64);
-    sampleSchema.addField("stream$value", DataType::Type::UINT64);
-    sampleSchema.addField("stream$timestamp", DataType::Type::UINT64);
-
+    INVARIANT(arguments.memProviderPagedVector.has_value(), "Memory provider paged vector not set");
+    INVARIANT(arguments.reservoirSize.has_value(), "Reservoir size not set");
 
     return std::make_shared<ReservoirSamplePhysicalFunction>(
         std::move(arguments.inputType),
@@ -201,8 +192,8 @@ AggregationPhysicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregatio
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
         arguments.memProviderPagedVector.value(),
-        reservoirSize,
-        sampleSchema);
+        arguments.reservoirSize.value(),
+        arguments.memProviderPagedVector.value()->getMemoryLayout()->getSchema());
 }
 
 

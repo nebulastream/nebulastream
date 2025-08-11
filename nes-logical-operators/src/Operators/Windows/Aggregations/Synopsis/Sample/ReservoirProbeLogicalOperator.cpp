@@ -64,10 +64,21 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
     auto copy = *this;
 
     copy.inputSchema = inputSchemas[0];
+
+    auto asFieldName = copy.asField.getFieldName();
+    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+    {
+        copy.asField = copy.asField.withFieldName(asFieldName).get<FieldAccessLogicalFunction>();
+    }
+    else
+    {
+        copy.asField = copy.asField.withFieldName(copy.inputSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + asFieldName)
+                               .get<FieldAccessLogicalFunction>();
+    }
+
     copy.outputSchema = Schema{inputSchemas[0].memoryLayoutType};
     for (auto field : copy.inputSchema)
     {
-        auto asFieldName = asField.getFieldName();
         auto fieldWithoutStream = field.name.substr(field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         auto asFieldWithoutStream = asFieldName.substr(asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         if (fieldWithoutStream != asFieldWithoutStream)
@@ -87,18 +98,6 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
         }
         copy.sampleSchema.value().addField(field.name, field.dataType);
     }
-    // copy.outputSchema = Schema{inputSchemas[0].memoryLayoutType};
-    // copy.outputSchema.addField("stream$start", DataType::Type::UINT64);
-    // copy.outputSchema.addField("stream$end", DataType::Type::UINT64);
-    // // copy.outputSchema.addField("stream$id", DataType::Type::UINT64);
-    // copy.outputSchema.addField("stream$id", DataType::Type::UINT64);
-    // copy.outputSchema.addField("stream$value", DataType::Type::UINT64);
-    // copy.outputSchema.addField("stream$timestamp", DataType::Type::UINT64);
-    //
-    // copy.sampleSchema = Schema{inputSchemas[0].memoryLayoutType};
-    // copy.sampleSchema.value().addField("stream$id", DataType::Type::UINT64);
-    // copy.sampleSchema.value().addField("stream$value", DataType::Type::UINT64);
-    // copy.sampleSchema.value().addField("stream$timestamp", DataType::Type::UINT64);
 
     return copy;
 }
@@ -166,79 +165,17 @@ std::string ReservoirProbeLogicalOperator::explain(ExplainVerbosity verbosity) c
 
 SerializableOperator ReservoirProbeLogicalOperator::serialize() const
 {
-    SerializableLogicalOperator proto;
-
-    proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.serialize();
-    }
-
-    const auto inputs = getInputSchemas();
-    const auto originLists = getInputOriginIds();
-    for (size_t i = 0; i < inputs.size(); ++i)
-    {
-        auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
-
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originLists[i])
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
-
+    /// TODO Not yet adapted to reservoirProbe.
     SerializableOperator serializableOperator;
-    serializableOperator.set_operator_id(id.getRawValue());
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
-
-// NES::Configurations::DescriptorConfig::Config ReservoirProbeLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
-// {
-//     return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParameters>(std::move(config), NAME);
-// }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterReservoirProbeLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    /// TODO remove:
+    /// TODO Implement this function when its use is implemented.
     (void)arguments;
-    // auto functionVariant = arguments.config[ReservoirSampleLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
-    // if (std::holds_alternative<NES::FunctionList>(functionVariant))
-    // {
-    //     const auto functions = std::get<FunctionList>(functionVariant).functions();
-    //
-    //     INVARIANT(functions.size() == 1, "Expected exactly one function");
-    //     auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-    //     INVARIANT(
-    //         function.tryGet<FieldAssignmentLogicalFunction>(),
-    //         "Expected a field assignment function, got: {}",
-    //         function.explain(ExplainVerbosity::Debug));
-    //
-    //     auto logicalOperator = MapLogicalOperator(function.get<FieldAssignmentLogicalFunction>());
-    //     if (auto& id = arguments.id)
-    //     {
-    //         logicalOperator.id = *id;
-    //     }
-    //     return logicalOperator.withInferredSchema(arguments.inputSchemas)
-    //         .withInputOriginIds(arguments.inputOriginIds)
-    //         .withOutputOriginIds(arguments.outputOriginIds);
-    // }
+
     throw UnknownLogicalOperator();
 }
 
