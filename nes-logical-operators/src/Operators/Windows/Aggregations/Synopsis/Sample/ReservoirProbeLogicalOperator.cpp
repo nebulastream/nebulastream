@@ -41,7 +41,8 @@
 namespace NES
 {
 
-ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField) : asField(asField)
+ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField)
+    : asField(asField), sampleSchema(std::nullopt)
 {
 }
 
@@ -88,6 +89,11 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
     copy.outputSchema.addField("stream$id", DataType::Type::UINT64);
     copy.outputSchema.addField("stream$value", DataType::Type::UINT64);
     copy.outputSchema.addField("stream$timestamp", DataType::Type::UINT64);
+
+    copy.sampleSchema = Schema{inputSchemas[0].memoryLayoutType};
+    copy.sampleSchema.value().addField("stream$id", DataType::Type::UINT64);
+    copy.sampleSchema.value().addField("stream$value", DataType::Type::UINT64);
+    copy.sampleSchema.value().addField("stream$timestamp", DataType::Type::UINT64);
 
     return copy;
 }

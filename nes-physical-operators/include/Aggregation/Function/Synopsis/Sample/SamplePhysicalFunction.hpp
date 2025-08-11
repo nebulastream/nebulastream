@@ -39,7 +39,8 @@ public:
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
-        uint64_t sampleSize);
+        uint64_t sampleSize,
+        const Schema& sampleSchema);
 
     /// Returns the size of a record including size of variable sized data fields
     nautilus::val<uint64_t> getRecordDataSize(const Record& record) const;
@@ -47,6 +48,7 @@ public:
 protected:
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
     nautilus::val<uint64_t> sampleSize;
+    Schema sampleSchema;
 };
 
 }

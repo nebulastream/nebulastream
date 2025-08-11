@@ -71,6 +71,7 @@ public:
     //         = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
     // };
     FieldAccessLogicalFunction asField;
+    std::optional<Schema> sampleSchema;
 
 private:
     static constexpr std::string_view NAME = "ReservoirProbe";

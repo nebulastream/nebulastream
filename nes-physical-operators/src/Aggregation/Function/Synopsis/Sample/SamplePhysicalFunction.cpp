@@ -26,10 +26,12 @@ SamplePhysicalFunction::SamplePhysicalFunction(
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
-    const uint64_t sampleSize)
+    const uint64_t sampleSize,
+    const Schema& sampleSchema)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , memProviderPagedVector(std::move(memProviderPagedVector))
     , sampleSize(sampleSize)
+    , sampleSchema(sampleSchema)
 {
 }
 

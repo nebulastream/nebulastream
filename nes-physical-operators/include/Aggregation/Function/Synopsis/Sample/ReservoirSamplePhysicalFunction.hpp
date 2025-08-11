@@ -32,7 +32,8 @@ public:
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
-        uint64_t reservoirSize);
+        uint64_t reservoirSize,
+        Schema sampleSchema);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,

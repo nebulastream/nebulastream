@@ -38,14 +38,16 @@ ReservoirSamplePhysicalFunction::ReservoirSamplePhysicalFunction(
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
-    const uint64_t reservoirSize)
+    const uint64_t reservoirSize,
+    Schema sampleSchema)
     : SamplePhysicalFunction(
           std::move(inputType),
           std::move(resultType),
           std::move(inputFunction),
           std::move(resultFieldIdentifier),
           std::move(memProviderPagedVector),
-          reservoirSize)
+          reservoirSize,
+          sampleSchema)
 {
     PRECONDITION(reservoirSize != 0, "Reservoir size cannot be zero");
 }
@@ -185,8 +187,13 @@ AggregationPhysicalFunctionRegistryReturnType
 AggregationPhysicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    /// TODO Get reservoir size
+    /// TODO Get reservoir size and sampleSchema
     uint64_t reservoirSize = 5;
+    Schema sampleSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    sampleSchema.addField("stream$id", DataType::Type::UINT64);
+    sampleSchema.addField("stream$value", DataType::Type::UINT64);
+    sampleSchema.addField("stream$timestamp", DataType::Type::UINT64);
+
 
     return std::make_shared<ReservoirSamplePhysicalFunction>(
         std::move(arguments.inputType),
@@ -194,7 +201,8 @@ AggregationPhysicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregatio
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
         arguments.memProviderPagedVector.value(),
-        reservoirSize);
+        reservoirSize,
+        sampleSchema);
 }
 
 
