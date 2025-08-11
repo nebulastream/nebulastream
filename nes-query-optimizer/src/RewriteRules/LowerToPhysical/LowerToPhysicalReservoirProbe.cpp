@@ -32,11 +32,14 @@ RewriteRuleResultSubgraph LowerToPhysicalReservoirProbe::apply(LogicalOperator l
 {
     PRECONDITION(logicalOperator.tryGet<ReservoirProbeLogicalOperator>(), "Expected a ReservoirProbeLogicalOperator");
     auto reservoirProbe = logicalOperator.get<ReservoirProbeLogicalOperator>();
-    const auto sampleSchema = reservoirProbe.getOutputSchema();
+    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    schema.addField("stream$id", DataType::Type::UINT64);
+    schema.addField("stream$value", DataType::Type::UINT64);
+    schema.addField("stream$timestamp", DataType::Type::UINT64);
     auto asField = reservoirProbe.asField.getFieldName();
     /// TODO get these from the logical operator!
     const auto windowMetaData = WindowMetaData{"stream$start", "stream$end"};
-    auto physicalOperator = SampleProbePhysicalOperator(sampleSchema, asField, windowMetaData);
+    auto physicalOperator = SampleProbePhysicalOperator(schema, asField, windowMetaData);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         logicalOperator.getInputSchemas()[0],

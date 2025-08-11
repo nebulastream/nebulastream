@@ -119,7 +119,11 @@ Record ReservoirSamplePhysicalFunction::lower(
     const auto pagedVectorPtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector);
     const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
-    auto sampleRef = SynopsisFunctionRef(memProviderPagedVector->getMemoryLayout()->getSchema());
+    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    schema.addField("stream$id", DataType::Type::UINT64);
+    schema.addField("stream$value", DataType::Type::UINT64);
+    schema.addField("stream$timestamp", DataType::Type::UINT64);
+    auto sampleRef = SynopsisFunctionRef(schema);
 
     const auto curRecordIdxPtr = pagedVectorPtr + nautilus::val<uint64_t>(sizeof(Interface::PagedVector));
     const auto sampleDataSizePtr = curRecordIdxPtr + nautilus::val<uint64_t>(sizeof(uint64_t));

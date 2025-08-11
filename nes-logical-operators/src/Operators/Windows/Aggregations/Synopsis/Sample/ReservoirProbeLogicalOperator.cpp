@@ -63,21 +63,31 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
     auto copy = *this;
 
     copy.inputSchema = inputSchemas[0];
-    for (auto field : copy.inputSchema)
-    {
-        if (field.name != asField.getFieldName())
-        {
-            copy.outputSchema.addField(field.name, field.dataType);
-        }
-    }
-    /// Accessing the last time the stream was not yet "sampled".
-    /// TODO This might not be a great solution.
-    auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
-    for (auto field : aggSchema.getFields())
-    {
-        copy.outputSchema.addField(field.name, field.dataType);
-    }
-
+    // for (auto field : copy.inputSchema)
+    // {
+    //     auto asFieldName = asField.getFieldName();
+    //     auto fieldWithoutStream = field.name.substr(field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    //     auto asFieldWithoutStream = asFieldName.substr(asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    //     if (fieldWithoutStream != asFieldWithoutStream)
+    //     {
+    //         copy.outputSchema.addField(field.name, field.dataType);
+    //     }
+    // }
+    // /// Accessing the last time the stream was not yet "sampled" to get the sample's schema.
+    // /// TODO This might not be a great solution.
+    // auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
+    // for (auto field : aggSchema.getFields())
+    // {
+    //     auto fieldWithoutStream = field.name.substr(field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    //     copy.outputSchema.addField(fieldWithoutStream, field.dataType);
+    // }
+    copy.outputSchema = Schema{inputSchemas[0].memoryLayoutType};
+    copy.outputSchema.addField("stream$start", DataType::Type::UINT64);
+    copy.outputSchema.addField("stream$end", DataType::Type::UINT64);
+    // copy.outputSchema.addField("stream$id", DataType::Type::UINT64);
+    copy.outputSchema.addField("stream$id", DataType::Type::UINT64);
+    copy.outputSchema.addField("stream$value", DataType::Type::UINT64);
+    copy.outputSchema.addField("stream$timestamp", DataType::Type::UINT64);
 
     return copy;
 }

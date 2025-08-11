@@ -130,8 +130,8 @@ Record SynopsisFunctionRef::readNextRecord()
         {
             record.write(fieldName, VarVal::readVarValFromMemory(currReadPtr, dataType.type));
         }
-
-        currReadPtr += nautilus::val<uint64_t>(dataType.getSizeInBytes());
+        auto temp = dataType.getSizeInBytes();
+        currReadPtr += nautilus::val<uint64_t>(temp);
     }
 
     return record;
