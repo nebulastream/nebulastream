@@ -21,6 +21,7 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
+
 /// Implements MemoryProvider. Provides columnar memory access.
 class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
@@ -52,4 +53,5 @@ private:
     /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
     std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayout;
 };
+
 }

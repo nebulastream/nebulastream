@@ -48,7 +48,6 @@
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
-
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>

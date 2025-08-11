@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -30,6 +31,7 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
+
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
     : rowMemoryLayout(std::move(rowMemoryLayout)) { };
 
@@ -88,4 +90,5 @@ void RowTupleBufferMemoryProvider::writeRecord(
         storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }
+
 }

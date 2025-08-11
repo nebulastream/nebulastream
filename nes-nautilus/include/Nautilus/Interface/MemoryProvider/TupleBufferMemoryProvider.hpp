@@ -26,6 +26,8 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
+
+
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
 class TupleBufferMemoryProvider
@@ -78,4 +80,5 @@ protected:
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);
 };
+
 }

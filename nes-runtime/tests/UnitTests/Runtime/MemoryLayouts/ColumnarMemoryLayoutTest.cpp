@@ -30,7 +30,6 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
@@ -374,4 +373,5 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
 }
+
 }

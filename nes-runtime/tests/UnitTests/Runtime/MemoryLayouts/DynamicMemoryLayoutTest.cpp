@@ -28,7 +28,6 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
-
 #include <BaseUnitTest.hpp>
 
 namespace NES::Memory::MemoryLayouts
