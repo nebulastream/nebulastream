@@ -11,17 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/ColumnLayout.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
+
 ColumnLayout::ColumnLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
@@ -68,4 +70,5 @@ uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
     PRECONDITION(fieldIndex < columnOffsets.size(), "Field index is out of bounds");
     return columnOffsets[fieldIndex];
 }
+
 }

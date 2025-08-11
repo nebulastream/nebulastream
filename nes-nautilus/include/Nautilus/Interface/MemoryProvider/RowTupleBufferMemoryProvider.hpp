@@ -21,6 +21,7 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
+
 /// Implements MemoryProvider. Provides row-wise memory access.
 class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
@@ -52,4 +53,5 @@ private:
     /// the same, during tracing and during the execution of the generated code.
     std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
 };
+
 }

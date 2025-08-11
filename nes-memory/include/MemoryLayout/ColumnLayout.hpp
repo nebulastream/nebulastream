@@ -21,6 +21,7 @@
 
 namespace NES::Memory::MemoryLayouts
 {
+
 /**
  * @brief Implements a columnar layout, that maps all tuples in a tuple buffer to a column-wise layout.
  * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
@@ -54,4 +55,5 @@ private:
 
     std::vector<uint64_t> columnOffsets;
 };
+
 }

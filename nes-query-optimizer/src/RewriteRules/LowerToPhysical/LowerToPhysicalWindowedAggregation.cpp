@@ -52,6 +52,7 @@
 
 namespace NES
 {
+
 static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
 getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
 {

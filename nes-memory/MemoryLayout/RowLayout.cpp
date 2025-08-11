@@ -11,18 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/RowLayout.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
+
 RowLayout::RowLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))
 {
     uint64_t offsetCounter = 0;
@@ -73,4 +75,5 @@ uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fie
     NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = {}", offSet);
     return offSet;
 }
+
 }

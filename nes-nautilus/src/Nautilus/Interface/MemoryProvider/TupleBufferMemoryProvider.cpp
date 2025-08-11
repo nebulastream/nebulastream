@@ -37,7 +37,6 @@
 #include <Util/Common.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
-
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider

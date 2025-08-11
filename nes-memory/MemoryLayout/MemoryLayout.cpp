@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -19,7 +20,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -30,6 +30,7 @@
 
 namespace NES::Memory::MemoryLayouts
 {
+
 std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
