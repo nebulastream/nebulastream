@@ -161,8 +161,8 @@ std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
 
 Schema SinkLogicalOperator::getOutputSchema() const
 {
-    INVARIANT(!children.empty(), "Logical Sink should have at least one child");
-    return children.at(0).getOutputSchema();
+    INVARIANT(this->sinkDescriptor.has_value(), "Logical Sink must have a valid descriptor (with a schema).");
+    return *this->sinkDescriptor.value().getSchema();
 }
 
 std::vector<std::vector<OriginId>> SinkLogicalOperator::getInputOriginIds() const
