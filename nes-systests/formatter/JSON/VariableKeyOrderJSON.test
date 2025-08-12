@@ -1,0 +1,34 @@
+# name: JSON.test
+# description: tests that the json input formatter supports different orderings for the keys
+# groups: [Formatter, JSON]
+
+Source variableKeyOrderStream UINT64 key UINT64 value VARSIZED name
+
+ATTACH File JSON variableKeyOrderStream INLINE
+{"name":"john", "key":1, "value":1}
+{"value":2, "key":1, "name":"max"}
+
+Sink keySink UINT64 variableKeyOrderStream$key
+Sink valueSink UINT64 variableKeyOrderStream$value
+Sink nameSink VARSIZED variableKeyOrderStream$name
+Sink allFieldsSink UINT64 variableKeyOrderStream$key UINT64 variableKeyOrderStream$value VARSIZED variableKeyOrderStream$name
+
+SELECT key FROM variableKeyOrderStream INTO keySink
+----
+1
+1
+
+SELECT value FROM variableKeyOrderStream INTO valueSink
+----
+1
+2
+
+SELECT name FROM variableKeyOrderStream INTO nameSink
+----
+john
+max
+
+SELECT * FROM variableKeyOrderStream INTO allFieldsSink
+----
+1,1,john
+1,2,max
