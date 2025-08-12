@@ -167,6 +167,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
 def short_name(name: str):
     name = name.replace("(anonymous namespace)", "anon")
+    name = name.replace("[abi:cxx11]", "")
 
     if name.startswith("_Z"):
         return "mangled"
