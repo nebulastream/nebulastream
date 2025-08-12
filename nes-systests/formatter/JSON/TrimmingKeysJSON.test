@@ -1,0 +1,34 @@
+# name: JSON.test
+# description: tests that the json input formatter supports padded keys and values
+# groups: [Formatter, JSON]
+
+Source paddedKeysStream UINT64 key UINT64 value VARSIZED name
+
+ATTACH File JSON paddedKeysStream INLINE
+{"key":1,   "value":1, "name":"john"}
+{"key":1, "value":2,                    "name":"max"}
+
+Sink keySink UINT64 paddedKeysStream$key
+Sink valueSink UINT64 paddedKeysStream$value
+Sink nameSink VARSIZED paddedKeysStream$name
+Sink allFieldsSink UINT64 paddedKeysStream$key UINT64 paddedKeysStream$value VARSIZED paddedKeysStream$name
+
+SELECT key FROM paddedKeysStream INTO keySink
+----
+1
+1
+
+SELECT value FROM paddedKeysStream INTO valueSink
+----
+1
+2
+
+SELECT name FROM paddedKeysStream INTO nameSink
+----
+john
+max
+
+SELECT * FROM paddedKeysStream INTO allFieldsSink
+----
+1,1,john
+1,2,max

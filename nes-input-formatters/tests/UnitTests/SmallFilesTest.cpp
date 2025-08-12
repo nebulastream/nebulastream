@@ -73,19 +73,47 @@ class SmallFilesTest : public Testing::BaseUnitTest
     {
         std::filesystem::path fileName;
         std::vector<InputFormatterTestUtil::TestDataTypes> schemaFieldTypes;
+        std::vector<std::string> schemaFieldNames;
     };
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns", .schemaFieldTypes = {INT32, INT32}}},
+        {"TwoIntegerColumns",
+         TestFile{.fileName = "TwoIntegerColumns", .schemaFieldTypes = {INT32, INT32}, .schemaFieldNames = {"id", "value"}}},
         {"Bimbo", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
              .fileName = "Bimbo",
-             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
+             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16},
+             .schemaFieldNames
+             = {"Agencia_ID",
+                "Canal_ID",
+                "Cliente_ID",
+                "Demanda_uni_equil",
+                "Dev_proxima",
+                "Dev_uni_proxima",
+                "Number of Records",
+                "Producto_ID",
+                "Ruta_SAK",
+                "Semana",
+                "Venta_hoy",
+                "Venta_uni_hoy"}}},
         {"Food", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{.fileName = "Food", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+         TestFile{
+             .fileName = "Food",
+             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64},
+             .schemaFieldNames = {"Number of Records", "activity_sec", "application", "device", "subscribers", "volume_total_bytes"}}},
         {"Spacecraft_Telemetry", /// generated
-         TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
+         TestFile{
+             .fileName = "Spacecraft_Telemetry",
+             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64},
+             .schemaFieldNames
+             = {"temperature_delta",
+                "power_level",
+                "is_sunlit",
+                "status_code",
+                "operation_state",
+                "radiation_level",
+                "orbital_velocity"}}}};
 
     SourceCatalog sourceCatalog;
 
@@ -157,7 +185,7 @@ public:
     SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
-        const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
+        const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes, currentTestFile.schemaFieldNames);
         const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType;
         const auto testFilePath
             = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view formatterType)
@@ -300,7 +328,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
+        .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
@@ -311,7 +339,7 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
+        .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
@@ -322,7 +350,7 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
+        .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
@@ -333,7 +361,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
+        .sizeOfRawBuffers = 16});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
