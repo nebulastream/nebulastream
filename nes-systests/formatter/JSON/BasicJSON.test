@@ -1,0 +1,34 @@
+# name: JSON.test
+# description: tests general input formatter behavior
+# groups: [Formatter, JSON]
+
+Source jsonStream UINT64 key UINT64 value VARSIZED name
+
+ATTACH File JSON jsonStream INLINE
+{"key":1, "value":1, "name":"john"}
+{"key":1, "value":2, "name":"max"}
+
+Sink keySink UINT64 jsonStream$key
+Sink valueSink UINT64 jsonStream$value
+Sink nameSink VARSIZED jsonStream$name
+Sink allFieldsSink UINT64 jsonStream$key UINT64 jsonStream$value VARSIZED jsonStream$name
+
+SELECT key FROM jsonStream INTO keySink
+----
+1
+1
+
+SELECT value FROM jsonStream INTO valueSink
+----
+1
+2
+
+SELECT name FROM jsonStream INTO nameSink
+----
+john
+max
+
+SELECT * FROM jsonStream INTO allFieldsSink
+----
+1,1,john
+1,2,max

@@ -33,12 +33,28 @@ constexpr auto JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
 
 struct JSONMetaData
 {
-    explicit JSONMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit JSONMetaData(const ParserConfig& config, const Schema& schema) : tupleDelimiter(config.tupleDelimiter)
+    {
+        for (const auto& [fieldIdx, field] : schema | NES::views::enumerate)
+        {
+            if (const auto& qualifierPosition = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
+            {
+                fieldNameToIndexOffset.emplace(field.name.substr(qualifierPosition + 1), fieldIdx);
+            }
+            else
+            {
+                fieldNameToIndexOffset.emplace(field.name, fieldIdx);
+            }
+        }
+    };
 
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
+    const std::unordered_map<std::string, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
+
 private:
     std::string tupleDelimiter;
+    std::unordered_map<std::string, FieldIndex> fieldNameToIndexOffset;
 };
 
 class JSONInputFormatIndexer final : public InputFormatIndexer<JSONInputFormatIndexer>
@@ -52,6 +68,7 @@ public:
     static constexpr char TUPLE_DELIMITER = '\n';
     static constexpr char KEY_VALUE_DELIMITER = ':';
     static constexpr char FIELD_DELIMITER = ',';
+    static constexpr char KEY_QUOTE = '"';
 
     explicit JSONInputFormatIndexer(const ParserConfig& config, size_t numberOfFieldsInSchema);
     ~JSONInputFormatIndexer() = default;

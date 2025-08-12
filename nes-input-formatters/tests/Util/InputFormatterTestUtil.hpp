@@ -138,7 +138,9 @@ public:
     }
 };
 
+/// Generates field names (for field N: Field_N)
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
