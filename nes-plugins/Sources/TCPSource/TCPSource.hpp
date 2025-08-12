@@ -39,6 +39,66 @@
 namespace NES::Sources
 {
 
+struct AddressInfo
+{
+    static std::expected<AddressInfo, std::string> from(const std::string& host, uint16_t port);
+
+    auto operator*() const { return *result; }
+    auto operator->() const { return result.operator->(); }
+
+    std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> result;
+};
+
+struct OwnedDescriptor
+{
+    int descriptor = -1;
+    explicit OwnedDescriptor(int descriptor);
+    ~OwnedDescriptor();
+
+    operator int() const { return descriptor; }
+
+    OwnedDescriptor(OwnedDescriptor&& other) noexcept;
+    OwnedDescriptor& operator=(OwnedDescriptor&& other) noexcept;
+    OwnedDescriptor(const OwnedDescriptor& other) = delete;
+    OwnedDescriptor& operator=(const OwnedDescriptor& other) = delete;
+};
+
+struct Socket
+{
+    static std::expected<Socket, std::string> create(const AddressInfo& address);
+
+    std::expected<void, std::string> addFlag(unsigned flag);
+
+    std::expected<void, std::string> removeFlag(unsigned flag);
+
+    auto setNonBlock();
+    auto setBlock();
+
+    std::expected<void, std::string> setTimeouts(std::chrono::microseconds timeoutDuration);
+
+    std::expected<void, std::string> checkError() const;
+
+    OwnedDescriptor descriptor;
+    unsigned flags;
+    std::chrono::microseconds timeout;
+};
+
+struct Connection
+{
+    static std::expected<Connection, std::string> from(Socket sock, AddressInfo addrinfo, std::chrono::microseconds connectionTimeout);
+
+    std::expected<void, std::string> reconnect();
+    struct EoS
+    {
+    };
+
+    std::expected<std::span<uint8_t>, std::variant<EoS, std::string>> receive(std::span<uint8_t> result, std::chrono::microseconds timeout);
+
+    Socket socket;
+    AddressInfo addrinfo;
+    std::chrono::microseconds connectionTimeout;
+};
+
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
@@ -191,21 +251,15 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
     bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
-    int connection = -1;
-    int sockfd = -1;
-
-    /// buffer for thread-safe strerror_r
-    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
+    std::optional<Connection> connection;
 
     std::string socketHost;
-    std::string socketPort;
+    uint16_t socketPort;
     int socketType;
     int socketDomain;
     float flushIntervalInMs;
-    uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
     u_int32_t connectionTimeout;
 };

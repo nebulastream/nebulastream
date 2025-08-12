@@ -97,8 +97,17 @@ int main(const int argc, char** argv)
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        int attempts = 0;
         while (!pendingQueries.empty())
         {
+            if (attempts > 80)
+            {
+                std::cerr << "deadlock?" << std::endl;
+                exit(1);
+            } else
+            {
+                std::cout << "running" << std::endl;
+            }
             std::vector<std::pair<std::string, NES::QueryId>> newPendingQueries;
             for (auto [grpc, query] : pendingQueries)
             {
@@ -110,6 +119,7 @@ int main(const int argc, char** argv)
             }
             pendingQueries = std::move(newPendingQueries);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            attempts++;
         }
 
         std::cout << "All Queries done";

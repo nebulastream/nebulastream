@@ -64,7 +64,7 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(Memory::TupleBuffer
     const std::stop_callback callback(stopToken, [this] { interrupt_receiver(**channel); });
     if (receive_buffer(**channel, builder))
     {
-        // NES_DEBUG("Received buffer {}", tupleBuffer.getSequenceNumber());
+         NES_DEBUG("Received buffer {}, {}", tupleBuffer.getSequenceNumber(), channelId);
         return FillTupleBufferResult(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
     return FillTupleBufferResult(); /// End of Stream

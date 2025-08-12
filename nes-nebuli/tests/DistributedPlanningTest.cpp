@@ -84,7 +84,7 @@ TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 {
-    const auto decomposedPlan = QueryPlanner::plan(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "join_placement_with_one_selection.yaml");
+    const auto [decomposedPlan, a, b] = QueryPlanner::plan(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "join_placement_with_one_selection.yaml");
 
     const auto sourceNode0Plan = decomposedPlan.at("source-node0");
     EXPECT_EQ(flatten(sourceNode0Plan).size(), 3);

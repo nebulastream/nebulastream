@@ -125,7 +125,7 @@ impl CommunicationListener for MemComListener {
     type Reader = ReadHalf<SimplexStream>;
     type Writer = WriteHalf<SimplexStream>;
     async fn listen(&mut self) -> Result<Channel<Self::Reader, Self::Writer>> {
-        let duplex = memcom_listen(self.connection_identifier.as_ref().clone()).await;
+        let duplex = memcom_listen(self.connection_identifier.as_ref().clone()).await?;
         Ok(Channel {
             reader: duplex.read,
             writer: duplex.write,
@@ -148,7 +148,7 @@ impl Communication for MemCom {
         &self,
         identifier: &ConnectionIdentifier,
     ) -> Result<Channel<ReadHalf<SimplexStream>, WriteHalf<SimplexStream>>> {
-        let channel = memcom_connect(identifier).await;
+        let channel = memcom_connect(identifier).await?;
         Ok(Channel {
             reader: channel.read,
             writer: channel.write,

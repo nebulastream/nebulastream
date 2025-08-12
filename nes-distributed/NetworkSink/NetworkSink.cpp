@@ -166,6 +166,7 @@ void NetworkSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecut
         children.emplace_back(childBuffer.getBuffer<uint8_t>(), childBuffer.getBufferSize());
     }
 
+    NES_DEBUG("TRying to send");
     /// Set data and send over the network
     const auto sendResult = try_send_on_channel(
         **channel,

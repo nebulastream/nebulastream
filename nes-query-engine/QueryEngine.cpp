@@ -41,6 +41,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -295,24 +296,26 @@ public:
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            [id, sourceId, listener = listener]
-            { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
-            {}});
+        admissionQueue.blockingWrite(
+            StopSourceTask{
+                id,
+                std::move(source),
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); },
+                {}});
     }
 
     void emitPendingPipelineStop(
@@ -333,6 +336,7 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , admissionQueue(admissionQueueSize)
         , internalTaskQueue(internalTaskQueueSize)
+        , delayedTaskSubmitter(std::function([this](Task&& t) { internalTaskQueue.blockingWrite(std::move(t)); }))
     {
     }
 
@@ -423,6 +427,7 @@ private:
 
     detail::Queue admissionQueue;
     detail::Queue internalTaskQueue;
+    DelayedTaskSubmitter delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
@@ -448,6 +453,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        bool repeated = false;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -455,6 +461,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto continuationPolicy)
             {
+                INVARIANT(repeated == false, "Repeated WorkTask must have been emitted only once");
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
@@ -462,7 +469,11 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
+                    pool.delayedTaskSubmitter.submitTaskIn(
+                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.onCompletion), std::move(task.onError)),
+                        std::chrono::milliseconds(25));
+                    repeated = true;
+                    return true;
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(
@@ -578,9 +589,13 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 
             if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
             {
-                pool.emitPipelineStop(stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline),
-                std::move(stopPipelineTask.onCompletion),
-                std::move(stopPipelineTask.onError));
+                pool.delayedTaskSubmitter.submitTaskIn(
+                    StopPipelineTask(
+                        stopPipelineTask.queryId,
+                        std::move(stopPipelineTask.pipeline),
+                        std::move(stopPipelineTask.onCompletion),
+                        std::move(stopPipelineTask.onError)),
+                    std::chrono::milliseconds(25));
                 return true;
             }
 
@@ -733,8 +748,9 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(
-          statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
+    , threadPool(
+          std::make_unique<ThreadPool>(
+              statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {

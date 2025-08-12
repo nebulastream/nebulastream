@@ -1,0 +1,79 @@
+query: |
+  SELECT start, end, id FROM (
+    SELECT * FROM (SELECT * FROM stream)
+    INNER JOIN (SELECT * FROM stream2)
+    ON id = id2
+    WINDOW TUMBLING (timestamp, size 1 sec)
+  )
+  INTO sink;
+sinks:
+  - name: sink
+    type: File
+    config:
+      filePath: /tmp/out.csv
+      inputFormat: CSV
+    schema:
+      - name: streamstream2$start
+        dataType: UINT64
+      - name: streamstream2$end
+        dataType: UINT64
+      - name: stream$id
+        dataType: UINT64
+    host: worker-1:9090
+
+logicalSources:
+  - name: stream
+    schema:
+      - dataType: UINT64
+        name: id
+      - dataType: UINT64
+        name: value
+      - dataType: UINT64
+        name: timestamp
+  - name: stream2
+    schema:
+      - dataType: UINT64
+        name: id2
+      - dataType: UINT64
+        name: value
+      - dataType: UINT64
+        name: timestamp
+
+physicalSources:
+  - logicalSource: stream
+    host: worker-2:9090
+    parserConfig:
+      type: CSV
+    type: TCP
+    sourceConfig:
+      socketHost: 127.0.0.1
+      socketPort: 9999
+      flushIntervalMS: 1
+      socketType: SOCK_STREAM
+      socketDomain: AF_INET
+  - logicalSource: stream2
+    host: worker-3:9090
+    parserConfig:
+      type: CSV
+    type: TCP
+    sourceConfig:
+      socketHost: 127.0.0.1
+      socketPort: 9999
+      flushIntervalMS: 1
+      socketType: SOCK_STREAM
+      socketDomain: AF_INET
+
+workerNodes:
+  - host: worker-1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 100
+  - host: worker-2:9090
+    grpc: 127.0.0.1:8081
+    capacity: 0
+    downstreamNodes:
+      - worker-1:9090
+  - host: worker-3:9090
+    grpc: 127.0.0.1:8082
+    capacity: 0
+    downstreamNodes:
+      - worker-1:9090

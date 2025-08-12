@@ -33,7 +33,7 @@ async fn handle_client(mut socket: TcpStream, client_address: std::net::SocketAd
         return;
     }
 
-    for _i in 0..1000000 {
+    for _i in 0..2 {
         monotonic_counter += 1000;
         let random_val = rand::thread_rng().gen_range(0.0..100.0);
 
@@ -58,6 +58,7 @@ async fn handle_client(mut socket: TcpStream, client_address: std::net::SocketAd
             break;
         }
     }
+    sleep(Duration::from_secs(1)).await;
     println!("[*] Closing connection to {}", client_address);
 }
 

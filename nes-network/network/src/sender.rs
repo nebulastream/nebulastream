@@ -457,7 +457,7 @@ async fn establish_channel<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                         {
                             None => {}
                             Some(Ok(())) => {
-                                info!("Channel connection lost.Reopening channel");
+                                info!("Channel connection lost. Reopening channel");
                             }
                             Some(Err(_)) => {}
                         }
@@ -523,7 +523,7 @@ async fn connection_handler<L: Communication + 'static>(
                                 target_connection
                             );
                             retry += 1;
-                            tokio::time::sleep(Duration::from_secs(retry)).await;
+                            tokio::time::sleep(Duration::from_millis(10 * 2u64.pow(retry))).await;
                             continue;
                         }
                     };

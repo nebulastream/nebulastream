@@ -376,7 +376,7 @@ int main(const int argc, char** argv)
                 const auto& subparser = program.at<argparse::ArgumentParser>(command);
                 const auto inputPath = subparser.get<std::string>(ARG_INPUT_SHORT);
 
-                auto [decomposedPlan, _] = NES::QueryPlanner::plan(inputPath);
+                auto [decomposedPlan, a, b] = NES::QueryPlanner::plan(inputPath);
 
                 if (command == CMD_DUMP)
                 {
