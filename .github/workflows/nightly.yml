@@ -92,7 +92,7 @@ jobs:
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           echo checking $(find ../../corpus -type f | wc -l) files.
-          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {} 2> /dev/null; then git mv -f {} crash-$(basename {}); fi"
+          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'if ! $fuzzer {} 2> /dev/null; then git mv -f {} crash-$(basename {}); fi'
       - name: commit corpus
         run: |
           cd nes-corpora
@@ -226,7 +226,7 @@ jobs:
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           echo checking $(find -type f | wc -l) files.
-          find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if $fuzzer {} 2> /dev/null; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi"
+          find -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'if $fuzzer {} 2> /dev/null; then mv -f {} /corpus_wip/$(echo {} | awk -F- '{ print $NF }'); fi'
       - name: check for broken inputs
         shell: bash
         timeout-minutes: 60
@@ -236,7 +236,7 @@ jobs:
         run: |
           cd nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }}
           echo checking $(find ../../corpus -type f | wc -l) files.
-          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {} 2> /dev/null; then git mv -f {} crash-$(basename {}); fi"
+          find ../../corpus -type f -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'if ! $fuzzer {} 2> /dev/null; then mv -f {} crash-$(basename {}); fi'
       - name: cull garbage files
         run: |
           find nes-corpora/${{ inputs.fuzzer }}/broken/${{ matrix.sanitizer }} -name "*.log"   -delete
@@ -407,7 +407,7 @@ jobs:
           do
             echo checking $(find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f | wc -l) files in $sanitizer
             find $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/$sanitizer -type f -print0 | \
-              xargs -0 --max-procs=$(nproc) -I {} sh -c "if ! $fuzzer {}; then echo mv to none {}; mv -f {} $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none; fi"
+              xargs -0 --max-procs=$(nproc) -I {} sh -c 'if ! $fuzzer {}; then echo mv to none {}; mv -f {} $in_pwd/nes-corpora/${{ inputs.fuzzer }}/broken/none; fi'
           done
       - name: commit corpus
         run: |
