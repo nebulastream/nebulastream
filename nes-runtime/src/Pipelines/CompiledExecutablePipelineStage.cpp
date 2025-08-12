@@ -77,9 +77,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
     }
     catch (...)
     {
-        auto queryCompilerNautilusException = wrapExternalException();
-        queryCompilerNautilusException.what() += fmt::format("Could not query compile pipeline: {}", *pipeline);
-        throw queryCompilerNautilusException;
+        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
     }
 }
 
