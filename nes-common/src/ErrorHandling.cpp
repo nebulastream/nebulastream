@@ -175,6 +175,28 @@ Exception wrapExternalException()
     }
 }
 
+Exception wrapExternalException(std::string contextMsg)
+{
+    try
+    {
+        throw;
+    }
+    catch (const Exception& e)
+    {
+        return e;
+    }
+    catch (const std::exception& e)
+    {
+        auto trace = cpptrace::raw_trace_from_current_exception();
+        auto msg = fmt::format("{}\ne.what: '{}'", contextMsg, e.what());
+        return {std::move(msg), ErrorCode::UnknownException, std::move(trace)};
+    }
+    catch (...) /// NOLINT(no-raw-catch-all)
+    {
+        return UnknownException();
+    }
+}
+
 ErrorCode getCurrentErrorCode()
 {
     try

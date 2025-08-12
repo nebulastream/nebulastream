@@ -192,7 +192,7 @@ void TCPSource::open()
     catch (const std::exception& e)
     {
         ::close(sockfd); /// close socket to clean up state
-        throw CannotOpenSource("Could not establish connection! Error: {}", e.what());
+        throw wrapExternalException("Could not establich connection!");
     }
 
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
