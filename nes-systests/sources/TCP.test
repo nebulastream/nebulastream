@@ -1,6 +1,6 @@
-# name: projection/Projection.test
-# description: Simple map tests with an add function
-# groups: [Projection]
+# name: sources/TCP.test
+# description: forwarding queries with mixed CSV/TCP sources
+# groups: [Sources]
 
 # Source/Sink for single TCP stream
 Source stream UINT64 id UINT64 value UINT64 timestamp
