@@ -64,15 +64,15 @@ Interface::HashMap* getHashMapPtrProxy(Interface::HashMap** hashMaps, const uint
 }
 }
 
-void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void HJProbePhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
+    executionContext.watermarkTs = recordBuffer.getWatermarkTs();
+    executionContext.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionContext.chunkNumber = recordBuffer.getChunkNumber();
+    executionContext.lastChunk = recordBuffer.isLastChunk();
+    executionContext.originId = recordBuffer.getOriginId();
+    StreamJoinProbePhysicalOperator::open(executionContext, compilationContext, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getBuffer());
@@ -136,7 +136,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                             const auto rightRecord = *rightIt;
                             auto joinedRecord
                                 = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
-                            executeChild(executionCtx, joinedRecord);
+                            executeChild(executionContext, compilationContext, joinedRecord);
                         }
                     }
                 }

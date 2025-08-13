@@ -27,14 +27,14 @@ MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWr
 {
 }
 
-void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void MapPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
     /// execute map function
-    const auto value = mapFunction.execute(record, ctx.pipelineMemoryProvider.arena);
+    const auto value = mapFunction.execute(record, executionContext.pipelineMemoryProvider.arena);
     /// write the result to the record
     record.write(fieldToWriteTo, value);
     /// call next operator
-    executeChild(ctx, record);
+    executeChild(executionContext, compilationContext, record);
 }
 
 std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const

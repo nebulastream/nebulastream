@@ -27,7 +27,7 @@
 namespace NES
 {
 
-void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
+void EventTimeFunction::open(ExecutionContext&, CompilationContext&, RecordBuffer&) const
 {
     /// nop
 }
@@ -37,23 +37,25 @@ EventTimeFunction::EventTimeFunction(PhysicalFunction timestampFunction, const W
 {
 }
 
-nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record) const
+nautilus::val<Timestamp>
+EventTimeFunction::getTs(ExecutionContext& executionContext, CompilationContext&, Record& record) const
 {
-    const auto ts = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
+    const auto ts = this->timestampFunction.execute(record, executionContext.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
-    ctx.currentTs = tsInMs;
+    executionContext.currentTs = tsInMs;
     return tsInMs;
 }
 
-void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer) const
+void IngestionTimeFunction::open(ExecutionContext& executionContext, CompilationContext&, RecordBuffer& buffer) const
 {
-    ctx.currentTs = buffer.getCreatingTs();
+    executionContext.currentTs = buffer.getCreatingTs();
 }
 
-nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Record&) const
+nautilus::val<Timestamp>
+IngestionTimeFunction::getTs(ExecutionContext& executionContext, CompilationContext&, Record&) const
 {
-    return ctx.currentTs;
+    return executionContext.currentTs;
 }
 
 }

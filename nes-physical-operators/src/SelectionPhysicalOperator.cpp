@@ -22,12 +22,12 @@
 namespace NES
 {
 
-void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void SelectionPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
     /// evaluate function and call child operator if function is valid
-    if (function.execute(record, ctx.pipelineMemoryProvider.arena))
+    if (function.execute(record, executionContext.pipelineMemoryProvider.arena))
     {
-        executeChild(ctx, record);
+        executeChild(executionContext, compilationContext, record);
     }
 }
 

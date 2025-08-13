@@ -22,6 +22,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -58,54 +59,46 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
     opHandler->triggerAllWindows(piplineContext);
 }
 
-/// The slice store needs to know in how many pipelines this operator appears, and consequently, how many terminations it will receive
-void registerActivePipeline(OperatorHandler* ptrOpHandler)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
-}
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
 {
 }
 
-void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+void WindowBuildPhysicalOperator::close(ExecutionContext& executionContext, CompilationContext&, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    auto operatorHandlerMemRef = executionContext.getGlobalOperatorHandler(operatorHandlerId);
     invoke(
         checkWindowsTriggerProxy,
         operatorHandlerMemRef,
-        executionCtx.pipelineContext,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
+        executionContext.pipelineContext,
+        executionContext.watermarkTs,
+        executionContext.sequenceNumber,
+        executionContext.chunkNumber,
+        executionContext.lastChunk,
+        executionContext.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+void WindowBuildPhysicalOperator::setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(registerActivePipeline, operatorHandlerMemRef);
+    setupChild(executionContext, compilationContext);
 };
 
-void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowBuildPhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// Initializing the time function
-    timeFunction->open(executionCtx, recordBuffer);
+    timeFunction->open(executionContext, compilationContext, recordBuffer);
 
     /// Creating the local state for the window operator build.
-    const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
+    const auto operatorHandler = executionContext.getGlobalOperatorHandler(operatorHandlerId);
+    executionContext.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
 }
 
-void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionContext) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
+    auto operatorHandlerMemRef = executionContext.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionContext.pipelineContext);
 }
 
 std::optional<PhysicalOperator> WindowBuildPhysicalOperator::getChild() const

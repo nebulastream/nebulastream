@@ -55,14 +55,14 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
 {
 }
 
-void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+void NLJBuildPhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
     /// Getting the operator handler from the local state
-    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionContext.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
 
     /// Get the current slice / pagedVector that we have to insert the tuple into
-    const auto timestamp = timeFunction->getTs(executionCtx, record);
+    const auto timestamp = timeFunction->getTs(executionContext, compilationContext, record);
     const auto sliceReference = invoke(
         +[](OperatorHandler* ptrOpHandler, const Timestamp timestampVal)
         {
@@ -80,12 +80,12 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
             return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
         },
         sliceReference,
-        executionCtx.workerThreadId,
+        executionContext.workerThreadId,
         nautilus::val<JoinBuildSideType>(joinBuildSide));
 
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, memoryProvider);
-    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionContext.pipelineMemoryProvider.bufferProvider);
 }
 }

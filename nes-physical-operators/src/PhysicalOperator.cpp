@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <PhysicalOperator.hpp>
 
 #include <memory>
@@ -27,7 +26,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
+#include <Engine.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
@@ -41,59 +40,66 @@ PhysicalOperatorConcept::PhysicalOperatorConcept(OperatorId existingId) : id(exi
 {
 }
 
-void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const
 {
-    setupChild(executionCtx);
+    setupChild(executionContext, compilationContext);
 }
 
-void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& rb) const
 {
-    openChild(executionCtx, rb);
+    openChild(executionContext, compilationContext, rb);
 }
 
-void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& rb) const
 {
-    closeChild(executionCtx, rb);
+    closeChild(executionContext, compilationContext, rb);
 }
 
-void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::terminate(ExecutionContext& executionContext) const
 {
-    terminateChild(executionCtx);
+    terminateChild(executionContext);
 }
 
-void PhysicalOperatorConcept::execute(ExecutionContext& executionCtx, Record& record) const
+void PhysicalOperatorConcept::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
-    executeChild(executionCtx, record);
+    executeChild(executionContext, compilationContext, record);
 }
 
-void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setupChild(ExecutionContext& executionContext, CompilationContext& compilationContext) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().setup(executionCtx);
+    if (const auto child = getChild())
+    {
+        child.value().setup(executionContext, compilationContext);
+    }
+}
+void PhysicalOperatorConcept::openChild(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
+{
+    if (const auto child = getChild())
+    {
+        child.value().open(executionContext, compilationContext, recordBuffer);
+    }
+}
+void PhysicalOperatorConcept::closeChild(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
+{
+    if (const auto child = getChild())
+    {
+        child.value().close(executionContext, compilationContext, recordBuffer);
+    }
+}
+void PhysicalOperatorConcept::executeChild(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
+{
+    if (const auto child = getChild())
+    {
+        child.value().execute(executionContext, compilationContext, record);
+    }
 }
 
-void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperatorConcept::terminateChild(ExecutionContext& executionContext) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().open(executionCtx, recordBuffer);
-}
-
-void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().close(executionCtx, recordBuffer);
-}
-
-void PhysicalOperatorConcept::executeChild(ExecutionContext& executionCtx, Record& record) const
-{
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().execute(executionCtx, record);
-}
-
-void PhysicalOperatorConcept::terminateChild(ExecutionContext& executionCtx) const
-{
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().terminate(executionCtx);
+    if (const auto child = getChild())
+    {
+        child.value().terminate(executionContext);
+    }
 }
 
 PhysicalOperator::PhysicalOperator() = default;
@@ -116,36 +122,34 @@ std::optional<PhysicalOperator> PhysicalOperator::getChild() const
     return self->getChild();
 }
 
-PhysicalOperator PhysicalOperator::withChild(PhysicalOperator child) const
+void PhysicalOperator::setChild(PhysicalOperator child) const
 {
-    auto copy = self->clone();
-    copy->setChild(std::move(child));
-    return {copy};
+    self->setChild(std::move(child));
 }
 
-void PhysicalOperator::setup(ExecutionContext& executionCtx) const
+void PhysicalOperator::setup(ExecutionContext& executionContext, CompilationContext& compilationContext) const
 {
-    self->setup(executionCtx);
+    self->setup(executionContext, compilationContext);
 }
 
-void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
-    self->open(executionCtx, recordBuffer);
+    self->open(executionContext, compilationContext, recordBuffer);
 }
 
-void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperator::close(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
-    self->close(executionCtx, recordBuffer);
+    self->close(executionContext, compilationContext, recordBuffer);
 }
 
-void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void PhysicalOperator::terminate(ExecutionContext& executionContext) const
 {
-    self->terminate(executionCtx);
+    self->terminate(executionContext);
 }
 
-void PhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+void PhysicalOperator::execute(ExecutionContext& executionContext, CompilationContext& compilationContext, Record& record) const
 {
-    self->execute(executionCtx, record);
+    self->execute(executionContext, compilationContext, record);
 }
 
 std::string PhysicalOperator::toString() const

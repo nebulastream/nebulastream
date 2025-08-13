@@ -44,15 +44,15 @@ Interface::HashMap* getHashMapPtrProxy(const EmittedAggregationWindow* emittedAg
     return emittedAggregationWindow->hashMaps[currentHashMapVal];
 }
 
-void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AggregationProbePhysicalOperator::open(ExecutionContext& executionContext, CompilationContext& compilationContext, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    openChild(executionCtx, recordBuffer);
+    executionContext.watermarkTs = recordBuffer.getWatermarkTs();
+    executionContext.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionContext.chunkNumber = recordBuffer.getChunkNumber();
+    executionContext.lastChunk = recordBuffer.isLastChunk();
+    executionContext.originId = recordBuffer.getOriginId();
+    openChild(executionContext, compilationContext, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
@@ -90,7 +90,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                 entryRef.entryRef,
                 [fieldKeys = hashMapOptions.fieldKeys,
                  fieldValues = hashMapOptions.fieldValues,
-                 &executionCtx,
+                 &executionContext,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  hashMapPtr = hashMapPtr](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
@@ -101,14 +101,14 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                     auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
-                        aggFunction->combine(globalState, entryRefState, executionCtx.pipelineMemoryProvider);
+                        aggFunction->combine(globalState, entryRefState, executionContext.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
                 },
                 [fieldKeys = hashMapOptions.fieldKeys,
                  fieldValues = hashMapOptions.fieldValues,
-                 &executionCtx,
+                 &executionContext,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  hashMapPtr = hashMapPtr](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
@@ -121,13 +121,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
                         /// In contrast to the lambda method above, we have to reset the aggregation state before combining it with the other state
-                        aggFunction->reset(globalState, executionCtx.pipelineMemoryProvider);
-                        aggFunction->combine(globalState, entryRefStatePtr, executionCtx.pipelineMemoryProvider);
+                        aggFunction->reset(globalState, executionContext.pipelineMemoryProvider);
+                        aggFunction->combine(globalState, entryRefStatePtr, executionContext.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefStatePtr = entryRefStatePtr + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                executionCtx.pipelineMemoryProvider.bufferProvider);
+                executionContext.pipelineMemoryProvider.bufferProvider);
         }
     }
 
@@ -141,7 +141,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
-            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
+            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionContext.pipelineMemoryProvider));
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
         }
 
@@ -149,7 +149,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.reassignFields(recordKey);
         outputRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
         outputRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
-        executeChild(executionCtx, outputRecord);
+        executeChild(executionContext, compilationContext, outputRecord);
 
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))

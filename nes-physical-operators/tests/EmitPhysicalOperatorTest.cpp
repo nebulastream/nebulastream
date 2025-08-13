@@ -119,7 +119,7 @@ public:
         return emit;
     }
 
-    void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, Memory::TupleBuffer buffer)
+    void run(const std::function<void(ExecutionContext&, CompilationContext&, RecordBuffer&)>& test, Memory::TupleBuffer buffer)
     {
         MockedPipelineContext pec{buffers, bm};
         pec.setOperatorHandlers(handlers);
@@ -129,9 +129,10 @@ public:
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
+        CompilationContext compilationContext{std::make_shared<nautilus::engine::NautilusEngine>()};
 
         RecordBuffer recordBuffer(std::addressof(buffer));
-        test(executionContext, recordBuffer);
+        test(executionContext, compilationContext, recordBuffer);
     }
 
     ///NOLINTBEGIN(fuchsia-default-arguments-declarations)
@@ -230,10 +231,10 @@ TEST_F(EmitPhysicalOperatorTest, BasicTest)
     EmitPhysicalOperator emit = createUUT();
 
     run(
-        [&](auto& executionContext, auto& recordBuffer)
+        [&](auto& executionContext, auto& compilationContext, auto& recordBuffer)
         {
-            emit.open(executionContext, recordBuffer);
-            emit.close(executionContext, recordBuffer);
+            emit.open(executionContext, compilationContext, recordBuffer);
+            emit.close(executionContext, compilationContext, recordBuffer);
         },
         buffer);
 
@@ -260,10 +261,10 @@ TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
         for (auto& buffer : inputBuffers)
         {
             run(
-                [&](auto& executionContext, auto& recordBuffer)
+                [&](auto& executionContext, auto& compilationContext, auto& recordBuffer)
                 {
-                    emit.open(executionContext, recordBuffer);
-                    emit.close(executionContext, recordBuffer);
+                    emit.open(executionContext, compilationContext, recordBuffer);
+                    emit.close(executionContext, compilationContext, recordBuffer);
                 },
                 buffer);
         }
@@ -306,10 +307,10 @@ TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
         for (auto& buffer : inputBuffers)
         {
             run(
-                [&](auto& executionContext, auto& recordBuffer)
+                [&](auto& executionContext, auto& compilationContext, auto& recordBuffer)
                 {
-                    emit.open(executionContext, recordBuffer);
-                    emit.close(executionContext, recordBuffer);
+                    emit.open(executionContext, compilationContext, recordBuffer);
+                    emit.close(executionContext, compilationContext, recordBuffer);
                 },
                 buffer);
         }
@@ -358,10 +359,10 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
                     for (size_t index = threadId; index < inputBuffers.size(); index += numberOfThreads)
                     {
                         run(
-                            [&](auto& executionContext, auto& recordBuffer)
+                            [&](auto& executionContext, auto& compilationContext, auto& recordBuffer)
                             {
-                                emit.open(executionContext, recordBuffer);
-                                emit.close(executionContext, recordBuffer);
+                                emit.open(executionContext, compilationContext, recordBuffer);
+                                emit.close(executionContext, compilationContext, recordBuffer);
                             },
                             inputBuffers.at(index));
                     }
