@@ -1,0 +1,7 @@
+type: TCP
+numberOfBuffersInLocalPool: 16
+socketDomain: AF_INET
+socketType: SOCK_STREAM
+socketPort: 6666
+socketHost: localhost
+flushIntervalMS: 1
