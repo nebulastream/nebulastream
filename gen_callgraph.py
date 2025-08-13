@@ -72,11 +72,7 @@ def compute_callgraph(args):
     if callgraph := shitty_make_caching(in_cpp, out_cg):
         return callgraph
 
-    try:
-        subprocess.run(cmd_arr, check=True, cwd=cwd)
-    except:
-        print("error running:" " ".join(cmd_arr))
-        return None
+    subprocess.run(cmd_arr, check=True, cwd=cwd)
 
     out = cwd + "/" + out
     assert Path(out).exists()
