@@ -67,7 +67,7 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
         return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
 
-    if (fixedSizeBuffers.empty() || fixedSizeBuffers.size() == 1)
+    if (fixedSizeBuffers.empty())
     {
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
         lastAllocationSize = bufferProvider->getBufferSize();
