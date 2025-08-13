@@ -119,12 +119,27 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
     ret = []
 
-    ignored_fns = {
-        "Logger",
-        "LogCaller",
-        "_Test(",
-        "Schema::~Schema",
-    }
+    def ignore_fn(name: str):
+        ignored_fns = {
+            "absl::",
+            "folly",
+            "Logger",
+            "LogCaller",
+            "_Test(",
+            "Schema::~Schema",
+            "grpc::internal",
+            "google::protobuf::",
+            "fmt::v11",
+            "boost::asio::",
+            "spdlog::details::",
+            "std::__cxx11",
+            "testing::internal::",
+        }
+
+        for ignored_fn in ignored_fns:
+            if ignored_fn in name:
+                return True
+        return False
 
     ret.append("digraph G {")
     ret.append("overlap = false;")
@@ -132,9 +147,9 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
-            for ignored_fn in ignored_fns:
-                if ignored_fn in fun["name"]:
-                    continue
+            if ignore_fn(fun["name"]):
+                continue
+
             if fun["name"] not in elgnamed:
                 print("name not in elgnamed", fun["name"])
                 continue # check if we miss anything important here
