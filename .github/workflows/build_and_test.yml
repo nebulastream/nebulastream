@@ -140,6 +140,61 @@ jobs:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
           path: /junit.xml
 
+  clean-build-and-test-linux:
+    # Ensures that the build works from a clean build directory.
+    name: "Clean build and tests"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      env:
+        MOLD_JOBS: 1
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Choose a number of concurrent jobs
+        id: number-of-jobs
+        shell: bash
+        run: |
+          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
+          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
+          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
+      - name: Configure NebulaStream
+        run: |
+          rm -rf build || true
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+      - name: Build NebulaStream
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} -- -k 0
+      - name: Verify basic functionality of systest tool
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
+      - name: Run Tests
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200
+      - uses: actions/upload-artifact@v4
+        # Upload all log and stat files if any of the tests has failed.
+        name: Upload Test Logs on Failure
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+
   build-without-tests:
     name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"
     container:
