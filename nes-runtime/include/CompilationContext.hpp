@@ -45,14 +45,14 @@ public:
     requires std::is_void_v<R>
     void callCompiledFunction(Args... arguments)
     {
-        func.operator()(std::forward<Args>(arguments)...);
+        func(std::forward<Args>(arguments)...);
     }
 
     template <typename... Args>
     requires (not std::is_void_v<R>)
     R callCompiledFunction(Args... arguments)
     {
-        return func.operator()(std::forward<Args>(arguments)...);
+        return func(std::forward<Args>(arguments)...);
     }
 };
 
@@ -75,7 +75,7 @@ public:
     nautilus::val<CompiledFunctionWrapper<R, FunctionArguments...>*> registerFunction(std::function<R(nautilus::val<FunctionArguments...>)> function)
     {
         /// Passing the function to the nautilus engine so that we can compile/register the function and get a callable back
-        auto compiledFunction = engine->registerFunction<R, FunctionArguments...>(function);
+        auto compiledFunction = engine->registerFunction(function);
         auto compiledFunctionInWrapper = std::make_shared<CompiledFunctionWrapper<R, FunctionArguments...>>(std::move(compiledFunction));
         compiledFunctions.emplace_back(std::move(compiledFunctionInWrapper));
         const auto compiledFunctionBack = compiledFunctions.back();

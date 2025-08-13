@@ -50,8 +50,8 @@ private:
     std::shared_ptr<nautilus::engine::NautilusEngine> engine;
     nautilus::engine::CallableFunction<void, const PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
         compiledPipelineFunction;
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     CompilationContext compilationContext;
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };
 

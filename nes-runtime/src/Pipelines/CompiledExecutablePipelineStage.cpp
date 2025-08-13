@@ -31,18 +31,18 @@
 
 namespace NES
 {
-
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : engine(std::make_shared<nautilus::engine::NautilusEngine>(options))
     , compiledPipelineFunction(nullptr)
-    , operatorHandlers(std::move(operatorHandlers))
     , compilationContext(engine)
+    , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
 {
 }
+
 
 void CompiledExecutablePipelineStage::execute(
     const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -50,13 +50,11 @@ void CompiledExecutablePipelineStage::execute(
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(
-        std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-nautilus::engine::
-    CallableFunction<void, const PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
-    CompiledExecutablePipelineStage::compilePipeline()
+nautilus::engine::CallableFunction<void, const PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+CompiledExecutablePipelineStage::compilePipeline()
 {
     try
     {
@@ -64,9 +62,7 @@ nautilus::engine::
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
         /// NOLINTBEGIN(performance-unnecessary-value-param)
         const std::function<void(
-            nautilus::val<const PipelineExecutionContext*>,
-            nautilus::val<const Memory::TupleBuffer*>,
-            nautilus::val<const Arena*>)>
+            nautilus::val<const PipelineExecutionContext*>, nautilus::val<const Memory::TupleBuffer*>, nautilus::val<const Arena*>)>
             compiledFunction = [&](nautilus::val<const PipelineExecutionContext*> pipelineExecutionContext,
                                    nautilus::val<const Memory::TupleBuffer*> recordBufferRef,
                                    nautilus::val<const Arena*> arenaRef)
