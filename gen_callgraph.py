@@ -32,13 +32,13 @@ def parse_callgraph_text(cg):
             callers[cur_caller] = cur_callees
         elif line.startswith("Call graph node <<null function>>"):
             pass
-        elif line.startswith("Call graph node for function"):
-            cur_caller = caller_regex.match(line)[1]
+        elif match := caller_regex.match(line):
+            cur_caller = match[1]
             cur_callees = set()
         elif line.endswith(" calls external node"):
             pass
-        elif line.startswith("  CS"):
-            callee = callee_regex.match(line)[1]
+        elif match := callee_regex.match(line):
+            callee = match[1]
             cur_callees.add(callee)
         else:
             print(line)
