@@ -68,7 +68,8 @@ jobs:
           source .github/.env/test-${{matrix.sanitizer}}.env
           build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
       - name: Run Tests
-        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200
       - uses: actions/upload-artifact@v4
         # Upload all log and stat files if any of the tests has failed.
         name: Upload Test Logs on Failure

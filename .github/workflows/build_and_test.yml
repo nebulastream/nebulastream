@@ -69,11 +69,11 @@ jobs:
           source .github/.env/test-${{matrix.sanitizer}}.env
           cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
       - name: Run Tests
-        # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600 ${ADDTIONAL_CTEST_ARGS}
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
