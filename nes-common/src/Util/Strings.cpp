@@ -38,7 +38,7 @@ std::optional<float> from_chars<float>(const std::string_view input)
     {
         return std::stof(str);
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return {};
     }
@@ -131,7 +131,7 @@ std::optional<double> from_chars<double>(const std::string_view input)
     {
         return std::stod(str);
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return {};
     }
