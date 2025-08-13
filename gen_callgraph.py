@@ -42,7 +42,7 @@ def parse_callgraph_text(cg):
             cur_callees.add(callee)
         else:
             print(line)
-            raise Exception("wat?!")
+            raise RuntimeError("wat?!")
 
     return callers
 
