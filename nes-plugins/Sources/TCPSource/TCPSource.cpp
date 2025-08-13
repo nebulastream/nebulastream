@@ -40,6 +40,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
+#include <cpptrace/from_current.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
@@ -185,11 +186,11 @@ void TCPSource::open()
 
     const int flags = fcntl(sockfd, F_GETFL, 0);
 
-    try
+    CPPTRACE_TRY
     {
         tryToConnect(result, flags);
     }
-    catch (const std::exception& e)
+    CPPTRACE_CATCH(...)
     {
         ::close(sockfd); /// close socket to clean up state
         throw wrapExternalException("Could not establich connection!");

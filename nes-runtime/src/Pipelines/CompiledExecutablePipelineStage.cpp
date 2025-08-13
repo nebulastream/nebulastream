@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
 #include <Engine.hpp>
@@ -55,7 +56,7 @@ void CompiledExecutablePipelineStage::execute(
 nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
-    try
+    CPPTRACE_TRY
     {
         /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
@@ -75,10 +76,11 @@ CompiledExecutablePipelineStage::compilePipeline() const
         const nautilus::engine::NautilusEngine engine(options);
         return engine.registerFunction(compiledFunction);
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
     }
+    std::unreachable();
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)

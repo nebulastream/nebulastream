@@ -20,6 +20,7 @@
 #include <mutex>
 #include <ranges>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -27,6 +28,7 @@
 
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <cpptrace/from_current.hpp>
 #include <LegacyOptimizer.hpp>
 
 namespace NES
@@ -178,7 +180,7 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
     const std::unique_lock lock(mutex);
-    try
+    CPPTRACE_TRY
     {
         const auto optimizedPlan = optimizer->optimize(statement);
         const auto id = queryManager->registerQuery(optimizedPlan);
@@ -190,10 +192,11 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
                     return QueryStatementResult{id.value()};
                 });
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         return std::unexpected{wrapExternalException()};
     }
+    std::unreachable();
 }
 
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
