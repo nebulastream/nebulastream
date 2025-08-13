@@ -28,6 +28,7 @@
 #include <unordered_set>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest_prod.h>
 #include <ErrorHandling.hpp>
@@ -97,15 +98,16 @@ public:
     void dump(const std::vector<Operator>& rootOperators)
     {
         /// Don't crash NES just because we failed to print the queryplan.
-        try
+        CPPTRACE_TRY
         {
             const size_t maxWidth = calculateLayers(rootOperators);
             const std::stringstream asciiOutput = drawTree(maxWidth);
             dumpAndUseUnicodeBoxDrawing(asciiOutput.str());
         }
-        catch (const std::exception& exc)
+        CPPTRACE_CATCH(...)
         {
-            NES_ERROR("Failed to print queryplan with exception: {}\n", exc.what());
+            NES_ERROR("Failed to print queryplan with following exception:");
+            tryLogCurrentException();
         }
     }
 
