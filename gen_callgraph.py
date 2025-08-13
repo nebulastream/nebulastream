@@ -39,8 +39,7 @@ def parse_callgraph_text(cg):
             pass
         elif line.startswith("  CS"):
             callee = callee_regex.match(line)[1]
-            if callee.startswith("_ZN3NES"):
-                cur_callees.add(callee)
+            cur_callees.add(callee)
         else:
             print(line)
             raise Exception("wat?!")
