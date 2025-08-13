@@ -150,9 +150,12 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
             if ignore_fn(fun["name"]):
                 continue
 
+            # check if we miss anything important here
             if fun["name"] not in elgnamed:
-                print("name not in elgnamed", fun["name"])
-                continue # check if we miss anything important here
+                if int(fun["blocks_percent"]):
+                    print("name not in elgnamed ", int(fun["blocks_percent"]), fun["name"])
+                continue
+
             demngld_name = fun["name"]
             mangled_name = elgnamed[demngld_name]
             drawn_fns[mangled_name] = f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
