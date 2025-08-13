@@ -128,6 +128,8 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
     ret.append("digraph G {")
     ret.append("overlap = false;")
+    ret.append("maxiter = 3;")
+
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
             for ignored_fn in ignored_fns:
