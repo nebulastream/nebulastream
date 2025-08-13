@@ -161,7 +161,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
             drawn_fns[mangled_name] = f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
 
     act_drawn_fn = {}
-    
+
     for drawn_fn in drawn_fns:
         act_drawn_fn[drawn_fn] = []
         if drawn_fn in callers:
