@@ -234,7 +234,17 @@ QueryDecomposer::DecomposedLogicalPlan QueryDecomposer::decompose() &&
 
     /// Step 2: connect plan fragments on nodes with network sources/sinks to enable sending of intermediate results
     connectPlanFragments();
-    return planByNode;
+
+    DecomposedLogicalPlan decomposed_logical_plan;
+    for (const auto& [node, plan] : planByNode)
+    {
+        for (const auto& root_operator : plan.getRootOperators())
+        {
+            decomposed_logical_plan[node].emplace_back(root_operator);
+        }
+    }
+
+    return decomposed_logical_plan;
 }
 
 /// Takes the input logical plan and assumes that all operators have been assigned to a node by attaching a placement trait to them.

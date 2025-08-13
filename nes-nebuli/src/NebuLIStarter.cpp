@@ -170,7 +170,7 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
     std::vector<NES::Distributed::QueryId::ConnectionQueryIdPair> queryFragments;
     const bool autoStart = registerArgs.is_used(ARG_AUTO_START);
 
-    for (const auto& [grpcAddr, plan] : decomposedPlan)
+    for (const auto& [grpcAddr, plans] : decomposedPlan)
     {
         try
         {
@@ -178,16 +178,17 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
                 = grpc::CreateChannel(grpcAddr, grpc::InsecureChannelCredentials()); /// TODO: use grpc address instead of host addr
             const auto client = std::make_shared<NES::GRPCClient>(std::move(channel));
 
-            const auto queryId = client->registerQuery(plan);
-            queryFragments.emplace_back(grpcAddr, queryId.getRawValue());
-
-            if (autoStart)
+            for (const auto& plan : plans)
             {
-                client->start(queryId);
-                NES_INFO("Started query {} on host {}", queryId.getRawValue(), grpcAddr);
-            }
+                const auto queryId = client->registerQuery(plan);
+                queryFragments.emplace_back(grpcAddr, queryId.getRawValue());
 
-            std::cout << queryId.getRawValue() << '\n';
+                if (autoStart)
+                {
+                    client->start(queryId);
+                    NES_INFO("Started query {} on host {}", queryId.getRawValue(), grpcAddr);
+                }
+            }
         }
         catch (const std::exception& e)
         {
@@ -196,7 +197,8 @@ void handleRegister(const argparse::ArgumentParser& registerArgs, const NES::Que
         }
     }
 
-    NES::Distributed::QueryId::save(NES::Distributed::QueryId{queryFragments});
+    auto id = NES::Distributed::QueryId::save(NES::Distributed::QueryId{queryFragments});
+    std::cout << id << '\n';
     NES_INFO("Successfully registered {} query fragments", queryFragments.size());
 }
 
