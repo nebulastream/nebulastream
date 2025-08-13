@@ -148,7 +148,7 @@ void tryLogCurrentException()
     {
         NES_ERROR("{}", formatLogMessage(e));
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         NES_ERROR("failed to process with unknown error\n")
     }
@@ -169,7 +169,7 @@ Exception wrapExternalException()
         auto trace = cpptrace::raw_trace_from_current_exception();
         return {e.what(), ErrorCode::UnknownException, std::move(trace)};
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return UnknownException();
     }
@@ -207,7 +207,7 @@ ErrorCode getCurrentErrorCode()
     {
         return e.code();
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return ErrorCode::UnknownException;
     }
