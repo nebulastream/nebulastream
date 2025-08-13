@@ -2,8 +2,8 @@ services:
   worker-1:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080", "--bind=0.0.0.0:9090", "--connection=worker-1:9090", "--worker.queryEngine.numberOfWorkerThreads=1" ]
-    image: nebulastream/nes-worker:distributed
+    command: [ "--grpc=0.0.0.0:8080", "--bind=0.0.0.0:9090", "--connection=worker-1:9090", "--worker.queryEngine.numberOfWorkerThreads=4" , "--worker.defaultQueryExecution.executionMode=COMPILER" ]
+    image: worker-image
     ports:
       - "8080:8080"
     build:
@@ -15,116 +15,105 @@ services:
   worker-10:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-10:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
-    image: nebulastream/nes-worker:distributed
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-10:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
     ports:
-      - "8081:8080"
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8089:8080"
 
   worker-9:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-9:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-9:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8082:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8088:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-8:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-8:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-8:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8083:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8087:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-7:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-7:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
-    image: nebulastream/nes-worker:distributed
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-7:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8084:8080"
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8086:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-6:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-6:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-6:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
       - "8085:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-5:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-5:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-5:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8086:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8084:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-4:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-4:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-4:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8087:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8083:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-3:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-3:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-3:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8088:8080"
-    image: nebulastream/nes-worker:distributed
-    build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      - "8082:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
 
   worker-2:
     healthcheck:
       test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
-    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-2:9090" , "--worker.queryEngine.numberOfWorkerThreads=1"]
+    command: [ "--grpc=0.0.0.0:8080" , "--bind=0.0.0.0:9090", "--connection=worker-2:9090" , "--worker.queryEngine.numberOfWorkerThreads=1", "--worker.defaultQueryExecution.executionMode=INTERPRETER" ]
     ports:
-      - "8089:8080"
-    image: nebulastream/nes-worker:distributed
+      - "8081:8080"
+    depends_on:
+      - worker-1
+    image: worker-image
+    pull_policy: never
+
+  datagen:
+    ports:
+      - "9999:9999"
     build:
-      context: ..
-      dockerfile: demo/SingleNodeWorker.dockerfile
-      args:
-        - TAG=ls-distributed-poc
+      context: .
+      dockerfile: TCPGen.dockerfile
