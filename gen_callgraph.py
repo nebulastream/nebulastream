@@ -244,7 +244,10 @@ def main():
                     else:
                         callers[caller].update(callees)
 
-    mangled_callers = "\n".join(callers.keys())
+    fns = set(callers.keys())
+    fns.update(*callers.values())
+
+    mangled_callers = "\n".join(fns)
     demngld_callers = subprocess.run("c++filt", input=mangled_callers, capture_output=True, text=True, check=True).stdout
 
     mangled_callers = mangled_callers.split("\n")
