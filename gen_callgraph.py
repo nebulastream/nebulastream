@@ -209,9 +209,6 @@ def main():
     output_regex = re.compile(" -o (.*) -c (.*)")
 
     for cmd in compile_cmds:
-        if "_generated_src" in cmd["output"]:
-            continue
-
         c = cmd["command"].replace(".o ", ".bc ")
         c = c.replace('\\"', '"')
         out_file, in_file = output_regex.findall(c)[0]
