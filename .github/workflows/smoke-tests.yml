@@ -25,13 +25,14 @@ jobs:
       dev_image_tag:     ${{ inputs.dev_image_tag }}
       number_of_commits: ${{ inputs.number_of_commits }}
 
-  clean-build-and-test-linux:
-    # Ensures that the build works from a clean build directory.
-    name: "Clean build and tests"
+  build-and-test-linux:
+    name: "Build and test"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
+        CCACHE_DIR: /ccache
         MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
@@ -45,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ inputs.ref }}
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash
@@ -55,27 +56,37 @@ jobs:
           echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
       - name: Configure NebulaStream
         run: |
-          rm -rf build || true
-          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} -- -k 0
-      - name: Verify basic functionality of systest tool
+          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
+      - name: Run Tests
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          build/nes-systests/systest/systest --exclude-groups large -n 100 -- --worker.defaultQueryExecution.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=${{steps.number-of-jobs.outputs.number_of_jobs}}
-      - name: Run Tests
-        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        run: ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200
-      - uses: actions/upload-artifact@v4
-        # Upload all log and stat files if any of the tests has failed.
-        name: Upload Test Logs on Failure
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
         if: ${{ failure() && !github.event.act }}
         with:
-          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}
           path: |
             build/**/*.log
             build/**/*.stats
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
+          file: /junit.xml
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
+          path: /junit.xml
