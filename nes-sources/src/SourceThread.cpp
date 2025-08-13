@@ -34,6 +34,7 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
@@ -96,11 +97,11 @@ struct SourceHandle
     ~SourceHandle()
     {
         /// Throwing in a destructor would terminate the application
-        try
+        CPPTRACE_TRY
         {
             source.close();
         }
-        catch (...)
+        CPPTRACE_CATCH(...)
         {
             tryLogCurrentException();
         }
