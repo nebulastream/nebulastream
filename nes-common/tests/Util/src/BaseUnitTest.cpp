@@ -22,6 +22,7 @@
 #include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <gtest/gtest.h>
 
 namespace NES
@@ -82,7 +83,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
             switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP)))
             {
                 case std::future_status::ready: {
-                    try
+                    CPPTRACE_TRY
                     {
                         auto res = future.get();
                         if (!res)
@@ -91,9 +92,10 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
                             FAIL();
                         }
                     }
-                    catch (const std::exception& exception)
+                    CPPTRACE_CATCH(const std::exception& exception)
                     {
-                        NES_ERROR("Got exception in test [{}]: {}", testName, exception.what());
+                        const auto& trace = cpptrace::from_current_exception();
+                        NES_ERROR("Got exception in test [{}]: {}\n{}", testName, exception.what(), trace.to_string());
                         FAIL();
                     }
                     break;
