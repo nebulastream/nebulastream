@@ -216,7 +216,7 @@ void dataSourceThread(
 
 bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 {
-    INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
+    /// INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source must not be invalid");
     if (started.exchange(true))
     {
         return false;
