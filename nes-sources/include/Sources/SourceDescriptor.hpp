@@ -23,7 +23,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <Configurations/ConfigurationsNames.hpp>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>

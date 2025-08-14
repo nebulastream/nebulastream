@@ -23,7 +23,7 @@
 #include <system_error>
 #include <unordered_map>
 #include <utility>
-#include <Configurations/ConfigurationsNames.hpp>
+
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>

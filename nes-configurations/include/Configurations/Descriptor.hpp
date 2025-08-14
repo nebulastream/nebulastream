@@ -24,7 +24,7 @@
 #include <utility>
 #include <variant>
 
-#include <Configurations/ConfigurationsNames.hpp>
+
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
