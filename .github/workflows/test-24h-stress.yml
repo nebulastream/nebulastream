@@ -11,6 +11,7 @@ on:
         type: string
         description: "nebulastream/nes-development tag"
         required: true
+  pull_request:
 
 jobs:
   fetch-current-main-commit:
