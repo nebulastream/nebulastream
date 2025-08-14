@@ -582,6 +582,7 @@ jobs:
           git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
 
   gen-cov:
+    if: ${{ !github.event.act }}
     name: "generate coverage"
     needs: [ get-dev-images, final-merge, check-sanitizer-specifity ]
     container:
@@ -638,9 +639,6 @@ jobs:
       - name: generate callgraph .svg
         run: |
           neato -Tsvg cov.dot > cov.svg
-      - if: ${{ github.event.act }}
-        run: |
-          apt install -y nodejs
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
