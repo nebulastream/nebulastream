@@ -10,6 +10,7 @@ on:
         required: true
         type: string
         description: "Docker image tag of the benchmarking image"
+  pull_request:
 
 concurrency:
   group: stress-test-24h
