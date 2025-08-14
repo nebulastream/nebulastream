@@ -12,80 +12,118 @@
     limitations under the License.
 */
 
-#include <FileSource.hpp>
+#include <Async/Sources/FileSource.hpp>
+
+#include <fcntl.h>
 
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <format>
-#include <fstream>
-#include <ios>
 #include <memory>
 #include <ostream>
-#include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <utility>
+
+#include <boost/asio/as_tuple.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/deferred.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/posix/stream_descriptor.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/this_coro.hpp>
+#include <boost/system/system_error.hpp>
+
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <FileDataRegistry.hpp>
-#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+
+#include "FileDataRegistry.hpp"
+#include "InlineDataRegistry.hpp"
 
 namespace NES::Sources
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
 {
 }
 
-void FileSource::open()
+asio::awaitable<void, Executor> FileSource::open()
 {
-    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
-    if (not this->inputFile)
+    PRECONDITION(
+        !fileDescriptor.has_value() && !fileStream.has_value(), "open() may not be called twice on the same instance.");
+    fileDescriptor.emplace(::open(filePath.c_str(), O_RDONLY));
+
+    if (fileDescriptor == -1)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), std::strerror(errno));
+        throw CannotOpenSource("Failed to open file: {}", filePath);
     }
+
+    fileStream.emplace(asio::posix::stream_descriptor{co_await asio::this_coro::executor, fileDescriptor.value()});
+    NES_DEBUG("Opened file: {}", filePath);
+}
+
+asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuffer(IOBuffer& buffer)
+{
+    PRECONDITION(fileStream.has_value() && fileStream->is_open(), "File is not open.");
+    if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+    {
+        co_return Cancelled{};
+    }
+
+    auto [errorCode, bytesRead] = co_await async_read(
+        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
+    buffer.setNumberOfTuples(bytesRead);
+
+    if (errorCode)
+    {
+        if (errorCode == asio::error::eof)
+        {
+            co_return EndOfStream{.bytesRead = bytesRead};
+        }
+        if (errorCode == asio::error::operation_aborted)
+        {
+            co_return Cancelled{};
+        }
+        const auto message = std::format("Failed to read from file {} with errorCode: '{}'", filePath, errorCode.message());
+        co_return Error{.exception = DataIngestionFailure(message)};
+    }
+    co_return Continue{.bytesRead = bytesRead};
 }
 
 void FileSource::close()
 {
-    this->inputFile.close();
-}
-
-size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
-{
-    this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
-    const auto numBytesRead = this->inputFile.gcount();
-    this->totalNumBytesRead += numBytesRead;
-    return numBytesRead;
-}
-
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
+    if (fileStream->is_open())
+    {
+        fileStream->close();
+        NES_DEBUG("Closed file stream.");
+    }
 }
 
 std::ostream& FileSource::toString(std::ostream& str) const
 {
-    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
-    return str;
+    return str << std::format("\nFileSource(filepath: {})", filePath);
 }
 
-SourceValidationRegistryReturnType
-SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
+DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
+    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
+SourceValidationRegistryReturnType SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments arguments)
 {
-    return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
+    return FileSource::validateAndFormat(arguments.config);
+}
+
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments arguments)
+{
+    return std::make_unique<FileSource>(arguments.sourceDescriptor);
 }
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
@@ -129,6 +167,5 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
-
 
 }

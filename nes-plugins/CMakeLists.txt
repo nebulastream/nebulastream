@@ -16,8 +16,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
 
 # activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/TCPSource" ON)
-activate_optional_plugin("Sources/GeneratorSource" ON)
+activate_optional_plugin("Sources/GeneratorSource" OFF)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

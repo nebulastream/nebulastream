@@ -11,16 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+#include <ostream>
+#include <Sources/AsyncSource.hpp>
 
-#include <Configurations/Descriptor.hpp>
+#include <ostream>
 
-namespace NES::Sources::SourceValidationProvider
+namespace NES::Sources
 {
-std::optional<DescriptorConfig::Config> provide(std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig);
+std::ostream& operator<<(std::ostream& out, const AsyncSource& source)
+{
+    return source.toString(out);
+}
+
 }

@@ -36,6 +36,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
+
+#include <Blocking/BlockingSourceHandle.hpp>
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
 
@@ -147,8 +149,9 @@ void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds 
     fail_during_close = true;
 }
 
-size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t NES::Sources::TestSource::fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken)
 {
+    NES_DEBUG("TestSource::fillBuffer(), sourceId: {}", this->sourceId);
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
     while (!stopToken.stop_requested()
@@ -185,9 +188,9 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
     {
         return 0;
     }
-    INVARIANT(data->data.size() <= tupleBuffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
-    tupleBuffer.setNumberOfTuples(data->numberOfTuples);
-    std::ranges::copy(data->data, tupleBuffer.getBuffer<std::byte>());
+    INVARIANT(data->data.size() <= buffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
+    buffer.setNumberOfTuples(data->numberOfTuples);
+    std::ranges::copy(data->data, buffer.getBuffer<std::byte>());
     return data->data.size();
 }
 
@@ -227,11 +230,13 @@ NES::Sources::TestSource::~TestSource()
 }
 
 std::pair<std::unique_ptr<NES::Sources::SourceHandle>, std::shared_ptr<NES::Sources::TestSourceControl>>
-NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
+NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> poolProvider)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
-    auto testSource = std::make_unique<TestSource>(originId, ctrl);
-    auto sourceHandle = std::make_unique<SourceHandle>(
-        std::move(originId), std::move(bufferPool), DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::move(testSource));
-    return {std::move(sourceHandle), ctrl};
+
+    auto sourceRunner = std::make_unique<BlockingSourceHandle>(SourceExecutionContext<BlockingSource>{
+        originId,
+        std::make_unique<TestSource>(originId, ctrl),
+        *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)});
+    return {std::move(sourceRunner), ctrl};
 }

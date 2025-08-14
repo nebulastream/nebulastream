@@ -15,31 +15,43 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
-#include <variant>
-
-#include <Sources/AsyncSource.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/BlockingSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Sources/SourceUtility.hpp>
 
 namespace NES::Sources
 {
+// struct Error
+// {
+//     Exception ex;
+// };
+//
+// struct Data
+// {
+//     NES::Memory::TupleBuffer buffer;
+// };
+//
+// struct EoS
+// {
+// };
 
-using SourceRegistryReturnType = std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>>;
-struct SourceRegistryArguments
+template <typename SourceType>
+struct SourceExecutionContext
 {
-    SourceDescriptor sourceDescriptor;
+    const OriginId originId;
+    std::unique_ptr<SourceType> sourceImpl;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
 };
-using KeyType = std::string;
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, KeyType, SourceRegistryReturnType, SourceRegistryArguments>
+enum class TryStopResult : uint8_t
 {
+    SUCCESS,
+    TIMEOUT
 };
+
+using SourceReturnType = std::variant<Error, Data, EoS>;
+using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }
-
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <SourceGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_REGISTRY

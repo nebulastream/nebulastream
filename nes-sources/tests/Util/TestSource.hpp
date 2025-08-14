@@ -28,9 +28,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
@@ -90,10 +89,10 @@ private:
     folly::MPMCQueue<ControlData> queue{10};
 };
 
-class TestSource : public Source
+class TestSource : public BlockingSource
 {
 public:
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillBuffer(IOBuffer& buffer, const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
 

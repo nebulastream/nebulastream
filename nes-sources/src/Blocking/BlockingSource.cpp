@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include <Sources/BlockingSource.hpp>
+
 #include <ostream>
-#include <Sources/Source.hpp>
 
 namespace NES::Sources
 {
-std::ostream& operator<<(std::ostream& out, const Source& source)
+std::ostream& operator<<(std::ostream& out, const BlockingSource& source)
 {
     return source.toString(out);
 }
-
 }
