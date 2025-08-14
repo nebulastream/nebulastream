@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Configurations/ConfigurationsNames.hpp>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
