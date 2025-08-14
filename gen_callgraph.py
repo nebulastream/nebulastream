@@ -291,7 +291,7 @@ def main():
         gcovr_json = json.load(f)
 
     actual_version = gcovr_json["gcovr/format_version"]
-    expect_version = "0.11"
+    expect_version = "0.6"
     assert actual_version == expect_version, f"Version mismatch: got {actual_version}, expected {expect_version}"
 
     jobs = []
