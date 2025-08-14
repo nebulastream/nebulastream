@@ -69,11 +69,11 @@ public:
         static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
             "TimeMs",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
         static inline const DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
             "Function",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FUNCTION, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);

@@ -84,29 +84,29 @@ public:
         static inline const DescriptorConfig::ConfigParameter<EnumWrapper, JoinType> JOIN_TYPE{
             "joinType",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FunctionList> JOIN_FUNCTION{
             "joinFunctionName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
             "windowStartFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
             "windowEndFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
             "windowInfo",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(

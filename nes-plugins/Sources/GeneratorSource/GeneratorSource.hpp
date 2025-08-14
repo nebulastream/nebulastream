@@ -80,76 +80,27 @@ struct ConfigParametersGenerator
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
-            if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
-            {
-                NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                throw NES::InvalidConfigParameter(
-                    "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
-            }
-            switch (optToken.value().asEnum<GeneratorStop>().value())
-            {
-                case GeneratorStop::ALL: {
-                    return std::optional(EnumWrapper(GeneratorStop::ALL));
-                }
-                case GeneratorStop::ONE: {
-                    return std::optional(EnumWrapper(GeneratorStop::ONE));
-                }
-                default: {
-                    NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                    throw NES::InvalidConfigParameter(
-                        "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
-                }
-            }
+            return std::nullopt;
         }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SEED{
         "seed",
         std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
         "generatorSchema",
         {},
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const std::string schema = DescriptorConfig::tryGet(GENERATOR_SCHEMA, config).value_or("");
-            if (schema.empty())
-            {
-                NES_ERROR("Generator schema cannot be empty!")
-                throw NES::InvalidConfigParameter("Generator schema cannot be empty!");
-            }
-            auto lines = schema | std::ranges::views::split('\n')
-                | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-                | std::views::filter([](const auto& subView) { return !subView.empty(); });
-            for (auto line : lines)
-            {
-                const auto foundIdentifer = line.substr(0, line.find_first_of(' '));
-                bool validatorExists = false;
-                for (const auto& [identifier, validator] : GeneratorFields::Validators)
-                {
-                    if (identifier == foundIdentifer)
-                    {
-                        validator(line);
-                        validatorExists = true;
-                        break;
-                    }
-                }
-                if (!validatorExists)
-                {
-                    NES_ERROR("Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
-                    throw NES::InvalidConfigParameter(
-                        "Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
-                }
-            }
-            return DescriptorConfig::tryGet(GENERATOR_SCHEMA, config);
+            return std::nullopt;
         }};
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
         "maxRuntimeMs",
         -1,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(

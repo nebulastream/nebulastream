@@ -65,7 +65,7 @@ public:
         static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
             "fieldName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_NAME, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);

@@ -61,7 +61,7 @@ public:
             "constantValueAsString",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config); }};
+            { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);

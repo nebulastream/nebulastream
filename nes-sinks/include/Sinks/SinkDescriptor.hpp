@@ -69,7 +69,7 @@ public:
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
         "addTimestamp",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -81,7 +81,7 @@ public:
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "filePath",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);

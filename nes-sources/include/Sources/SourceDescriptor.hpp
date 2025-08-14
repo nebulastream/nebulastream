@@ -102,7 +102,7 @@ public:
         "numberOfBuffersInLocalPool",
         INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};
+        { return std::nullopt; }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)

@@ -90,35 +90,35 @@ public:
         static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
             "TimeMs",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<AggregationFunctionList> WINDOW_AGGREGATIONS{
             "windowAggregations",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_AGGREGATIONS, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<FunctionList> WINDOW_KEYS{
             "windowKeys",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_KEYS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
             "windowStartFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
             "windowEndFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_INFOS{
             "windowInfos",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(

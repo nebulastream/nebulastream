@@ -68,7 +68,7 @@ struct ConfigParametersCSV
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         std::string(SYSTEST_FILE_PATH_PARAMETER),
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);

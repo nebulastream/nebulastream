@@ -81,12 +81,12 @@ public:
             "projectionFunctionName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config); }};
+            { return std::nullopt; }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> ASTERISK{
             "asterisk",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ASTERISK, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME, ASTERISK);

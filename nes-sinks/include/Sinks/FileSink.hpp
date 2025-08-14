@@ -72,11 +72,11 @@ struct ConfigParametersFile
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
         "inputFormat",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
     static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
         "append",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return std::nullopt; }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
