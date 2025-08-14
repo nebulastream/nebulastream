@@ -200,6 +200,17 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     return "\n".join(ret).replace("$", "_")
 
 
+def to_treemap(callers, elgnamed, gcovr_json) -> str:
+    ret = []
+    ret.append("graph {")
+
+    drawn_fns = filter_fns(elgnamed, gcovr_json)
+
+    ret.append("}")
+    return "\n".join(ret).replace("$", "_")
+
+
+
 def short_name(name: str):
     name = name.replace("(anonymous namespace)", "anon")
     name = name.replace("[abi:cxx11]", "")
@@ -278,6 +289,10 @@ def main():
     gcovr_json_file = sys.argv[2]
     with open(gcovr_json_file, encoding="utf-8") as f:
         gcovr_json = json.load(f)
+
+    actual_version = gcovr_json["gcovr/format_version"]
+    expect_version = "0.11"
+    assert actual_version == expect_version, f"Version mismatch: got {actual_version}, expected {expect_version}"
 
     jobs = []
 
