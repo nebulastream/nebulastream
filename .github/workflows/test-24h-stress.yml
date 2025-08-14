@@ -14,30 +14,16 @@ on:
   pull_request:
 
 jobs:
-  fetch-current-main-commit:
-    runs-on: [ self-hosted ]
-    outputs:
-      sha: ${{ steps.fetch-sha.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref || 'main' }}
-      - name: Fetch SHA
-        id: fetch-sha
-        run: |
-          git rev-parse --verify HEAD
-          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
-
   get-dev-images:
-    needs: fetch-current-main-commit
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      branch-name: ${{ github.head_ref }}
+      ref: ${{ github.event.pull_request.head.sha }}
 
   call-stress:
     uses: ./.github/workflows/24h_stress_test.yml
-    needs: [ fetch-current-main-commit, get-dev-images ]
+    needs: [ get-dev-images ]
     with:
-      ref: ${{ inputs.ref }}
+      ref: ${{ github.event.pull_request.head.ref }}
       dev_image_tag: ${{ inputs.dev_image_tag }}
