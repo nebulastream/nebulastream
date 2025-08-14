@@ -3,14 +3,14 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to test (branch/sha/tag)"
+        type: string
         required: true
-        default: your-branch-name
+        description: "ref of the branch"
+        default: 1046-24h-nightly-runs
       dev_image_tag:
+        type: string
         description: "nebulastream/nes-development tag"
         required: true
-        default: latest
-  pull_request:
 
 jobs:
   fetch-current-main-commit:
