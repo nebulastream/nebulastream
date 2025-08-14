@@ -38,5 +38,5 @@ add_plugin(BlockingTCP Source nes-sources Blocking/Sources/BlockingTCPSource.cpp
 add_plugin(BlockingTCP SourceValidation nes-sources Blocking/Sources/BlockingTCPSource.cpp)
 
 # Systest adaptors
-add_plugin(File InlineData nes-sources FileSource.cpp)
-add_plugin(File FileData nes-sources FileSource.cpp)
+#add_plugin(File InlineData nes-sources FileSource.cpp)
+#add_plugin(File FileData nes-sources FileSource.cpp)

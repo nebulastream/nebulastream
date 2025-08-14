@@ -43,7 +43,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
@@ -106,16 +106,16 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return schema;
 }
 
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
+std::function<void(OriginId, Sources::SourceReturnType)>
 getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
 {
-    return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
+    return [&resultBuffers](const OriginId, Sources::SourceReturnType returnType)
     {
         std::visit(
             Overloaded{
-                [&](const Sources::SourceReturnType::Data& data) { resultBuffers.emplace_back(data.buffer); },
-                [](const Sources::SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
-                [](const Sources::SourceReturnType::Error& error) { throw error.ex; }},
+                [&](const Sources::Data& data) { resultBuffers.emplace_back(data.buffer); },
+                [](const Sources::EoS&) { NES_DEBUG("Reached EoS in source"); },
+                [](const Sources::Error& error) { throw error.ex; }},
             returnType);
     };
 }

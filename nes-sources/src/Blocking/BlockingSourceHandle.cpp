@@ -76,6 +76,29 @@ bool BlockingSourceHandle::stop()
         });
 }
 
+TryStopResult BlockingSourceHandle::tryStop()
+{
+    state.transition(
+        [](Running&& runningState) -> Stopped
+        {
+            PRECONDITION(runningState.thread.get_id() != std::this_thread::get_id(), "stop() must not be called from the source thread.");
+            NES_DEBUG("BlockingSourceHandle: Running -> Stopped");
+
+            runningState.thread.request_stop();
+            try
+            {
+                runningState.terminationFuture.get();
+            }
+            catch (const std::exception& exception)
+            {
+                NES_ERROR("Source encountered an error: {}", exception.what());
+            }
+            return Stopped{};
+        });
+    // Todo: reenable
+    return TryStopResult::SUCCESS;
+}
+
 std::ostream& BlockingSourceHandle::toString(std::ostream& str) const
 {
     return str;

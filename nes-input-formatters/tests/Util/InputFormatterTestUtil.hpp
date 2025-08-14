@@ -31,7 +31,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <TestTaskQueue.hpp>
@@ -140,7 +140,7 @@ public:
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
+std::function<void(OriginId, Sources::SourceReturnType)>
 getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);

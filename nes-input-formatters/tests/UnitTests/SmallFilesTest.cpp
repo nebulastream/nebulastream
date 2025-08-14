@@ -33,7 +33,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -166,7 +166,7 @@ public:
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(
-            fileSource->tryStop(std::chrono::milliseconds(1000)) == Sources::SourceReturnType::TryStopResult::SUCCESS,
+            fileSource->tryStop() == Sources::TryStopResult::SUCCESS,
             "Failed to stop source.");
         INVARIANT(
             numberOfExpectedRawBuffers == rawBuffers.size(),

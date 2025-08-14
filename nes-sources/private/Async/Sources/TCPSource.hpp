@@ -56,7 +56,7 @@ public:
     /// Close TCP connection.
     void close() override;
 
-    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -70,17 +70,17 @@ private:
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
+    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return Configurations::DescriptorConfig::tryGet(HOST, config); }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
             /// Mandatory (no default value)
-            const auto portNumber = Configurations::DescriptorConfig::tryGet(PORT, config);
+            const auto portNumber = DescriptorConfig::tryGet(PORT, config);
             if (portNumber.has_value())
             {
                 constexpr uint32_t PORT_NUMBER_MAX = 65535;
@@ -93,7 +93,7 @@ struct ConfigParametersTCP
             return portNumber;
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, PORT);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(HOST, PORT);
 };
 }

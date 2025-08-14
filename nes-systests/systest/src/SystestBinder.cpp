@@ -55,7 +55,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <GeneratorFields.hpp>
+// #include <GeneratorFields.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -465,33 +465,33 @@ struct SystestBinder::Impl
                                 schemaFieldType,
                                 magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
                         }
-                        auto generatorFieldIdentifier = fieldSchemaTokens[1];
-                        auto [acceptedTypesBegin, acceptedTypesEnd]
-                            = Sources::GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
-                        bool isAcceptedType = false;
-                        for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
-                        {
-                            if (definedLogicalField->dataType.type == it->second)
-                            {
-                                isAcceptedType = true;
-                                break;
-                            }
-                        }
-                        if (!isAcceptedType)
-                        {
-                            throw InvalidConfigParameter(
-                                "Field {} is of {} type, which does not allow {}!",
-                                fieldName,
-                                generatorFieldIdentifier,
-                                magic_enum::enum_name(definedLogicalField.value().dataType.type));
-                        }
-
-                        for (const auto& token : fieldSchemaTokens | std::views::drop(1))
-                        {
-                            generatorSchema.append(token);
-                            generatorSchema.append(" "sv);
-                        }
-                        generatorSchema.back() = '\n';
+                        // auto generatorFieldIdentifier = fieldSchemaTokens[1];
+                        // auto [acceptedTypesBegin, acceptedTypesEnd]
+                        //     = Sources::GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
+                        // bool isAcceptedType = false;
+                        // for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
+                        // {
+                        //     if (definedLogicalField->dataType.type == it->second)
+                        //     {
+                        //         isAcceptedType = true;
+                        //         break;
+                        //     }
+                        // }
+                        // if (!isAcceptedType)
+                        // {
+                        //     throw InvalidConfigParameter(
+                        //         "Field {} is of {} type, which does not allow {}!",
+                        //         fieldName,
+                        //         generatorFieldIdentifier,
+                        //         magic_enum::enum_name(definedLogicalField.value().dataType.type));
+                        // }
+                        //
+                        // for (const auto& token : fieldSchemaTokens | std::views::drop(1))
+                        // {
+                        //     generatorSchema.append(token);
+                        //     generatorSchema.append(" "sv);
+                        // }
+                        // generatorSchema.back() = '\n';
                     }
 
                     physicalSource.sourceConfig = inlineConfig.options;

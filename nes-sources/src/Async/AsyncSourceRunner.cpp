@@ -44,7 +44,7 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
 {
     /// Helper lambda that we forward to the input formatter to emit data events on our behalf
     uint64_t sequenceNumberGenerator{SequenceNumber::INITIAL};
-    const std::function dataEmit = [&](IOBuffer& buf) -> void
+    const auto dataEmit = [&](IOBuffer& buf) -> void
     {
         addBufferMetadata(context.originId, buf, sequenceNumberGenerator++);
         emitFn(context.originId, Data{std::move(buf)});
@@ -90,14 +90,15 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
 }
 
 void AsyncSourceRunner::handleSourceResult(
-    const IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const
+    IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const
 {
     std::visit(
         Overloaded{
-            [&](const AsyncSource::Continue& resultContinue)
+            [&](const AsyncSource::Continue&)
             {
                 /// Usual case, the source is ready to continue to ingest more data
-                context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultContinue.bytesRead, dataEmit);
+                dataEmit(buffer);
+                // context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultContinue.bytesRead, dataEmit);
             },
             [&](const AsyncSource::EndOfStream& resultEos)
             {
@@ -105,7 +106,8 @@ void AsyncSourceRunner::handleSourceResult(
                 /// Check for a partially filled buffer before signalling EoS and exiting
                 if (resultEos.bytesRead)
                 {
-                    context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultEos.bytesRead, dataEmit);
+                    dataEmit(buffer);
+                    // context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultEos.bytesRead, dataEmit);
                 }
                 emitFn(context.originId, EoS{});
             },

@@ -39,7 +39,6 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
 {
@@ -56,7 +55,6 @@ BlockingTCPSource::BlockingTCPSource(const SourceDescriptor& sourceDescriptor)
 {
     /// init physical types
     std::vector<std::string> const schemaKeys;
-    const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
     NES_TRACE("BlockingTCPSource::BlockingTCPSource: Init BlockingTCPSource.");
 }
@@ -193,10 +191,10 @@ bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
     return numReceivedBytes == 0 and readWasValid;
 }
 
-Configurations::DescriptorConfig::Config
+DescriptorConfig::Config
 BlockingTCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersBlockingTCP>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersBlockingTCP>(std::move(config), NAME);
 }
 
 void BlockingTCPSource::close()

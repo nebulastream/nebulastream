@@ -49,6 +49,7 @@ public:
 
     bool start(EmitFunction&& emitFn) override;
     bool stop() override;
+    TryStopResult tryStop() override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

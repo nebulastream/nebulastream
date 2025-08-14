@@ -17,9 +17,8 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -36,6 +35,7 @@ public:
 
     virtual bool start(EmitFunction&& emitFn) = 0;
     virtual bool stop() = 0;
+    virtual TryStopResult tryStop() = 0;
 
     virtual OriginId getOriginId() { return originId; }
 

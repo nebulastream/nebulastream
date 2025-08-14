@@ -29,7 +29,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <absl/functional/any_invocable.h>
 #include <CompiledQueryPlan.hpp>
 #include <EngineLogger.hpp>
@@ -316,7 +316,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 ENGINE_LOG_DEBUG("Pipeline Setup Completed");
                 for (auto& [source, successors] : sources)
                 {
-                    auto sourceId = source->getSourceId();
+                    auto sourceId = source->getOriginId();
                     internal.sources.emplace(
                         sourceId,
                         RunningSource::create(
@@ -330,7 +330,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                                 ENGINE_LOG_INFO("Stopping Source with OriginId {}", id);
                                 if (const auto it = internal.sources.find(id); it != internal.sources.end())
                                 {
-                                    if (it->second->tryStop() != Sources::SourceReturnType::TryStopResult::SUCCESS)
+                                    if (it->second->tryStop() != Sources::TryStopResult::SUCCESS)
                                     {
                                         return false;
                                     }

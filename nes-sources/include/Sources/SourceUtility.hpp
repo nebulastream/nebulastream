@@ -49,9 +49,8 @@ using EmitFunction = std::function<void(OriginId, SourceReturnType)>;
 inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const uint64_t sequenceNumber)
 {
     buffer.setOriginId(originId);
-    buffer.setCreationTimestampInMS(
-        Runtime::Timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    buffer.setCreationTimestampInMS(Timestamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     buffer.setSequenceNumber(SequenceNumber{sequenceNumber});
     buffer.setChunkNumber(ChunkNumber{1});
     buffer.setLastChunk(true);

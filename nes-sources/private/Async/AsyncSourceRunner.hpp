@@ -51,7 +51,7 @@ private:
     EmitFunction emitFn;
 
     void
-    handleSourceResult(const IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const;
+    handleSourceResult(IOBuffer& buffer, const AsyncSource::InternalSourceResult& internalSourceResult, const std::function<void(IOBuffer&)>& dataEmit) const;
 
     struct AsyncSourceWrapper
     {

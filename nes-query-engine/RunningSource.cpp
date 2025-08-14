@@ -108,7 +108,9 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (source->tryStop(std::chrono::milliseconds(0)) == Sources::SourceReturnType::TryStopResult::TIMEOUT)
+        // Todo: reenable
+        // if (source->tryStop(std::chrono::milliseconds(0)) == Sources::SourceReturnType::TryStopResult::TIMEOUT)
+        if (source->tryStop() == Sources::TryStopResult::SUCCESS)
         {
             ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
         }
@@ -127,9 +129,11 @@ bool RunningSource::attemptUnregister()
     return false;
 }
 
-Sources::SourceReturnType::TryStopResult RunningSource::tryStop() const
+Sources::TryStopResult RunningSource::tryStop() const
 {
-    return this->source->tryStop(std::chrono::milliseconds(0));
+    // Todo: reenable
+    // return this->source->tryStop(std::chrono::milliseconds(0));
+    return this->source->tryStop();
 }
 
 void RunningSource::fail(Exception exception) const

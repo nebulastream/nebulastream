@@ -66,7 +66,7 @@ try
     const auto executor = co_await asio::this_coro::executor;
     socket.emplace(executor);
     const auto endpoints = co_await tcp::resolver{executor}.async_resolve(socketHost, socketPort, asio::deferred);
-    co_await async_connect(socket.value(), endpoints, asio::deferred);
+    co_await asio::async_connect(socket.value(), endpoints, asio::deferred);
     NES_DEBUG("Connected to {}:{}.", socketHost, socketPort);
 }
 catch (boost::system::system_error& error)
@@ -83,7 +83,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> TCPSource::fillBuff
     }
 
     auto [errorCode, bytesRead]
-        = co_await async_read(socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), as_tuple(asio::deferred));
+        = co_await async_read(socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
 
     if (not errorCode)
     {
@@ -114,9 +114,9 @@ catch (boost::system::system_error& err)
     NES_ERROR("Failed to close socket: {}", err.what());
 }
 
-Configurations::DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType

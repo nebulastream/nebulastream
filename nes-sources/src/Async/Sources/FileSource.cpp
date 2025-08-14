@@ -75,7 +75,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
     }
 
     auto [errorCode, bytesRead] = co_await async_read(
-        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), as_tuple(asio::deferred));
+        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
 
     if (errorCode)
     {
@@ -107,9 +107,9 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str << std::format("\nFileSource(filepath: {})", filePath);
 }
 
-Configurations::DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments arguments)

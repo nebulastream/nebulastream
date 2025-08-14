@@ -39,11 +39,6 @@ BlockingSourceRunner::BlockingSourceRunner(
 void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) const
 {
     auto sequenceNumber = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](IOBuffer&& buffer) -> void
-    {
-        addBufferMetadata(executionContext->originId, buffer, sequenceNumber++);
-        emitFn(executionContext->originId, Data{std::move(buffer)});
-    };
 
     const BlockingSourceWrapper handle{*executionContext->sourceImpl};
     while (!stopToken.stop_requested())
@@ -55,7 +50,12 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
         if (numReadBytes != 0)
         {
-            executionContext->inputFormatter->parseTupleBufferRaw(buffer, *executionContext->bufferProvider, numReadBytes, dataEmit);
+            // executionContext->inputFormatter->parseTupleBufferRaw(buffer, *executionContext->bufferProvider, numReadBytes, dataEmit);
+            /// The source read in raw bytes, thus we don't know the number of tuples yet.
+            /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
+            buffer.setNumberOfTuples(numReadBytes);
+            addBufferMetadata(executionContext->originId, buffer, sequenceNumber++);
+            emitFn(executionContext->originId, Data{std::move(buffer)});
         }
 
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.

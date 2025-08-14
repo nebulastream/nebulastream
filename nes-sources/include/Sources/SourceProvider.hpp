@@ -36,7 +36,7 @@ public:
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-        size_t numBuffersPerSource = NUM_SOURCE_LOCAL_BUFFERS);
+        size_t numBuffersPerSource);
 
     ~SourceProvider() = default;
 };
