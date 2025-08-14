@@ -44,7 +44,8 @@ namespace NES
 
 namespace asio = boost::asio;
 
-static constexpr auto TEST_DATA_DIR = "/tmp/nebulastream-public/nes-sources/tests/testdata";
+// static constexpr auto TEST_DATA_DIR = "/tmp/nebulastream-public/nes-sources/tests/testdata";
+static constexpr auto TEST_DATA_DIR = "/home/rudi/dima/nebulastream-public/nes-sources/tests/testdata/";
 static constexpr size_t DEFAULT_BUFFER_SIZE = 32; // bytes
 static constexpr size_t DEFAULT_NUM_BUFFERS = 4;
 
