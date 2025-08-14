@@ -148,7 +148,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 struct DestroyOnExit
 {
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    ~DestroyOnExit() { bufferProvider->destroy(); }
+    ~DestroyOnExit() { }
 };
 
 void dataSourceThread(
