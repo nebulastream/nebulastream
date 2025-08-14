@@ -40,7 +40,7 @@ def parse_callgraph_text(cg):
         elif line.endswith(" calls external node"):
             pass
         elif match := callee_regex.match(line):
-            callee = match[1]
+            callee = match[1].replace(".", "_")
             cur_callees.add(callee)
         else:
             print(line)
