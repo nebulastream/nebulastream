@@ -32,14 +32,11 @@ class SourceProvider
 public:
     SourceProvider() = default;
 
-    /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        int defaultNumberOfBuffersInLocalPool);
-
-    static bool contains(const std::string& sourceType);
+        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+        size_t numBuffersPerSource = NUM_SOURCE_LOCAL_BUFFERS);
 
     ~SourceProvider() = default;
 };

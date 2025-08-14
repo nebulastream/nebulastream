@@ -17,40 +17,70 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
+
+#include <Async/AsyncSourceHandle.hpp>
+#include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
 namespace NES::Sources
 {
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-    const int defaultNumberOfBuffersInLocalPool)
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
-    /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
-    {
-        /// The source-specific configuration of numberOfBuffersInLocalPool takes priority.
-        /// If not specified (-1), we take the NodeEngine-wide configuration.
-        auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
-            ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
-            : defaultNumberOfBuffersInLocalPool;
-        return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(source.value()));
-    }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
+    return std::make_unique<SourceProvider>();
 }
 
-bool SourceProvider::contains(const std::string& sourceType)
+std::unique_ptr<SourceHandle> SourceProvider::lower(
+    const OriginId originId,
+    const SourceDescriptor& sourceDescriptor,
+    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+    const size_t numBuffersPerSource)
 {
-    return SourceRegistry::instance().contains(sourceType);
+    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+        sourceDescriptor.parserConfig.parserType,
+        *sourceDescriptor.schema,
+        sourceDescriptor.parserConfig.tupleDelimiter,
+        sourceDescriptor.parserConfig.fieldDelimiter);
+
+    auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
+    {
+        if (const auto bufferProvider = poolProvider->createFixedSizeBufferPool(numBuffersPerSource); bufferProvider)
+        {
+            return std::visit(
+                Overloaded{
+                    [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferProvider.value(),
+                            .inputFormatter = std::move(inputFormatter)});
+                    },
+                    [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferProvider.value(),
+                            .inputFormatter = std::move(inputFormatter)});
+                    }},
+                std::move(source.value()));
+        }
+        throw BufferAllocationFailure("Cannot allocate the buffer pool for source: {}", sourceDescriptor.logicalSourceName);
+    }
+    throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }
 
 }

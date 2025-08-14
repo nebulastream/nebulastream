@@ -12,14 +12,27 @@
     limitations under the License.
 */
 
-#include <ostream>
-#include <Sources/Source.hpp>
+#include <Async/IOThread.hpp>
+
+#include <boost/asio/executor_work_guard.hpp>
+
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
 {
-std::ostream& operator<<(std::ostream& out, const Source& source)
+
+/// The io_context is initialized first from its default constructor.
+IOThread::IOThread() : workGuard(asio::make_work_guard(ioc)), ioThread([this] { ioc.run(); })
 {
-    return source.toString(out);
+    NES_DEBUG("IOThread: started [{}]", ioThread.get_id());
+}
+
+IOThread::~IOThread()
+{
+    workGuard.reset();
+    ioc.stop();
+    NES_DEBUG("IOThread: stopped [{}]", ioThread.get_id());
+    /// Thread is joined when leaving this scope
 }
 
 }

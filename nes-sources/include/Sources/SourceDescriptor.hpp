@@ -21,16 +21,15 @@
 #include <functional>
 #include <ostream>
 #include <string>
+
 #include <string_view>
 #include <unordered_map>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>

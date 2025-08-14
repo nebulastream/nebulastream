@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -11,16 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+#include <Sources/BlockingSource.hpp>
 
-#include <Configurations/Descriptor.hpp>
+#include <ostream>
 
-namespace NES::Sources::SourceValidationProvider
+namespace NES::Sources
 {
-std::optional<DescriptorConfig::Config> provide(std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig);
+std::ostream& operator<<(std::ostream& out, const BlockingSource& source)
+{
+    return source.toString(out);
+}
 }

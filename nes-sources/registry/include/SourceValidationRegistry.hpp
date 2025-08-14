@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
 
@@ -28,9 +30,9 @@ struct SourceValidationRegistryArguments
 {
     std::unordered_map<std::string, std::string> config;
 };
+using KeyType = std::string;
 
-class SourceValidationRegistry final
-    : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
+class SourceValidationRegistry final : public BaseRegistry<SourceValidationRegistry, KeyType, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
 {
 };
 

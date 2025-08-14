@@ -14,27 +14,23 @@
 
 #pragma once
 
-#include <functional>
-#include <variant>
+#include <memory>
+
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
+#include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/BlockingSource.hpp>
 
-namespace NES::Sources::SourceReturnType
+namespace NES::Sources
 {
-/// Todo #237: Improve error handling in sources
-struct Error
-{
-    Exception ex;
-};
 
-struct Data
+template <typename SourceType>
+struct SourceExecutionContext
 {
-    NES::Memory::TupleBuffer buffer;
-};
-
-struct EoS
-{
+    const OriginId originId;
+    std::unique_ptr<SourceType> sourceImpl;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
 };
 
 enum class TryStopResult : uint8_t
