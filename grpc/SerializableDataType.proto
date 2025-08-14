@@ -13,7 +13,6 @@
 */
 
 syntax = "proto3";
-import "google/protobuf/any.proto";
 package NES;
 message SerializableDataType {
   // Enum do identify the data type
