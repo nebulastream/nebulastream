@@ -39,6 +39,11 @@ class SinkCatalog;
 namespace NES::Sinks
 {
 
+enum class InputFormat : uint8_t
+{
+    CSV
+};
+
 class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;

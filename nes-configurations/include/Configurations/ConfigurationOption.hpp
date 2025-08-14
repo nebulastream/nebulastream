@@ -20,7 +20,7 @@
 #include <string>
 #include <typeinfo>
 #include <utility>
-#include <Configurations/ConfigurationsNames.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
@@ -100,19 +100,6 @@ public:
         }
         return false;
     };
-
-    /// @brief converts a string to the appropriate InputFormat enum value and sets it
-    void setInputFormatEnum(std::string inputFormat)
-    {
-        if (inputFormat == "CSV")
-        {
-            this->value = InputFormat::CSV;
-        }
-        else
-        {
-            NES_ERROR("InputFormatEnum: value unknown.");
-        }
-    }
 
 private:
     explicit ConfigurationOption(std::string name, T value, std::string description)
