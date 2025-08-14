@@ -48,7 +48,7 @@ message SerializableSourceDescriptor
 message SerializableSourceDescriptorLogicalOperator
 {
   SerializableSourceDescriptor sourceDescriptor = 1;
-  uint64 sourceOriginId = 2;
+  repeated uint64 source_origin_ids = 2;
 }
 
 message SerializableSinkLogicalOperator

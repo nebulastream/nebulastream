@@ -23,7 +23,7 @@
 namespace NES
 {
 
-SourcePhysicalOperator::SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id)
+SourcePhysicalOperator::SourcePhysicalOperator(SourceDescriptor descriptor, const OriginId id)
     : originId(id), descriptor(std::move(std::move(descriptor))) { };
 
 SourceDescriptor SourcePhysicalOperator::getDescriptor() const

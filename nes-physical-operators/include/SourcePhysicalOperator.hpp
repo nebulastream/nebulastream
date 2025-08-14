@@ -13,8 +13,8 @@
 */
 #pragma once
 
-#include <memory>
 #include <optional>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <PhysicalOperator.hpp>

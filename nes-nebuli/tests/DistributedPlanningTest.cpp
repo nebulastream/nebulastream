@@ -232,9 +232,8 @@ TEST_F(DistributedPlanningTest, FourWayJoin)
 {
     auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "four_way_join.yaml");
     auto boundPlan = CLI::YamlBinder::from(std::move(queryConfig)).bind();
-    auto plan = QueryPlanner::plan(std::move(boundPlan));
 
-    for (const auto& [node, plans] : plan)
+    for (const auto plan = QueryPlanner::plan(std::move(boundPlan)); const auto& [node, plans] : plan)
     {
         for (const auto& localPlan : plans)
         {

@@ -86,8 +86,7 @@ LogicalOperator QueryDecomposer::createNetworkSource(const NetworkChannel& chann
                           .value();
 
     return SourceDescriptorLogicalOperator{std::move(descriptor)}
-        .withInputOriginIds({{INVALID_ORIGIN_ID}})
-        .withTraitSet({PlacementTrait{downstreamNode}});
+        .withInputOriginIds({upstreamOp.getOutputOriginIds()});
 }
 
 LogicalOperator QueryDecomposer::createNetworkSink(const NetworkChannel& channel)
@@ -108,7 +107,6 @@ LogicalOperator QueryDecomposer::createNetworkSink(const NetworkChannel& channel
     return SinkLogicalOperator{std::move(*networkSinkDescriptor)}
         .withInputOriginIds({upstreamOp.getOutputOriginIds()})
         .withOutputOriginIds(upstreamOp.getOutputOriginIds())
-        .withTraitSet({PlacementTrait{upstreamNode}})
         .withInferredSchema({upstreamOp.getOutputSchema()});
 }
 
