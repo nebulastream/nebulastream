@@ -10,6 +10,7 @@ on:
         description: "nebulastream/nes-development tag"
         required: true
         default: latest
+  pull_request:
 
 jobs:
   fetch-current-main-commit:
