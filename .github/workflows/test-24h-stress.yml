@@ -1,0 +1,41 @@
+name: test-24h-stress
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to test (branch/sha/tag)"
+        required: true
+        default: your-branch-name
+      dev_image_tag:
+        description: "nebulastream/nes-development tag"
+        required: true
+        default: latest
+
+jobs:
+  fetch-current-main-commit:
+    runs-on: [ self-hosted ]
+    outputs:
+      sha: ${{ steps.fetch-sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+      - name: Fetch SHA
+        id: fetch-sha
+        run: |
+          git rev-parse --verify HEAD
+          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
+
+  get-dev-images:
+    needs: fetch-current-main-commit
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
+  call-stress:
+    uses: ./.github/workflows/24h_stress_test.yml
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    with:
+      ref: ${{ inputs.ref }}
+      dev_image_tag: ${{ inputs.dev_image_tag }}
