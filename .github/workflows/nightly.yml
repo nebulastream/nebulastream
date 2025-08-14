@@ -582,7 +582,6 @@ jobs:
           git push --set-upstream origin run-${{ github.run_id }}-${{ github.run_attempt }}
 
   gen-cov:
-    if: ${{ !github.event.act }}
     name: "generate coverage"
     needs: [ get-dev-images, final-merge, check-sanitizer-specifity ]
     container:
@@ -598,48 +597,60 @@ jobs:
     runs-on: [ self-hosted, linux, Build, "x64" ]
     steps:
       - uses: actions/checkout@v4
+        if: ${{ !env.ACT }}
         with:
           path: nes
       - name: clone corpus
+        if: ${{ !env.ACT }}
         run: |
           rm -rf nes-corpora
           git clone https://fwc:${{ secrets.FWC_NES_CORPORA }}@github.com/fwc/nes-corpora.git
       - name: configure
+        if: ${{ !env.ACT }}
         run: |
           cd nes
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=RelWithDebug -DNES_LOG_LEVEL=WARN -DUSE_LIBFUZZER=ON -DUSE_GCOV=ON
       - name: build
+        if: ${{ !env.ACT }}
         shell: bash
         run: |
           cd nes
           # build everything, so that all intermediate files are created for coverage
           cmake --build build -j -- -k 0
       - name: setup
+        if: ${{ !env.ACT }}
         run: |
           cd nes/build
           echo fuzzer="$(pwd)/$(find -name ${{ inputs.fuzzer }} -type f)" >> $GITHUB_ENV
       - name: run on corpus and broken
+        if: ${{ !env.ACT }}
         run: |
           if ! find nes-corpora/${{ inputs.fuzzer }} -type f -print0 | xargs -0 --max-args=1 --max-procs="$(nproc)" timeout 6m "$fuzzer" -timeout=300
           then
             true
           fi
       - name: install gcovr
+        if: ${{ !env.ACT }}
         run: |
           apt install -y gcovr graphviz
       - name: garbage files around?
+        if: ${{ !env.ACT }}
         run: |
           find -name "*.gcda"
       - name: collect coverage
+        if: ${{ !env.ACT }}
         run: |
           gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --root nes
       - name: generate callgraph .dot
+        if: ${{ !env.ACT }}
         run: |
           python3 nes/gen_callgraph.py nes/build/compile_commands.json gcovr.json
       - name: generate callgraph .svg
+        if: ${{ !env.ACT }}
         run: |
           neato -Tsvg cov.dot > cov.svg
       - uses: actions/upload-artifact@v4
+        if: ${{ !env.ACT }}
         with:
           name: coverage
           path: |
