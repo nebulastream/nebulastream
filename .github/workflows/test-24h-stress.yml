@@ -26,4 +26,4 @@ jobs:
     needs: [ get-dev-images ]
     with:
       ref: ${{ github.event.pull_request.head.ref }}
-      dev_image_tag: ${{ inputs.dev_image_tag }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
