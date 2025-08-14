@@ -97,25 +97,7 @@ def dot_escapce(s: str):
     return s
 
 
-def to_graph(callers, elgnamed, gcovr_json) -> str:
-    
-    def cov_percent_to_color(value):
-        value = max(0, min(100, value))  # Clamp value between 0 and 100
-
-        if value <= 50:
-            red = 255
-            green = int(255 * (value / 50))
-            blue = 0
-        else:
-            red = int(255 * (1 - (value - 50) / 50))
-            green = 255
-            blue = 0
-
-        return f'#{red:02x}{green:02x}{blue:02x}'
-
-    drawn_fns = {}
-
-    ret = []
+def filter_fns(elgnamed, gcovr_json):
 
     def ignore_fn(name: str):
         ignored_fns = {
@@ -139,9 +121,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
                 return True
         return False
 
-    ret.append("digraph G {")
-    ret.append("overlap = false;")
-    ret.append("maxiter = 3;")
+    fns = {}
 
     for f in gcovr_json["files"]:
         for fun in f["functions"]:
@@ -155,11 +135,36 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
                 continue
 
             demngld_name = fun["name"]
-            mangled_name = elgnamed[demngld_name]
-            drawn_fns[mangled_name] = {
-                "file": f["file"],
-                "gv_node": f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];',
-            }
+            fns[elgnamed[demngld_name]] = {"file": f["file"], "fun": fun}
+
+    return fns
+
+
+def cov_percent_to_color(value):
+    value = max(0, min(100, value))  # Clamp value between 0 and 100
+
+    if value <= 50:
+        red = 255
+        green = int(255 * (value / 50))
+        blue = 0
+    else:
+        red = int(255 * (1 - (value - 50) / 50))
+        green = 255
+        blue = 0
+
+    return f'#{red:02x}{green:02x}{blue:02x}'
+
+def to_graph(callers, elgnamed, gcovr_json) -> str:
+
+    drawn_fns = {}
+
+    ret = []
+
+    ret.append("digraph G {")
+    ret.append("overlap = false;")
+    ret.append("maxiter = 3;")
+
+    drawn_fns = filter_fns(elgnamed, gcovr_json)
 
     act_drawn_fn = {}
 
@@ -176,7 +181,9 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     grouped_fns: Dict[str, list[str]] = defaultdict(list)
     for fn in drawn_fn_set:
         f = drawn_fns[fn]
-        grouped_fns[file_by_root_folder(f["file"])].append(f["gv_node"])
+        fun = f["fun"]
+        gv_node = f'{fn} [label="{short_name(f["fun"]["name"])}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(f["fun"]["name"])}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
+        grouped_fns[file_by_root_folder(f["file"])].append(gv_node)
 
     for group, nodes in grouped_fns.items():
         ret.append('subgraph cluster_' + group.replace("-", "_") + ' {')
