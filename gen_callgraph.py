@@ -11,6 +11,8 @@
 # limitations under the License.
 
 
+from typing import Dict
+from collections import defaultdict
 import json
 import sys
 import subprocess
@@ -154,7 +156,10 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
 
             demngld_name = fun["name"]
             mangled_name = elgnamed[demngld_name]
-            drawn_fns[mangled_name] = f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
+            drawn_fns[mangled_name] = {
+                "file": f["file"],
+                "gv_node": f'{mangled_name} [label="{short_name(demngld_name)}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(demngld_name)}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];',
+            }
 
     act_drawn_fn = {}
 
@@ -168,12 +173,20 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     drawn_fn_set = set(fn for fn in act_drawn_fn if act_drawn_fn[fn])
     drawn_fn_set |= set(el for li in act_drawn_fn.values() for el in li)
 
+    grouped_fns: Dict[str, list[str]] = defaultdict(list)
     for fn in drawn_fn_set:
-        ret.append(drawn_fns[fn])
+        f = drawn_fns[fn]
+        grouped_fns[file_by_root_folder(f["file"])].append(f["gv_node"])
 
-    for fn in act_drawn_fn:
-        for callee in act_drawn_fn[fn]:
-            ret.append(f"{fn} -> {callee};")
+    for group, nodes in grouped_fns.items():
+        ret.append('subgraph cluster_' + group.replace("-", "_") + ' {')
+        for node in nodes:
+            ret.append(node)
+        ret.append("}")
+
+    for caller, callees in act_drawn_fn.items():
+        for callee in callees:
+            ret.append(f"{caller} -> {callee};")
 
     ret.append("}")
 
@@ -207,6 +220,47 @@ def short_name(name: str):
 
     print("could not shorten ", name)
     return name
+
+
+def file_by_root_folder(file: str):
+    prefix = file.split("/")[0]
+
+    vcpkg_deps = [
+        "absl",
+        "antlr4-runtime",
+        "argparse",
+        "boost",
+        "cpptrace",
+        "fmt",
+        "folly",
+        "gmock",
+        "grpcpp",
+        "gtest",
+        "magic_enum",
+        "nautilus",
+        "nlohmann",
+        "protobuf",
+        "replxx",
+        "spdlog",
+        "yaml-cpp",
+    ]
+
+    if prefix.startswith("nes-"):
+        return prefix
+
+    if "vcpkg_installed" in file:
+        for dep in vcpkg_deps:
+            if dep in file:
+                return dep
+        raise RuntimeError(f"Unknown dependency: {file}")
+    elif "antlr4_generated_src" in file:
+        return "gen-parser"
+    elif "grpc_generated_src" in file:
+        return "gen-grpc"
+    elif "registry" in file:
+        return "registry"
+    else:
+        raise RuntimeError(f"Unknown dependency: {file}")
 
 
 def main():
