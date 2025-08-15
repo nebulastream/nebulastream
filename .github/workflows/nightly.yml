@@ -149,6 +149,14 @@ jobs:
       - name: Print Placeholder Message
         run: echo "Long running tests will be added in the future."
 
+  stress-test-24h:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/24h_stress_test.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
   build-and-benchmark:
     needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/build-and-benchmark.yml

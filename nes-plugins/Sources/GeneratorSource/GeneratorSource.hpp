@@ -95,6 +95,9 @@ struct ConfigParametersGenerator
                 case GeneratorStop::ONE: {
                     return std::optional(EnumWrapper(GeneratorStop::ONE));
                 }
+                case GeneratorStop::NONE: {
+                    return std::optional(EnumWrapper(GeneratorStop::NONE));
+                }
                 default: {
                     NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
                     throw NES::InvalidConfigParameter(
