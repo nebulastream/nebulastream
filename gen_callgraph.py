@@ -255,6 +255,8 @@ def fn_len_from_line(line, lines, filename):
             return (line, line + 1)
         if lines[line-1].strip().startswith("class"):
             return (line, line + 1)
+        if lines[line-1].strip().startswith("struct"):
+            return (line, line + 1)
         if lines[line-1].endswith("default;\n"):
             return (line, line + 1)
         if lines[line-1].strip().startswith("ASSERT"):
@@ -293,8 +295,10 @@ def fn_len_from_line(line, lines, filename):
         brace_open = None
         brace_clos = None
         for i in range(6):
+            # TODO prevent accidentally taking if/else or loop block
             if lines[line + i].strip() == "{":
                 brace_open = line + i
+                whitespace_offset = lines[line + i].index("{")
                 break
 
         if not brace_open:
@@ -303,7 +307,7 @@ def fn_len_from_line(line, lines, filename):
 
         j = line + i
         while j < len(lines):
-            if lines[j].strip() == "}":
+            if lines[j].startswith((" " * whitespace_offset) + "}"):
                 brace_clos = j
                 break
             j += 1
@@ -327,8 +331,25 @@ def is_overlap(a, b):
 
     return True
 
+def small_left(a, b):
+    al, ar = a
+    bl, br = b
+    return (a, b) if ar-al < br-bl else (b, a)
+
+def is_contained(a, b):
+    if not is_overlap(a, b):
+        return False
+
+    (al, ar), (bl, br) = small_left(a, b)
+
+    if bl <= al and ar <= br:
+        return True
+
+    return False
+
 def mk_fn_len_estimator(gcovr_json):
-    ret = {} # {file: {line: len}}
+    fn_to_locs = defaultdict(list)
+    loc_to_fns = defaultdict(list)
 
     for file in gcovr_json["files"]:
         try:
@@ -337,21 +358,24 @@ def mk_fn_len_estimator(gcovr_json):
         except Exception as e:
             continue
 
-        fn_locs = set()
 
         for fn in file["functions"]:
             if fn_loc := fn_len_from_line(fn["lineno"], lines, file["file"]):
-                fn_locs.add(fn_loc)
+                loc_to_fns[fn_loc].append(fn["name"])
+                fn_to_locs[fn["name"]].append(fn_loc)
 
-        print(file["file"], fn_locs)
+        for loc1, loc2 in itertools.combinations(loc_to_fns.keys(), 2):
+            if is_overlap(loc1, loc2) and not is_contained(loc1, loc2):
+                print(f"ERROR: fns 'crossover' in {file["file"]}:{loc1[0]}, ranges {loc1} and {loc2}")
+                print(loc_to_fns[loc1])
+                print(loc_to_fns[loc2])
+                sys.exit(1)
+            if is_overlap(loc1, loc2) and is_contained(loc1, loc2):
+                (l, r), _ = small_left(loc1, loc2)
+                if r-l > 3:
+                    print(f"WARN: big fn contained in {file["file"]}:{l}, ranges {loc1} and {loc2}")
 
-        for loc1, loc2 in itertools.combinations(fn_locs, 2):
-            if is_overlap(loc1, loc2):
-                print(f"WARN: fns 'overlap' in {file["file"]}, ranges {loc1} and {loc2}")
-                break
-
-
-    return ret
+    return fn_to_locs, loc_to_fns
 
 
 def cluster_nested(gcovr_json):
