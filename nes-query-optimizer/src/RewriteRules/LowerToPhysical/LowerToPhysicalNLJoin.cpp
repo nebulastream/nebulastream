@@ -102,7 +102,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
 {
     if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
-        NES_DEBUG("Skip eventime identification as we use ingestion time");
+        NES_DEBUG("Skip event time identification, as we use ingestion time");
         return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
     }
 
@@ -124,12 +124,12 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
     };
 
     /// Extracting the left and right timestamp
-    auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas()[0]);
-    auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas()[1]);
+    const auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas()[0]);
+    const auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas()[1]);
 
     INVARIANT(
         !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-        "Could not find timestampfieldname {} in both streams!",
+        "Could not find the name of the timestamp field '{}' in both streams",
         timeStampFieldNameWithoutSourceName);
 
     return {
@@ -156,8 +156,8 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    auto rightInputSchema = join.getInputSchemas()[0];
-    auto leftInputSchema = join.getInputSchemas()[1];
+    auto leftInputSchema = join.getLeftSchema();
+    auto rightInputSchema = join.getRightSchema();
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds()[0];
     auto logicalJoinFunction = join.getJoinFunction();
@@ -175,7 +175,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
@@ -206,7 +206,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{leftBuildWrapper, rightBuildWrapper});
 
-    return {.root = {probeWrapper}, .leafs = {rightBuildWrapper, leftBuildWrapper}};
+    return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule>
