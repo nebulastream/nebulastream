@@ -79,6 +79,9 @@ TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
     const auto networkSink = root.back().tryGet<SinkLogicalOperator>();
     EXPECT_TRUE(networkSink.has_value());
     EXPECT_EQ(networkSink.value().getSinkDescriptor()->getSinkType(), "Network");
+    const auto sources = getOperatorByType<SourceDescriptorLogicalOperator>(sourceNodePlan);
+    EXPECT_TRUE(sources.size() == 1);
+    EXPECT_EQ(sources.front().getSourceDescriptor().getSourceType(), "File");
 
     const auto sinkNodePlan = plan["sink-node"].front();
     const auto leaf = getLeafOperators(sinkNodePlan);

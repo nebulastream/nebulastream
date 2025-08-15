@@ -14,20 +14,19 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <Distributed/NetworkTopology.hpp>
 #include <Distributed/OperatorPlacement.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <QueryConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
+#include <QueryConfig.hpp>
 
 namespace NES
 {
@@ -39,15 +38,14 @@ class QueryDecomposer
     SharedPtr<SourceCatalog> sourceCatalog;
     SharedPtr<SinkCatalog> sinkCatalog;
 
-    std::unordered_map<TopologyGraph::NodeId, LogicalPlan> planByNode;
-    std::unordered_map<OperatorId, TopologyGraph::NodeId> placement;
+    std::unordered_map<TopologyGraph::NodeId, std::vector<LogicalPlan>> plansByNode;
     struct NetworkChannel
     {
         CLI::ChannelId id;
-        OperatorId upstreamOp;
-        OperatorId downstreamOp;
+        const LogicalOperator& upstreamOp;
+        TopologyGraph::NodeId upstreamNode;
+        const TopologyGraph::NodeId& downstreamNode;
     };
-    std::vector<NetworkChannel> channels;
 
     QueryDecomposer(
         OperatorPlacer::PlacedLogicalPlan&& placedPlan,
@@ -73,30 +71,21 @@ public:
     DecomposedLogicalPlan decompose() &&;
 
 private:
-    void distributePlanFragments();
-    void connectPlanFragments();
+    LogicalOperator decomposePlanRecursive(const LogicalOperator& op);
+    LogicalOperator assignOperator(const LogicalOperator& op, const LogicalOperator& child);
 
-    void attachChildToParentOnSameNode(const LogicalOperator& parent, const LogicalOperator& child, const TopologyGraph::NodeId& node);
+    LogicalOperator createNetworkChannel(
+        const LogicalOperator& op,
+        const TopologyGraph::NodeId& startNode,
+        const TopologyGraph::NodeId& endNode);
 
-    void handleCrossNodeConnection(
-        const LogicalOperator& parent,
-        const LogicalOperator& child,
-        const TopologyGraph::NodeId& parentNode,
-        const TopologyGraph::NodeId& childNode);
+    void addPlanToNode(LogicalOperator&& op, const TopologyGraph::NodeId& nodeId);
 
-    void addOperatorAsRoot(const LogicalOperator& op);
+    using Bridge = std::pair<LogicalOperator, LogicalOperator>;
+    Bridge connect(NetworkChannel channel);
 
-    LogicalOperator findOperatorById(const OperatorId id) const
-    {
-        const auto nodeId = placement.at(id);
-        return getOperatorById(planByNode.at(nodeId), id).value();
-    }
-
-    LogicalOperator createNetworkSink(const NetworkChannel& channel);
-    LogicalOperator createNetworkSource(const NetworkChannel& channel);
-
-    [[nodiscard]] auto view() { return planByNode; }
-    [[nodiscard]] auto begin() { return planByNode.begin(); }
-    [[nodiscard]] auto end() { return planByNode.end(); }
+    [[nodiscard]] auto view() { return plansByNode; }
+    [[nodiscard]] auto begin() { return plansByNode.begin(); }
+    [[nodiscard]] auto end() { return plansByNode.end(); }
 };
 }
