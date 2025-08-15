@@ -17,6 +17,7 @@ import json
 import sys
 import subprocess
 import multiprocessing
+import itertools
 from pathlib import Path
 import re
 
@@ -239,6 +240,93 @@ def short_name(name: str):
     print("could not shorten ", name)
     return name
 
+def fn_len_from_line(line, lines, filename):
+    assert lines[line-1]
+
+    try:
+        lines_loc = None
+        if "{" in lines[line-1] and (
+            lines[line-1].endswith("}\n")
+            or lines[line-1].endswith("};\n")
+            or lines[line-1].endswith("});\n")
+            or lines[line].endswith("});\n")
+            or lines[line].endswith("}));\n")
+            ):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("class"):
+            return (line, line + 1)
+        if lines[line-1].endswith("default;\n"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("ASSERT"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("TEST"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("MOCK"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("INSTANTIATE"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("FMT"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("DEFINE_OPERATOR_VAR_VAL_BINARY"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("DEFINE_OPERATOR_VAR_VAL_UNARY"):
+            return (line, line + 1)
+        if lines[line-1].strip().startswith("EXCEPTION"):
+            return (line, line + 1)
+        if "[](" in lines[line-1]:
+            return (line, line + 1)
+        if "[&](" in lines[line-1]:
+            return (line, line + 1)
+
+        # TODO
+        if "[](" in lines[line]:
+            return (line, line + 1)
+        if "[&](" in lines[line]:
+            return (line, line + 1)
+        if "{" in lines[line] and (
+            lines[line].endswith("}\n")
+            or lines[line].endswith("};\n")
+            or lines[line].endswith("});\n")
+            ):
+            return (line, line + 1)
+
+        brace_open = None
+        brace_clos = None
+        for i in range(6):
+            if lines[line + i].strip() == "{":
+                brace_open = line + i
+                break
+
+        if not brace_open:
+            print("could not find opening: ", filename + ":" + str(line))
+            return None
+
+        j = line + i
+        while j < len(lines):
+            if lines[j].strip() == "}":
+                brace_clos = j
+                break
+            j += 1
+
+        if brace_open and brace_clos:
+            return (brace_open + 1, brace_clos + 1)
+    except IndexError as e:
+        print("tja", e, filename, line)
+    print("could not find fn range: ", filename + ":" + str(line))
+
+
+def is_overlap(a, b):
+    al, ar = a
+    bl, br = b
+
+    assert al < ar
+    assert bl < br
+
+    if ar <= bl or br <= al:
+        return False
+
+    return True
+
 def mk_fn_len_estimator(gcovr_json):
     ret = {} # {file: {line: len}}
 
@@ -249,13 +337,19 @@ def mk_fn_len_estimator(gcovr_json):
         except Exception as e:
             continue
 
+        fn_locs = set()
+
         for fn in file["functions"]:
-            line = fn["lineno"]
-            try:
-                print(lines[line-1].strip())
-            except:
-                print(file["file"])
-                print(f"wtf: {line}, {len(lines)}")
+            if fn_loc := fn_len_from_line(fn["lineno"], lines, file["file"]):
+                fn_locs.add(fn_loc)
+
+        print(file["file"], fn_locs)
+
+        for loc1, loc2 in itertools.combinations(fn_locs, 2):
+            if is_overlap(loc1, loc2):
+                print(f"WARN: fns 'overlap' in {file["file"]}, ranges {loc1} and {loc2}")
+                break
+
 
     return ret
 
