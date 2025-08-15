@@ -1,0 +1,43 @@
+# name: SWJ_todo.test
+# description: Extended multi-way join queries using IoTropolis-inspired data (as DEBS.test)
+# groups: [milestone, benchmark, small]
+
+# Source definitions
+
+SourceCSV solarPanel INT32 solarPanel_Id INT32 solarPanel_groupId FLOAT64 solarPanel_power UINT64 TS TESTDATA/small/solarPanel.csv
+SourceCSV factory INT32 factory_Id INT32 factory_sectorId FLOAT64 factory_power UINT64 TS TESTDATA/small/factory.csv
+#SourceCSV household INT32 household_Id INT32 household_sectorId FLOAT64 household_power UINT64 TS TESTDATA/household.csv
+#SourceCSV office INT32 office_Id INT32 office_sectorId FLOAT64 office_power UINT64 TS TESTDATA/office.csv
+#SourceCSV streetLight INT32 streetLight_Id INT32 streetLight_sectorId FLOAT64 streetLight_power UINT64 TS TESTDATA/streetLight.csv
+SourceCSV windTurbine INT32 windTurbine_Id INT32 windTurbine_groupId FLOAT64 windTurbine_power UINT64 TS TESTDATA/small/windTurbine.csv
+
+SINK testQ1 INT32 solarPanel_power INT32 windTurbine_power INT32 solarPanel_groupId UINT64 TS UINT64 TS
+
+# Q3
+SELECT factory_power, solarPanel_power, solarPanel_groupId, TS
+#SELECT *
+FROM (SELECT * FROM factory )
+        INNER JOIN (SELECT * FROM solarPanel WHERE solarPanel_power < INT32(30)) ON factory_sectorId = solarPanel_groupId
+        WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 3 MINUTES)
+            INNER JOIN (SELECT * FROM windTurbine ) ON solarPanel_groupId =  windTurbine_groupId AND solarPanel_power < windTurbine_power
+            WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 8 MINUTES)
+INTO testQ1;
+----
+24454004,0
+
+# Q4
+#SELECT factory_power, solarPanel_power, windTurbine_power, solarPanel_groupId, TS
+SELECT *
+FROM (SELECT * FROM factory )
+        INNER JOIN (SELECT * FROM solarPanel WHERE solarPanel_power > INT32(100)) ON factory_sectorId = solarPanel_groupId
+        WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 5 MINUTES)
+            INNER JOIN (SELECT * FROM windTurbine ) ON solarPanel_groupId =  windTurbine_groupId AND factory_power > windTurbine_power
+            WINDOW SLIDING (TS, SIZE 10 MINUTE, ADVANCE BY 5 MINUTES)
+INTO testQ1;
+----
+14088315, 91655208287
+# 116623328, 758670965779
+# result for slide 2
+# 466442782, 3034540934289
+# result for slide 1 finishes
+# early exit with slide 3 and 7
