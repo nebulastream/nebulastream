@@ -35,7 +35,7 @@ public:
 
     virtual bool start(EmitFunction&& emitFn) = 0;
     virtual bool stop() = 0;
-    virtual TryStopResult tryStop() = 0;
+    virtual TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
 
     virtual OriginId getOriginId() { return originId; }
 

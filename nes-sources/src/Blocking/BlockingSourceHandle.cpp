@@ -76,27 +76,15 @@ bool BlockingSourceHandle::stop()
         });
 }
 
-TryStopResult BlockingSourceHandle::tryStop()
+TryStopResult BlockingSourceHandle::tryStop(const std::chrono::milliseconds timeout)
 {
-    state.transition(
-        [](Running&& runningState) -> Stopped
-        {
-            PRECONDITION(runningState.thread.get_id() != std::this_thread::get_id(), "stop() must not be called from the source thread.");
-            NES_DEBUG("BlockingSourceHandle: Running -> Stopped");
-
-            runningState.thread.request_stop();
-            try
-            {
-                runningState.terminationFuture.get();
-            }
-            catch (const std::exception& exception)
-            {
-                NES_ERROR("Source encountered an error: {}", exception.what());
-            }
-            return Stopped{};
-        });
-    // Todo: reenable
-    return TryStopResult::SUCCESS;
+    const auto deadline = std::chrono::system_clock::now() + timeout;
+    bool successfullyStopped = stop();
+    while (not successfullyStopped and std::chrono::system_clock::now() < deadline)
+    {
+        successfullyStopped = stop();
+    }
+    return (successfullyStopped) ? TryStopResult::SUCCESS : TryStopResult::TIMEOUT;
 }
 
 std::ostream& BlockingSourceHandle::toString(std::ostream& str) const

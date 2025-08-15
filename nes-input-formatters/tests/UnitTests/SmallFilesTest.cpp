@@ -166,7 +166,7 @@ public:
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(
-            fileSource->tryStop() == Sources::TryStopResult::SUCCESS,
+            fileSource->tryStop(std::chrono::milliseconds(0)) == Sources::TryStopResult::SUCCESS,
             "Failed to stop source.");
         INVARIANT(
             numberOfExpectedRawBuffers == rawBuffers.size(),

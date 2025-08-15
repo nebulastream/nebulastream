@@ -49,7 +49,7 @@ public:
 
     bool start(EmitFunction&& emitFn) override;
     bool stop() override;
-    TryStopResult tryStop() override;
+    TryStopResult tryStop(std::chrono::milliseconds) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -69,7 +69,7 @@ private:
             : ioThread{LazySingleton<IOThread>::getOrCreate()}
             , runner{std::make_shared<AsyncSourceRunner>(std::move(context), std::move(emitFn))}
             , cancellationSignal{std::make_unique<asio::cancellation_signal>()}
-            , terminationFuture{co_spawn(
+            , terminationFuture{asio::co_spawn(
                   ioThread->ioContext(),
                   runner->runningRoutine(),
                   bind_cancellation_slot(cancellationSignal->slot(), asio::use_future))}

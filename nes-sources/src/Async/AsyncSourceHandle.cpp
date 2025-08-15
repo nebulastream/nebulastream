@@ -66,24 +66,15 @@ bool AsyncSourceHandle::stop()
         });
 }
 
-TryStopResult AsyncSourceHandle::tryStop()
+TryStopResult AsyncSourceHandle::tryStop(const std::chrono::milliseconds timeout)
 {
-    /// After calling stop once atomically, this runner can not be used anymore (no further transitions possible)
-    /// Any attempt will fail and return false
-    state.transition(
-        [](Running&& runningState) -> Stopped
-        {
-            NES_DEBUG("Running -> Stopped");
-            /// Emit a cancellation signal to the coroutine
-            /// If the source already finished by itself, this is a no-op
-            runningState.cancellationSignal->emit(asio::cancellation_type::terminal);
-            /// Block on the future to wait for the coroutine to finish
-            runningState.terminationFuture.wait();
-            /// Transition to stopped state
-            return Stopped{};
-        });
-    // Todo: reenable
-    return TryStopResult::SUCCESS;
+    const auto deadline = std::chrono::system_clock::now() + timeout;
+    bool successfullyStopped = stop();
+    while (not successfullyStopped and std::chrono::system_clock::now() < deadline)
+    {
+        successfullyStopped = stop();
+    }
+    return (successfullyStopped) ? TryStopResult::SUCCESS : TryStopResult::TIMEOUT;
 }
 
 std::ostream& AsyncSourceHandle::toString(std::ostream& str) const
