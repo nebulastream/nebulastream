@@ -240,6 +240,28 @@ def short_name(name: str):
     return name
 
 
+def cluster_nested(gcovr_json):
+    ret = {}
+
+    for file in gcovr_json["files"]:
+        filepath = file["file"]
+        filepath = filepath.replace("/include/", "/src/")
+        if not file["file"].startswith("nes-sql"):
+            continue
+        cur = ret
+        for path_step in file["file"].split("/"):
+            if not path_step in ret:
+                cur[path_step] = {}
+            cur = cur[path_step]
+
+        for fn in file["functions"]:
+            line = fn["lineno"]
+            if not line in cur:
+                cur[line] = []
+            cur[line].append(fn)
+    return ret
+
+
 def cluster_by_root_folder(file: str):
     prefix = file.split("/")[0]
 
