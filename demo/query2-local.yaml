@@ -26,9 +26,8 @@ query: |
   INTO sink;
 sinks:
   - name: sink
-    type: File
+    type: Print
     config:
-      filePath: /tmp/out.csv
       inputFormat: CSV
     schema:
       - name: streamstream2stream3stream4stream5stream6stream7stream8$start
@@ -216,50 +215,50 @@ physicalSources:
 
 workerNodes:
   - host: worker-1:9090
-    grpc: 127.0.0.1:8080
+    grpc: worker-1:8080
     capacity: 100
   - host: worker-2:9090
-    grpc: 127.0.0.1:8081
+    grpc: worker-2:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-3:9090
-    grpc: 127.0.0.1:8082
+    grpc: worker-3:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-4:9090
-    grpc: 127.0.0.1:8083
+    grpc: worker-4:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-5:9090
-    grpc: 127.0.0.1:8084
+    grpc: worker-5:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-6:9090
-    grpc: 127.0.0.1:8085
+    grpc: worker-6:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-7:9090
-    grpc: 127.0.0.1:8086
+    grpc: worker-7:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-8:9090
-    grpc: 127.0.0.1:8087
+    grpc: worker-8:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-9:9090
-    grpc: 127.0.0.1:8088
+    grpc: worker-9:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-10:9090
-    grpc: 127.0.0.1:8089
+    grpc: worker-10:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090

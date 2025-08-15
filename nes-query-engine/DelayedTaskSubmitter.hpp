@@ -13,6 +13,8 @@
 #include <thread>
 #include <Task.hpp>
 
+#include "NESThread.hpp"
+
 namespace NES
 {
 class DelayedTaskSubmitter
@@ -37,7 +39,7 @@ private:
     std::priority_queue<ScheduledTask, std::vector<ScheduledTask>, TaskComparator> taskQueue_;
     std::mutex mutex_;
     std::condition_variable cv_;
-    std::thread workerThread_;
+    Thread workerThread_;
     std::atomic<bool> shutdown_{false};
 
     void workerLoop()
@@ -77,7 +79,7 @@ private:
 
 public:
     explicit DelayedTaskSubmitter(SubmitFn submitFn)
-        : submitFn_(std::move(submitFn)), workerThread_(&DelayedTaskSubmitter::workerLoop, this)
+        : submitFn_(std::move(submitFn)), workerThread_("delay-task-submitter", &DelayedTaskSubmitter::workerLoop, this)
     {
     }
 
@@ -89,12 +91,6 @@ public:
             shutdown_ = true;
         }
         cv_.notify_all();
-
-        // Wait for worker thread to finish
-        if (workerThread_.joinable())
-        {
-            workerThread_.join();
-        }
     }
 
     // Template function to accept any std::chrono::duration type

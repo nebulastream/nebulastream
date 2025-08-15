@@ -38,3 +38,5 @@ private:
     NES::Memory::TupleBuffer& buffer;
     NES::Memory::AbstractBufferProvider& bufferProvider;
 };
+
+void init_logger(rust::String name, rust::String workerId);

@@ -132,8 +132,8 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
         /// If yes, keep the pipeline alive by emitting an empty buffer
         if (sender_writes_pending(**this->channel))
         {
+            NES_WARNING("Cannot shut down Network Sink. Network Channel has pending buffers to send");
             pec.emitBuffer({}, PipelineExecutionContext::ContinuationPolicy::REPEAT);
-            // NES_WARNING("Cannot shut down Network Sink. Network Channel Flush is ongoing");
             return;
         }
     }

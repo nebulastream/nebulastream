@@ -1,3 +1,4 @@
+use crate::ffi::init_logger;
 use async_channel::TrySendError;
 use nes_network::protocol::{ConnectionIdentifier, ThisConnectionIdentifier, TupleBuffer};
 use nes_network::sender::{ChannelControlMessage, ChannelControlQueue};
@@ -6,8 +7,6 @@ use once_cell::sync;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::error::Error;
-use std::fmt;
-use std::fmt::format;
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -35,6 +34,7 @@ pub mod ffi {
         fn set_metadata(self: Pin<&mut TupleBufferBuilder>, meta: &SerializedTupleBuffer);
         fn set_data(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
         fn add_child_buffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn init_logger(thread_name: String, worker_id: String);
     }
 
     extern "Rust" {
@@ -43,9 +43,9 @@ pub mod ffi {
         type SenderDataChannel;
         type ReceiverDataChannel;
 
-        fn init_receiver_service(connection_addr: String) -> Result<()>;
+        fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<()>;
         fn receiver_instance(connection_addr: String) -> Result<Box<ReceiverNetworkService>>;
-        fn init_sender_service(connection_addr: String) -> Result<()>;
+        fn init_sender_service(connection_addr: String, worker_id: String) -> Result<()>;
         fn sender_instance(connection_addr: String) -> Result<Box<SenderNetworkService>>;
 
         fn register_receiver_channel(
@@ -106,7 +106,7 @@ struct ReceiverDataChannel {
     chan: Box<async_channel::Receiver<TupleBuffer>>,
 }
 
-fn init_sender_service(connection_addr: String) -> Result<(), String> {
+fn init_sender_service(connection_addr: String, worker_id: String) -> Result<(), String> {
     let this_connection =
         ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
     let mut services = SERVICES.lock().unwrap();
@@ -121,18 +121,17 @@ fn init_sender_service(connection_addr: String) -> Result<(), String> {
                     .enable_time()
                     .build()
                     .unwrap();
-                sender::NetworkService::start(
-                    runtime,
-                    this_connection,
-                    channel::MemCom::new(),
-                )
+                runtime.spawn(async move {
+                    init_logger("net-sender".to_string(), worker_id);
+                });
+                sender::NetworkService::start(runtime, this_connection, channel::MemCom::new())
             });
             Ok(())
         }
     }
 }
 
-fn init_receiver_service(connection_addr: String) -> Result<(), String> {
+fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<(), String> {
     let this_connection =
         ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
     let mut services = SERVICES.lock().unwrap();
@@ -141,17 +140,16 @@ fn init_receiver_service(connection_addr: String) -> Result<(), String> {
         Entry::Vacant(e) => {
             e.insert({
                 let runtime = tokio::runtime::Builder::new_multi_thread()
-                    .thread_name(format!("net-receiver-{}", connection_addr))
+                    .thread_name("net-receiver")
                     .worker_threads(1)
                     .enable_io()
                     .enable_time()
                     .build()
                     .unwrap();
-                receiver::NetworkService::start(
-                    runtime,
-                    this_connection,
-                    channel::MemCom::new(),
-                )
+                runtime.spawn(async move {
+                    init_logger("net-receiver".to_string(), worker_id);
+                });
+                receiver::NetworkService::start(runtime, this_connection, channel::MemCom::new())
             });
             Ok(())
         }

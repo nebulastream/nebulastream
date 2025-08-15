@@ -1,11 +1,13 @@
-use crate::memcom::{memcom_connect, memcom_listen};
+use crate::memcom::{memcom_bind, memcom_connect};
 use crate::protocol::{ConnectionIdentifier, ThisConnectionIdentifier};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
+use async_channel::Receiver;
 use tokio::io::{AsyncRead, AsyncWrite, ReadHalf, SimplexStream, WriteHalf};
 use tokio::net::TcpSocket;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::sync::Mutex;
+use crate::memcom;
 
 pub struct Channel<R: AsyncRead + Unpin + Send, W: AsyncWrite + Unpin + Send> {
     pub reader: R,
@@ -15,7 +17,7 @@ pub struct Channel<R: AsyncRead + Unpin + Send, W: AsyncWrite + Unpin + Send> {
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub trait CommunicationListener: Send + Sync + Clone {
+pub trait CommunicationListener: Send + Sync {
     type Reader: AsyncRead + Unpin + Send;
     type Writer: AsyncWrite + Unpin + Send;
     fn listen(
@@ -110,9 +112,8 @@ impl Communication for TcpCommunication {
 
 #[derive(Clone)]
 pub struct MemCom {}
-#[derive(Clone)]
 pub struct MemComListener {
-    connection_identifier: Arc<ConnectionIdentifier>,
+    connection_identifier: tokio::sync::mpsc::Receiver<memcom::Channel>,
 }
 
 impl MemCom {
@@ -125,7 +126,7 @@ impl CommunicationListener for MemComListener {
     type Reader = ReadHalf<SimplexStream>;
     type Writer = WriteHalf<SimplexStream>;
     async fn listen(&mut self) -> Result<Channel<Self::Reader, Self::Writer>> {
-        let duplex = memcom_listen(self.connection_identifier.as_ref().clone()).await?;
+        let duplex = self.connection_identifier.recv().await.ok_or("Could not receive connection")?;
         Ok(Channel {
             reader: duplex.read,
             writer: duplex.write,
@@ -141,7 +142,7 @@ impl Communication for MemCom {
         this_connection_identifier: ThisConnectionIdentifier,
     ) -> Result<MemComListener> {
         Ok(MemComListener {
-            connection_identifier: Arc::new(this_connection_identifier.into()),
+            connection_identifier: memcom_bind(this_connection_identifier.into()).await?,
         })
     }
     async fn connect(

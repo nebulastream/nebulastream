@@ -33,6 +33,7 @@
 #include <Distributed/WorkerStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <YAML/YAMLBinder.hpp>
+#include <fmt/color.h>
 #include <ErrorHandling.hpp>
 #include <GRPCClient.hpp>
 #include <GrpcService.hpp>
@@ -50,8 +51,11 @@ std::unordered_map<std::string, NES::SingleNodeWorker> instantiate(const Topolog
         configuration.connection = connection;
         configuration.workerConfiguration.defaultQueryExecution.executionMode = ExecutionMode::INTERPRETER;
         configuration.workerConfiguration.queryEngine.numberOfWorkerThreads = 1;
-        servers.emplace(nodes.getGrpcAddressFor(connection), NES::SingleNodeWorker(configuration));
+        servers.emplace(nodes.getGrpcAddressFor(connection), NES::SingleNodeWorker(configuration, WorkerId(connection)));
     }
+    std::stringstream strstream;
+    renderTopologyGraph(graph, strstream);
+    NES_INFO("Topology: \n{}", fmt::styled(strstream.str(), fmt::emphasis::bold));
     return servers;
 }
 }
@@ -61,7 +65,7 @@ int main(const int argc, char** argv)
     CPPTRACE_TRY
     {
         /// Initialize logging
-        NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_DEBUG, false);
         argparse::ArgumentParser parser("nebuli-embedded");
         parser.add_argument("path");
 
@@ -100,13 +104,10 @@ int main(const int argc, char** argv)
         int attempts = 0;
         while (!pendingQueries.empty())
         {
-            if (attempts > 80)
+            if (attempts > 400)
             {
-                std::cerr << "deadlock?" << std::endl;
+                NES_ERROR("Deadlock");
                 exit(1);
-            } else
-            {
-                std::cout << "running" << std::endl;
             }
             std::vector<std::pair<std::string, NES::QueryId>> newPendingQueries;
             for (auto [grpc, query] : pendingQueries)
@@ -117,6 +118,7 @@ int main(const int argc, char** argv)
                     newPendingQueries.push_back({grpc, query});
                 }
             }
+            NES_INFO("Pending queries: {}", fmt::join(newPendingQueries, ", "));
             pendingQueries = std::move(newPendingQueries);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             attempts++;

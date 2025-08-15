@@ -76,6 +76,51 @@ void TopologyGraph::addDownstreamNode(const NodeId& node, const NodeId& downstre
     nodes[downstreamNode].upstreamNodes.emplace_back(node);
 }
 
+struct TopologyGraphNodeWrapper
+{
+    const TopologyGraph* graph;
+    TopologyGraph::NodeId id;
+};
+
+template <>
+struct GetRootOperator<TopologyGraph>
+{
+    auto operator()(const TopologyGraph& op) const
+    {
+        return std::views::filter(op, [&op](const auto& node) { return op.getDownstreamNodesOf(node.first).empty(); })
+            | std::views::transform([&op](const auto& node) { return TopologyGraphNodeWrapper{&op, node.first}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+template <>
+struct Explain<TopologyGraphNodeWrapper>
+{
+    auto operator()(const TopologyGraphNodeWrapper& op, const ExplainVerbosity) const { return op.id; }
+};
+
+template <>
+struct GetId<TopologyGraphNodeWrapper>
+{
+    auto operator()(const TopologyGraphNodeWrapper& op) const { return op.id; }
+};
+
+template <>
+struct GetChildren<TopologyGraphNodeWrapper>
+{
+    auto operator()(const TopologyGraphNodeWrapper& op) const
+    {
+        return op.graph->getUpstreamNodesOf(op.id)
+            | std::views::transform([&op](const auto& child) { return TopologyGraphNodeWrapper{op.graph, child}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+void renderTopologyGraph(const TopologyGraph& graph, std::ostream& os)
+{
+    PlanRenderer<TopologyGraph, TopologyGraphNodeWrapper>(os, ExplainVerbosity::Short).dump(graph);
+}
+
 
 std::vector<TopologyGraph::NodeId> TopologyGraph::getUpstreamNodesOf(const NodeId& node) const
 {

@@ -18,17 +18,45 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/common.h>
 #include <spdlog/details/periodic_worker.h>
 #include <spdlog/logger.h>
+#include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <NESThread.hpp>
 
 extern void initialize_logging(std::shared_ptr<spdlog::logger> logger);
+
+class my_formatter_flag : public spdlog::custom_flag_formatter
+{
+public:
+    void format(const spdlog::details::log_msg&, const std::tm&, spdlog::memory_buf_t& dest) override
+    {
+        auto id = NES::Thread::getThisWorkerNodeId();
+        dest.append(id.value.data(), id.value.data() + id.value.size());
+    }
+
+    std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<my_formatter_flag>(); }
+};
+
+
+class my_other_formatter_flag : public spdlog::custom_flag_formatter
+{
+public:
+    void format(const spdlog::details::log_msg&, const std::tm&, spdlog::memory_buf_t& dest) override
+    {
+        auto id = NES::Thread::getThisThreadName();
+        dest.append(id.data(), id.data() + id.size());
+    }
+
+    std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<my_other_formatter_flag>(); }
+};
 
 namespace NES
 {
@@ -38,7 +66,7 @@ namespace detail
 
 static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
-static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
+static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [%*] [%G] [%&] [%s:%#] [%!] %v%$";
 
 auto toSpdlogLevel(const LogLevel level)
 {
@@ -94,17 +122,25 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         consoleSink->set_level(spdlogLevel);
         consoleSink->set_color_mode(spdlog::color_mode::always);
-        consoleSink->set_pattern(SPDLOG_PATTERN);
+
+        auto formatter = std::make_unique<spdlog::pattern_formatter>();
+        formatter->add_flag<my_formatter_flag>('*');
+        formatter->add_flag<my_other_formatter_flag>('G');
+        formatter->set_pattern(SPDLOG_PATTERN);
+        consoleSink->set_formatter(std::move(formatter));
         sinks.push_back(consoleSink);
     }
 
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
     fileSink->set_level(spdlogLevel);
-    fileSink->set_pattern(SPDLOG_PATTERN);
+    auto formatter = std::make_unique<spdlog::pattern_formatter>();
+    formatter->add_flag<my_formatter_flag>('*');
+    formatter->add_flag<my_other_formatter_flag>('G');
+    formatter->set_pattern(SPDLOG_PATTERN);
+    fileSink->set_formatter(std::move(formatter));
     sinks.push_back(fileSink);
 
-    impl = std::make_shared<spdlog::async_logger>(
-        SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end(), loggerThreadPool, spdlog::async_overflow_policy::block);
+    impl = std::make_shared<spdlog::logger>(SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end());
 
     impl->flush_on(spdlog::level::debug);
 

@@ -8,9 +8,8 @@ query: |
   INTO sink;
 sinks:
   - name: sink
-    type: File
+    type: Print
     config:
-      filePath: /tmp/out.csv
       inputFormat: CSV
     schema:
       - name: streamstream2$start
@@ -65,15 +64,15 @@ physicalSources:
 
 workerNodes:
   - host: worker-1:9090
-    grpc: 127.0.0.1:8080
+    grpc: worker-1:8080
     capacity: 100
   - host: worker-2:9090
-    grpc: 127.0.0.1:8081
+    grpc: worker-2:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090
   - host: worker-3:9090
-    grpc: 127.0.0.1:8082
+    grpc: worker-3:8080
     capacity: 0
     downstreamNodes:
       - worker-1:9090

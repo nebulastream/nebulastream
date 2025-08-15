@@ -38,6 +38,8 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
+#include "NESThread.hpp"
+
 namespace NES::Sources
 {
 
@@ -80,10 +82,6 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
 }
 
 using EmitFn = std::function<void(Memory::TupleBuffer&&, bool addBufferMetadata)>;
-void threadSetup(OriginId originId)
-{
-    setThreadName(fmt::format("DataSrc-{}", originId));
-}
 
 /// RAII-Wrapper around source open and close
 struct SourceHandle
@@ -179,7 +177,6 @@ void dataSourceThread(
     OriginId originId,
     std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
 {
-    threadSetup(originId);
     if (!bufferProvider)
     {
         emit(originId, SourceReturnType::Error(BufferAllocationFailure()));
@@ -227,7 +224,8 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
-    std::jthread sourceThread(
+    Thread sourceThread(
+        fmt::format("DataSrc-{}", originId),
         detail::dataSourceThread,
         ingestion,
         std::move(terminationPromise),
@@ -241,14 +239,14 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 
 void SourceThread::stop()
 {
-    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
 
-    NES_DEBUG("SourceThread  {} : stop source", originId);
-    thread.request_stop();
+    NES_DEBUG("SourceThread {} : stop source", originId);
+    thread.requestStop();
     {
         auto deletedOnScopeExit = std::move(thread);
     }
-    NES_DEBUG("SourceThread  {} : stopped", originId);
+    NES_INFO("SourceThread {} : stopped", originId);
 
     try
     {
@@ -262,16 +260,16 @@ void SourceThread::stop()
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
-    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
     NES_DEBUG("SourceThread {} : attempting to stop source", originId);
-    thread.request_stop();
+    thread.requestStop();
 
     try
     {
         auto result = this->terminationFuture.wait_for(timeout);
         if (result == std::future_status::timeout)
         {
-            NES_DEBUG("SourceThread  {} : source was not stopped during timeout", originId);
+            NES_DEBUG("SourceThread {} : source was not stopped during timeout", originId);
             return SourceReturnType::TryStopResult::TIMEOUT;
         }
         auto deletedOnScopeExit = std::move(thread);
@@ -281,7 +279,7 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
 
-    NES_DEBUG("SourceThread  {} : stopped", originId);
+    NES_INFO("SourceThread {} : stopped", originId);
     return SourceReturnType::TryStopResult::SUCCESS;
 }
 

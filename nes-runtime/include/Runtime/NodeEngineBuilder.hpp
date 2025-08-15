@@ -32,7 +32,7 @@ public:
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryEngineStatisticListener> statisticListener);
 
-    std::unique_ptr<NodeEngine> build();
+    std::unique_ptr<NodeEngine> build(WorkerId workerId);
 
 private:
     WorkerConfiguration workerConfiguration;

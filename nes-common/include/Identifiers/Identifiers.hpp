@@ -65,7 +65,12 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 }
 
 /// Legacy
-using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
-static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
-static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
+struct WorkerId
+{
+    std::string value;
+    WorkerId(std::string value) : value(std::move(value)) { }
+
+    const std::string& getRawValue() {return value;}
+    auto operator<=>(const WorkerId&) const = default;
+};
 }

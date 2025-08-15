@@ -36,8 +36,8 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
 
-extern void init_receiver_service(std::string connectionAddr);
-extern void init_sender_service(std::string connectionAddr);
+extern void init_receiver_service(std::string connectionAddr, NES::WorkerId worker_id);
+extern void init_sender_service(std::string connectionAddr, NES::WorkerId worker_id);
 
 namespace NES
 {
@@ -46,7 +46,7 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, WorkerId workerId)
     : optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
     , configuration(configuration)
@@ -62,8 +62,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     if (!configuration.connection.getValue().empty())
     {
-        init_receiver_service(configuration.connection.getValue());
-        init_sender_service(configuration.connection.getValue());
+        init_receiver_service(configuration.connection.getValue(), workerId);
+        init_sender_service(configuration.connection.getValue(), workerId);
     }
 
     this->systemEvents = std::make_shared<PrintingStatisticListener>(
@@ -73,7 +73,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     {
         queryEngineStatsListener = std::dynamic_pointer_cast<QueryEngineStatisticListener>(this->systemEvents);
     }
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, this->systemEvents, queryEngineStatsListener).build();
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, this->systemEvents, queryEngineStatsListener).build(workerId);
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.

@@ -40,14 +40,14 @@ NodeEngineBuilder::NodeEngineBuilder(
 }
 
 
-std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
+std::unique_ptr<NodeEngine> NodeEngineBuilder::build(WorkerId workerId)
 {
     auto bufferManager = Memory::BufferManager::create(
         workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
 
-    auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticEventListener, queryLog, bufferManager);
+    auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticEventListener, queryLog, bufferManager, workerId);
 
     return std::make_unique<NodeEngine>(
         std::move(bufferManager),

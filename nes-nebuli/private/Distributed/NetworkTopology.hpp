@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "Util/PlanRenderer.hpp"
+
 #include <ErrorHandling.hpp>
 #include <QueryConfig.hpp>
 
@@ -100,4 +102,5 @@ private:
     void addDownstreamNode(const NodeId& node, const NodeId& downstreamNode);
 };
 
+void renderTopologyGraph(const TopologyGraph& graph, std::ostream& os);
 }

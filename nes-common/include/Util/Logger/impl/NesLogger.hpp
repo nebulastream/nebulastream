@@ -18,6 +18,7 @@
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
+#include <spdlog/mdc.h>
 
 namespace spdlog::details
 {
@@ -108,5 +109,17 @@ void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout
 
 std::shared_ptr<detail::Logger> getInstance();
 }
+
+struct LogContext
+{
+    std::string context;
+    template <typename Formatable>
+    requires(fmt::is_formattable<Formatable>::value)
+    explicit LogContext(std::string context, Formatable&& f) : context(std::move(context))
+    {
+        spdlog::mdc::put(this->context, fmt::format("{}", std::forward<Formatable>(f)));
+    }
+    ~LogContext() { spdlog::mdc::remove(context); }
+};
 
 }

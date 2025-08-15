@@ -288,55 +288,58 @@ async fn control_socket(
                         error!("Control socket was closed");
                         return;
                     };
-                    let identification = match identify_connection(stream).await {
-                        Ok(identification) => identification,
-                        Err(e) => {
-                            warn!("Connection identification failed: {e:?}");
-                            continue;
-                        }
-                    };
+                    let _ = tokio::spawn(
+                        {
+                            let controller = controller.clone();
+                            let opened_channels = opened_channels.clone();
+                            let registered_channels = registered_channels.clone();
+                            let receiver_span = receiver_span.clone();
+                            let ports = ports.clone();
+                            async move {
+                                let identification = match identify_connection(stream).await {
+                                    Ok(identification) => identification,
+                                    Err(e) => {
+                                        warn!("Connection identification failed: {e:?}");
+                                        return;
+                                    }
+                                };
 
-                    match identification {
-                        ConnectionIdentification::Connection(reader, writer, connection) => {
-                            tokio::spawn(
-                                {
-                                    let controller = controller.clone();
-                                    let registered_channels = registered_channels.clone();
-                                    let opened_channels = opened_channels.clone();
-                                    let ports = ports.clone();
-                                    let c = connection.clone();
-                                    async move {
-                                        info!("Starting control socket handler for {c}");
+                                match identification {
+                                    ConnectionIdentification::Connection(
+                                        reader,
+                                        writer,
+                                        connection,
+                                    ) => {
+                                        info!("Starting control socket handler for {connection:?}");
                                         let result = control_socket_handler(
                                             reader,
                                             writer,
-                                            c,
+                                            connection.clone(),
                                             &ports,
                                             registered_channels.clone(),
                                             opened_channels.clone(),
                                             controller.clone(),
                                         )
-                                            .await;
+                                            .await.instrument(info_span!(parent: receiver_span.clone(), "connection_handler", other = %connection));
                                         info!("Control socket handler terminated: {:?}", result);
                                     }
-                                }
-                                    .instrument(info_span!(parent: receiver_span.clone(), "connection_handler",  other = %connection)),
-                            );
-                        }
-                        ConnectionIdentification::Channel(r, w, c, channel) => {
-                            let mut lock = opened_channels.write().await;
-                            let Some(sender) = lock.remove(&(c, channel)) else {
-                                error!("Channel was not registered");
-                                continue;
-                            };
-                            match sender.send((r, w)) {
-                                Ok(_) => {}
-                                Err(_) => {
-                                    warn!("Channel was already closed");
+                                    ConnectionIdentification::Channel(r, w, c, channel) => {
+                                        let mut lock = opened_channels.write().await;
+                                        let Some(sender) = lock.remove(&(c, channel)) else {
+                                            error!("Channel was not registered");
+                                            return;
+                                        };
+                                        match sender.send((r, w)) {
+                                            Ok(_) => {}
+                                            Err(_) => {
+                                                warn!("Channel was already closed");
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
+                        },
+                    );
                 }
             }
         }

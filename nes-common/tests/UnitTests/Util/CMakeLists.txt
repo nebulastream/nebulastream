@@ -22,6 +22,10 @@ add_nes_common_test(nes-common-tests
 )
 target_link_libraries(nes-common-tests bindings)
 
+add_nes_test(nes-thread-test
+        "NESThread.cpp"
+)
+
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"
 )

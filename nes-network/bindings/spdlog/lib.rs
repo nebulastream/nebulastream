@@ -4,6 +4,7 @@ use tracing::{Event, Subscriber};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::Layer;
 use tracing::{warn};
+use tracing::field::Field;
 
 #[cxx::bridge]
 mod ffi {
