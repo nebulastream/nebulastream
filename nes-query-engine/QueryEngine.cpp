@@ -109,6 +109,7 @@ public:
         QueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> plan,
         const std::shared_ptr<AbstractQueryStatusListener>& listener,
+        const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
     QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
@@ -351,7 +352,6 @@ public:
 
     [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_.load(); }
 
-private:
     struct WorkerThread
     {
         static thread_local WorkerThreadId id;
@@ -373,6 +373,7 @@ private:
         bool terminating{};
     };
 
+private:
     void doTaskInPlace(Task&& task)
     {
         WorkerThread worker{*this, false};
@@ -618,7 +619,7 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
     ENGINE_LOG_INFO("Start Query Task for Query {}", startQuery.queryId);
     if (auto queryCatalog = startQuery.catalog.lock())
     {
-        queryCatalog->start(startQuery.queryId, std::move(startQuery.queryPlan), pool.listener, pool, pool);
+        queryCatalog->start(startQuery.queryId, std::move(startQuery.queryPlan), pool.listener, pool.statistic, pool, pool);
         pool.statistic->onEvent(QueryStart{WorkerThread::id, startQuery.queryId});
         return true;
     }
@@ -761,6 +762,7 @@ void QueryCatalog::start(
     QueryId queryId,
     std::unique_ptr<ExecutableQueryPlan> plan,
     const std::shared_ptr<AbstractQueryStatusListener>& listener,
+    const std::shared_ptr<QueryEngineStatisticListener>& statistic,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
@@ -768,8 +770,9 @@ void QueryCatalog::start(
 
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
-        RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
-            : listener(std::move(listener)), queryId(queryId)
+        RealQueryLifeTimeListener(
+            QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
+            : listener(std::move(listener)), statistic(statistic), queryId(queryId)
         {
         }
 
@@ -850,15 +853,17 @@ void QueryCatalog::start(
                         return Terminated{Terminated::Stopped};
                     });
                 listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
+                statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
             }
         }
 
         std::shared_ptr<AbstractQueryStatusListener> listener;
+        std::shared_ptr<QueryEngineStatisticListener> statistic;
         QueryId queryId;
         WeakStateRef state;
     };
 
-    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener);
+    auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
     const auto startTimestamp = std::chrono::system_clock::now();
     auto state = std::make_shared<StateRef>(Reserved{});
     this->queryStates.emplace(queryId, state);

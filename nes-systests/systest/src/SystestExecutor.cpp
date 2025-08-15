@@ -383,7 +383,6 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
         singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
     }
 
-
     std::mt19937 rng(std::random_device{}());
 
     const auto grpcURI = config.grpcAddressUri.getValue();
