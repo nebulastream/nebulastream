@@ -239,6 +239,26 @@ def short_name(name: str):
     print("could not shorten ", name)
     return name
 
+def mk_fn_len_estimator(gcovr_json):
+    ret = {} # {file: {line: len}}
+
+    for file in gcovr_json["files"]:
+        try:
+            with open(file["file"]) as f:
+                lines = f.readlines()
+        except Exception as e:
+            continue
+
+        for fn in file["functions"]:
+            line = fn["lineno"]
+            try:
+                print(lines[line-1].strip())
+            except:
+                print(file["file"])
+                print(f"wtf: {line}, {len(lines)}")
+
+    return ret
+
 
 def cluster_nested(gcovr_json):
     ret = {}
