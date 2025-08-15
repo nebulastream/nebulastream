@@ -65,6 +65,12 @@ public:
         /// Setting the correct options for the engine, depending on the enum value from the backend
         nautilus::engine::Options options;
         const bool compilation = (backend == ExecutionMode::COMPILER);
+#ifndef USE_MLIR
+        if (compilation)
+        {
+            GTEST_SKIP_("Compiler backend not enabled");
+        }
+#endif
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
@@ -285,7 +291,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
         projections, testSchema, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 1, *nautilusEngine, *bufferManager);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PagedVectorTest,
     PagedVectorTest,
     ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER),
