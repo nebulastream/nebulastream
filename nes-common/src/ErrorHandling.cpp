@@ -22,10 +22,11 @@
 #include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/basic.hpp>
+#include <cpptrace/exceptions.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-#include <from_current.hpp>
 
 /// formater for cpptrace::nullable
 namespace fmt
@@ -147,7 +148,7 @@ void tryLogCurrentException()
     {
         NES_ERROR("{}", formatLogMessage(e));
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         NES_ERROR("failed to process with unknown error\n")
     }
@@ -165,9 +166,32 @@ Exception wrapExternalException()
     }
     catch (const std::exception& e)
     {
-        return UnknownException(e.what());
+        auto trace = cpptrace::raw_trace_from_current_exception();
+        return {e.what(), ErrorCode::UnknownException, std::move(trace)};
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
+    {
+        return UnknownException();
+    }
+}
+
+Exception wrapExternalException(std::string contextMsg)
+{
+    try
+    {
+        throw;
+    }
+    catch (const Exception& e)
+    {
+        return e;
+    }
+    catch (const std::exception& e)
+    {
+        auto trace = cpptrace::raw_trace_from_current_exception();
+        auto msg = fmt::format("{}\ne.what: '{}'", contextMsg, e.what());
+        return {std::move(msg), ErrorCode::UnknownException, std::move(trace)};
+    }
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return UnknownException();
     }
@@ -183,7 +207,7 @@ ErrorCode getCurrentErrorCode()
     {
         return e.code();
     }
-    catch (...)
+    catch (...) /// NOLINT(no-raw-catch-all)
     {
         return ErrorCode::UnknownException;
     }

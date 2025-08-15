@@ -33,6 +33,7 @@
 #include <fmt/ranges.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
@@ -103,7 +104,7 @@ struct CriticalSequenceNumberEntry
 
 bool SequenceShredder::validateState() noexcept
 {
-    try
+    CPPTRACE_TRY
     {
         /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
         {
@@ -177,11 +178,13 @@ bool SequenceShredder::validateState() noexcept
             return true;
         }
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         NES_ERROR("Validation failed unexpectedly.");
+        tryLogCurrentException();
         return false;
     }
+    std::unreachable();
 }
 
 template <bool HasTupleDelimiter>

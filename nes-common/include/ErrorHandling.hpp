@@ -20,10 +20,13 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp> /// NOLINT(misc-include-cleaner) used in macro for NES::Logger::{getInstance(), shutdown()}
+#include <cpptrace/basic.hpp>
 #include <cpptrace/cpptrace.hpp>
+#include <cpptrace/exceptions.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -52,6 +55,9 @@ class Exception final : public cpptrace::lazy_exception
 {
 public:
     Exception(std::string message, uint64_t code);
+
+    Exception(std::string message, ErrorCode errorCode, cpptrace::raw_trace&& trace)
+        : cpptrace::lazy_exception(std::move(trace)), message(std::move(message)), errorCode(errorCode) { };
 
     /// copy-constructor is unsaved noexcept because of std::string copy
     Exception(const Exception&) noexcept = default;
@@ -146,8 +152,10 @@ private:
 /// @warning This function should be used only in a catch block.
 void tryLogCurrentException();
 
-/// The wrapped exception gets the error code 9999.
+/// Wrapped as UnknownException
 Exception wrapExternalException();
+/// Wrapped as UnknownException
+Exception wrapExternalException(std::string contextMsg);
 
 /// @brief This function is used to get the current exception code.
 /// @warning This function should be used only in a catch block.
