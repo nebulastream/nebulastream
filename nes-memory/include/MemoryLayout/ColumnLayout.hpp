@@ -49,9 +49,9 @@ public:
     [[nodiscard]] uint64_t getColumnOffset(uint64_t fieldIndex) const;
 
 private:
+    ///Layouts should only be created using MemoryLayout::create()
     ColumnLayout(uint64_t bufferSize, Schema schema);
-
-    static std::shared_ptr<ColumnLayout> create(uint64_t bufferSize, const Schema& schema);
+    static std::shared_ptr<MemoryLayout> create(uint64_t bufferSize, const Schema& schema);
 
     std::vector<uint64_t> columnOffsets;
 };
