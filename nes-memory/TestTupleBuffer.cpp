@@ -375,20 +375,8 @@ const MemoryLayout& TestTupleBuffer::getMemoryLayout() const
 
 TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
-    {
-        auto memoryLayout = MemoryLayout::create(buffer.getBufferSize(), schema);
-        return TestTupleBuffer(std::move(memoryLayout), buffer);
-    }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto memoryLayout = MemoryLayout::create(buffer.getBufferSize(), schema);
-        return TestTupleBuffer(std::move(memoryLayout), buffer);
-    }
-    else
-    {
-        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
-    }
+    auto memoryLayout = MemoryLayout::create(buffer.getBufferSize(), schema);
+    return TestTupleBuffer(std::move(memoryLayout), buffer);
 }
 
 uint64_t TestTupleBuffer::countOccurrences(DynamicTuple& tuple) const

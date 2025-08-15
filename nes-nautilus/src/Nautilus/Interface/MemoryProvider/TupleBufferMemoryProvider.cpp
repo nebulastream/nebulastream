@@ -115,21 +115,23 @@ TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
 std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    auto memoryLayout = Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema);
+
+    switch (schema.memoryLayoutType)
     {
-        auto rowMemoryLayout
-            = NES::Util::as<Memory::MemoryLayouts::RowLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
-        //usage:
-        //auto newProvider = std::make_shared<RowTupleBufferMemoryProvider>(MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, schema));
-        return std::make_shared<RowTupleBufferMemoryProvider>(RowTupleBufferMemoryProvider{rowMemoryLayout});
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto rowMemoryLayout
+                = NES::Util::as<Memory::MemoryLayouts::RowLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+            return std::make_shared<RowTupleBufferMemoryProvider>(RowTupleBufferMemoryProvider{rowMemoryLayout});
+        }
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto columnMemoryLayout
+                = NES::Util::as<Memory::MemoryLayouts::ColumnLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+            return std::make_shared<ColumnTupleBufferMemoryProvider>(ColumnTupleBufferMemoryProvider{columnMemoryLayout});
+        }
+            /// should never get accessed since creating the memoryLayout already checks schemas memoryLayoutType.
+        default:
+            throw NotImplemented("Currently only row and column layout are supported");
     }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout
-            = NES::Util::as<Memory::MemoryLayouts::ColumnLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
-        auto* provider = new ColumnTupleBufferMemoryProvider(columnMemoryLayout);
-        return std::shared_ptr<ColumnTupleBufferMemoryProvider>(provider);
-    }
-    throw NotImplemented("Currently only row and column layout are supported");
 }
 }
