@@ -50,10 +50,9 @@ public:
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
 private:
+    ///Layouts should only be created using MemoryLayout::create()
     RowLayout(uint64_t bufferSize, Schema schema);
-
-    /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-    static std::shared_ptr<RowLayout> create(uint64_t bufferSize, const Schema& schema);
+    static std::shared_ptr<MemoryLayout> create(uint64_t bufferSize, const Schema& schema);
 
     std::vector<uint64_t> fieldOffSets;
 };

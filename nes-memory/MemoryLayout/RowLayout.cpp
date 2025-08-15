@@ -40,11 +40,6 @@ RowLayout::RowLayout(const RowLayout& other)
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(uint64_t bufferSize, const Schema& schema)
-{
-    return std::make_shared<RowLayout>(RowLayout{bufferSize, schema});
-}
-
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
 {
     PRECONDITION(

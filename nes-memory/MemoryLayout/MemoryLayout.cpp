@@ -27,6 +27,7 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -57,15 +58,17 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
 
 std::shared_ptr<MemoryLayout> MemoryLayout::create(uint64_t bufferSize, const Schema& schema)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    switch (schema.memoryLayoutType)
     {
-        return RowLayout::create(bufferSize, std::move(schema));
+        case Schema::MemoryLayoutType::ROW_LAYOUT:
+            return std::make_shared<RowLayout>(RowLayout{bufferSize, schema});
+
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
+            return std::make_shared<ColumnLayout>(ColumnLayout{bufferSize, schema});
+
+        default:
+            throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
     }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        return ColumnLayout::create(bufferSize, std::move(schema));
-    }
-    return std::make_shared<RowLayout>(RowLayout(bufferSize, std::move(schema)));
 }
 
 uint64_t MemoryLayout::getTupleSize() const
