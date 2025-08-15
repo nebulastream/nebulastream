@@ -189,6 +189,26 @@ std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
     return children;
 }
 
+LogicalOperator JoinLogicalOperator::getLeftChild() const
+{
+    return children.at(0);
+}
+
+LogicalOperator JoinLogicalOperator::getRightChild() const
+{
+    return children.at(1);
+}
+
+void JoinLogicalOperator::withLeftChild(LogicalOperator leftChild)
+{
+    children[0] = leftChild;
+}
+
+void JoinLogicalOperator::withRightChild(LogicalOperator rightChild)
+{
+    children[1] = rightChild;
+}
+
 Schema JoinLogicalOperator::getLeftSchema() const
 {
     return leftInputSchema;

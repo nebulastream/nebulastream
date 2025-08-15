@@ -66,6 +66,10 @@ public:
 
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] LogicalOperator getLeftChild() const;
+    [[nodiscard]] LogicalOperator getRightChild() const;
+    void withLeftChild(LogicalOperator leftChild);
+    void withRightChild(LogicalOperator rightChild);
 
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
     [[nodiscard]] Schema getOutputSchema() const override;
