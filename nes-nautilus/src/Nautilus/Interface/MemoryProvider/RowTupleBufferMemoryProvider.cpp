@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 #include <cstddef>
 #include <cstdint>

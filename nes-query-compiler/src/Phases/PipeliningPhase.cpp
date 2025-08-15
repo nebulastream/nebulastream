@@ -22,6 +22,7 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
@@ -51,8 +52,7 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, schema.value());
     /// Prepend the default scan operator.
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
@@ -66,9 +66,7 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
 {
     auto schema = wrappedOpAfterScan.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
-
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, schema.value());
 
     const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
@@ -87,8 +85,8 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    const auto memoryProvider = NES::Util::as<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
+        Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, schema.value()));
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());

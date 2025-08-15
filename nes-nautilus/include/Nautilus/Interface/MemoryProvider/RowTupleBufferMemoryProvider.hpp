@@ -25,9 +25,9 @@ namespace NES::Nautilus::Interface::MemoryProvider
 /// Implements MemoryProvider. Provides row-wise memory access.
 class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
+    friend TupleBufferMemoryProvider;
+
 public:
-    /// Creates a row memory provider based on a valid row memory layout pointer.
-    RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
     [[nodiscard]] std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const override;
@@ -44,6 +44,9 @@ public:
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
+    /// Creates a row memory provider based on a valid row memory layout pointer.
+    RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
+
     [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 
     /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
