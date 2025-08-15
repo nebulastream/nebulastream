@@ -1,0 +1,158 @@
+input_tables:
+  - logicalSourceName: "consumers"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/CONSUMERS_TOPIC.csv"
+
+  - logicalSourceName: "solarPanels"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/SOLAR_PANELS_TOPIC.csv"
+
+  - logicalSourceName: "factories"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/FACTORIES_TOPIC.csv"
+
+  - logicalSourceName: "households"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/HOUSEHOLDS_TOPIC.csv"
+
+  - logicalSourceName: "offices"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/OFFICES_TOPIC.csv"
+
+  - logicalSourceName: "streetlights"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/STREET_LIGHTS_TOPIC.csv"
+
+  - logicalSourceName: "windTurbines"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/WIND_TURBINES_TOPIC.csv"
+
+output_tables:
+  - name: "sink_q_test"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_test.csv"
+
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q1.csv"
+
+  - name: "sink_q2"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q2.csv"
+
+  - name: "sink_q3"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q3.csv"
+
+  - name: "sink_q4"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q4.csv"
+
+
+  - name: "sink_q6"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q6.csv"
+
+  - name: "sink_q7"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q7.csv"
+
+  - name: "sink_q8"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q8.csv"
+
+  - name: "sink_q9"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q9.csv"
+
+  - name: "sink_q10"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q10.csv"
+
+  - name: "sink_q11"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q11.csv"
+
+  - name: "sink_q12"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/IoTropolis/outputs/sink_q12.csv"
+
+
+queries:
+  - >
+    SELECT consumerId, eventTime
+    FROM factories
+    WHERE eventTime > TIMESTAMP '2024-01-21 21:12:00';
+  - >
+    SELECT * FROM consumers WHERE consumedPower >= 400;
+  - >
+    SELECT * FROM consumers WHERE consumedPower >= 400 AND sectorId = 1;
+  - >
+    SELECT * FROM consumers WHERE consumedPower >= 1 AND consumedPower < (60 + 1);
+  - >
+    SELECT consumedPower / 1000 AS consumedPower FROM consumers;
+  - >
+    SELECT *
+    FROM windTurbines
+    UNION
+    SELECT *
+    FROM solarPanels;
+  - >
+    SELECT 1 AS source
+    FROM windTurbines
+    UNION
+    SELECT 2 AS source
+    FROM solarPanels;
+  - >
+    SELECT groupId, SUM(producedPower) AS producedPower
+    FROM TABLE(
+        TUMBLE(TABLE solarPanels, DESCRIPTOR(eventTime), INTERVAL '1' HOUR)
+    )
+    GROUP BY groupId, window_start, window_end;
+  - >
+    SELECT groupId, SUM(producedPower) AS producedPower
+    FROM TABLE(
+        HOP(TABLE solarPanels, DESCRIPTOR(eventTime), INTERVAL '10' MINUTE, INTERVAL '1' HOUR)
+    )
+    GROUP BY groupId, window_start, window_end;
+  - >
+    SELECT 
+    p.groupId,
+    p.window_start,
+    p.window_end,
+    (p.totalProduced - c.totalConsumed) AS netPower
+    FROM (
+        SELECT 
+            groupId, 
+            window_start, 
+            window_end, 
+            SUM(producedPower) AS totalProduced
+        FROM TABLE(
+            HOP(
+                TABLE solarPanels, 
+                DESCRIPTOR(eventTime), 
+                INTERVAL '10' MINUTE, 
+                INTERVAL '1' HOUR
+            )
+        )
+        GROUP BY groupId, window_start, window_end
+    ) p
+    JOIN (
+        SELECT 
+            groupId, 
+            window_start, 
+            window_end, 
+            SUM(producedPower) AS totalConsumed
+        FROM TABLE(
+            HOP(
+                TABLE windTurbines, 
+                DESCRIPTOR(eventTime), 
+                INTERVAL '10' MINUTE, 
+                INTERVAL '1' HOUR
+            )
+        )
+        GROUP BY groupId, window_start, window_end
+    ) c
+    ON p.groupId = c.groupId
+      AND p.window_start = c.window_start
+      AND p.window_end = c.window_end;
+  - >
+    SELECT producedPower / 1000 AS producedPower
+    FROM windTurbines
+    WHERE producedPower < 80000;
+  - >
+    SELECT producedPower
+    FROM (
+      SELECT producedPower / 1000 AS producedPower
+      FROM windTurbines
+    ) AS t
+    WHERE producedPower < 80;
+  - >
+    SELECT groupId, SUM(producedPower) AS producedPower
+    FROM TABLE(
+        HOP(TABLE windTurbines, DESCRIPTOR(eventTime), INTERVAL '10' MINUTE, INTERVAL '1' HOUR)
+    )
+    GROUP BY groupId
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"

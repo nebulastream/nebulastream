@@ -1,0 +1,28 @@
+input_tables:
+  - logicalSourceName: "manufacturing_data"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/manufacturing-equipment/DEBS2012-small.csv"
+
+output_tables:
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/debs/manufacturing-equipment/outputs/sink_q1"
+
+queries:
+  - >
+    SELECT 
+    AVG(mf01) AS avg_mf01,
+    AVG(mf02) AS avg_mf02,
+    AVG(mf03) AS avg_mf03,
+    1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+    1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE manufacturing_data,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,  -- slide interval
+            INTERVAL '60' SECOND  -- window size
+        )
+    )
+    GROUP BY window_start, window_end;
+
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"

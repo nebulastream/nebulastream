@@ -1,0 +1,53 @@
+input_tables:
+  - logicalSourceName: "monitoring"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/cluster_monitoring/google-cluster-data.csv"
+
+output_tables:
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/cluster_monitoring/outputs/sink_q1"
+  
+  - name: "sink_q2"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/cluster_monitoring/outputs/sink_q2"
+
+
+queries:
+  - >
+    SELECT 
+    SUM(cpu) AS totalCpu,
+    1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+    1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE monitoring,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,  -- slide interval
+            INTERVAL '60' SECOND  -- window size
+        )
+    )
+    GROUP BY window_start, window_end
+  - >
+    CREATE TEMPORARY VIEW filtered_monitoring AS
+    SELECT *
+    FROM monitoring
+    WHERE eventType = 3;
+  - >
+    CREATE TEMPORARY VIEW filtered_monitoring AS
+    SELECT *
+    FROM monitoring
+    WHERE eventType = 3
+    SELECT 
+        jobId,
+        SUM(cpu) AS totalCpu,
+        1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+        1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE filtered_monitoring,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,  -- slide interval
+            INTERVAL '60' SECOND  -- window size
+        )
+    )
+    GROUP BY jobId, window_start, window_end
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"

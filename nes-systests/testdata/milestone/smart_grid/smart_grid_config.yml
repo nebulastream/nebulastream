@@ -1,0 +1,75 @@
+input_tables:
+  - logicalSourceName: "smart_grid"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/smart_grid/smartgrid-data.csv"
+
+output_tables:
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/smart_grid/outputs/sink_q1"
+
+  - name: "sink_q2"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/smart_grid/outputs/sink_q2"
+
+  - name: "sink_q3"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/smart_grid/outputs/sink_q3"
+
+queries:
+  - >
+    SELECT 
+    AVG(test_value) AS globalAvgLoad,
+    1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+    1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE smart_grid,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,   -- Slide interval
+            INTERVAL '1' HOUR   -- Window size (1 hour)
+        )
+    )
+    GROUP BY window_start, window_end;
+  - >
+    SELECT 
+        plug,
+        household,
+        house,
+        AVG(test_value) AS localAvgLoad,
+        1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) AS window_start,
+        1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) AS window_end
+    FROM TABLE(
+        HOP(
+            TABLE smart_grid,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,   -- Slide interval
+            INTERVAL '1' HOUR      -- Window size (1 hour)
+        )
+    )
+    GROUP BY 
+        plug, 
+        household, 
+        house, 
+        window_start, 
+        window_end;
+  - >
+    SELECT 
+    plug,
+    household,
+    house,
+    AVG(test_value) AS localAvgLoad,
+    1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) AS window_start,
+    1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) AS window_end
+    FROM TABLE(
+        HOP(
+            TABLE smart_grid,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,   -- Slide interval
+            INTERVAL '00:02:08' HOUR TO SECOND   -- Window size (128 seconds)
+        )
+    )
+    GROUP BY 
+        plug, 
+        household, 
+        house, 
+        window_start, 
+        window_end;
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"
