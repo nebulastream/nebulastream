@@ -30,8 +30,9 @@
 
 namespace
 {
+
 void initializeIndexFunctionForTuple(
-    NES::InputFormatters::FieldOffsets& fieldOffsets,
+    NES::InputFormatters::FieldOffsets<NES::InputFormatters::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
     const std::string_view tuple,
     const NES::InputFormatters::FieldIndex startIdxOfTuple,
     const NES::ParserConfig& config,
@@ -67,7 +68,8 @@ CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t n
 {
 }
 
-void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
+void CSVInputFormatIndexer::indexRawBuffer(
+    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
@@ -110,7 +112,8 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
     InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return arguments.createInputFormatterTaskPipeline(
-        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()));
+        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()),
+        RawValueParser::QuotationType::NONE);
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)

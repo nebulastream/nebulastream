@@ -91,7 +91,7 @@ then
     #   remove filenames indicating non-text content
     #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
     git ls-files \
-      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" \
+      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" \
       | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
 else
@@ -107,7 +107,7 @@ else
     #   take last char of the files, count lines and chars,
     #   fail if not equal (i.e. not every char is a newline)
     git ls-files \
-      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" \
+      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
       | awk '$1 != $2 { exit 1 }' \
       || log_error 'There are missing newline(s) at EOF. Please run "scripts/format.sh -i" to fix'

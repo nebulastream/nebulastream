@@ -1,0 +1,47 @@
+# name: JSON.test
+# description: tests json-specific behavior
+# groups: [Formatter, JSON, Negative]
+
+Source wrongKeyStream UINT64 key UINT64 value VARSIZED name
+ATTACH File JSON wrongKeyStream INLINE
+{"id":1, "value":1, "name":"john"}
+
+Sink keySink UINT64 wrongKeyStream$key
+
+# key 'id' is not part of expected schema
+SELECT key FROM wrongKeyStream INTO keySink
+----
+ERROR 4005
+
+
+Source missingValueKey UINT64 key UINT64 value VARSIZED name
+ATTACH File JSON missingValueKey INLINE
+{"key":1, "value":1, "name":"john"}
+{"key":1, "name":"max"}
+
+Sink allFieldsSink UINT64 missingValueKey$key UINT64 missingValueKey$value VARSIZED missingValueKey$name
+
+# key 'value' is missing in second tuple
+SELECT * FROM missingValueKey INTO allFieldsSink
+----
+ERROR 4005
+
+
+Sink keyNameSink UINT64 missingValueKey$key VARSIZED missingValueKey$name
+
+# query does not require 'value', but schema does
+SELECT key, name FROM missingValueKey INTO keyNameSink
+----
+ERROR 4005
+
+
+Source paddedValuesStream UINT64 key UINT64 value VARSIZED name
+ATTACH File JSON paddedValuesStream INLINE
+{"key": 1,"value":1 ,"name":  "john"  }
+
+Sink paddedValuesSink UINT64 paddedValuesStream$key
+
+# Tries to parse ' 1', which fails and throws a 'CannotFormatMalformedStringValue' exception (since we don't support null values)
+SELECT key FROM paddedValuesStream INTO paddedValuesSink
+----
+ERROR 3007
