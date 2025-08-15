@@ -183,7 +183,7 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
         f = drawn_fns[fn]
         fun = f["fun"]
         gv_node = f'{fn} [label="{short_name(f["fun"]["name"])}", tooltip="{int(fun["blocks_percent"])}% {dot_escapce(f["fun"]["name"])}", color="{cov_percent_to_color(fun["blocks_percent"])}", shape=box, penwidth={5 if fun["blocks_percent"] else 2}];'
-        grouped_fns[file_by_root_folder(f["file"])].append(gv_node)
+        grouped_fns[cluster_by_root_folder(f["file"])].append(gv_node)
 
     for group, nodes in grouped_fns.items():
         ret.append('subgraph cluster_' + group.replace("-", "_") + ' {')
@@ -240,7 +240,7 @@ def short_name(name: str):
     return name
 
 
-def file_by_root_folder(file: str):
+def cluster_by_root_folder(file: str):
     prefix = file.split("/")[0]
 
     vcpkg_deps = [
