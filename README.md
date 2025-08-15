@@ -36,7 +36,7 @@ To run the checks, you can use the target `format`.
 ## Development
 NebulaStream targets C++23 using all features implemented in both `libc++` 19 and `libstdc++` 14. All tests are using
 `Clang` 19.
-Follow the [development guide](docs/technical/development.md) to learn how to set up the development environment.
+Follow the [development guide](docs/development/development.md) to learn how to set up the development environment.
 To see our code of conduct, please refer to [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md).
 
 ## Build Types
