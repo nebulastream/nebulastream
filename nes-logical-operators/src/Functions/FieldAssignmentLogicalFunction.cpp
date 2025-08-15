@@ -146,7 +146,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
 
     if (copy.fieldAccess.getDataType().isType(DataType::Type::UNDEFINED))
     {
-        copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
+        copy.fieldAccess = copy.fieldAccess.withDataType(copy.logicalFunction.getDataType()).get<FieldAccessLogicalFunction>();
     }
     else
     {
@@ -159,7 +159,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
             copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
         }
     }
-    copy.dataType = copy.getAssignment().getDataType();
+    copy.dataType = copy.fieldAccess.getDataType();
     return copy;
 }
 
