@@ -1,2 +1,6 @@
 # Ignore everything
 *
+
+# Re-include the script for installing system dependencies. Also, ensure that the folder containing this installation script is re-included first
+!scripts/
+!scripts/install_sys_dependencies.sh
