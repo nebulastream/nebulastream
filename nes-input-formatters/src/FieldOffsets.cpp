@@ -28,21 +28,13 @@ namespace NES::InputFormatters
 void FieldOffsets::startSetup(const size_t numberOfFieldsInSchema, const size_t sizeOfFieldDelimiter)
 {
     PRECONDITION(
-        sizeOfFieldDelimiter <= std::numeric_limits<FieldIndex>::max(),
-        "Size of tuple delimiter must be smaller than: {}",
-        std::numeric_limits<FieldIndex>::max());
-    this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
+            sizeOfFieldDelimiter <= std::numeric_limits<FieldIndex>::max(),
+            "Size of tuple delimiter must be smaller than: {}",
+            std::numeric_limits<FieldIndex>::max());
     this->sizeOfFieldDelimiter = static_cast<FieldIndex>(sizeOfFieldDelimiter);
     this->numberOfFieldsInSchema = numberOfFieldsInSchema;
-    this->maxNumberOfTuplesInFormattedBuffer
-        = (this->bufferProvider.getBufferSize() - NUMBER_OF_RESERVED_BYTES) / ((numberOfFieldsInSchema + 1) * sizeof(FieldIndex));
-    PRECONDITION(
-        this->maxNumberOfTuplesInFormattedBuffer != 0,
-        "The buffer is of size {}, which is not large enough to represent a single tuple.",
-        this->bufferProvider.getBufferSize());
-    this->maxIndex = NUMBER_OF_RESERVED_FIELDS + ((numberOfFieldsInSchema + 1) * maxNumberOfTuplesInFormattedBuffer);
+    this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema + 1;
     this->totalNumberOfTuples = 0;
-    this->offsetBuffers.emplace_back(this->bufferProvider.getBufferBlocking());
 }
 
 FieldIndex FieldOffsets::applyGetOffsetOfFirstTupleDelimiter() const
@@ -60,45 +52,9 @@ size_t FieldOffsets::applyGetTotalNumberOfTuples() const
     return this->totalNumberOfTuples;
 }
 
-std::string_view FieldOffsets::applyReadFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx) const
+void FieldOffsets::writeOffsetAt(const FieldIndex offset, const FieldIndex)
 {
-    /// If this function becomes bottleneck, we could template on whether we support tuple-based indexing or not
-    /// Without tuple-based indexing, we can significantly simplify the offset calculation
-    PRECONDITION(tupleIdx < this->totalNumberOfTuples, "TupleIdx {} is out of range [0-{}].", tupleIdx, this->totalNumberOfTuples);
-    PRECONDITION(fieldIdx < this->numberOfFieldsInSchema, "FieldIdx {} is out of range [0-{}].", fieldIdx, numberOfFieldsInSchema);
-
-    /// Calculate buffer from which to read field
-    const auto tupleIdxForDiv = (tupleIdx == 0) ? 0 : tupleIdx;
-    const auto bufferNumber = tupleIdxForDiv / maxNumberOfTuplesInFormattedBuffer;
-    PRECONDITION(bufferNumber < this->offsetBuffers.size(), "Buffer {} is out of range [0-{}].", bufferNumber, this->offsetBuffers.size());
-    const auto targetBuffer = this->offsetBuffers[bufferNumber];
-
-    const auto numTuplesInPriorBuffers = bufferNumber * maxNumberOfTuplesInFormattedBuffer;
-    const auto tuplesAlreadyInCurrentBuffer = tupleIdx - numTuplesInPriorBuffers;
-    const auto fieldOffset = (tuplesAlreadyInCurrentBuffer * (numberOfFieldsInSchema + 1)) + fieldIdx;
-
-    const auto startOfField = targetBuffer[NUMBER_OF_RESERVED_FIELDS + fieldOffset];
-    /// There are 'numberOfFieldsInSchema + 1' offsets for each tuple, so it is safe to use 'fieldIdx + 1'
-    const auto endOfField = targetBuffer[NUMBER_OF_RESERVED_FIELDS + fieldOffset + 1];
-    /// The last field does not end in a tuple delimiter, so we can't deduct
-    const auto sizeOfField
-        = (fieldIdx != numberOfFieldsInSchema - 1) ? endOfField - startOfField - this->sizeOfFieldDelimiter : endOfField - startOfField;
-    return bufferView.substr(startOfField, sizeOfField);
-}
-
-void FieldOffsets::writeOffsetsOfNextTuple()
-{
-    currentIndex += numberOfFieldsInSchema + 1;
-    if (currentIndex >= maxIndex)
-    {
-        allocateNewChildBuffer();
-        currentIndex = NUMBER_OF_RESERVED_FIELDS;
-    }
-}
-
-void FieldOffsets::writeOffsetAt(const FieldIndex offset, const FieldIndex idx)
-{
-    this->offsetBuffers.back()[currentIndex + idx] = offset;
+    this->indexValues.emplace_back(offset);
 }
 
 void FieldOffsets::markNoTupleDelimiters()
@@ -109,45 +65,18 @@ void FieldOffsets::markNoTupleDelimiters()
 
 void FieldOffsets::markWithTupleDelimiters(const FieldIndex offsetToFirstTuple, const FieldIndex offsetToLastTuple)
 {
-    this->offsetOfFirstTuple = offsetToFirstTuple;
-    this->offsetOfLastTuple = offsetToLastTuple;
-
     /// Make sure that the number of read fields matches the expected value.
-    if ((currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInSchema + 1) != 0)
+    const auto finalIndex = indexValues.size();
+    const auto [totalNumberOfTuples, remainder] = std::lldiv(finalIndex, numberOfOffsetsPerTuple);
+    if (remainder != 0)
     {
         throw FormattingError(
-            "Number of indexes {} must be a multiple of number of fields in tuple {}",
-            currentIndex - NUMBER_OF_RESERVED_FIELDS,
-            (numberOfFieldsInSchema + 1));
+            "Number of indexes {} must be a multiple of number of fields in tuple {}", finalIndex, (numberOfOffsetsPerTuple));
     }
-
-    /// First, set the number of tuples for the current field offsets buffer
-    const auto numberOfTuplesRepresentedInCurrentBuffer = (currentIndex - NUMBER_OF_RESERVED_FIELDS) / (numberOfFieldsInSchema + 1);
-    totalNumberOfTuples += numberOfTuplesRepresentedInCurrentBuffer;
-    setNumberOfRawTuples(numberOfTuplesRepresentedInCurrentBuffer);
-
-    this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
-    /// Set the first buffer as the current buffer. Adjusts the number of tuples of the first buffer. Determines if there is a child buffer.
-    --this->offsetBuffers.front()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES];
-}
-
-void FieldOffsets::allocateNewChildBuffer()
-{
-    INVARIANT(
-        (currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInSchema + 1) == 0,
-        "Number of indexes {} must be a multiple of number of fields in tuple {}",
-        currentIndex - NUMBER_OF_RESERVED_FIELDS,
-        (numberOfFieldsInSchema + 1));
-
-    setNumberOfRawTuples(maxNumberOfTuplesInFormattedBuffer);
-    totalNumberOfTuples += maxNumberOfTuplesInFormattedBuffer;
-    this->offsetBuffers.emplace_back(bufferProvider.getBufferBlocking());
-    this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
-}
-
-void FieldOffsets::setNumberOfRawTuples(const FieldIndex numberOfTuples)
-{
-    this->offsetBuffers.back()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES] = numberOfTuples + 1;
+    /// Finalize the state of the FieldOffsets object
+    this->totalNumberOfTuples = totalNumberOfTuples;
+    this->offsetOfFirstTuple = offsetToFirstTuple;
+    this->offsetOfLastTuple = offsetToLastTuple;
 }
 
 

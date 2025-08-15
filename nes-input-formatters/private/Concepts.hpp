@@ -39,9 +39,10 @@ concept FieldIndexFunctionType = requires(const T& indexFunction) {
     { indexFunction.getOffsetOfFirstTupleDelimiter() };
     { indexFunction.getOffsetOfLastTupleDelimiter() };
     { indexFunction.getTotalNumberOfTuples() };
-    {
-        indexFunction.readFieldAt(std::declval<std::string_view>(), std::declval<size_t>(), std::declval<size_t>())
-    } -> std::same_as<std::string_view>;
+    // Todo: replace
+    // {
+    //     indexFunction.readFieldAt(std::declval<std::string_view>(), std::declval<size_t>(), std::declval<size_t>())
+    // } -> std::same_as<std::string_view>;
 };
 
 template <typename T>

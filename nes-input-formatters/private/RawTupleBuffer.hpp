@@ -44,6 +44,11 @@ public:
     explicit RawTupleBuffer(Memory::TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer)), bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getNumberOfTuples()) { };
 
+
+    // Todo: make private
+    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple)
+        : rawBuffer(Memory::TupleBuffer{}), bufferView(rawDataPtr, sizeOfSpanningTuple) { };
+
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer(const RawTupleBuffer& other) = default;

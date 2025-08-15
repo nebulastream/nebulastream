@@ -78,6 +78,11 @@ ParseFunctionSignature getBasicStringParseFunction()
     };
 }
 
+ParseFunctionSignature getStringParseFunction()
+{
+            return getBasicStringParseFunction();
+}
+
 ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType)
 {
     switch (physicalType)
@@ -118,35 +123,21 @@ ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalTy
         case DataType::Type::BOOLEAN: {
             return parseFieldString<bool>();
         }
-        case DataType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED:
             return getBasicStringParseFunction();
-        }
-        case DataType::Type::VARSIZED_POINTER_REP: {
-            throw NotImplemented("Cannot parse VARSIZED_POINTER_REP type.");
-        }
-        case DataType::Type::UNDEFINED: {
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented("Cannot parse varsized pointer rep type.");
+        case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
-        }
     }
     return nullptr;
 }
 
 Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
-    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
     const nautilus::val<bool> isPointerToInputData{true};
-    switch (quotationType)
-    {
-        case QuotationType::NONE: {
             return Nautilus::VariableSizedData(fieldAddress, fieldSize, isPointerToInputData);
-        }
-        case QuotationType::DOUBLE_QUOTE: {
-            const auto adjustedAddress = fieldAddress + nautilus::val<int8_t>(1);
-            const auto adjustedFieldSize = fieldSize + nautilus::val<uint64_t>(1);
-            return Nautilus::VariableSizedData(adjustedAddress, adjustedFieldSize, isPointerToInputData);
-        }
-    }
-    std::unreachable();
 }
 
 void parseRawValueIntoRecord(
@@ -154,75 +145,76 @@ void parseRawValueIntoRecord(
     Nautilus::Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
-    const QuotationType quotationType)
+    const std::string& fieldName)
 {
     switch (physicalType)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::CHAR: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize));
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize, quotationType));
+            record.write(fieldName, parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize));
             return;
         }
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented("Cannot parse varsized pointer rep type.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }
     std::unreachable();
 }
 
-ParseFunctionSignature getParseFunction(const DataType::Type physicalType, const QuotationType quotationType)
+ParseFunctionSignature getParseFunction(const DataType::Type physicalType)
 {
     if (physicalType == DataType::Type::VARSIZED)
     {
-        return getStringParseFunction(quotationType);
+        return getStringParseFunction();
     }
-    return getBasicTypeParseFunction(physicalType, quotationType);
+    return getBasicTypeParseFunction(physicalType);
 }
 }

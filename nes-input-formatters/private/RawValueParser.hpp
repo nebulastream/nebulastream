@@ -49,37 +49,20 @@ auto parseQuotedFieldString()
     };
 }
 
-Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
-    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType);
+Nautilus::VariableSizedData
+parseVarSizedIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize);
 
 template <typename T>
-nautilus::val<T> parseIntoNautilusRecord(
-    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const QuotationType quotationType)
+nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
-    switch (quotationType)
-    {
-        case QuotationType::NONE: {
-            return nautilus::invoke(
-                +[](const char* fieldAddress, const uint64_t fieldSize)
-                {
-                    const auto fieldView = std::string_view(fieldAddress, fieldSize);
-                    return NES::Util::from_chars_with_exception<T>(fieldView);
-                },
-                fieldAddress,
-                fieldSize);
-        }
-        case QuotationType::DOUBLE_QUOTE: {
-            return nautilus::invoke(
-                +[](const char* fieldAddress, const uint64_t fieldSize)
-                {
-                    INVARIANT(fieldSize >= 2, "Input string must be at least 2 characters long.");
-                    const auto fieldView = std::string_view(fieldAddress + 1, fieldSize - 1);
-                    return NES::Util::from_chars_with_exception<T>(fieldView);
-                },
-                fieldAddress,
-                fieldSize);
-        }
-    }
+    return nautilus::invoke(
+        +[](const char* fieldAddress, const uint64_t fieldSize)
+        {
+            const auto fieldView = std::string_view(fieldAddress, fieldSize);
+            return NES::Util::from_chars_with_exception<T>(fieldView);
+        },
+        fieldAddress,
+        fieldSize);
 }
 
 void parseRawValueIntoRecord(
@@ -87,8 +70,7 @@ void parseRawValueIntoRecord(
     Nautilus::Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
-    QuotationType quotationType);
+    const std::string& fieldName);
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
 ParseFunctionSignature getParseFunction(const DataType::Type physicalType);

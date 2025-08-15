@@ -26,6 +26,15 @@
 #include <FieldIndexFunction.hpp>
 #include <InputFormatterTask.hpp>
 
+#include "Nautilus/Interface/Record.hpp"
+
+inline bool includesField(
+    const std::vector<NES::Nautilus::Record::RecordFieldIdentifier>& projections,
+    const NES::Nautilus::Record::RecordFieldIdentifier& fieldIndex)
+{
+    return std::ranges::find(projections, fieldIndex) != projections.end();
+}
+
 namespace NES::InputFormatters
 {
 
@@ -42,23 +51,57 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const;
     [[nodiscard]] std::string_view applyReadFieldAt(std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const;
 
-    class FieldOffsetsBuffer
+    const FieldIndex* getBufferByWithRecordIndex() const { return indexValues.data(); }
+
+    static const FieldIndex* getTupleBufferForEntryProxy(const FieldOffsets* const fieldOffsets)
     {
-    public:
-        explicit FieldOffsetsBuffer(Memory::TupleBuffer tupleBuffer)
-            : tupleBuffer(std::move(tupleBuffer))
-            , fieldOffsetSpan(this->tupleBuffer.getBuffer<FieldIndex>(), this->tupleBuffer.getBufferSize()) { };
-        ~FieldOffsetsBuffer() = default;
+        // Todo: determine which buffer to access first
+        return fieldOffsets->getBufferByWithRecordIndex();
+    }
 
-        [[nodiscard]] FieldIndex& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
+    template <typename IndexerMetaData>
+    [[nodiscard]] Record applyReadSpanningRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const nautilus::val<int8_t*>& recordBufferPtr,
+        const nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData,
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+    {
+        /// static loop over number of fields (which don't change)
+        /// skips fields that are not part of projection and only traces invoke functions for fields that we need
+        Nautilus::Record record;
+        const auto indexBufferPtr = nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
+        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
+        {
+            if (const auto& fieldName = metaData.getSchema().getFieldAt(i).name; not includesField(projections, fieldName))
+            {
+                continue;
+            }
 
-    private:
-        Memory::TupleBuffer tupleBuffer;
-        std::span<FieldIndex> fieldOffsetSpan;
-    };
+            // Todo: could access member: 'numberOfOffsetsPerTuple'
+            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields() + 1);
+            // const auto byteOffsetStart = numPriorFields * nautilus::static_val(sizeof(FieldOffsetsType));
+            const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
+            const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
+            const auto fieldOffsetStart = Nautilus::Util::readValueFromMemRef<FieldIndex>(recordOffsetAddress);
+            const auto fieldOffsetEnd = Nautilus::Util::readValueFromMemRef<FieldIndex>(recordOffsetEndAddress);
+
+            auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
+            // Todo: find better way to only deduct size of field delimiter if field is last field
+            if (i < metaData.getSchema().getNumberOfFields() - 1)
+            {
+                fieldSize -= nautilus::static_val<uint64_t>(
+                    metaData.getTupleDelimitingBytes().size()); //Todo: should be 'getFieldDelimitingBytes'
+            }
+            const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
+            const auto& currentField = metaData.getSchema().getFieldAt(i);
+            RawValueParser::parseRawValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
+        }
+        return record;
+    }
 
 public:
-    explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
+    FieldOffsets() = default;
     ~FieldOffsets() = default;
 
     /// InputFormatter interface functions:
@@ -73,27 +116,13 @@ public:
     void markWithTupleDelimiters(FieldIndex offsetToFirstTuple, FieldIndex offsetToLastTuple);
 
 private:
-    size_t currentIndex{};
     FieldIndex sizeOfFieldDelimiter{};
     size_t numberOfFieldsInSchema{};
-    size_t maxNumberOfTuplesInFormattedBuffer{};
-    size_t maxIndex{};
+    size_t numberOfOffsetsPerTuple{};
     size_t totalNumberOfTuples{};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
-    std::vector<FieldOffsetsBuffer> offsetBuffers;
-    /// The InputFormatterTask guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance, since the
-    /// InputFormatterTask constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets the ABP as an argument
-    Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-
-    /// Sets the metadata for the current buffer, uses the buffer provider to get a new buffer.
-    void allocateNewChildBuffer();
-
-    /// We always add 1 to the number of tuples, because we represent an overfull buffer as the max number of tuples + 1.
-    /// When iterating over the index buffers, we always deduct 1 from the number of tuples, yielding the correct number of tuples in both cases
-    /// (overfull, not overfull)
-    inline void setNumberOfRawTuples(FieldIndex numberOfTuples);
+    std::vector<FieldIndex> indexValues;
 };
 
-static_assert(FieldIndexFunctionType<FieldOffsets>);
 }

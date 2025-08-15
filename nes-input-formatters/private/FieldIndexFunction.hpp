@@ -26,6 +26,9 @@
 #include <Concepts.hpp>
 #include <RawValueParser.hpp>
 
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+
 namespace NES::InputFormatters
 {
 
@@ -89,25 +92,26 @@ public:
     [[nodiscard]] size_t getTotalNumberOfTuples() const { return static_cast<const Derived*>(this)->applyGetTotalNumberOfTuples(); }
 
     template <typename IndexerMetaData>
-    [[nodiscard]] Record readNextRecord(
-        const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+    [[nodiscard]] Nautilus::Record readNextRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+        const Nautilus::RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData) const
     {
-        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(projections, recordBuffer, recordIndex, metaData);
+        return static_cast<const Derived*>(this)->template applyReadNextRecord<IndexerMetaData>(
+            projections, recordBuffer, recordIndex, metaData);
     }
 
     template <typename IndexerMetaData>
-    [[nodiscard]] Record readSpanningRecord(
-        const std::vector<Record::RecordFieldIdentifier>& projections,
+    [[nodiscard]] Nautilus::Record readSpanningRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& recordBufferPtr,
         nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        RawValueParser::QuotationType quotationType,
         nautilus::val<Derived*> fieldIndexFunction) const
     {
-        return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(projections, recordBufferPtr, recordIndex, metaData, quotationType, fieldIndexFunction);
+        return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
+            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction);
     }
 };
 
@@ -118,6 +122,16 @@ struct NoopFieldIndexFunction
     [[nodiscard]] static FieldIndex getOffsetOfLastTupleDelimiter() { return 0; }
 
     [[nodiscard]] static size_t getTotalNumberOfTuples() { return 0; }
+
+    template <typename IndexerMetaData>
+    [[nodiscard]] static Nautilus::Record readNextRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>&,
+        const Nautilus::RecordBuffer&,
+        nautilus::val<uint64_t>&,
+        const IndexerMetaData&)
+    {
+        return Nautilus::Record{};
+    }
 
     [[nodiscard]] static std::string_view readFieldAt(const std::string_view bufferView, size_t, size_t) { return bufferView; }
 };

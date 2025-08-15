@@ -20,27 +20,40 @@
 #include <PipelineExecutionContext.hpp>
 #include <RawTupleBuffer.hpp>
 
-void NES::InputFormatters::InputFormatterTaskPipeline::start(PipelineExecutionContext&)
+void NES::InputFormatters::InputFormatterTaskPipeline::scan(
+    ExecutionContext& executionCtx,
+    Nautilus::RecordBuffer& recordBuffer,
+    const PhysicalOperator& child,
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const size_t configuredBufferSize,
+    const bool isFirstOperatorAfterSource) const
 {
-    this->inputFormatterTask->startTask();
+    /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
+    // Todo: can't check if numRecords == 0, since it may be initialized with 0 during tracing
+    // if (recordBuffer.getNumRecords() == 0)
+    // {
+    //     NES_WARNING("Received empty buffer in InputFormatterTask.");
+    //     return;
+    // }
+    this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
 }
 
-void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionContext&)
+void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionContext&) const
 {
     this->inputFormatterTask->stopTask();
 }
 
-void NES::InputFormatters::InputFormatterTaskPipeline::execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
-{
-    /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
-    if (rawTupleBuffer.getBufferSize() == 0)
-    {
-        NES_WARNING("Received empty buffer in InputFormatterTask.");
-        return;
-    }
-
-    this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
-}
+// void NES::InputFormatters::InputFormatterTaskPipeline::execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
+// {
+//     /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
+//     if (rawTupleBuffer.getBufferSize() == 0)
+//     {
+//         NES_WARNING("Received empty buffer in InputFormatterTask.");
+//         return;
+//     }
+//
+//     this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
+// }
 
 std::ostream& NES::InputFormatters::InputFormatterTaskPipeline::toString(std::ostream& os) const
 {

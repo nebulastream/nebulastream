@@ -22,12 +22,19 @@
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
+
+#include "Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp"
+#include "Nautilus/Interface/RecordBuffer.hpp"
+
+#include "ExecutionContext.hpp"
+#include "PhysicalOperator.hpp"
+
 namespace NES::InputFormatters
 {
 class RawTupleBuffer;
 
 /// Type-erased wrapper around InputFormatterTask
-class InputFormatterTaskPipeline final : public ExecutablePipelineStage
+class InputFormatterTaskPipeline final
 {
 public:
     template <typename T>
@@ -37,27 +44,39 @@ public:
     {
     }
 
-    ~InputFormatterTaskPipeline() override = default;
+    ~InputFormatterTaskPipeline() = default;
 
-    void start(PipelineExecutionContext&) override;
+    void scan(
+       ExecutionContext& executionCtx,
+       Nautilus::RecordBuffer& recordBuffer,
+       const PhysicalOperator& child,
+       const std::vector<Record::RecordFieldIdentifier>& projections,
+       size_t configuredBufferSize,
+       bool isFirstOperatorAfterSource) const;
+
     /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
-    void stop(PipelineExecutionContext&) override;
+    void stop(PipelineExecutionContext&) const;
     /// (concurrently) executes an InputFormatterTask.
     /// First, uses the concrete InputFormatIndexer implementation to determine the indexes of all fields of all full tuples.
     /// Second, uses the SequenceShredder to find spanning tuples.
     /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
     /// process all complete tuples and trailing spanning tuple.
-    void execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override;
 
-    std::ostream& toString(std::ostream& os) const override;
+    std::ostream& toString(std::ostream& os) const;
 
     /// Describes what a InputFormatterTask that is in the InputFormatterTaskPipeline does (interface).
     struct InputFormatterTaskConcept
     {
         virtual ~InputFormatterTaskConcept() = default;
-        virtual void startTask() = 0;
         virtual void stopTask() = 0;
-        virtual void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) = 0;
+        virtual void scanTask(
+            ExecutionContext& executionCtx,
+            Nautilus::RecordBuffer& recordBuffer,
+            const PhysicalOperator& child,
+            const std::vector<Record::RecordFieldIdentifier>& projections,
+            size_t configuredBufferSize,
+            bool isFirstOperatorAfterSource)
+            = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -67,13 +86,17 @@ public:
     {
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : inputFormatterTask(std::move(inputFormatterTask)) { }
 
-        void startTask() override { inputFormatterTask.startTask(); }
-
         void stopTask() override { inputFormatterTask.stopTask(); }
 
-        void executeTask(const RawTupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override
+        void scanTask(
+            ExecutionContext& executionCtx,
+            Nautilus::RecordBuffer& recordBuffer,
+            const PhysicalOperator& child,
+            const std::vector<Record::RecordFieldIdentifier>& projections,
+            const size_t configuredBufferSize,
+            const bool isFirstOperatorAfterSource) override
         {
-            inputFormatterTask.executeTask(rawTupleBuffer, pec);
+            inputFormatterTask.scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
         }
 
         std::ostream& toString(std::ostream& os) const override { return inputFormatterTask.taskToString(os); }
