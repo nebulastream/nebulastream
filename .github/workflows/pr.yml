@@ -74,3 +74,11 @@ jobs:
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       ref: ${{ github.event.pull_request.head.ref }}
+
+  nix-build:
+    needs: [ get-dev-images ]
+    name: "Run Nix Build"
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}

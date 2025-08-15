@@ -17,7 +17,7 @@ SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 
-if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
+if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT} AND NOT DEFINED ENV{IN_NIX_SHELL})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
 endif ()
 
@@ -98,6 +98,15 @@ else ()
     # support dynamic linking (which is usually the case unless working with small embedded devices).
     SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
     find_package(MLIR CONFIG QUIET)
+    
+    # Use Nix MLIR if available and not already found
+    if (NOT MLIR_DIR AND DEFINED ENV{IN_NIX_SHELL})
+        set(MLIR_DIR "${CMAKE_SOURCE_DIR}/mlir-20/clang/lib/cmake/mlir")
+        set(LLVM_DIR "${CMAKE_SOURCE_DIR}/mlir-20/clang/lib/cmake/llvm")
+        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/mlir-20/clang")
+        message(STATUS "Using locally installed MLIR from Nix environment")
+    endif()
+    
     # One way to propagate configurations to third-party libraries (in this case nautilus) is via environment variables.
     # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
     # nautilus cmake configuration to find the locally installed version of MLIR.
