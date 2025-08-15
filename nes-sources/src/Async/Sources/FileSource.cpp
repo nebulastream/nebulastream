@@ -44,6 +44,9 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
+#include "FileDataRegistry.hpp"
+#include "InlineDataRegistry.hpp"
+
 namespace NES::Sources
 {
 
@@ -76,6 +79,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
 
     auto [errorCode, bytesRead] = co_await async_read(
         fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
+    buffer.setNumberOfTuples(bytesRead);
 
     if (errorCode)
     {
@@ -120,6 +124,48 @@ SourceValidationRegistryReturnType SourceValidationGeneratedRegistrar::RegisterF
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments arguments)
 {
     return std::make_unique<FileSource>(arguments.sourceDescriptor);
+}
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples)
+    {
+        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            filePath->second = systestAdaptorArguments.testFilePath;
+            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+            {
+                /// Write inline tuples to test file.
+                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
+                {
+                    testFile << tuple << "\n";
+                }
+                testFile.flush();
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+        }
+        throw InvalidConfigParameter("A FileSource config must contain filePath parameter");
+    }
+    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    /// Check that the test data dir is defined and that the 'filePath' parameter is set
+    /// Replace the 'TESTDATA' placeholder in the filepath
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    {
+        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            filePath->second = attachSourceFilePath.value();
+            return systestAdaptorArguments.physicalSourceConfig;
+        }
+        throw InvalidConfigParameter("A FileSource config must contain filePath parameter.");
+    }
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
 
 }

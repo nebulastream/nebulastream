@@ -43,7 +43,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     const size_t numBuffersPerSource)
 {
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
-    auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
+    const auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
            ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
            : numBuffersPerSource;
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))

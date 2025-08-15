@@ -94,6 +94,9 @@ struct ConfigParametersTCP
         }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(HOST, PORT);
+       = DescriptorConfig::createConfigParameterContainerMap(
+           SourceDescriptor::parameterMap,
+           HOST,
+           PORT);
 };
 }

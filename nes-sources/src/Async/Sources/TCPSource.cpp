@@ -34,8 +34,10 @@
 #include <boost/asio/this_coro.hpp>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataServer/TCPDataServer.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/system/detail/error_code.hpp>
 #include <boost/system/system_error.hpp>
@@ -44,6 +46,9 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include "Util/Logger/Logger.hpp"
+
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
 namespace NES::Sources
 {
@@ -85,6 +90,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> TCPSource::fillBuff
     auto [errorCode, bytesRead]
         = co_await async_read(socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
 
+    buffer.setNumberOfTuples(bytesRead);
     if (not errorCode)
     {
         co_return Continue{.bytesRead = bytesRead};
@@ -128,6 +134,61 @@ SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(SourceValidation
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments arguments)
 {
     return std::make_unique<TCPSource>(arguments.sourceDescriptor);
+}
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.attachSource.tuples.value()));
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(attachSourceFilePath.value());
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                systestAdaptorArguments.physicalSourceConfig.sourceConfig.erase(std::string(SYSTEST_FILE_PATH_PARAMETER));
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
 
 }
