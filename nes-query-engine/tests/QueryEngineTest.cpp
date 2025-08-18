@@ -166,6 +166,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     test.stats.expect(
         ExpectStats::QueryStart(1),
         ExpectStats::QueryStop(1),
+        ExpectStats::QueryStopRequest(0),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(8),
@@ -219,7 +220,8 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
     ///           We expect a range of executed tasks between 8-10 because the query stop races with the 2nd-5th emit.
     test.stats.expect(
         ExpectStats::QueryStart(1),
-        ExpectStats::QueryStop(2),
+        ExpectStats::QueryStop(1),
+        ExpectStats::QueryStopRequest(1),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(2, 10),
@@ -838,11 +840,12 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminatio
     auto query = test.addNewQuery(std::move(builder));
 
     /// Statistics. 1 Query Start/Stop with 2 pipelines and 0 data emitted
-    ///   Query Stop and Pipelines are not terminated due to engine shutdown
+    ///   Query Stop/Failure and Pipelines are not terminated due to engine shutdown
 
     test.stats.expect(
         ExpectStats::QueryStart(1),
         ExpectStats::QueryStop(0),
+        ExpectStats::QueryFail(0),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(0),
         ExpectStats::TaskExecutionStart(0),
@@ -874,7 +877,8 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
     /// Statistics. 1 Query Start/Stop with 2 pipelines and 0 data emitted
     test.stats.expect(
         ExpectStats::QueryStart(1),
-        ExpectStats::QueryStop(2),
+        ExpectStats::QueryStop(1),
+        ExpectStats::QueryStopRequest(1),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
         ExpectStats::TaskExecutionStart(0),
