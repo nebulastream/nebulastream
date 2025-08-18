@@ -323,8 +323,9 @@ std::vector<std::vector<TupleBuffer>> createExpectedResults(const TestHandle<Tup
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
         for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
-            expectedTupleBuffers.at(0).emplace_back(createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
-                testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
+            expectedTupleBuffers.at(0).emplace_back(
+                createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
+                    testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
         }
     }
     return expectedTupleBuffers;
@@ -355,7 +356,7 @@ template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     const std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask
-        = provideInputFormatterTask(OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+        = provideInputFormatterTask(testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
@@ -374,8 +375,9 @@ std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
     {
         auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
         INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.");
-        rawTupleBuffers.emplace_back(TaskPackage{
-            rawInputBuffer.sequenceNumber, copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+        rawTupleBuffers.emplace_back(
+            TaskPackage{
+                rawInputBuffer.sequenceNumber, copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
     }
     return rawTupleBuffers;
 }

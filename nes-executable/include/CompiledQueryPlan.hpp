@@ -42,6 +42,7 @@ struct CompiledQueryPlan
         /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
         /// the descriptor and originId are instantiated into concrete source implementation.
         OriginId originId;
+        OperatorId operatorId;
         SourceDescriptor descriptor;
 
         /// Sources do not have any predecessors
@@ -56,7 +57,7 @@ struct CompiledQueryPlan
         SinkDescriptor descriptor;
 
         /// Sinks do not have any successors
-        std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> predecessor;
+        std::vector<std::variant<OperatorId, std::weak_ptr<ExecutablePipeline>>> predecessor;
     };
 
     static std::unique_ptr<CompiledQueryPlan> create(
