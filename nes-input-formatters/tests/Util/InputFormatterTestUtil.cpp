@@ -36,8 +36,10 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -47,6 +49,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -181,14 +184,14 @@ std::unique_ptr<SourceHandle> createFileSource(
     return sourceProvider.lower(NES::OriginId(1), sourceDescriptor.value());
 }
 
-std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
-{
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-
-    return provideInputFormatterTask(schema, validatedParserConfiguration);
-}
+// std::unique_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
+// {
+//     const std::unordered_map<std::string, std::string> parserConfiguration{
+//         {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+//     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+//
+//     return provideInputFormatterTask(schema, validatedParserConfiguration);
+// }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
@@ -201,14 +204,37 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
     }
 }
 
+//TestPipelineTask createInputFormatterTask(
+//    const Schema& schema,
+//    std::string formatterType,
+//    const SequenceNumber sequenceNumber,
+//    const WorkerThreadId workerThreadId,
+//    Memory::TupleBuffer taskBuffer)
+//{
+//    const std::unordered_map<std::string, std::string> parserConfiguration{
+//                {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+//    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+//    auto inputFormatterTask = InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+//    taskBuffer.setSequenceNumber(sequenceNumber);
+//    // Todo: set configured size using 'formatted' size
+//    FormatScanPhysicalOperator formatScanPhysicalOp{{}, std::move(inputFormatterTask), 4096, true};
+//    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
+//    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
+//    return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};
+//}
+//
 TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask)
+    std::unique_ptr<InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    return TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
+    // Todo: set configured size using 'formatted' size
+    FormatScanPhysicalOperator formatScanPhysicalOp{{}, std::move(inputFormatterTask), 4096, true};
+    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
+    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
+    return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};
 }
 
 }

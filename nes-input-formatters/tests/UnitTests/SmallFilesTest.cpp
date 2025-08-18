@@ -282,7 +282,7 @@ public:
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
                 = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
+            // auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
@@ -295,7 +295,10 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        // Todo: problem
+                        auto pipelineTask = InputFormatterTestUtil::createInputFormatterTask()
+                        auto pipelineTask = InputFormatterTestUtil::createInputFormatterTask(currentSequenceNumber, WorkerThreadId(currentWorkerThreadId), rawBuffer, std::move(inputFormatterTask));
+                        // auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }

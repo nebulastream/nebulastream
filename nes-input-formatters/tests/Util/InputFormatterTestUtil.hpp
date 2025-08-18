@@ -166,7 +166,7 @@ TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask);
+    std::unique_ptr<InputFormatterTaskPipeline> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle

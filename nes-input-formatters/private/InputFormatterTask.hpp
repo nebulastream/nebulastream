@@ -444,7 +444,7 @@ public:
                 return &spanningTuplePOD;
             }
 
-            if (stagedBuffers.empty())
+            if (stagedBuffers.size() < 2)
             {
                 spanningTuplePOD = spanningTupleData.createSpanningTuplePOD();
                 return &spanningTuplePOD;
