@@ -19,7 +19,7 @@ namespace NES
 
 void CompositeStatisticListener::onEvent(Event event)
 {
-    for (auto& listener : statisticListeners)
+    for (auto& listener : queryEngineListeners)
     {
         listener->onEvent(event);
     }
@@ -33,9 +33,9 @@ void CompositeStatisticListener::onEvent(SystemEvent event)
     }
 }
 
-void CompositeStatisticListener::addListener(std::shared_ptr<QueryEngineStatisticListener> listener)
+void CompositeStatisticListener::addQueryEngineListener(std::shared_ptr<QueryEngineStatisticListener> listener)
 {
-    statisticListeners.push_back(std::move(listener));
+    queryEngineListeners.push_back(std::move(listener));
 }
 
 void CompositeStatisticListener::addSystemListener(std::shared_ptr<SystemEventListener> listener)
@@ -43,9 +43,15 @@ void CompositeStatisticListener::addSystemListener(std::shared_ptr<SystemEventLi
     systemListeners.push_back(std::move(listener));
 }
 
+void CompositeStatisticListener::addListener(std::shared_ptr<StatisticListener> listener)
+{
+    queryEngineListeners.push_back(listener);
+    systemListeners.push_back(listener);
+}
+
 bool CompositeStatisticListener::hasListeners() const
 {
-    return !statisticListeners.empty() || !systemListeners.empty();
+    return not queryEngineListeners.empty() or not systemListeners.empty();
 }
 
 }

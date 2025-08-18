@@ -16,25 +16,25 @@
 
 #include <memory>
 #include <vector>
+#include <Listeners/StatisticListener.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
 namespace NES
 {
 /// Allows to register multiple statistics listener that are notified once the CompositeStatisticsListener gets notified
-struct CompositeStatisticListener final : QueryEngineStatisticListener, SystemEventListener
+struct CompositeStatisticListener final : StatisticListener
 {
     void onEvent(Event event) override;
     void onEvent(SystemEvent event) override;
 
-    void addListener(std::shared_ptr<QueryEngineStatisticListener> listener);
+    void addQueryEngineListener(std::shared_ptr<QueryEngineStatisticListener> listener);
     void addSystemListener(std::shared_ptr<SystemEventListener> listener);
-
-    /// Check if the composite listener has any listeners
+    void addListener(std::shared_ptr<StatisticListener> listener);
     [[nodiscard]] bool hasListeners() const;
 
 private:
-    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListeners;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineListeners;
     std::vector<std::shared_ptr<SystemEventListener>> systemListeners;
 };
 }
