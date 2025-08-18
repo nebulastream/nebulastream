@@ -63,9 +63,7 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
 
     const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     auto inputFormatterTaskPipeline = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-        sourceOperator.getOriginId(),
-        *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
-        sourceOperator.getDescriptor().getParserConfig());
+        *sourceOperator.getDescriptor().getLogicalSource().getSchema(), sourceOperator.getDescriptor().getParserConfig());
 
     auto executableInputFormatterPipeline
         = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTaskPipeline), executableSuccessorPipelines);
@@ -86,7 +84,7 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
     inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
 
-    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
+    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.id, sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
 }
 
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)
@@ -170,9 +168,8 @@ std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const st
 {
     this->pipelineQueryPlan = pipelineQueryPlan;
 
-    ///Process all pipelines recursively.
-    auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
-    for (const auto& pipeline : sourcePipelines)
+    /// Process all pipelines recursively.
+    for (auto sourcePipelines = pipelineQueryPlan->getSourcePipelines(); const auto& pipeline : sourcePipelines)
     {
         processSource(pipeline);
     }

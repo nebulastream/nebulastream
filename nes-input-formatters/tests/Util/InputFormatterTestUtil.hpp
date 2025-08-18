@@ -362,8 +362,7 @@ template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     const std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask
-        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-            OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
