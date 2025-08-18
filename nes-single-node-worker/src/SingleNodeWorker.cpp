@@ -39,7 +39,6 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <StatisticPrinter.hpp>
 
 namespace NES
 {
@@ -51,20 +50,14 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
-    auto printingStatisticsListener = std::make_shared<PrintingStatisticListener>(
-        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
-    listener->addListener(printingStatisticsListener);
-    listener->addSystemListener(printingStatisticsListener);
-
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
             fmt::format("GoogleEventTrace_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", std::chrono::system_clock::now(), ::getpid()));
         listener->addListener(googleTracePrinter);
-        listener->addSystemListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener), Util::copyPtr(listener)).build();
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build();
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();

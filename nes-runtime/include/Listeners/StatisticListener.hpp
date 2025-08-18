@@ -13,25 +13,15 @@
 */
 
 #pragma once
-#include <memory>
-#include <Configuration/WorkerConfiguration.hpp>
-#include <Listeners/StatisticListener.hpp>
-#include <Runtime/NodeEngine.hpp>
+
+#include <Listeners/SystemEventListener.hpp>
+#include <QueryEngineStatisticListener.hpp>
 
 namespace NES
 {
-/// Create instances of NodeEngine using the builder pattern.
-class NodeEngineBuilder
+/// Listener interface that can handle both query engine events and system events
+struct StatisticListener : QueryEngineStatisticListener, SystemEventListener
 {
-public:
-    NodeEngineBuilder() = delete;
-
-    explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
-
-    std::unique_ptr<NodeEngine> build();
-
-private:
-    WorkerConfiguration workerConfiguration;
-    std::shared_ptr<StatisticListener> statisticsListener;
+    virtual ~StatisticListener() = default;
 };
 }
