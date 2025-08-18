@@ -29,7 +29,6 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <StatisticPrinter.hpp>
 
 namespace NES
 {

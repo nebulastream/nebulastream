@@ -15,6 +15,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -26,18 +27,25 @@
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/SystemEventListener.hpp>
+#include <Listeners/StatisticListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <QueryEngineStatisticListener.hpp>
-#include <StatisticPrinter.hpp>
+
+template <typename Var1, typename Var2>
+struct FlattenVariant;
+
+template <typename... Ts1, typename... Ts2>
+struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
+{
+    using type = std::variant<Ts1..., Ts2...>;
+};
 
 namespace NES
 {
 /// This printer generates Chrome DevTools trace files that can be opened in Chrome's
 /// chrome://tracing/ interface for performance analysis (or any other event trace visualizer)
-struct GoogleEventTracePrinter final : QueryEngineStatisticListener, SystemEventListener
+struct GoogleEventTracePrinter final : StatisticListener
 {
     using CombinedEventType = FlattenVariant<SystemEvent, Event>::type;
     void onEvent(Event event) override;

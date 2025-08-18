@@ -13,7 +13,6 @@
 add_source_files(nes-single-node-worker
         SingleNodeWorker.cpp
         GrpcService.cpp
-        StatisticPrinter.cpp
         GoogleEventTracePrinter.cpp
         CompositeStatisticListener.cpp
 )
