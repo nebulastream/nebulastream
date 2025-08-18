@@ -35,8 +35,10 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -48,6 +50,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -171,14 +174,14 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
-{
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-
-    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
-}
+// std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
+// {
+//     const std::unordered_map<std::string, std::string> parserConfiguration{
+//         {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+//     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+//
+//     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+// }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
@@ -206,14 +209,38 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
     return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
 }
 
+
+TestPipelineTask createInputFormatterTask(
+    const Schema& schema,
+    std::string formatterType,
+    const SequenceNumber sequenceNumber,
+    const WorkerThreadId workerThreadId,
+    Memory::TupleBuffer taskBuffer)
+{
+    const std::unordered_map<std::string, std::string> parserConfiguration{
+            {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+    auto inputFormatterTask = InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    taskBuffer.setSequenceNumber(sequenceNumber);
+    // Todo: set configured size using 'formatted' size
+    FormatScanPhysicalOperator formatScanPhysicalOp{{}, std::move(inputFormatterTask), 4096, true};
+    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
+    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
+    return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};
+}
+
 TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
+    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
-    return TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
+    // Todo: set configured size using 'formatted' size
+    FormatScanPhysicalOperator formatScanPhysicalOp{{}, std::move(inputFormatterTask), 4096, true};
+    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
+    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
+    return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};
 }
 
 }

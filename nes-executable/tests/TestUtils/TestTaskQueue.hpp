@@ -123,7 +123,7 @@ private:
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
 /// Executes all 'taskSteps' in its 'execute' function.
-class TestPipelineStage : public ExecutablePipelineStage
+class TestPipelineStage final : public ExecutablePipelineStage
 {
 public:
     using ExecuteFunction = std::function<void(const Memory::TupleBuffer&, PipelineExecutionContext&)>;
