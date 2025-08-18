@@ -23,6 +23,7 @@
 #include <fmt/format.h>
 #include <FieldIndexFunction.hpp>
 #include <InputFormatIndexer.hpp>
+// #include <NativeFieldIndexFunction.hpp>
 #include "Util/Ranges.hpp"
 
 namespace NES::InputFormatters
@@ -31,7 +32,18 @@ namespace NES::InputFormatters
 class NativeMetaData
 {
 public:
-    NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
+    // NativeMetaData(const ParserConfig&, const Schema&) { /* noop */ }
+    NativeMetaData(ParserConfig, Schema schema) : schema(std::move(schema))
+    {
+        this->fieldOffsets = std::vector<size_t>(schema.getNumberOfFields());
+
+        size_t currentFieldSize = 0;
+        for (const auto& [fieldIdx, field] : this->schema | NES::views::enumerate)
+        {
+            this->fieldOffsets.at(fieldIdx) = currentFieldSize;
+            currentFieldSize += field.dataType.getSizeInBytes();
+        }
+    }
 
     static std::string_view getTupleDelimitingBytes() { return ""; }
     [[nodiscard]] const Schema& getSchema() const { return schema; }
@@ -52,12 +64,15 @@ class NativeInputFormatIndexer : public InputFormatIndexer<NativeInputFormatInde
 public:
     static constexpr bool IsFormattingRequired = false;
     static constexpr bool HasSpanningTuple = false;
-    using FieldIndexFunctionType = NoopFieldIndexFunction;
+    using FieldIndexFunctionType = NativeFieldIndexFunction<Schema::MemoryLayoutType::ROW_LAYOUT>;
+    // using FieldIndexFunctionType = NoopFieldIndexFunction;
     using IndexerMetaData = NativeMetaData;
 
-    void indexRawBuffer(NoopFieldIndexFunction&, const RawTupleBuffer&, const NativeMetaData&) const
+    // void indexRawBuffer(NoopFieldIndexFunction&, const RawTupleBuffer&, const NativeMetaData&) const
+    void indexRawBuffer(NativeFieldIndexFunction<Schema::MemoryLayoutType::ROW_LAYOUT>&, const RawTupleBuffer&, const NativeMetaData&) const
     {
         ///Noop
+        INVARIANT(not HasSpanningTuple, "The Native input formatter currently does not support spanning tuples.");
     }
 
     friend std::ostream& operator<<(std::ostream& os, const NativeInputFormatIndexer&)

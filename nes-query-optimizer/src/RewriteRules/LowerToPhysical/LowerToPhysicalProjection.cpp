@@ -66,12 +66,27 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(OriginId::INITIAL), inputSchema, ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
     }();
+    // Todo: problem:
+    // - if we use 'outputSchema.getFieldNames()' we try to select input fields using output names (given renaming)
+
+    auto accessedFields = projection.getAccessedFields();
     auto scan = FormatScanPhysicalOperator(
-        outputSchema.getFieldNames(), std::move(inputFormatterTaskPipeline), bufferSize, isFirstOperatorAfterSource);
+        accessedFields, std::move(inputFormatterTaskPipeline), bufferSize, isFirstOperatorAfterSource);
+    // Todo: output -> output was already here
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
+
+    // Todo: use below approach
+    // auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
+    // auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
+    // auto accessedFields = projection.getAccessedFields();
+    // auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
+    // auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
+    //     scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+    //
+    // auto child = scanWrapper;
     for (const auto& [fieldName, function] : projection.getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
