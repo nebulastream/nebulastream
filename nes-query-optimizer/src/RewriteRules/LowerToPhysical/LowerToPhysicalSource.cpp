@@ -36,10 +36,6 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
 
     const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
-    PRECONDITION(
-        outputOriginIdsOpt.has_value() && std::ranges::size(outputOriginIdsOpt.value()) == 1,
-        "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}",
-        std::ranges::size(*outputOriginIdsOpt));
     auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
     const auto inputSchemas = logicalOperator.getInputSchemas();
