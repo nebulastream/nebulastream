@@ -47,7 +47,13 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             const auto& serializedSource = serializedOperator.source();
             auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
             auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            return sourceOperator.withOutputOriginIds({{OriginId(serializedSource.sourceoriginid())}});
+
+            std::vector<OriginId> originIds;
+            for (const auto& id : serializedSource.source_origin_ids())
+            {
+                originIds.emplace_back(id);
+            }
+            return sourceOperator.withOutputOriginIds(originIds);
         }
 
         if (serializedOperator.has_sink())
