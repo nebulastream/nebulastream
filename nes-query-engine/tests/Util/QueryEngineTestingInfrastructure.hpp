@@ -110,6 +110,8 @@ struct ExpectStats
     }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
+    STAT_TYPE(QueryStopRequest);
+    STAT_TYPE(QueryFail);
     STAT_TYPE(PipelineStart);
     STAT_TYPE(PipelineStop);
     STAT_TYPE(TaskExecutionStart);
@@ -134,6 +136,10 @@ struct ExpectStats
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExpired>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskEmit>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStopRequest>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryFail>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 

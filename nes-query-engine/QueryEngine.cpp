@@ -608,7 +608,7 @@ bool ThreadPool::WorkerThread::operator()(const StopQueryTask& stopQuery) const
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
         queryCatalog->stopQuery(stopQuery.queryId);
-        pool.statistic->onEvent(QueryStop{WorkerThread::id, stopQuery.queryId});
+        pool.statistic->onEvent(QueryStopRequest{WorkerThread::id, stopQuery.queryId});
         return true;
     }
     return false;
@@ -826,6 +826,7 @@ void QueryCatalog::start(
                 exception.what() += fmt::format(" in Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
                 listener->logQueryFailure(queryId, std::move(exception), timestamp);
+                statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
             }
         }
 

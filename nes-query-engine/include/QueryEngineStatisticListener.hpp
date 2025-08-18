@@ -96,11 +96,25 @@ struct QueryStart : EventBase
     QueryStart() = default;
 };
 
+struct QueryStopRequest : EventBase
+{
+    QueryStopRequest(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+
+    QueryStopRequest() = default;
+};
+
 struct QueryStop : EventBase
 {
     QueryStop(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
 
     QueryStop() = default;
+};
+
+struct QueryFail : EventBase
+{
+    QueryFail(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+
+    QueryFail() = default;
 };
 
 struct PipelineStart : EventBase
@@ -124,8 +138,17 @@ struct PipelineStop : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
 };
 
-using Event
-    = std::variant<TaskExecutionStart, TaskEmit, TaskExecutionComplete, TaskExpired, PipelineStart, PipelineStop, QueryStart, QueryStop>;
+using Event = std::variant<
+    TaskExecutionStart,
+    TaskEmit,
+    TaskExecutionComplete,
+    TaskExpired,
+    PipelineStart,
+    PipelineStop,
+    QueryStart,
+    QueryStopRequest,
+    QueryStop,
+    QueryFail>;
 
 struct QueryEngineStatisticListener
 {
