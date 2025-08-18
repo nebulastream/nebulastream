@@ -23,7 +23,7 @@
 
 namespace NES
 {
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(OriginId originId, const Schema& schema, const ParserConfig& config);
+std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config);
 
 bool contains(const std::string& parserType);
 }
