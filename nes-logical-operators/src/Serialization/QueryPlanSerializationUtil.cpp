@@ -136,6 +136,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     };
 
     /// 3) Build root-operators
+    if (serializedQueryPlan.rootoperatorids().empty())
+    {
+        throw CannotDeserialize("Query Plan has no root operator(s)!");
+    }
     std::vector<LogicalOperator> rootOperators;
     for (auto rootId : serializedQueryPlan.rootoperatorids())
     {
