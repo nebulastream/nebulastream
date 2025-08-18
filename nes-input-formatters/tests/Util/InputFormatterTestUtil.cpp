@@ -40,11 +40,9 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
@@ -176,7 +174,7 @@ std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schem
         {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    return provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    return provideInputFormatterTask(schema, validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
