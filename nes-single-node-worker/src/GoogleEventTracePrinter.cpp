@@ -202,9 +202,40 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     activeQueries.emplace(queryStart.queryId, std::make_pair(queryStart.timestamp, queryStart.threadId));
                     NES_DEBUG("Tracking query start: {} on thread {}", queryStart.queryId, queryStart.threadId.getRawValue());
                 },
+                [&](const QueryFail& queryFail)
+                {
+                    /// Use the thread ID from the QueryFail event to ensure matching begin/end pairs
+                    auto it = activeQueries.find(queryFail.queryId);
+                    uint64_t originalTid
+                        = (it != activeQueries.end()) ? it->second.second.getRawValue() : queryFail.threadId.getRawValue(); /// fallback
+
+                    auto traceEvent = createTraceEvent(
+                        fmt::format("Query {}", queryFail.queryId),
+                        Category::Query,
+                        Phase::End,
+                        timestampToMicroseconds(queryFail.timestamp));
+                    traceEvent["tid"] = originalTid;
+
+                    emit(traceEvent);
+
+                    /// Remove from active queries
+                    activeQueries.erase(queryFail.queryId);
+                    NES_DEBUG("Query completed with a failure: {} on thread {}", queryFail.queryId, originalTid);
+                },
+                [&](const QueryStopRequest& queryStopRequest)
+                {
+                    auto traceEvent = createTraceEvent(
+                        fmt::format("QueryStopRequest {}", queryStopRequest.queryId),
+                        Category::Query,
+                        Phase::Instant,
+                        timestampToMicroseconds(queryStopRequest.timestamp));
+                    traceEvent["tid"] = queryStopRequest.threadId.getRawValue();
+                    emit(traceEvent);
+                    NES_DEBUG("Query stop request: {} on thread {}", queryStopRequest.queryId, queryStopRequest.threadId);
+                },
                 [&](const QueryStop& queryStop)
                 {
-                    /// Use the thread ID from the QueryStart event to ensure matching begin/end pairs
+                    /// Use the thread ID from the QueryStop event to ensure matching begin/end pairs
                     auto it = activeQueries.find(queryStop.queryId);
                     uint64_t originalTid
                         = (it != activeQueries.end()) ? it->second.second.getRawValue() : queryStop.threadId.getRawValue(); /// fallback
