@@ -44,7 +44,6 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
@@ -181,7 +180,7 @@ std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatte
         {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(schema, validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

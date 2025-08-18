@@ -37,8 +37,8 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskP
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, const OriginId originId, const Schema& schema)
-        : inputFormatIndexerConfig(std::move(config)), originId(originId), schema(schema)
+    InputFormatIndexerRegistryArguments(ParserConfig config, const Schema& schema)
+        : inputFormatIndexerConfig(std::move(config)), schema(schema)
     {
     }
 
@@ -48,7 +48,7 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType FormatterType>
     InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(FormatterType inputFormatter)
     {
-        auto inputFormatterTask = InputFormatterTask<FormatterType>(originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
+        auto inputFormatterTask = InputFormatterTask<FormatterType>(std::move(inputFormatter), schema, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
 
@@ -57,7 +57,6 @@ struct InputFormatIndexerRegistryArguments
     ParserConfig inputFormatIndexerConfig;
 
 private:
-    OriginId originId{NES::OriginId(NES::OriginId::INVALID)};
     Schema schema;
 };
 

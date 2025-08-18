@@ -30,7 +30,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -172,10 +171,8 @@ class InputFormatterTask
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
 
-    explicit InputFormatterTask(
-        const OriginId originId, FormatterType inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
-        : originId(originId)
-        , inputFormatIndexer(std::move(inputFormatIndexer))
+    explicit InputFormatterTask(FormatterType inputFormatIndexer, const Schema& schema, const ParserConfig& parserConfig)
+        : inputFormatIndexer(std::move(inputFormatIndexer))
         , schemaInfo(schema)
         , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, schema})
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
@@ -281,13 +278,12 @@ public:
     std::ostream& taskToString(std::ostream& os) const
     {
         /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "InputFormatterTask(originId: " << originId << ", inputFormatIndexer: " << inputFormatIndexer
+        os << "InputFormatterTask(" << ", inputFormatIndexer: " << inputFormatIndexer
            << ", sequenceShredder: " << *sequenceShredder << ")\n";
         return os;
     }
 
 private:
-    OriginId originId;
     FormatterType inputFormatIndexer;
     SchemaInfo schemaInfo;
     typename FormatterType::IndexerMetaData indexerMetaData;

@@ -15,7 +15,10 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <variant>
+#include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
@@ -34,7 +37,7 @@ public:
     std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan);
 
 private:
-    using Predecessor = std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>;
+    using Predecessor = std::variant<OperatorId, std::weak_ptr<ExecutablePipeline>>;
     using Successor = std::optional<std::shared_ptr<ExecutablePipeline>>;
 
     std::shared_ptr<ExecutablePipeline> processOperatorPipeline(const std::shared_ptr<Pipeline>& pipeline);
