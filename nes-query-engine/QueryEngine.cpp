@@ -450,7 +450,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
     if (terminating)
     {
         ENGINE_LOG_WARNING("Skipped Task for {}-{} during termination", task.queryId, task.pipelineId);
-        return false;
+        return true;
     }
 
     const auto taskId = TaskId(pool.taskIdCounter++);
@@ -500,7 +500,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
     if (terminating)
     {
         ENGINE_LOG_WARNING("Pipeline Start {}-{} was skipped during Termination", startPipeline.queryId, startPipeline.pipelineId);
-        return false;
+        return true;
     }
 
     if (auto pipeline = startPipeline.pipeline.lock())
