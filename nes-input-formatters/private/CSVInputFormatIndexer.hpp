@@ -31,7 +31,7 @@ constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
 {
-    explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit CSVMetaData(const ParserConfig& config, const Schema& schema) : tupleDelimiter(config.tupleDelimiter), schema(schema) { };
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
     const Schema& getSchema() const { return this->schema; }
