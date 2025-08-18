@@ -162,7 +162,7 @@ void buildPipelineRecursively(
     /// it should close the pipeline without adding a default emit
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
-        if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        if (not prevOpWrapper || prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
             /// current operator to create a new pipeline
