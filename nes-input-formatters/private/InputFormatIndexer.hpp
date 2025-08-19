@@ -27,7 +27,9 @@ namespace NES::InputFormatters
 template <typename T>
 class InputFormatIndexer
 {
-public:
+    friend T;
+
+private:
     /// We can't constrain 'T' using the InputFormatIndexerType concept, since it is not satisfied when the 'InputFormatIndexer' is initiated.
     /// Thus, we delay asserting the constraints of the concept by applying it in the constructor.
     InputFormatIndexer()
