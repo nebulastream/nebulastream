@@ -61,9 +61,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    CompiledQueryPlan& compiledQueryPlan,
-    const std::shared_ptr<AbstractPoolProvider>& poolProvider,
-    int numberOfBuffersInSourceLocalPools)
+    CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<AbstractPoolProvider>& poolProvider, int numberOfBuffersInSourceLocalPools)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -71,7 +69,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 
     for (auto& [pipelineId, descriptor, predecessors] : compiledQueryPlan.sinks)
     {
-        auto sink = ExecutablePipeline::create(pipelineId, NES::SinkProvider::lower(descriptor), {});
+        auto sink = ExecutablePipeline::create(pipelineId, lower(descriptor), {});
         compiledQueryPlan.pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {

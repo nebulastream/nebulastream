@@ -22,7 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>
 
-namespace NES::SinkProvider
+namespace NES
 {
 
 std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor)
