@@ -109,6 +109,25 @@ def compute_callers(compile_cmds):
     return callers
 
 
+def mk_elgnamed(callers):
+    fns = set(callers.keys())
+    fns.update(*callers.values())
+
+    mangled_callers = "\n".join(fns)
+    demngld_callers = subprocess.run("llvm-cxxfilt-19", input=mangled_callers, capture_output=True, text=True, check=True).stdout
+
+    mangled_callers = mangled_callers.split("\n")
+    demngld_callers = demngld_callers.split("\n")
+
+    assert demngld_callers[-1] == ""
+    assert len(mangled_callers) == len(demngld_callers) - 1
+
+    demngld_callers = demngld_callers[:-1]
+
+    elgnamed = dict(zip(demngld_callers, mangled_callers))
+    return elgnamed
+
+
 def dot_escapce(s: str):
     escapes = {
         "&": "&amp;",
@@ -514,22 +533,7 @@ def main():
     file_reports = [f for f in gcovr_json["files"] if f["file"].startswith("nes-")]
 
     callers = compute_callers(compile_cmds)
-
-    fns = set(callers.keys())
-    fns.update(*callers.values())
-
-    mangled_callers = "\n".join(fns)
-    demngld_callers = subprocess.run("llvm-cxxfilt-19", input=mangled_callers, capture_output=True, text=True, check=True).stdout
-
-    mangled_callers = mangled_callers.split("\n")
-    demngld_callers = demngld_callers.split("\n")
-
-    assert demngld_callers[-1] == ""
-    assert len(mangled_callers) == len(demngld_callers) - 1
-
-    demngld_callers = demngld_callers[:-1]
-
-    elgnamed = dict(zip(demngld_callers, mangled_callers))
+    elgnamed = mk_elgnamed(callers)
 
     graph = to_graph(callers, elgnamed, file_reports)
     with open("cov.dot", "w", encoding="utf-8") as f:
