@@ -33,8 +33,8 @@
 namespace NES::CLI
 {
 
-/// In NES::CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
-/// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as NES::LogicalSource and NES::SourceDescriptor.
+/// In CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
+/// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as LogicalSource and SourceDescriptor.
 struct SchemaField
 {
     SchemaField(std::string name, const std::string& typeName);
@@ -90,7 +90,7 @@ public:
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
-    std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
+    std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
     std::vector<Sinks::SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
 };

@@ -56,7 +56,7 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("QueryPlanTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup QueryPlanTest test class.");
     }
 

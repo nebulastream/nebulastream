@@ -61,7 +61,7 @@ class SystestRunner;
 using TestName = std::string;
 using TestGroup = std::string;
 
-using SystestQueryId = NES::NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
+using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 

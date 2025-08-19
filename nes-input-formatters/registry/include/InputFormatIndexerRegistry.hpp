@@ -57,7 +57,7 @@ struct InputFormatIndexerRegistryArguments
     ParserConfig inputFormatIndexerConfig;
 
 private:
-    OriginId originId{NES::OriginId(NES::OriginId::INVALID)};
+    OriginId originId{OriginId(OriginId::INVALID)};
     Schema schema;
 };
 

@@ -81,7 +81,7 @@ class PlanRenderer
 {
 public:
     virtual ~PlanRenderer() = default;
-    explicit PlanRenderer(std::ostream& out, NES::ExplainVerbosity verbosity)
+    explicit PlanRenderer(std::ostream& out, ExplainVerbosity verbosity)
         : out(out), verbosity(verbosity), processedDag({}), layerCalcQueue({}) { };
 
     void dump(const Plan& plan)
@@ -115,7 +115,7 @@ private:
     FRIEND_TEST(PlanRenderer, printQuerySourceFilterMapSink);
     FRIEND_TEST(PlanRenderer, printQueryMapFilterTwoSinks);
     std::ostream& out;
-    NES::ExplainVerbosity verbosity;
+    ExplainVerbosity verbosity;
 
     struct PrintNode
     {

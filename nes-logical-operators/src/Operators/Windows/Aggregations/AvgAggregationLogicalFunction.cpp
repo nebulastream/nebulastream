@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 
 #include <memory>
 #include <string>
@@ -19,7 +20,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -109,9 +109,9 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     inputStamp = newOnField.getDataType();
 }
 
-NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

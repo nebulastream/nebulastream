@@ -42,7 +42,7 @@ public:
 
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("DynamicMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
 

@@ -47,10 +47,10 @@ void Generator::generateTuple(std::ostream& ostream)
     std::visit(generateField, *this->fields.front());
     for (auto& field : this->fields | std::views::drop(1))
     {
-        ostream << NES::Sources::Generator::fieldDelimiter;
+        ostream << Sources::Generator::fieldDelimiter;
         std::visit(generateField, *field);
     }
-    ostream << NES::Sources::Generator::tupleDelimiter;
+    ostream << Sources::Generator::tupleDelimiter;
 }
 
 void Generator::addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> field)
@@ -83,7 +83,7 @@ void Generator::parseRawSchemaLine(std::string_view line)
     }
     else
     {
-        throw NES::InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
+        throw InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
     }
 }
 

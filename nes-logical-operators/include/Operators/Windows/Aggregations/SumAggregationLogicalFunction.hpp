@@ -37,7 +37,7 @@ public:
     create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
-    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:

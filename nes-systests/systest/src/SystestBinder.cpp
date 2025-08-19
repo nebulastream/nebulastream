@@ -68,7 +68,7 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory(std::shared_ptr<NES::SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
     {
@@ -165,7 +165,7 @@ public:
         this->optimizedPlan = std::move(optimizedPlan);
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
-            NES::getOperatorByType<NES::SourceDescriptorLogicalOperator>(*this->optimizedPlan),
+            getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
             [&sourceNamesToFilepathAndCountForQuery](const SourceDescriptorLogicalOperator& logicalSourceOperator)
             {
                 if (const auto path = logicalSourceOperator.getSourceDescriptor().tryGetFromConfig<std::string>(std::string{"filePath"});
@@ -314,7 +314,7 @@ struct SystestBinder::Impl
 
                                      if (systest.getBoundPlan().has_value())
                                      {
-                                         const NES::CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+                                         const CLI::LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
                                          try
                                          {
                                              systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
@@ -398,7 +398,7 @@ struct SystestBinder::Impl
             [&](SystestAttachSource attachSource)
             {
                 attachSource.serverThreads = sourceThreads;
-                if (not NES::InputFormatters::InputFormatterProvider::contains(attachSource.inputFormatterType))
+                if (not InputFormatters::InputFormatterProvider::contains(attachSource.inputFormatterType))
                 {
                     throw UnknownSourceFormat("Did not find input formatter for type {}", attachSource.inputFormatterType);
                 }

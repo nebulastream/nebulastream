@@ -80,9 +80,9 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
 }
 
-NES::SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

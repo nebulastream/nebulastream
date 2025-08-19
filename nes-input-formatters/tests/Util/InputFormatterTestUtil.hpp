@@ -230,7 +230,7 @@ checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::Tupl
     return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
 }
 
-inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
+inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, Memory::TupleBuffer tupleBuffer)
 {
     PRECONDITION(
         tupleBuffer.getBufferSize() >= rawData.size(),
@@ -344,8 +344,8 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
     std::shared_ptr<Memory::BufferManager> formattedBufferManager
         = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
-        = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(1);
+    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers
+        = std::make_shared<std::vector<std::vector<Memory::TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,

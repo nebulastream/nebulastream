@@ -51,7 +51,7 @@ public:
 
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("TestTupleBufferTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("TestTupleBufferTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup TestTupleBufferTest test class.");
     }
 

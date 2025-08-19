@@ -205,7 +205,9 @@ private:
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
-        if constexpr (requires(std::string string) { NES::Util::from_chars<T>(string); })
+        if constexpr (requires(std::string string) {
+                          NES::Util::from_chars<T>(string);
+                      }) /// TODO #1035: check if two Util namespaces are needed
         {
             return NES::Util::from_chars<T>(stringParameter);
         }
