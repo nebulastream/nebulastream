@@ -92,7 +92,7 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)
 {
     const auto sinkOperator = pipeline->getRootOperator().get<SinkPhysicalOperator>().getDescriptor();
-    auto it = std::ranges::find(sinks, pipeline->getPipelineId(), &Sink::id);
+    auto it = std::ranges::find(sinks, pipeline->getPipelineId(), &CompiledQueryPlan::Sink::id);
     if (it == sinks.end())
     {
         sinks.emplace_back(pipeline->getPipelineId(), sinkOperator, std::vector<Predecessor>{});
