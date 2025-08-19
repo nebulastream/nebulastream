@@ -69,11 +69,10 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
-    auto rightInputSchema = join.getInputSchemas()[0];
-    auto leftInputSchema = join.getInputSchemas()[1];
+    auto leftInputSchema = join.getLeftSchema();
+    auto rightInputSchema = join.getRightSchema();
     auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = join.getOutputOriginIds()[0];
+    auto outputOriginId = join.getOutputOriginIds().at(0);
     auto logicalJoinFunction = join.getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
     const auto pageSize = conf.pageSize.getValue();
@@ -89,7 +88,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldRight, timeStampFieldLeft] = TimestampField::getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
@@ -120,7 +119,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{leftBuildWrapper, rightBuildWrapper});
 
-    return {.root = {probeWrapper}, .leafs = {rightBuildWrapper, leftBuildWrapper}};
+    return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule>

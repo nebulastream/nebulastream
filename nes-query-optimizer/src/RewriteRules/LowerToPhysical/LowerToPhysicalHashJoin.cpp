@@ -101,8 +101,8 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
             /// This should be true, as the join operator receives an input schema from its parent operator without any additional functions
             /// over the join fields.
             PRECONDITION(parent.getChildren().size() == 2, "Expect the parent to have exact two children, left and right join fields");
-            const auto& firstChild = parent.getChildren()[0].tryGet<FieldAccessLogicalFunction>();
-            const auto& secondChild = parent.getChildren()[1].tryGet<FieldAccessLogicalFunction>();
+            const auto& firstChild = parent.getChildren().at(0).tryGet<FieldAccessLogicalFunction>();
+            const auto& secondChild = parent.getChildren().at(1).tryGet<FieldAccessLogicalFunction>();
             if (not(firstChild.has_value() && secondChild.has_value()))
             {
                 throw UnknownJoinStrategy(
@@ -234,10 +234,10 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto join = logicalOperator.get<JoinLogicalOperator>();
 
     auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = join.getOutputOriginIds()[0];
+    auto outputOriginId = join.getOutputOriginIds().at(0);
     auto logicalJoinFunction = join.getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
-    auto [timeStampFieldRight, timeStampFieldLeft] = TimestampField::getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     auto nested = logicalOperator.getInputOriginIds();
     auto inputOriginIds = nested | std::views::join | std::ranges::to<std::vector>();
@@ -246,9 +246,9 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
     /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto [leftJoinFields, rightJoinFields]
-        = getJoinFieldExtensionsLeftRight(join.getRightSchema(), join.getLeftSchema(), logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join.getRightSchema(), leftJoinFields);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join.getLeftSchema(), rightJoinFields);
+        = getJoinFieldExtensionsLeftRight(join.getLeftSchema(), join.getRightSchema(), logicalJoinFunction);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join.getLeftSchema(), leftJoinFields);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join.getRightSchema(), rightJoinFields);
     auto leftMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
         conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
     auto rightMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
@@ -328,7 +328,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         }
     }
 
-    return {.root = {probeWrapper}, .leafs = {rightLeaf, leftLeaf}};
+    return {.root = {probeWrapper}, .leafs = {leftLeaf, rightLeaf}};
 };
 
 std::unique_ptr<AbstractRewriteRule>
