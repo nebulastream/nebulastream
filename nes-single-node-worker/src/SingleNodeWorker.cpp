@@ -54,6 +54,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
             fmt::format("GoogleEventTrace_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", std::chrono::system_clock::now(), ::getpid()));
+        googleTracePrinter->start();
         listener->addListener(googleTracePrinter);
     }
 
