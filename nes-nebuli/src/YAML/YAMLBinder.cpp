@@ -140,9 +140,9 @@ Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) c
     return schema;
 }
 
-std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
+std::vector<LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources) ///TODO: #1035
 {
-    std::vector<NES::LogicalSource> boundSources{};
+    std::vector<LogicalSource> boundSources{};
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {

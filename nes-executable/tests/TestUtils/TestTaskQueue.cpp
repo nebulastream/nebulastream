@@ -31,7 +31,7 @@
 
 namespace NES
 {
-bool TestPipelineExecutionContext::emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
+bool TestPipelineExecutionContext::emitBuffer(const Memory::TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
     switch (continuationPolicy)
     {
@@ -52,16 +52,16 @@ bool TestPipelineExecutionContext::emitBuffer(const NES::Memory::TupleBuffer& re
     return true;
 }
 
-NES::Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
+Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
     {
         return buffer.value();
     }
-    throw NES::BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
+    throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestPipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer, NES::PipelineExecutionContext& pec)
+void TestPipelineStage::execute(const Memory::TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)
     {
@@ -85,8 +85,8 @@ std::ostream& TestPipelineStage::toString(std::ostream& os) const
 }
 
 SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
-    std::shared_ptr<NES::Memory::BufferManager> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
+    std::shared_ptr<Memory::BufferManager> bufferProvider,
+    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers)
     : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
 {
 }
@@ -105,7 +105,7 @@ void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pip
     for (const auto& testTask : pipelineTasks)
     {
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(
-            this->bufferProvider, NES::WorkerThreadId(testTask.workerThreadId.getRawValue()), PipelineId(0), this->resultBuffers);
+            this->bufferProvider, WorkerThreadId(testTask.workerThreadId.getRawValue()), PipelineId(0), this->resultBuffers);
         /// There is a circular dependency, because the repeatTaskCallback needs to know about the pec and the pec needs to know about the
         /// repeatTaskCallback. The Tasks own the pec. When a tasks goes out of scope, so should the pec and the repeatTaskCallback.
         /// Thus, we give a weak_ptr of the pec to the repeatTaskCallback, which is guaranteed to be alive during the lifetime of the repeatTaskCallback.
@@ -138,8 +138,8 @@ void SingleThreadedTestTaskQueue::runTasks()
 MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestPipelineTask>& testTasks,
-    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers)
     : threadTasks(testTasks.size())
     , numberOfWorkerThreads(numberOfThreads)
     , completionLatch(numberOfThreads)
@@ -192,7 +192,7 @@ void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
     WorkTask workTask{};
     while (threadTasks.readIfNotEmpty(workTask))
     {
-        workTask.pipelineExecutionContext->workerThreadId = NES::WorkerThreadId(threadIdx);
+        workTask.pipelineExecutionContext->workerThreadId = WorkerThreadId(threadIdx);
         workTask.task.execute(*workTask.pipelineExecutionContext);
     }
     completionLatch.count_down();

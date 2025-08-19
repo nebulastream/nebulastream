@@ -79,10 +79,10 @@ bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
-class TestQueryStatisticListener : public NES::QueryEngineStatisticListener
+class TestQueryStatisticListener : public QueryEngineStatisticListener ///TODO: 1035
 {
 public:
-    MOCK_METHOD(void, onEvent, (NES::Event), (override));
+    MOCK_METHOD(void, onEvent, (Event), (override)); ///TODO: 1035
 };
 
 /// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
@@ -107,7 +107,7 @@ struct ExpectStats
     void apply(Name v) \
     { \
         EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
-    }
+    }///TODO: 1035
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
     STAT_TYPE(QueryStopRequest);
@@ -121,7 +121,7 @@ struct ExpectStats
 
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_))) /// needed because not in ExpectStats
             .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
@@ -169,7 +169,7 @@ struct TestWorkEmitter : WorkEmitter
         emitWork,
         (QueryId,
          const std::shared_ptr<RunningQueryPlanNode>&,
-         Memory::TupleBuffer,
+         TupleBuffer,
          BaseTask::onComplete,
          BaseTask::onFailure,
          PipelineExecutionContext::ContinuationPolicy),
@@ -272,7 +272,7 @@ struct TestPipeline final : ExecutablePipelineStage
         }
     }
 
-    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
+    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
@@ -292,9 +292,9 @@ struct TestSinkController
     /// Waits for *at least* `numberOfExpectedBuffers`
     testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
 
-    void insertBuffer(Memory::TupleBuffer&& buffer);
+    void insertBuffer(TupleBuffer&& buffer);
 
-    std::vector<Memory::TupleBuffer> takeBuffers();
+    std::vector<TupleBuffer> takeBuffers();
 
     testing::AssertionResult waitForInitialization(std::chrono::milliseconds timeout) const { return waitForFuture(setup_future, timeout); }
 
@@ -308,7 +308,7 @@ struct TestSinkController
     std::atomic<size_t> invocations = 0;
 
 private:
-    folly::Synchronized<std::vector<Memory::TupleBuffer>, std::mutex> receivedBuffers;
+    folly::Synchronized<std::vector<TupleBuffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;
     std::promise<void> setup;
     std::promise<void> shutdown;
@@ -324,7 +324,7 @@ class TestSink final : public ExecutablePipelineStage
 public:
     void start(PipelineExecutionContext&) override { controller->setup.set_value(); }
 
-    void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override
+    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override
     {
         controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
     }

@@ -397,7 +397,7 @@ private:
             if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->schemaInfo.getSizeOfTupleInBytes())
             {
                 setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, false);
-                pec.emitBuffer(formattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 formattedBuffer = bufferProvider->getBufferBlocking();
             }
 
@@ -417,7 +417,7 @@ private:
         if (formattedBuffer.getNumberOfTuples() != 0)
         {
             setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, true);
-            pec.emitBuffer(formattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+            pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         }
     }
 
@@ -453,9 +453,9 @@ private:
             this->parseFunctions);
 
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
-        formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
+        formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBuffer.getOriginId());
-        pec.emitBuffer(formattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 };
 

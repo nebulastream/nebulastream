@@ -99,7 +99,7 @@ protected:
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
-    void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
+    void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 };
 

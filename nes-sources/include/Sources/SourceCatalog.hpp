@@ -47,7 +47,7 @@ public:
     /// @param schema the schema of fields without the logical source name as a prefix
     /// @return the created logical source if successful with a schema containing the logical source name as a prefix,
     /// nullopt if a logical source with that name already existed
-    [[nodiscard]] std::optional<LogicalSource> addLogicalSource(const std::string& logicalSourceName, const Schema& schema);
+    [[nodiscard]] std::optional<NES::LogicalSource> addLogicalSource(const std::string& logicalSourceName, const Schema& schema);
 
 
     /// @brief method to delete a logical source and any associated physical source.

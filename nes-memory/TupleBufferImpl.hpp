@@ -178,12 +178,12 @@ static_assert(alignof(BufferControlBlock) % 64 == 0);
  */
 class MemorySegment
 {
-    friend class NES::Memory::TupleBuffer;
+    friend class NES::Memory::TupleBuffer; /// needed, because not in NES::detail namespace
     friend class NES::Memory::LocalBufferPool;
     friend class NES::Memory::FixedSizeBufferPool;
     friend class NES::Memory::BufferManager;
     friend class NES::UnpooledChunksManager;
-    friend class NES::Memory::detail::BufferControlBlock;
+    friend class Memory::detail::BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t
     {

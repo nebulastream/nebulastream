@@ -505,7 +505,7 @@ SystestParser::expectInlineGeneratorSource(SystestLogicalSource& source, const s
     std::advance(curPos, 2); /// First two words are always: Source sourceName
     for (; curPos != attachSourceTokens.end(); ++curPos)
     {
-        if (magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
+        if (magic_enum::enum_cast<TestDataIngestionType>(Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
         {
             break;
         }
@@ -555,7 +555,7 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
     SystestLogicalSource source;
     auto& line = lines[currentLine];
-    const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
+    const auto attachSourceTokens = Util::splitWithStringDelimiter<std::string>(line, " ");
 
     /// Read and discard the first word as it is always Source
     if (attachSourceTokens.front() != SystestLogicalSourceToken)
@@ -570,7 +570,7 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
     }
     source.name = attachSourceTokens.at(1);
 
-    if (const auto dataIngestionType = magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.back())))
+    if (const auto dataIngestionType = magic_enum::enum_cast<TestDataIngestionType>(Util::toUpperCase(attachSourceTokens.back())))
     {
         const std::vector<std::string> arguments = attachSourceTokens | std::views::drop(2)
             | std::views::take(std::ranges::size(attachSourceTokens) - 3) | std::ranges::to<std::vector<std::string>>();
@@ -632,9 +632,9 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
     }
     if (std::ranges::any_of(
             attachSourceTokens
-                | std::views::transform([](const auto& token) { return magic_enum::enum_cast<NES::TestDataIngestionType>(token); })
+                | std::views::transform([](const auto& token) { return magic_enum::enum_cast<TestDataIngestionType>(token); })
                 | std::views::filter([](const auto& optType) { return optType.has_value(); }),
-            [](const auto& optType) { return optType.value() == NES::TestDataIngestionType::GENERATOR; }))
+            [](const auto& optType) { return optType.value() == TestDataIngestionType::GENERATOR; }))
     {
         return expectInlineGeneratorSource(source, attachSourceTokens);
     }

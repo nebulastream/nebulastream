@@ -43,7 +43,7 @@ public:
 
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("ColumnarMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ColumnarMemoryLayoutTest test class.");
     }
 

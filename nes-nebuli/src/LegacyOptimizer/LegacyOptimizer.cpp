@@ -27,13 +27,13 @@ namespace NES::CLI
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
-    const auto sinkBindingRule = NES::LegacyOptimizer::SinkBindingRule{sinkCatalog};
-    const auto sourceInference = NES::LegacyOptimizer::SourceInferencePhase{sourceCatalog};
-    const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule{sourceCatalog};
-    constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
-    constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
-    constexpr auto redundantUnionRemovalRule = NES::LegacyOptimizer::RedundantUnionRemovalRule{};
-    constexpr auto redundantProjectionRemovalRule = NES::LegacyOptimizer::RedundantProjectionRemovalRule{};
+    const auto sinkBindingRule = LegacyOptimizer::SinkBindingRule{sinkCatalog}; ///TODO: #1035
+    const auto sourceInference = LegacyOptimizer::SourceInferencePhase{sourceCatalog};
+    const auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule{sourceCatalog};
+    constexpr auto typeInference = LegacyOptimizer::TypeInferencePhase{};
+    constexpr auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase{};
+    constexpr auto redundantUnionRemovalRule = LegacyOptimizer::RedundantUnionRemovalRule{};
+    constexpr auto redundantProjectionRemovalRule = LegacyOptimizer::RedundantProjectionRemovalRule{};
 
     sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);

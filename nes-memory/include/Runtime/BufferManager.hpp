@@ -157,7 +157,7 @@ private:
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
 
-    NES::UnpooledChunksManager unpooledChunksManager;
+    UnpooledChunksManager unpooledChunksManager;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;

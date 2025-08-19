@@ -93,9 +93,9 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     }
 }
 
-NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

@@ -79,23 +79,23 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
             {
                 protoVar.set_string_value(arg);
             }
-            else if constexpr (std::is_same_v<U, NES::EnumWrapper>)
+            else if constexpr (std::is_same_v<U, EnumWrapper>)
             {
                 protoVar.mutable_enum_value()->set_value(arg.getValue());
             }
-            else if constexpr (std::is_same_v<U, NES::FunctionList>)
+            else if constexpr (std::is_same_v<U, FunctionList>)
             {
                 protoVar.mutable_function_list()->CopyFrom(arg);
             }
-            else if constexpr (std::is_same_v<U, NES::ProjectionList>)
+            else if constexpr (std::is_same_v<U, ProjectionList>)
             {
                 protoVar.mutable_projections()->CopyFrom(arg);
             }
-            else if constexpr (std::is_same_v<U, NES::AggregationFunctionList>)
+            else if constexpr (std::is_same_v<U, AggregationFunctionList>)
             {
                 protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
             }
-            else if constexpr (std::is_same_v<U, NES::WindowInfos>)
+            else if constexpr (std::is_same_v<U, WindowInfos>)
             {
                 protoVar.mutable_window_infos()->CopyFrom(arg);
             }

@@ -33,7 +33,7 @@ class LogLevelTest : public Testing::BaseUnitTest
 TEST_F(LogLevelTest, testLogLevel)
 {
     constexpr auto filePath = "LogLevelTest.log";
-    Logger::setupLogging(filePath, NES::LogLevel::LOG_TRACE);
+    Logger::setupLogging(filePath, LogLevel::LOG_TRACE);
 
     /// Depending on the cmake configuration for the log level, only log messages with a higher log level than the one set in the cmake
     /// configuration will be written to the log file.
@@ -51,23 +51,23 @@ TEST_F(LogLevelTest, testLogLevel)
     logFile << std::ifstream(filePath).rdbuf();
     const std::string logFileContent = logFile.str();
 
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_TRACE))
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LogLevel::LOG_TRACE))
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_TRACE)));
     }
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_DEBUG))
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LogLevel::LOG_DEBUG))
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_DEBUG)));
     }
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_INFO))
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LogLevel::LOG_INFO))
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_INFO)));
     }
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_WARNING))
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LogLevel::LOG_WARNING))
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_WARNING)));
     }
-    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(LogLevel::LOG_ERROR))
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LogLevel::LOG_ERROR))
     {
         EXPECT_THAT(logFileContent, testing::HasSubstr(magic_enum::enum_name(LogLevel::LOG_ERROR)));
     }

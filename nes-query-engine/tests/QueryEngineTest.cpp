@@ -44,7 +44,7 @@ class QueryEngineTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("QueryEngineTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("QueryEngineTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup QueryEngineTest test class.");
     }
 
@@ -997,11 +997,11 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
     std::atomic<size_t> pipelinesCompletedOrExpired = 0;
 
     /// Count number of completed non-sink tasks
-    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<NES::TaskExecutionComplete>(::testing::_)))
+    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<TaskExecutionComplete>(::testing::_)))
         .WillRepeatedly(::testing::Invoke(
-            [&](NES::Event event)
+            [&](Event event)
             {
-                const auto& completion = std::get<NES::TaskExecutionComplete>(event);
+                const auto& completion = std::get<TaskExecutionComplete>(event);
                 if (completion.pipelineId != test.pipelineIds.at(sink))
                 {
                     ++pipelinesCompletedOrExpired;
@@ -1009,11 +1009,11 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
             }));
 
     /// Count number of expired Non-Sink tasks
-    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<NES::TaskExpired>(::testing::_)))
+    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<TaskExpired>(::testing::_)))
         .WillRepeatedly(::testing::Invoke(
-            [&](NES::Event event)
+            [&](Event event)
             {
-                const auto& expired = std::get<NES::TaskExpired>(event);
+                const auto& expired = std::get<TaskExpired>(event);
                 if (expired.pipelineId != test.pipelineIds.at(sink))
                 {
                     ++pipelinesCompletedOrExpired;

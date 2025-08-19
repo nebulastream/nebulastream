@@ -132,7 +132,7 @@ INSTANTIATE_TEST_CASE_P(
             DataType::Type::FLOAT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
         TypeConversionTestInput{
             DataType::Type::FLOAT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}),
-    [](const testing::TestParamInfo<NES::NumericTypeConversionTest::ParamType>& info)
+    [](const testing::TestParamInfo<NumericTypeConversionTest::ParamType>& info)
     {
         return fmt::format(
             "{}_{}_{}",
