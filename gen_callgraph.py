@@ -141,6 +141,9 @@ def filter_fns(elgnamed, gcovr_json):
 def cov_percent_to_color(value):
     value = max(0, min(100, value))  # Clamp value between 0 and 100
 
+    if value == 0:
+        return "#FF0066"
+
     if value <= 50:
         red = 255
         green = int(255 * (value / 50))
