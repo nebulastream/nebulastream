@@ -201,11 +201,18 @@ def to_graph(callers, elgnamed, gcovr_json) -> str:
     return "\n".join(ret).replace("$", "_")
 
 
-def to_treemap(callers, elgnamed, gcovr_json) -> str:
+def to_treemap(file_reports) -> str:
     ret = []
     ret.append("graph {")
 
-    drawn_fns = filter_fns(elgnamed, gcovr_json)
+    mk_fn_len_estimator(file_reports)
+
+    for file in file_reports:
+        for fn in file["functions"]:
+            fn["node_str"] = f'n{abs(hash(fn["name"]))} [area={fn["len"] / 10 if "len" in fn else 0.1}, tooltip="{dot_escapce(fn["name"])}", style="filled", fillcolor="{cov_percent_to_color(fn["blocks_percent"])}", label=""];'
+
+    nested = cluster_nested(file_reports)
+    ret += print_nested(nested)
 
     ret.append("}")
     return "\n".join(ret).replace("$", "_")
@@ -523,6 +530,11 @@ def main():
     with open("cov.dot", "w", encoding="utf-8") as f:
         f.write(graph)
     print("cov.dot written")
+
+    treemap = to_treemap(file_reports)
+    with open("patchwork.dot", "w", encoding="utf-8") as f:
+        f.write(treemap)
+    print("patchwork.dot written")
 
 
 if __name__ == "__main__":
