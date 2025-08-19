@@ -27,7 +27,7 @@
 #include <Concepts.hpp>
 #include <InputFormatterTask.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 

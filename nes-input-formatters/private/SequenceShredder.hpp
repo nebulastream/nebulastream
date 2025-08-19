@@ -33,7 +33,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 /// A staged buffer represents a raw buffer together with the locations of the first and last tuple delimiter.
@@ -246,5 +246,5 @@ private:
 
 }
 
-FMT_OSTREAM(NES::InputFormatters::SequenceShredder);
-FMT_OSTREAM(NES::InputFormatters::CriticalSequenceNumberEntry);
+FMT_OSTREAM(NES::SequenceShredder);
+FMT_OSTREAM(NES::CriticalSequenceNumberEntry);

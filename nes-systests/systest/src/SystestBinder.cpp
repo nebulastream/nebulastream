@@ -398,7 +398,7 @@ struct SystestBinder::Impl
             [&](SystestAttachSource attachSource)
             {
                 attachSource.serverThreads = sourceThreads;
-                if (not InputFormatters::InputFormatterProvider::contains(attachSource.inputFormatterType))
+                if (not contains(attachSource.inputFormatterType))
                 {
                     throw UnknownSourceFormat("Did not find input formatter for type {}", attachSource.inputFormatterType);
                 }

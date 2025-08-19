@@ -24,7 +24,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar
+namespace NES
 {
 
 /// declarations of register functions for 'InputFormatIndexers'
@@ -34,10 +34,10 @@ namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<InputFormatters::InputFormatIndexerRegistry, std::string, InputFormatters::InputFormatIndexerRegistryReturnType, InputFormatters::InputFormatIndexerRegistryArguments>::registerAll(
+inline void Registrar<InputFormatIndexerRegistry, std::string, InputFormatIndexerRegistryReturnType, InputFormatIndexerRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::InputFormatters::InputFormatIndexerGeneratedRegistrar;
+    using namespace NES;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

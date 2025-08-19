@@ -23,7 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
 
-namespace NES::InputFormatters::RawValueParser
+namespace NES
 {
 
 using ParseFunctionSignature = std::function<void(
@@ -37,8 +37,8 @@ auto parseFieldString()
 {
     return [](const std::string_view fieldValueString,
               const size_t writeOffsetInBytes,
-              Memory::AbstractBufferProvider&,
-              Memory::TupleBuffer& tupleBufferFormatted)
+              AbstractBufferProvider&,
+              TupleBuffer& tupleBufferFormatted)
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)

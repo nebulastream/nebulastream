@@ -22,7 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::InputFormatters::RawValueParser
+namespace NES
 {
 
 ParseFunctionSignature getBasicStringParseFunction()

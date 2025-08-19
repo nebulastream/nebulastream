@@ -23,7 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
@@ -33,13 +33,13 @@ namespace NES::InputFormatters
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 class RawTupleBuffer
 {
-    Memory::TupleBuffer rawBuffer;
+    TupleBuffer rawBuffer;
     std::string_view bufferView;
 
 public:
     RawTupleBuffer() = default;
     ~RawTupleBuffer() = default;
-    explicit RawTupleBuffer(Memory::TupleBuffer rawTupleBuffer)
+    explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer)), bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getNumberOfTuples()) { };
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
@@ -69,7 +69,7 @@ public:
         pec.emitBuffer(rawBuffer, continuationPolicy);
     }
 
-    [[nodiscard]] const Memory::TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+    [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 };

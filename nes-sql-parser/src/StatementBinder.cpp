@@ -349,7 +349,7 @@ public:
         }
 
         /// Validate input formatter and source config and type. We don't attach it directly to the SourceDescriptor to avoid the dependencies
-        if (not InputFormatters::InputFormatterProvider::contains(parserConfig.parserType))
+        if (not contains(parserConfig.parserType))
         {
             throw InvalidConfigParameter("Invalid parser type {}", parserConfig.parserType);
         }

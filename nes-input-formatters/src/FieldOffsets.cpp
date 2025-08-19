@@ -22,7 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTask.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 void FieldOffsets::startSetup(const size_t numberOfFieldsInSchema, const size_t sizeOfFieldDelimiter)

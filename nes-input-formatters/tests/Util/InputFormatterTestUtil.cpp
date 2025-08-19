@@ -171,13 +171,13 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
+std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
         {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    return provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -210,7 +210,7 @@ TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
+    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     return TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};

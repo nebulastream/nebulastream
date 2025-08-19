@@ -24,7 +24,7 @@
 #include <FieldIndexFunction.hpp>
 #include <InputFormatIndexer.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 class NativeMetaData

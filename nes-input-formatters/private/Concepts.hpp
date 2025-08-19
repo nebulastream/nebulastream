@@ -23,7 +23,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <RawTupleBuffer.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
 template <typename T>

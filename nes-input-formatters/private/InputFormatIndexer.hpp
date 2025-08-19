@@ -16,7 +16,7 @@
 
 #include <Concepts.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
