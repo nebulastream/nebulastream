@@ -57,9 +57,6 @@ def shitty_make_caching(source, result):
     except FileNotFoundError:
         return None
 
-    assert src_stat.st_mtime >= src_stat.st_ctime
-    assert res_stat.st_mtime >= res_stat.st_ctime
-
     # result is older than source
     if res_stat.st_mtime < src_stat.st_mtime:
         return None
