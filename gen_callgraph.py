@@ -399,11 +399,9 @@ def cluster_nested(gcovr_json):
     for file in gcovr_json["files"]:
         filepath = file["file"]
         filepath = filepath.replace("/include/", "/src/")
-        if not file["file"].startswith("nes-sql"):
-            continue
         cur = ret
-        for path_step in file["file"].split("/"):
-            if not path_step in ret:
+        for path_step in filepath.split("/"):
+            if not path_step in cur:
                 cur[path_step] = {}
             cur = cur[path_step]
 
