@@ -84,6 +84,31 @@ def compute_callgraph(args):
     return callgraph
 
 
+def compute_callers(compile_cmds):
+    jobs = []
+
+    output_regex = re.compile(" -o (.*) -c (.*)")
+
+    for cmd in compile_cmds:
+        c = cmd["command"].replace(".o ", ".bc ")
+        c = c.replace('\\"', '"')
+        out_file, in_file = output_regex.findall(c)[0]
+        cmd_arr = c.split(" ")
+        cmd_arr += ["-emit-llvm", "-O0"]
+        jobs.append((cmd_arr, cmd["directory"], out_file, in_file))
+
+    with multiprocessing.Pool(32) as p:
+        callers = {}
+        for callgraph in p.map(compute_callgraph, jobs):
+            if callgraph:
+                for caller, callees in parse_callgraph_text(callgraph).items():
+                    if caller not in callers:
+                        callers[caller] = callees
+                    else:
+                        callers[caller].update(callees)
+    return callers
+
+
 def dot_escapce(s: str):
     escapes = {
         "&": "&amp;",
@@ -488,27 +513,7 @@ def main():
 
     file_reports = [f for f in gcovr_json["files"] if f["file"].startswith("nes-")]
 
-    jobs = []
-
-    output_regex = re.compile(" -o (.*) -c (.*)")
-
-    for cmd in compile_cmds:
-        c = cmd["command"].replace(".o ", ".bc ")
-        c = c.replace('\\"', '"')
-        out_file, in_file = output_regex.findall(c)[0]
-        cmd_arr = c.split(" ")
-        cmd_arr += ["-emit-llvm", "-O0"]
-        jobs.append((cmd_arr, cmd["directory"], out_file, in_file))
-
-    with multiprocessing.Pool(32) as p:
-        callers = {}
-        for callgraph in p.map(compute_callgraph, jobs):
-            if callgraph:
-                for caller, callees in parse_callgraph_text(callgraph).items():
-                    if caller not in callers:
-                        callers[caller] = callees
-                    else:
-                        callers[caller].update(callees)
+    callers = compute_callers(compile_cmds)
 
     fns = set(callers.keys())
     fns.update(*callers.values())
