@@ -37,7 +37,7 @@
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
@@ -129,12 +129,12 @@ DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::str
     return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return FileSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType SinkGeneratedRegistrar::RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<FileSink>(sinkRegistryArguments.sinkDescriptor);
 }

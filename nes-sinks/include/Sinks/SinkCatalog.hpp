@@ -27,20 +27,20 @@ namespace NES
 class SinkCatalog
 {
 public:
-    std::optional<Sinks::SinkDescriptor> addSinkDescriptor(
+    std::optional<SinkDescriptor> addSinkDescriptor(
         std::string sinkName, const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
 
-    std::optional<Sinks::SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
+    std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
 
     bool removeSinkDescriptor(const std::string& sinkName);
-    bool removeSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor);
+    bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
 
     bool containsSinkDescriptor(const std::string& sinkName) const;
-    bool containsSinkDescriptor(const Sinks::SinkDescriptor& sinkDescriptor) const;
+    bool containsSinkDescriptor(const SinkDescriptor& sinkDescriptor) const;
 
-    std::vector<Sinks::SinkDescriptor> getAllSinkDescriptors() const;
+    std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
-    folly::Synchronized<std::unordered_map<std::string, Sinks::SinkDescriptor>> sinks;
+    folly::Synchronized<std::unordered_map<std::string, SinkDescriptor>> sinks;
 };
 }

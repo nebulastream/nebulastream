@@ -75,7 +75,7 @@ public:
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
-                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<Sinks::SinkDescriptor, Exception>
+                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"filePath", std::move(filePath)}};
                 if (sinkType == "File")
@@ -92,7 +92,7 @@ public:
         return success;
     }
 
-    std::expected<Sinks::SinkDescriptor, Exception>
+    std::expected<SinkDescriptor, Exception>
     createActualSink(const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
     {
         const auto sinkProviderIter = sinkProviders.find(sinkNameInFile);
@@ -113,7 +113,7 @@ public:
 
 private:
     std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
-    std::unordered_map<std::string, std::function<std::expected<Sinks::SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
+    std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
 

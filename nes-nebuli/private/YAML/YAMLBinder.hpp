@@ -90,9 +90,10 @@ public:
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] Schema bindSchema(const std::vector<SchemaField>& attributeFields) const;
-    std::vector<NES::LogicalSource> bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
+    std::vector<NES::LogicalSource>
+    bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
-    std::vector<Sinks::SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
+    std::vector<SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
 };
 
 }

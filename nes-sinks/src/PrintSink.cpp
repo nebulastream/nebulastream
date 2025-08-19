@@ -33,7 +33,7 @@
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
@@ -75,12 +75,12 @@ DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::st
     return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return PrintSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
 }

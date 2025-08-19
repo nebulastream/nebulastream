@@ -96,8 +96,7 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    Sinks::SinkDescriptor dummySinkDescriptor
-        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"inputFormat", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"inputFormat", "CSV"}}).value();
 };
 
 class MockQueryManager final : public QueryManager

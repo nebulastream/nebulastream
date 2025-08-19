@@ -68,7 +68,7 @@ public:
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs;
-    std::vector<Sinks::SinkDescriptor> sinkDescriptor;
+    std::vector<SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
     std::vector<FieldAccessLogicalFunction> groupByFields;

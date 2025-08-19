@@ -31,9 +31,8 @@
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
-
 /// A sink that writes formatted TupleBuffers to arbitrary files.
 class FileSink final : public Sink
 {
@@ -88,7 +87,7 @@ struct ConfigParametersFile
 namespace fmt
 {
 template <>
-struct formatter<NES::Sinks::FileSink> : ostream_formatter
+struct formatter<NES::FileSink> : ostream_formatter
 {
 };
 }

@@ -36,7 +36,7 @@ class OperatorSerializationUtil;
 class SinkCatalog;
 }
 
-namespace NES::Sinks
+namespace NES
 {
 
 enum class InputFormat : uint8_t
@@ -94,12 +94,12 @@ public:
 }
 
 template <>
-struct std::hash<NES::Sinks::SinkDescriptor>
+struct std::hash<NES::SinkDescriptor>
 {
-    size_t operator()(const NES::Sinks::SinkDescriptor& sinkDescriptor) const noexcept
+    size_t operator()(const NES::SinkDescriptor& sinkDescriptor) const noexcept
     {
         return std::hash<std::string>{}(sinkDescriptor.getSinkName());
     }
 };
 
-FMT_OSTREAM(NES::Sinks::SinkDescriptor);
+FMT_OSTREAM(NES::SinkDescriptor);

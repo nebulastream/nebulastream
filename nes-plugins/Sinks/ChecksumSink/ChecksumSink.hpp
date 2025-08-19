@@ -31,7 +31,7 @@
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 /// A sink that counts the number of tuples and accumulates a checksum, which is written to file once the query is stopped.
@@ -69,4 +69,4 @@ struct ConfigParametersChecksum
 
 }
 
-FMT_OSTREAM(NES::Sinks::ChecksumSink);
+FMT_OSTREAM(NES::ChecksumSink);

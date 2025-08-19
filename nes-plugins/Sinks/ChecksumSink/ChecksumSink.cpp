@@ -33,7 +33,7 @@
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
@@ -93,13 +93,12 @@ DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std:
     return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType
-SinkValidationGeneratedRegistrar::RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType SinkGeneratedRegistrar::RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<ChecksumSink>(sinkRegistryArguments.sinkDescriptor);
 }

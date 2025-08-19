@@ -19,7 +19,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 using SinkRegistryReturnType = std::unique_ptr<Sink>;
