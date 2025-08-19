@@ -121,7 +121,7 @@ def filter_fns(elgnamed, gcovr_json):
 
     fns = {}
 
-    for f in gcovr_json["files"]:
+    for f in gcovr_json:
         for fun in f["functions"]:
             if ignore_fn(fun["name"]):
                 continue
@@ -393,10 +393,9 @@ def mk_fn_len_estimator(file_reports):
     return all_fn_to_locs, all_loc_to_fns
 
 
-def cluster_nested(gcovr_json):
+def cluster_nested(file_reports):
     ret = {}
-
-    for file in gcovr_json["files"]:
+    for file in file_reports:
         filepath = file["file"]
         filepath = filepath.replace("/include/", "/src/")
         cur = ret
@@ -480,6 +479,8 @@ def main():
     expect_version = "0.6"
     assert actual_version == expect_version, f"Version mismatch: got {actual_version}, expected {expect_version}"
 
+    file_reports = [f for f in gcovr_json["files"] if f["file"].startswith("nes-")]
+
     jobs = []
 
     output_regex = re.compile(" -o (.*) -c (.*)")
@@ -518,11 +519,9 @@ def main():
 
     elgnamed = dict(zip(demngld_callers, mangled_callers))
 
-    graph = to_graph(callers, elgnamed, gcovr_json)
-
+    graph = to_graph(callers, elgnamed, file_reports)
     with open("cov.dot", "w", encoding="utf-8") as f:
         f.write(graph)
-
     print("cov.dot written")
 
 
