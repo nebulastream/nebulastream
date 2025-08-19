@@ -29,7 +29,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class FileSource final : public Source

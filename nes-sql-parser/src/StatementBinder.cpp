@@ -353,7 +353,7 @@ public:
         {
             throw InvalidConfigParameter("Invalid parser type {}", parserConfig.parserType);
         }
-        if (not Sources::SourceValidationProvider::provide(type, sourceOptions).has_value())
+        if (not SourceValidationProvider::provide(type, sourceOptions).has_value())
         {
             /// We probably want to propagate the error from the descriptor validation up to here somehow, so that the user can receive a detailed error message.
             throw InvalidConfigParameter("Invalid source configuration for type {} with arguments {}", type, sourceOptions);

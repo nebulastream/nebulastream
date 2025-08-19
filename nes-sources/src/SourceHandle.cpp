@@ -25,7 +25,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <SourceThread.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 SourceHandle::SourceHandle(
     OriginId originId,

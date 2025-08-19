@@ -19,7 +19,7 @@
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 
-namespace NES::Sources::SourceValidationProvider
+namespace NES::SourceValidationProvider
 {
 std::optional<DescriptorConfig::Config> provide(std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig);
 }

@@ -467,7 +467,7 @@ struct SystestBinder::Impl
                         }
                         auto generatorFieldIdentifier = fieldSchemaTokens[1];
                         auto [acceptedTypesBegin, acceptedTypesEnd]
-                            = Sources::GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
+                            = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
                         bool isAcceptedType = false;
                         for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
                         {
@@ -515,17 +515,15 @@ struct SystestBinder::Impl
                             if (attachSource.tuples.has_value())
                             {
                                 const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
-                                return Sources::SourceDataProvider::provideInlineDataSource(
-                                    initialPhysicalSourceConfig, attachSource, sourceFile);
+                                return SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource, sourceFile);
                             }
                             throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
                         }
                         case TestDataIngestionType::FILE: {
-                            return Sources::SourceDataProvider::provideFileDataSource(
-                                initialPhysicalSourceConfig, attachSource, testDataDir);
+                            return SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir);
                         }
                         case TestDataIngestionType::GENERATOR: {
-                            return Sources::SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
+                            return SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
                         }
                     }
                     std::unreachable();

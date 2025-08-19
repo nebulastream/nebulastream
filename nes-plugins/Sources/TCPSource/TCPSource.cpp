@@ -48,7 +48,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
@@ -280,8 +280,7 @@ void TCPSource::close()
     }
 }
 
-SourceValidationRegistryReturnType
-SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return TCPSource::validateAndFormat(std::move(sourceConfig.config));
 }

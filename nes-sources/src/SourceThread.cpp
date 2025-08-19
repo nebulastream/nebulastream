@@ -38,7 +38,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 SourceThread::SourceThread(
@@ -78,6 +78,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 }
 
 using EmitFn = std::function<void(TupleBuffer, bool addBufferMetadata)>;
+
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -109,8 +110,8 @@ struct SourceHandle
     Source& source; ///NOLINT Source handle should never outlive the source
 };
 
-SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+SourceImplementationTermination
+dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, AbstractBufferProvider& bufferProvider, const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source);
     while (!stopToken.stop_requested())
@@ -150,6 +151,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 struct DestroyOnExit
 {
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+
     ~DestroyOnExit() { bufferProvider->destroy(); }
 };
 

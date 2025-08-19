@@ -19,7 +19,7 @@
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 using GeneratorDataRegistryReturnType = SystestSourceYAMLBinder::PhysicalSource;

@@ -154,8 +154,7 @@ public:
         size_t numberOfRequiredSourceBuffers)
     {
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
-        std::shared_ptr<BufferManager> sourceBufferPool
-            = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
+        std::shared_ptr<BufferManager> sourceBufferPool = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
@@ -166,8 +165,7 @@ public:
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(
-            fileSource->tryStop(std::chrono::milliseconds(1000)) == Sources::SourceReturnType::TryStopResult::SUCCESS,
-            "Failed to stop source.");
+            fileSource->tryStop(std::chrono::milliseconds(1000)) == SourceReturnType::TryStopResult::SUCCESS, "Failed to stop source.");
         INVARIANT(
             numberOfExpectedRawBuffers == rawBuffers.size(),
             "Expected to have {} raw buffers, but got: {}",
@@ -184,10 +182,8 @@ public:
             .currentTestFilePath = testFilePath};
     }
 
-    static bool compareResults(
-        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
-        const TestConfig& testConfig,
-        const SetupResult& setupResult)
+    static bool
+    compareResults(const std::vector<std::vector<TupleBuffer>>& resultBuffers, const TestConfig& testConfig, const SetupResult& setupResult)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
@@ -225,14 +221,13 @@ public:
             {
                 auto actualResultTestBuffer = TestTupleBuffer::createTestTupleBuffer(buffer, setupResult.schema);
                 actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-                const auto currentBufferAsString = actualResultTestBuffer.toString(
-                    setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                const auto currentBufferAsString
+                    = actualResultTestBuffer.toString(setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
                 writeBinaryToFile(currentBufferAsString, resultFilePath, append);
                 append = true;
             }
-            const auto lastBufferAsString
-                = TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), setupResult.schema)
-                      .toString(setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+            const auto lastBufferAsString = TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), setupResult.schema)
+                                                .toString(setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
             writeBinaryToFile(lastBufferAsString, resultFilePath, append);
         }
         else
@@ -257,8 +252,7 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             /// Prepare TestTaskQueue for processing the input formatter tasks
-            auto testBufferManager
-                = BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
+            auto testBufferManager = BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
 

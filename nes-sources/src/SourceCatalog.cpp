@@ -79,7 +79,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         return std::nullopt;
     }
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = Sources::SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
+    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
     if (not descriptorConfigOpt.has_value())
     {
         return std::nullopt;

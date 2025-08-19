@@ -22,7 +22,7 @@
 #include <string>
 #include <Util/Registry.hpp>
 
-namespace NES::Sources::FileDataGeneratedRegistrar
+namespace NES::FileDataGeneratedRegistrar
 {
 
 /// declarations of register functions for 'SystestAdaptors'
@@ -33,10 +33,10 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Sources::FileDataRegistry, std::string, Sources::FileDataRegistryReturnType, Sources::FileDataRegistryArguments>::registerAll(
+Registrar<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sources::FileDataGeneratedRegistrar;
+    using namespace NES::FileDataGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

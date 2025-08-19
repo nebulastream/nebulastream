@@ -16,7 +16,7 @@
 #include <filesystem>
 #include <SystestSources/SourceTypes.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class SourceDataProvider
