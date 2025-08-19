@@ -81,7 +81,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
+void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);

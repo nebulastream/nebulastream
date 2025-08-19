@@ -152,7 +152,7 @@ class DynamicTuple
 {
 public:
     /// Each tuple contains the index, to the memory layout and to the tuple buffer.
-    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, TupleBuffer buffer);
 
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
@@ -162,7 +162,7 @@ public:
     DynamicField operator[](std::string fieldName) const;
 
     void
-    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider);
+    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
@@ -176,7 +176,7 @@ public:
 private:
     uint64_t tupleIndex;
     std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    TupleBuffer buffer;
 };
 
 /**
@@ -227,9 +227,9 @@ public:
         NO_HEADER_END_IN_NEWLINE,
         NO_HEADER_END_WITHOUT_NEWLINE,
     };
-    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const Memory::TupleBuffer& buffer);
+    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const TupleBuffer& buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema);
+    static TestTupleBuffer createTestTupleBuffer(const TupleBuffer& buffer, const Schema& schema);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -243,7 +243,7 @@ public:
     /// @throws CannotAccessBuffer if index is larger then buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    Memory::TupleBuffer getBuffer();
+    TupleBuffer getBuffer();
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.
@@ -316,7 +316,7 @@ public:
      */
     template <typename... Types>
     requires(ContainsString<Types> || ...)
-    void pushRecordToBuffer(std::tuple<Types...> record, Memory::BufferManager* bufferManager)
+    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
     {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
     }
@@ -334,7 +334,7 @@ public:
      */
     template <typename... Types>
     void
-    pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, Memory::AbstractBufferProvider* bufferProvider = nullptr)
+    pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
     {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
@@ -416,7 +416,7 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<Memory::TupleBuffer::NestedTupleBufferKey>();
+                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
             }
             else
@@ -431,7 +431,7 @@ private:
     }
 
     std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    TupleBuffer buffer;
 };
 
 }

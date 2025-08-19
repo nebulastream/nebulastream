@@ -24,7 +24,7 @@
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory
+namespace NES
 {
 
 namespace

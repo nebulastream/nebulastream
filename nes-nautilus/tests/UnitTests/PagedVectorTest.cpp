@@ -45,7 +45,7 @@ class PagedVectorTest : public Testing::BaseUnitTest, public TestUtils::Nautilus
 {
 public:
     static constexpr uint64_t PAGE_SIZE = 4096;
-    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     uint64_t numberOfItems{};
@@ -83,7 +83,7 @@ public:
 
 TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataType::Type::UINT64)
@@ -100,7 +100,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -117,7 +117,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema
         = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
@@ -135,7 +135,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -152,7 +152,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataType::Type::UINT64);
@@ -168,7 +168,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 
 TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
@@ -177,7 +177,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
     constexpr auto numVectors = 2UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<Memory::TupleBuffer>> allRecords;
+    std::vector<std::vector<TupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -185,7 +185,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
         allRecords.emplace_back(records);
     }
 
-    std::vector<Memory::TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -197,7 +197,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -207,7 +207,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<Memory::TupleBuffer>> allRecords;
+    std::vector<std::vector<TupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -215,7 +215,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
         allRecords.emplace_back(records);
     }
 
-    std::vector<Memory::TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -227,7 +227,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -237,7 +237,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<Memory::TupleBuffer>> allRecords;
+    std::vector<std::vector<TupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -245,7 +245,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
         allRecords.emplace_back(records);
     }
 
-    std::vector<Memory::TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -257,7 +257,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = BufferManager::create();
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -267,7 +267,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<Memory::TupleBuffer>> allRecords;
+    std::vector<std::vector<TupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -275,7 +275,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
         allRecords.emplace_back(records);
     }
 
-    std::vector<Memory::TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());

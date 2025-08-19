@@ -149,13 +149,13 @@ public:
 
     SetupResult setupTest(
         const TestConfig& testConfig,
-        InputFormatterTestUtil::ThreadSafeVector<Memory::TupleBuffer>& rawBuffers,
+        InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers,
         size_t numberOfExpectedRawBuffers,
         size_t numberOfRequiredSourceBuffers)
     {
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
-        std::shared_ptr<Memory::BufferManager> sourceBufferPool
-            = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
+        std::shared_ptr<BufferManager> sourceBufferPool
+            = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
@@ -185,17 +185,17 @@ public:
     }
 
     static bool compareResults(
-        const std::vector<std::vector<Memory::TupleBuffer>>& resultBuffers,
+        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
         const TestConfig& testConfig,
         const SetupResult& setupResult)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
-        std::vector<Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        std::vector<TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
             resultBufferVec.begin(),
             resultBufferVec.end(),
-            [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+            [](const TupleBuffer& left, const TupleBuffer& right)
             {
                 if (left.getSequenceNumber() == right.getSequenceNumber())
                 {
@@ -247,7 +247,7 @@ public:
     {
         const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig);
         /// Create vector for result buffers and create emit function to collect buffers from source
-        InputFormatterTestUtil::ThreadSafeVector<Memory::TupleBuffer> rawBuffers;
+        InputFormatterTestUtil::ThreadSafeVector<TupleBuffer> rawBuffers;
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
@@ -258,9 +258,9 @@ public:
         {
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
-                = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
+                = BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
-            auto resultBuffers = std::make_shared<std::vector<std::vector<Memory::TupleBuffer>>>(testConfig.numberOfThreads);
+            auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);

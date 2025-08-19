@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace NES::Memory
+namespace NES
 {
 namespace detail
 {

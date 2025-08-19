@@ -25,7 +25,7 @@
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
-namespace NES::Memory
+namespace NES
 {
 
 FixedSizeBufferPool::FixedSizeBufferPool(

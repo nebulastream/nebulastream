@@ -75,7 +75,7 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::mi
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
 std::vector<std::byte> identifiableData(size_t identifier);
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
+bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
@@ -326,12 +326,12 @@ public:
 
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override
     {
-        controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
+        controller->insertBuffer(Testing::copyBuffer(inputBuffer, *bufferProvider));
     }
 
     void stop(PipelineExecutionContext&) override { controller->shutdown.set_value(); }
 
-    TestSink(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
+    TestSink(std::shared_ptr<AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
         : bufferProvider(std::move(bufferProvider)), controller(std::move(controller))
     {
     }
@@ -347,12 +347,12 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<TestSinkController> controller;
 };
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, std::shared_ptr<AbstractBufferProvider> bm);
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
@@ -396,7 +396,7 @@ struct QueryPlanBuilder
         std::unordered_map<identifier_t, ExecutablePipelineStage*> stages;
     };
 
-    TestPlanCtrl build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
+    TestPlanCtrl build(QueryId queryId, std::shared_ptr<BufferManager> bm) &&;
 
     QueryPlanBuilder(identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter);
 
@@ -415,7 +415,7 @@ struct TestingHarness
     explicit TestingHarness(size_t numberOfThreads, size_t numberOfBuffers);
     explicit TestingHarness();
 
-    std::shared_ptr<Memory::BufferManager> bm = Memory::BufferManager::create();
+    std::shared_ptr<BufferManager> bm = BufferManager::create();
     std::shared_ptr<TestQueryStatisticListener> statListener = std::make_shared<TestQueryStatisticListener>();
     ExpectStats stats{statListener};
     std::shared_ptr<QueryStatusListener> status = std::make_shared<QueryStatusListener>();

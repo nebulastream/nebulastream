@@ -167,7 +167,7 @@ The interface to implement a source is straightforward:
 ```c++
 /// Read data into a `TupleBuffer`, until the TupleBuffer is full, or stop was requested.
 /// @return the number of bytes read
-virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+virtual size_t fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
  /// If applicable, opens resources like file descriptors, database connections, etc.
 virtual void open() = 0;
@@ -244,7 +244,7 @@ Because no methods of the `MQTTSource` will be called after `close`, we simply r
 
 In most scenarios, `fillTupleBuffer` implements an I/O request loop that stops when either the buffer is full, an error occurs or EOS is signalled.
 ```c++
-size_t MQTTSource::fillTupleBuffer(NES::Memory::TupleBuffer& buf, const std::stop_token& stopToken)
+size_t MQTTSource::fillTupleBuffer(NES::TupleBuffer& buf, const std::stop_token& stopToken)
 {
     /// (1) Setup offset within buffer and size of buffer
     size_t offset = 0;

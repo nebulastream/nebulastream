@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::Memory
+namespace NES
 {
 
 /// Tests that the fixed size buffer pool is kept alive until all inflight buffers have been released.

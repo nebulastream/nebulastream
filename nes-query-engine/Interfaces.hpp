@@ -45,7 +45,7 @@ public:
     virtual bool emitWork(
         QueryId,
         const std::shared_ptr<RunningQueryPlanNode>& target,
-        Memory::TupleBuffer,
+        TupleBuffer,
         BaseTask::onComplete,
         BaseTask::onFailure,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)

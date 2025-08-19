@@ -41,12 +41,10 @@ public:
     /// Especially a wrapper around a ChainedHashMapEntry.
     struct ChainedEntryRef
     {
-        void copyKeysToEntry(const Record& keys, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
-        void
-        copyKeysToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
-        void copyValuesToEntry(const Record& values, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
-        void
-        copyValuesToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+        void copyKeysToEntry(const Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
+        void copyKeysToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
+        void copyValuesToEntry(const Record& values, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
+        void copyValuesToEntry(const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
         [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
         [[nodiscard]] Record getKey() const;
         [[nodiscard]] Record getValue() const;
@@ -116,12 +114,12 @@ public:
         const Record& recordKey,
         const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) override;
     void insertOrUpdateEntry(
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) override;
     nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) override;
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
@@ -131,7 +129,7 @@ private:
     /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findChain(const HashFunction::HashValue& hash) const;
     nautilus::val<ChainedHashMapEntry*>
-    insert(const HashFunction::HashValue& hash, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+    insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
     [[nodiscard]] nautilus::val<bool> compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Record& recordKey, const HashFunction::HashValue& hash) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;

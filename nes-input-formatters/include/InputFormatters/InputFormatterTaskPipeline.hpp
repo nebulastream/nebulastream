@@ -47,7 +47,7 @@ public:
     /// Second, uses the SequenceShredder to find spanning tuples.
     /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
     /// process all complete tuples and trailing spanning tuple.
-    void execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override;
+    void execute(const TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec) override;
 
     std::ostream& toString(std::ostream& os) const override;
 

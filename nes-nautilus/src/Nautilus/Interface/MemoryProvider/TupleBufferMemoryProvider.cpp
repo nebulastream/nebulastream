@@ -43,8 +43,8 @@ namespace NES::Nautilus::Interface::MemoryProvider
 namespace
 {
 uint32_t storeAssociatedTextValueProxy(
-    const Memory::TupleBuffer* tupleBuffer,
-    Memory::AbstractBufferProvider* bufferProvider,
+    const TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider,
     const int8_t* textValue,
     const uint32_t totalVariableSize)
 {
@@ -54,7 +54,7 @@ uint32_t storeAssociatedTextValueProxy(
     return tupleBuffer->storeChildBuffer(buffer.value());
 }
 
-const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
+const uint8_t* loadAssociatedTextValue(const TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
     auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
@@ -78,7 +78,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     if (physicalType.type != DataType::Type::VARSIZED)
     {

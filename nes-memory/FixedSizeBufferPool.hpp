@@ -25,7 +25,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <folly/MPMCQueue.h>
 
-namespace NES::Memory
+namespace NES
 {
 
 const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);

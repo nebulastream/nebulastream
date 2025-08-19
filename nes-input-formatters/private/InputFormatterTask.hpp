@@ -47,8 +47,8 @@ namespace NES::InputFormatters
 using FieldIndex = uint32_t;
 
 inline void setMetadataOfFormattedBuffer(
-    const Memory::TupleBuffer& rawBuffer,
-    Memory::TupleBuffer& formattedBuffer,
+    const TupleBuffer& rawBuffer,
+    TupleBuffer& formattedBuffer,
     ChunkNumber::Underlying& runningChunkNumber,
     const bool isLastChunk)
 {

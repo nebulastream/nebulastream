@@ -78,7 +78,7 @@ public:
 NodeEngine::~NodeEngine() = default;
 
 NodeEngine::NodeEngine(
-    std::shared_ptr<Memory::BufferManager> bufferManager,
+    std::shared_ptr<BufferManager> bufferManager,
     std::shared_ptr<SystemEventListener> systemEventListener,
     std::shared_ptr<QueryLog> queryLog,
     std::unique_ptr<QueryEngine> queryEngine,

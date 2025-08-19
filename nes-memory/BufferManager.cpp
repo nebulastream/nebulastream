@@ -34,7 +34,7 @@
 #include <FixedSizeBufferPool.hpp>
 #include <TupleBufferImpl.hpp>
 
-namespace NES::Memory
+namespace NES
 {
 
 BufferManager::BufferManager(

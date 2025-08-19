@@ -27,10 +27,7 @@ namespace NES::InputFormatters::RawValueParser
 {
 
 using ParseFunctionSignature = std::function<void(
-    std::string_view inputString,
-    size_t writeOffsetInBytes,
-    Memory::AbstractBufferProvider& bufferProvider,
-    Memory::TupleBuffer& tupleBufferFormatted)>;
+    std::string_view inputString, size_t writeOffsetInBytes, AbstractBufferProvider& bufferProvider, TupleBuffer& tupleBufferFormatted)>;
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.

@@ -31,7 +31,7 @@
     #include <cpptrace.hpp>
 #endif
 
-namespace NES::Memory
+namespace NES
 {
 
 namespace detail

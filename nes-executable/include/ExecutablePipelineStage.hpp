@@ -33,7 +33,7 @@ public:
 
     /// Executes the ExecutablePipelineStage with a readonly input tuple buffer.
     /// `execute` should never be called on a pipeline that has not previously been `started`.
-    virtual void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
+    virtual void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     /// Stops the ExecutablePipelineStage allowing it to flush left over state.
     /// `stop` should never be called on a pipeline that has not previously been `started`.

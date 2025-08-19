@@ -47,7 +47,7 @@ using namespace Nautilus;
 /// suitable for storing state across pipeline invocations. For storing state across pipeline invocations, the operator handler should be used.
 struct Arena
 {
-    explicit Arena(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : bufferProvider(std::move(bufferProvider)) { }
+    explicit Arena(std::shared_ptr<AbstractBufferProvider> bufferProvider) : bufferProvider(std::move(bufferProvider)) { }
 
     /// Allocating memory by the buffer provider. There are three cases:
     /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
@@ -90,9 +90,9 @@ struct Arena
         return result;
     }
 
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::vector<Memory::TupleBuffer> fixedSizeBuffers;
-    std::vector<Memory::TupleBuffer> unpooledBuffers;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::vector<TupleBuffer> fixedSizeBuffers;
+    std::vector<TupleBuffer> unpooledBuffers;
     size_t lastAllocationSize{0};
     size_t currentOffset{0};
 };
@@ -135,19 +135,18 @@ private:
 /// 2. Memory for a query: bufferProvider
 struct PipelineMemoryProvider
 {
-    explicit PipelineMemoryProvider(
-        const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    explicit PipelineMemoryProvider(const nautilus::val<Arena*>& arena, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
         : arena(arena), bufferProvider(bufferProvider)
     {
     }
 
-    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
         : arena(std::move(arena)), bufferProvider(bufferProvider)
     {
     }
 
     ArenaRef arena;
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
+    nautilus::val<AbstractBufferProvider*> bufferProvider;
 };
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
@@ -168,7 +167,7 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
-    [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<TupleBuffer*> allocateBuffer() const;
 
     /// Use allocateMemory if you want to allocate memory that lives for one pipeline invocation, i.e., tuple buffer lifetime.
     /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.

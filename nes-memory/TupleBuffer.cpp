@@ -26,7 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
-namespace NES::Memory
+namespace NES
 {
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)

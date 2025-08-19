@@ -107,7 +107,7 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 }
 
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
+getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
 {
     return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
     {
@@ -158,7 +158,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
-    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    std::shared_ptr<BufferManager> sourceBufferPool,
     const int numberOfLocalBuffersInSource)
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
@@ -180,7 +180,7 @@ std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatte
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }
 
-void waitForSource(const std::vector<Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
+void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
     /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
     const auto timeout = std::chrono::seconds(1);
@@ -209,7 +209,7 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
 TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer,
+    TupleBuffer taskBuffer,
     std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
