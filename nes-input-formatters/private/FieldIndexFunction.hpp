@@ -26,7 +26,7 @@
 #include <Concepts.hpp>
 #include <RawValueParser.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 using FieldIndex = uint32_t;
@@ -68,10 +68,10 @@ public:
         std::string_view tupleView,
         const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
         size_t numTuplesReadFromRawBuffer,
-        Memory::TupleBuffer& formattedBuffer,
+        TupleBuffer& formattedBuffer,
         const SchemaInfo& schemaInfo,
-        const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
-        Memory::AbstractBufferProvider& bufferProvider);
+        const std::vector<ParseFunctionSignature>& parseFunctions,
+        AbstractBufferProvider& bufferProvider);
 
     friend Derived;
 
@@ -80,7 +80,7 @@ private:
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
         /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
-        static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
+        static_assert(std::is_constructible_v<Derived, AbstractBufferProvider&>, "Derived class must have a default constructor");
     };
 
 public:

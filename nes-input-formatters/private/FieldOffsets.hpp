@@ -26,7 +26,7 @@
 #include <FieldIndexFunction.hpp>
 #include <InputFormatterTask.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 class FieldOffsets final : public FieldIndexFunction<FieldOffsets>

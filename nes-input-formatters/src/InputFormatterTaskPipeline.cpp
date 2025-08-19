@@ -20,17 +20,17 @@
 #include <PipelineExecutionContext.hpp>
 #include <RawTupleBuffer.hpp>
 
-void NES::InputFormatters::InputFormatterTaskPipeline::start(PipelineExecutionContext&)
+void NES::InputFormatterTaskPipeline::start(PipelineExecutionContext&)
 {
     this->inputFormatterTask->startTask();
 }
 
-void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionContext&)
+void NES::InputFormatterTaskPipeline::stop(PipelineExecutionContext&)
 {
     this->inputFormatterTask->stopTask();
 }
 
-void NES::InputFormatters::InputFormatterTaskPipeline::execute(const TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
+void NES::InputFormatterTaskPipeline::execute(const TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
 {
     /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
     if (rawTupleBuffer.getBufferSize() == 0)
@@ -42,7 +42,7 @@ void NES::InputFormatters::InputFormatterTaskPipeline::execute(const TupleBuffer
     this->inputFormatterTask->executeTask(RawTupleBuffer{rawTupleBuffer}, pec);
 }
 
-std::ostream& NES::InputFormatters::InputFormatterTaskPipeline::toString(std::ostream& os) const
+std::ostream& NES::InputFormatterTaskPipeline::toString(std::ostream& os) const
 {
     return this->inputFormatterTask->toString(os);
 }

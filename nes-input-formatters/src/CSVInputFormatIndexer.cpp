@@ -31,9 +31,9 @@
 namespace
 {
 void initializeIndexFunctionForTuple(
-    NES::InputFormatters::FieldOffsets& fieldOffsets,
+    NES::FieldOffsets& fieldOffsets,
     const std::string_view tuple,
-    const NES::InputFormatters::FieldIndex startIdxOfTuple,
+    const NES::FieldIndex startIdxOfTuple,
     const NES::ParserConfig& config,
     size_t numberOfFieldsInSchema)
 {
@@ -59,7 +59,7 @@ void initializeIndexFunctionForTuple(
 }
 }
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t numberOfFieldsInSchema)
@@ -106,8 +106,8 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
-InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::RegisterCSVInputFormatIndexer(
-    InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+InputFormatIndexerRegistryReturnType
+RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return arguments.createInputFormatterTaskPipeline(
         CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()));

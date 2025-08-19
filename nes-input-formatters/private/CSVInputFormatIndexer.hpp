@@ -24,7 +24,7 @@
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
 struct CSVMetaData
