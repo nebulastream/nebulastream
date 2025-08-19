@@ -45,8 +45,8 @@ private:
     std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline>& pipeline);
 
     /// Lowering context
-    std::vector<Sink> sinks;
-    std::vector<Source> sources;
+    std::vector<CompiledQueryPlan::Sink> sinks;
+    std::vector<CompiledQueryPlan::Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
 
     std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan;
