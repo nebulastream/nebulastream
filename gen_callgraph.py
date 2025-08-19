@@ -262,6 +262,51 @@ def to_treemap(file_reports) -> str:
     return "\n".join(ret).replace("$", "_")
 
 
+def to_smol_graph(callers, elgnamed, file_reports) -> str:
+
+    drawn_fns = {}
+    ret = []
+
+    ret.append("digraph G {")
+    ret.append("overlap = false;")
+    ret.append("maxiter = 3;")
+
+    drawn_fns = set()
+    duplicate_fns = set()
+
+    for file in file_reports:
+        for fn in file["functions"]:
+            if fn["name"] in elgnamed:
+                if elgnamed[fn["name"]] in drawn_fns:
+                    continue
+                drawn_fns.add(elgnamed[fn["name"]])
+                fn["mngld"] = elgnamed[fn["name"]]
+                fn["node_str"] = f'{fn["mngld"]} [label="{short_name(fn["name"])}", tooltip="{int(fn["blocks_percent"])}% {dot_escapce(fn["name"])}", color="{cov_percent_to_color(fn["blocks_percent"])}", shape=box, penwidth={5 if fn["blocks_percent"] else 2}];'
+            else:
+                if fn["blocks_percent"]:
+                    print("WARN: fn covered but could not dedemangle")
+
+    for file in file_reports:
+        for fn in file["functions"]:
+            if "mngld" in fn and fn["mngld"] in duplicate_fns:
+                print(fn["name"])
+                print(file["file"])
+                print()
+
+    clustered = cluster_nested(file_reports)
+
+    ret += print_nested(clustered)
+
+    for caller in drawn_fns:
+        for callee in callers[caller]:
+            if callee in drawn_fns:
+                ret.append(f"{caller} -> {callee};")
+
+    ret.append("}")
+
+    return "\n".join(ret).replace("$", "_")
+
+
 
 def short_name(name: str):
     name = name.replace("(anonymous namespace)", "anon")
@@ -494,16 +539,19 @@ def cluster_nested(file_reports):
     return ret
 
 
-def print_nested(nested, depth=0):
+def print_nested(nested, depth=1, path=""):
     ret = []
     for k, v in nested.items():
         if type(v) is dict:
-            ret.append(" " * depth + 'subgraph "cluster_' + k + '" {')
-            ret += print_nested(v, depth+1)
+            ret.append(" " * depth + 'subgraph "cluster_' + path + "__" + k + '" {')
+            ret.append(" " * depth + f'label="{k}";')
+            ret.append(" " * depth + f'fontsize={int(200 / depth)};')
+            ret += print_nested(v, depth+1, path + "_" + k)
             ret.append(" " * depth + "}")
         else:
             for n in v:
-                ret.append(n["node_str"])
+                if "node_str" in n:
+                    ret.append(n["node_str"])
     return ret
 
 
@@ -570,6 +618,11 @@ def main():
     with open("cov.dot", "w", encoding="utf-8") as f:
         f.write(graph)
     print("cov.dot written")
+
+    graph = to_smol_graph(callers, elgnamed, file_reports)
+    with open("clustered.dot", "w", encoding="utf-8") as f:
+        f.write(graph)
+    print("clustered.dot written")
 
     treemap = to_treemap(file_reports)
     with open("patchwork.dot", "w", encoding="utf-8") as f:
