@@ -230,6 +230,11 @@ void TestTupleBuffer::setNumberOfTuples(const uint64_t value)
     buffer.setNumberOfTuples(value);
 }
 
+void TestTupleBuffer::setUsedMemorySize(const uint64_t value)
+{
+    buffer.setUsedMemorySize(value);
+}
+
 DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 {
     if (tupleIndex >= getCapacity())

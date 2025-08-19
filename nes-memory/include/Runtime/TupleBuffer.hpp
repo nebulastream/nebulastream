@@ -85,14 +85,6 @@ public:
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 
-    /**
-     * @brief Interprets the void* as a pointer to the content of tuple buffer
-     * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
-     * @param bufferPointer
-     * @return TupleBuffer
-     */
-    [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
-
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
@@ -162,29 +154,38 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
 
+    /// @brief gets the used memory in byte
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
+
+    /// @brief sets the used memory in bytes
+    void setUsedMemorySize(uint64_t) const noexcept;
+
+    /// @brief get the watermark as a timestamp
     [[nodiscard]] Timestamp getWatermark() const noexcept;
-    void setWatermark(Timestamp value) noexcept;
+
+    /// @brief set the watermark from a timestamp
+    void setWatermark(Timestamp value) const noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
-    void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
+    void setSequenceNumber(SequenceNumber sequenceNumber) const noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
-    void setChunkNumber(ChunkNumber chunkNumber) noexcept;
+    void setChunkNumber(ChunkNumber chunkNumber) const noexcept;
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
     /// @brief set if this is the last chunk of a sequence number
-    void setLastChunk(bool isLastChunk) noexcept;
+    void setLastChunk(bool isLastChunk) const noexcept;
 
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
-    void setCreationTimestampInMS(Timestamp value) noexcept;
+    void setCreationTimestampInMS(Timestamp value) const noexcept;
 
     [[nodiscard]] OriginId getOriginId() const noexcept;
-    void setOriginId(OriginId id) noexcept;
+    void setOriginId(OriginId id) const noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
     [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;

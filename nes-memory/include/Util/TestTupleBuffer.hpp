@@ -237,6 +237,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     void setNumberOfTuples(uint64_t value);
+    void setUsedMemorySize(uint64_t value);
 
 
     /// @throws CannotAccessBuffer if index is larger then buffer capacity

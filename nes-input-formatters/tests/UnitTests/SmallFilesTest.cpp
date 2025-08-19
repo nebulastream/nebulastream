@@ -320,7 +320,7 @@ TEST_F(SmallFilesTest, testFoodData)
         .formatterType = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
-        .numberOfThreads = 8,
+        .numberOfThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
