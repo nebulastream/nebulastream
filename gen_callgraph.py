@@ -308,6 +308,7 @@ def fn_len_from_line(line, lines, filename):
     try:
         if "{" in lines[line-1] and (
             lines[line-1].endswith("}\n")
+            or lines[line-1].split("///")[0].strip().endswith("};")
             or lines[line-1].endswith("};\n")
             or lines[line-1].endswith("});\n")
             or lines[line].endswith("});\n")
@@ -350,6 +351,29 @@ def fn_len_from_line(line, lines, filename):
             or lines[line].endswith("};\n")
             or lines[line].endswith("});\n")
             ):
+            return (line, line + 1)
+        if "[&ctx, this](auto&& arg) {" in lines[line-1]:
+            return (line, line + 1)
+        if "[this](auto& pair)" in lines[line-1]:
+            return (line, line + 1)
+        if "[&terminations, stage](auto, auto termination, auto complete, auto fail)" in lines[line-1]:
+            return (line, line + 1)
+        if "[&setups, originId](auto, auto, auto sourceStop)" in lines[line-1]:
+            return (line, line + 1)
+        if "[&setups, stage](auto, auto setup, auto complete, auto fail)" in lines[line-1]:
+            return (line, line + 1)
+        if "[listener](const Exception& exception)" in lines[line-1]:
+            return (line, line + 1)
+        if "[ref = successor] { }" in lines[line -1]:
+            return (line, line + 1)
+
+        if "explicit InputFormatterTask" in lines[line-1]:
+            return (line, line + 1)
+        if "ASSERT_VIOLATION_FOR_ON_INSERT" in lines[line-1]:
+            return (line, line + 1)
+        if "[&]<size_t... Is>(std::index_sequence<Is...>)" in lines[line-1]:
+            return (line, line + 1)
+        if "[statement](const auto& source)" in lines[line-1]:
             return (line, line + 1)
 
         brace_open = None
