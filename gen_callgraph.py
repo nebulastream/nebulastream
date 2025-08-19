@@ -413,6 +413,19 @@ def cluster_nested(gcovr_json):
     return ret
 
 
+def print_nested(nested, depth=0):
+    ret = []
+    for k, v in nested.items():
+        if type(v) is dict:
+            ret.append(" " * depth + 'subgraph "cluster_' + k + '" {')
+            ret += print_nested(v, depth+1)
+            ret.append(" " * depth + "}")
+        else:
+            for n in v:
+                ret.append(n["node_str"])
+    return ret
+
+
 def cluster_by_root_folder(file: str):
     prefix = file.split("/")[0]
 
