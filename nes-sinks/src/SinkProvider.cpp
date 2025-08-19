@@ -22,13 +22,13 @@
 #include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>
 
-namespace NES::Sinks::SinkProvider
+namespace NES::SinkProvider
 {
 
 std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor)
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
-    auto sinkArguments = Sinks::SinkRegistryArguments(sinkDescriptor);
+    auto sinkArguments = SinkRegistryArguments(sinkDescriptor);
     if (auto sink = SinkRegistry::instance().create(sinkDescriptor.getSinkType(), sinkArguments); sink.has_value())
     {
         return std::move(sink.value());

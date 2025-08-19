@@ -18,7 +18,7 @@
 #include <fmt/ostream.h>
 #include <ExecutablePipelineStage.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 class Sink : public ExecutablePipelineStage
@@ -33,7 +33,7 @@ public:
 namespace fmt
 {
 template <>
-struct formatter<NES::Sinks::Sink> : ostream_formatter
+struct formatter<NES::Sink> : ostream_formatter
 {
 };
 }

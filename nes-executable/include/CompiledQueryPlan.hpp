@@ -51,7 +51,7 @@ struct Sink
     PipelineId id;
     /// The Sink representation in the `CompiledQueryPlan` is still an abstract sink representation. During Query Instantiation
     /// the descriptor is instantiated into concrete sink implementation.
-    Sinks::SinkDescriptor descriptor;
+    SinkDescriptor descriptor;
 
     /// Sinks do not have any successors
     std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> predecessor;

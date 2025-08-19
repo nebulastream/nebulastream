@@ -30,7 +30,7 @@
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 class PrintSink final : public Sink

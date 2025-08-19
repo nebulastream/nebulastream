@@ -29,7 +29,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 CSVFormat::CSVFormat(const Schema& schema) : CSVFormat(schema, false)
 {

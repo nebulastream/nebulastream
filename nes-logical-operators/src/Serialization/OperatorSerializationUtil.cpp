@@ -170,7 +170,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(sourceDescriptorConfig), deserializedParserConfig};
 }
 
-Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
+SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
     auto sinkName = serializableSinkDescriptor.sinkname();
@@ -184,7 +184,7 @@ Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const
         sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
-    return Sinks::SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), std::move(sinkDescriptorConfig)};
+    return SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), std::move(sinkDescriptorConfig)};
 }
 
 

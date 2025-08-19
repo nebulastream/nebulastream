@@ -185,9 +185,9 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
     return boundSources;
 }
 
-std::vector<Sinks::SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
+std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
 {
-    std::vector<Sinks::SinkDescriptor> boundSinks{};
+    std::vector<SinkDescriptor> boundSinks{};
     for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
     {
         auto schema = bindSchema(schemaFields);

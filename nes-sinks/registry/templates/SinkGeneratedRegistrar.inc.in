@@ -24,7 +24,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sinks::SinkGeneratedRegistrar
+namespace NES
 {
 
 /// declaration of register functions for 'Sinks'
@@ -34,9 +34,9 @@ namespace NES::Sinks::SinkGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<Sinks::SinkRegistry, std::string, Sinks::SinkRegistryReturnType, Sinks::SinkRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sinks::SinkGeneratedRegistrar;
+    /// using namespace NES;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

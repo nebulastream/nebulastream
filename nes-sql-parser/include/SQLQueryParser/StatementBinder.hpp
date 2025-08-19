@@ -108,7 +108,7 @@ struct DropPhysicalSourceStatement
 
 struct DropSinkStatement
 {
-    Sinks::SinkDescriptor descriptor;
+    SinkDescriptor descriptor;
 };
 
 using QueryStatement = LogicalPlan;

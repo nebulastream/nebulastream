@@ -38,7 +38,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
     explicit SinkLogicalOperator(std::string sinkName);
-    explicit SinkLogicalOperator(Sinks::SinkDescriptor sinkDescriptor);
+    explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     void serialize(SerializableOperator&) const override;
@@ -63,9 +63,9 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
     [[nodiscard]] std::string getSinkName() const noexcept;
-    [[nodiscard]] std::optional<Sinks::SinkDescriptor> getSinkDescriptor() const;
+    [[nodiscard]] std::optional<SinkDescriptor> getSinkDescriptor() const;
 
-    [[nodiscard]] SinkLogicalOperator withSinkDescriptor(Sinks::SinkDescriptor sinkDescriptor) const;
+    [[nodiscard]] SinkLogicalOperator withSinkDescriptor(SinkDescriptor sinkDescriptor) const;
 
     struct ConfigParameters
     {
@@ -87,7 +87,7 @@ private:
     std::vector<OriginId> outputOriginIds;
 
     std::string sinkName;
-    std::optional<Sinks::SinkDescriptor> sinkDescriptor;
+    std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
 };

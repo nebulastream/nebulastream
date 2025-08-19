@@ -24,9 +24,9 @@
 namespace NES
 {
 
-SinkPhysicalOperator::SinkPhysicalOperator(const Sinks::SinkDescriptor& descriptor) : descriptor(descriptor) { };
+SinkPhysicalOperator::SinkPhysicalOperator(const SinkDescriptor& descriptor) : descriptor(descriptor) { };
 
-Sinks::SinkDescriptor SinkPhysicalOperator::getDescriptor() const
+SinkDescriptor SinkPhysicalOperator::getDescriptor() const
 {
     return descriptor;
 };
