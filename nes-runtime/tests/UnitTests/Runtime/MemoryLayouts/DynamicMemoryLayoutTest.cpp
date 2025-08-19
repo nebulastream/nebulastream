@@ -29,7 +29,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>

@@ -30,7 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 template <class Type>
@@ -161,8 +161,7 @@ public:
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::string fieldName) const;
 
-    void
-    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
+    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
@@ -333,8 +332,7 @@ public:
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    void
-    pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
     {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;

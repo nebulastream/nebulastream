@@ -19,7 +19,7 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 /**

@@ -20,7 +20,7 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 /**
  * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.

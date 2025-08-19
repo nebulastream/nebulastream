@@ -30,12 +30,13 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 class RowMemoryLayoutTest : public Testing::BaseUnitTest
 {
 public:
     std::shared_ptr<BufferManager> bufferManager;
+
     static void SetUpTestCase()
     {
         Logger::setupLogging("RowMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
@@ -80,7 +81,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 0U);
@@ -104,7 +105,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 2, 3);
     testBuffer->pushRecordToBuffer(writeRecord);
@@ -131,7 +132,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const size_t numTuples = 230; ///tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
 
@@ -168,7 +169,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
 
@@ -209,7 +210,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
 
@@ -287,7 +288,7 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
 

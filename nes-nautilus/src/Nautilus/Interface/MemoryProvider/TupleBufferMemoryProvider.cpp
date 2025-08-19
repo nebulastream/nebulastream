@@ -43,10 +43,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 namespace
 {
 uint32_t storeAssociatedTextValueProxy(
-    const TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider,
-    const int8_t* textValue,
-    const uint32_t totalVariableSize)
+    const TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* textValue, const uint32_t totalVariableSize)
 {
     auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
     INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
@@ -116,12 +113,12 @@ std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(con
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, schema);
+        auto rowMemoryLayout = std::make_shared<RowLayout>(bufferSize, schema);
         return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
     }
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, schema);
+        auto columnMemoryLayout = std::make_shared<ColumnLayout>(bufferSize, schema);
         return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
     }
     throw NotImplemented("Currently only row and column layout are supported");

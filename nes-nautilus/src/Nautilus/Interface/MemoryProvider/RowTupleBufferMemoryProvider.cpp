@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -20,7 +21,6 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -31,10 +31,10 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
+RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<RowLayout> rowMemoryLayout)
     : rowMemoryLayout(std::move(rowMemoryLayout)) { };
 
-std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
+std::shared_ptr<MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
 {
     return rowMemoryLayout;
 }
