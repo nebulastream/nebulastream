@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -56,6 +57,9 @@ struct GoogleEventTracePrinter final : StatisticListener
     explicit GoogleEventTracePrinter(const std::filesystem::path& path);
     ~GoogleEventTracePrinter() override;
 
+    /// Start the event processing thread. Must be called after construction.
+    void start();
+
     /// Flushes the trace file and closes it, blocking until all pending events are written
     void flush();
 
@@ -90,8 +94,8 @@ private:
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{QUEUE_LENGTH};
     std::jthread traceThread;
-    bool headerWritten = false;
-    bool footerWritten = false;
+    std::atomic<bool> headerWritten{false};
+    std::atomic<bool> footerWritten{false};
 
     /// Track active tasks for duration calculation
     std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
