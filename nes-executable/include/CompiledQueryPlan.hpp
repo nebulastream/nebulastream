@@ -35,30 +35,30 @@ struct ExecutablePipeline
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
 };
 
-struct Source
-{
-    /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
-    /// the descriptor and originId are instantiated into concrete source implementation.
-    OriginId originId;
-    SourceDescriptor descriptor;
-
-    /// Sources do not have any predecessors
-    std::vector<std::weak_ptr<ExecutablePipeline>> successors;
-};
-
-struct Sink
-{
-    PipelineId id;
-    /// The Sink representation in the `CompiledQueryPlan` is still an abstract sink representation. During Query Instantiation
-    /// the descriptor is instantiated into concrete sink implementation.
-    SinkDescriptor descriptor;
-
-    /// Sinks do not have any successors
-    std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> predecessor;
-};
-
 struct CompiledQueryPlan
 {
+    struct Source
+    {
+        /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
+        /// the descriptor and originId are instantiated into concrete source implementation.
+        OriginId originId;
+        SourceDescriptor descriptor;
+
+        /// Sources do not have any predecessors
+        std::vector<std::weak_ptr<ExecutablePipeline>> successors;
+    };
+
+    struct Sink
+    {
+        PipelineId id;
+        /// The Sink representation in the `CompiledQueryPlan` is still an abstract sink representation. During Query Instantiation
+        /// the descriptor is instantiated into concrete sink implementation.
+        SinkDescriptor descriptor;
+
+        /// Sinks do not have any successors
+        std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> predecessor;
+    };
+
     static std::unique_ptr<CompiledQueryPlan> create(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
 
