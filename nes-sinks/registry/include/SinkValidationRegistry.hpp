@@ -19,7 +19,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 using SinkValidationRegistryReturnType = DescriptorConfig::Config;

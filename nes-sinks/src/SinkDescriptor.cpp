@@ -31,7 +31,7 @@
 #include <SerializableOperator.pb.h>
 #include <SinkValidationRegistry.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(std::string sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
@@ -57,7 +57,7 @@ std::string SinkDescriptor::getSinkName() const
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
-    auto sinkValidationRegistryArguments = Sinks::SinkValidationRegistryArguments{std::move(configPairs)};
+    auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{std::move(configPairs)};
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
 }
 

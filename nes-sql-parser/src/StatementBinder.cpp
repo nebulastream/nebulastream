@@ -375,7 +375,7 @@ public:
                                         { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
-        if (not Sinks::SinkDescriptor::validateAndFormatConfig(sinkType, sinkOptions).has_value())
+        if (not SinkDescriptor::validateAndFormatConfig(sinkType, sinkOptions).has_value())
         {
             throw InvalidConfigParameter("Invalid sink configuration");
         }

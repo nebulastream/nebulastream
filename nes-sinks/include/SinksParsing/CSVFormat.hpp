@@ -25,7 +25,7 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 
-namespace NES::Sinks
+namespace NES
 {
 
 class CSVFormat
@@ -52,8 +52,7 @@ public:
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    [[nodiscard]] std::string
-    tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
+    [[nodiscard]] std::string tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
@@ -65,4 +64,4 @@ private:
 
 }
 
-FMT_OSTREAM(NES::Sinks::CSVFormat);
+FMT_OSTREAM(NES::CSVFormat);

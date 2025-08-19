@@ -17,10 +17,10 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
-namespace NES::Sinks::SinkProvider
+namespace NES::SinkProvider
 {
 
 /// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
-std::unique_ptr<Sinks::Sink> lower(const SinkDescriptor& sinkDescriptor);
+std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor);
 
 }

@@ -22,7 +22,7 @@
 #include <Util/Registry.hpp>
 #include <Configurations/Descriptor.hpp>
 
-namespace NES::Sinks::SinkValidationGeneratedRegistrar
+namespace NES
 {
 
 /// declaration of register functions for 'Sinks'
@@ -32,10 +32,10 @@ namespace NES::Sinks::SinkValidationGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<Sinks::SinkValidationRegistry, std::string, Sinks::SinkValidationRegistryReturnType, Sinks::SinkValidationRegistryArguments>::registerAll(
+inline void Registrar<SinkValidationRegistry, std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sinks::SinkValidationGeneratedRegistrar;
+    using namespace NES;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }
