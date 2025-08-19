@@ -241,10 +241,13 @@ def short_name(name: str):
     return name
 
 def fn_len_from_line(line, lines, filename):
+
+    if "generated_src" in filename:
+        return None
+
     assert lines[line-1]
 
     try:
-        lines_loc = None
         if "{" in lines[line-1] and (
             lines[line-1].endswith("}\n")
             or lines[line-1].endswith("};\n")
@@ -269,21 +272,20 @@ def fn_len_from_line(line, lines, filename):
             return (line, line + 1)
         if lines[line-1].strip().startswith("FMT"):
             return (line, line + 1)
+        if lines[line-1].strip().startswith("STAT_TYPE"):
+            return (line, line + 1)
         if lines[line-1].strip().startswith("DEFINE_OPERATOR_VAR_VAL_BINARY"):
             return (line, line + 1)
         if lines[line-1].strip().startswith("DEFINE_OPERATOR_VAR_VAL_UNARY"):
             return (line, line + 1)
         if lines[line-1].strip().startswith("EXCEPTION"):
             return (line, line + 1)
+
         if "[](" in lines[line-1]:
             return (line, line + 1)
         if "[&](" in lines[line-1]:
             return (line, line + 1)
-
-        # TODO
         if "[](" in lines[line]:
-            return (line, line + 1)
-        if "[&](" in lines[line]:
             return (line, line + 1)
         if "{" in lines[line] and (
             lines[line].endswith("}\n")
@@ -294,12 +296,21 @@ def fn_len_from_line(line, lines, filename):
 
         brace_open = None
         brace_clos = None
-        for i in range(6):
-            # TODO prevent accidentally taking if/else or loop block
-            if lines[line + i].strip() == "{":
-                brace_open = line + i
-                whitespace_offset = lines[line + i].index("{")
+
+        i = 0
+        param_or_ctor_lines = 0
+        while i < 6:
+            idx = line + i + param_or_ctor_lines
+            if lines[idx].endswith("{ };\n"):
+                return (line, idx)
+            if lines[idx].strip().startswith(",") or lines[idx].strip().endswith(","):
+                param_or_ctor_lines += 1
+                continue
+            if lines[idx].strip() == "{":
+                brace_open = idx
+                whitespace_offset = lines[idx].index("{")
                 break
+            i += 1
 
         if not brace_open:
             print("could not find opening: ", filename + ":" + str(line))
@@ -347,22 +358,27 @@ def is_contained(a, b):
 
     return False
 
-def mk_fn_len_estimator(gcovr_json):
-    fn_to_locs = defaultdict(list)
-    loc_to_fns = defaultdict(list)
+def mk_fn_len_estimator(file_reports):
 
-    for file in gcovr_json["files"]:
+    all_fn_to_locs = {}
+    all_loc_to_fns = {}
+
+    for file in file_reports:
         try:
             with open(file["file"]) as f:
                 lines = f.readlines()
         except Exception as e:
+            print(e)
             continue
 
+        fn_to_locs = defaultdict(list)
+        loc_to_fns = defaultdict(list)
 
         for fn in file["functions"]:
             if fn_loc := fn_len_from_line(fn["lineno"], lines, file["file"]):
                 loc_to_fns[fn_loc].append(fn["name"])
                 fn_to_locs[fn["name"]].append(fn_loc)
+                fn["len"] = fn_loc[1] - fn_loc[0]
 
         for loc1, loc2 in itertools.combinations(loc_to_fns.keys(), 2):
             if is_overlap(loc1, loc2) and not is_contained(loc1, loc2):
@@ -370,12 +386,11 @@ def mk_fn_len_estimator(gcovr_json):
                 print(loc_to_fns[loc1])
                 print(loc_to_fns[loc2])
                 sys.exit(1)
-            if is_overlap(loc1, loc2) and is_contained(loc1, loc2):
-                (l, r), _ = small_left(loc1, loc2)
-                if r-l > 3:
-                    print(f"WARN: big fn contained in {file["file"]}:{l}, ranges {loc1} and {loc2}")
 
-    return fn_to_locs, loc_to_fns
+        all_fn_to_locs[file["file"]] = fn_to_locs
+        all_loc_to_fns[file["file"]] = loc_to_fns
+
+    return all_fn_to_locs, all_loc_to_fns
 
 
 def cluster_nested(gcovr_json):
