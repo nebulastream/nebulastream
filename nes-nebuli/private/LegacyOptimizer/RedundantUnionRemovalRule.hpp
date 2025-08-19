@@ -16,7 +16,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 /**

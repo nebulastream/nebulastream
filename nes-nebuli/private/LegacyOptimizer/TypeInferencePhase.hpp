@@ -17,7 +17,7 @@
 #include <memory>
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 /// The type inference phase receives and query plan and infers all input and output schemata for all operators.

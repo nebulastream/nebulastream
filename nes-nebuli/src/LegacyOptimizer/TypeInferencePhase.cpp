@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 static LogicalOperator propagateSchema(const LogicalOperator& op)

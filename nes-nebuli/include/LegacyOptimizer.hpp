@@ -24,7 +24,7 @@ class SinkCatalog;
 class SourceCatalog;
 }
 
-namespace NES::CLI
+namespace NES
 {
 class LegacyOptimizer
 {
