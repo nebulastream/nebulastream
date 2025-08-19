@@ -59,20 +59,18 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 {
     struct MockedPipelineContext final : PipelineExecutionContext
     {
-        bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy) override
+        bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy) override
         {
             buffers.wlock()->emplace_back(buffer);
             return true;
         }
 
-        Memory::TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
-
+        TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
         [[nodiscard]] WorkerThreadId getId() const override { return INITIAL<WorkerThreadId>; }
 
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
 
-        [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
-
+        [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
@@ -86,14 +84,14 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         }
 
         MockedPipelineContext(
-            folly::Synchronized<std::vector<Memory::TupleBuffer>>& buffers, std::shared_ptr<Memory::BufferManager> bufferManager)
+            folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
         }
 
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
-        folly::Synchronized<std::vector<Memory::TupleBuffer>>& buffers;
-        std::shared_ptr<Memory::BufferManager> bufferManager;
+        folly::Synchronized<std::vector<TupleBuffer>>& buffers;
+        std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     };
 
@@ -119,7 +117,7 @@ public:
         return emit;
     }
 
-    void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, Memory::TupleBuffer buffer)
+    void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
     {
         MockedPipelineContext pec{buffers, bm};
         pec.setOperatorHandlers(handlers);
@@ -196,7 +194,7 @@ public:
         }
     }
 
-    Memory::TupleBuffer createBuffer(
+    TupleBuffer createBuffer(
         SequenceNumber::Underlying sequence,
         ChunkNumber::Underlying chunkNumber,
         bool isLastChunk = false,
@@ -217,8 +215,8 @@ public:
 
     void reset() { buffers.wlock()->clear(); }
 
-    folly::Synchronized<std::vector<Memory::TupleBuffer>> buffers;
-    std::shared_ptr<Memory::BufferManager> bm = Memory::BufferManager::create(512, 100000);
+    folly::Synchronized<std::vector<TupleBuffer>> buffers;
+    std::shared_ptr<BufferManager> bm = BufferManager::create(512, 100000);
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
 
     std::random_device rd;
@@ -244,7 +242,7 @@ TEST_F(EmitPhysicalOperatorTest, BasicTest)
 
 TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
 {
-    std::vector<Memory::TupleBuffer> inputBuffers;
+    std::vector<TupleBuffer> inputBuffers;
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false));
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, false));
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 2, false));
@@ -275,7 +273,7 @@ TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
         hasMorePermutations = std::ranges::next_permutation(
                                   inputBuffers,
                                   std::less{},
-                                  [](const Memory::TupleBuffer& buffer)
+                                  [](const TupleBuffer& buffer)
                                   { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
                                   .found;
     }
@@ -286,7 +284,7 @@ TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
 /// marked as the last chunk, and no duplicates.
 TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
 {
-    std::vector<Memory::TupleBuffer> inputBuffers;
+    std::vector<TupleBuffer> inputBuffers;
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false));
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, false));
     inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 2, true));
@@ -319,7 +317,7 @@ TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
         hasMorePermutations = std::ranges::next_permutation(
                                   inputBuffers,
                                   std::less{},
-                                  [](const Memory::TupleBuffer& buffer)
+                                  [](const TupleBuffer& buffer)
                                   { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
                                   .found;
     };
@@ -331,7 +329,7 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
          std::initializer_list<std::tuple<size_t, size_t, size_t>>{{2, 10, 2}, {1000, 2, 4}, {10, 100, 4}, {1000, 20, 10}})
     {
         reset();
-        std::vector<Memory::TupleBuffer> inputBuffers;
+        std::vector<TupleBuffer> inputBuffers;
         for (size_t seq = 0; seq < numberOfSequences; seq++)
         {
             std::uniform_int_distribution chunkNumbers(ChunkNumber::INITIAL + 1, maxChunksPerSequence);

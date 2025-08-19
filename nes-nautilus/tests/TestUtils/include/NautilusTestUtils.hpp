@@ -141,17 +141,17 @@ public:
     static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
-    std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
         const Schema& schema,
         uint64_t numberOfTuples,
-        Memory::BufferManager& bufferManager,
+        BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
-    std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager, uint64_t minSizeVarSizedData);
-    std::vector<Memory::TupleBuffer>
-    createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager);
+    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+        const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager, uint64_t minSizeVarSizedData);
+    std::vector<TupleBuffer>
+    createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,
@@ -176,8 +176,8 @@ public:
 
     /// Compares two buffers and returns a string with the differences. If the buffers are equal, return an empty string
     static std::string compareRecordBuffers(
-        const std::vector<Memory::TupleBuffer>& actualRecords,
-        const std::vector<Memory::TupleBuffer>& expectedRecords,
+        const std::vector<TupleBuffer>& actualRecords,
+        const std::vector<TupleBuffer>& expectedRecords,
         const Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderActualBuffer,
         const Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer);
 

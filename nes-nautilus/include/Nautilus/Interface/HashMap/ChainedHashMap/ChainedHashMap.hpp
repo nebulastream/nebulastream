@@ -66,8 +66,8 @@ public:
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ~ChainedHashMap() override;
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
-    int8_t* allocateSpaceForVarSized(Memory::AbstractBufferProvider* bufferProvider, size_t neededSize);
-    AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider) override;
+    int8_t* allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
+    AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const ChainedHashMapEntry* getPage(uint64_t pageIndex) const;
     [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
@@ -86,9 +86,9 @@ public:
 private:
     friend class ChainedHashMapRef;
 
-    Memory::TupleBuffer entrySpace;
-    std::vector<Memory::TupleBuffer> storageSpace;
-    std::vector<Memory::TupleBuffer> varSizedSpace;
+    TupleBuffer entrySpace;
+    std::vector<TupleBuffer> storageSpace;
+    std::vector<TupleBuffer> varSizedSpace;
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize

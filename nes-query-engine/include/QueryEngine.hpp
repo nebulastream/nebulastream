@@ -34,7 +34,7 @@ public:
         const QueryEngineConfiguration& configuration,
         std::shared_ptr<QueryEngineStatisticListener> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
-        std::shared_ptr<Memory::BufferManager> bm);
+        std::shared_ptr<BufferManager> bm);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
@@ -45,7 +45,7 @@ public:
     /// This implies that there will be no ThreadPool and WorkQueue around to handle the termination of
     /// left over running queries. Dropping a RunningQueryPlan has to invoke a HardStop which must not emit
     /// further work into the TaskQueue.
-    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
     std::shared_ptr<AbstractQueryStatusListener> statusListener;
     std::shared_ptr<QueryEngineStatisticListener> statisticListener;
     std::shared_ptr<QueryCatalog> queryCatalog;

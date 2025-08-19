@@ -31,7 +31,7 @@
 
 namespace NES
 {
-bool TestPipelineExecutionContext::emitBuffer(const Memory::TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
+bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
     switch (continuationPolicy)
     {
@@ -52,7 +52,7 @@ bool TestPipelineExecutionContext::emitBuffer(const Memory::TupleBuffer& resultB
     return true;
 }
 
-Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
+TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
     {
@@ -61,7 +61,7 @@ Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
     throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestPipelineStage::execute(const Memory::TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)
+void TestPipelineStage::execute(const TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)
     {
@@ -85,8 +85,7 @@ std::ostream& TestPipelineStage::toString(std::ostream& os) const
 }
 
 SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
-    std::shared_ptr<Memory::BufferManager> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers)
+    std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
     : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
 {
 }
@@ -138,8 +137,8 @@ void SingleThreadedTestTaskQueue::runTasks()
 MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestPipelineTask>& testTasks,
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
     : threadTasks(testTasks.size())
     , numberOfWorkerThreads(numberOfThreads)
     , completionLatch(numberOfThreads)

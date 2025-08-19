@@ -56,7 +56,7 @@ void PrintSink::stop(PipelineExecutionContext&)
 {
 }
 
-void PrintSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
+void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
 

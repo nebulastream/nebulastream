@@ -32,7 +32,7 @@ namespace NES
 class UnpooledChunksManager;
 }
 
-namespace NES::Memory
+namespace NES
 {
 namespace detail
 {
@@ -66,7 +66,7 @@ class TupleBuffer
 {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
-    friend class NES::UnpooledChunksManager; /// TODO: #1035 remove NES:: prefix
+    friend class UnpooledChunksManager;
     friend class FixedSizeBufferPool;
     friend class LocalBufferPool;
     friend class detail::MemorySegment;

@@ -36,7 +36,7 @@ public:
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
+        std::shared_ptr<AbstractPoolProvider> bufferPool,
         int defaultNumberOfBuffersInLocalPool);
 
     static bool contains(const std::string& sourceType);

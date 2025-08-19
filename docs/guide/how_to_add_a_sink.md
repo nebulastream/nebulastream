@@ -75,7 +75,7 @@ Their interface is as follows:
 void start(PipelineExecutionContext& pipelineExecutionContext) override;
 
 /// Equivalent to `fillTupleBuffer` in sources
-void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 /// Equivalent to `close` in sources
 void stop(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -117,7 +117,7 @@ Operators can use them to emit result buffers into successor pipelines, which is
 Our MQTT sink's `execute` method could be implemented like this:
 ```c++
 
-void MQTTSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+void MQTTSink::execute(const TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     /// (1) Early exit when empty
     if (inputBuffer.getNumberOfTuples() == 0)

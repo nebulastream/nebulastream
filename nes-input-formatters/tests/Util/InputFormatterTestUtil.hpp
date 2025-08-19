@@ -65,7 +65,7 @@ struct ThreadInputBuffers
 struct TaskPackage
 {
     SequenceNumber sequenceNumber;
-    Memory::TupleBuffer rawByteBuffer;
+    TupleBuffer rawByteBuffer;
 };
 
 template <typename TupleSchemaTemplate>
@@ -141,7 +141,7 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
+getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
@@ -149,13 +149,13 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
-    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    std::shared_ptr<BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
 std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
 
 /// Waits until source reached EoS
-void waitForSource(const std::vector<Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
+void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
 
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
@@ -163,20 +163,20 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
 TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer,
+    TupleBuffer taskBuffer,
     std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
 {
     TestConfig<TupleSchemaTemplate> testConfig;
-    std::shared_ptr<Memory::BufferManager> testBufferManager;
-    std::shared_ptr<Memory::BufferManager> formattedBufferManager;
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
+    std::shared_ptr<BufferManager> testBufferManager;
+    std::shared_ptr<BufferManager> formattedBufferManager;
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
     Schema schema;
     std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
     std::vector<TaskPackage> inputBuffers;
-    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
+    std::vector<std::vector<TupleBuffer>> expectedResultVectors;
 
     void destroy()
     {
@@ -190,7 +190,7 @@ struct TestHandle
 };
 
 inline bool
-checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
+checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
 {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
@@ -230,7 +230,7 @@ checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::Tupl
     return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
 }
 
-inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, Memory::TupleBuffer tupleBuffer)
+inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, TupleBuffer tupleBuffer)
 {
     PRECONDITION(
         tupleBuffer.getBufferSize() >= rawData.size(),
@@ -251,8 +251,8 @@ inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view ra
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
-Memory::TupleBuffer
-createTupleBufferFromTuples(const Schema& schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+TupleBuffer
+createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferManager.getBufferSize(), schema);
@@ -321,9 +321,9 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
 }
 
 template <typename TupleSchemaTemplate, bool PrintDebug>
-std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
+std::vector<std::vector<TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(1);
+    std::vector<std::vector<TupleBuffer>> expectedTupleBuffers(1);
     for (const auto workerThreadResultVector : testHandle.testConfig.expectedResults)
     {
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
@@ -339,13 +339,13 @@ std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHa
 template <typename TupleSchemaTemplate>
 TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
-    std::shared_ptr<Memory::BufferManager> testBufferManager
-        = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, 2 * testConfig.numRequiredBuffers);
-    std::shared_ptr<Memory::BufferManager> formattedBufferManager
-        = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
+    std::shared_ptr<BufferManager> testBufferManager
+        = BufferManager::create(testConfig.sizeOfRawBuffers, 2 * testConfig.numRequiredBuffers);
+    std::shared_ptr<BufferManager> formattedBufferManager
+        = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers
-        = std::make_shared<std::vector<std::vector<Memory::TupleBuffer>>>(1);
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers
+        = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,

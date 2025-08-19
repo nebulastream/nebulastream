@@ -34,19 +34,19 @@ uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
     return pagedVector->getTotalNumberOfEntries();
 }
 
-const Memory::TupleBuffer* createNewEntryProxy(
-    PagedVector* pagedVector, Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+const TupleBuffer* createNewEntryProxy(
+    PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
     pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
     return std::addressof(pagedVector->getLastPage());
 }
 
-const Memory::TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
+const TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
 {
     return std::addressof(pagedVector->getFirstPage());
 }
 
-const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+const TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getTupleBufferForEntry(entryPos);
 }
@@ -67,7 +67,7 @@ PagedVectorRef::PagedVectorRef(
 {
 }
 
-void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
@@ -100,7 +100,7 @@ PagedVectorRefIter PagedVectorRef::end(const std::vector<Record::RecordFieldIden
 {
     /// End does not point to any existing page. Therefore, we only set the pos
     const auto pos = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
-    const nautilus::val<Memory::TupleBuffer*> curPage(nullptr);
+    const nautilus::val<TupleBuffer*> curPage(nullptr);
     const nautilus::val<uint64_t> posOnPage(0);
     PagedVectorRefIter pagedVectorRefIter(*this, memoryProvider, projections, curPage, posOnPage, pos, pos);
     return pagedVectorRefIter;
@@ -115,7 +115,7 @@ PagedVectorRefIter::PagedVectorRefIter(
     PagedVectorRef pagedVector,
     const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const nautilus::val<Memory::TupleBuffer*>& curPage,
+    const nautilus::val<TupleBuffer*>& curPage,
     const nautilus::val<uint64_t>& posOnPage,
     const nautilus::val<uint64_t>& pos,
     const nautilus::val<uint64_t>& numberOfTuplesInPagedVector)

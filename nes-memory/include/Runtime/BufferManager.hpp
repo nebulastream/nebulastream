@@ -28,7 +28,7 @@
 #include <Runtime/UnpooledChunksManager.hpp>
 #include <folly/MPMCQueue.h>
 
-namespace NES::Memory
+namespace NES
 {
 
 /**

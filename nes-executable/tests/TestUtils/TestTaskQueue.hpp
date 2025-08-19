@@ -52,10 +52,10 @@ public:
 
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferManager,
         const WorkerThreadId workerThreadId,
         const PipelineId pipelineId,
-        std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers)
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
         : workerThreadId(workerThreadId)
         , pipelineId(pipelineId)
         , bufferManager(std::move(bufferManager))
@@ -71,8 +71,7 @@ public:
 
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferManager,
-        std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBufferPtr)
+        std::shared_ptr<AbstractBufferProvider> bufferManager, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBufferPtr)
         : workerThreadId(WorkerThreadId(0))
         , pipelineId(PipelineId(0))
         , bufferManager(std::move(bufferManager))
@@ -87,9 +86,9 @@ public:
     }
 
     /// if buffer contains data, writes it into the result buffer vector, otherwise, calls the 'repeatTaskCallback'
-    bool emitBuffer(const Memory::TupleBuffer& resultBuffer, ContinuationPolicy continuationPolicy) override;
+    bool emitBuffer(const TupleBuffer& resultBuffer, ContinuationPolicy continuationPolicy) override;
 
-    Memory::TupleBuffer allocateTupleBuffer() override;
+    TupleBuffer allocateTupleBuffer() override;
 
     void setRepeatTaskCallback(std::function<void()> repeatTaskCallback) { this->repeatTaskCallback = std::move(repeatTaskCallback); }
 
@@ -97,7 +96,7 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 0; }; /// dummy implementation for  pure virtual function
 
-    [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
 
@@ -113,12 +112,12 @@ public:
 
 private:
     std::function<void()> repeatTaskCallback;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferManager;
+    std::shared_ptr<AbstractBufferProvider> bufferManager;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     /// Different threads have different TestPipelineExecutionContexts. All threads share the same pointer to the result buffers.
     /// Each thread writes its own results in a dedicated slot. This keeps results in a single place and does not require awkward logic
     /// to get the result buffers out of the TestPipelineExecutionContexts.
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
 };
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
@@ -126,7 +125,7 @@ private:
 class TestPipelineStage : public ExecutablePipelineStage
 {
 public:
-    using ExecuteFunction = std::function<void(const Memory::TupleBuffer&, PipelineExecutionContext&)>;
+    using ExecuteFunction = std::function<void(const TupleBuffer&, PipelineExecutionContext&)>;
     TestPipelineStage() = default;
 
     TestPipelineStage(const std::string& stepName, ExecuteFunction testTask) { addStep(stepName, std::move(testTask)); }
@@ -134,7 +133,7 @@ public:
     void addStep(const std::string& stepName, ExecuteFunction testTask) { taskSteps.emplace_back(stepName, std::move(testTask)); }
 
     /// executes all task steps (ExecuteFunctions)
-    void execute(const Memory::TupleBuffer& tupleBuffer, PipelineExecutionContext& pec) override;
+    void execute(const TupleBuffer& tupleBuffer, PipelineExecutionContext& pec) override;
 
 private:
     std::vector<std::pair<std::string, ExecuteFunction>> taskSteps;
@@ -151,7 +150,7 @@ struct TestPipelineTask
 {
     TestPipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) { };
 
-    TestPipelineTask(const WorkerThreadId workerThreadId, Memory::TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
+    TestPipelineTask(const WorkerThreadId workerThreadId, TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
     }
@@ -165,7 +164,7 @@ struct TestPipelineTask
     void execute(TestPipelineExecutionContext& pec) const { eps->execute(tupleBuffer, pec); }
 
     WorkerThreadId workerThreadId;
-    Memory::TupleBuffer tupleBuffer;
+    TupleBuffer tupleBuffer;
     std::shared_ptr<ExecutablePipelineStage> eps;
 };
 
@@ -182,8 +181,7 @@ class SingleThreadedTestTaskQueue
 {
 public:
     SingleThreadedTestTaskQueue(
-        std::shared_ptr<Memory::BufferManager> bufferProvider,
-        std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers);
+        std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers);
 
     ~SingleThreadedTestTaskQueue() = default;
 
@@ -192,8 +190,8 @@ public:
 
 private:
     std::queue<WorkTask> tasks;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
 
     std::shared_ptr<ExecutablePipelineStage> eps;
 
@@ -211,8 +209,8 @@ public:
     MultiThreadedTestTaskQueue(
         size_t numberOfThreads,
         const std::vector<TestPipelineTask>& testTasks,
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-        std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers);
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers);
 
     /// Activates threads which start to concurrently process the WorkTasks in the MPMC queue.
     void startProcessing();
@@ -224,8 +222,8 @@ private:
     folly::MPMCQueue<WorkTask> threadTasks;
     uint64_t numberOfWorkerThreads;
     std::latch completionLatch;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
     std::shared_ptr<ExecutablePipelineStage> eps;
     std::vector<std::jthread> threads;
     Timer<std::chrono::microseconds> timer;

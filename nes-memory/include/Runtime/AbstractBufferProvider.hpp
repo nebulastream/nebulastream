@@ -23,7 +23,7 @@
 /// global: overall buffer manager
 /// local: buffer manager that we give to the processing
 /// fixed: buffer manager that we use for sources
-namespace NES::Memory
+namespace NES
 {
 enum class BufferManagerType : uint8_t
 {

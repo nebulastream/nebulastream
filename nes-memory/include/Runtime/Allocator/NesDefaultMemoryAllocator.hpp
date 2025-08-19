@@ -17,7 +17,7 @@
 #include <memory>
 #include <memory_resource>
 
-namespace NES::Memory
+namespace NES
 {
 /**
  * @brief The default memory resource of nes that use posix_memalign

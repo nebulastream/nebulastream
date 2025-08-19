@@ -23,7 +23,7 @@
 
 namespace NES::Testing
 {
-Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
+TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
 {
     auto copiedBuffer = provider.getBufferBlocking();
     PRECONDITION(

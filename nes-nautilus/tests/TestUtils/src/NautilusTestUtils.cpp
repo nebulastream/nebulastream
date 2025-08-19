@@ -58,8 +58,8 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
     return std::make_unique<Interface::MurMur3HashFunction>();
 }
 
-std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
@@ -69,17 +69,17 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
-std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema& schema,
     const uint64_t numberOfTuples,
-    Memory::BufferManager& bufferManager,
+    BufferManager& bufferManager,
     const uint64_t seed,
     const uint64_t minSizeVarSizedData,
     const uint64_t maxSizeVarSizedData)
@@ -115,7 +115,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// Now, we have to call the compiled function to fill the buffer with the values.
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
-    std::vector<Memory::TupleBuffer> buffers;
+    std::vector<TupleBuffer> buffers;
     const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
@@ -126,7 +126,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         auto buffer = bufferManager.getBufferBlocking();
         auto outputBufferIndex = createShuffledVector(tuplesToFill);
         const auto sizeVarSizedData = (rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData)) + minSizeVarSizedData;
-        callCompiledFunction<void, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
+        callCompiledFunction<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
             {FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend},
             std::addressof(buffer),
             std::addressof(bufferManager),
@@ -170,8 +170,8 @@ void NautilusTestUtils::compileFillBufferFunction(
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function tmp = [=](nautilus::val<Memory::TupleBuffer*> buffer,
-                                  nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
+    const std::function tmp = [=](nautilus::val<TupleBuffer*> buffer,
+                                  nautilus::val<AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,
                                   nautilus::val<uint64_t> startForValues,
                                   nautilus::val<uint64_t> sizeVarSizedDataVal,
@@ -196,7 +196,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 else if (field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
-                        +[](const Memory::TupleBuffer* inputBuffer, Memory::AbstractBufferProvider* bufferProviderVal, const uint64_t size)
+                        +[](const TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
                         {
                             /// Creating a random string of the given size
                             auto randchar = []() -> char
@@ -239,7 +239,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     auto compiledFunction = engine.registerFunction(tmp);
 
     compiledFunctions[{functionName, backend}] = std::make_unique<
-        FunctionWrapper<void, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
+        FunctionWrapper<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
         std::move(compiledFunction));
 }
 

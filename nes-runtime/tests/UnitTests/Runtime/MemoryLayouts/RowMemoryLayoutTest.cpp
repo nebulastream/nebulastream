@@ -35,8 +35,7 @@ namespace NES::Memory::MemoryLayouts
 class RowMemoryLayoutTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<Memory::BufferManager> bufferManager;
-
+    std::shared_ptr<BufferManager> bufferManager;
     static void SetUpTestCase()
     {
         Logger::setupLogging("RowMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
@@ -46,7 +45,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = Memory::BufferManager::create(4096, 10);
+        bufferManager = BufferManager::create(4096, 10);
     }
 };
 

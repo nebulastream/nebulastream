@@ -51,7 +51,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <TestSource.hpp>
 
-namespace NES::Testing
+namespace NES
 {
 
 std::vector<std::byte> identifiableData(size_t identifier)
@@ -66,7 +66,7 @@ std::vector<std::byte> identifiableData(size_t identifier)
     return data;
 }
 
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
+bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier)
 {
     if (buffer.getBufferSize() == 0)
     {
@@ -111,14 +111,14 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
                buffers->size());
 }
 
-void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
+void TestSinkController::insertBuffer(TupleBuffer&& buffer)
 {
     ++invocations;
     receivedBuffers.lock()->push_back(std::move(buffer));
     receivedBufferTrigger.notify_one();
 }
 
-std::vector<Memory::TupleBuffer> TestSinkController::takeBuffers()
+std::vector<TupleBuffer> TestSinkController::takeBuffers()
 {
     return receivedBuffers.exchange({});
 }
@@ -129,7 +129,7 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, std::shared_ptr<AbstractBufferProvider> bm)
 {
     auto sinkController = std::make_shared<TestSinkController>();
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
@@ -182,7 +182,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
     return identifier;
 }
 
-QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&
+QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<BufferManager> bm) &&
 {
     auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
                                                { return std::holds_alternative<SourceDescriptor>(kv.second); });
@@ -264,7 +264,7 @@ QueryPlanBuilder::QueryPlanBuilder(
 }
 
 TestingHarness::TestingHarness(size_t numberOfThreads, size_t numberOfBuffers)
-    : bm(Memory::BufferManager::create(DEFAULT_BUFFER_SIZE, numberOfBuffers)), numberOfThreads(numberOfThreads)
+    : bm(BufferManager::create(DEFAULT_BUFFER_SIZE, numberOfBuffers)), numberOfThreads(numberOfThreads)
 {
 }
 

@@ -32,28 +32,28 @@ void runStoreTest(
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager);
+    AbstractBufferProvider& bufferManager);
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager);
+    AbstractBufferProvider& bufferManager);
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const Schema& schema,
     uint64_t entrySize,
     uint64_t pageSize,
-    const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,
-    const std::vector<Memory::TupleBuffer>& expectedRecordsAfterAppendAll,
+    const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
+    const std::vector<TupleBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager);
+    AbstractBufferProvider& bufferManager);
 
 }

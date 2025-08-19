@@ -44,8 +44,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 {
 }
 
-void CompiledExecutablePipelineStage::execute(
-    const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
+void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
@@ -53,7 +52,7 @@ void CompiledExecutablePipelineStage::execute(
     compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     CPPTRACE_TRY
@@ -62,7 +61,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
         /// NOLINTBEGIN(performance-unnecessary-value-param)
         const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                                   nautilus::val<const Memory::TupleBuffer*> recordBufferRef,
+                                                   nautilus::val<const TupleBuffer*> recordBufferRef,
                                                    nautilus::val<const Arena*> arenaRef)
         {
             auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);

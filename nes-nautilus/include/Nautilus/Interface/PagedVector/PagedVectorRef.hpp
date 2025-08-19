@@ -44,7 +44,7 @@ public:
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
     /// @param bufferProvider: Buffer provider used for acquiring memory for the write operation, if needed
-    void writeRecord(const Record& record, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+    void writeRecord(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
 
     /// @brief Reads the specified fields of a record from the pagedVectorRef
     /// @param pos record position in pagedVector
@@ -70,7 +70,7 @@ public:
         PagedVectorRef pagedVector,
         const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const nautilus::val<Memory::TupleBuffer*>& curPage,
+        const nautilus::val<TupleBuffer*>& curPage,
         const nautilus::val<uint64_t>& posOnPage,
         const nautilus::val<uint64_t>& pos,
         const nautilus::val<uint64_t>& numberOfTuplesInPagedVector);
@@ -87,7 +87,7 @@ private:
     nautilus::val<uint64_t> pos;
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
     nautilus::val<uint64_t> posOnPage;
-    nautilus::val<Memory::TupleBuffer*> curPage;
+    nautilus::val<TupleBuffer*> curPage;
     std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 

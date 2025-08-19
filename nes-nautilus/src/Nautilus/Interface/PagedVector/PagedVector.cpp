@@ -30,7 +30,7 @@
 namespace NES::Nautilus::Interface
 {
 
-void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
     PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
     PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
@@ -82,7 +82,7 @@ void PagedVector::copyFrom(const PagedVector& other)
     pages.addPages(other.pages);
 }
 
-const Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
+const TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.
     /// If an index exists for this, we get the tuple buffer
@@ -116,7 +116,7 @@ const PagedVector::TupleBufferWithCumulativeSum& PagedVector::PagesWrapper::oper
     return pages.at(index);
 }
 
-void PagedVector::PagesWrapper::addPage(const Memory::TupleBuffer& newPage)
+void PagedVector::PagesWrapper::addPage(const TupleBuffer& newPage)
 {
     updateCumulativeSumLastItem();
     pages.emplace_back(newPage);
@@ -172,13 +172,13 @@ uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
     return penultimateCumulativeSum + lastNumberOfTuples;
 }
 
-const Memory::TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
+const TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
 {
     PRECONDITION(not pages.empty(), "getLastPage() should be called after a page has been inserted!");
     return pages.back().buffer;
 }
 
-const Memory::TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
+const TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
 {
     PRECONDITION(not pages.empty(), "getFirstPage() should be called after a page has been inserted!");
     return pages.front().buffer;

@@ -107,13 +107,13 @@ namespace
 {
 void storeVarSized(
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProviderRef,
+    const nautilus::val<AbstractBufferProvider*>& bufferProviderRef,
     const nautilus::val<int8_t*>& memoryAddress,
     const VariableSizedData& variableSizedData)
 {
     nautilus::invoke(
         +[](ChainedHashMap* hashMap,
-            Memory::AbstractBufferProvider* bufferProvider,
+            AbstractBufferProvider* bufferProvider,
             const int8_t** memoryAddressInEntry,
             const int8_t* varSizedData,
             const uint64_t varSizedDataSize)
@@ -133,7 +133,7 @@ void storeVarSized(
 void ChainedEntryMemoryProvider::writeRecord(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const Record& record) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
@@ -157,7 +157,7 @@ void ChainedEntryMemoryProvider::writeRecord(
 void ChainedEntryMemoryProvider::writeEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))

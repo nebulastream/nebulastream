@@ -43,7 +43,7 @@ namespace NES::Sources
 
 SourceThread::SourceThread(
     OriginId originId,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<AbstractPoolProvider> poolProvider,
     size_t numOfLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
@@ -56,7 +56,7 @@ SourceThread::SourceThread(
 
 namespace detail
 {
-void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory::TupleBuffer& buffer)
+void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
 {
     /// set the origin id for this source
     buffer.setOriginId(originId);
@@ -77,8 +77,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
-
+using EmitFn = std::function<void(TupleBuffer, bool addBufferMetadata)>;
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -111,7 +110,7 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, Memory::AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+    const std::stop_token& stopToken, Source& source, AbstractBufferProvider& bufferProvider, const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source);
     while (!stopToken.stop_requested())
@@ -150,8 +149,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
 struct DestroyOnExit
 {
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     ~DestroyOnExit() { bufferProvider->destroy(); }
 };
 
@@ -161,7 +159,7 @@ void dataSourceThread(
     Source* source,
     SourceReturnType::EmitFunction emit,
     OriginId originId,
-    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
+    std::optional<std::shared_ptr<AbstractBufferProvider>> bufferProvider)
 {
     threadSetup(originId);
     if (!bufferProvider)
@@ -173,7 +171,7 @@ void dataSourceThread(
 
     const DestroyOnExit onExit{bufferProvider.value()};
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
+    const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {

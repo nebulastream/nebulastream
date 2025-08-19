@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 
 #include <cstdlib>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory
+namespace NES
 {
 
 void* NesDefaultMemoryAllocator::do_allocate(const size_t bytes, const size_t alignment)

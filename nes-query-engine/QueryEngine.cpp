@@ -135,8 +135,8 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-    std::function<bool(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
-    std::shared_ptr<Memory::AbstractBufferProvider> bm;
+    std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
@@ -145,21 +145,21 @@ struct DefaultPEC final : PipelineExecutionContext
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
-        std::shared_ptr<Memory::AbstractBufferProvider> bm,
-        std::function<bool(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler)
+        std::shared_ptr<AbstractBufferProvider> bm,
+        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler)
         : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId), pipelineId(pipelineId)
     {
     }
 
     [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
 
-    Memory::TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+    TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
 
-    bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
+    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
 
-    std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
+    std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bm; }
 
     PipelineId getPipelineId() const override { return pipelineId; }
 
@@ -244,7 +244,7 @@ public:
     bool emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
-        Memory::TupleBuffer buffer,
+        TupleBuffer buffer,
         BaseTask::onComplete complete,
         BaseTask::onFailure failure,
         const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
@@ -334,7 +334,7 @@ public:
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
-        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
         const size_t internalTaskQueueSize,
         const size_t admissionQueueSize)
         : listener(std::move(listener))
@@ -428,7 +428,7 @@ private:
     /// Order of destruction matters: TaskQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     detail::Queue admissionQueue;
@@ -463,7 +463,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
-            [&](const Memory::TupleBuffer& tupleBuffer, auto continuationPolicy)
+            [&](const TupleBuffer& tupleBuffer, auto continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
@@ -578,7 +578,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
         pool.bufferProvider,
-        [&](const Memory::TupleBuffer& tupleBuffer, auto policy)
+        [&](const TupleBuffer& tupleBuffer, auto policy)
         {
             if (terminating)
             {
@@ -724,7 +724,7 @@ QueryEngine::QueryEngine(
     const QueryEngineConfiguration& config,
     std::shared_ptr<QueryEngineStatisticListener> statListener,
     std::shared_ptr<AbstractQueryStatusListener> listener,
-    std::shared_ptr<Memory::BufferManager> bm)
+    std::shared_ptr<BufferManager> bm)
     : bufferManager(std::move(bm))
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))

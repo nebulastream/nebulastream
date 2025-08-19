@@ -30,7 +30,7 @@ void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionCon
     this->inputFormatterTask->stopTask();
 }
 
-void NES::InputFormatters::InputFormatterTaskPipeline::execute(const Memory::TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
+void NES::InputFormatters::InputFormatterTaskPipeline::execute(const TupleBuffer& rawTupleBuffer, PipelineExecutionContext& pec)
 {
     /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
     if (rawTupleBuffer.getBufferSize() == 0)

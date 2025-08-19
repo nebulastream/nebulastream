@@ -52,7 +52,7 @@ public:
     GeneratorSource(GeneratorSource&&) = delete;
     GeneratorSource& operator=(GeneratorSource&&) = delete;
 
-    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

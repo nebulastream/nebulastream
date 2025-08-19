@@ -126,7 +126,7 @@ ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::ra
     return entries[entryStartPos];
 }
 
-int8_t* ChainedHashMap::allocateSpaceForVarSized(Memory::AbstractBufferProvider* bufferProvider, const size_t neededSize)
+int8_t* ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
     auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize);
     if (not varSizedBuffer)
@@ -142,8 +142,7 @@ uint64_t ChainedHashMap::getNumberOfTuples() const
     return numberOfTuples;
 }
 
-AbstractHashMapEntry*
-ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider)
+AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
     if (entries == nullptr)

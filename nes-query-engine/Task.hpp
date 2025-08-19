@@ -84,7 +84,7 @@ struct WorkTask : BaseTask
         QueryId queryId,
         PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
-        Memory::TupleBuffer buf,
+        TupleBuffer buf,
         onComplete complete,
         onFailure failure)
         : BaseTask(queryId, std::move(complete), std::move(failure))
@@ -97,7 +97,7 @@ struct WorkTask : BaseTask
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
-    Memory::TupleBuffer buf;
+    TupleBuffer buf;
 };
 
 struct StartPipelineTask : BaseTask
