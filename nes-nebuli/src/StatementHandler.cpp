@@ -163,7 +163,7 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
 }
 
 QueryStatementHandler::QueryStatementHandler(
-    const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<CLI::LegacyOptimizer>& optimizer)
+    const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<LegacyOptimizer>& optimizer)
     : queryManager(queryManager), optimizer(optimizer)
 {
 }

@@ -25,7 +25,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const

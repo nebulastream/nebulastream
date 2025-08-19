@@ -21,7 +21,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-void NES::LegacyOptimizer::SinkBindingRule::apply(LogicalPlan& queryPlan) const
+void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
 {
     queryPlan = queryPlan.withRootOperators(
         queryPlan.getRootOperators()

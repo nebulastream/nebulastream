@@ -18,7 +18,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 class SinkBindingRule
 {

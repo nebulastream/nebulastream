@@ -121,11 +121,11 @@ namespace NES::CLI
 {
 
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
+CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
 {
 }
 
-SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
+CLI::SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
 {
 }
 
@@ -140,9 +140,9 @@ Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) c
     return schema;
 }
 
-std::vector<LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources) ///TODO: #1035
+std::vector<NES::LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources)
 {
-    std::vector<LogicalSource> boundSources{};
+    std::vector<NES::LogicalSource> boundSources{};
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {
@@ -160,7 +160,7 @@ std::vector<LogicalSource> YAMLBinder::bindRegisterLogicalSources(const std::vec
     return boundSources;
 }
 
-std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources)
+std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources)
 {
     std::vector<SourceDescriptor> boundSources{};
     /// Add physical sources to corresponding logical sources.
@@ -185,7 +185,7 @@ std::vector<SourceDescriptor> YAMLBinder::bindRegisterPhysicalSources(const std:
     return boundSources;
 }
 
-std::vector<Sinks::SinkDescriptor> YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
+std::vector<Sinks::SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
 {
     std::vector<Sinks::SinkDescriptor> boundSinks{};
     for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
@@ -200,7 +200,7 @@ std::vector<Sinks::SinkDescriptor> YAMLBinder::bindRegisterSinks(const std::vect
     return boundSinks;
 }
 
-LogicalPlan YAMLBinder::parseAndBind(std::istream& inputStream)
+LogicalPlan CLI::YAMLBinder::parseAndBind(std::istream& inputStream)
 {
     try
     {

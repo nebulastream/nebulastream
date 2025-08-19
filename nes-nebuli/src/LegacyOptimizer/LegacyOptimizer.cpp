@@ -22,18 +22,18 @@
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 
-namespace NES::CLI
+namespace NES
 {
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
-    const auto sinkBindingRule = LegacyOptimizer::SinkBindingRule{sinkCatalog}; ///TODO: #1035
-    const auto sourceInference = LegacyOptimizer::SourceInferencePhase{sourceCatalog};
-    const auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule{sourceCatalog};
-    constexpr auto typeInference = LegacyOptimizer::TypeInferencePhase{};
-    constexpr auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase{};
-    constexpr auto redundantUnionRemovalRule = LegacyOptimizer::RedundantUnionRemovalRule{};
-    constexpr auto redundantProjectionRemovalRule = LegacyOptimizer::RedundantProjectionRemovalRule{};
+    const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
+    const auto sourceInference = SourceInferencePhase{sourceCatalog};
+    const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
+    constexpr auto typeInference = TypeInferencePhase{};
+    constexpr auto originIdInferencePhase = OriginIdInferencePhase{};
+    constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
+    constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
     sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
