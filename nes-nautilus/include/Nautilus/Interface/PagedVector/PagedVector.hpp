@@ -34,6 +34,7 @@ public:
     struct TupleBufferWithCumulativeSum
     {
         explicit TupleBufferWithCumulativeSum(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
         size_t cumulativeSum{0};
         TupleBuffer buffer;
     };
@@ -41,7 +42,7 @@ public:
     PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+    void appendPageIfFull(AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void moveAllPages(PagedVector& other);
@@ -59,6 +60,7 @@ public:
     [[nodiscard]] const TupleBuffer& getLastPage() const { return pages.getLastPage(); }
 
     [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
+
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
 private:

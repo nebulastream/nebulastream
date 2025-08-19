@@ -32,7 +32,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 class ColumnarMemoryLayoutTest : public Testing::BaseUnitTest
 {
@@ -87,7 +87,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const auto capacity = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
     ASSERT_EQ(testBuffer->getCapacity(), capacity);
@@ -113,7 +113,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
     testBuffer->pushRecordToBuffer(writeRecord);
@@ -140,7 +140,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
 
@@ -176,7 +176,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
 
@@ -217,7 +217,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes());
 
@@ -270,7 +270,7 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     ASSERT_NO_THROW((ColumnLayoutField<uint8_t, true>::create("t1", columnLayout, tupleBuffer)));
     ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
@@ -331,7 +331,7 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
+    const auto testBuffer = std::make_unique<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
 

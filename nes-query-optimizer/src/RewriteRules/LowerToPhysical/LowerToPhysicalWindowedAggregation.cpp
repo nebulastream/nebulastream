@@ -115,8 +115,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
-        auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-            configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
+        auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
         auto memoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
 
         auto name = descriptor->getName();

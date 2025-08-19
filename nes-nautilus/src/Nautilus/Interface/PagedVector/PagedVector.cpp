@@ -30,7 +30,7 @@
 namespace NES::Nautilus::Interface
 {
 
-void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
 {
     PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
     PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");

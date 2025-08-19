@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 /**
@@ -71,8 +71,8 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
 }
 
 template <class T, bool boundaryChecks>
-ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::create(
-    const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
+ColumnLayoutField<T, boundaryChecks>
+ColumnLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
     INVARIANT(fieldIndex.has_value(), "Could not find fieldIndex for {}", fieldName);

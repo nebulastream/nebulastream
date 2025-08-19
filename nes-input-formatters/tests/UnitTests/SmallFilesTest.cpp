@@ -223,16 +223,16 @@ public:
             bool append = false;
             for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
             {
-                auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, setupResult.schema);
+                auto actualResultTestBuffer = TestTupleBuffer::createTestTupleBuffer(buffer, setupResult.schema);
                 actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
                 const auto currentBufferAsString = actualResultTestBuffer.toString(
-                    setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                    setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
                 writeBinaryToFile(currentBufferAsString, resultFilePath, append);
                 append = true;
             }
             const auto lastBufferAsString
-                = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), setupResult.schema)
-                      .toString(setupResult.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                = TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), setupResult.schema)
+                      .toString(setupResult.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
             writeBinaryToFile(lastBufferAsString, resultFilePath, append);
         }
         else
