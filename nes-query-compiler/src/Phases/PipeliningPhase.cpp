@@ -51,7 +51,7 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
+    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
@@ -67,7 +67,7 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
     auto schema = wrappedOpAfterScan.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
+    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
     const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
@@ -87,7 +87,7 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(configuredBufferSize, schema.value());
+    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();

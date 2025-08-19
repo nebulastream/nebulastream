@@ -69,8 +69,8 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
+std::vector<TupleBuffer>
+NautilusTestUtils::createMonotonicallyIncreasingValues(const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
@@ -209,8 +209,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto varSizedPosition
-                                = Memory::MemoryLayouts::writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal).value();
+                            const auto varSizedPosition = writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal).value();
                             const auto varSizedDataBuffer = inputBuffer->loadChildBuffer(varSizedPosition);
                             return varSizedDataBuffer.getBuffer();
                         },
@@ -238,9 +237,9 @@ void NautilusTestUtils::compileFillBufferFunction(
     options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
     auto compiledFunction = engine.registerFunction(tmp);
 
-    compiledFunctions[{functionName, backend}] = std::make_unique<
-        FunctionWrapper<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
-        std::move(compiledFunction));
+    compiledFunctions[{functionName, backend}]
+        = std::make_unique<FunctionWrapper<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
+            std::move(compiledFunction));
 }
 
 std::string NautilusTestUtils::compareRecords(

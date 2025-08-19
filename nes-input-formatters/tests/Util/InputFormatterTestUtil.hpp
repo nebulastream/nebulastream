@@ -255,8 +255,8 @@ TupleBuffer
 createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
-    auto rowLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferManager.getBufferSize(), schema);
-    auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
+    auto rowLayout = std::make_shared<RowLayout>(bufferManager.getBufferSize(), schema);
+    auto testTupleBuffer = std::make_unique<TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
 
     for (const auto& testTuple : tuples)
     {
@@ -299,17 +299,17 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
             {
                 /// If specified, print the contents of the buffers.
                 auto actualResultTestBuffer
-                    = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
+                    = TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
                 actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
-                auto expectedTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(
+                auto expectedTestBuffer = TestTupleBuffer::createTestTupleBuffer(
                     testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
                 expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
                 NES_DEBUG(
                     "\n Actual result buffer:\n{} Expected result buffer:\n{}",
                     actualResultTestBuffer.toString(
-                        testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
+                        testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
                     expectedTestBuffer.toString(
-                        testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
+                        testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
             isValid &= checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeOfSchemaInBytes());

@@ -22,7 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 /**
  * @brief The RowLayoutField enables assesses to a specific field in a row layout.
@@ -36,8 +36,7 @@ template <class T, bool boundaryChecks = true>
 class RowLayoutField
 {
 public:
-    static inline RowLayoutField<T, boundaryChecks>
-    create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
+    static inline RowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
 
     static inline RowLayoutField<T, boundaryChecks>
     create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);

@@ -11,17 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/RowLayout.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 RowLayout::RowLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bufferSize, std::move(schema))

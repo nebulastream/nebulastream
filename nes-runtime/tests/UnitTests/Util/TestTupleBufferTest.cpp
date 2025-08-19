@@ -33,7 +33,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 #define VAR_SIZED_DATA_TYPES uint16_t, std::string, double, std::string

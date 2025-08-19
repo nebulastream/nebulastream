@@ -38,7 +38,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : address(address), physicalType(std::move(physicalType))

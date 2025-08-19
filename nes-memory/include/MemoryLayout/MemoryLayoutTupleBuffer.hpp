@@ -17,7 +17,7 @@
 #include <cstring>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 /**

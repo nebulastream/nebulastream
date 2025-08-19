@@ -66,11 +66,13 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         }
 
         TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+
         [[nodiscard]] WorkerThreadId getId() const override { return INITIAL<WorkerThreadId>; }
 
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
 
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
+
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
@@ -83,8 +85,7 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
-        MockedPipelineContext(
-            folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
+        MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
         }
@@ -111,7 +112,7 @@ public:
     EmitPhysicalOperator createUUT()
     {
         auto schema = Schema{}.addField("A_FIELD", DataType::Type::UINT32);
-        auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(512, schema);
+        auto layout = std::make_shared<RowLayout>(512, schema);
         EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout)};
         handlers.emplace(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
         return emit;

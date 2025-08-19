@@ -18,7 +18,7 @@
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, const uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity)

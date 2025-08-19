@@ -22,7 +22,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 class MemoryLayoutTupleBuffer;
@@ -36,8 +36,7 @@ std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx)
 /// @param value
 /// @param bufferProvider
 /// @return Index of the child buffer
-std::optional<uint32_t>
-writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider);
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider);
 
 /// @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.
 /// To this end, it requires the definition of an schema and a specific buffer size.

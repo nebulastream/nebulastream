@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -22,11 +23,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Memory::MemoryLayouts
+namespace NES
 {
 
 std::string readVarSizedData(const TupleBuffer& buffer, const uint64_t childBufferIdx)
@@ -38,8 +38,7 @@ std::string readVarSizedData(const TupleBuffer& buffer, const uint64_t childBuff
     return varSizedData;
 }
 
-std::optional<uint32_t>
-writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider)
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
     auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));

@@ -60,7 +60,7 @@ public:
 private:
     nautilus::val<PagedVector*> pagedVectorRef;
     std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
+    nautilus::val<MemoryLayout*> memoryLayout;
 };
 
 class PagedVectorRefIter
