@@ -38,12 +38,12 @@
 
 namespace NES
 {
-class SourceCatalogTest : public NES::Testing::BaseUnitTest
+class SourceCatalogTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("SourceCatalogTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("SourceCatalogTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SourceCatalog test class.");
     }
 

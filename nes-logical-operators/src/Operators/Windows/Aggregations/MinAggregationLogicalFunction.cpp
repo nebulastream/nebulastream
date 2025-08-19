@@ -80,9 +80,9 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
-NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

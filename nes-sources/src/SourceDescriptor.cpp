@@ -151,7 +151,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
 
     /// Serialize parser config.
-    auto* const serializedParserConfig = NES::SerializableParserConfig().New();
+    auto* const serializedParserConfig = SerializableParserConfig().New();
     serializedParserConfig->set_type(parserConfig.parserType);
     serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);

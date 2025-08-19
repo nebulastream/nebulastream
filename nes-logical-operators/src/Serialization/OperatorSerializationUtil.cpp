@@ -98,7 +98,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             config[key] = protoToDescriptorConfigType(value);
         }
 
-        auto registryArgument = NES::LogicalOperatorRegistryArguments{
+        auto registryArgument = LogicalOperatorRegistryArguments{
             .id = OperatorId(serializedOperator.operator_id()),
             .inputOriginIds = {}, /// inputOriginIds - will be populated from operator_().input_origin_lists
             .outputOriginIds = {}, /// outputOriginIds - will be populated from operator_().output_origin_ids

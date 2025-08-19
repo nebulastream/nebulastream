@@ -57,7 +57,7 @@ std::string SinkDescriptor::getSinkName() const
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
-    auto sinkValidationRegistryArguments = NES::Sinks::SinkValidationRegistryArguments{std::move(configPairs)};
+    auto sinkValidationRegistryArguments = Sinks::SinkValidationRegistryArguments{std::move(configPairs)};
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
 }
 

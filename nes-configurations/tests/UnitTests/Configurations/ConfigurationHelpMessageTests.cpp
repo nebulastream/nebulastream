@@ -36,7 +36,7 @@ class ConfigHelpMessageTest : public Testing::BaseIntegrationTest
 public:
     static void SetUpTestSuite()
     {
-        NES::Logger::setupLogging("ConfigHelpMessageTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("ConfigHelpMessageTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup Configuration Help Message test class.");
     }
 };

@@ -298,12 +298,12 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
+LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     const auto functionVariant = arguments.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
     const auto asterisk = std::get<bool>(arguments.config[ProjectionLogicalOperator::ConfigParameters::ASTERISK]);
 
-    if (const auto* projection = std::get_if<NES::ProjectionList>(&functionVariant))
+    if (const auto* projection = std::get_if<ProjectionList>(&functionVariant))
     {
         auto logicalOperator = ProjectionLogicalOperator(
             projection->projections()

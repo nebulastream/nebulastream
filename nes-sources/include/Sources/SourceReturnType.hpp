@@ -30,7 +30,7 @@ struct Error
 
 struct Data
 {
-    NES::Memory::TupleBuffer buffer;
+    Memory::TupleBuffer buffer;
 };
 
 struct EoS

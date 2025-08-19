@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 
 #include <memory>
 #include <optional>
@@ -20,7 +21,6 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
-#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -61,7 +61,7 @@ void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, 
 void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PRECONDITION(
-        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
+        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)), /// TODO #1035
         "Expects the local state to be of type WatermarkState");
     auto* const state = dynamic_cast<WatermarkState*>(executionCtx.getLocalState(id));
     executionCtx.watermarkTs = state->currentWatermark;

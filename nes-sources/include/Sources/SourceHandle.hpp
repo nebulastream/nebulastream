@@ -40,7 +40,7 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+        std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
         size_t numberOfBuffersInLocalPool,
         std::unique_ptr<Source> sourceImplementation);
 

@@ -92,9 +92,9 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
-NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
+SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();

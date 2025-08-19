@@ -126,7 +126,7 @@ public:
 
     struct SetupResult
     {
-        NES::Schema schema;
+        Schema schema;
         size_t numberOfRequiredFormattedBuffers;
         std::string currentTestFileName;
         std::string currentTestFilePath;
@@ -149,7 +149,7 @@ public:
 
     SetupResult setupTest(
         const TestConfig& testConfig,
-        InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer>& rawBuffers,
+        InputFormatterTestUtil::ThreadSafeVector<Memory::TupleBuffer>& rawBuffers,
         size_t numberOfExpectedRawBuffers,
         size_t numberOfRequiredSourceBuffers)
     {
@@ -185,13 +185,13 @@ public:
     }
 
     static bool compareResults(
-        const std::vector<std::vector<NES::Memory::TupleBuffer>>& resultBuffers,
+        const std::vector<std::vector<Memory::TupleBuffer>>& resultBuffers,
         const TestConfig& testConfig,
         const SetupResult& setupResult)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
-        std::vector<NES::Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        std::vector<Memory::TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
             resultBufferVec.begin(),
             resultBufferVec.end(),
@@ -247,7 +247,7 @@ public:
     {
         const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig);
         /// Create vector for result buffers and create emit function to collect buffers from source
-        InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer> rawBuffers;
+        InputFormatterTestUtil::ThreadSafeVector<Memory::TupleBuffer> rawBuffers;
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
@@ -260,7 +260,7 @@ public:
             auto testBufferManager
                 = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
             auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
-            auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
+            auto resultBuffers = std::make_shared<std::vector<std::vector<Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);

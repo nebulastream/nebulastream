@@ -52,7 +52,7 @@ public:
     GeneratorSource(GeneratorSource&&) = delete;
     GeneratorSource& operator=(GeneratorSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -84,7 +84,7 @@ struct ConfigParametersGenerator
             if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
             {
                 NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                throw NES::InvalidConfigParameter(
+                throw InvalidConfigParameter(
                     "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
             }
             switch (optToken.value().asEnum<GeneratorStop>().value())
@@ -97,7 +97,7 @@ struct ConfigParametersGenerator
                 }
                 default: {
                     NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                    throw NES::InvalidConfigParameter(
+                    throw InvalidConfigParameter(
                         "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
                 }
             }
@@ -117,7 +117,7 @@ struct ConfigParametersGenerator
             if (schema.empty())
             {
                 NES_ERROR("Generator schema cannot be empty!")
-                throw NES::InvalidConfigParameter("Generator schema cannot be empty!");
+                throw InvalidConfigParameter("Generator schema cannot be empty!");
             }
             auto lines = schema | std::ranges::views::split('\n')
                 | std::views::transform([](const auto& subView) { return std::string_view(subView); })
@@ -138,7 +138,7 @@ struct ConfigParametersGenerator
                 if (!validatorExists)
                 {
                     NES_ERROR("Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
-                    throw NES::InvalidConfigParameter(
+                    throw InvalidConfigParameter(
                         "Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
                 }
             }

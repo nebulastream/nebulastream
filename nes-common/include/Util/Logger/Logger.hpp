@@ -59,7 +59,7 @@ struct LogCaller<LogLevel::LOG_INFO>
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
-        if (auto instance = NES::Logger::getInstance())
+        if (auto instance = Logger::getInstance())
         {
             instance->info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
         }
@@ -72,7 +72,7 @@ struct LogCaller<LogLevel::LOG_TRACE>
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
-        if (auto instance = NES::Logger::getInstance())
+        if (auto instance = Logger::getInstance())
         {
             instance->trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
         }
@@ -85,7 +85,7 @@ struct LogCaller<LogLevel::LOG_DEBUG>
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
-        if (auto instance = NES::Logger::getInstance())
+        if (auto instance = Logger::getInstance())
         {
             instance->debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
         }
@@ -98,7 +98,7 @@ struct LogCaller<LogLevel::LOG_ERROR>
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
-        if (auto instance = NES::Logger::getInstance())
+        if (auto instance = Logger::getInstance())
         {
             instance->error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
         }
@@ -111,7 +111,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
-        if (auto instance = NES::Logger::getInstance())
+        if (auto instance = Logger::getInstance())
         {
             instance->warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
         }
@@ -127,10 +127,11 @@ struct LogCaller<LogLevel::LOG_WARNING>
 
 
 /// @brief this is the new logging macro that is the entry point for logging calls
+/// TODO #1035: remove namespace NES::Logger
 #define NES_LOG(LEVEL, ...) \
     do \
     { \
-        auto constexpr __level = NES::getLogLevel(LEVEL); \
+        auto constexpr __level = getLogLevel(LEVEL); \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) \
         { \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
@@ -143,7 +144,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
     } while (0)
 
 /// Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
+#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__); /// TODO #1035: remove namespace LogLevel
 /// Creates a log message with log level info.
 #define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
 /// Creates a log message with log level debug.

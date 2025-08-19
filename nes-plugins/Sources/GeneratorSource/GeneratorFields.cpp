@@ -42,7 +42,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
         const auto opt = Util::from_chars<T>(parameter);
         if (!opt)
         {
-            throw NES::InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
+            throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
     auto view = rawSchemaLine | std::ranges::views::split(' ')
@@ -51,7 +51,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
-        throw NES::InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
+        throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
     }
     const auto type = parameters[1];
     const auto start = parameters[2];
@@ -60,7 +60,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 
     if (type != "FLOAT64" && type != "FLOAT32" && type != "INT64" && type != "UINT64")
     {
-        throw NES::InvalidConfigParameter("Invalid SequenceField type of {}!", type);
+        throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);
     }
     if (type == "FLOAT64")
     {
@@ -130,7 +130,7 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
     }
     else
     {
-        throw NES::InvalidConfigParameter("Unknown Type \"{}\" in: {}", type, rawSchemaLine);
+        throw InvalidConfigParameter("Unknown Type \"{}\" in: {}", type, rawSchemaLine);
     }
     this->stop = false;
 }
@@ -192,7 +192,7 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     const std::vector parameters(view.begin(), view.end());
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
-        throw NES::InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
+        throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
     }
 
     const auto type = parameters[1];
@@ -201,17 +201,17 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
 
     if (type != "FLOAT64" || type == "FLOAT32")
     {
-        throw NES::InvalidConfigParameter("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
+        throw InvalidConfigParameter("Invalid Type in NORMAL_DISTRIBUTION, supported are only FLOAT32 or FLOAT64: {}", rawSchemaLine);
     }
     const auto parsedMean = Util::from_chars<double>(mean);
     const auto parsedStdDev = Util::from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
     {
-        throw NES::InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
+        throw InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
     }
     if (parsedStdDev < 0.0)
     {
-        throw NES::InvalidConfigParameter("Stddev must be non-negative");
+        throw InvalidConfigParameter("Stddev must be non-negative");
     }
 }
 
