@@ -102,21 +102,21 @@ nlohmann::json GoogleEventTracePrinter::createTraceEvent(
 
 void GoogleEventTracePrinter::writeTraceHeader()
 {
-    if (!headerWritten)
+    bool expected = false;
+    if (headerWritten.compare_exchange_strong(expected, true))
     {
         file << "{\n";
         file << "  \"traceEvents\": [\n";
-        headerWritten = true;
     }
 }
 
 void GoogleEventTracePrinter::writeTraceFooter()
 {
-    if (!footerWritten)
+    bool expected = false;
+    if (footerWritten.compare_exchange_strong(expected, true))
     {
         file << "\n  ]\n";
         file << "}\n";
-        footerWritten = true;
     }
 }
 
@@ -405,10 +405,14 @@ void GoogleEventTracePrinter::onEvent(SystemEvent event)
     events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
 }
 
-GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& path)
-    : file(path, std::ios::out | std::ios::trunc), traceThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken); })
+GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& path) : file(path, std::ios::out | std::ios::trunc)
 {
     NES_INFO("Writing Google Event Trace to: {}", path);
+}
+
+void GoogleEventTracePrinter::start()
+{
+    traceThread = std::jthread([this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
 }
 
 GoogleEventTracePrinter::~GoogleEventTracePrinter()
