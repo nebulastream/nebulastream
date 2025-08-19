@@ -71,6 +71,11 @@ struct DefaultTrait : TraitConcept
         trait.set_trait_type(getType().name());
         return trait;
     }
+
+    friend Derived;
+
+private:
+    DefaultTrait() = default;
 };
 
 /// A type-erased wrapper for traits.

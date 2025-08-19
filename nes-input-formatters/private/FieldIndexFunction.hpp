@@ -73,6 +73,9 @@ public:
         const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
         Memory::AbstractBufferProvider& bufferProvider);
 
+    friend Derived;
+
+private:
     FieldIndexFunction()
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
@@ -80,6 +83,7 @@ public:
         static_assert(std::is_constructible_v<Derived, Memory::AbstractBufferProvider&>, "Derived class must have a default constructor");
     };
 
+public:
     ~FieldIndexFunction() = default;
 
     [[nodiscard]] FieldIndex getOffsetOfFirstTupleDelimiter() const
