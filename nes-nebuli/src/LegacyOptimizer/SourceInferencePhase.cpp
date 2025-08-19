@@ -23,7 +23,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void SourceInferencePhase::apply(LogicalPlan& queryPlan) const

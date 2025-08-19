@@ -27,7 +27,7 @@
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 namespace

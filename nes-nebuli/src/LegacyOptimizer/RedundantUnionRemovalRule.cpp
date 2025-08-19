@@ -22,7 +22,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void RedundantUnionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
