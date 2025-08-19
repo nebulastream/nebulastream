@@ -34,7 +34,7 @@ namespace NES
 
 namespace
 {
-Sources::SourceReturnType::EmitFunction emitFunction(
+SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -42,11 +42,11 @@ Sources::SourceReturnType::EmitFunction emitFunction(
     WorkEmitter& emitter)
 {
     return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               const OriginId sourceId, Sources::SourceReturnType::SourceReturnType event)
+               const OriginId sourceId, SourceReturnType::SourceReturnType event)
     {
         std::visit(
             Overloaded{
-                [&](const Sources::SourceReturnType::Data& data)
+                [&](const SourceReturnType::Data& data)
                 {
                     for (const auto& successor : successors)
                     {
@@ -58,13 +58,12 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
                 },
-                [&](Sources::SourceReturnType::EoS)
+                [&](SourceReturnType::EoS)
                 {
                     ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
                     controller.initializeSourceStop(queryId, sourceId, source);
                 },
-                [&](Sources::SourceReturnType::Error error)
-                { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
+                [&](SourceReturnType::Error error) { controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex)); }},
             std::move(event));
     };
 }
@@ -77,7 +76,7 @@ OriginId RunningSource::getOriginId() const
 
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::unique_ptr<Sources::SourceHandle> source,
+    std::unique_ptr<SourceHandle> source,
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
     std::function<void(Exception)> unregisterWithError)
     : successors(std::move(successors))
@@ -89,7 +88,7 @@ RunningSource::RunningSource(
 
 std::shared_ptr<RunningSource> RunningSource::create(
     QueryId queryId,
-    std::unique_ptr<Sources::SourceHandle> source,
+    std::unique_ptr<SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
     std::function<void(Exception)> unregisterWithError,
@@ -108,7 +107,7 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (source->tryStop(std::chrono::milliseconds(0)) == Sources::SourceReturnType::TryStopResult::TIMEOUT)
+        if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
         {
             ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
         }
@@ -127,7 +126,7 @@ bool RunningSource::attemptUnregister()
     return false;
 }
 
-Sources::SourceReturnType::TryStopResult RunningSource::tryStop() const
+SourceReturnType::TryStopResult RunningSource::tryStop() const
 {
     return this->source->tryStop(std::chrono::milliseconds(0));
 }

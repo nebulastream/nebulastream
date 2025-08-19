@@ -72,15 +72,15 @@ public:
 
 struct RecordingEmitFunction
 {
-    void operator()(const OriginId, Sources::SourceReturnType::SourceReturnType emittedData)
+    void operator()(const OriginId, SourceReturnType::SourceReturnType emittedData)
     {
         auto value = std::visit(
-            [&]<typename T>(T emitted) -> Sources::SourceReturnType::SourceReturnType
+            [&]<typename T>(T emitted) -> SourceReturnType::SourceReturnType
             {
-                if constexpr (std::same_as<T, Sources::SourceReturnType::Data>)
+                if constexpr (std::same_as<T, SourceReturnType::Data>)
                 {
                     /// Release old Buffer
-                    return Sources::SourceReturnType::Data{Testing::copyBuffer(emitted.buffer, bm)};
+                    return SourceReturnType::Data{Testing::copyBuffer(emitted.buffer, bm)};
                 }
                 else
                 {
@@ -93,7 +93,7 @@ struct RecordingEmitFunction
     }
 
     AbstractBufferProvider& bm;
-    folly::Synchronized<std::vector<Sources::SourceReturnType::SourceReturnType>, std::mutex> recordedEmits;
+    folly::Synchronized<std::vector<SourceReturnType::SourceReturnType>, std::mutex> recordedEmits;
     std::condition_variable block;
 };
 
@@ -109,7 +109,7 @@ void wait_for_emits(RecordingEmitFunction& recorder, size_t numberOfEmits, std::
         << "Timeout waiting for " << numberOfEmits << " emits";
 }
 
-void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_location location = std::source_location::current())
+void verify_non_blocking_stop(SourceThread& sourceThread, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_stop");
     auto calledStop = std::chrono::high_resolution_clock::now();
@@ -120,9 +120,7 @@ void verify_non_blocking_stop(Sources::SourceThread& sourceThread, std::source_l
 }
 
 void verify_non_blocking_start(
-    Sources::SourceThread& sourceThread,
-    Sources::SourceReturnType::EmitFunction emitFn,
-    std::source_location location = std::source_location::current())
+    SourceThread& sourceThread, SourceReturnType::EmitFunction emitFn, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_start");
     auto calledStart = std::chrono::high_resolution_clock::now();
@@ -158,7 +156,7 @@ void verify_number_of_emits(
     for (size_t i = 0; i < numberOfEmits; ++i)
     {
         auto& emitted = recorder.recordedEmits.lock()->at(i);
-        if (auto* data = std::get_if<Sources::SourceReturnType::Data>(&emitted))
+        if (auto* data = std::get_if<SourceReturnType::Data>(&emitted))
         {
             sequenceNumbers.push_back(data->buffer.getSequenceNumber());
         }
@@ -175,13 +173,12 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     {
-        Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread,
-            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
     }
 
     verify_no_events(recorder);
@@ -194,10 +191,10 @@ TEST_F(SourceThreadTest, NoOpDestruction)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     {
-        const Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        const SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -210,22 +207,21 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectError("I should fail");
     {
-        Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread,
-            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
         wait_for_emits(recorder, 3);
         verify_non_blocking_stop(sourceThread);
     }
 
     verify_number_of_emits(recorder, 3);
-    verify_last_event<Sources::SourceReturnType::Error>(recorder);
+    verify_last_event<SourceReturnType::Error>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed()) << "The SourceThread should attempt to close the implementation if the source was started";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation regardless";
@@ -235,20 +231,19 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
-        Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread,
-            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
         wait_for_emits(recorder, 1);
         verify_non_blocking_stop(sourceThread);
     }
 
     verify_number_of_emits(recorder, 1);
-    verify_last_event<Sources::SourceReturnType::Error>(recorder);
+    verify_last_event<SourceReturnType::Error>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_FALSE(control->wasClosed()) << "The SourceThread should not close the implementation if the source was never started";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation regardless";
@@ -258,22 +253,21 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread,
-            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
         wait_for_emits(recorder, 3);
         verify_non_blocking_stop(sourceThread);
     }
 
     verify_number_of_emits(recorder, 3);
-    verify_last_event<Sources::SourceReturnType::Data>(recorder);
+    verify_last_event<SourceReturnType::Data>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
@@ -283,17 +277,16 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
-    auto control = std::make_shared<Sources::TestSourceControl>();
+    auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        Sources::SourceThread sourceThread(
-            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
-            sourceThread,
-            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+            sourceThread, [&](const OriginId originId, SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
         wait_for_emits(recorder, 3);
         control->injectEoS();
         wait_for_emits(recorder, 4);
@@ -301,7 +294,7 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     }
 
     verify_number_of_emits(recorder, 4);
-    verify_last_event<Sources::SourceReturnType::EoS>(recorder);
+    verify_last_event<SourceReturnType::EoS>(recorder);
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());

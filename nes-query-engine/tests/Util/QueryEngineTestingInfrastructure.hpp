@@ -79,10 +79,10 @@ bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
-class TestQueryStatisticListener : public QueryEngineStatisticListener ///TODO: 1035
+class TestQueryStatisticListener : public QueryEngineStatisticListener
 {
 public:
-    MOCK_METHOD(void, onEvent, (Event), (override)); ///TODO: 1035
+    MOCK_METHOD(void, onEvent, (Event), (override));
 };
 
 /// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
@@ -107,7 +107,7 @@ struct ExpectStats
     void apply(Name v) \
     { \
         EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
-    }///TODO: 1035
+    } /// TODO #1035: remove namespace testing
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
     STAT_TYPE(QueryStopRequest);
@@ -390,7 +390,7 @@ struct QueryPlanBuilder
         std::unordered_map<identifier_t, OriginId> sourceIds;
         std::unordered_map<identifier_t, PipelineId> pipelineIds;
 
-        std::unordered_map<identifier_t, std::shared_ptr<Sources::TestSourceControl>> sourceCtrls;
+        std::unordered_map<identifier_t, std::shared_ptr<TestSourceControl>> sourceCtrls;
         std::unordered_map<identifier_t, std::shared_ptr<TestSinkController>> sinkCtrls;
         std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
         std::unordered_map<identifier_t, ExecutablePipelineStage*> stages;
@@ -428,14 +428,14 @@ struct TestingHarness
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
     std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;
-    std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<Sources::TestSourceControl>> sourceControls;
+    std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestSourceControl>> sourceControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestSinkController>> sinkControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestPipelineController>> pipelineControls;
     std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryTermination;
     std::unordered_map<QueryId, std::shared_future<void>> queryTerminationFutures;
     std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryRunning;
     std::unordered_map<QueryId, std::shared_future<void>> queryRunningFutures;
-    std::unordered_map<std::shared_ptr<SourceDescriptor>, std::unique_ptr<Sources::SourceHandle>> unusedSources;
+    std::unordered_map<std::shared_ptr<SourceDescriptor>, std::unique_ptr<SourceHandle>> unusedSources;
 
     std::unordered_map<QueryPlanBuilder::identifier_t, OriginId> sourceIds;
     std::unordered_map<QueryPlanBuilder::identifier_t, PipelineId> pipelineIds;
@@ -548,10 +548,10 @@ struct DataThread
         }
     }
 
-    explicit DataThread(std::vector<std::shared_ptr<Sources::TestSourceControl>> sources) : sources(std::move(sources)) { }
+    explicit DataThread(std::vector<std::shared_ptr<TestSourceControl>> sources) : sources(std::move(sources)) { }
 
 private:
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sources;
+    std::vector<std::shared_ptr<TestSourceControl>> sources;
     size_t failAfterBuffers = 0;
 };
 
@@ -561,7 +561,7 @@ class DataGenerator
     std::jthread thread;
 
 public:
-    void start(std::vector<std::shared_ptr<Sources::TestSourceControl>> sources)
+    void start(std::vector<std::shared_ptr<TestSourceControl>> sources)
     {
         thread = std::jthread(DataThread<FailurePolicy>{std::move(sources)});
     }

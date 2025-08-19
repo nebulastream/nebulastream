@@ -140,12 +140,11 @@ public:
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
+std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
-std::unique_ptr<Sources::SourceHandle> createFileSource(
+std::unique_ptr<SourceHandle> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -189,8 +188,7 @@ struct TestHandle
     }
 };
 
-inline bool
-checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
+inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
 {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
@@ -251,8 +249,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
-TupleBuffer
-createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+TupleBuffer createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto rowLayout = std::make_shared<RowLayout>(bufferManager.getBufferSize(), schema);
@@ -298,18 +295,15 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
             if (PrintDebug)
             {
                 /// If specified, print the contents of the buffers.
-                auto actualResultTestBuffer
-                    = TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
+                auto actualResultTestBuffer = TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
                 actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
-                auto expectedTestBuffer = TestTupleBuffer::createTestTupleBuffer(
-                    testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
+                auto expectedTestBuffer
+                    = TestTupleBuffer::createTestTupleBuffer(testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
                 expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
                 NES_DEBUG(
                     "\n Actual result buffer:\n{} Expected result buffer:\n{}",
-                    actualResultTestBuffer.toString(
-                        testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
-                    expectedTestBuffer.toString(
-                        testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
+                    actualResultTestBuffer.toString(testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
+                    expectedTestBuffer.toString(testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
             isValid &= checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeOfSchemaInBytes());
@@ -344,8 +338,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
     std::shared_ptr<BufferManager> formattedBufferManager
         = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
-    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers
-        = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
@@ -362,8 +355,7 @@ template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     const std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask
-        = provideInputFormatterTask(
-            OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+        = provideInputFormatterTask(OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)

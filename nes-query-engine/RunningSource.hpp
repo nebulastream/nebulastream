@@ -41,7 +41,7 @@ public:
     /// UnRegistering a source should not block, but it may not succeed (immediately), the tryUnregister
     static std::shared_ptr<RunningSource> create(
         QueryId queryId,
-        std::unique_ptr<Sources::SourceHandle> source,
+        std::unique_ptr<SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
         std::function<void(Exception)> unregisterWithError,
@@ -60,17 +60,17 @@ public:
     void fail(Exception exception) const;
 
     /// Calls the underlying `tryStop`
-    [[nodiscard]] Sources::SourceReturnType::TryStopResult tryStop() const;
+    [[nodiscard]] SourceReturnType::TryStopResult tryStop() const;
 
 private:
     RunningSource(
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::unique_ptr<Sources::SourceHandle> source,
+        std::unique_ptr<SourceHandle> source,
         std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
         std::function<void(Exception)> unregisterWithError);
 
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
-    std::unique_ptr<Sources::SourceHandle> source;
+    std::unique_ptr<SourceHandle> source;
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister;
     std::function<void(Exception)> unregisterWithError;
 };

@@ -207,7 +207,7 @@ void RunningQueryPlanNode::fail(Exception exception) const
 }
 
 std::
-    pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
+    pair<std::vector<std::pair<std::unique_ptr<SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
         QueryId queryId,
         ExecutableQueryPlan& queryPlan,
         std::function<void(Exception)> unregisterWithError,
@@ -215,7 +215,7 @@ std::
         const CallbackRef& pipelineSetupCallbackRef,
         WorkEmitter& emitter)
 {
-    std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
+    std::vector<std::pair<std::unique_ptr<SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
     std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
     std::unordered_map<ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
     std::function<std::shared_ptr<RunningQueryPlanNode>(ExecutablePipeline*)> getOrCreate = [&](ExecutablePipeline* pipeline)
@@ -330,7 +330,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                                 ENGINE_LOG_INFO("Stopping Source with OriginId {}", id);
                                 if (const auto it = internal.sources.find(id); it != internal.sources.end())
                                 {
-                                    if (it->second->tryStop() != Sources::SourceReturnType::TryStopResult::SUCCESS)
+                                    if (it->second->tryStop() != SourceReturnType::TryStopResult::SUCCESS)
                                     {
                                         return false;
                                     }

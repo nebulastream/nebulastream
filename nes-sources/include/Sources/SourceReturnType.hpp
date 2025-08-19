@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources::SourceReturnType
+namespace NES::SourceReturnType
 {
 /// Todo #237: Improve error handling in sources
 struct Error

@@ -25,7 +25,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sources::SourceValidationGeneratedRegistrar
+namespace NES
 {
 
 /// declaration of register functions for 'Sources'
@@ -37,9 +37,9 @@ namespace NES
 
 template <>
 inline void
-Registrar<Sources::SourceValidationRegistry, std::string, Sources::SourceValidationRegistryReturnType, Sources::SourceValidationRegistryArguments>::registerAll(Registry<Registrar>& registry)
+Registrar<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>::registerAll(Registry<Registrar>& registry)
 {
-    using namespace NES::Sources::SourceValidationGeneratedRegistrar;
+    using namespace NES;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

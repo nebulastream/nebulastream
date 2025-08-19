@@ -36,7 +36,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
@@ -77,8 +77,7 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str;
 }
 
-SourceValidationRegistryReturnType
-SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }

@@ -21,7 +21,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 /// Source is the interface for all sources that read data into TupleBuffers.
@@ -51,4 +51,4 @@ protected:
 
 }
 
-FMT_OSTREAM(NES::Sources::Source);
+FMT_OSTREAM(NES::Source);

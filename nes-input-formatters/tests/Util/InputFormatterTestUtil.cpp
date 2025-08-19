@@ -106,16 +106,15 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return schema;
 }
 
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
+std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
 {
-    return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
+    return [&resultBuffers](const OriginId, SourceReturnType::SourceReturnType returnType)
     {
         std::visit(
             Overloaded{
-                [&](const Sources::SourceReturnType::Data& data) { resultBuffers.emplace_back(data.buffer); },
-                [](const Sources::SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
-                [](const Sources::SourceReturnType::Error& error) { throw error.ex; }},
+                [&](const SourceReturnType::Data& data) { resultBuffers.emplace_back(data.buffer); },
+                [](const SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
+                [](const SourceReturnType::Error& error) { throw error.ex; }},
             returnType);
     };
 }
@@ -154,7 +153,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     return validParserConfig;
 }
 
-std::unique_ptr<Sources::SourceHandle> createFileSource(
+std::unique_ptr<SourceHandle> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -168,7 +167,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return Sources::SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    return SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
