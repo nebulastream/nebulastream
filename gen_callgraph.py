@@ -270,6 +270,13 @@ def short_name(name: str):
     if name.startswith("_Z"):
         return "mangled"
 
+    if "bool hasTraits<NES::OriginIdAssignerTrait>" in name:
+        return "hasTraits"
+    if "bool hasTrait<NES::OriginIdAssignerTrait>" in name:
+        return "hasTrait"
+    if "operator<<(std::ostream&, Checksum const&)" == name:
+        return "Checksum::operator<<"
+
     if "(" not in name and "::" not in name:
         return name
 
