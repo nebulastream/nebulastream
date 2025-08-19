@@ -22,7 +22,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 class RawTupleBuffer;
 
@@ -87,4 +87,4 @@ public:
 
 }
 
-FMT_OSTREAM(NES::InputFormatters::InputFormatterTaskPipeline);
+FMT_OSTREAM(NES::InputFormatterTaskPipeline);

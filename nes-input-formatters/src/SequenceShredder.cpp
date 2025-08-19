@@ -36,7 +36,7 @@
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 /// Enable for detailed bitmap prints
 constexpr bool VERBOSE_DEBUG_BITMAP_PRINTING = false;

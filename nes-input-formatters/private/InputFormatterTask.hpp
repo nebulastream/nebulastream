@@ -41,16 +41,13 @@
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 /// The type that all formatters use to represent indexes to fields.
 using FieldIndex = uint32_t;
 
 inline void setMetadataOfFormattedBuffer(
-    const TupleBuffer& rawBuffer,
-    TupleBuffer& formattedBuffer,
-    ChunkNumber::Underlying& runningChunkNumber,
-    const bool isLastChunk)
+    const TupleBuffer& rawBuffer, TupleBuffer& formattedBuffer, ChunkNumber::Underlying& runningChunkNumber, const bool isLastChunk)
 {
     formattedBuffer.setLastChunk(isLastChunk);
     formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
@@ -83,10 +80,10 @@ void processTuple(
     const std::string_view tupleView,
     const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
     const size_t numTuplesReadFromRawBuffer,
-    Memory::TupleBuffer& formattedBuffer,
+    TupleBuffer& formattedBuffer,
     const SchemaInfo& schemaInfo,
-    const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions,
-    Memory::AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
+    const std::vector<ParseFunctionSignature>& parseFunctions,
+    AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
 )
 {
     const size_t currentTupleIdx = formattedBuffer.getNumberOfTuples();
@@ -117,12 +114,12 @@ void processTuple(
 template <InputFormatIndexerType FormatterType>
 void processSpanningTuple(
     const std::span<const StagedBuffer> stagedBuffersSpan,
-    Memory::AbstractBufferProvider& bufferProvider,
-    Memory::TupleBuffer& formattedBuffer,
+    AbstractBufferProvider& bufferProvider,
+    TupleBuffer& formattedBuffer,
     const SchemaInfo& schemaInfo,
     const typename FormatterType::IndexerMetaData& indexerMetaData,
     const FormatterType& inputFormatIndexer,
-    const std::vector<RawValueParser::ParseFunctionSignature>& parseFunctions)
+    const std::vector<ParseFunctionSignature>& parseFunctions)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
     /// If the buffers are not empty, there are at least three buffers
@@ -188,9 +185,8 @@ public:
               | std::views::transform(
                   [](const auto& field)
                   {
-                      return (field.dataType.isType(DataType::Type::VARSIZED))
-                          ? RawValueParser::getBasicStringParseFunction()
-                          : RawValueParser::getBasicTypeParseFunction(field.dataType.type);
+                      return (field.dataType.isType(DataType::Type::VARSIZED)) ? getBasicStringParseFunction()
+                                                                               : getBasicTypeParseFunction(field.dataType.type);
                   })
               | std::ranges::to<std::vector>())
     {
@@ -292,7 +288,7 @@ private:
     SchemaInfo schemaInfo;
     typename FormatterType::IndexerMetaData indexerMetaData;
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
-    std::vector<RawValueParser::ParseFunctionSignature> parseFunctions;
+    std::vector<ParseFunctionSignature> parseFunctions;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples, using the indexes in FieldOffsets and parses the tuples into formatted data.
@@ -300,7 +296,7 @@ private:
         const RawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
         const FieldIndexFunction<typename FormatterType::FieldIndexFunctionType>& fieldIndexFunction,
-        Memory::TupleBuffer& formattedBuffer,
+        TupleBuffer& formattedBuffer,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();

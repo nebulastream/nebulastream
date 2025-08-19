@@ -33,7 +33,7 @@
 /// We check whether the range of all produces sequence numbers matches the expected range.
 class StreamingMultiThreadedAutomatedSequenceShredderTest : public ::testing::Test
 {
-    using SequenceShredder = NES::InputFormatters::SequenceShredder;
+    using SequenceShredder = NES::SequenceShredder;
 
 public:
     void SetUp() override { NES_INFO("Setting up StreamingMultiThreadedAutomatedSequenceShredderTest."); }
@@ -121,8 +121,7 @@ public:
                 {
                 }
 
-                const auto dummyStagedBuffer
-                    = NES::InputFormatters::StagedBuffer{NES::InputFormatters::RawTupleBuffer{}, threadLocalSequenceNumber, 0, 0};
+                const auto dummyStagedBuffer = NES::StagedBuffer{NES::RawTupleBuffer{}, threadLocalSequenceNumber, 0, 0};
                 if (tupleDelimiter)
                 {
                     const auto stagedBuffers

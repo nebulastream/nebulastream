@@ -152,7 +152,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::shared_ptr<BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
+std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
@@ -164,7 +164,7 @@ TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
+    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -361,8 +361,8 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    const std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask
-        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    const std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask
+        = provideInputFormatterTask(
             OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());

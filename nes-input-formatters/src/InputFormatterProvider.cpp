@@ -24,7 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 
-namespace NES::InputFormatters::InputFormatterProvider
+namespace NES
 {
 
 std::unique_ptr<InputFormatterTaskPipeline>

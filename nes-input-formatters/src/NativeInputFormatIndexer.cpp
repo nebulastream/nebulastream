@@ -17,11 +17,10 @@
 
 #include <InputFormatIndexerRegistry.hpp>
 
-namespace NES::InputFormatters
+namespace NES
 {
 
-InputFormatIndexerRegistryReturnType
-InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
+InputFormatIndexerRegistryReturnType RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>(NativeInputFormatIndexer());
 }
