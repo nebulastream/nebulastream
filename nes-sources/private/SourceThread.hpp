@@ -30,7 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 struct SourceImplementationTermination
 {
@@ -105,4 +105,4 @@ protected:
 
 }
 
-FMT_OSTREAM(NES::Sources::SourceImplementationTermination);
+FMT_OSTREAM(NES::SourceImplementationTermination);

@@ -24,7 +24,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 /// Hides SourceThread implementation.
@@ -50,7 +50,7 @@ public:
     void stop() const;
 
     /// Tries to stop the source within a given timeout.
-    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
+    [[nodiscard]] NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 
@@ -64,4 +64,4 @@ private:
 
 }
 
-FMT_OSTREAM(NES::Sources::SourceHandle);
+FMT_OSTREAM(NES::SourceHandle);

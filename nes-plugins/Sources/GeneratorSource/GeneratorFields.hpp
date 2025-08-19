@@ -25,7 +25,7 @@
 
 #include <DataTypes/DataType.hpp>
 
-namespace NES::Sources::GeneratorFields
+namespace NES::GeneratorFields
 {
 
 static constexpr std::string_view SEQUENCE_IDENTIFIER = "SEQUENCE";

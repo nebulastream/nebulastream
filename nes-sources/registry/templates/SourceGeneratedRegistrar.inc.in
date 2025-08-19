@@ -25,7 +25,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sources::SourceGeneratedRegistrar
+namespace NES::SourceGeneratedRegistrar
 {
 
 /// declaration of register functions for 'Sources'
@@ -36,10 +36,10 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+Registrar<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
-    using namespace NES::Sources::SourceGeneratedRegistrar;
+    using namespace NES::SourceGeneratedRegistrar;
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     @REGISTER_ALL_FUNCTION_CALLS@
 }

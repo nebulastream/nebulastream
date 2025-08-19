@@ -34,7 +34,7 @@
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 class TestSourceControl

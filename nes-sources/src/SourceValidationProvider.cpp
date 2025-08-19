@@ -23,7 +23,7 @@
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources::SourceValidationProvider
+namespace NES::SourceValidationProvider
 {
 
 std::optional<DescriptorConfig::Config>

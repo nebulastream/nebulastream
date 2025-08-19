@@ -25,7 +25,7 @@
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 enum class GeneratorStop : uint8_t
@@ -43,8 +43,7 @@ public:
     {
         if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE)
         {
-            throw InvalidConfigParameter(
-                "sequenceStopsGenerator: {} not recognized", static_cast<uint32_t>(this->sequenceStopsGenerator));
+            throw InvalidConfigParameter("sequenceStopsGenerator: {} not recognized", static_cast<uint32_t>(this->sequenceStopsGenerator));
         }
         this->parseSchema(rawSchema);
     }

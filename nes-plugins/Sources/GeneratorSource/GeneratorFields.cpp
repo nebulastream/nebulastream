@@ -28,7 +28,7 @@
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources::GeneratorFields
+namespace NES::GeneratorFields
 {
 SequenceField::SequenceField(const FieldType start, const FieldType end, const FieldType step)
     : sequencePosition(start), sequenceStart(start), sequenceEnd(end), sequenceStepSize(step)

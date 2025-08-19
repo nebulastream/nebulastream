@@ -36,7 +36,7 @@
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class GeneratorSource : public Source

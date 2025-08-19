@@ -26,7 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 void Generator::generateTuple(std::ostream& ostream)
@@ -47,10 +47,10 @@ void Generator::generateTuple(std::ostream& ostream)
     std::visit(generateField, *this->fields.front());
     for (auto& field : this->fields | std::views::drop(1))
     {
-        ostream << Sources::Generator::fieldDelimiter;
+        ostream << Generator::fieldDelimiter;
         std::visit(generateField, *field);
     }
-    ostream << Sources::Generator::tupleDelimiter;
+    ostream << Generator::tupleDelimiter;
 }
 
 void Generator::addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> field)

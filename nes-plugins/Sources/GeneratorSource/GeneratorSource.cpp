@@ -33,7 +33,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
@@ -124,7 +124,7 @@ DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<s
 
 SourceValidationRegistryReturnType
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
-SourceValidationGeneratedRegistrar::RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig)
+RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return GeneratorSource::validateAndFormat(sourceConfig.config);
 }

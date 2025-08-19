@@ -536,7 +536,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     auto sink = builder.addSink({builder.addPipeline(sources)});
     auto query = test.addNewQuery(std::move(builder));
 
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::ranges::transform(
         sources,
         std::back_inserter(sourcesCtrls),
@@ -581,7 +581,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     auto sink = builder.addSink({builder.addPipeline(sources)});
     auto query = test.addNewQuery(std::move(builder));
 
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::ranges::transform(sources, std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
 
     test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
@@ -652,7 +652,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
         queryPlans.push_back(test.addNewQuery(std::move(builder)));
     }
 
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::vector<std::shared_ptr<TestSinkController>> sinkCtrls;
 
     for (const auto& [index, _] : queryPlans | views::enumerate)
@@ -727,7 +727,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         queryPlans.push_back(test.addNewQuery(std::move(builder)));
     }
 
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::vector<std::shared_ptr<TestSinkController>> sinkCtrls;
 
     /// Query 1 is terminated by an Failure of source 0
@@ -1073,7 +1073,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         queryPlans.push_back(test.addNewQuery(std::move(builder)));
     }
 
-    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::vector<std::shared_ptr<TestSinkController>> sinkCtrls;
 
     /// Query 1 is terminated by an end of stream

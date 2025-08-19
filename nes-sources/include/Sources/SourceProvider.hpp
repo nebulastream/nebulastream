@@ -21,7 +21,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
