@@ -42,9 +42,9 @@ void runStoreTest(
     const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager)
+    AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
@@ -57,8 +57,8 @@ void runStoreTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
+        [=](nautilus::val<TupleBuffer*> inputBufferRef,
+            nautilus::val<AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             const RecordBuffer recordBuffer(inputBufferRef);
@@ -98,9 +98,9 @@ void runRetrieveTest(
     const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<Memory::TupleBuffer>& allRecords,
+    const std::vector<TupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager)
+    AbstractBufferProvider& bufferManager)
 {
     /// Creating a buffer to store the retrieved records and then calling the compiled method to retrieve the records
     const uint64_t numberOfExpectedTuples = std::accumulate(
@@ -120,8 +120,8 @@ void runRetrieveTest(
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto readFromPagedVectorIntoTupleBuffer = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<Memory::TupleBuffer*> outputBufferRef,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferProviderVal,
+        [=](nautilus::val<TupleBuffer*> outputBufferRef,
+            nautilus::val<AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             RecordBuffer recordBuffer(outputBufferRef);
@@ -143,13 +143,13 @@ void runRetrieveTest(
 
 
     /// Checking for correctness of the retrieved records
-    const RecordBuffer recordBufferActual(nautilus::val<Memory::TupleBuffer*>(std::addressof(outputBuffer)));
+    const RecordBuffer recordBufferActual(nautilus::val<TupleBuffer*>(std::addressof(outputBuffer)));
     nautilus::val<uint64_t> recordBufferIndexActual = 0;
     const auto memoryProviderInputBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
     for (auto inputBuf : allRecords)
     {
-        const RecordBuffer recordBufferInput(nautilus::val<Memory::TupleBuffer*>(std::addressof(inputBuf)));
+        const RecordBuffer recordBufferInput(nautilus::val<TupleBuffer*>(std::addressof(inputBuf)));
         for (nautilus::val<uint64_t> i = 0; i < inputBuf.getNumberOfTuples(); ++i)
         {
             auto recordActual = memoryProviderActualBuffer->readRecord(projections, recordBufferActual, recordBufferIndexActual);
@@ -175,11 +175,11 @@ void insertAndAppendAllPagesTest(
     const Schema& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
-    const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,
-    const std::vector<Memory::TupleBuffer>& expectedRecordsAfterAppendAll,
+    const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
+    const std::vector<TupleBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,
     const nautilus::engine::NautilusEngine& nautilusEngine,
-    Memory::AbstractBufferProvider& bufferManager)
+    AbstractBufferProvider& bufferManager)
 {
     /// Inserting data into each PagedVector and checking for correct values
     std::vector<std::unique_ptr<Interface::PagedVector>> allPagedVectors;

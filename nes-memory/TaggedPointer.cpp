@@ -52,6 +52,6 @@ void TaggedPointer<T>::reset(T* ptr, const uint16_t tag)
 }
 
 /// explicit instantiation of tagged ptr
-template class TaggedPointer<Memory::detail::BufferControlBlock>;
+template class TaggedPointer<detail::BufferControlBlock>;
 
 }

@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/RecordBuffer.hpp>
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -27,7 +27,7 @@
 namespace NES::Nautilus
 {
 
-RecordBuffer::RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)
+RecordBuffer::RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)
 {
 }
 
@@ -46,7 +46,7 @@ nautilus::val<int8_t*> RecordBuffer::getBuffer() const
     return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getBuffer, tupleBufferRef);
 }
 
-const nautilus::val<Memory::TupleBuffer*>& RecordBuffer::getReference() const
+const nautilus::val<TupleBuffer*>& RecordBuffer::getReference() const
 {
     return tupleBufferRef;
 }

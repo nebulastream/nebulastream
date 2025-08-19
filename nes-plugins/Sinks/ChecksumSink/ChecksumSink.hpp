@@ -47,7 +47,7 @@ public:
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
+    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:

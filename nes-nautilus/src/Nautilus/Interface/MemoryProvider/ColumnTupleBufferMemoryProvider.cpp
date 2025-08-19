@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -20,7 +21,6 @@
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -76,7 +76,7 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();

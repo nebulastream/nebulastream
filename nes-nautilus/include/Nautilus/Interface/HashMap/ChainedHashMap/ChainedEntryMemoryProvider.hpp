@@ -56,12 +56,12 @@ public:
     void writeRecord(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
         const nautilus::val<ChainedHashMap*>& hashMapRef,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const Record& record) const;
     void writeEntryRef(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
         const nautilus::val<ChainedHashMap*>& hashMapRef,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldIdentifiers() const;

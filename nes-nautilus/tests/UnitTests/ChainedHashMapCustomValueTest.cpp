@@ -121,7 +121,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         const auto keyPositionInBuffer = std::rand() % bufferKey.getNumberOfTuples();
 
         /// Writing the key and values to the exact map to compare the values later.
-        const RecordBuffer recordBufferKey(nautilus::val<const Memory::TupleBuffer*>(std::addressof(bufferKey)));
+        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(bufferKey)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
         auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
@@ -134,7 +134,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 
 
             /// Writing the values to the exact map
-            const RecordBuffer recordBufferValue(nautilus::val<const Memory::TupleBuffer*>(std::addressof(bufferValue)));
+            const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValue)));
             for (nautilus::val<uint64_t> i = 0; i < recordBufferValue.getNumRecords(); i = i + 1)
             {
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, i);
@@ -160,7 +160,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     for (auto [buffer, keyPositionInBuffer] : std::views::zip(inputBuffers, allKeyPositions))
     {
         /// Getting the record key from the input buffer, so that we can compare the values with the exact map.
-        const RecordBuffer recordBufferKey(nautilus::val<const Memory::TupleBuffer*>(std::addressof(buffer)));
+        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
         auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
@@ -191,7 +191,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         for (auto exactIt = recordValueExactStart; exactIt != recordValueExactEnd; ++exactIt)
         {
             /// Printing an error message, if the values are not equal.
-            const RecordBuffer recordBufferOutput(nautilus::val<const Memory::TupleBuffer*>(std::addressof(outputBuffer)));
+            const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
             auto recordValueActual = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
             std::stringstream ss;
             ss << compareRecords(recordValueActual, exactIt->second, projectionAllFields);

@@ -30,7 +30,7 @@ struct Error
 
 struct Data
 {
-    Memory::TupleBuffer buffer;
+    TupleBuffer buffer;
 };
 
 struct EoS

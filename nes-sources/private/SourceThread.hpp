@@ -58,7 +58,7 @@ class SourceThread
 public:
     explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<AbstractPoolProvider> bufferManager,
         size_t numOfLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
 
@@ -88,7 +88,7 @@ public:
 
 protected:
     OriginId originId;
-    std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
+    std::shared_ptr<AbstractPoolProvider> localBufferManager;
     uint64_t numOfLocalBuffers;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
@@ -99,7 +99,7 @@ protected:
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
-    void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
+    void emitWork(TupleBuffer& buffer, bool addBufferMetaData = true);
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 };
 

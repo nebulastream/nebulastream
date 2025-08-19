@@ -34,19 +34,18 @@
 namespace NES::Nautilus::TestUtils
 {
 
-nautilus::engine::
-    CallableFunction<void, Memory::TupleBuffer*, Memory::TupleBuffer*, uint64_t, Memory::AbstractBufferProvider*, Interface::HashMap*>
-    ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
-        const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
+nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, Interface::HashMap*>
+ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
+    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// Resharper disable once CppPassValueParameterByConstReference
     return nautilusEngine->registerFunction(std::function(
         [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> bufferKey,
-            nautilus::val<Memory::TupleBuffer*> bufferValue,
+            nautilus::val<TupleBuffer*> bufferKey,
+            nautilus::val<TupleBuffer*> bufferValue,
             nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+            nautilus::val<AbstractBufferProvider*> bufferManagerVal,
             nautilus::val<Interface::HashMap*> hashMapVal)
         {
             Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
@@ -81,20 +80,19 @@ nautilus::engine::
         }));
 }
 
-nautilus::engine::
-    CallableFunction<void, Memory::TupleBuffer*, uint64_t, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, Interface::HashMap*>
-    ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
-        const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
+nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
+ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
+    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
         [this, projectionAllFields](
-            nautilus::val<Memory::TupleBuffer*> keyBufferRef,
+            nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<Memory::TupleBuffer*> outputBufferRef,
-            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+            nautilus::val<TupleBuffer*> outputBufferRef,
+            nautilus::val<AbstractBufferProvider*> bufferManagerVal,
             nautilus::val<Interface::HashMap*> hashMapVal)
         {
             Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);

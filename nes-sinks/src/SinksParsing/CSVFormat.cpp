@@ -61,12 +61,12 @@ std::string CSVFormat::getFormattedSchema() const
     return fmt::format("{}\n", ss.str());
 }
 
-std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const
+std::string CSVFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
 {
     return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext) const
+std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const
 {
     std::stringstream ss;
     const auto numberOfTuples = tbuffer.getNumberOfTuples();

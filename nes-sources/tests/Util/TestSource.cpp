@@ -147,7 +147,7 @@ void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds 
     fail_during_close = true;
 }
 
-size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t NES::Sources::TestSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
@@ -227,7 +227,7 @@ NES::Sources::TestSource::~TestSource()
 }
 
 std::pair<std::unique_ptr<NES::Sources::SourceHandle>, std::shared_ptr<NES::Sources::TestSourceControl>>
-NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
+NES::Sources::getTestSource(OriginId originId, std::shared_ptr<AbstractPoolProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);

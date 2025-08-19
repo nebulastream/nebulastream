@@ -63,13 +63,13 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
 
-DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
+DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, TupleBuffer buffer)
     : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer))
 {
 }
 
 void DynamicTuple::writeVarSized(
-    std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider)
+    std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
     auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
@@ -111,7 +111,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                auto index = (*this)[key].template read<Memory::TupleBuffer::NestedTupleBufferKey>();
+                auto index = (*this)[key].template read<TupleBuffer::NestedTupleBufferKey>();
                 return readVarSizedData(this->buffer, index);
             }
             else
@@ -133,7 +133,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
         {
-            const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
+            const auto index = currentField.read<TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
             ss << string << fieldEnding;
         }
@@ -239,7 +239,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
     return {tupleIndex, memoryLayout, buffer};
 }
 
-TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const Memory::TupleBuffer& buffer)
+TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const TupleBuffer& buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
     PRECONDITION(
@@ -249,7 +249,7 @@ TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayo
         buffer.getBufferSize());
 }
 
-Memory::TupleBuffer TestTupleBuffer::getBuffer()
+TupleBuffer TestTupleBuffer::getBuffer()
 {
     return buffer;
 }
@@ -373,7 +373,7 @@ const MemoryLayout& TestTupleBuffer::getMemoryLayout() const
     return *memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const TupleBuffer& buffer, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {

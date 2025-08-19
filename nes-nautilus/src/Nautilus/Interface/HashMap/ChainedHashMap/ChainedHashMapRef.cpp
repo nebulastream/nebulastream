@@ -38,25 +38,25 @@
 namespace NES::Nautilus::Interface
 {
 void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
-    const Nautilus::Record& keys, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const Nautilus::Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderKeys.writeRecord(entryRef, hashMapRef, bufferProvider, keys);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
-    const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderKeys.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
-    const Nautilus::Record& values, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const Nautilus::Record& values, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderValues.writeRecord(entryRef, hashMapRef, bufferProvider, values);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
-    const ChainedEntryRef& otherEntryRef, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderValues.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
 }
@@ -199,7 +199,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     const Nautilus::Record& recordKey,
     const HashFunction& hashFunction,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     /// Calculating the hash value of the keys and finding the entry.
     /// We can use here a std::vector to store the read VarValues of the keyFunction, as the number of keys does not change between
@@ -237,7 +237,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
     const nautilus::val<AbstractHashMapEntry*>& otherEntry,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
@@ -289,10 +289,10 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 }
 
 nautilus::val<ChainedHashMapEntry*>
-ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     const auto newEntry = invoke(
-        +[](HashMap* hashMap, const HashFunction::HashValue::raw_type hashValue, Memory::AbstractBufferProvider* bufferProviderVal)
+        +[](HashMap* hashMap, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
         { return dynamic_cast<ChainedHashMap*>(hashMap)->insertEntry(hashValue, bufferProviderVal); },
         hashMapRef,
         hash,

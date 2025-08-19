@@ -29,8 +29,8 @@ ParseFunctionSignature getBasicStringParseFunction()
 {
     return [](const std::string_view inputString,
               const size_t writeOffsetInBytes,
-              Memory::AbstractBufferProvider& bufferProvider,
-              Memory::TupleBuffer& tupleBufferFormatted)
+              AbstractBufferProvider& bufferProvider,
+              TupleBuffer& tupleBufferFormatted)
     {
         const auto valueLength = inputString.length();
         auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));

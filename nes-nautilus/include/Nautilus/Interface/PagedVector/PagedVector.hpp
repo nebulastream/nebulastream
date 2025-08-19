@@ -33,16 +33,15 @@ class PagedVector
 public:
     struct TupleBufferWithCumulativeSum
     {
-        explicit TupleBufferWithCumulativeSum(Memory::TupleBuffer buffer) : buffer(std::move(buffer)) { }
-
+        explicit TupleBufferWithCumulativeSum(TupleBuffer buffer) : buffer(std::move(buffer)) { }
         size_t cumulativeSum{0};
-        Memory::TupleBuffer buffer;
+        TupleBuffer buffer;
     };
 
     PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+    void appendPageIfFull(AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void moveAllPages(PagedVector& other);
@@ -51,16 +50,15 @@ public:
     void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
-    [[nodiscard]] const Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
+    [[nodiscard]] const TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
     [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
 
-    [[nodiscard]] const Memory::TupleBuffer& getLastPage() const { return pages.getLastPage(); }
+    [[nodiscard]] const TupleBuffer& getLastPage() const { return pages.getLastPage(); }
 
-    [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
-
+    [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
 private:
@@ -68,15 +66,15 @@ private:
     struct PagesWrapper
     {
         [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
-        [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
-        [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
+        [[nodiscard]] const TupleBuffer& getLastPage() const;
+        [[nodiscard]] const TupleBuffer& getFirstPage() const;
         [[nodiscard]] uint64_t getNumberOfPages() const;
         const TupleBufferWithCumulativeSum& operator[](size_t index) const;
         [[nodiscard]] uint64_t getNumberOfTuplesLastPage() const;
 
         /// Finds the index in the vector<TupleBufferWithCumulativeSum> for an entry position
         [[nodiscard]] std::optional<size_t> findIdx(uint64_t entryPos) const;
-        void addPage(const Memory::TupleBuffer& newPage);
+        void addPage(const TupleBuffer& newPage);
         void addPages(const PagesWrapper& other);
         void clearPages();
 

@@ -41,7 +41,7 @@ public:
     ~NodeEngine();
 
     NodeEngine(
-        std::shared_ptr<Memory::BufferManager> bufferManager,
+        std::shared_ptr<BufferManager> bufferManager,
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine,
@@ -54,14 +54,14 @@ public:
     /// been called.
     void stopQuery(QueryId queryId, QueryTerminationType terminationType);
 
-    [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
+    [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 
     [[nodiscard]] std::shared_ptr<const QueryLog> getQueryLog() const { return queryLog; }
 
 private:
-    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
     std::shared_ptr<QueryLog> queryLog;
 
     std::shared_ptr<SystemEventListener> systemEventListener;

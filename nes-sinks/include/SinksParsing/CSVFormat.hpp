@@ -49,11 +49,11 @@ public:
     [[nodiscard]] std::string getFormattedSchema() const;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
-    [[nodiscard]] std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const;
+    [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
     [[nodiscard]] std::string
-    tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
+    tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 

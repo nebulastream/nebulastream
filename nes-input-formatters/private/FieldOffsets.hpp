@@ -45,7 +45,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
     class FieldOffsetsBuffer
     {
     public:
-        explicit FieldOffsetsBuffer(Memory::TupleBuffer tupleBuffer)
+        explicit FieldOffsetsBuffer(TupleBuffer tupleBuffer)
             : tupleBuffer(std::move(tupleBuffer))
             , fieldOffsetSpan(this->tupleBuffer.getBuffer<FieldIndex>(), this->tupleBuffer.getBufferSize()) { };
         ~FieldOffsetsBuffer() = default;
@@ -53,12 +53,12 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
         [[nodiscard]] FieldIndex& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
 
     private:
-        Memory::TupleBuffer tupleBuffer;
+        TupleBuffer tupleBuffer;
         std::span<FieldIndex> fieldOffsetSpan;
     };
 
 public:
-    explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
+    explicit FieldOffsets(AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
     ~FieldOffsets() = default;
 
     /// InputFormatter interface functions:
@@ -84,7 +84,7 @@ private:
     std::vector<FieldOffsetsBuffer> offsetBuffers;
     /// The InputFormatterTask guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance, since the
     /// InputFormatterTask constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets the ABP as an argument
-    Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     /// Sets the metadata for the current buffer, uses the buffer provider to get a new buffer.
     void allocateNewChildBuffer();
