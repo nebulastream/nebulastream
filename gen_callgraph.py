@@ -348,7 +348,9 @@ def fn_len_from_line(line, lines, filename):
     if "generated_src" in filename:
         return None
 
-    assert lines[line-1]
+    if line-1 >= len(lines):
+        print(f"WARN: oob in {filename}: idx {line-1} vs len {len(lines)}")
+        return None
 
     try:
         if "{" in lines[line-1] and (
