@@ -146,6 +146,11 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         rootOperators.push_back(build(rootId, {}));
     }
 
+    if (rootOperators.size() != 1)
+    {
+        throw CannotDeserialize("Plan contains multiple root operators!");
+    }
+
     /// 4) Finalize plan
     auto queryId = INVALID_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
