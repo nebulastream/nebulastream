@@ -21,6 +21,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -149,6 +150,23 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     if (rootOperators.size() != 1)
     {
         throw CannotDeserialize("Plan contains multiple root operators!");
+    }
+
+    auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+    if (!sink)
+    {
+        throw CannotDeserialize(
+            "Plan root has to be a source, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
+    }
+
+    if (sink->getChildren().empty())
+    {
+        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
+    }
+
+    if (not sink->getSinkDescriptor())
+    {
+        throw CannotDeserialize("Sink has no descriptor!");
     }
 
     /// 4) Finalize plan
