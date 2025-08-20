@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Projection]
 
-Source stream UINT64 id FLOAT64 value UINT64 timestamp
+Source stream UINT64 id FLOAT64 value UINT64 timestamp INLINE
 1,1.3,1000
 2,1.3,1001
 3,1.3,1002
@@ -33,7 +33,7 @@ SELECT id, value FROM stream WHERE id < UINT64(4) INTO sinkFloatValue
 3 1.3
 
 
-Source streamWithText UINT64 id VARSIZED value
+Source streamWithText UINT64 id VARSIZED value INLINE
 1,test1
 4,test2
 12,test1
@@ -44,7 +44,7 @@ SELECT id, value FROM streamWithText WHERE id < UINT64(4) INTO sinkTextValue
 ----
 1 test1
 
-Source streamWithTextAndTimestamp UINT64 id VARSIZED value UINT64 timestamp
+Source streamWithTextAndTimestamp UINT64 id VARSIZED value UINT64 timestamp INLINE
 1,test1,1000
 4,test2,1002
 12,test1,1001
