@@ -145,7 +145,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         }
     }
 
-    throw CannotDeserialize("could not de-serialize this serialized operator: {}", serializedOperator.DebugString());
+    throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
 }
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
