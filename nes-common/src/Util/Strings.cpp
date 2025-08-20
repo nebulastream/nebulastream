@@ -194,24 +194,6 @@ USED_IN_DEBUG constexpr bool isAsciiString(std::string_view input)
 }
 }
 
-void toUpperCaseInplace(std::string& modified)
-{
-    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
-    for (char& character : modified)
-    {
-        character = static_cast<char>(::toupper(character));
-    }
-}
-
-void toLowerCaseInplace(std::string& modified)
-{
-    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
-    for (char& character : modified)
-    {
-        character = static_cast<char>(::tolower(character));
-    }
-}
-
 std::string escapeSpecialCharacters(const std::string_view input)
 {
     std::string result;
