@@ -233,11 +233,10 @@ TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
+    FormatScanPhysicalOperator formatScanPhysicalOp)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     // Todo: set configured size using 'formatted' size
-    FormatScanPhysicalOperator formatScanPhysicalOp{{}, std::move(inputFormatterTask), 4096, true};
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
     const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
     return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};

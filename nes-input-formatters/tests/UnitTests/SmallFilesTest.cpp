@@ -29,16 +29,18 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceExecutionContext.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
@@ -259,6 +261,13 @@ public:
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
                 = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
+
+            const std::unordered_map<std::string, std::string> parserConfiguration{
+            {"type", std::move(testConfig.formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+            const auto validatedParserConfiguration = InputFormatterTestUtil::validateAndFormatParserConfig(parserConfiguration);
+
+            auto inputFormatterTaskPipeline = InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), setupResult.schema, validatedParserConfiguration);
+            auto formatScanPhysicalOp = FormatScanPhysicalOperator({}, std::move(inputFormatterTaskPipeline), testConfig.sizeOfFormattedBuffers, true);
             // auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
@@ -272,10 +281,8 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        // Todo: problem
-                        auto pipelineTask = InputFormatterTestUtil::createInputFormatterTask()
-                        auto pipelineTask = InputFormatterTestUtil::createInputFormatterTask(currentSequenceNumber, WorkerThreadId(currentWorkerThreadId), rawBuffer, std::move(inputFormatterTask));
-                        // auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        // Todo: create pipeline task
+                        auto pipelineTask = InputFormatterTestUtil::createInputFormatterTask(currentSequenceNumber, WorkerThreadId(currentWorkerThreadId), rawBuffer, formatScanPhysicalOp);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }

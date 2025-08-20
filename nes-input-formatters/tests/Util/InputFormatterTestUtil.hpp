@@ -25,13 +25,14 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceExecutionContext.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <TestTaskQueue.hpp>
@@ -162,7 +163,7 @@ TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
+    FormatScanPhysicalOperator formatScanPhysicalOp);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -359,15 +360,21 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    const std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask
+    auto inputFormatterTaskPipeline
         = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+    auto formatScanPhysicalOp = FormatScanPhysicalOperator({}, std::move(inputFormatterTaskPipeline), testHandle.formattedBufferManager->getBufferSize(), true);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
+    //     TestPipelineTask createInputFormatterTask(
+        // SequenceNumber sequenceNumber,
+        // WorkerThreadId workerThreadId,
+        // Memory::TupleBuffer taskBuffer,
+        // std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
         tasks.emplace_back(
-            createInputFormatterTask(inputBuffer.sequenceNumber, WorkerThreadId(0), inputBuffer.rawByteBuffer, inputFormatterTask));
+            createInputFormatterTask(inputBuffer.sequenceNumber, WorkerThreadId(0), inputBuffer.rawByteBuffer, formatScanPhysicalOp));
     }
     return tasks;
 }
