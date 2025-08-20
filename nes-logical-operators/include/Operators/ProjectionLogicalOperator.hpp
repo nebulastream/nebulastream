@@ -32,7 +32,6 @@
 namespace NES
 {
 
-/// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
 class ProjectionLogicalOperator : public LogicalOperatorConcept
 {
 public:

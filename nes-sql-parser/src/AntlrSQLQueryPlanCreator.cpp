@@ -448,6 +448,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         {
             auto asField = helpers.top().windowAggs.front().get()->asField;
             queryPlan = LogicalPlanBuilder::addReservoirProbeOp(queryPlan, asField);
+            /// TODO This is a hack to get the new projection operator to work.
+            /// The projection operator wants to know which fields its going to project here, in its member projections. But as we do not yet know the source's schema, we cannot give it the schema of the sample. So instead we just project all input fields:
+            helpers.top().asterisk = true;
         }
     }
 
@@ -583,21 +586,13 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helper.asterisk = true;
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function and we need to generate one.
-    else if (context->name == nullptr and ((not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation) or helpers.top().hasUnnamedSample))
+    else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation)
     {
         std::string aggIdentifyingString;
-        if (not helpers.top().hasUnnamedSample)
-        {
-            const auto fieldAccess = helpers.top().functionBuilder.back();
-            helpers.top().functionBuilder.pop_back();
-            const auto fieldAccessLogicalFn = fieldAccess.get<FieldAccessLogicalFunction>();
-            aggIdentifyingString = fmt::format("{}_", fieldAccessLogicalFn.getFieldName());
-        }
-        else
-        {
-            aggIdentifyingString = "";
-            helpers.top().hasUnnamedSample = false;
-        }
+        const auto fieldAccess = helpers.top().functionBuilder.back();
+        helpers.top().functionBuilder.pop_back();
+        const auto fieldAccessLogicalFn = fieldAccess.get<FieldAccessLogicalFunction>();
+        aggIdentifyingString = fmt::format("{}_", fieldAccessLogicalFn.getFieldName());
         const auto lastAggregation = helpers.top().windowAggs.back();
         const auto newName = fmt::format("{}{}", aggIdentifyingString, lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
