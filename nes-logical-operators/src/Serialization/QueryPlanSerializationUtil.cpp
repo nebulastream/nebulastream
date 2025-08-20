@@ -27,6 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <from_current.hpp>
 
 namespace NES
 {
@@ -38,17 +39,18 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 
     SerializableQueryPlan serializableQueryPlan;
     /// Serialize Query Plan operators
-    auto& serializedOperatorMap = *serializableQueryPlan.mutable_operatormap();
+    std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
     {
-        if (serializedOperatorMap.find(itr.getId().getRawValue()) != serializedOperatorMap.end())
+        if (alreadySerialized.contains(itr.getId()))
         {
             /// Skip rest of the steps as the operator is already serialized
             continue;
         }
+        alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        const SerializableOperator serializeOperator = itr.serialize();
-        serializedOperatorMap[itr.getId().getRawValue()] = serializeOperator;
+        auto* sOp = serializableQueryPlan.add_operators();
+        itr.serialize(*sOp);
     }
 
     /// Serialize the root operator ids
@@ -59,11 +61,47 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 
 LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
 {
+    std::vector<Exception> deserializeExceptions;
+
     /// 1) Deserialize all operators into a map
     std::unordered_map<OperatorId::Underlying, LogicalOperator> baseOps;
-    for (const auto& [_, serializedOp] : serializedQueryPlan.operatormap())
+    std::unordered_map<OperatorId::Underlying, std::vector<OperatorId::Underlying>> baseChildren;
+    for (const auto& serializedOp : serializedQueryPlan.operators())
     {
-        baseOps.emplace(serializedOp.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOp));
+        CPPTRACE_TRY
+        {
+            auto [_, inserted] = baseOps.emplace(serializedOp.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOp));
+            if (!inserted)
+            {
+                throw CannotDeserialize("Duplicate operator id in {}", serializedQueryPlan.DebugString());
+            }
+            auto& opChildren = baseChildren[serializedOp.operator_id()];
+            opChildren.reserve(serializedOp.children_ids_size());
+            for (auto child : serializedOp.children_ids())
+            {
+                opChildren.push_back(child);
+            }
+        }
+        CPPTRACE_CATCH(...)
+        {
+            deserializeExceptions.push_back(wrapExternalException());
+        }
+    }
+
+    if (!deserializeExceptions.empty())
+    {
+        std::string msgs;
+        for (auto& deserExc : deserializeExceptions)
+        {
+            msgs += '\n';
+            msgs += deserExc.what();
+            msgs += deserExc.trace().to_string(true);
+        }
+        throw CannotDeserialize(
+            "Deserialization of {} out of {} operators failed! Encountered Errors:{}",
+            deserializeExceptions.size(),
+            serializedQueryPlan.operators_size(),
+            msgs);
     }
 
     /// 2) Recursive builder to attach all children
@@ -80,15 +118,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
         const LogicalOperator op = baseIt->second;
 
-        if (!serializedQueryPlan.operatormap().contains(id))
-        {
-            throw CannotDeserialize("serialized query plan does not contain expected id {}", 0);
-        }
-        const auto& serializedOp = serializedQueryPlan.operatormap().at(id);
         std::vector<LogicalOperator> children;
         auto anc = ancestors;
         anc.insert(id);
-        for (const auto childId : serializedOp.children_ids())
+        for (const auto childId : baseChildren.at(id))
         {
             if (ancestors.contains(childId))
             {

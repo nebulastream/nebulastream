@@ -138,18 +138,16 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
     return sourceDescriptor;
 }
 
-[[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
+void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableSourceDescriptorLogicalOperator proto;
     INVARIANT(sourceOriginIds.size() == 1, "Expected one originId, got '{}' instead", sourceOriginIds.size());
     proto.set_sourceoriginid(sourceOriginIds[0].getRawValue());
     proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
 
     serializableOperator.mutable_source()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 }

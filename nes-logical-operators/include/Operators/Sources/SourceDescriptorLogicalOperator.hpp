@@ -42,7 +42,7 @@ public:
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    [[nodiscard]] SerializableOperator serialize() const override;
+    void serialize(SerializableOperator&) const override;
 
     [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
     [[nodiscard]] TraitSet getTraitSet() const override;

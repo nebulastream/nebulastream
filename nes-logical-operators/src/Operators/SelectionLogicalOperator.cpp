@@ -156,7 +156,7 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-SerializableOperator SelectionLogicalOperator::serialize() const
+void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -189,7 +189,6 @@ SerializableOperator SelectionLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
@@ -202,7 +201,6 @@ SerializableOperator SelectionLogicalOperator::serialize() const
     (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType

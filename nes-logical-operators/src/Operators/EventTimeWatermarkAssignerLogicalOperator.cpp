@@ -154,7 +154,7 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
     return children;
 }
 
-SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
+void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -188,7 +188,6 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
@@ -204,7 +203,6 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
     (*serializableOperator.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType

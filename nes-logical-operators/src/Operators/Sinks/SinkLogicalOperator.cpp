@@ -212,7 +212,7 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(Sinks::SinkDescripto
     return newOperator;
 }
 
-SerializableOperator SinkLogicalOperator::serialize() const
+void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableSinkLogicalOperator proto;
     if (sinkDescriptor)
@@ -234,7 +234,6 @@ SerializableOperator SinkLogicalOperator::serialize() const
         proto.add_output_origin_ids(outId.getRawValue());
     }
 
-    SerializableOperator serializableOperator;
     const DescriptorConfig::ConfigType timeVariant = sinkName;
     (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
 
@@ -245,6 +244,5 @@ SerializableOperator SinkLogicalOperator::serialize() const
     }
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
-    return serializableOperator;
 }
 }

@@ -160,7 +160,7 @@ std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
     return children;
 }
 
-SerializableOperator UnionLogicalOperator::serialize() const
+void UnionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -194,7 +194,6 @@ SerializableOperator UnionLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
@@ -202,7 +201,6 @@ SerializableOperator UnionLogicalOperator::serialize() const
     }
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
