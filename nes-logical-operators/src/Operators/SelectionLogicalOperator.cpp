@@ -79,7 +79,7 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "Selection should have at least one input");
 
-    const auto& firstSchema = inputSchemas[0];
+    const auto& firstSchema = inputSchemas.at(0);
     for (const auto& schema : inputSchemas)
     {
         if (schema != firstSchema)
