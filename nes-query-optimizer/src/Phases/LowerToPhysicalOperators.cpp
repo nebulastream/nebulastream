@@ -96,7 +96,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
                 logicalOperator.getChildren().size() == 1,
                 "Empty lowering results of operators with multiple keys are not supported for {}",
                 logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+            return lowerOperatorRecursively(logicalOperator.getChildren().at(0), registryArgument);
         }
         return {};
     }
