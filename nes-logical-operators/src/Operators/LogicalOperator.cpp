@@ -75,9 +75,9 @@ std::string_view LogicalOperator::getName() const noexcept
     return self->getName();
 }
 
-SerializableOperator LogicalOperator::serialize() const
+void LogicalOperator::serialize(SerializableOperator& sOp) const
 {
-    return self->serialize();
+    self->serialize(sOp);
 }
 
 TraitSet LogicalOperator::getTraitSet() const

@@ -242,7 +242,7 @@ std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
     return children;
 }
 
-SerializableOperator ProjectionLogicalOperator::serialize() const
+void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -275,7 +275,6 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
@@ -296,7 +295,6 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
     (*serializableOperator.mutable_config())[ConfigParameters::ASTERISK] = descriptorConfigTypeToProto(asterisk);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
