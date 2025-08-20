@@ -129,10 +129,6 @@ std::string formatFloat(std::floating_point auto value);
 [[nodiscard]] std::string toUpperCase(std::string_view input);
 [[nodiscard]] std::string toLowerCase(std::string_view input);
 
-/// Modify string objects in place without requiring further allocations
-void toUpperCaseInplace(std::string& modified);
-void toLowerCaseInplace(std::string& modified);
-
 /// escape characters such as '\n', e.g., for logging
 std::string escapeSpecialCharacters(std::string_view input);
 
