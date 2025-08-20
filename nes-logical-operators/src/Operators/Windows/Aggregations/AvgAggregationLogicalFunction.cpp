@@ -13,6 +13,8 @@
 */
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 
+#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
+
 #include <memory>
 #include <string>
 #include <string_view>
