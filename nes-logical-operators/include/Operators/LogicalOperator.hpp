@@ -72,7 +72,7 @@ struct LogicalOperatorConcept
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
     /// Serializes the operator to a protobuf message
-    [[nodiscard]] virtual SerializableOperator serialize() const = 0;
+    virtual void serialize(SerializableOperator&) const = 0;
 
     /// Returns the trait set of the operator
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
@@ -163,7 +163,7 @@ struct LogicalOperator
     [[nodiscard]] bool operator==(const LogicalOperator& other) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SerializableOperator serialize() const;
+    void serialize(SerializableOperator&) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
     [[nodiscard]] std::vector<Schema> getInputSchemas() const;
@@ -206,7 +206,7 @@ private:
 
         [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }
 
-        [[nodiscard]] SerializableOperator serialize() const override { return data.serialize(); }
+        void serialize(SerializableOperator& sOp) const override { return data.serialize(sOp); }
 
         [[nodiscard]] TraitSet getTraitSet() const override { return data.getTraitSet(); }
 

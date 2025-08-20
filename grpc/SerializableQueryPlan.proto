@@ -20,7 +20,7 @@ package NES;
 The serializable wrapper definition for query plan
  */
 message SerializableQueryPlan{
-  map<uint64, SerializableOperator> operatorMap = 1;
+  repeated SerializableOperator operators = 1;
   repeated uint64 rootOperatorIds = 2;
   optional uint64 queryId = 3;
 }

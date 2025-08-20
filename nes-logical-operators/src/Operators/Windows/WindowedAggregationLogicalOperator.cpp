@@ -288,7 +288,7 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
     return windowMetaData;
 }
 
-SerializableOperator WindowedAggregationLogicalOperator::serialize() const
+void WindowedAggregationLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -321,7 +321,6 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
@@ -377,7 +376,6 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
         = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType

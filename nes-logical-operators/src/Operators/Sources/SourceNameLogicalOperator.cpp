@@ -160,10 +160,9 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-SerializableOperator SourceNameLogicalOperator::serialize() const
+void SourceNameLogicalOperator::serialize(SerializableOperator&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
-    return {};
 }
 
 }
