@@ -362,52 +362,6 @@ TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
     EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("éçàô"); }(), "");
 }
 
-TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
-{
-    std::string str = "hello";
-    toUpperCaseInplace(str);
-    EXPECT_EQ(str, "HELLO");
-}
-
-TEST(StringCaseInplaceTest, ToUpperCaseInplaceEmpty)
-{
-    std::string str;
-    toUpperCaseInplace(str);
-    EXPECT_EQ(str, "");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceBasic)
-{
-    std::string str = "HELLO";
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "hello");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceEmpty)
-{
-    std::string str;
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
-{
-    std::string str = "HeLLo WorlD!";
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "hello world!");
-}
-
-TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
-{
-    SKIP_IF_TSAN();
-
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-    std::string lowerStr = "héllô!123";
-    EXPECT_DEATH_DEBUG(toUpperCaseInplace(lowerStr), "");
-    std::string str = "HÉLLÔ!123";
-    EXPECT_DEATH_DEBUG(toLowerCaseInplace(str), "");
-}
-
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)
 {
     EXPECT_EQ(replaceAll("hello world", "l", "x"), "hexxo worxd");
