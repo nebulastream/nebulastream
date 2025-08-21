@@ -116,7 +116,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         }
         const auto baseIt = baseOps.find(id);
 
-        INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
+        if (baseIt == baseOps.end())
+        {
+            throw CannotDeserialize("Unknown operator id: {}", id);
+        }
         const LogicalOperator op = baseIt->second;
 
         std::vector<LogicalOperator> children;
