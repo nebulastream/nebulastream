@@ -112,8 +112,10 @@ SerializableAggregationFunction CountAggregationLogicalFunction::serialize() con
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.fields.size() == 2, "CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    if (arguments.fields.size() != 2)
+    {
+        throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    }
     return CountAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
 }
 }

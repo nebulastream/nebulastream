@@ -138,9 +138,17 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.config.contains("FieldName"), "FieldAccessLogicalFunction requires a FieldName in its config");
+    if (not arguments.config.contains("FieldName"))
+    {
+        throw CannotDeserialize(
+
+            "FieldAccessLogicalFunction requires a FieldName in its config");
+    }
     auto fieldName = get<std::string>(arguments.config["FieldName"]);
-    PRECONDITION(!fieldName.empty(), "FieldName cannot be empty");
+    if (fieldName.empty())
+    {
+        throw CannotDeserialize("FieldName cannot be empty");
+    }
     return FieldAccessLogicalFunction(arguments.dataType, fieldName);
 }
 

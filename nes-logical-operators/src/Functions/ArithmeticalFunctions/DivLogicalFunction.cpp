@@ -107,7 +107,10 @@ SerializableFunction DivLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "DivLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
+    }
     return DivLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

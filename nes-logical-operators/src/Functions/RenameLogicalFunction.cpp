@@ -142,11 +142,24 @@ SerializableFunction RenameLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.config.contains("NewFieldName"), "RenameLogicalFunction requires a NewFieldName in its config");
-    PRECONDITION(arguments.children.size() == 1, "RenameLogicalFunction requires exactly one child, but got {}", arguments.children.size());
-    PRECONDITION(arguments.children[0].tryGet<FieldAccessLogicalFunction>(), "Child must be a FieldAccessLogicalFunction");
+    if (not arguments.config.contains("NewFieldName"))
+    {
+        throw CannotDeserialize("RenameLogicalFunction requires a NewFieldName in its config");
+    }
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("RenameLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
+    if (arguments.children[0].tryGet<FieldAccessLogicalFunction>())
+    {
+        throw CannotDeserialize(
+            "Child must be a FieldAccessLogicalFunction but got {}", arguments.children[0].explain(ExplainVerbosity::Short));
+    }
     auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
-    PRECONDITION(!newFieldName.empty(), "NewFieldName cannot be empty");
+    if (newFieldName.empty())
+    {
+        throw CannotDeserialize("NewFieldName cannot be empty");
+    }
     return RenameLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), newFieldName);
 }
 
