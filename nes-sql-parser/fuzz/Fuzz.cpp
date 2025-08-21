@@ -13,6 +13,7 @@
 */
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <cpptrace/from_current.hpp>
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -36,4 +37,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         return 0;
     }
+    std::unreachable();
 }
