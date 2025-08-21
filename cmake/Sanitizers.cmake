@@ -32,7 +32,7 @@ elseif (SANITIZER_OPTION STREQUAL "undefined")
     add_compile_options(-fno-sanitize=alignment)
     add_link_options(-fno-sanitize=alignment)
 
-elseif (SANITIZER_OPTION STREQUAL "address")
+elseif (SANITIZER_OPTION STREQUAL "asan")
     MESSAGE(STATUS "Enabling Address Sanitizer")
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)

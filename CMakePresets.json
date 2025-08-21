@@ -1,0 +1,112 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev",
+      "displayName": "Developer (RelWithDebInfo)",
+      "description": "Configure into ${sourceDir}/build using Ninja with RelWithDebInfo and tests enabled.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "NES_ENABLES_TESTS": true,
+        "USE_CCACHE_IF_AVAILABLE": true,
+        "NES_USE_MOLD_IF_AVAILABLE": true
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Configure into ${sourceDir}/build-debug using Ninja with Debug and tests enabled.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "NES_ENABLES_TESTS": true,
+        "USE_CCACHE_IF_AVAILABLE": true,
+        "NES_USE_MOLD_IF_AVAILABLE": true
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Configure into ${sourceDir}/build-release using Ninja with Release and tests disabled by default.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "NES_ENABLES_TESTS": false,
+        "USE_CCACHE_IF_AVAILABLE": true,
+        "NES_USE_MOLD_IF_AVAILABLE": true
+      }
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "RelWithDebInfo",
+      "description": "Configure into ${sourceDir}/build-relwithdebinfo using Ninja with RelWithDebInfo and tests enabled.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "NES_ENABLES_TESTS": true,
+        "USE_CCACHE_IF_AVAILABLE": true,
+        "NES_USE_MOLD_IF_AVAILABLE": true
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "ASAN (RelWithDebInfo)",
+      "description": "Configure into ${sourceDir}/build-asan using Ninja with AddressSanitizer enabled.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "NES_ENABLES_TESTS": true,
+        "USE_SANITIZER": "asan",
+        "USE_CCACHE_IF_AVAILABLE": true,
+        "NES_USE_MOLD_IF_AVAILABLE": true
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev", "configurePreset": "dev" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo" },
+    { "name": "asan", "configurePreset": "asan" }
+  ],
+  "testPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}
+
+
