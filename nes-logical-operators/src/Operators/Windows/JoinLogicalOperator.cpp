@@ -174,7 +174,10 @@ std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator JoinLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 2, "Join should have only two inputs");
+    if (ids.size() != 2)
+    {
+        throw CannotDeserialize("Join should have only two inputs");
+    }
     auto copy = *this;
     copy.inputOriginIds = ids;
     return copy;
@@ -307,7 +310,10 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    PRECONDITION(arguments.inputSchemas.size() == 2, "Expected two input schemas, but got {}", arguments.inputSchemas.size());
+    if (arguments.inputSchemas.size() != 2)
+    {
+        throw CannotDeserialize("Expected two input schemas, but got {}", arguments.inputSchemas.size());
+    }
 
     auto functionVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION);
     auto joinTypeVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_TYPE);
@@ -323,7 +329,10 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
         auto windowStartFieldName = std::get<std::string>(windowStartVariant);
         auto windowEndFieldName = std::get<std::string>(windowEndVariant);
 
-        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        if (functions.size() != 1)
+        {
+            throw CannotDeserialize("Expected exactly one function");
+        }
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
 
         std::shared_ptr<Windowing::WindowType> windowType;

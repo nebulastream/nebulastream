@@ -111,8 +111,10 @@ SerializableFunction EqualsLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

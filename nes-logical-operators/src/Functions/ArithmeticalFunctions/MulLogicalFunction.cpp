@@ -108,7 +108,10 @@ SerializableFunction MulLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return MulLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

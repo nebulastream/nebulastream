@@ -186,6 +186,10 @@ LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogical
     {
         logicalOperator.id = *id;
     }
+    if (arguments.inputSchemas.size() != 1 or arguments.inputOriginIds.size() != 1)
+    {
+        throw CannotDeserialize("Watermark assigner should have only one input");
+    }
     return logicalOperator.withInferredSchema(arguments.inputSchemas)
         .withInputOriginIds(arguments.inputOriginIds)
         .withOutputOriginIds(arguments.outputOriginIds);

@@ -107,8 +107,10 @@ SerializableFunction ModuloLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterModLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
