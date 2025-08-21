@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
