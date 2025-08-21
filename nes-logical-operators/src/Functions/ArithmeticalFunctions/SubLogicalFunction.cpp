@@ -106,7 +106,10 @@ SerializableFunction SubLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "SubLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
+    }
     return SubLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

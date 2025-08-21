@@ -69,7 +69,10 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     auto newOnField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(newOnField.getDataType().isNumeric(), "aggregations on non numeric fields is not supported.");
+    if (not newOnField.getDataType().isNumeric())
+    {
+        throw CannotDeserialize("aggregations on non numeric fields is not supported.");
+    }
 
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
     if (onField.getDataType().isInteger())
@@ -130,8 +133,10 @@ SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.fields.size() == 2, "AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    if (arguments.fields.size() != 2)
+    {
+        throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    }
     return AvgAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
 }
 }

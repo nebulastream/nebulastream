@@ -103,7 +103,10 @@ SerializableFunction SqrtLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 1, "SqrtLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
+    }
     return SqrtLogicalFunction(arguments.children[0]);
 }
 

@@ -137,7 +137,10 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 
 LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    INVARIANT(!inputSchemas.empty(), "Projection should have at least one input");
+    if (inputSchemas.empty())
+    {
+        throw CannotDeserialize("Projection should have at least one input");
+    }
 
     const auto& firstSchema = inputSchemas[0];
     for (const auto& schema : inputSchemas)
@@ -224,7 +227,10 @@ std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 1, "Projection should have only one input");
+    if (ids.size() != 1)
+    {
+        throw CannotDeserialize("Projection should have only one input");
+    }
     auto copy = *this;
     copy.inputOriginIds = ids.at(0);
     return copy;

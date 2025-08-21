@@ -103,7 +103,10 @@ SerializableFunction FloorLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 1, "FloorLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
+    }
     return FloorLogicalFunction(arguments.children[0]);
 }
 

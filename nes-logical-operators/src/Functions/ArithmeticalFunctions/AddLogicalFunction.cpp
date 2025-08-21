@@ -111,7 +111,10 @@ SerializableFunction AddLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
+    }
     return AddLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

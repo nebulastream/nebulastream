@@ -77,7 +77,10 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    INVARIANT(!inputSchemas.empty(), "Selection should have at least one input");
+    if (inputSchemas.empty())
+    {
+        throw CannotDeserialize("Selection should have at least one input");
+    }
 
     const auto& firstSchema = inputSchemas.at(0);
     for (const auto& schema : inputSchemas)
@@ -206,12 +209,15 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = arguments.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
+    auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
     if (std::holds_alternative<FunctionList>(functionVariant))
     {
         const auto functions = std::get<FunctionList>(functionVariant).functions();
 
-        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        if (functions.size() != 1)
+        {
+            throw CannotDeserialize("Expected exactly one function but got {}", functions.size());
+        }
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
         auto logicalOperator = SelectionLogicalOperator(function);
         if (auto& id = arguments.id)

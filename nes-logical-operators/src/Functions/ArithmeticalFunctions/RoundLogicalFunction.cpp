@@ -103,7 +103,10 @@ SerializableFunction RoundLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 1, "RoundLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
+    }
     return RoundLogicalFunction(arguments.children[0]);
 }
 

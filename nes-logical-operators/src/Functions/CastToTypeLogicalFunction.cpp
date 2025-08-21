@@ -101,8 +101,10 @@ std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 1, "CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
     return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
 }
 

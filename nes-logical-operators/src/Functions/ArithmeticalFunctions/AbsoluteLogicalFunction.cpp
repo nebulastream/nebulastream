@@ -105,8 +105,10 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 1, "AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
     return AbsoluteLogicalFunction(arguments.children[0]);
 }
 

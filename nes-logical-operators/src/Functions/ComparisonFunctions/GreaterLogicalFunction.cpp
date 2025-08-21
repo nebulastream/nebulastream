@@ -109,8 +109,10 @@ SerializableFunction GreaterLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
