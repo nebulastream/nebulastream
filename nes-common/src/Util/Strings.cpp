@@ -186,14 +186,6 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
     return std::string(origin);
 }
 
-namespace
-{
-USED_IN_DEBUG constexpr bool isAsciiString(std::string_view input)
-{
-    return std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; });
-}
-}
-
 std::string escapeSpecialCharacters(const std::string_view input)
 {
     std::string result;
@@ -233,13 +225,11 @@ std::string escapeSpecialCharacters(const std::string_view input)
 
 std::string toUpperCase(std::string_view input)
 {
-    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::toupper) | std::ranges::to<std::string>();
 }
 
 std::string toLowerCase(std::string_view input)
 {
-    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::tolower) | std::ranges::to<std::string>();
 }
 
