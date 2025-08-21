@@ -20,6 +20,8 @@
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#define LOG_SLICE_ACCESS
+
 namespace NES
 {
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
@@ -87,10 +89,13 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 {
     const auto workerThread = WorkerThreadId(threadId % numberOfWorkerThreads);
     const auto slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, threadId, joinBuildSide);
-    logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd});
 
     if (slice.has_value())
     {
+#ifdef LOG_SLICE_ACCESS
+        logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd, false});
+#endif
+
         readSliceFromFiles(
             slice.value(),
             bufferProvider,
@@ -189,12 +194,13 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
         alteredSlicesPerThread[{WorkerThreadId(i), JoinBuildSideType::Right}];
     }
 
+#ifdef LOG_SLICE_ACCESS
     /// Initialise files to keep track of slice operations
+    const auto now = std::chrono::system_clock::now();
     const auto loggerPaths
-        = {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}.stats", std::chrono::system_clock::now())};
-        //= {fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_0.stats", std::chrono::system_clock::now()),
-        //   fmt::format("SliceOperations_{:%Y-%m-%d_%H-%M-%S}_1.stats", std::chrono::system_clock::now())};
+        = {fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_0.stats", now), fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_1.stats", now)};
     logger = std::make_shared<AsyncLogger>(loggerPaths);
+#endif
 
     /// Initialise memory controller and measure execution times for reading and writing
     /// Separate keys means keys and payload are written to separate files, additionally, we may need a descriptor for variable sized data
@@ -353,7 +359,10 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                     timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + sliceStoreInfo.predictionTimeDelta)
                 >= sliceEnd)
         {
-            logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd});
+#ifdef LOG_SLICE_ACCESS
+            logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd, true});
+#endif
+
             /// Slice should be read back now as it will be triggered once the read operation has finished
             slicesToUpdate.emplace_back(slice, FileOperation::READ);
         }
@@ -366,7 +375,10 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                         + sliceStoreInfo.predictionTimeDelta)
                 < sliceEnd)
         {
-            logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::START, sliceEnd});
+#ifdef LOG_SLICE_ACCESS
+            logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::START, sliceEnd, true});
+#endif
+
             /// Slice should be written out as it will not be triggered before write and read operations have finished
             slicesToUpdate.emplace_back(slice, FileOperation::WRITE);
         }
@@ -401,7 +413,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     nljSlice->releaseCombinePagedVectorsLock();
     // TODO handle wrong predictions
 
-    logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd()});
+#ifdef LOG_SLICE_ACCESS
+    logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), true});
+#endif
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -432,7 +446,15 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         }
     }
 
-    logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::END, slice->getSliceEnd()});
+#ifdef LOG_SLICE_ACCESS
+    if (numberOfWorkerThreads <= 1)
+    {
+        throw std::runtime_error(
+            "Slice access logging needs at least two worker threads to differentiate between predicted and forced read operations");
+    }
+    logger->log(
+        {std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::END, slice->getSliceEnd(), threadsToRead.size() <= 1});
+#endif
 }
 
 void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)

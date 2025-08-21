@@ -143,13 +143,14 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
 void FileDescriptorManager::deleteFileWriters(const SliceEnd sliceEnd, const bool withCleanup)
 {
     std::vector<std::shared_ptr<FileWriter>> writersToDelete;
+    writersToDelete.reserve(withCleanup ? threadWriters.size() * 2 : 0);
     for (auto& local : threadWriters)
     {
         const std::scoped_lock lock(local.mutex);
         for (const auto joinBuildSide : {JoinBuildSideType::Left, JoinBuildSideType::Right})
         {
             const auto writer = deleteFileWriter(local, {sliceEnd, joinBuildSide});
-            if (writer.has_value() and withCleanup)
+            if (withCleanup and writer.has_value())
             {
                 writersToDelete.emplace_back(writer.value());
             }
@@ -190,7 +191,7 @@ std::string FileDescriptorManager::constructFilePath(
 }
 
 std::optional<std::shared_ptr<FileWriter>>
-FileDescriptorManager::deleteFileWriter(ThreadLocalWriters& local, const std::pair<SliceEnd, JoinBuildSideType>& key)
+FileDescriptorManager::deleteFileWriter(ThreadLocalWriters& local, const ThreadLocalWriters::WriterKey& key)
 {
     auto& [writers, lruQueue, _] = local;
     if (const auto it = writers.find(key); it != writers.end())

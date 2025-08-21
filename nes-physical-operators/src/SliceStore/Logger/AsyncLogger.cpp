@@ -41,9 +41,8 @@ AsyncLogger::~AsyncLogger()
 
 void AsyncLogger::log(LoggingParams params)
 {
-    while (not queue.writeIfNotFull(std::move(params)))
+    while (not queue.writeIfNotFull(params))
     {
-        //throw std::runtime_error("Log queue is full, dropping log entry\n");
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
@@ -63,15 +62,16 @@ void AsyncLogger::processLogs(const std::string& path)
         if (queue.readIfNotEmpty(params))
         {
             file << fmt::format(
-                "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}\n",
+                "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}{}\n",
                 params.timestamp,
                 magic_enum::enum_name<FileOperation>(params.operation),
                 magic_enum::enum_name<OperationStatus>(params.status),
-                params.sliceEnd);
+                params.sliceEnd,
+                params.prediction ? " with prediction" : "");
         }
         else
         {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
     file.flush();

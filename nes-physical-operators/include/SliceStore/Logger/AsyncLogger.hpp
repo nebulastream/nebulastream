@@ -32,8 +32,9 @@ public:
             const std::chrono::system_clock::time_point timestamp,
             const FileOperation operation,
             const OperationStatus status,
-            const SliceEnd sliceEnd)
-            : timestamp(timestamp), operation(operation), status(status), sliceEnd(sliceEnd)
+            const SliceEnd sliceEnd,
+            const bool prediction)
+            : timestamp(timestamp), operation(operation), status(status), sliceEnd(sliceEnd), prediction(prediction)
         {
         }
         LoggingParams() = default;
@@ -42,6 +43,7 @@ public:
         FileOperation operation = static_cast<FileOperation>(0);
         OperationStatus status = static_cast<OperationStatus>(0);
         SliceEnd sliceEnd = SliceEnd(SliceEnd::INVALID_VALUE);
+        bool prediction = false;
     };
 
     explicit AsyncLogger(const std::vector<std::string>& paths);
