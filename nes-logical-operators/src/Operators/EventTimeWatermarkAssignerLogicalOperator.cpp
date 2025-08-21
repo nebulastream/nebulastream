@@ -87,7 +87,10 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
 LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
+    if (inputSchemas.size() != 1)
+    {
+        throw CannotDeserialize("Watermark assigner should have only one input");
+    }
     const auto& inputSchema = inputSchemas[0];
     copy.onField = onField.withInferredDataType(inputSchema);
     copy.inputSchema = inputSchema;
@@ -143,7 +146,10 @@ std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOrigin
 
 LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 1, "Assigner should have one input");
+    if (ids.size() != 1)
+    {
+        throw CannotDeserialize("Assigner should have one input");
+    }
     auto copy = *this;
     copy.inputOriginIds = ids.at(0);
     return copy;
@@ -216,7 +222,10 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
         const auto functions = std::get<FunctionList>(functionVariant).functions();
         const auto time = Windowing::TimeUnit(std::get<uint64_t>(timeVariant));
 
-        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        if (functions.size() != 1)
+        {
+            throw CannotDeserialize("Expected exactly one function");
+        }
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
 
         auto logicalOperator = EventTimeWatermarkAssignerLogicalOperator(function, time);
