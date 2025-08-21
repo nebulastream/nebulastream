@@ -61,8 +61,10 @@ WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
 ERROR_FILE_PATH = os.path.join(RESULTS_DIR, "failed_benchmarks.txt")
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
+COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
+SLICE_ACCESSES_FILE = "SliceAccesses_"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -360,7 +362,7 @@ def run_benchmark(current_benchmark_config):
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
             if file_name.startswith(ENGINE_STATS_FILE) or file_name.startswith(
-                    BENCHMARK_STATS_FILE) or file_name.endswith(".log"):
+                    BENCHMARK_STATS_FILE) or file_name.startswith(SLICE_ACCESSES_FILE) or file_name.endswith(".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
 
@@ -466,8 +468,10 @@ def main():
                                                         BENCHMARK_CONFIG_FILE,
                                                         ENGINE_STATS_FILE,
                                                         BENCHMARK_STATS_FILE,
+                                                        SLICE_ACCESSES_FILE,
                                                         COMBINED_ENGINE_STATISTICS_FILE,
                                                         COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                        COMBINED_SLICE_ACCESSES_FILE,
                                                         engine_stats_csv_path,
                                                         benchmark_stats_csv_path,
                                                         SERVER_NAME,

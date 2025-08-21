@@ -62,8 +62,9 @@ void AsyncLogger::processLogs(const std::string& path)
         if (queue.readIfNotEmpty(params))
         {
             file << fmt::format(
-                "{:%Y-%m-%d %H:%M:%S} Executed operation {} with status {} on slice {}{}\n",
+                "{:%Y-%m-%d %H:%M:%S} Thread {} executed operation {} with status {} on slice {}{}\n",
                 params.timestamp,
+                params.threadId,
                 magic_enum::enum_name<FileOperation>(params.operation),
                 magic_enum::enum_name<OperationStatus>(params.status),
                 params.sliceEnd,

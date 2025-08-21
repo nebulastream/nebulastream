@@ -24,8 +24,10 @@ RESULTS_DIR = f"benchmarks/data/{DATETIME}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME}"
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
+COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
+SLICE_ACCESSES_FILE = "SliceAccesses_"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 TEST_NAME = "Benchmark"
 
@@ -59,8 +61,10 @@ if __name__ == "__main__":
                                                     BENCHMARK_CONFIG_FILE,
                                                     ENGINE_STATS_FILE,
                                                     BENCHMARK_STATS_FILE,
+                                                    SLICE_ACCESSES_FILE,
                                                     COMBINED_ENGINE_STATISTICS_FILE,
                                                     COMBINED_BENCHMARK_STATISTICS_FILE,
+                                                    COMBINED_SLICE_ACCESSES_FILE,
                                                     engine_stats_csv_path,
                                                     benchmark_stats_csv_path,
                                                     SERVER_NAME,

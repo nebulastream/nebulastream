@@ -30,16 +30,18 @@ public:
     {
         LoggingParams(
             const std::chrono::system_clock::time_point timestamp,
+            const WorkerThreadId threadId,
             const FileOperation operation,
             const OperationStatus status,
             const SliceEnd sliceEnd,
             const bool prediction)
-            : timestamp(timestamp), operation(operation), status(status), sliceEnd(sliceEnd), prediction(prediction)
+            : timestamp(timestamp), threadId(threadId), operation(operation), status(status), sliceEnd(sliceEnd), prediction(prediction)
         {
         }
         LoggingParams() = default;
 
         std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
+        WorkerThreadId threadId = WorkerThreadId(WorkerThreadId::INVALID);
         FileOperation operation = static_cast<FileOperation>(0);
         OperationStatus status = static_cast<OperationStatus>(0);
         SliceEnd sliceEnd = SliceEnd(SliceEnd::INVALID_VALUE);

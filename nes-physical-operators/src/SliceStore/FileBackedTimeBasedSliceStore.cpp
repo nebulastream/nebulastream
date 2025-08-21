@@ -93,7 +93,7 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     if (slice.has_value())
     {
 #ifdef LOG_SLICE_ACCESS
-        logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd, false});
+        logger->log({std::chrono::system_clock::now(), workerThread, FileOperation::READ, OperationStatus::START, sliceEnd, false});
 #endif
 
         readSliceFromFiles(
@@ -360,7 +360,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                 >= sliceEnd)
         {
 #ifdef LOG_SLICE_ACCESS
-            logger->log({std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::START, sliceEnd, true});
+            logger->log({std::chrono::system_clock::now(), threadId, FileOperation::READ, OperationStatus::START, sliceEnd, true});
 #endif
 
             /// Slice should be read back now as it will be triggered once the read operation has finished
@@ -376,7 +376,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
                 < sliceEnd)
         {
 #ifdef LOG_SLICE_ACCESS
-            logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::START, sliceEnd, true});
+            logger->log({std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::START, sliceEnd, true});
 #endif
 
             /// Slice should be written out as it will not be triggered before write and read operations have finished
@@ -414,7 +414,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     // TODO handle wrong predictions
 
 #ifdef LOG_SLICE_ACCESS
-    logger->log({std::chrono::system_clock::now(), FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), true});
+    logger->log({std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), true});
 #endif
 }
 
@@ -453,7 +453,12 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
             "Slice access logging needs at least two worker threads to differentiate between predicted and forced read operations");
     }
     logger->log(
-        {std::chrono::system_clock::now(), FileOperation::READ, OperationStatus::END, slice->getSliceEnd(), threadsToRead.size() <= 1});
+        {std::chrono::system_clock::now(),
+         workerThreadId,
+         FileOperation::READ,
+         OperationStatus::END,
+         slice->getSliceEnd(),
+         threadsToRead.size() <= 1});
 #endif
 }
 

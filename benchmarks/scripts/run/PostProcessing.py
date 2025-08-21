@@ -21,7 +21,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 import multiprocessing
 
-
 unit_multipliers = {'': 1, 'k': 10 ** 3, 'M': 10 ** 6, 'G': 10 ** 9, 'T': 10 ** 12}
 
 
@@ -29,16 +28,19 @@ unit_multipliers = {'': 1, 'k': 10 ** 3, 'M': 10 ** 6, 'G': 10 ** 9, 'T': 10 ** 
 class PostProcessing:
 
     def __init__(self, input_folders, measure_interval, startup_time, benchmark_config_file, engine_statistics_file,
-                 benchmark_statistics_file, combined_engine_file, combined_benchmark_file, engine_statistics_csv_path,
-                 benchmark_statistics_csv_path, server_name, test_name):
+                 benchmark_statistics_file, slices_accesses_file, combined_engine_file, combined_benchmark_file,
+                 combined_slice_accesses_file, engine_statistics_csv_path, benchmark_statistics_csv_path, server_name,
+                 test_name):
         self.input_folders = input_folders
         self.measure_interval = measure_interval
         self.startup_time = startup_time
         self.benchmark_config_file = benchmark_config_file
         self.engine_statistics_file = engine_statistics_file
         self.benchmark_statistics_file = benchmark_statistics_file
+        self.slices_accesses_file = slices_accesses_file
         self.combined_engine_file = combined_engine_file
         self.combined_benchmark_file = combined_benchmark_file
+        self.combined_slice_accesses_file = combined_slice_accesses_file
         self.engine_statistics_csv_path = engine_statistics_csv_path
         self.benchmark_statistics_csv_path = benchmark_statistics_csv_path
         self.server_name = server_name
@@ -54,6 +56,9 @@ class PostProcessing:
         with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
             futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+
+        for f in self.input_folders:
+            self.convert_slice_accesses_to_csv(f)
 
         # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
         # failed_engines = self.combine_engine_statistics()
@@ -138,9 +143,10 @@ class PostProcessing:
 
     def convert_engine_statistics_to_csv(self, input_folder):
         pattern_engine_statistics_file = rf"^{re.escape(self.engine_statistics_file)}[\w\.\-]+\.stats$"
-        pattern_task_details = (r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
-                                r"Task (?P<task_id>\d+) for Pipeline (?P<pipeline>\d+).*?"
-                                r"(?P<action>Started|Completed)(?:\. Number of Tuples: (?P<num_tuples>\d+))?")
+        pattern_task_details = re.compile(
+            r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
+            r"Task (?P<task_id>\d+) for Pipeline (?P<pipeline>\d+).*?"
+            r"(?P<action>Started|Completed)(?:\. Number of Tuples: (?P<num_tuples>\d+))?")
 
         # Gathering all statistic files. For now, there should only be one
         statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
@@ -214,7 +220,7 @@ class PostProcessing:
         interesting_queries = [1]
 
         pattern_engine_statistics_file = rf"^{re.escape(self.benchmark_statistics_file)}[\w\.\-]+\.stats$"
-        pattern_throughput_details = (
+        pattern_throughput_details = re.compile(
             r"Throughput for queryId (?P<query_id>\d+) in window (?P<window_start>\d+)-(?P<window_end>\d+) "
             r"is (?P<throughput_data>[\d\.]+ (?P<data_prefix>[kMGT]?))B/s / (?P<throughput_tuples>[\d\.]+ "
             r"(?P<tuple_prefix>[kMGT]?))Tup/s and memory consumption is (?P<memory>[\d\.]+ (?P<memory_prefix>[kMGT]?))B")
@@ -278,7 +284,7 @@ class PostProcessing:
 
             # Keep only relevant data within the measurement interval
             df = df[(df['window_start_normalized'] >= self.startup_time) & (
-                        df['window_start_normalized'] <= self.measure_interval)]
+                    df['window_start_normalized'] <= self.measure_interval)]
 
             if df.empty:
                 print(f"WARNING: {stat_file} produced no data")
@@ -293,3 +299,87 @@ class PostProcessing:
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
             combined_df.to_csv(os.path.join(input_folder, self.combined_benchmark_file), index=False)
+
+    def convert_slice_accesses_to_csv(self, input_folder):
+        pattern_slice_accesses_file = rf"^{re.escape(self.slices_accesses_file)}[\w\.\-]+\.stats$"
+        pattern_slice_access_details = re.compile(
+            r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
+            r"Thread (?P<thread_id>\d+) executed operation (?P<operation>WRITE|READ) "
+            r"with status (?P<status>START|END) on slice (?P<slice_id>\d+)"
+            r"(?: with prediction)?")
+
+        # Gathering all statistic files.
+        statistic_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                           re.match(pattern_slice_accesses_file, f)]
+        tasks = {}
+
+        for idx, stat_file in enumerate(statistic_files):
+            # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            dir_name = os.path.dirname(stat_file)
+            with open(stat_file, 'r') as file:
+                log_text = file.read()
+
+            with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
+                benchmark_config_yaml = yaml.safe_load(file)
+
+            for match in re.finditer(pattern_slice_access_details, log_text):
+                timestamp = pd.to_datetime(match.group("timestamp"), format="%Y-%m-%d %H:%M:%S.%f")
+                thread_id = int(match.group("thread_id"))
+                operation = match.group("operation")
+                status = match.group("status")
+                slice_id = int(match.group("slice_id"))
+                prediction = True if match.group("prediction") else False
+
+                if slice_id not in tasks:
+                    tasks[slice_id] = benchmark_config_yaml.copy()
+                    tasks[slice_id].update({
+                        "thread_id": thread_id,
+                        "first_write_start": None,
+                        "last_write_end": None,
+                        "first_read_pred_start": None,
+                        "last_read_pred_end": None,
+                        "first_read_nopred_start": None,
+                        "last_read_nopred_end": None,
+                    })
+
+                if operation == "WRITE":
+                    if status == "START":
+                        if tasks[slice_id]["first_write_start"] is None or timestamp < tasks[slice_id]["first_write_start"]:
+                            tasks[slice_id]["first_write_start"] = timestamp
+                    elif status == "END":
+                        if tasks[slice_id]["last_write_end"] is None or timestamp < tasks[slice_id]["last_write_end"]:
+                            tasks[slice_id]["last_write_end"] = timestamp
+                elif operation == "READ":
+                    if prediction:
+                        if status == "START":
+                            if tasks[slice_id]["first_read_pred_start"] is None or timestamp < tasks[slice_id]["first_read_pred_start"]:
+                                tasks[slice_id]["first_read_pred_start"] = timestamp
+                        elif status == "END":
+                            if tasks[slice_id]["last_read_pred_end"] is None or timestamp < tasks[slice_id]["last_read_pred_end"]:
+                                tasks[slice_id]["last_read_pred_end"] = timestamp
+                    else:
+                        if status == "START":
+                            if tasks[slice_id]["first_read_nopred_start"] is None or timestamp < tasks[slice_id]["first_read_nopred_start"]:
+                                tasks[slice_id]["first_read_nopred_start"] = timestamp
+                        elif status == "END":
+                            if tasks[slice_id]["last_read_nopred_end"] is None or timestamp < tasks[slice_id]["last_read_nopred_end"]:
+                                tasks[slice_id]["last_read_nopred_end"] = timestamp
+
+        # Create DataFrame from records
+        df = pd.DataFrame.from_dict(tasks, orient="index").reset_index()
+        df = df.rename(columns={"index": "slice_id"})
+
+        # Filter valid rows
+        def valid_row(row):
+            has_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
+            has_write = pd.notna(row["first_write_start"]) and pd.notna(row["last_write_end"])
+            has_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
+            return has_nopred and (has_write or has_pred)  # keep if nopred + (write or pred or both)
+
+        df = df[df.apply(valid_row, axis=1)]
+
+        # Sort the DataFrame
+        df = df.sort_values(by=["slice_id"]).reset_index(drop=True)
+
+        # Write the created DataFrame to the csv file
+        df.to_csv(os.path.join(input_folder, self.combined_slice_accesses_file), index=False)
