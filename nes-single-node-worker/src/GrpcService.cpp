@@ -21,6 +21,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
@@ -32,9 +33,11 @@
 
 namespace NES
 {
-
+namespace
+{
 grpc::Status handleError(const std::exception& exception, grpc::ServerContext* context)
 {
+    NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
     context->AddTrailingMetadata("what", exception.what());
     context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
@@ -43,10 +46,22 @@ grpc::Status handleError(const std::exception& exception, grpc::ServerContext* c
 
 grpc::Status handleError(const Exception& exception, grpc::ServerContext* context)
 {
+    NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
     context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
+}
+
+template <typename T>
+T getValueOrThrow(std::expected<T, Exception> expected)
+{
+    if (expected.has_value())
+    {
+        return expected.value();
+    }
+    throw std::move(expected.error());
+}
 }
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
@@ -74,7 +89,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
     auto queryId = QueryId(request->queryid());
     CPPTRACE_TRY
     {
-        delegate.unregisterQuery(queryId);
+        getValueOrThrow(delegate.unregisterQuery(queryId));
         return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
@@ -93,7 +108,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
     auto queryId = QueryId(request->queryid());
     CPPTRACE_TRY
     {
-        delegate.startQuery(queryId);
+        getValueOrThrow(delegate.startQuery(queryId));
         return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
@@ -113,7 +128,7 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
     auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
-        delegate.stopQuery(queryId, terminationType);
+        getValueOrThrow(delegate.stopQuery(queryId, terminationType));
         return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
