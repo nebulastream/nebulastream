@@ -63,32 +63,6 @@ namespace NES
 
 namespace
 {
-std::tuple<TimestampField, TimestampField>
-getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
-{
-    if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-    {
-        NES_DEBUG("Skip eventime identification as we use ingestion time");
-        return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
-    }
-
-    auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
-    auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-
-    /// Extracting the left and right timestamp
-    const auto timeStampFieldNameLeft = joinOperator.getInputSchemas()[0].getFieldByName(timeStampFieldNameWithoutSourceName);
-    const auto timeStampFieldNameRight = joinOperator.getInputSchemas()[1].getFieldByName(timeStampFieldNameWithoutSourceName);
-
-    INVARIANT(
-        (timeStampFieldNameLeft.has_value() and timeStampFieldNameRight.has_value()),
-        "Could not find timestamp field name {} in both streams!",
-        timeStampFieldNameWithoutSourceName);
-
-    return {
-        TimestampField::eventTime(timeStampFieldNameLeft.value().name, windowType->getTimeCharacteristic().getTimeUnit()),
-        TimestampField::eventTime(timeStampFieldNameRight.value().name, windowType->getTimeCharacteristic().getTimeUnit())};
-}
-
 /// Helper struct for storing the old and new field name and datatype for each join comparison
 struct FieldNamesExtension
 {
@@ -263,7 +237,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto outputOriginId = join.getOutputOriginIds()[0];
     auto logicalJoinFunction = join.getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
-    auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldRight, timeStampFieldLeft] = TimestampField::getTimestampLeftAndRight(join, windowType);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     auto nested = logicalOperator.getInputOriginIds();
     auto inputOriginIds = nested | std::views::join | std::ranges::to<std::vector>();
