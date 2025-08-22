@@ -40,7 +40,8 @@ def create_results_dir():
     os.makedirs(RESULTS_DIR, exist_ok=True)
     # print(f"Created results dir {folder_name}...")
     return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
-            os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE)]
+            os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE),
+            os.path.join(RESULTS_DIR, COMBINED_SLICE_ACCESSES_FILE)]
 
 
 def get_subdirectories_with_paths(directory):
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     # Calling the postprocessing main
     measurement_time = MEASURE_INTERVAL * 1000
     startup_time = WAIT_BETWEEN_COMMANDS * 1000
-    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
+    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     post_processing = PostProcessing.PostProcessing(output_folders,
                                                     measurement_time,
                                                     startup_time,
@@ -67,6 +68,7 @@ if __name__ == "__main__":
                                                     COMBINED_SLICE_ACCESSES_FILE,
                                                     engine_stats_csv_path,
                                                     benchmark_stats_csv_path,
+                                                    slice_accesses_csv_path,
                                                     SERVER_NAME,
                                                     TEST_NAME)
     failed_run_folders = post_processing.main()

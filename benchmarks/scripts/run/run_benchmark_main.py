@@ -102,7 +102,8 @@ def create_results_dir():
     os.makedirs(RESULTS_DIR, exist_ok=True)
     # print(f"Created results dir {folder_name}...")
     return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
-            os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE)]
+            os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE),
+            os.path.join(RESULTS_DIR, COMBINED_SLICE_ACCESSES_FILE)]
 
 
 def create_working_dir(output_folder):
@@ -418,7 +419,7 @@ def main():
     print("################################################################\n")
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
 
-    engine_stats_csv_path, benchmark_stats_csv_path = create_results_dir()
+    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Benchmarks: \n")
 
@@ -474,6 +475,7 @@ def main():
                                                         COMBINED_SLICE_ACCESSES_FILE,
                                                         engine_stats_csv_path,
                                                         benchmark_stats_csv_path,
+                                                        slice_accesses_csv_path,
                                                         SERVER_NAME,
                                                         TEST_NAME)
         failed_run_folders = post_processing.main()
