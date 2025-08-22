@@ -14,11 +14,10 @@
 
 #include <Serialization/DataTypeSerializationUtil.hpp>
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <type_traits>
 #include <DataTypes/DataType.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableDataType.pb.h>
 
 namespace NES
@@ -34,7 +33,20 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
 
 DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
-    const DataType deserializedDataType = DataType{.type = magic_enum::enum_value<DataType::Type>(serializedDataType.type())};
+    auto type = magic_enum::enum_cast<DataType::Type>(serializedDataType.type());
+    if (!type)
+    {
+        /// from https://protobuf.dev/programming-guides/proto3/#enum:
+        ///
+        /// During deserialization, unrecognized enum values will be preserved in the message [...]
+        /// In [...] C++ and Go, the unknown enum value is simply stored as its underlying integer representation.
+        throw CannotDeserialize(
+            "Encountered illegal enum value for {}! Got {} but enum only goes up to {}",
+            magic_enum::enum_type_name<DataType::Type>(),
+            static_cast<std::underlying_type_t<DataType::Type>>(serializedDataType.type()),
+            magic_enum::enum_values<DataType::Type>().size());
+    }
+    const DataType deserializedDataType = DataType{.type = *type};
     return deserializedDataType;
 }
 
