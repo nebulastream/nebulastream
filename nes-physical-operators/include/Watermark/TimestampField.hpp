@@ -16,10 +16,16 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <tuple>
 #include <utility>
+#include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -58,6 +64,32 @@ public:
     static TimestampField eventTime(std::string fieldName, const Windowing::TimeUnit& timeUnit)
     {
         return {std::move(fieldName), timeUnit, EVENT_TIME};
+    }
+
+    static std::tuple<TimestampField, TimestampField>
+    getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+    {
+        if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+        {
+            NES_DEBUG("Skip eventime identification as we use ingestion time");
+            return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
+        }
+
+        auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
+        auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        /// Extracting the left and right timestamp
+        const auto timeStampFieldNameLeft = joinOperator.getInputSchemas().at(0).getFieldByName(timeStampFieldNameWithoutSourceName);
+        const auto timeStampFieldNameRight = joinOperator.getInputSchemas().at(1).getFieldByName(timeStampFieldNameWithoutSourceName);
+
+        INVARIANT(
+            timeStampFieldNameLeft.has_value() and timeStampFieldNameRight.has_value(),
+            "Could not find timestampfieldname {} in both streams!",
+            timeStampFieldNameWithoutSourceName);
+
+        return {
+            TimestampField::eventTime(timeStampFieldNameLeft.value().name, windowType->getTimeCharacteristic().getTimeUnit()),
+            TimestampField::eventTime(timeStampFieldNameRight.value().name, windowType->getTimeCharacteristic().getTimeUnit())};
     }
 
 private:
