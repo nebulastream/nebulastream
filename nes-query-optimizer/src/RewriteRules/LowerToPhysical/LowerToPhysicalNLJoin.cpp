@@ -55,7 +55,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
 {
     if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
-        NES_DEBUG("Skip eventime identification as we use ingestion time");
+        NES_DEBUG("Skip event time identification, as we use ingestion time");
         return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
     }
 
@@ -76,12 +76,12 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
     };
 
     /// Extracting the left and right timestamp
-    auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas()[0]);
-    auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas()[1]);
+    const auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas().at(0));
+    const auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas().at(1));
 
     INVARIANT(
         !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-        "Could not find timestampfieldname {} in both streams!",
+        "Could not find the name of the timestamp field '{}' in both streams",
         timeStampFieldNameWithoutSourceName);
 
     return {
@@ -91,7 +91,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
 
 static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
-    return NES::BFSRange(joinFunction)
+    return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
         | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getFieldName(); })
         | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
@@ -108,11 +108,10 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
-    auto rightInputSchema = join.getInputSchemas()[0];
-    auto leftInputSchema = join.getInputSchemas()[1];
+    auto leftInputSchema = join.getLeftSchema();
+    auto rightInputSchema = join.getRightSchema();
     auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = join.getOutputOriginIds()[0];
+    auto outputOriginId = join.getOutputOriginIds().at(0);
     auto logicalJoinFunction = join.getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
     const auto pageSize = conf.pageSize.getValue();
@@ -128,7 +127,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
@@ -159,7 +158,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{leftBuildWrapper, rightBuildWrapper});
 
-    return {.root = {probeWrapper}, .leafs = {rightBuildWrapper, leftBuildWrapper}};
+    return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule>
