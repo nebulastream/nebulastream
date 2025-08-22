@@ -7,7 +7,7 @@ on:
 jobs:
   stale:
     if: ${{ !github.event.act }}
-    runs-on: [ self-hosted, linux, X64, Build ]
+    runs-on: [ self-hosted, linux, x64, Build ]
     permissions:
       issues: write
       pull-requests: write
@@ -15,10 +15,13 @@ jobs:
     steps:
     - uses: actions/stale@v3
       with:
-        repo-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+        repo-token: ${{ github.token }}
         stale-issue-message: 'Stale issue message'
         stale-pr-message: 'Stale pull request message'
         stale-issue-label: 'no-issue-activity'
         stale-pr-label: 'no-pr-activity'
         days-before-close: -1
+        days-before-pr-close: 14
+        days-before-stale: 30
+        operations-per-run: 500
 
