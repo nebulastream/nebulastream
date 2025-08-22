@@ -17,7 +17,7 @@ on:
 
 jobs:
   build-and-benchmark:
-    runs-on: bc58-nes-public
+    runs-on: bc58
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
