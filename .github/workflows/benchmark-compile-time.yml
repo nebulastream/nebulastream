@@ -18,7 +18,7 @@ on:
 
 jobs:
   benchmark-compile-time:
-    runs-on: bc58-nes-public
+    runs-on: bc58
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
     timeout-minutes: 40
