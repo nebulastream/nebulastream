@@ -168,6 +168,17 @@ then
     log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH to preserve stacktraces.\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)")"
 fi
 
+# no magic_enum::enum_value<...>
+#
+# Given e.g.  enum class Color : uint8_t { RED, GREEN, BLUE };
+# a value of this type can be an unknown enum value,
+# i.e. an uint8_t that represents none of RED, GREEN, BLUE like e.g. 42.
+if git grep "magic_enum::enum_value<" -- ".hpp" "*.cpp" > /dev/null
+then
+    log_error "Found magic_enum::enum_value<...>. This can fail if given value is out of range. Use magic_enum::enum_cast instead!\n$(git grep -n "magic_enum::enum_value<" -- ".hpp" "*.cpp")"
+fi
+
+
 python3 scripts/check_preamble.py || FAIL=1
 
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
