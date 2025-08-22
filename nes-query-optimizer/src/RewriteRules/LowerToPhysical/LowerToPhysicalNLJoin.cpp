@@ -50,45 +50,6 @@
 namespace NES
 {
 
-static std::tuple<TimestampField, TimestampField>
-getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
-{
-    if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-    {
-        NES_DEBUG("Skip eventime identification as we use ingestion time");
-        return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
-    }
-
-    auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
-    auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-
-    /// Lambda function for extracting the timestamp from a schema
-    auto findTimeStampFieldName = [&](const Schema& schema)
-    {
-        for (const auto& field : schema.getFields())
-        {
-            if (field.name.find(timeStampFieldNameWithoutSourceName) != std::string::npos)
-            {
-                return field.name;
-            }
-        }
-        return std::string();
-    };
-
-    /// Extracting the left and right timestamp
-    auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas()[0]);
-    auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas()[1]);
-
-    INVARIANT(
-        !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-        "Could not find timestampfieldname {} in both streams!",
-        timeStampFieldNameWithoutSourceName);
-
-    return {
-        TimestampField::eventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic().getTimeUnit()),
-        TimestampField::eventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic().getTimeUnit())};
-}
-
 static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
     return NES::BFSRange(joinFunction)
@@ -128,7 +89,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldRight, timeStampFieldLeft] = TimestampField::getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
