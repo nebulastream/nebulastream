@@ -49,14 +49,14 @@ constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
 template <typename QueueType, typename Args>
 bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> condition)
 {
-    constexpr auto attempts = 10;
+    constexpr auto attempts = 100;
     for (size_t i = 0; i < attempts; ++i)
     {
         if (condition())
         {
             return true;
         }
-        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), args))
+        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10 * i), args))
         {
             return true;
         }
