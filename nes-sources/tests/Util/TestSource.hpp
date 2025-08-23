@@ -40,6 +40,8 @@ namespace NES
 class TestSourceControl
 {
 public:
+    static constexpr size_t DEFAULT_QUEUE_SIZE = 10;
+    static constexpr size_t RETRY_MULTIPLIER_MS = 10;
     bool injectEoS();
     bool injectData(std::vector<std::byte> data, size_t numberOfTuples);
     bool injectError(std::string error);
@@ -87,7 +89,7 @@ private:
     };
 
     using ControlData = std::variant<EoS, Data, Error>;
-    folly::MPMCQueue<ControlData> queue{10};
+    folly::MPMCQueue<ControlData> queue{DEFAULT_QUEUE_SIZE};
 };
 
 class TestSource : public Source
