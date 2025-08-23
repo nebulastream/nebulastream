@@ -624,6 +624,7 @@ TEST_F(QueryEngineTest, RaceBetweenFailureAndEOS)
     {
         auto queryId = query->queryId;
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(identifiableData(1), 1);
         test.sourceControls[source]->injectEoS();
         ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
