@@ -1,5 +1,5 @@
 [{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]
-[{"parser_config":{"fieldDelimiter":",","tupleDelimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"generatorSchema":"SEQUENCE UINT64 0 10 1"},{"maxRuntimeMs":10000000},{"numberOfBuffersInLocalPool":-1},{"seed":1},{"stopGeneratorWhenSequenceFinishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]
+[{"parser_config":{"fieldDelimiter":",","tupleDelimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"generatorSchema":"SEQUENCE UINT64 0 10 1"},{"maxInflightBuffers":0},{"maxRuntimeMs":10000000},{"seed":1},{"stopGeneratorWhenSequenceFinishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]
 [{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"addTimestamp":false},{"append":false},{"filePath":"WORKDIR/out.csv"},{"inputFormat":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]
 []
 [{"query_id":1}]

@@ -49,10 +49,11 @@ public:
            {std::make_shared<NumberValidation>()}};
 
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
-    UIntOption numberOfBuffersInSourceLocalPools
-        = {"numberOfBuffersInSourceLocalPools",
+    UIntOption defaultMaxInflightBuffers
+        = {"defaultMaxInflightBuffers",
            "64",
-           "Number buffers in source local buffer pool. May be overwritten by a source-specific configuration (see SourceDescriptor).",
+           "Number of buffers a source can have inflight before blocking. May be overwritten by a source-specific configuration (see "
+           "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
     EnumOption<DumpMode> dumpQueryCompilationIntermediateRepresentations
@@ -67,7 +68,7 @@ private:
             &queryEngine,
             &defaultQueryExecution,
             &numberOfBuffersInGlobalBufferManager,
-            &numberOfBuffersInSourceLocalPools,
+            &defaultMaxInflightBuffers,
             &bufferSizeInBytes,
             &dumpQueryCompilationIntermediateRepresentations};
     }

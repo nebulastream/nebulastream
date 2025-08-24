@@ -61,9 +61,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    CompiledQueryPlan& compiledQueryPlan,
-    const std::shared_ptr<AbstractBufferProvider>& poolProvider,
-    int numberOfBuffersInSourceLocalPools)
+    CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<AbstractBufferProvider>& poolProvider, size_t defaultMaxInflightBuffers)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -88,7 +86,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(
-            SourceProvider::lower(id, descriptor, poolProvider, numberOfBuffersInSourceLocalPools), std::move(successors));
+            SourceProvider::lower(id, descriptor, poolProvider, defaultMaxInflightBuffers), std::move(successors));
     }
 
 

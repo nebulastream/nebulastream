@@ -160,16 +160,16 @@ std::unique_ptr<SourceHandle> createFileSource(
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
-    const int numberOfLocalBuffersInSource)
+    const size_t numberOfRequiredSourceBuffers)
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
-        {"filePath", filePath}, {"numberOfBuffersInLocalPool", std::to_string(numberOfLocalBuffersInSource)}};
+        {"filePath", filePath}, {"maxInflightBuffers", std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    return SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), 0);
 }
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)

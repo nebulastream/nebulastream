@@ -33,17 +33,20 @@
 
 namespace NES
 {
+constexpr size_t MAX_INFLIGHT_BUFFERS_PER_SOURCE = 1024 * 1024;
 
 namespace
 {
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
+    size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    auto availableBuffer = std::make_shared<std::counting_semaphore<64>>(64);
+    auto availableBuffer = std::make_shared<std::counting_semaphore<MAX_INFLIGHT_BUFFERS_PER_SOURCE>>(
+        std::min(numberOfInflightBuffers, MAX_INFLIGHT_BUFFERS_PER_SOURCE));
     return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
@@ -124,10 +127,15 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
+    /// Capture the configuration before moving the source
+    auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
+
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(tryUnregister), std::move(unregisterWithError)));
+
     ENGINE_LOG_DEBUG("Starting Running Source");
-    runningSource->source->start(emitFunction(queryId, runningSource, std::move(successors), controller, emitter));
+    runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+
     return runningSource;
 }
 

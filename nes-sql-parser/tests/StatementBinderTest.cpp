@@ -106,7 +106,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (-1 as `SOURCE`.NUMBER_OF_BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as `SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"filePath", "/dev/null"}};
@@ -295,15 +295,15 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     createSourcesStatements.emplace_back("CREATE LOGICAL SOURCE testSource2 (attribute1 UINT32, attribute2 INT32)");
     createSourcesStatements.emplace_back(
         "CREATE PHYSICAL SOURCE FOR testSource1 TYPE File SET (200 as "
-        "`SOURCE`.NUMBER_OF_BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
         "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
     createSourcesStatements.emplace_back(
-        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (-1 as "
-        "`SOURCE`.NUMBER_OF_BUFFERS_IN_LOCAL_POOL, '/dev/random' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
+        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/random' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
         "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
     createSourcesStatements.emplace_back(
-        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (-1 as "
-        "`SOURCE`.NUMBER_OF_BUFFERS_IN_LOCAL_POOL, '/dev/ones' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
+        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/ones' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
         "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
 
     for (const auto& sourceStatementString : createSourcesStatements)
@@ -368,9 +368,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getFromConfig(
-            SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL),
-        200);
+        physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS), 200);
 
     const auto physicalSourceForLogicalSourceStatementFilteredExp
         = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementFilteredString);
