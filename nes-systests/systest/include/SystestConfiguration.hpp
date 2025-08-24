@@ -64,6 +64,8 @@ connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 
+    BoolOption dumpQueries = {"", "false", ""};
+
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:
