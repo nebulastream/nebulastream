@@ -31,6 +31,7 @@
 
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
+#include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
@@ -90,7 +91,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     for (const auto& [fieldName, function] : projection.getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = ProjectionLogicalOperator(
+        auto physicalOperator = MapPhysicalOperator(
             fieldName.transform([](const auto& identifier) { return identifier.getFieldName(); })
                 .value_or(function.explain(ExplainVerbosity::Short)),
             physicalFunction);

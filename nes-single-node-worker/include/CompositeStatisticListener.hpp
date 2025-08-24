@@ -34,7 +34,7 @@ struct CompositeStatisticListener final : StatisticListener
     [[nodiscard]] bool hasListeners() const;
 
 private:
-    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineListeners; /// TODO: layouts add new event max value
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> queryEngineListeners;
     std::vector<std::shared_ptr<SystemEventListener>> systemListeners;
 };
 }
