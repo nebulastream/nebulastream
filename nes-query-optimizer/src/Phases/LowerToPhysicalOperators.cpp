@@ -135,6 +135,11 @@ LogicalOperator getNewChild(LogicalOperator op, Schema newSchema)
     }
     auto child = getNewChild(op.getChildren()[0], newSchema);
     op = op.withChildren({child});
+    if (op.tryGet<SinkLogicalOperator>())
+    {
+        auto sink = op.get<SinkLogicalOperator>();
+        return sink.withSchema({newSchema}); /// TODO: work with filter/ map not at first position
+    }
     return op.withInferredSchema({newSchema});
 }
 

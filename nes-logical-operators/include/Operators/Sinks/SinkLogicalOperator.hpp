@@ -61,6 +61,8 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    /// TODO: only for field reduction of sinks when using selection
+    [[nodiscard]] LogicalOperator withSchema(std::vector<Schema> inputSchemas) const;
 
     [[nodiscard]] std::string getSinkName() const noexcept;
     [[nodiscard]] std::optional<Sinks::SinkDescriptor> getSinkDescriptor() const;
