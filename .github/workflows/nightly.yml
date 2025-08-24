@@ -649,11 +649,14 @@ jobs:
       - name: generate callgraph .dot
         if: ${{ !env.ACT }}
         run: |
-          python3 nes/gen_callgraph.py nes/build/compile_commands.json gcovr.json
+          cd nes
+          python3 gen_callgraph.py build/compile_commands.json ../gcovr.json
+          mv *.dot ..
       - name: generate callgraph .svg
         if: ${{ !env.ACT }}
         run: |
           neato -Tsvg cov.dot > cov.svg
+          patchwork -Tsvg patchwork.dot > pw.svg
       - uses: actions/upload-artifact@v4
         if: ${{ !env.ACT }}
         with:
