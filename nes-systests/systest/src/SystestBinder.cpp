@@ -50,8 +50,8 @@
 #include <SystestSources/SourceTypes.hpp>
 #include <SystestSources/SystestSourceYAMLBinder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
-#include <experimental/propagate_const>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -112,7 +112,7 @@ public:
     }();
 
 private:
-    std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
+    SharedPtr<SinkCatalog> sinkCatalog;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
