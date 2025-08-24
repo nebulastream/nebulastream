@@ -20,7 +20,6 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
