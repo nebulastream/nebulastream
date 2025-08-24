@@ -5,7 +5,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -141,7 +141,7 @@ namespace NES
                 emitWrapperRowNew->addChild(scanWrapperRow);
                 return std::make_pair(emitSelectionNew, scanWrapperRow);
             }
-            if (logicalOperator.tryGet<MapLogicalOperator>())
+            if (logicalOperator.tryGet<ProjectionLogicalOperator>())
             {
                 //swap back to row
                 emitWrapperRow->addChild(scanWrapperRowNew);
@@ -173,7 +173,7 @@ namespace NES
                 emitWrapperCol->addChild(scanWrapperRow);
                 return std::make_pair(emitSelectionWrapper, scanWrapperRow);
             }
-            if (logicalOperator.tryGet<MapLogicalOperator>())
+            if (logicalOperator.tryGet<ProjectionLogicalOperator>())
             {
                 emitWrapperRow->addChild(scanWrapperCol);
                 scanWrapperCol->addChild(emitSelectionWrapper);

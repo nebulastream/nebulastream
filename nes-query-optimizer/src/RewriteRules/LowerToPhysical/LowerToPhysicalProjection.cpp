@@ -28,7 +28,9 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <MapPhysicalOperator.hpp>
+
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
@@ -39,6 +41,7 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
+    auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
@@ -87,7 +90,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     for (const auto& [fieldName, function] : projection.getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = MapPhysicalOperator(
+        auto physicalOperator = ProjectionLogicalOperator(
             fieldName.transform([](const auto& identifier) { return identifier.getFieldName(); })
                 .value_or(function.explain(ExplainVerbosity::Short)),
             physicalFunction);

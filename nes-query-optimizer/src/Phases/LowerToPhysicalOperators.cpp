@@ -19,7 +19,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -152,9 +151,9 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
     auto op = queryPlan.getRootOperators()[0];
     while (not op.getChildren().empty())
     {
-        auto sink = queryPlan.getRootOperators()[0].get<SinkLogicalOperator>();
+        auto sinkOld = queryPlan.getRootOperators()[0].get<SinkLogicalOperator>();
         auto inputSchema = queryPlan.getRootOperators()[0].getChildren()[0].getOutputSchema();
-        sink.setOutputSchema(inputSchema);
+        auto sink = sinkOld.withInferredSchema({inputSchema});
         //auto sinkOperator = std::make_shared<SinkLogicalOperator>()
         //auto sinkWrapper = std::make_shared<PhysicalOperatorWrapper>(newRootOperators[0].get()->getPhysicalOperator(), inputSchema, inputSchema,
         //                        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

@@ -13,10 +13,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 #pragma once
 
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 namespace NES
 {
-std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapOperators(LogicalOperator logicalOperator, PhysicalOperator physicalOperator, NES::Configurations::QueryOptimizerConfiguration conf);
+std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapOperators(LogicalOperator logicalOperator, PhysicalOperator physicalOperator, QueryExecutionConfiguration conf);
 }

@@ -16,4 +16,5 @@ add_subdirectory(Phases)
 
 add_source_files(nes-query-optimizer
         PhysicalPlanBuilder.cpp
-        QueryOptimizer.cpp)
+        QueryOptimizer.cpp
+        Utils.cpp)
