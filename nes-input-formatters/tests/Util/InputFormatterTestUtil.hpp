@@ -149,7 +149,7 @@ std::unique_ptr<SourceHandle> createFileSource(
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
-    int numberOfLocalBuffersInSource);
+    size_t numberOfRequiredSourceBuffers);
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
 

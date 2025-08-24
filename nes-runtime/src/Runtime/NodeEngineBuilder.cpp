@@ -46,7 +46,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         statisticsListener,
         std::move(queryLog),
         std::move(queryEngine),
-        workerConfiguration.numberOfBuffersInSourceLocalPools.getValue());
+        workerConfiguration.defaultMaxInflightBuffers.getValue());
 }
 
 }

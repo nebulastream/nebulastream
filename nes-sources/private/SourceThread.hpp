@@ -59,7 +59,6 @@ public:
     explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        size_t numOfLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
 
     SourceThread() = delete;
@@ -89,7 +88,6 @@ public:
 protected:
     OriginId originId;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
-    uint64_t numOfLocalBuffers;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
 

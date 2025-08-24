@@ -30,6 +30,11 @@ namespace NES
 /// Hides SourceThread implementation.
 class SourceThread;
 
+struct SourceRuntimeConfiguration
+{
+    size_t inflightBufferLimit;
+};
+
 /// Interface class to handle sources.
 /// Created from a source descriptor via the SourceProvider.
 /// start(): The underlying source starts consuming data. All queries using the source start processing.
@@ -40,8 +45,8 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
+        SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        size_t numberOfBuffersInLocalPool,
         std::unique_ptr<Source> sourceImplementation);
 
     ~SourceHandle();
@@ -57,7 +62,10 @@ public:
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getSourceId() const;
 
+    const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
+
 private:
+    SourceRuntimeConfiguration configuration;
     /// Used to print the data source via the overloaded '<<' operator.
     std::unique_ptr<SourceThread> sourceThread;
 };
