@@ -9,6 +9,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Util/Common.hpp>
 
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>

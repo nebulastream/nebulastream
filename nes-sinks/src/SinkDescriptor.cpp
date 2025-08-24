@@ -44,6 +44,11 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
+void SinkDescriptor::setSchema(const Schema newSchema)
+{
+    schema = std::make_shared<Schema>(newSchema);
+}
+
 std::string SinkDescriptor::getSinkType() const
 {
     return sinkType;

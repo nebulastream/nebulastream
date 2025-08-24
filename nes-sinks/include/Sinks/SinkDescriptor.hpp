@@ -59,6 +59,7 @@ public:
 
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    void setSchema(const Schema schema);
     [[nodiscard]] std::string getSinkName() const;
 
 private:

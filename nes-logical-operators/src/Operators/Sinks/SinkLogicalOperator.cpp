@@ -35,7 +35,6 @@
 
 namespace NES
 {
-
 SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
 
 SinkLogicalOperator::SinkLogicalOperator(Sinks::SinkDescriptor sinkDescriptor)
@@ -130,6 +129,23 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
             expectedFieldsString.str(),
             actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
     }
+    return copy;
+}
+
+LogicalOperator SinkLogicalOperator::withSchema(std::vector<Schema> inputSchemas) const
+{
+    auto copy = *this;
+    INVARIANT(!inputSchemas.empty(), "Sink should have at least one input");
+
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas)
+    {
+        if (schema != firstSchema)
+        {
+            throw CannotInferSchema("All input schemas must be equal for Sink operator");
+        }
+    }
+    copy.sinkDescriptor->setSchema(inputSchemas.at(0));
     return copy;
 }
 
