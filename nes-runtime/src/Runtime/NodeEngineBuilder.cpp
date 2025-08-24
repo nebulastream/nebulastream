@@ -38,15 +38,12 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
-
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager);
 
+    auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
+
     return std::make_unique<NodeEngine>(
-        std::move(bufferManager),
-        statisticsListener,
-        std::move(queryLog),
-        std::move(queryEngine),
-        workerConfiguration.defaultMaxInflightBuffers.getValue());
+        std::move(bufferManager), statisticsListener, std::move(queryLog), std::move(queryEngine), std::move(sourceProvider));
 }
 
 }

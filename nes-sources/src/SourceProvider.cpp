@@ -27,11 +27,12 @@
 namespace NES
 {
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<AbstractBufferProvider> bufferPool,
-    const int defaultMaxInflightBuffers)
+SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool)
+    : defaultMaxInflightBuffers(defaultMaxInflightBuffers), bufferPool(std::move(bufferPool))
+{
+}
+
+std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescriptor) const
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
@@ -44,13 +45,12 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
-        return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(source.value()));
+        return std::make_unique<SourceHandle>(std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
 
-bool SourceProvider::contains(const std::string& sourceType)
+bool SourceProvider::contains(const std::string& sourceType) const
 {
     return SourceRegistry::instance().contains(sourceType);
 }

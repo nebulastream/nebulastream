@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <CompiledQueryPlan.hpp>
 
@@ -31,10 +31,7 @@ namespace NES
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor = std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
-    static std::unique_ptr<ExecutableQueryPlan> instantiate(
-        CompiledQueryPlan& compiledQueryPlan,
-        const std::shared_ptr<AbstractBufferProvider>& poolProvider,
-        size_t defaultMaxInflightBuffers);
+    static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
 
     ExecutableQueryPlan(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
