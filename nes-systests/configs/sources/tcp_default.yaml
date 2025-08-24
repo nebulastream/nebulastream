@@ -1,5 +1,5 @@
 type: TCP
-number_of_buffers_in_local_pool: 16
+max_inflight_buffers: 16
 socket_domain: AF_INET
 socket_type: SOCK_STREAM
 socket_port: PLACEHOLDER
