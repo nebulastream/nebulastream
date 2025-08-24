@@ -150,8 +150,7 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
 struct TerminatePipelineArgs
 {
     std::unique_ptr<RunningQueryPlanNode> target;
-    BaseTask::onComplete onComplete;
-    BaseTask::onFailure onFailure;
+    TaskCallback callback;
 };
 
 template <typename Args, typename KeyT>
@@ -257,9 +256,9 @@ std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipeli
     auto terminations = std::make_unique<Terminations>();
     for (auto* stage : stages)
     {
-        EXPECT_CALL(emitter, emitPipelineStop(::testing::_, UniquePtrStageMatcher(stage), ::testing::_, ::testing::_))
-            .WillOnce(::testing::Invoke([&terminations, stage](auto, auto termination, auto complete, auto fail)
-                                        { terminations->add(stage, std::move(termination), std::move(complete), std::move(fail)); }));
+        EXPECT_CALL(emitter, emitPipelineStop(::testing::_, UniquePtrStageMatcher(stage), ::testing::_))
+            .WillOnce(::testing::Invoke([&terminations, stage](auto, auto termination, auto callback)
+                                        { terminations->add(stage, std::move(termination), std::move(callback)); }));
     }
 
     return terminations;
@@ -273,21 +272,20 @@ template <>
     try
     {
         args.target->stage->stop(pec);
-        args.onComplete();
+        args.callback.callOnSuccess();
     }
     catch (const Exception& e)
     {
-        args.onFailure(e);
+        args.callback.callOnFailure(e);
     }
-
+    args.callback.callOnComplete();
     return ::testing::AssertionSuccess();
 }
 
 struct SetupPipelineArgs
 {
     std::weak_ptr<RunningQueryPlanNode> target;
-    BaseTask::onComplete onComplete;
-    BaseTask::onFailure onFailure;
+    TaskCallback callback;
 };
 
 using Setups = EmittedTask<SetupPipelineArgs, ExecutablePipelineStage*>;
@@ -300,9 +298,9 @@ std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> au
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
     for (auto* stage : stages)
     {
-        EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_, ::testing::_))
-            .WillOnce(::testing::Invoke([&setups, stage](auto, auto setup, auto complete, auto fail)
-                                        { setups->add(stage, std::move(setup), std::move(complete), std::move(fail)); }));
+        EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_))
+            .WillOnce(::testing::Invoke([&setups, stage](auto, auto setup, auto callback)
+                                        { setups->add(stage, std::move(setup), std::move(callback)); }));
     }
 
     return setups;
@@ -318,14 +316,14 @@ template <>
         if (auto strongRef = args.target.lock())
         {
             strongRef->stage->start(pec);
-            args.onComplete();
+            args.callback.callOnSuccess();
         }
     }
     catch (const Exception& e)
     {
-        args.onFailure(e);
+        args.callback.callOnFailure(e);
     }
-
+    args.callback.callOnComplete();
     return ::testing::AssertionSuccess();
 }
 

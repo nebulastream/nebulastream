@@ -167,25 +167,11 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         bool,
         emitWork,
-        (QueryId,
-         const std::shared_ptr<RunningQueryPlanNode>&,
-         TupleBuffer,
-         BaseTask::onComplete,
-         BaseTask::onFailure,
-         PipelineExecutionContext::ContinuationPolicy),
+        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TupleBuffer, TaskCallback, PipelineExecutionContext::ContinuationPolicy),
         (override));
-    MOCK_METHOD(
-        void,
-        emitPipelineStart,
-        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure),
-        (override));
-    MOCK_METHOD(
-        void,
-        emitPendingPipelineStop,
-        (QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
-        (override));
-    MOCK_METHOD(
-        void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure), (override));
+    MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
+    MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
+    MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback), (override));
 };
 
 struct TestQueryLifetimeController : QueryLifetimeController
