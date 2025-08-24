@@ -29,19 +29,17 @@ namespace NES
 /// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
+    size_t defaultMaxInflightBuffers;
+    std::shared_ptr<AbstractBufferProvider> bufferPool;
+
 public:
-    SourceProvider() = default;
+    /// Constructor that can be configured with various options
+    SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    static std::unique_ptr<SourceHandle> lower(
-        OriginId originId,
-        const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<AbstractBufferProvider> bufferPool,
-        int defaultNumberOfBuffersInLocalPool);
+    [[nodiscard]] std::unique_ptr<SourceHandle> lower(OriginId originId, const SourceDescriptor& sourceDescriptor) const;
 
-    static bool contains(const std::string& sourceType);
-
-    ~SourceProvider() = default;
+    [[nodiscard]] bool contains(const std::string& sourceType) const;
 };
 
 }

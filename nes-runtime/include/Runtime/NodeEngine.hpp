@@ -19,6 +19,7 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
@@ -45,7 +46,7 @@ public:
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine,
-        size_t defaultMaxInflightBuffers);
+        std::unique_ptr<SourceProvider> sourceProvider);
 
     [[nodiscard]] QueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     void unregisterQuery(QueryId queryId);
@@ -67,6 +68,6 @@ private:
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<QueryTracker> queryTracker;
-    size_t defaultMaxInflightBuffers;
+    std::unique_ptr<SourceProvider> sourceProvider;
 };
 }
