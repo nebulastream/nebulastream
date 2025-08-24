@@ -143,21 +143,12 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
-    if (queryPlan.getRootOperators()[0].tryGet<SinkLogicalOperator>())
-    newRootOperators.reserve(queryPlan.getRootOperators().size());
     auto allFieldNames= queryPlan.getRootOperators()[0].getOutputSchema().getFieldNames();
     auto fieldNames = std::vector<std::string>();
     auto fieldNamesSet = std::unordered_set<std::string>();
     auto op = queryPlan.getRootOperators()[0];
     while (not op.getChildren().empty())
     {
-        auto sinkOld = queryPlan.getRootOperators()[0].get<SinkLogicalOperator>();
-        auto inputSchema = queryPlan.getRootOperators()[0].getChildren()[0].getOutputSchema();
-        auto sink = sinkOld.withInferredSchema({inputSchema});
-        //auto sinkOperator = std::make_shared<SinkLogicalOperator>()
-        //auto sinkWrapper = std::make_shared<PhysicalOperatorWrapper>(newRootOperators[0].get()->getPhysicalOperator(), inputSchema, inputSchema,
-        //                        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-        //newRootOperators[0] = std::move(sinkWrapper);
         op= op.getChildren()[0]; //skip sink
         if (op.tryGet<SourceDescriptorLogicalOperator>() || op.tryGet<SourceNameLogicalOperator>())
         {

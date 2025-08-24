@@ -28,7 +28,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 namespace NES
 {
-    std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapOperators(LogicalOperator logicalOperator, PhysicalOperator physicalOperator, NES::Configurations::QueryOptimizerConfiguration conf)
+    std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapOperators(LogicalOperator logicalOperator, PhysicalOperator physicalOperator, QueryExecutionConfiguration conf)
     {
         auto inputSchema = logicalOperator.getInputSchemas()[0];
         auto outputSchema = logicalOperator.getOutputSchema();
