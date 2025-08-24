@@ -21,14 +21,10 @@
 
 namespace NES
 {
-StopPipelineTask::~StopPipelineTask() = default;
 
-StopPipelineTask::StopPipelineTask(StopPipelineTask&& other) noexcept = default;
-StopPipelineTask& StopPipelineTask::operator=(StopPipelineTask&& other) noexcept = default;
 
-StopPipelineTask::StopPipelineTask(
-    QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept
-    : BaseTask(queryId, std::move(complete), std::move(failure)), pipeline(std::move(pipeline))
+StopPipelineTask::StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept
+    : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline))
 {
 }
 
