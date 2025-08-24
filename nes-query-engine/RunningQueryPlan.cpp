@@ -146,20 +146,23 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
         emitter.emitPipelineStop(
             queryId,
             std::move(node),
-            [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
-            {
-                ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
-                ptr->requiresTermination = false;
-                for (auto& successor : ptr->successors)
-                {
-                    emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
-                }
-            },
-            [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
-            {
-                ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
-                ptr->requiresTermination = false;
-            });
+            TaskCallback{
+                TaskCallback::OnComplete(
+                    [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
+                    {
+                        ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
+                        ptr->requiresTermination = false;
+                        for (auto& successor : ptr->successors)
+                        {
+                            emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
+                        }
+                    }),
+                TaskCallback::OnFailure(
+                    [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
+                    {
+                        ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
+                        ptr->requiresTermination = false;
+                    })});
     }
     else
     {
@@ -183,15 +186,15 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
-        {
-            if (const auto nodeLocked = weakRef.lock())
+        TaskCallback{TaskCallback::OnComplete(
+            [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
             {
-                ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
-                nodeLocked->requiresTermination = true;
-            }
-        },
-        {});
+                if (const auto nodeLocked = weakRef.lock())
+                {
+                    ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
+                    nodeLocked->requiresTermination = true;
+                }
+            })});
 
     return node;
 }
@@ -340,7 +343,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
 
                                 for (auto& successor : successors)
                                 {
-                                    emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
+                                    emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
                                 }
 
                                 internal.sources.erase(id);
