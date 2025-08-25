@@ -97,8 +97,8 @@ struct convert<NES::CLI::PhysicalSource>
     {
         rhs.logical = node["logical"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
-        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
-        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };

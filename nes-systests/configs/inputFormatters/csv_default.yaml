@@ -1,2 +1,2 @@
 type: CSV
-fieldDelimiter: ','
+field_delimiter: ','

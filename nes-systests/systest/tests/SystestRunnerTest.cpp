@@ -96,7 +96,7 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"inputFormat", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
 };
 
 class MockQueryManager final : public QueryManager
@@ -139,7 +139,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"filePath", "/dev/null"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
@@ -169,7 +169,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"filePath", "/dev/null"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 

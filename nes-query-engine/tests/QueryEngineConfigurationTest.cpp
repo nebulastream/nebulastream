@@ -44,7 +44,7 @@ TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 {
     QueryEngineConfiguration defaultConfig;
     defaultConfig.overwriteConfigWithCommandLineInput(
-        {{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "2"}, {"admissionQueueSize", "123"}});
+        {{"task_queue_size", "200"}, {"number_of_worker_threads", "2"}, {"admission_queue_size", "123"}});
 
     EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 200);
     EXPECT_EQ(defaultConfig.admissionQueueSize.getValue(), 123);

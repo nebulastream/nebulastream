@@ -250,42 +250,6 @@ std::string escapeSpecialCharacters(const std::string_view input)
     return result;
 }
 
-std::string snakeToCamelCase(const std::string_view snakeCase)
-{
-    PRECONDITION(isAsciiString(snakeCase), "Support for non-ascii character not implemented");
-    if (snakeCase.empty())
-    {
-        return std::string{snakeCase};
-    }
-
-    std::string camelCase;
-    camelCase.reserve(snakeCase.length());
-
-    bool capitalizeNext = false;
-
-    for (const char character : snakeCase)
-    {
-        if (character == '_')
-        {
-            capitalizeNext = true;
-        }
-        else
-        {
-            if (capitalizeNext)
-            {
-                camelCase.push_back(static_cast<char>(std::toupper(character)));
-                capitalizeNext = false;
-            }
-            else
-            {
-                camelCase.push_back(static_cast<char>(std::tolower(character)));
-            }
-        }
-    }
-
-    return camelCase;
-}
-
 std::string toUpperCase(std::string_view input)
 {
     PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
