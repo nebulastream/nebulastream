@@ -290,7 +290,9 @@ struct SystestBinder::Impl
                 std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.getLogFilePath(), exception.what());
             }
         }
-        std::cout << "Loaded test files: " << loadedFiles << "/" << discoveredTestFiles.size() << '\n' << std::flush;
+        std::cout << fmt::format(
+            "Loaded {}/{} test files containing a total of {} queries\n", loadedFiles, discoveredTestFiles.size(), queries.size())
+                  << std::flush;
         return std::make_pair(queries, loadedFiles);
     }
 

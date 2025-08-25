@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -48,8 +49,18 @@ static constexpr auto padSizeQueryCounter = 3;
 
 /// Runs queries
 /// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter);
+using QueryPerformanceMessageBuilder = std::function<std::string(RunningQuery&)>;
+
+inline std::string discardPerformanceMessage(RunningQuery&)
+{
+    return "";
+}
+
+[[nodiscard]] std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
