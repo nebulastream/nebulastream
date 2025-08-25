@@ -74,9 +74,14 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const JoinBuildSideType joinBuildSide,
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
+    const auto workerThread = WorkerThreadId(threadId % numberOfWorkerThreads);
     const auto slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
-    auto& alteredSlicesVec = alteredSlicesPerThread[{WorkerThreadId(threadId % numberOfWorkerThreads), joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlicesPerThread[{workerThread, joinBuildSide}];
     alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
+#ifdef LOG_SLICE_ACCESS
+    logger->log(
+        {std::chrono::system_clock::now(), workerThread, FileOperation::WRITE, OperationStatus::END, slicesVec[0]->getSliceEnd(), false});
+#endif
     return slicesVec;
 }
 

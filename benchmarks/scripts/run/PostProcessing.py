@@ -377,8 +377,10 @@ class PostProcessing:
                     tasks[slice_id].update({
                         "dir_name": dir_name,
                         "thread_id": thread_id,
-                        "first_write_start": None,
-                        "last_write_end": None,
+                        "first_write_pred_start": None,
+                        "last_write_pred_end": None,
+                        "first_write_nopred_start": None,
+                        "last_write_nopred_end": None,
                         "first_read_pred_start": None,
                         "last_read_pred_end": None,
                         "first_read_nopred_start": None,
@@ -386,12 +388,20 @@ class PostProcessing:
                     })
 
                 if operation == "WRITE":
-                    if status == "START":
-                        if tasks[slice_id]["first_write_start"] is None or timestamp < tasks[slice_id]["first_write_start"]:
-                            tasks[slice_id]["first_write_start"] = timestamp
-                    elif status == "END":
-                        if tasks[slice_id]["last_write_end"] is None or timestamp > tasks[slice_id]["last_write_end"]:
-                            tasks[slice_id]["last_write_end"] = timestamp
+                    if prediction:
+                        if status == "START":
+                            if tasks[slice_id]["first_write_pred_start"] is None or timestamp < tasks[slice_id]["first_write_pred_start"]:
+                                tasks[slice_id]["first_write_pred_start"] = timestamp
+                        elif status == "END":
+                            if tasks[slice_id]["last_write_pred_end"] is None or timestamp > tasks[slice_id]["last_write_pred_end"]:
+                                tasks[slice_id]["last_write_pred_end"] = timestamp
+                    else:
+                        if status == "START":
+                            if tasks[slice_id]["first_write_nopred_start"] is None or timestamp < tasks[slice_id]["first_write_nopred_start"]:
+                                tasks[slice_id]["first_write_nopred_start"] = timestamp
+                        elif status == "END":
+                            if tasks[slice_id]["last_write_nopred_end"] is None or timestamp > tasks[slice_id]["last_write_nopred_end"]:
+                                tasks[slice_id]["last_write_nopred_end"] = timestamp
                 elif operation == "READ":
                     if prediction:
                         if status == "START":
@@ -419,15 +429,16 @@ class PostProcessing:
         # Keep only relevant data
         def valid_row(row):
             has_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
-            has_write = pd.notna(row["first_write_start"]) and pd.notna(row["last_write_end"])
+            has_write = pd.notna(row["first_write_pred_start"]) and pd.notna(row["last_write_pred_end"])
             has_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
-            return has_nopred and (has_write or has_pred)  # keep if nopred + (write or pred or both)
+            return has_nopred and (has_write or has_pred)  # keep if read nopred + (write pred or read pred or both)
 
         df = df[df.apply(valid_row, axis=1)]
 
         # Shift all timestamps by the minimal window start of any task
         timestamp_cols = [
-            "first_write_start", "last_write_end",
+            "first_write_pred_start", "last_write_pred_end",
+            "first_write_nopred_start", "last_write_nopred_end",
             "first_read_pred_start", "last_read_pred_end",
             "first_read_nopred_start", "last_read_nopred_end"
         ]
