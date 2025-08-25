@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -102,7 +103,14 @@ SerializableFunction NegateLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
+    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN)
+    {
+        throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
+    }
     return NegateLogicalFunction(arguments.children[0]);
 }
 

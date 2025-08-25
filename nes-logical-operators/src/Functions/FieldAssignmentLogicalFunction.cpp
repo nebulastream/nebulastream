@@ -176,11 +176,14 @@ SerializableFunction FieldAssignmentLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAssignmentLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2,
-        "FieldAssignmentLogicalFunction requires exactly two children, but got {}",
-        arguments.children.size());
-    PRECONDITION(arguments.children[0].tryGet<FieldAccessLogicalFunction>(), "First child must be a FieldAccessLogicalFunction");
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("FieldAssignmentLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
+    if (!arguments.children[0].tryGet<FieldAccessLogicalFunction>())
+    {
+        throw CannotDeserialize("First child must be a FieldAccessLogicalFunction");
+    }
     return FieldAssignmentLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), arguments.children[1]);
 }
 

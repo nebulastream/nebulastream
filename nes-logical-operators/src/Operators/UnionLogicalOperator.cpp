@@ -205,7 +205,10 @@ void UnionLogicalOperator::serialize(SerializableOperator& serializableOperator)
 
 LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
 {
-    PRECONDITION(!inputSchemas.empty(), "Expected at least input schema");
+    if (inputSchemas.empty())
+    {
+        throw UnknownException("Expected at least input schema");
+    }
     auto copy = *this;
     copy.inputSchemas = std::move(inputSchemas);
     return copy;
@@ -218,12 +221,20 @@ LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema
     return copy;
 }
 
-LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
+LogicalOperatorRegistryReturnType
+LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     auto logicalOperator = UnionLogicalOperator();
     if (auto& id = arguments.id)
     {
         logicalOperator.id = *id;
+    }
+    if (arguments.inputOriginIds.empty() || arguments.inputSchemas.empty())
+    {
+        throw CannotDeserialize(
+            "Union expects at least one child but got {} inputOriginIds and {} inputSchemas!",
+            arguments.inputOriginIds.size(),
+            arguments.inputSchemas.size());
     }
     auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
                          .withOutputOriginIds(arguments.outputOriginIds)

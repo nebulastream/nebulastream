@@ -21,6 +21,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -115,7 +116,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         }
         const auto baseIt = baseOps.find(id);
 
-        INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
+        if (baseIt == baseOps.end())
+        {
+            throw CannotDeserialize("Unknown operator id: {}", id);
+        }
         const LogicalOperator op = baseIt->second;
 
         std::vector<LogicalOperator> children;
@@ -136,10 +140,36 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     };
 
     /// 3) Build root-operators
+    if (serializedQueryPlan.rootoperatorids().empty())
+    {
+        throw CannotDeserialize("Query Plan has no root operator(s)!");
+    }
     std::vector<LogicalOperator> rootOperators;
     for (auto rootId : serializedQueryPlan.rootoperatorids())
     {
         rootOperators.push_back(build(rootId, {}));
+    }
+
+    if (rootOperators.size() != 1)
+    {
+        throw CannotDeserialize("Plan contains multiple root operators!");
+    }
+
+    auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+    if (!sink)
+    {
+        throw CannotDeserialize(
+            "Plan root has to be a source, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
+    }
+
+    if (sink->getChildren().empty())
+    {
+        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
+    }
+
+    if (not sink->getSinkDescriptor())
+    {
+        throw CannotDeserialize("Sink has no descriptor!");
     }
 
     /// 4) Finalize plan

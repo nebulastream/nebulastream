@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -106,8 +107,10 @@ SerializableFunction ModuloLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterModLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -93,12 +94,14 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
         newChildren.push_back(node.withInferredDataType(schema));
     }
     /// check if children dataType is correct
-    INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
-    INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
+    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    {
+        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", left.getDataType());
+    }
+    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    {
+        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", right.getDataType());
+    }
     return this->withChildren(newChildren);
 }
 
@@ -114,7 +117,16 @@ SerializableFunction AndLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
+    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN
+        || arguments.children[1].getDataType().type != DataType::Type::BOOLEAN)
+    {
+        throw CannotDeserialize(
+            "requires children of type bool, but got {} and {}", arguments.children[0].getDataType(), arguments.children[1].getDataType());
+    }
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

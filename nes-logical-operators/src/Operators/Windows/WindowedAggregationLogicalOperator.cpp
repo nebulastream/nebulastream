@@ -470,6 +470,10 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     {
         logicalOperator.id = *id;
     }
+    if (arguments.inputOriginIds.size() != 1 or arguments.outputOriginIds.size() != 1 or arguments.inputSchemas.empty())
+    {
+        throw CannotDeserialize("Cannot construct WindowedAggregation");
+    }
     return logicalOperator.withInferredSchema(arguments.inputSchemas)
         .withInputOriginIds(arguments.inputOriginIds)
         .withOutputOriginIds(arguments.outputOriginIds);
