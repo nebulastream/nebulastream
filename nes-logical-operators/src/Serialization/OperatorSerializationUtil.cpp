@@ -52,6 +52,10 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     if (serializedOperator.has_sink())
     {
         const auto& sink = serializedOperator.sink();
+        if (not sink.has_sinkdescriptor())
+        {
+            throw CannotDeserialize("Sink is missing sinkdescription:\n{}", serializedOperator.DebugString());
+        }
         const auto serializedSinkDescriptor = sink.has_sinkdescriptor() ? std::make_optional(sink.sinkdescriptor()) : std::nullopt;
         DescriptorConfig::Config config;
         for (const auto& [key, value] : serializedOperator.config())
