@@ -34,6 +34,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
@@ -114,16 +115,23 @@ TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
 std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
+    auto memoryLayout = Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema);
+
+    switch (schema.memoryLayoutType)
     {
-        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, schema);
-        return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto rowMemoryLayout
+                = NES::Util::as<Memory::MemoryLayouts::RowLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+            return std::make_shared<RowTupleBufferMemoryProvider>(RowTupleBufferMemoryProvider{rowMemoryLayout});
+        }
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto columnMemoryLayout
+                = NES::Util::as<Memory::MemoryLayouts::ColumnLayout>(Memory::MemoryLayouts::MemoryLayout::create(bufferSize, schema));
+            return std::make_shared<ColumnTupleBufferMemoryProvider>(ColumnTupleBufferMemoryProvider{columnMemoryLayout});
+        }
+            /// should never get accessed since creating the memoryLayout already checks schemas memoryLayoutType.
+        default:
+            throw NotImplemented("Currently only row and column layout are supported");
     }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, schema);
-        return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
-    }
-    throw NotImplemented("Currently only row and column layout are supported");
 }
 }

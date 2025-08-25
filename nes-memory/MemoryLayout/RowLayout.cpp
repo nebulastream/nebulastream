@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/RowLayout.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -37,11 +38,6 @@ RowLayout::RowLayout(const uint64_t bufferSize, Schema schema) : MemoryLayout(bu
 RowLayout::RowLayout(const RowLayout& other)
     : MemoryLayout(other.bufferSize, other.schema), fieldOffSets(other.fieldOffSets) /// NOLINT(*-copy-constructor-init)
 {
-}
-
-std::shared_ptr<RowLayout> RowLayout::create(uint64_t bufferSize, Schema schema)
-{
-    return std::make_shared<RowLayout>(bufferSize, std::move(schema));
 }
 
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const

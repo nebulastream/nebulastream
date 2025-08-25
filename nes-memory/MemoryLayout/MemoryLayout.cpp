@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -22,9 +23,11 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -51,6 +54,21 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
         return buffer.storeChildBuffer(childBufferVal);
     }
     return {};
+}
+
+std::shared_ptr<MemoryLayout> MemoryLayout::create(uint64_t bufferSize, const Schema& schema)
+{
+    switch (schema.memoryLayoutType)
+    {
+        case Schema::MemoryLayoutType::ROW_LAYOUT:
+            return std::make_shared<RowLayout>(RowLayout{bufferSize, schema});
+
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
+            return std::make_shared<ColumnLayout>(ColumnLayout{bufferSize, schema});
+
+        default:
+            throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
+    }
 }
 
 uint64_t MemoryLayout::getTupleSize() const
