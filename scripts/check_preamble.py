@@ -68,6 +68,7 @@ INGORED_ENDINGS = {
     "properties",
     "svg",
     "test",
+    "nightly",
     "xml",
     "yaml",
     "zip",

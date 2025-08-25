@@ -123,6 +123,11 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         .default_value(false)
         .implicit_value(true);
 
+    /// Set Systest file extension
+    program.add_argument("--systestExtension")
+        .help("Change the file extension looked for when searching for systests. Default '.test'")
+        .default_value(".test");
+
     try
     {
         program.parse_args(argc, argv);
@@ -140,6 +145,11 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     }
 
     auto config = SystestConfiguration();
+
+    if (program.is_used("--systestExtension"))
+    {
+        config.testFileExtension = program.get<std::string>("--systestExtension");
+    }
 
     if (program.is_used("-b"))
     {

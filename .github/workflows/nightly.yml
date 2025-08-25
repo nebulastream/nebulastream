@@ -64,6 +64,13 @@ jobs:
       # since there is no merge base to compare against, just check last 10 commits
       number_of_commits: 10
 
+  stress-test-23h:
+    uses: ./.github/workflows/23h_stress_test.yml
+    needs: [ get-dev-images ]
+    with:
+      ref: ${{ github.event.pull_request.head.ref }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
   build-and-test:
     name: "Run build and test"
     needs: [ fetch-current-main-commit, get-dev-images ]

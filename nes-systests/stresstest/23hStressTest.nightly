@@ -1,0 +1,12 @@
+# name: nightly/23hStressTest.nightly
+# description: 23h Stress test
+# groups: [StressTest]
+
+# This test is given the filetype ".nightly" to prevent it from running when simply running all systest. As such it can
+# only be started using the --systestExtension .nightly program arg
+Source generatorInline FLOAT64 field1 GENERATOR seed 1, stopGeneratorWhenSequenceFinishes NONE, maxRuntimeMs 82800000
+field1 NORMAL_DISTRIBUTION FLOAT64 0 1
+
+SINK generator_sink_inline TYPE Void FLOAT64 generatorInline$field1
+SELECT * FROM generatorInline INTO generator_sink_inline
+----

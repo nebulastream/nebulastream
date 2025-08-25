@@ -32,6 +32,7 @@ enum class GeneratorStop : uint8_t
 {
     ALL = 0,
     ONE = 1,
+    NONE = 2,
 };
 
 /// @brief The Generator encapsulates the functionality of generating rows for the GeneratorSource based on the fields
@@ -41,7 +42,8 @@ public:
     explicit Generator(const uint64_t seed, GeneratorStop sequenceStopsGenerator, const std::string_view rawSchema)
         : sequenceStopsGenerator(std::move(sequenceStopsGenerator)), randEng(std::default_random_engine(seed))
     {
-        if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE)
+        if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE
+            && this->sequenceStopsGenerator != GeneratorStop::NONE)
         {
             throw NES::InvalidConfigParameter(
                 "sequenceStopsGenerator: {} not recognized", static_cast<uint32_t>(this->sequenceStopsGenerator));
