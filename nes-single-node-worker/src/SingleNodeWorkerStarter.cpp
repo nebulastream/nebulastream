@@ -38,11 +38,11 @@ int main(const int argc, const char* argv[])
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 
         grpc::ServerBuilder builder;
-        builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
+        builder.AddListeningPort(configuration->grpcAddressUri.toString(), grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
 
         const auto server = builder.BuildAndStart();
-        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
+        NES_INFO("Server listening on {}", configuration->grpcAddressUri.toString());
         server->Wait();
         return 0;
     }
