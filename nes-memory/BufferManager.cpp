@@ -209,7 +209,8 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
-    availableBuffers.write(segment);
+    USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
+    INVARIANT(couldRecycleBuffer, "should always succeed");
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*)
