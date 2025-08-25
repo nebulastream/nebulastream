@@ -815,7 +815,7 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
-                locked->transition(
+                bool didTransition = locked->transition(
                     [](Starting&& starting)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -831,8 +831,11 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
-                statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
+                if (didTransition)
+                {
+                    listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
+                    statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
+                }
             }
         }
 
@@ -869,22 +872,19 @@ void QueryCatalog::stopQuery(QueryId id)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {
-        CallbackRef ref;
         const std::scoped_lock lock(mutex);
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;
             state.transition(
-                [&ref](Starting&& starting)
+                [](Starting&& starting)
                 {
-                    auto [stoppingQueryPlan, callback] = RunningQueryPlan::stop(std::move(starting.plan));
-                    ref = callback;
+                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(starting.plan));
                     return Stopping{std::move(stoppingQueryPlan)};
                 },
-                [&ref](Running&& running)
+                [](Running&& running)
                 {
-                    auto [stoppingQueryPlan, callback] = RunningQueryPlan::stop(std::move(running.plan));
-                    ref = callback;
+                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(running.plan));
                     return Stopping{std::move(stoppingQueryPlan)};
                 });
         }
