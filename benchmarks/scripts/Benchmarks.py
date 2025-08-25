@@ -21,9 +21,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
-SERVER = 'amd'
-DATETIME = '2025-07-19_11-23-08'
-FILE = 'combined_benchmark_statistics.csv'
+SERVER = ''
+DATETIME = '2025-08-25_09-56-56'
+# FILE = 'combined_benchmark_statistics.csv'
+FILE = 'combined_slice_accesses.csv'
 
 
 # Define helper functions
@@ -179,12 +180,35 @@ def find_default_values_for_params(min_support_ratio=1.0):
     return likely_defaults
 
 
+def compute_prediction_correctness(row):
+    if pd.notna(row['last_read_pred_end']) and row['last_read_pred_end'] >= row['first_read_nopred_start']:
+        return False
+    if pd.notna(row['last_write_end']) and row['last_write_end'] >= row['first_read_nopred_start']:
+        return False
+    if pd.notna(row['last_write_end']) and pd.notna(row['first_read_pred_start']):
+        if row['last_write_end'] >= row['first_read_pred_start']:
+            return False
+
+    return True
+
+
+def compute_prediction_precision(row):
+    if pd.notna(row['last_write_end']) and pd.notna(row['last_read_pred_end']):
+        last_pred = max(row['last_write_end'], row['last_read_pred_end'])
+    elif pd.notna(row['last_write_end']):
+        last_pred = row['last_write_end']
+    elif pd.notna(row['last_read_pred_end']):
+        last_pred = row['last_read_pred_end']
+
+    return row['first_read_nopred_start'] - last_pred
+
+
 # Load the CSV file
 dtypes = {
     'lower_memory_bound': 'UInt64',
     'upper_memory_bound': 'UInt64',
     'max_num_sequence_numbers': 'UInt64',
-    'withCleanup': 'str',
+    'with_cleanup': 'str',
     'with_prediction': 'str'
 }
 df = pd.read_csv(os.path.join('data', SERVER, DATETIME, FILE), dtype=dtypes)
@@ -216,12 +240,19 @@ common_config_dicts = common_configs.to_dict(orient='records')
 # Map long queries to short codes and sort by hue column values
 query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
 df['query_id'] = df['query'].map(query_mapping)
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers'], ascending=[True, True, True, True, True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'], ascending=[True, True, True, True, True, True, True])
+
+# Compute correctness of predictions
+df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
+
+# Compute precision of predictions
+df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
+df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
 
 
 # %% Compare slice store types for different configs
@@ -571,6 +602,42 @@ for param in watermark_predictor_config_params:
         if data_per_hue['query_id'].unique()[0] == 'Q3':
             plot_watermark_predictor_params(data_per_hue, param, 'throughput_data', 'watermark_predictor_hue', 'Throughput / sec', 'Watermark Gaps | Sequence Numbers')
             plot_watermark_predictor_params(data_per_hue, param, 'memory', 'watermark_predictor_hue', 'Memory', 'Watermark Gaps | Sequence Numbers')
+
+
+# %% Watermark-Predictor accuracy and precision plots
+
+def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label, legend):
+    data = filter_by_default_values_except_params(data, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'])
+    if metric == 'prediction_correctness':
+        data_scaled, metric_unit = convert_units(data, metric, '%')
+    if metric == 'prediction_precision':
+        data_scaled, metric_unit = convert_units(data, metric, 'ns')
+
+    plt.figure(figsize=(14, 6))
+    sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+
+    # Add legend below
+    add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
+
+    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.xlabel(param)
+    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.legend(title=legend)
+    plt.show()
+
+#df = df.head(4)
+#accuracy = (
+#    df.groupby("watermark_predictor_type")["prediction_correctness"]
+#      .mean()
+#      .reset_index()
+#)
+
+file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
+for hue_value in df['file_backed_hue'].unique():
+    data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
+    # if data_per_hue['query_id'].unique()[0] == 'Q3':
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_correctness', 'correctness_precision_hue', 'Prediction Correctness', 'Watermark Gaps | Sequence Numbers | Time Delta')
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'correctness_precision_hue', 'Prediction Presicion', 'Watermark Gaps | Sequence Numbers | Time Delta')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time

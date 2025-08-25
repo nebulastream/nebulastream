@@ -57,15 +57,19 @@ class PostProcessing:
         with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
             futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
-        with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
-            futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
-            results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+        # with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+        #     futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
+        #     results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+
+        for f in self.input_folders:
+            self.convert_slice_accesses_to_csv(f)
 
         # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
         # failed_engines = self.combine_engine_statistics()
         failed_benchmarks = self.combine_benchmark_statistics()
-        failed_slice_accesses = self.combined_slice_accesses_file()
-        failed_experiments = failed_benchmarks + failed_slice_accesses  # + failed_engines
+        failed_slice_accesses = self.combine_slice_accesses()
+        failed_experiments = failed_benchmarks  # + failed_engines
+        print(f"\nFailed slice access logging: {failed_slice_accesses}\n")
         return failed_experiments
 
     # Converting query engine statistics to a csv file
@@ -151,12 +155,18 @@ class PostProcessing:
                           self.input_folders for f in os.listdir(input_folder_name) if
                           self.combined_slice_accesses_file in f]
 
-        print(f"Found {len(accesses_files)} query engine statistic files in {os.path.dirname(self.input_folders[0])}")
+        print(f"Found {len(accesses_files)} slices accesses files in {os.path.dirname(self.input_folders[0])}")
         combined_df = pd.DataFrame()
+
+        dtype_map = {
+            'max_num_sequence_numbers': 'UInt64',
+            'lower_memory_bound': 'UInt64',
+            'upper_memory_bound': 'UInt64'
+        }
 
         for idx, [input_folder, stat_file] in enumerate(accesses_files):
             # print(f"Reading {stat_file} [{idx+1}/{no_statistics_files}]")
-            df = pd.read_csv(stat_file)
+            df = pd.read_csv(stat_file, dtype=dtype_map)
 
             # Adding this DataFrame to the global one
             combined_df = pd.concat([combined_df, df], ignore_index=True)
@@ -340,7 +350,7 @@ class PostProcessing:
             r"with status (?P<status>START|END) on slice (?P<slice_id>\d+)"
             r"(?P<prediction> with prediction)?")
 
-        # Gathering all statistic files.
+        # Gathering all statistic files
         accesses_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
                           re.match(pattern_slice_accesses_file, f)]
         tasks = {}
@@ -355,7 +365,7 @@ class PostProcessing:
                 benchmark_config_yaml = yaml.safe_load(file)
 
             for match in re.finditer(pattern_slice_access_details, log_text):
-                timestamp = pd.to_datetime(match.group("timestamp"), format="%Y-%m-%d %H:%M:%S.%f")
+                timestamp = pd.to_datetime(match.group("timestamp"), format="%Y-%m-%d %H:%M:%S.%f").value
                 thread_id = int(match.group("thread_id"))
                 operation = match.group("operation")
                 status = match.group("status")
@@ -398,11 +408,15 @@ class PostProcessing:
                             if tasks[slice_id]["last_read_nopred_end"] is None or timestamp > tasks[slice_id]["last_read_nopred_end"]:
                                 tasks[slice_id]["last_read_nopred_end"] = timestamp
 
+        if len(tasks) == 0:
+            print(f"WARNING: {input_folder} produced no data")
+            return
+
         # Create DataFrame from records
         df = pd.DataFrame.from_dict(tasks, orient="index").reset_index()
         df = df.rename(columns={"index": "slice_id"})
 
-        # Filter valid rows
+        # Keep only relevant data
         def valid_row(row):
             has_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
             has_write = pd.notna(row["first_write_start"]) and pd.notna(row["last_write_end"])
@@ -410,6 +424,17 @@ class PostProcessing:
             return has_nopred and (has_write or has_pred)  # keep if nopred + (write or pred or both)
 
         df = df[df.apply(valid_row, axis=1)]
+
+        # Shift all timestamps by the minimal window start of any task
+        timestamp_cols = [
+            "first_write_start", "last_write_end",
+            "first_read_pred_start", "last_read_pred_end",
+            "first_read_nopred_start", "last_read_nopred_end"
+        ]
+
+        min_timestamp = min(df[col].min() for col in timestamp_cols)
+        for col in timestamp_cols:
+            df[col] = df[col] - min_timestamp
 
         # Sort the DataFrame
         df = df.sort_values(by=["slice_id"]).reset_index(drop=True)
