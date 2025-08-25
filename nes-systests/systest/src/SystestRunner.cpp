@@ -71,17 +71,23 @@ template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
     std::size_t& finishedCount,
-    std::size_t total,
+    const std::size_t total,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
-    ErrorCallable&& errorBuilder)
+    ErrorCallable&& errorBuilder,
+    SuccessCallback&& successCallback)
 {
-    std::string msg = errorBuilder();
-    runningQuery->passed = msg.empty();
-    printQueryResultToStdOut(*runningQuery, msg, finishedCount++, total, "");
-    if (!msg.empty())
+    const std::string errorMessage = errorBuilder();
+    runningQuery->passed = errorMessage.empty();
+    std::string queryPerformanceMessage = "";
+    if (not errorMessage.empty())
     {
         failed.push_back(runningQuery);
     }
+    else
+    {
+        queryPerformanceMessage = successCallback(*runningQuery);
+    }
+    printQueryResultToStdOut(*runningQuery, errorMessage, finishedCount++, total, queryPerformanceMessage);
 }
 
 bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
@@ -111,14 +117,18 @@ void processQueryWithError(
                 return std::string{};
             }
             return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
-        });
+        },
+        [](auto) { return ""; });
 }
 
 }
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<RunningQuery>
-runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, QuerySubmitter& querySubmitter)
+std::vector<RunningQuery> runQueries(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    QuerySubmitter& querySubmitter,
+    SuccessCallback&& successCallback)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -200,7 +210,8 @@ runQueries(const std::vector<SystestQuery>& queries, const uint64_t numConcurren
                             return *err;
                         }
                         return std::string{};
-                    });
+                    },
+                    std::move(successCallback));
             }
             active.erase(it);
         }
@@ -244,43 +255,15 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 {
     auto worker = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
     QuerySubmitter submitter(std::move(worker));
-    std::vector<std::shared_ptr<RunningQuery>> ranQueries;
-    std::size_t queryFinishedCounter = 0;
-    const auto totalQueries = queries.size();
-    for (const auto& queryToRun : queries)
+    constexpr auto numConcurrentQueries = 1;
+
+    auto successCallback = [](RunningQuery& runningQuery)
     {
-        if (not queryToRun.planInfoOrException.has_value())
-        {
-            fmt::println("skip failing query: {}", queryToRun.testName);
-            continue;
-        }
-
-        const auto registrationResult = submitter.registerQuery(queryToRun.planInfoOrException.value().queryPlan);
-        if (not registrationResult.has_value())
-        {
-            fmt::println("skip failing query: {}", queryToRun.testName);
-            continue;
-        }
-        auto queryId = registrationResult.value();
-
-        auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
-        runningQueryPtr->passed = false;
-        ranQueries.emplace_back(runningQueryPtr);
-        submitter.startQuery(queryId);
-        const auto summary = submitter.finishedQueries().at(0);
-
-        if (summary.runs.empty() or summary.runs.back().error.has_value())
-        {
-            fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
-            continue;
-        }
-        runningQueryPtr->querySummary = summary;
-
         /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
         size_t bytesProcessed = 0;
         size_t tuplesProcessed = 0;
         for (const auto& [sourcePath, sourceOccurrencesInQuery] :
-             queryToRun.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
+             runningQuery.systestQuery.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
         {
             if (not(std::filesystem::exists(sourcePath.getRawValue()) and sourcePath.getRawValue().has_filename()))
             {
@@ -297,21 +280,13 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             tuplesProcessed
                 += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
         }
-        ranQueries.back()->bytesProcessed = bytesProcessed;
-        ranQueries.back()->tuplesProcessed = tuplesProcessed;
+        runningQuery.bytesProcessed = bytesProcessed;
+        runningQuery.tuplesProcessed = tuplesProcessed;
+        return fmt::format(" in {} ({})", runningQuery.getElapsedTime(), runningQuery.getThroughput());
+    };
 
-        auto errorMessage = checkResult(*ranQueries.back());
-        ranQueries.back()->passed = not errorMessage.has_value();
-        const auto queryPerformanceMessage
-            = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
-        printQueryResultToStdOut(
-            *ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
-
-        queryFinishedCounter += 1;
-    }
-
-    return serializeExecutionResults(
-        ranQueries | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>(), resultJson);
+    const auto ranQueries = runQueries(queries, numConcurrentQueries, submitter, successCallback);
+    return serializeExecutionResults(ranQueries, resultJson);
 }
 
 void printQueryResultToStdOut(

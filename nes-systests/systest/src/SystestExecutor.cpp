@@ -402,7 +402,7 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     while (true)
     {
         std::ranges::shuffle(queries, rng);
-        const auto failedQueries = runQueries(queries, numberConcurrentQueries, querySubmitter);
+        const auto failedQueries = runQueries(queries, numberConcurrentQueries, querySubmitter, [](auto) { return ""; });
         if (!failedQueries.empty())
         {
             std::stringstream outputMessage;
