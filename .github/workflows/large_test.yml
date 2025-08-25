@@ -1,5 +1,5 @@
 # This workflow builds and tests a ref, on a combination of different architectures and standard libraries.
-name: Build and Test
+name: Build and Run Large Tests
 on:
   workflow_call:
     inputs:
