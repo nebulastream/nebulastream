@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -187,32 +186,6 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
     return std::string(origin);
 }
 
-namespace
-{
-USED_IN_DEBUG constexpr bool isAsciiString(std::string_view input)
-{
-    return std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; });
-}
-}
-
-void toUpperCaseInplace(std::string& modified)
-{
-    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
-    for (char& character : modified)
-    {
-        character = static_cast<char>(::toupper(character));
-    }
-}
-
-void toLowerCaseInplace(std::string& modified)
-{
-    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
-    for (char& character : modified)
-    {
-        character = static_cast<char>(::tolower(character));
-    }
-}
-
 std::string escapeSpecialCharacters(const std::string_view input)
 {
     std::string result;
@@ -252,7 +225,6 @@ std::string escapeSpecialCharacters(const std::string_view input)
 
 std::string snakeToCamelCase(const std::string_view snakeCase)
 {
-    PRECONDITION(isAsciiString(snakeCase), "Support for non-ascii character not implemented");
     if (snakeCase.empty())
     {
         return std::string{snakeCase};
@@ -288,13 +260,11 @@ std::string snakeToCamelCase(const std::string_view snakeCase)
 
 std::string toUpperCase(std::string_view input)
 {
-    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::toupper) | std::ranges::to<std::string>();
 }
 
 std::string toLowerCase(std::string_view input)
 {
-    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::tolower) | std::ranges::to<std::string>();
 }
 
