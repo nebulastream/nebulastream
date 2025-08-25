@@ -77,10 +77,10 @@ public:
             [this, schema, sinkType](
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
-                std::unordered_map<std::string, std::string> config{{"filePath", std::move(filePath)}};
+                std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
                 if (sinkType == "File")
                 {
-                    config["inputFormat"] = "CSV";
+                    config["input_format"] = "CSV";
                 }
                 const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
                 if (not sink.has_value())
@@ -168,7 +168,7 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
             [&sourceNamesToFilepathAndCountForQuery](const SourceDescriptorLogicalOperator& logicalSourceOperator)
             {
-                if (const auto path = logicalSourceOperator.getSourceDescriptor().tryGetFromConfig<std::string>(std::string{"filePath"});
+                if (const auto path = logicalSourceOperator.getSourceDescriptor().tryGetFromConfig<std::string>(std::string{"file_path"});
                     path.has_value())
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator.getSourceDescriptor());
@@ -427,7 +427,7 @@ struct SystestBinder::Impl
                     SystestSourceYAMLBinder::PhysicalSource physicalSource{};
                     physicalSource.logical = logicalSourceName;
                     physicalSource.parserConfig["type"] = "CSV";
-                    physicalSource.parserConfig["fieldDelimiter"] = ",";
+                    physicalSource.parserConfig["field_delimiter"] = ",";
                     auto logicalSourceMapping = sourceCatalog.getLogicalSource(logicalSourceName);
                     if (!logicalSourceMapping.has_value())
                     {
@@ -496,7 +496,7 @@ struct SystestBinder::Impl
 
                     physicalSource.sourceConfig = inlineConfig.options;
                     physicalSource.type = "Generator";
-                    physicalSource.sourceConfig["generatorSchema"] = generatorSchema;
+                    physicalSource.sourceConfig["generator_schema"] = generatorSchema;
                     return physicalSource;
                 };
 
