@@ -34,6 +34,7 @@
 #include "Operators/Sinks/SinkLogicalOperator.hpp"
 
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -164,18 +165,27 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
             auto selection = op.get<SelectionLogicalOperator>();
             auto selectionFunc = selection.getPredicate();
             auto res = selectionFunc.explain(ExplainVerbosity::Short);
-
             for (const std::string& fieldName : allFieldNames)
             {
                 if (res.find(fieldName) != std::string::npos) { //if the fieldname is part of the selection function
                     fieldNamesSet.insert(fieldName);
                 }
             }
+            fieldNames = std::vector<std::string>(fieldNamesSet.begin(), fieldNamesSet.end());
         }
-        /// TODO: do also for agg and map
-        fieldNames = std::vector<std::string>(fieldNamesSet.begin(), fieldNamesSet.end());
+        if (op.tryGet<ProjectionLogicalOperator>())
+        {
+            auto projection = op.get<ProjectionLogicalOperator>();
+            fieldNames = projection.getOutputSchema().getFieldNames();//getAccessedFields();
+        }
+        /// TODO: append new fields for all operators, take into account optimized schemas now
+        /// TODO: do also for agg
     }
-
+    if (fieldNames.empty())
+    {
+        NES_DEBUG("Lower to Physical: No fields used in selection or projection, use all fields");
+        fieldNames = allFieldNames; /// if no selection or projection, use all fields
+    }
     /// set in and outputschema of all operators except source to used fieldnames
     auto newSchema = Schema(conf.memoryLayout.getDefaultValue());
     auto sink = queryPlan.getRootOperators()[0];
@@ -184,7 +194,7 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
         newSchema.addField(fieldName, queryPlan.getRootOperators()[0].getOutputSchema().getFieldByName(fieldName)->dataType);
     }
 
-    sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
+    //sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
 
     //auto newPlan = LogicalPlan(sink);
 
