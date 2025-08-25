@@ -121,28 +121,31 @@ def compute_stats(trace_path):
     except Exception as e:
         return trace_path, 0, 0, {}, f"Error: {str(e)}"
 
-def extract_metadata_from_filename(filename):
+def extract_metadata_from_filename(file_path):
     """Extract metadata (layout, buffer size, threads, query) from filename."""
+    # Get just the filename from path
+    filename = os.path.basename(file_path)
+
     metadata = {}
 
-    # Extract layout
-    if 'COLUMNAR_LAYOUT' in filename:
-        metadata['layout'] = 'COLUMNAR_LAYOUT'
-    elif 'ROW_LAYOUT' in filename:
+    # Extract layout with more specific pattern
+    if '_ROW_LAYOUT_' in filename:
         metadata['layout'] = 'ROW_LAYOUT'
+    elif '_COLUMNAR_LAYOUT_' in filename:
+        metadata['layout'] = 'COLUMNAR_LAYOUT'
 
-    # Extract buffer size
-    buffer_match = re.search(r'buffer(\d+)', filename)
+    # Extract buffer size with more specific pattern
+    buffer_match = re.search(r'_buffer(\d+)_', filename)
     if buffer_match:
         metadata['buffer_size'] = buffer_match.group(1)
 
-    # Extract thread count
-    threads_match = re.search(r'threads(\d+)', filename)
+    # Extract thread count with more specific pattern
+    threads_match = re.search(r'_threads(\d+)_', filename)
     if threads_match:
         metadata['threads'] = threads_match.group(1)
 
-    # Extract query number
-    query_match = re.search(r'query(\d+)', filename)
+    # Extract query number with more specific pattern
+    query_match = re.search(r'_query(\d+)', filename)
     if query_match:
         metadata['query'] = query_match.group(1)
 
