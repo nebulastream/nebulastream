@@ -172,6 +172,20 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         throw CannotDeserialize("Sink has no descriptor!");
     }
 
+    bool first = true;
+    for (auto op : BFSRange(rootOperators.at(0)))
+    {
+        if (first)
+        {
+            first = false;
+            continue;
+        }
+        if (auto sink = op.tryGet<SinkLogicalOperator>())
+        {
+            throw CannotDeserialize("Sink is not root of plan!\n{}", serializedQueryPlan.DebugString());
+        }
+    }
+
     /// 4) Finalize plan
     auto queryId = INVALID_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
