@@ -95,6 +95,22 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
 
     if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
     {
+        if (copy.sinkDescriptor->getSchema()->getFields().size() > firstSchema.getFields().size())
+        {
+            NES_DEBUG("SinkDescriptor has {} fields, but new input schema has only {} fields", copy.sinkDescriptor->getSchema()->getFields().size(), firstSchema.getFields().size());
+
+            for (const auto& fieldName : copy.sinkDescriptor->getSchema()->getFieldNames())
+            {
+
+                if (auto field = firstSchema.getFieldByName(fieldName); not field.has_value())
+                {
+                    NES_DEBUG("Field {} not found in input schema with fields {}", field, firstSchema);
+                    throw CannotInferSchema("Field {} not found in input schema with fields {}", field, firstSchema);
+                }
+
+            }
+            return copy.withSchema(inputSchemas);
+        }
         std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
         std::vector actualFields(firstSchema.begin(), firstSchema.end());
 
@@ -129,7 +145,7 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
             expectedFieldsString.str(),
             actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
     }
-    return copy;
+    return copy; /// TODO: copy.withSchema(inputSchemas); ?
 }
 
 LogicalOperator SinkLogicalOperator::withSchema(std::vector<Schema> inputSchemas) const

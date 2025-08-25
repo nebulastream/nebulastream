@@ -41,8 +41,8 @@ for layout in "${memory_layouts[@]}"; do
         # Create a unique identifier for this run
         RUN_ID="$(date +%s)_${layout}_buffer${buffer_size}_threads${threads}_query${query}"
 
-        # clear enginestats files before running the test
-        rm -f $PROJECT_DIR/cmake-build-release/nes-systests/enginestats*
+        # clear GoogleEventTrace files before running the test
+        rm -f $PROJECT_DIR/cmake-build-release/nes-systests/GoogleEventTrace*
 
         memAvailableInBytes=150000000000 #$(grep MemAvailable /proc/meminfo | awk '{print $2 * 1024}') # Convert kB to bytes
         totalBuffer=$((memAvailableInBytes / buffer_size))
@@ -61,25 +61,25 @@ for layout in "${memory_layouts[@]}"; do
           -t /tmp/nebulastream/nes-systests/benchmark/DEBS.test:$query -- \
           --worker.queryEngine.numberOfWorkerThreads=$threads \
           --worker.bufferSizeInBytes=$buffer_size \
-          --worker.numberOfBuffersPerWorker=256 \
           --worker.numberOfBuffersInGlobalBufferManager=$totalBuffer \
-          --worker.queryOptimizer.operatorBufferSize=$buffer_size \
-          --worker.queryOptimizer.memoryLayout=$layout \
-          --worker.queryOptimizer.useSingleMemoryLayout=true
+          --worker.defaultQueryExecution.operatorBufferSize=$buffer_size \
+          --worker.defaultQueryExecution.memoryLayout=$layout \
+          --worker.defaultQueryExecution.useSingleMemoryLayout=true \
+          --enableGoogleEventTrace=true
         "
 
         # get last (only) enginestat file
-        enginestat=$(find "$PROJECT_DIR/cmake-build-release/nes-systests/" -name "enginestats*" -o -name "EngineStats*" -type f | sort | tail -n 1)
-        echo "Found enginestats file: $enginestat"
+        enginestat=$(find "$PROJECT_DIR/cmake-build-release/nes-systests/" -name "GoogleEventTrace*" -o -name "GoogleEventTrace*" -type f | sort | tail -n 1)
+        echo "Found GoogleEventTrace file: $enginestat"
         if [ -n "$enginestat" ]; then
           # Create a new filename with parameters
-          new_filename="${BENCHMARK_DIR}/enginestats_${layout}_buffer${buffer_size}_threads${threads}_query${query}.stats"
+          new_filename="${BENCHMARK_DIR}/GoogleEventTrace_${layout}_buffer${buffer_size}_threads${threads}_query${query}.json"
 
           # Copy the file with the new name
           cp "$enginestat" "$new_filename"
           echo "Copied stats from $enginestat to $new_filename"
         else
-          echo "No new enginestats file found!"
+          echo "No new GoogleEventTrace file found!"
         fi
 
         # Add a small delay to ensure files are properly written
@@ -89,9 +89,9 @@ for layout in "${memory_layouts[@]}"; do
   done
 done
 
-echo "All tests completed. Results in $(BENCHMARK_DIR) directory."
+echo "All tests completed. Results in $BENCHMARK_DIR directory."
 
-echo "reading enginestats files"
+echo "reading GoogleEventTrace files"
 
 python3 "$PROJECT_DIR/Testing/scripts/enginestatsread.py" "$BENCHMARK_DIR"
 
