@@ -17,6 +17,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Listeners/StatisticListener.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Sources/SourceProvider.hpp>
 
 namespace NES
 {

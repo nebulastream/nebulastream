@@ -106,9 +106,10 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return schema;
 }
 
-std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
+SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
 {
-    return [&resultBuffers](const OriginId, SourceReturnType::SourceReturnType returnType)
+    return [&resultBuffers](
+               const OriginId, SourceReturnType::SourceReturnType returnType, const std::stop_token&) -> SourceReturnType::EmitResult
     {
         std::visit(
             Overloaded{
@@ -116,6 +117,7 @@ std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunctio
                 [](const SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
                 [](const SourceReturnType::Error& error) { throw error.ex; }},
             returnType);
+        return SourceReturnType::EmitResult::SUCCESS;
     };
 }
 
@@ -158,16 +160,18 @@ std::unique_ptr<SourceHandle> createFileSource(
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
-    const int numberOfLocalBuffersInSource)
+    const size_t numberOfRequiredSourceBuffers)
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
-        {"filePath", filePath}, {"numberOfBuffersInLocalPool", std::to_string(numberOfLocalBuffersInSource)}};
+        {"filePath", filePath}, {"maxInflightBuffers", std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+
+    const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
+    return sourceProvider.lower(NES::OriginId(1), sourceDescriptor.value());
 }
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)

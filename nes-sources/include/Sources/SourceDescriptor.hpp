@@ -94,20 +94,19 @@ private:
         ParserConfig parserConfig);
 
 public:
-    /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
+    /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
-    static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL = -1;
+    static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<int64_t> NUMBER_OF_BUFFERS_IN_LOCAL_POOL{
-        "numberOfBuffersInLocalPool",
-        INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};
+    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
+        "maxInflightBuffers",
+        INVALID_MAX_INFLIGHT_BUFFERS,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(NUMBER_OF_BUFFERS_IN_LOCAL_POOL);
+        = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
 };
 
 }
