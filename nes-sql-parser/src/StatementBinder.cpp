@@ -337,14 +337,14 @@ public:
         const ParserConfig parserConfig = ParserConfig::create(
             parserConfigIter->second
             | std::views::transform([this](const auto& pair)
-                                    { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                    { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>());
 
         if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
         {
             sourceOptions = sourceConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
 
@@ -372,7 +372,7 @@ public:
         {
             sinkOptions = sinkConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(NES::Util::snakeToCamelCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         if (not SinkDescriptor::validateAndFormatConfig(sinkType, sinkOptions).has_value())
