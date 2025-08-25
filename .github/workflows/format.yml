@@ -35,7 +35,7 @@ jobs:
         run: echo "result=$((${{ inputs.number_of_commits }} + 1))" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
-          fetch-depth: ${{ steps.increment.outputs.result }}
+          fetch-depth: 0
           ref: ${{ inputs.head_sha }}
       - name: Check Format
         run: ./scripts/format.sh
