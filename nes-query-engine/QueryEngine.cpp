@@ -819,7 +819,7 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
-                locked->transition(
+                const auto didTransition = locked->transition(
                     [](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -835,8 +835,11 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                listener->logQueryStatusChange(queryId, QueryState::Stopped, timestamp);
-                statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
+                if (didTransition)
+                {
+                    listener->logQueryStatusChange(queryId, QueryState::Stopped, timestamp);
+                    statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
+                }
             }
         }
 
@@ -874,22 +877,19 @@ void QueryCatalog::stopQuery(QueryId id)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {
-        CallbackRef ref;
         const std::scoped_lock lock(mutex);
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;
             state.transition(
-                [&ref](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                [](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto [stoppingQueryPlan, callback] = RunningQueryPlan::stop(std::move(starting.plan));
-                    ref = callback;
+                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(starting.plan));
                     return Stopping{std::move(stoppingQueryPlan)};
                 },
-                [&ref](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                [](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto [stoppingQueryPlan, callback] = RunningQueryPlan::stop(std::move(running.plan));
-                    ref = callback;
+                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(running.plan));
                     return Stopping{std::move(stoppingQueryPlan)};
                 });
         }
