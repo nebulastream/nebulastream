@@ -109,7 +109,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (-1 as `SOURCE`.NUMBER_OF_BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-    std::unordered_map<std::string, std::string> unvalidatedConfig{{"filePath", "/dev/null"}};
+    std::unordered_map<std::string, std::string> unvalidatedConfig{{"file_path", "/dev/null"}};
     const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 
     ASSERT_TRUE(statement2.has_value());
@@ -353,7 +353,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("filePath").value(), "/dev/random");
+        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("file_path").value(), "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
@@ -389,7 +389,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("filePath").value(),
+        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("file_path").value(),
         "/dev/ones");
 }
 
