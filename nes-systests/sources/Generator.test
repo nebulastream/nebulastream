@@ -14,7 +14,7 @@ CONFIG/sources/generator_stop_all.yaml
 Source generatorStopOne UINT64 id UINT64 field2 GENERATOR
 CONFIG/sources/generator_stop_one.yaml
 
-Source generatorInline UINT64 id GENERATOR seed 1, maxRuntimeMs 1000, stopGeneratorWhenSequenceFinishes ALL
+Source generatorInline UINT64 id GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
 id SEQUENCE UINT64 0 10 1
 
 SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$field2
