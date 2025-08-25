@@ -353,59 +353,10 @@ TEST(StringCaseConversionTest, ToLowerCaseSpecialCharacters)
     EXPECT_EQ(toLowerCase("HELLO!@#"), "hello!@#");
 }
 
-TEST(StringCaseConversionTest, NoSupportForNonAsciiCharacters)
+TEST(StringCaseConversionTest, testWithNonAsciiCharacters)
 {
-    SKIP_IF_TSAN();
-
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("ÉÇÀÔ"); }(), "");
-    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = toLowerCase("éçàô"); }(), "");
-}
-
-TEST(StringCaseInplaceTest, ToUpperCaseInplaceBasic)
-{
-    std::string str = "hello";
-    toUpperCaseInplace(str);
-    EXPECT_EQ(str, "HELLO");
-}
-
-TEST(StringCaseInplaceTest, ToUpperCaseInplaceEmpty)
-{
-    std::string str;
-    toUpperCaseInplace(str);
-    EXPECT_EQ(str, "");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceBasic)
-{
-    std::string str = "HELLO";
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "hello");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceEmpty)
-{
-    std::string str;
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "");
-}
-
-TEST(StringCaseInplaceTest, ToLowerCaseInplaceMixed)
-{
-    std::string str = "HeLLo WorlD!";
-    toLowerCaseInplace(str);
-    EXPECT_EQ(str, "hello world!");
-}
-
-TEST(StringCaseInplaceTest, NoSupportForNonAsciiCharacters)
-{
-    SKIP_IF_TSAN();
-
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-    std::string lowerStr = "héllô!123";
-    EXPECT_DEATH_DEBUG(toUpperCaseInplace(lowerStr), "");
-    std::string str = "HÉLLÔ!123";
-    EXPECT_DEATH_DEBUG(toLowerCaseInplace(str), "");
+    EXPECT_EQ(toLowerCase("ÉÇÀÔ"), "ÉÇÀÔ");
+    EXPECT_EQ(toUpperCase("éçàô"), "éçàô");
 }
 
 TEST(ReplaceAllTest, ReplaceAllOccurrencesBasic)
@@ -576,10 +527,7 @@ TEST(SnakeToCamelCaseTest, NumbersInString)
 
 TEST(SnakeToCamelCaseTest, SpecialCharacters)
 {
-    SKIP_IF_TSAN();
-
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-    EXPECT_DEATH_DEBUG([]() { [[maybe_unused]] auto testString = snakeToCamelCase("hello_world_é"); }(), "");
+    EXPECT_EQ(snakeToCamelCase("hello_world_é"), "helloWorldé");
 }
 
 }

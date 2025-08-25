@@ -39,3 +39,33 @@ elseif (SANITIZER_OPTION STREQUAL "address")
 else ()
     MESSAGE(STATUS "Enabling No Sanitizer")
 endif ()
+
+option(USE_LIBFUZZER "" OFF)
+
+if (USE_LIBFUZZER)
+    add_compile_definitions(FUZZING)
+    add_compile_options(-fsanitize=fuzzer-no-link)
+    add_link_options(-fsanitize=fuzzer-no-link)
+endif ()
+
+option(USE_GCOV "" OFF)
+
+if (USE_GCOV)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif ()
+
+option(USE_MULL "" OFF)
+
+if (USE_MULL)
+    if (NOT EXISTS "/usr/lib/mull-ir-frontend-18")
+        message(FATAL_ERROR "mull not found but USE_MULL is set")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fpass-plugin=/usr/lib/mull-ir-frontend-18 -g -grecord-command-line")
+endif ()
+
+
+option(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION OFF)
+if (NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
+    add_compile_definitions(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
+endif()

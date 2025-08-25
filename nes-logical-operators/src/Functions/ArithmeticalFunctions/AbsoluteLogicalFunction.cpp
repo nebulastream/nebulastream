@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -103,8 +105,10 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 1, "AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
     return AbsoluteLogicalFunction(arguments.children[0]);
 }
 

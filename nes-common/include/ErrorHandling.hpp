@@ -99,10 +99,79 @@ private:
 #include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 
-#ifdef NO_ASSERT
+#if defined(NO_ASSERT)
     #define USED_IN_DEBUG [[maybe_unused]]
     #define PRECONDITION(condition, formatString, ...) ((void)0)
     #define INVARIANT(condition, formatString, ...) ((void)0)
+#elif defined(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
+    #define USED_IN_DEBUG
+
+    #define PRECONDITION(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                throw std::runtime_error("foo"); \
+            } \
+        } while (false)
+
+    #define INVARIANT(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                throw std::runtime_error("foo"); \
+            } \
+        } while (false)
+
+    #define NOXARIANT(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                auto trace = cpptrace::generate_trace().to_string(true); \
+                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
+                if (auto logger = NES::Logger::getInstance()) \
+                { \
+                    logger->shutdown(); \
+                } \
+                std::terminate(); \
+            } \
+        } while (false)
+#elif defined(FUZZING)
+    #define USED_IN_DEBUG
+
+/// does not print trace
+
+    #define PRECONDITION(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, ""); \
+                if (auto logger = NES::Logger::getInstance()) \
+                { \
+                    logger->shutdown(); \
+                } \
+                std::terminate(); \
+            } \
+        } while (false)
+
+    #define NOXARIANT INVARIANT
+
+    #define INVARIANT(condition, formatString, ...) \
+        do \
+        { \
+            if (!(condition)) \
+            { \
+                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, ""); \
+                if (auto logger = NES::Logger::getInstance()) \
+                { \
+                    logger->shutdown(); \
+                } \
+                std::terminate(); \
+            } \
+        } while (false)
 #else
     #define USED_IN_DEBUG
     /// Note:
@@ -128,6 +197,8 @@ private:
                 std::terminate(); \
             } \
         } while (false)
+
+    #define NOXARIANT INVARIANT
 
     /// This documents what is assumed to be true at this particular point in a program. If violated, there is a misunderstanding and maybe a bug.
     /// @param condition is assumed to be true

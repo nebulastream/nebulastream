@@ -58,7 +58,10 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(onField.getDataType().isNumeric(), "aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
+    if (not onField.getDataType().isNumeric())
+    {
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
+    }
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -99,8 +102,10 @@ SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.fields.size() == 2, "SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    if (arguments.fields.size() != 2)
+    {
+        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    }
     return SumAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
 }
 }

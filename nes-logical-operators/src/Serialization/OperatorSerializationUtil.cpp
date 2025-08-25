@@ -52,6 +52,10 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     if (serializedOperator.has_sink())
     {
         const auto& sink = serializedOperator.sink();
+        if (not sink.has_sinkdescriptor())
+        {
+            throw CannotDeserialize("Sink is missing sinkdescription:\n{}", serializedOperator.DebugString());
+        }
         const auto serializedSinkDescriptor = sink.has_sinkdescriptor() ? std::make_optional(sink.sinkdescriptor()) : std::nullopt;
         DescriptorConfig::Config config;
         for (const auto& [key, value] : serializedOperator.config())
@@ -59,7 +63,11 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             config[key] = protoToDescriptorConfigType(value);
         }
         auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
-        INVARIANT(std::holds_alternative<std::string>(sinkName), "Expected a string");
+        if (not std::holds_alternative<std::string>(sinkName))
+        {
+            throw CannotDeserialize(
+                "Expected string for sinkName but got {} while deserializing\n{}", sinkName, serializedOperator.DebugString());
+        }
 
         auto sinkOperator = SinkLogicalOperator();
         sinkOperator.id = OperatorId(serializedOperator.operator_id());
@@ -86,6 +94,11 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
         sinkOperator.sinkDescriptor
             = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
+
+        if (sinkOperator.getSinkDescriptor()->getSinkType() == "File" && sinkOperator.sinkDescriptor->getSchema()->getNumberOfFields() == 0)
+        {
+            throw CannotDeserialize("Sink must not have empty schema!");
+        }
 
         return sinkOperator;
     }
@@ -141,7 +154,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         }
     }
 
-    throw CannotDeserialize("could not de-serialize this serialized operator: {}", serializedOperator.DebugString());
+    throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
 }
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)

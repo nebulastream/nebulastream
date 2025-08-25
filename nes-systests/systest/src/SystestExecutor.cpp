@@ -38,6 +38,7 @@
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <QueryManager/GRPCQueryManager.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -499,6 +500,22 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
+
+        for (const auto& q : queries)
+        {
+            if (!q.planInfoOrException.has_value())
+            {
+                continue;
+            }
+            auto qp = q.planInfoOrException.value().queryPlan;
+            auto s = QueryPlanSerializationUtil::serializeQueryPlan(qp);
+
+            std::cout << q.testName << " " << q.queryIdInFile << std::endl;
+
+            std::ofstream ofs{fmt::format("systest_{}_{}.txtpb", q.testName, q.queryIdInFile)};
+            ofs << s.DebugString();
+        }
+
         if (loadedFiles != discoveredTestFiles.size())
         {
             return {

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,7 +21,6 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -105,8 +106,10 @@ SerializableFunction LessLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return LessLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

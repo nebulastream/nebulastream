@@ -47,3 +47,11 @@ ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
 ENV VCPKG_STDLIB=${STDLIB}
 ENV VCPKG_SANITIZER=${SANITIZER}
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
+
+# lld is required for afl lto
+RUN apt install -y lld-19
+ADD --checksum=sha256:98903c8036282c8908b1d8cc0d60caf3ea259db4339503a76449b47acce58d1d https://github.com/AFLplusplus/AFLplusplus/archive/refs/tags/v4.33c.tar.gz afl.tar.gz
+RUN tar -xf afl.tar.gz && cd AFLplusplus-4.33c && make source-only && make install
+
+ADD https://github.com/google/honggfuzz.git#ded8c87bcf3cc32f64c1097746a3461d6da1c24a /honggfuzz
+RUN if [ "$STDLIB" = "libstdcxx" ]; then apt install -y binutils-dev libunwind-dev libblocksruntime-dev && cd /honggfuzz && make && make install; fi

@@ -125,8 +125,15 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
     /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole LogicalPlanBuilder should be refactored to be more readable and
     /// also to be more maintainable. TODO #506
+
+    int iters = 0;
+
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
+        if (++iters > 1000 * 1000)
+        {
+            throw InvalidQuerySyntax("unreasonably large joinFn");
+        }
         if (itr.getChildren().size() == 2)
         {
             auto leftVisitingOp = itr.getChildren()[0];
@@ -135,8 +142,8 @@ LogicalPlan LogicalPlanBuilder::addJoin(
                 if (visitedFunctions.find(leftVisitingOp) == visitedFunctions.end())
                 {
                     visitedFunctions.insert(leftVisitingOp);
-                    auto leftChild = leftVisitingOp.getChildren()[0];
-                    auto rightChild = leftVisitingOp.getChildren()[1];
+                    auto leftChild = leftVisitingOp.getChildren().at(0);
+                    auto rightChild = leftVisitingOp.getChildren().at(1);
                     /// ensure that the child nodes are not binary
                     if ((leftChild.getChildren().size() == 1) && (rightChild.getChildren().size() == 1))
                     {

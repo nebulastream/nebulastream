@@ -109,10 +109,10 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2,
-        "GreaterEqualsLogicalFunction requires exactly two children, but got {}",
-        arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

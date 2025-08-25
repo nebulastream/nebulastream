@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -109,7 +111,10 @@ SerializableFunction AddLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
+    }
     return AddLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <Functions/ConcatLogicalFunction.hpp>
+
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -105,8 +106,10 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.children.size() == 2, "ConcatLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("ConcatLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    }
     return ConcatLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
