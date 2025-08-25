@@ -570,7 +570,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
 
         EXPECT_TRUE(srcCtrl->waitUntilOpened());
         EXPECT_FALSE(srcCtrl->waitUntilClosed());
-        stopping = dropRef(RunningQueryPlan::stop(std::move(runningQueryPlan)));
+        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
     }
 
     EXPECT_TRUE(terminations->handle(test.stages.at(pipeline)));
@@ -612,7 +612,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
         EXPECT_TRUE(setups->waitForTasks(3));
         /// Only setup the pipeline1 pipeline
         EXPECT_TRUE(setups->handle(test.stages[pipeline1]));
-        stopping = dropRef(RunningQueryPlan::stop(std::move(runningQueryPlan)));
+        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
     }
 
     EXPECT_TRUE(terminations->handle(test.stages[pipeline1]));
