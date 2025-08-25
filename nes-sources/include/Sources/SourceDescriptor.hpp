@@ -95,11 +95,11 @@ private:
 
 public:
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
-    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
+    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
     static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL = -1;
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<int64_t> NUMBER_OF_BUFFERS_IN_LOCAL_POOL{
-        "numberOfBuffersInLocalPool",
+        "number_of_buffers_in_local_pool",
         INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};

@@ -107,7 +107,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
             }
             throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
         }
-        throw InvalidConfigParameter("A FileSource config must contain filePath parameter");
+        throw InvalidConfigParameter("A FileSource config must contain file_path parameter");
     }
     throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
 }
@@ -124,7 +124,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
             filePath->second = attachSourceFilePath.value();
             return systestAdaptorArguments.physicalSourceConfig;
         }
-        throw InvalidConfigParameter("A FileSource config must contain filePath parameter.");
+        throw InvalidConfigParameter("A FileSource config must contain file_path parameter.");
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }

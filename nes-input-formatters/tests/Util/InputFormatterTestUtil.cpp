@@ -130,7 +130,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    if (const auto tupleDelimiter = parserConfig.find("tuple_delimiter"); tupleDelimiter != parserConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
@@ -141,7 +141,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
         validParserConfig.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    if (const auto fieldDelimiter = parserConfig.find("field_delimiter"); fieldDelimiter != parserConfig.end())
     {
         validParserConfig.fieldDelimiter = fieldDelimiter->second;
     }
@@ -161,7 +161,7 @@ std::unique_ptr<SourceHandle> createFileSource(
     const int numberOfLocalBuffersInSource)
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
-        {"filePath", filePath}, {"numberOfBuffersInLocalPool", std::to_string(numberOfLocalBuffersInSource)}};
+        {"file_path", filePath}, {"number_of_buffers_in_local_pool", std::to_string(numberOfLocalBuffersInSource)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
@@ -173,7 +173,7 @@ std::unique_ptr<SourceHandle> createFileSource(
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
+        {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
     return provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);

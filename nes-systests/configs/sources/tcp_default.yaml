@@ -1,9 +1,9 @@
 type: TCP
-numberOfBuffersInLocalPool: 16
-socketDomain: AF_INET
-socketType: SOCK_STREAM
-socketPort: PLACEHOLDER
-socketHost: PLACEHOLDER
-socketBufferSize: 2
-flushIntervalMs: 100
-connectTimeoutSeconds: 60
+number_of_buffers_in_local_pool: 16
+socket_domain: AF_INET
+socket_type: SOCK_STREAM
+socket_port: PLACEHOLDER
+socket_host: PLACEHOLDER
+socket_buffer_size: 2
+flush_interval_ms: 100
+connect_timeout_seconds: 60

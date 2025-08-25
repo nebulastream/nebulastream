@@ -37,8 +37,8 @@ void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig)
 {
     jsonOutput = nlohmann::json{
         {"type", parserConfig.parserType},
-        {"fieldDelimiter", parserConfig.fieldDelimiter},
-        {"tupleDelimiter", parserConfig.tupleDelimiter}};
+        {"field_delimiter", parserConfig.fieldDelimiter},
+        {"tuple_delimiter", parserConfig.tupleDelimiter}};
 }
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType)

@@ -76,16 +76,16 @@ private:
 struct ConfigParametersGenerator
 {
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
-        "stopGeneratorWhenSequenceFinishes",
+        "stop_generator_when_sequence_finishes",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
             if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
             {
-                NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
+                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
                 throw InvalidConfigParameter(
-                    "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
+                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
             }
             switch (optToken.value().asEnum<GeneratorStop>().value())
             {
@@ -96,9 +96,10 @@ struct ConfigParametersGenerator
                     return std::optional(EnumWrapper(GeneratorStop::ONE));
                 }
                 default: {
-                    NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
+                    NES_ERROR(
+                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
                     throw InvalidConfigParameter(
-                        "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
+                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
                 }
             }
         }};
@@ -109,7 +110,7 @@ struct ConfigParametersGenerator
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
-        "generatorSchema",
+        "generator_schema",
         {},
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -147,7 +148,7 @@ struct ConfigParametersGenerator
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
-        "maxRuntimeMs",
+        "max_runtime_ms",
         -1,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
 

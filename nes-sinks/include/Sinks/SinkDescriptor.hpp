@@ -72,7 +72,7 @@ private:
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
-        "addTimestamp",
+        "add_timestamp",
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
@@ -84,7 +84,7 @@ public:
     /// Well-known property for any sink that sends its data to a file
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "filePath",
+        "file_path",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 

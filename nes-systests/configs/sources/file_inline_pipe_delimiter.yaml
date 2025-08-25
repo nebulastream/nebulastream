@@ -1,7 +1,7 @@
 logical: PLACEHOLDER
 type: File
-parserConfig:
+parser_config:
   type: CSV
-  fieldDelimiter: '|'
-sourceConfig:
-  filePath: PLACEHOLDER
+  field_delimiter: '|'
+source_config:
+  file_path: PLACEHOLDER

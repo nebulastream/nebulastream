@@ -28,7 +28,7 @@
 namespace NES
 {
 
-static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "filePath";
+static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
 
 struct InlineGeneratorConfiguration
 {
