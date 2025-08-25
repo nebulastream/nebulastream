@@ -95,6 +95,11 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         sinkOperator.sinkDescriptor
             = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
 
+        if (sinkOperator.getSinkDescriptor()->getSinkType() == "File" && sinkOperator.sinkDescriptor->getSchema()->getNumberOfFields() == 0)
+        {
+            throw CannotDeserialize("Sink must not have empty schema!");
+        }
+
         return sinkOperator;
     }
 
