@@ -30,7 +30,7 @@ class PostProcessing:
     def __init__(self, input_folders, measure_interval, startup_time, benchmark_config_file, engine_statistics_file,
                  benchmark_statistics_file, slices_accesses_file, combined_engine_file, combined_benchmark_file,
                  combined_slice_accesses_file, engine_statistics_csv_path, benchmark_statistics_csv_path,
-                 slice_accesses_csv_path, server_name, test_name):
+                 slice_accesses_csv_path, server_name, test_name, slice_access_logging):
         self.input_folders = input_folders
         self.measure_interval = measure_interval
         self.startup_time = startup_time
@@ -46,6 +46,7 @@ class PostProcessing:
         self.slice_accesses_csv_path = slice_accesses_csv_path
         self.server_name = server_name
         self.test_name = test_name
+        self.slice_access_logging = slice_access_logging
 
     def main(self):
         print("Starting post processing...")
@@ -57,19 +58,22 @@ class PostProcessing:
         with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
             futures = {executor.submit(self.convert_benchmark_statistics_to_csv, f): f for f in self.input_folders}
             results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
-        # with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
-        #     futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
-        #     results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+        if self.slice_access_logging:
+            with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+                futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
+                results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
-        for f in self.input_folders:
-            self.convert_slice_accesses_to_csv(f)
+        # for f in self.input_folders:
+        #     self.convert_slice_accesses_to_csv(f)
 
         # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
         # failed_engines = self.combine_engine_statistics()
         failed_benchmarks = self.combine_benchmark_statistics()
-        failed_slice_accesses = self.combine_slice_accesses()
         failed_experiments = failed_benchmarks  # + failed_engines
-        print(f"\nFailed slice access logging: {failed_slice_accesses}\n")
+        if self.slice_access_logging:
+            failed_slice_accesses = self.combine_slice_accesses()
+            failed_experiments += failed_slice_accesses
+
         return failed_experiments
 
     # Converting query engine statistics to a csv file
@@ -180,8 +184,14 @@ class PostProcessing:
         combined_df.to_csv(self.slice_accesses_csv_path, index=False)
 
         # Return all folders that did not contain a result file
-        return [input_folder_name for input_folder_name in self.input_folders if
-                self.combined_slice_accesses_file not in os.listdir(input_folder_name)]
+        def file_backed_slice_store(input_folder_name):
+            with open(os.path.join(input_folder_name, self.benchmark_config_file), 'r') as file:
+                benchmark_config_yaml = yaml.safe_load(file)
+            return benchmark_config_yaml.get("slice_store_type") == "FILE_BACKED"
+
+        return [input_folder_name for input_folder_name in self.input_folders
+                if self.combined_slice_accesses_file not in os.listdir(input_folder_name)
+                and file_backed_slice_store(input_folder_name)]
 
     def convert_engine_statistics_to_csv(self, input_folder):
         pattern_engine_statistics_file = rf"^{re.escape(self.engine_statistics_file)}[\w\.\-]+\.stats$"

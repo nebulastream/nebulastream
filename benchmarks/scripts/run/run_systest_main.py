@@ -51,6 +51,7 @@ WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
+LOG_SLICE_ACCESSES = False
 DELETE_ENGINE_STATS = True
 SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
@@ -301,6 +302,7 @@ def main():
                       f"Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
         # Calling the postprocessing main
+        start_time = time.time()
         measurement_time = MEASURE_INTERVAL * 1000
         startup_time = 0
         post_processing = PostProcessing.PostProcessing(output_folders,
@@ -317,8 +319,11 @@ def main():
                                                         benchmark_stats_csv_path,
                                                         slice_accesses_csv_path,
                                                         SERVER_NAME,
-                                                        TEST_NAME)
+                                                        TEST_NAME,
+                                                        LOG_SLICE_ACCESSES)
         failed_run_folders = post_processing.main()
+        end_time = time.time()
+        print(f"Post Processing completed in {datetime.timedelta(seconds=int(end_time - start_time))}\n")
 
         # Re-running all runs that failed
         if not failed_run_folders:

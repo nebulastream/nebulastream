@@ -18,6 +18,7 @@ import PostProcessing
 
 
 # Compilation for misc.
+LOG_SLICE_ACCESSES = False
 SERVER_NAME = "amd"
 DATETIME = "2025-06-02_20-08-46"
 RESULTS_DIR = f"benchmarks/data/{DATETIME}"
@@ -70,7 +71,8 @@ if __name__ == "__main__":
                                                     benchmark_stats_csv_path,
                                                     slice_accesses_csv_path,
                                                     SERVER_NAME,
-                                                    TEST_NAME)
+                                                    TEST_NAME,
+                                                    LOG_SLICE_ACCESSES)
     failed_run_folders = post_processing.main()
 
     if not failed_run_folders:
