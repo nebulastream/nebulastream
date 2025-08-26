@@ -364,8 +364,24 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema.getRawValue(), expectedField);
-            matchingFieldIt != actualResultSchema.getRawValue().end())
+        auto matchingFieldIt = actualResultSchema.getRawValue().begin();
+        const auto endOfActualSchema = actualResultSchema.getRawValue().end();
+        while ((matchingFieldIt = std::ranges::find(matchingFieldIt, actualResultSchema.getRawValue().end(), expectedField))
+               != endOfActualSchema)
+        {
+            /// If the schema has multiple, identical fields, we need to make sure that we match the expected field with a still unmatched actual field.
+            /// We check if the offset to the current matched field was already emplaced in matchedActualResultFields and continue searching
+            /// if this is the case.
+            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
+            if (!matchedActualResultFields.contains(offset))
+            {
+                /// We found an unmatched field and can stop searching.
+                break;
+            }
+
+            ++matchingFieldIt;
+        }
+        if (matchingFieldIt != endOfActualSchema)
         {
             auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
             expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
