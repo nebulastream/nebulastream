@@ -26,6 +26,7 @@
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 
 namespace
 {

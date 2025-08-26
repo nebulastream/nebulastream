@@ -19,13 +19,13 @@
 #include <mutex>
 #include <queue>
 #include <stop_token>
-#include <thread>
 #include <utility>
 #include <vector>
 #include <absl/functional/any_invocable.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <Task.hpp>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -59,7 +59,7 @@ private:
 
     /// The DelayedTaskSubmitter is implemented as its own dedicated thread. Most of the time is spent blocking on an empty task queue
     /// or waiting until the deadline has passed to submit the next task.
-    std::jthread workerThread;
+    Thread workerThread;
 
     void workerLoop(const std::stop_token& stop);
 
@@ -96,8 +96,7 @@ public:
 
 template <typename CT>
 DelayedTaskSubmitter<CT>::DelayedTaskSubmitter(SubmitFn submitFn)
-    : submitFn(std::move(submitFn))
-    , workerThread([](const std::stop_token& stopToken, DelayedTaskSubmitter* self) { self->workerLoop(stopToken); }, this)
+    : submitFn(std::move(submitFn)), workerThread("task-delayer", &DelayedTaskSubmitter::workerLoop, this)
 {
 }
 
