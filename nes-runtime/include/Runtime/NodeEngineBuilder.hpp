@@ -28,7 +28,7 @@ public:
 
     explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
 
-    std::unique_ptr<NodeEngine> build();
+    std::unique_ptr<NodeEngine> build(WorkerId workerId);
 
 private:
     WorkerConfiguration workerConfiguration;
