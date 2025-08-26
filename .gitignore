@@ -44,3 +44,5 @@ nes-asp/data/*.csv
 
 scripts/__pycache__
 cov-*/
+
+mutations
