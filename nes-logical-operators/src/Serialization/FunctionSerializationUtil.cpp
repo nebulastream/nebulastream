@@ -63,6 +63,11 @@ deserializeWindowAggregationFunction(const SerializableAggregationFunction& seri
     const auto& type = serializedFunction.type();
     auto onField = deserializeFunction(serializedFunction.on_field());
     auto asField = deserializeFunction(serializedFunction.as_field());
+    std::optional<uint64_t> reservoirSize = std::nullopt;
+    if (type == "ReservoirSample")
+    {
+        reservoirSize = std::make_optional(serializedFunction.reservoir_size());
+    }
 
     if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>())
     {
@@ -70,6 +75,7 @@ deserializeWindowAggregationFunction(const SerializableAggregationFunction& seri
         {
             AggregationLogicalFunctionRegistryArguments args;
             args.fields = {fieldAccess.value(), asFieldAccess.value()};
+            args.reservoirSize = reservoirSize;
 
             if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args))
             {

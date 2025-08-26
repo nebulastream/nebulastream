@@ -98,7 +98,6 @@ void ReservoirSampleLogicalFunction::inferStamp(const Schema& schema)
 
 NES::SerializableAggregationFunction ReservoirSampleLogicalFunction::serialize() const
 {
-    /// TODO Adapt to reservoir sample
     NES::SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
@@ -110,6 +109,7 @@ NES::SerializableAggregationFunction ReservoirSampleLogicalFunction::serialize()
 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
+    serializedAggregationFunction.set_reservoir_size(reservoirSize);
     return serializedAggregationFunction;
 }
 
@@ -117,15 +117,11 @@ AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
-    (void)arguments;
-    PRECONDITION(false, "Not yet used. TODO Implement when NES/main has it.");
-    // PRECONDITION(
-    //     arguments.fields.size() == 3, "ReservoirSampleLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
-    // auto reservoirSizeString = arguments.fields[2].getFieldName();
-    // uint64_t reservoirSize;
-    // auto parseResult = std::from_chars(reservoirSizeString.data(), reservoirSizeString.data() + reservoirSizeString.size(), reservoirSize);
-    // INVARIANT(parseResult.ec == std::errc(), "Failed to parse reservoir size: {}", reservoirSizeString);
-    // return ReservoirSampleLogicalFunction::create(arguments.fields[0], arguments.fields[1], reservoirSize);
+    PRECONDITION(
+        arguments.fields.size() == 2, "ReservoirSampleLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    PRECONDITION(arguments.reservoirSize.has_value(), "ReservoirSampleLogicalFunction requires reservoirSize to be set!");
+    uint64_t reservoirSize = arguments.reservoirSize.value();
+    return ReservoirSampleLogicalFunction::create(arguments.fields[0], arguments.fields[1], reservoirSize);
 }
 
 uint64_t ReservoirSampleLogicalFunction::getReservoirSize() const

@@ -36,6 +36,7 @@ class ReservoirProbeLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField);
+    ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField, Schema sampleSchema);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -59,6 +60,25 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    struct ConfigParameters
+    {
+        static inline const DescriptorConfig::ConfigParameter<std::string> SAMPLE_AS_FIELD{
+            "sampleAsField",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return DescriptorConfig::tryGet(SAMPLE_AS_FIELD, config); }};
+
+        static inline const DescriptorConfig::ConfigParameter<std::string> SAMPLE_SCHEMA{
+            "sampleSchema",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return DescriptorConfig::tryGet(SAMPLE_SCHEMA, config); }};
+
+        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+            = DescriptorConfig::createConfigParameterContainerMap(SAMPLE_AS_FIELD, SAMPLE_SCHEMA);
+    };
+
+    /// Name of the field the sample is in.
     FieldAccessLogicalFunction asField;
     std::optional<Schema> sampleSchema;
 

@@ -46,6 +46,11 @@ ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalF
 {
 }
 
+ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField, Schema sampleSchema)
+    : asField(asField), sampleSchema(sampleSchema)
+{
+}
+
 std::string_view ReservoirProbeLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -88,15 +93,18 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
     }
     /// Accessing the last time the stream was not yet "sampled" to get the sample's schema.
     /// TODO This might not be a great solution.
-    auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
-    copy.sampleSchema = Schema{inputSchemas[0].memoryLayoutType};
-    for (auto field : aggSchema.getFields())
+    if (not copy.sampleSchema.has_value())
     {
-        if (not copy.outputSchema.contains(field.name))
+        auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
+        copy.sampleSchema = Schema{inputSchemas[0].memoryLayoutType};
+        for (auto field : aggSchema.getFields())
         {
-            copy.outputSchema.addField(field.name, field.dataType);
+            if (not copy.outputSchema.contains(field.name))
+            {
+                copy.outputSchema.addField(field.name, field.dataType);
+            }
+            copy.sampleSchema.value().addField(field.name, field.dataType);
         }
-        copy.sampleSchema.value().addField(field.name, field.dataType);
     }
 
     return copy;
@@ -166,25 +174,94 @@ std::string ReservoirProbeLogicalOperator::explain(ExplainVerbosity verbosity) c
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("RESERVOIR_PROBE(opId: {})", id);
+        return fmt::format("RESERVOIR_PROBE(opId: {}, asField: {}, sampleSchema: {})", id, asField, sampleSchema);
     }
     return fmt::format("RESERVOIR_PROBE");
 }
 
 SerializableOperator ReservoirProbeLogicalOperator::serialize() const
 {
-    /// TODO Not yet adapted to reservoirProbe.
+    SerializableLogicalOperator proto;
+
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (const auto& trait : getTraitSet())
+    {
+        *traitSetProto->add_traits() = trait.serialize();
+    }
+
+    const auto inputs = getInputSchemas();
+    const auto originLists = getInputOriginIds();
+    for (size_t i = 0; i < inputs.size(); ++i)
+    {
+        auto* inSch = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
+
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originLists[i])
+        {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds())
+    {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+
     SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (const auto& child : getChildren())
+    {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    auto asFieldFn = SerializableFunction();
+    asFieldFn.CopyFrom(asField.serialize());
+    (*serializableOperator.mutable_config())[ConfigParameters::SAMPLE_AS_FIELD] = descriptorConfigTypeToProto(asFieldFn);
+
+    if (sampleSchema.has_value())
+    {
+        SerializableSchema serializedSampleSchema;
+        SchemaSerializationUtil::serializeSchema(sampleSchema.value(), &serializedSampleSchema);
+        (*serializableOperator.mutable_config())[ConfigParameters::SAMPLE_SCHEMA] = descriptorConfigTypeToProto(serializedSampleSchema);
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterReservoirProbeLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    /// TODO Implement this function when its use is implemented.
-    (void)arguments;
+    auto asFieldSerialized = arguments.config[ReservoirProbeLogicalOperator::ConfigParameters::SAMPLE_AS_FIELD];
+    if (not std::holds_alternative<NES::SerializableFunction>(asFieldSerialized))
+    {
+        throw UnknownLogicalOperator();
+    }
+    auto asFieldFunction = FunctionSerializationUtil::deserializeFunction(std::get<NES::SerializableFunction>(asFieldSerialized));
+    auto asField = asFieldFunction.get<FieldAccessLogicalFunction>();
 
-    throw UnknownLogicalOperator();
+    auto sampleSchemaSerialized = arguments.config[ReservoirProbeLogicalOperator::ConfigParameters::SAMPLE_SCHEMA];
+    if (not std::holds_alternative<NES::SerializableSchema>(sampleSchemaSerialized))
+    {
+        throw UnknownLogicalOperator();
+    }
+    auto sampleSchema = SchemaSerializationUtil::deserializeSchema(std::get<NES::SerializableSchema>(sampleSchemaSerialized));
+
+    auto logicalOperator = ReservoirProbeLogicalOperator(asField, sampleSchema);
+    if (auto& id = arguments.id)
+    {
+        logicalOperator.id = *id;
+    }
+    /// Due to the hack of how we get the sample schema during type inferrence, we cannot run it here like the other operators:
+    /// return logicalOperator.withInferredSchema(arguments.inputSchemas)
+    ///    .withInputOriginIds(arguments.inputOriginIds)
+    ///    .withOutputOriginIds(arguments.outputOriginIds);
+    return logicalOperator;
 }
 
 }

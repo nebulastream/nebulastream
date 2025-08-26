@@ -29,6 +29,7 @@ using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggre
 struct AggregationLogicalFunctionRegistryArguments
 {
     std::vector<FieldAccessLogicalFunction> fields;
+    std::optional<uint64_t> reservoirSize;
 };
 
 class AggregationLogicalFunctionRegistry : public BaseRegistry<
