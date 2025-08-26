@@ -19,12 +19,9 @@
 #include <exception>
 #include <functional>
 #include <future>
-#include <iostream>
 #include <memory>
-#include <optional>
 #include <stop_token>
 #include <string>
-#include <thread>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -34,11 +31,10 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Overloaded.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -74,11 +70,6 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 }
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
-
-void threadSetup(OriginId originId)
-{
-    setThreadName(fmt::format("DataSrc-{}", originId));
-}
 
 /// RAII-Wrapper around source open and close
 struct SourceHandle
@@ -156,8 +147,6 @@ void dataSourceThread(
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
-    threadSetup(originId);
-
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -197,7 +186,8 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
-    std::jthread sourceThread(
+    Thread sourceThread(
+        fmt::format("DataSrc-{}", originId),
         detail::dataSourceThread,
         std::move(terminationPromise),
         sourceImplementation.get(),
@@ -210,10 +200,10 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 
 void SourceThread::stop()
 {
-    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
 
     NES_DEBUG("SourceThread  {} : stop source", originId);
-    thread.request_stop();
+    thread.requestStop();
     {
         auto deletedOnScopeExit = std::move(thread);
     }
@@ -231,9 +221,9 @@ void SourceThread::stop()
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
-    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
     NES_DEBUG("SourceThread {}: attempting to stop source", originId);
-    thread.request_stop();
+    thread.requestStop();
 
     try
     {

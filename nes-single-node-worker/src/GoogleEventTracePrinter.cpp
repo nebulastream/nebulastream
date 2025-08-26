@@ -29,7 +29,6 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
@@ -122,7 +121,6 @@ void GoogleEventTracePrinter::writeTraceFooter()
 
 void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
 {
-    setThreadName("GoogleEventTracePrinter");
     writeTraceHeader();
 
     bool firstEvent = true;
@@ -412,17 +410,11 @@ GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& pa
 
 void GoogleEventTracePrinter::start()
 {
-    traceThread = std::jthread([this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
+    traceThread = Thread("event-trace", [this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
 }
 
 GoogleEventTracePrinter::~GoogleEventTracePrinter()
 {
-    if (traceThread.joinable())
-    {
-        traceThread.request_stop();
-        traceThread.join();
-    }
-
     if (file.is_open())
     {
         file.flush();
@@ -432,12 +424,6 @@ GoogleEventTracePrinter::~GoogleEventTracePrinter()
 
 void GoogleEventTracePrinter::flush()
 {
-    if (traceThread.joinable())
-    {
-        traceThread.request_stop();
-        traceThread.join();
-    }
-
     if (file.is_open())
     {
         file.flush();
