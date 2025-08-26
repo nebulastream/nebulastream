@@ -33,6 +33,7 @@
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
+#include <Thread.hpp>
 
 namespace
 {
@@ -346,6 +347,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 int main(int argc, const char** argv)
 {
     auto startTime = std::chrono::high_resolution_clock::now();
+    NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
     auto config = parseConfiguration(argc, argv);
     NES::SystestExecutor executor(std::move(config));
