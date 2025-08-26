@@ -29,6 +29,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -91,7 +92,7 @@ protected:
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
 
-    std::jthread thread;
+    Thread thread;
     std::future<SourceImplementationTermination> terminationFuture;
 
     /// Runs in detached thread and kills thread when finishing.
