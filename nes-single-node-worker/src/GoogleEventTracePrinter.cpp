@@ -412,17 +412,11 @@ GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& pa
 
 void GoogleEventTracePrinter::start()
 {
-    traceThread = std::jthread([this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
+    traceThread = Thread("event-trace", [this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
 }
 
 GoogleEventTracePrinter::~GoogleEventTracePrinter()
 {
-    if (traceThread.joinable())
-    {
-        traceThread.request_stop();
-        traceThread.join();
-    }
-
     if (file.is_open())
     {
         file.flush();
@@ -432,12 +426,6 @@ GoogleEventTracePrinter::~GoogleEventTracePrinter()
 
 void GoogleEventTracePrinter::flush()
 {
-    if (traceThread.joinable())
-    {
-        traceThread.request_stop();
-        traceThread.join();
-    }
-
     if (file.is_open())
     {
         file.flush();

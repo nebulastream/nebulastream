@@ -47,7 +47,7 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, WorkerId workerId)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     if (configuration.enableGoogleEventTrace.getValue())
@@ -58,7 +58,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build();
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build(workerId);
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
