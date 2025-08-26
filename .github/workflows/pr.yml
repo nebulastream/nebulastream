@@ -64,7 +64,6 @@ jobs:
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      number_of_commits: ${{ github.event.pull_request.commits }}
     secrets: inherit
 
   run_endless_mode:
