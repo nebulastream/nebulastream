@@ -14,10 +14,14 @@
 
 #include <DataTypes/Schema.hpp>
 
+#include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -235,6 +239,110 @@ Schema withoutSourceQualifier(const Schema& input)
 
 
     return withoutPrefix;
+}
+
+SchemaDiff SchemaDiff::of(const Schema& leftSchema, const Schema& rightSchema)
+{
+    const std::multiset expectedResultFields(leftSchema.begin(), leftSchema.end());
+    const std::multiset actualResultFields(rightSchema.begin(), rightSchema.end());
+
+    SchemaDiff diff;
+
+    /// Difference by name
+    std::ranges::set_difference(
+        expectedResultFields,
+        actualResultFields,
+        std::back_inserter(diff.leftFields),
+        std::less{},
+        &Schema::Field::name,
+        &Schema::Field::name);
+
+    std::ranges::set_difference(
+        actualResultFields,
+        expectedResultFields,
+        std::back_inserter(diff.rightFields),
+        std::less{},
+        &Schema::Field::name,
+        &Schema::Field::name);
+
+    /// Find Intersection by Field name. This has to be done twice to get both fields from the left and the right schema.
+    std::multiset<Schema::Field> nameIntersectionLeft;
+    std::ranges::set_intersection(
+        expectedResultFields,
+        actualResultFields,
+        std::inserter(nameIntersectionLeft, nameIntersectionLeft.end()),
+        std::less{},
+        &Schema::Field::name,
+        &Schema::Field::name);
+
+    std::multiset<Schema::Field> nameIntersectionRight;
+    std::ranges::set_intersection(
+        actualResultFields,
+        expectedResultFields,
+        std::inserter(nameIntersectionRight, nameIntersectionRight.end()),
+        std::less{},
+        &Schema::Field::name,
+        &Schema::Field::name);
+
+    /// Find difference comparing all properties of a schema field, not just the name.
+    std::vector<Schema::Field> modifiedFieldsLeft;
+    std::vector<Schema::Field> modifiedFieldsRight;
+    std::ranges::set_difference(nameIntersectionLeft, nameIntersectionRight, std::back_inserter(modifiedFieldsLeft));
+    std::ranges::set_difference(nameIntersectionRight, nameIntersectionLeft, std::back_inserter(modifiedFieldsRight));
+    INVARIANT(modifiedFieldsLeft.size() == modifiedFieldsRight.size(), "Both set differences should return the same number of items");
+
+    diff.fieldsWithMissmatch.reserve(modifiedFieldsLeft.size());
+    for (size_t i = 0; i < modifiedFieldsLeft.size(); ++i)
+    {
+        diff.fieldsWithMissmatch.emplace_back(modifiedFieldsLeft[i], modifiedFieldsRight[i]);
+    }
+
+    return diff;
+}
+
+bool SchemaDiff::isDifferent() const
+{
+    return !leftFields.empty() || !rightFields.empty() || !fieldsWithMissmatch.empty();
+}
+
+std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff)
+{
+    os << "SchemaDiff {\n";
+
+    if (!diff.leftFields.empty())
+    {
+        os << "  Additional fields on the left (" << diff.leftFields.size() << "):\n";
+        for (const auto& field : diff.leftFields)
+        {
+            os << "    + " << field << "\n";
+        }
+    }
+
+    if (!diff.rightFields.empty())
+    {
+        os << "  Additional fields on the right (" << diff.rightFields.size() << "):\n";
+        for (const auto& field : diff.rightFields)
+        {
+            os << "    - " << field << "\n";
+        }
+    }
+
+    if (!diff.fieldsWithMissmatch.empty())
+    {
+        os << "  Fields with type missmatch (" << diff.fieldsWithMissmatch.size() << "):\n";
+        for (const auto& [expected, actual] : diff.fieldsWithMissmatch)
+        {
+            os << "    ~ " << expected.name << ": " << expected.dataType << " -> " << actual.dataType << "\n";
+        }
+    }
+
+    if (diff.leftFields.empty() && diff.rightFields.empty() && diff.fieldsWithMissmatch.empty())
+    {
+        os << "  No differences found\n";
+    }
+
+    os << "}";
+    return os;
 }
 
 bool Schema::hasFields() const

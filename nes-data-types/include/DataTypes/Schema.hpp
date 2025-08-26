@@ -49,7 +49,7 @@ public:
         Field(std::string name, DataType dataType);
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
-        bool operator==(const Field&) const = default;
+        auto operator<=>(const Field&) const = default;
         [[nodiscard]] std::string getUnqualifiedName() const;
 
         std::string name;
@@ -129,6 +129,19 @@ private:
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
 
+struct SchemaDiff
+{
+    std::vector<Schema::Field> leftFields;
+    std::vector<Schema::Field> rightFields;
+    std::vector<std::pair<Schema::Field, Schema::Field>> fieldsWithMissmatch;
+
+    static SchemaDiff of(const Schema& leftSchema, const Schema& rightSchema);
+
+    [[nodiscard]] bool isDifferent() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff);
+};
+
 }
 
 template <>
@@ -139,3 +152,4 @@ struct std::hash<NES::Schema::Field>
 
 FMT_OSTREAM(NES::Schema);
 FMT_OSTREAM(NES::Schema::Field);
+FMT_OSTREAM(NES::SchemaDiff);
