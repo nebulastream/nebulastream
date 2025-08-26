@@ -32,6 +32,7 @@
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <Thread.hpp>
 
 template <typename Var1, typename Var2>
 struct FlattenVariant;
@@ -93,7 +94,7 @@ private:
 
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{QUEUE_LENGTH};
-    std::jthread traceThread;
+    Thread traceThread;
     std::atomic<bool> headerWritten{false};
     std::atomic<bool> footerWritten{false};
 

@@ -359,7 +359,7 @@ void TestingHarness::start()
     }
     QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
-    qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm);
+    qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, WorkerId("test"));
 }
 
 void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const
