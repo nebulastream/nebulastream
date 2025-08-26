@@ -5,6 +5,21 @@
 name: Code Coverage
 
 on:
+  # Manual trigger via GitHub CLI or website
+  workflow_dispatch:
+    inputs:
+      dev_image_tag:
+        description: "Docker image tag of the development image"
+        required: true
+        type: string
+      head_sha:
+        description: "Commit sha of head"
+        required: true
+        type: string
+      branch_name:
+        description: "Name of the branch the coverage will be associated with"
+        required: true
+        type: string
   # We are using this yaml in other workflows, e.g., nightly or PR, so we need to allow another workflow call to trigger this workflow.
   # We are expecting the tag of the docker image to be passed as an output from the previous job.
   workflow_call:
@@ -17,11 +32,7 @@ on:
         required: true
         type: string
         description: "Commit sha of head"
-      number_of_commits:
-        required: true
-        type: number
-        description: distance between base and head
-      branch-name:
+      branch_name:
         required: false
         type: string
         description: name of the branch the coverage will be associated with, if not provided codecov will pick
@@ -56,5 +67,5 @@ jobs:
           fail_ci_if_error: true
           files: build/ccov/coverage.lcov
           token: ${{ secrets.CODECOV_TOKEN }}
-          override_branch: ${{ inputs.branch-name }}
+          override_branch: ${{ inputs.branch_name }}
           override_commit: ${{ inputs.head_sha }}
