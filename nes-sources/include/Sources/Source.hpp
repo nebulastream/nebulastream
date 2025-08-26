@@ -71,6 +71,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
+    [[nodiscard]] virtual bool addsMetadata() const { return false; }
+
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
