@@ -17,10 +17,6 @@ on:
         required: true
         type: string
         description: "Commit sha of head"
-      number_of_commits:
-        required: true
-        type: number
-        description: distance between base and head
       branch-name:
         required: false
         type: string
