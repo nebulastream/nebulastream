@@ -21,6 +21,10 @@ on:
         required: true
         type: number
         description: distance between base and head
+      branch-name:
+        required: false
+        type: string
+        description: name of the branch the coverage will be associated with, if not provided codecov will pick
 
 jobs:
   build-code-coverage-pr-branch:
@@ -52,3 +56,5 @@ jobs:
           fail_ci_if_error: true
           files: build/ccov/coverage.lcov
           token: ${{ secrets.CODECOV_TOKEN }}
+          override_branch: ${{ inputs.branch-name }}
+          override_commit: ${{ inputs.head_sha }}
