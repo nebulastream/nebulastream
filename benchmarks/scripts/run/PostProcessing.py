@@ -357,8 +357,8 @@ class PostProcessing:
         pattern_slice_access_details = re.compile(
             r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
             r"Thread (?P<thread_id>\d+) executed operation (?P<operation>WRITE|READ) "
-            r"with status (?P<status>START|END) on slice (?P<slice_id>\d+)"
-            r"(?P<prediction> with prediction)?")
+            r"with status (?P<status>START|END) on slice (?P<slice_id>\d+) "
+            r"(?P<prediction>with|without) prediction")
 
         # Gathering all statistic files
         accesses_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
@@ -380,7 +380,7 @@ class PostProcessing:
                 operation = match.group("operation")
                 status = match.group("status")
                 slice_id = int(match.group("slice_id"))
-                prediction = True if match.group("prediction") else False
+                prediction = match.group("prediction") == "with"
 
                 if slice_id not in tasks:
                     tasks[slice_id] = benchmark_config_yaml.copy()

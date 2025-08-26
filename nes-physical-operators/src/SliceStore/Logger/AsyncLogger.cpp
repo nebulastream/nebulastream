@@ -59,16 +59,16 @@ void AsyncLogger::processLogs(const std::string& path)
     LoggingParams params;
     while (running)
     {
-        if (queue.readIfNotEmpty(params))
+        if (queue.readIfNotEmpty(params)) [[likely]]
         {
             file << fmt::format(
-                "{:%Y-%m-%d %H:%M:%S} Thread {} executed operation {} with status {} on slice {}{}\n",
+                "{:%Y-%m-%d %H:%M:%S} Thread {} executed operation {} with status {} on slice {} {} prediction\n",
                 params.timestamp,
                 params.threadId,
                 magic_enum::enum_name<FileOperation>(params.operation),
                 magic_enum::enum_name<OperationStatus>(params.status),
                 params.sliceEnd,
-                params.prediction ? " with prediction" : "");
+                params.prediction ? "with" : "without");
         }
         else
         {

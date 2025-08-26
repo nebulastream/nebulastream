@@ -44,15 +44,15 @@ SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/n
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
-NUM_RUNS_PER_CONFIG = 3
+NUM_RUNS_PER_CONFIG = 1
 NUM_RETRIES_PER_RUN = 3
-MEASURE_INTERVAL = 8
+MEASURE_INTERVAL = 4
 WAIT_BEFORE_QUERY_STOP = 5
 WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
-LOG_SLICE_ACCESSES = False
+LOG_SLICE_ACCESSES = True
 DELETE_ENGINE_STATS = True
 SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
@@ -418,7 +418,7 @@ def main():
     print("################################################################")
     print("Running benchmark main")
     print("################################################################\n")
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
+    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_prediction_correctness_precision_configs()
 
     engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:

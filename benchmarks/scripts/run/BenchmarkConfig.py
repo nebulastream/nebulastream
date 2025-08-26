@@ -39,6 +39,8 @@ WINDOW_SIZE_SLIDE = [
     (1000 * 1000 * 1000, 1000 * 1000),
     # Representing a sliding window of 277.78h with slide of 100s, resulting in 10000 concurrent windows
     (1000 * 1000 * 1000, 100 * 1000),
+    # Representing a sliding window of 10s with slide of 1s, resulting in 10 concurrent windows
+    (10 * 1000, 1000),
     # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
     (10 * 1000, 100)
 ]
@@ -51,7 +53,7 @@ MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [4096, 16384, 0, 512]
-PREDICTION_TIME_DELTAS = [0, 100, 1000, 100000]
+PREDICTION_TIME_DELTAS = [0, 500, 5000, 100000]
 WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
@@ -442,6 +444,34 @@ def create_watermark_prediction_benchmark_configs():
                                 config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
                                 config_params["watermark_predictor_type"] = watermark_predictor_type
                                 configs.append(BenchmarkConfig(**config_params))
+
+    return configs
+
+
+def create_prediction_correctness_precision_configs():
+    # Generate configurations where only one parameter varies from the default value
+    configs = []
+    default_params = get_default_params_dict()
+    default_params["slice_store_type"] = "FILE_BACKED"
+
+    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    default_timestamp_increments, default_queries = get_additional_default_values()
+    default_queries = [get_queries()[5], get_queries()[6]]
+    # print(default_queries)
+    for timestamp_increment in default_timestamp_increments:
+        for query in default_queries:
+            for max_num_watermark_gaps in [MAX_NUM_WATERMARK_GAPS[0], MAX_NUM_WATERMARK_GAPS[2]]:
+                for max_num_sequence_numbers in [MAX_NUM_SEQUENCE_NUMBERS[0], MAX_NUM_SEQUENCE_NUMBERS[2]]:
+                    for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:
+                        for value in PREDICTION_TIME_DELTAS[:3]:
+                            config_params = default_params.copy()
+                            config_params["prediction_time_delta"] = value
+                            config_params["timestamp_increment"] = timestamp_increment
+                            config_params["query"] = query
+                            config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
+                            config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
+                            config_params["watermark_predictor_type"] = watermark_predictor_type
+                            configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
