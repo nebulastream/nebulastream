@@ -35,8 +35,7 @@ namespace NES
 class ReservoirProbeLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    explicit ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField);
-    ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField, Schema sampleSchema);
+    explicit ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField, Schema sampleSchema);
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;

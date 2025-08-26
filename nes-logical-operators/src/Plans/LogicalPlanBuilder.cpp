@@ -200,7 +200,7 @@ LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const st
     return queryPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::addReservoirProbeOp(const LogicalPlan& queryPlan, FieldAccessLogicalFunction asField)
+LogicalPlan LogicalPlanBuilder::addReservoirProbeOp(const LogicalPlan& queryPlan, FieldAccessLogicalFunction asField, std::vector<FieldAccessLogicalFunction> sampleFields)
 {
     PRECONDITION(
         not queryPlan.getRootOperators().empty()
@@ -214,7 +214,12 @@ LogicalPlan LogicalPlanBuilder::addReservoirProbeOp(const LogicalPlan& queryPlan
                     return std::nullopt;
                 }),
         "Can only add Reservoir probe after reservoir sample (TODO remove when we have statstore etc)");
-    return promoteOperatorToRoot(queryPlan, ReservoirProbeLogicalOperator(asField));
+    auto sampleSchema = Schema();
+    for (const auto& field: sampleFields)
+    {
+        sampleSchema.addField(field.getFieldName(), field.getDataType());
+    }
+    return promoteOperatorToRoot(queryPlan, ReservoirProbeLogicalOperator(std::move(asField), sampleSchema));
 }
 
 

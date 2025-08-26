@@ -68,6 +68,7 @@ message SerializableAggregationFunction {
     SerializableFunction on_field = 2;
     SerializableFunction as_field = 3;
     optional uint64 reservoir_size = 4;
+    optional FunctionList sample_fields = 5;
 }
 
 message AggregationFunctionList {

@@ -28,16 +28,16 @@ class ReservoirSampleLogicalFunction final : public WindowAggregationLogicalFunc
 {
 public:
     /// This function creates a ReservoirSampleLogicalFunction even though the name doesn't make sense
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, uint64_t reservoirSize);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, std::vector<FieldAccessLogicalFunction> sampleFields, uint64_t reservoirSize);
     /// `asField` used when the reservoir should be renamed in the query
     /// `reservoirSize` number of records the reservoir should hold
     static std::shared_ptr<WindowAggregationLogicalFunction>
-    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField, uint64_t reservoirSize);
+    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField, std::vector<FieldAccessLogicalFunction> sampleFields, uint64_t reservoirSize);
 
     /// TODO The onField is unused and should be removed.
-    ReservoirSampleLogicalFunction(const FieldAccessLogicalFunction& onField, uint64_t reservoirSize);
+    ReservoirSampleLogicalFunction(const FieldAccessLogicalFunction& onField, std::vector<FieldAccessLogicalFunction> sampleFields, uint64_t reservoirSize);
     ReservoirSampleLogicalFunction(
-        const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField, uint64_t reservoirSize);
+        const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField, std::vector<FieldAccessLogicalFunction> sampleFields, uint64_t reservoirSize);
 
     void inferStamp(const Schema& schema) override;
     ~ReservoirSampleLogicalFunction() override = default;
@@ -45,8 +45,11 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] uint64_t getReservoirSize() const;
+    [[nodiscard]] std::vector<FieldAccessLogicalFunction> getSampleFields() const;
 
 private:
+    /// Selects which fields get projected into the sample.
+    std::vector<FieldAccessLogicalFunction> sampleFields;
     uint64_t reservoirSize;
 
     static constexpr std::string_view NAME = "ReservoirSample";

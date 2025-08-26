@@ -41,11 +41,6 @@
 namespace NES
 {
 
-ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField)
-    : asField(asField), sampleSchema(std::nullopt)
-{
-}
-
 ReservoirProbeLogicalOperator::ReservoirProbeLogicalOperator(FieldAccessLogicalFunction asField, Schema sampleSchema)
     : asField(asField), sampleSchema(sampleSchema)
 {
@@ -81,30 +76,32 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
                                .get<FieldAccessLogicalFunction>();
     }
 
+    auto pos = asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+    auto asFieldWithoutStream = (pos != std::string::npos) ? asFieldName.substr(pos + 1) : asFieldName;
+
     copy.outputSchema = Schema{inputSchemas[0].memoryLayoutType};
     for (auto field : copy.inputSchema)
     {
-        auto fieldWithoutStream = field.name.substr(field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        auto asFieldWithoutStream = asFieldName.substr(asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        auto pos = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        auto fieldWithoutStream = (pos != std::string::npos) ? field.name.substr(pos + 1) : field.name;
+
         if (fieldWithoutStream != asFieldWithoutStream)
         {
             copy.outputSchema.addField(field.name, field.dataType);
         }
     }
-    /// Accessing the last time the stream was not yet "sampled" to get the sample's schema.
-    /// TODO This might not be a great solution.
-    if (not copy.sampleSchema.has_value())
+
+    PRECONDITION(sampleSchema.has_value(), "ReservoirProbe's sampleSchema needs to be initialized at this point!");
+    copy.sampleSchema = Schema{sampleSchema.value().memoryLayoutType};
+    for (auto field : sampleSchema.value().getFields())
     {
-        auto aggSchema = children.front().get<WindowedAggregationLogicalOperator>().getInputSchemas().front();
-        copy.sampleSchema = Schema{inputSchemas[0].memoryLayoutType};
-        for (auto field : aggSchema.getFields())
+        auto pos = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        std::string qualifiedName = (pos == std::string::npos)? copy.inputSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + field.name : field.name;
+        if (not copy.outputSchema.contains(field.name))
         {
-            if (not copy.outputSchema.contains(field.name))
-            {
-                copy.outputSchema.addField(field.name, field.dataType);
-            }
-            copy.sampleSchema.value().addField(field.name, field.dataType);
+            copy.outputSchema.addField(qualifiedName, field.dataType);
         }
+        copy.sampleSchema.value().addField(qualifiedName, field.dataType);
     }
 
     return copy;
@@ -257,11 +254,9 @@ LogicalOperatorGeneratedRegistrar::RegisterReservoirProbeLogicalOperator(NES::Lo
     {
         logicalOperator.id = *id;
     }
-    /// Due to the hack of how we get the sample schema during type inferrence, we cannot run it here like the other operators:
-    /// return logicalOperator.withInferredSchema(arguments.inputSchemas)
-    ///    .withInputOriginIds(arguments.inputOriginIds)
-    ///    .withOutputOriginIds(arguments.outputOriginIds);
-    return logicalOperator;
+    return logicalOperator.withInferredSchema(arguments.inputSchemas)
+       .withInputOriginIds(arguments.inputOriginIds)
+       .withOutputOriginIds(arguments.outputOriginIds);
 }
 
 }

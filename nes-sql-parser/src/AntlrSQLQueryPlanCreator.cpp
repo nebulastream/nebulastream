@@ -446,8 +446,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
         if (helpers.top().windowAggs.front().get()->getName() == "ReservoirSample")
         {
+            auto reservoirFn = dynamic_cast<ReservoirSampleLogicalFunction*>(helpers.top().windowAggs.front().get());
             auto asField = helpers.top().windowAggs.front().get()->asField;
-            queryPlan = LogicalPlanBuilder::addReservoirProbeOp(queryPlan, asField);
+            queryPlan = LogicalPlanBuilder::addReservoirProbeOp(queryPlan, asField, reservoirFn->getSampleFields());
             /// TODO This is a hack to get the new projection operator to work.
             /// The projection operator wants to know which fields its going to project here, in its member projections. But as we do not yet know the source's schema, we cannot give it the schema of the sample. So instead we just project all input fields:
             helpers.top().asterisk = true;
@@ -880,12 +881,27 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
-            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(helpers.top().functionBuilder)))
+            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
             {
                 helpers.top().functionBuilder.push_back(*logicalFunction);
             }
             else if (funcName == "RESERVOIR")
             {
+                if (helpers.top().functionBuilder.empty())
+                {
+                    throw InvalidQuerySyntax("Sample requires sample fields as arguments at {}", context->getText());
+                }
+                std::vector<FieldAccessLogicalFunction> sampleFields;
+                for (auto& field : helpers.top().functionBuilder) {
+                    PRECONDITION(field.tryGet<FieldAccessLogicalFunction>().has_value(), "sample field was not a FieldAccessLogicalFunction");
+                    sampleFields.emplace_back(field.get<FieldAccessLogicalFunction>());
+                }
+                helpers.top().functionBuilder.clear();
+
+                if (helpers.top().constantBuilder.empty())
+                {
+                    throw InvalidQuerySyntax("Expected constant at the end of ReservoirSample function call, got nothing at {}", context->getText());
+                }
                 auto constantString = helpers.top().constantBuilder.back();
                 helpers.top().constantBuilder.pop_back();
                 uint64_t reservoirSize;
@@ -894,7 +910,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 const auto uselessField = FieldAccessLogicalFunction("timestamp");
                 const auto asFieldIfNotOverwritten = FieldAccessLogicalFunction("reservoir");
                 helpers.top().windowAggs.push_back(
-                    ReservoirSampleLogicalFunction::create(uselessField, asFieldIfNotOverwritten, reservoirSize));
+                    ReservoirSampleLogicalFunction::create(uselessField, asFieldIfNotOverwritten, sampleFields, reservoirSize));
                 helpers.top().hasUnnamedSample = true;
                 break;
             }
