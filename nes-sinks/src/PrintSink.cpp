@@ -63,7 +63,7 @@ void PrintSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutio
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
 
     const auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
-    *(*outputStream.wlock()) << bufferAsString << '\n';
+    *(*outputStream.wlock()) << bufferAsString;
     std::this_thread::sleep_for(std::chrono::milliseconds{ingestion});
 }
 
