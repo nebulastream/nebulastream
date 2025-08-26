@@ -16,11 +16,11 @@
 
 #include <filesystem>
 #include <fstream>
-#include <thread>
 #include <type_traits>
 #include <variant>
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
+#include <NESThread.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
 template <typename Var1, typename Var2>
@@ -46,6 +46,6 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEve
 private:
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{100};
-    std::jthread printThread;
+    Thread printThread;
 };
 }

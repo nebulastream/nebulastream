@@ -30,6 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
+#include <NESThread.hpp>
 
 namespace NES::Sources
 {
@@ -96,7 +97,7 @@ protected:
     std::atomic_bool started;
     Ingestion ingestion;
 
-    std::jthread thread;
+    Thread thread;
     std::future<SourceImplementationTermination> terminationFuture;
 
     /// Runs in detached thread and kills thread when finishing.
