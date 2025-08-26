@@ -22,6 +22,10 @@ add_nes_common_test(nes-common-tests
         "TypeTraitsTest.cpp"
 )
 
+add_nes_test(nes-thread-test
+        "ThreadTest.cpp"
+)
+
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"
 )
