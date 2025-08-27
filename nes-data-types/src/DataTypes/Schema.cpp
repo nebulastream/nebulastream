@@ -234,4 +234,12 @@ auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
     return fields.cend();
 }
 
+Schema Schema::withMemoryLayoutType(MemoryLayoutType layoutType) const
+{
+    Schema copy = *this;
+    copy.memoryLayoutType = layoutType;
+    return copy;
+}
+
+
 }

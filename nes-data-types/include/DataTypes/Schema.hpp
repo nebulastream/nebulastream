@@ -111,6 +111,7 @@ public:
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 
+    [[nodiscard]] Schema withMemoryLayoutType(MemoryLayoutType memoryLayoutType) const;
     /// Public members that we get and set.
     MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
 

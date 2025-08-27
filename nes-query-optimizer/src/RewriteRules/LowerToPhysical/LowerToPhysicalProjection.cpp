@@ -35,6 +35,7 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -42,50 +43,26 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
-    auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
+
     auto bufferSize = conf.pageSize.getValue();
 
-    if (conf.useSingleMemoryLayout)
+    if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
     {
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(projectionLogicalOperator);
         bufferSize = conf.operatorBufferSize.getValue();
-
+        inputSchema = inputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
+        outputSchema = outputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
     }
-    if (inputSchema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto scanLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(bufferSize, inputSchema);
-        auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(scanLayout);
-        auto scan = ScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames());
-        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
-        auto emitLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, outputSchema);
-        auto emitMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(emitLayout);
-        auto emit = EmitPhysicalOperator(handlerId, emitMemoryProvider);
-        auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            emit,
-            outputSchema,
-            outputSchema,
-            handlerId,
-            std::make_shared<EmitOperatorHandler>(),
-            PhysicalOperatorWrapper::PipelineLocation::EMIT,
-            std::vector{scanWrapper});
-
-        /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-        const std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
-        return {.root = emitWrapper, .leafs = {scanWrapper}};
-    }
-    if (inputSchema.memoryLayoutType != Schema::MemoryLayoutType::ROW_LAYOUT)
-    {
-        NES_ERROR("MemoryLayoutType: {} is not supported for Projection", magic_enum::enum_name(inputSchema.memoryLayoutType));
-    }
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(bufferSize, inputSchema);
     auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
     auto accessedFields = projection.getAccessedFields();
     auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+
 
     auto child = scanWrapper;
     for (const auto& [fieldName, function] : projection.getProjections())
@@ -103,6 +80,19 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
             std::vector{child});
+    }
+
+    if (conf.layoutStrategy == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    {
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(projectionLogicalOperator);
+
+        auto ref = addSwapBeforeOperator(scanWrapper, memoryLayoutTrait, conf);
+            //addSwapBeforeProjection(scanWrapper, projectionLogicalOperator, conf);
+        auto leaf = ref.second;
+        /// ref.first is ignored, because childs are deeper than new swap:
+        /// scan (ref.second), emit, scan (ref.first), childs
+        std::vector leafes(projectionLogicalOperator.getChildren().size(), leaf);
+        return {.root = child, .leafs = {leafes}};
     }
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

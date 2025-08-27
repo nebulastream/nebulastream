@@ -18,10 +18,13 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
+
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -32,8 +35,26 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     auto sink = logicalOperator.get<SinkLogicalOperator>();
     PRECONDITION(sink.getSinkDescriptor().has_value(), "Expected SinkLogicalOperator to have sink descriptor");
     auto physicalOperator = SinkPhysicalOperator(sink.getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
+
+    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    {
+
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
+
+        auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, sink.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType), sink.getOutputSchema().withMemoryLayoutType(memoryLayoutTrait.targetLayoutType), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        ;
+        auto res = addSwapBeforeOperator(wrapper, memoryLayoutTrait, conf);
+
+        auto root = res.first;
+        auto leaf = res.second;
+
+        std::vector leafes(logicalOperator.getChildren().size(), leaf);
+        return {.root = root, .leafs = {leafes}};
+    }
+
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     ;
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

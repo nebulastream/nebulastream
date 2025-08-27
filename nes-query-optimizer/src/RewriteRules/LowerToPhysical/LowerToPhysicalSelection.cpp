@@ -47,12 +47,22 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
 
 
     /// if function left, right is field access, then use fieldname for outputschemas and swap after selection
-    if (conf.useSingleMemoryLayout.getValue())
+    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
     {
-        auto res = addSwapOperators(logicalOperator, physicalOperator, conf);
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
+
+        auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+               physicalOperator,
+               logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType),
+               logicalOperator.getOutputSchema().withMemoryLayoutType(memoryLayoutTrait.targetLayoutType),
+               PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+
+        auto res = addSwapBeforeOperator(wrapper, memoryLayoutTrait, conf);
+
         auto root = res.first;
         auto leaf = res.second;
-        return {.root = root, .leafs = {leaf}};
+        std::vector leafes(logicalOperator.getChildren().size(), leaf);
+        return {.root = root, .leafs = {leafes}};
 
     }
 

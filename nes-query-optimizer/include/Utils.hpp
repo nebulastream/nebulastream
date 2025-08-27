@@ -15,8 +15,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <QueryExecutionConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
+
 #include <PhysicalOperator.hpp>
 namespace NES
 {
 std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapOperators(LogicalOperator logicalOperator, PhysicalOperator physicalOperator, QueryExecutionConfiguration conf);
+std::shared_ptr<PhysicalOperatorWrapper> addSwapBeforeProjection(std::shared_ptr<PhysicalOperatorWrapper> scanWrapper, LogicalOperator projectionLogicalOperator, QueryExecutionConfiguration conf);
+std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapBeforeOperator(std::shared_ptr<PhysicalOperatorWrapper> operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf);
+MemoryLayoutTypeTrait getMemoryLayoutTypeTrait (const LogicalOperator& logicalOperator);
 }
