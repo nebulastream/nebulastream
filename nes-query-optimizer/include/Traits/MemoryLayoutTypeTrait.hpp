@@ -24,32 +24,18 @@
 
 namespace NES
 {
-enum class LayoutImplementation : uint8_t
-{
-    ROW,
-    COL
-};
 
-/// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
+
+/// Struct that stores memoryLayout types as traits. For now, we simply have a choice/implementation type for the memoryLayouts
 struct MemoryLayoutTypeTrait final : public TraitConcept
 {
-    LayoutImplementation implementationType;
+    Schema::MemoryLayoutType incomingLayoutType;
+    Schema::MemoryLayoutType targetLayoutType;
 
-    explicit MemoryLayoutTypeTrait(LayoutImplementation implementationType) : implementationType(implementationType) { }
+    explicit MemoryLayoutTypeTrait(Schema::MemoryLayoutType incomingLayoutType, Schema::MemoryLayoutType targetLayoutType) : incomingLayoutType(incomingLayoutType), targetLayoutType(targetLayoutType) { }
 
     [[nodiscard]] const std::type_info& getType() const override { return typeid(MemoryLayoutTypeTrait); }
 
-    [[nodiscard]] SerializableTrait serialize() const override
-    {
-        SerializableTrait trait;
-        trait.set_trait_type(getType().name());
-        auto wrappedImplType = SerializableEnumWrapper{};
-        wrappedImplType.set_value(magic_enum::enum_name(implementationType));
-        SerializableVariantDescriptor variant{};
-        variant.set_allocated_enum_value(&wrappedImplType);
-        (*trait.mutable_config())["implementationType"] = variant;
-        return trait;
-    }
 
     bool operator==(const TraitConcept& other) const override
     {
@@ -58,9 +44,8 @@ struct MemoryLayoutTypeTrait final : public TraitConcept
         {
             return false;
         }
-        return implementationType == casted->implementationType;
+        return incomingLayoutType == casted->incomingLayoutType && targetLayoutType == casted->targetLayoutType;
     };
 
-    [[nodiscard]] size_t hash() const override { return magic_enum::enum_integer(implementationType); }
 };
 }
