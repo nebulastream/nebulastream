@@ -772,7 +772,9 @@ void QueryCatalog::start(
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(
-            LocalQueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
+            LocalQueryId queryId,
+            std::shared_ptr<AbstractQueryStatusListener> listener,
+            std::shared_ptr<QueryEngineStatisticListener> statistic)
             : listener(std::move(listener)), statistic(statistic), queryId(queryId)
         {
         }

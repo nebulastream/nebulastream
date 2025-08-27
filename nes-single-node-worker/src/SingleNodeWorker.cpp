@@ -20,7 +20,6 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
-#include <fmt/format.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -30,6 +29,7 @@
 #include <Util/Common.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
