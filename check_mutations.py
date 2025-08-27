@@ -16,7 +16,6 @@ import sys
 import multiprocessing
 import json
 import subprocess
-import os
 
 from pathlib import Path
 
@@ -28,20 +27,18 @@ def get_patched_filename(patch):
     return filename
 
 
-def check_patch(compile_commands, filename, orig_file, main_dir, patch):
+def check_patch(compile_commands, filename, orig_file, patch):
     dir = compile_commands[filename]["dir"]
     cmd = compile_commands[filename]["cmd"]
 
     subprocess.run(["patch", filename, patch], text=True, check=True, capture_output=True)
-    os.chdir(dir)
 
     try:
-        subprocess.run(cmd.split(" "), text=True, check=True, capture_output=True)
+        subprocess.run(cmd.split(" "), text=True, check=True, capture_output=True, cwd=dir)
         compiles = True
     except subprocess.CalledProcessError:
         compiles = False
 
-    os.chdir(main_dir)
     with open(filename, "w", encoding="utf-8") as reset_file:
         reset_file.write(orig_file)
     return compiles
@@ -54,10 +51,9 @@ def check_patches(args):
     
     with open(filename, encoding="utf-8") as ofile:
         orig_file = ofile.read()
-    main_dir = os.getcwd()
 
     for patch in patches:
-        compiles = check_patch(compile_commands, filename, orig_file, main_dir, patch)
+        compiles = check_patch(compile_commands, filename, orig_file, patch)
         print("y" if compiles else "n", patch, flush=True)
 
 
@@ -86,7 +82,7 @@ def main():
         filename = get_patched_filename(mutation_thingy)
         with open(filename, encoding="utf-8") as ofile:
             orig_file = ofile.read()
-        compiles = check_patch(compile_cmds, filename, orig_file, os.getcwd(), mutation_thingy)
+        compiles = check_patch(compile_cmds, filename, orig_file, mutation_thingy)
         sys.exit(0 if compiles else 1)
 
 
