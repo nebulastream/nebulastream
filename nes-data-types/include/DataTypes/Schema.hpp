@@ -107,6 +107,8 @@ public:
     [[nodiscard]] std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
+    /// Will find all matching fields and update their datatype with the one from `otherSchema`.
+    void updateFieldsFromOtherSchema(const Schema& otherSchema);
     [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;

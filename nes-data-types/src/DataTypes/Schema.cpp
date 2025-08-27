@@ -175,6 +175,19 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }
 
+void Schema::updateFieldsFromOtherSchema(const Schema& otherSchema)
+{
+    for (const auto& otherField : otherSchema.fields)
+    {
+        for (auto& ourField : fields | std::views::filter([&otherField](Field ourField){ return ourField.name == otherField.name; })) {
+            ourField.dataType = otherField.dataType;
+        }
+        ///std::ranges::for_each(
+        ///fields | std::views::filter([&](const Field& ourField) { return ourField.name == otherField.name; }),
+        ///    [&](Field& ourField) { ourField.dataType = otherField.dataType; }
+    }
+}
+
 bool Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
 {
     if (auto fieldToRename = nameToField.extract(oldFieldName))

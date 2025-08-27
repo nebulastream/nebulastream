@@ -15,9 +15,13 @@
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include "Operators/Windows/Aggregations/Synopsis/Sample/ReservoirProbeLogicalOperator.hpp"
+#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
+#include "Operators/Windows/WindowedAggregationLogicalOperator.hpp"
 
 namespace NES
 {
@@ -40,8 +44,21 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
         newChildren.push_back(childWithSchema);
     }
 
-    const LogicalOperator updatedOperator = op.withChildren(newChildren);
-    return updatedOperator.withInferredSchema(childSchemas);
+    const LogicalOperator opWithChildren = op.withChildren(newChildren);
+    const LogicalOperator opWithTypes =  opWithChildren.withInferredSchema(childSchemas);
+
+    if (opWithTypes.tryGet<ReservoirProbeLogicalOperator>().has_value())
+    {
+        /// TODO: Add StatisticStore here as alternative to WindowAggregationLogicalOperator
+        PRECONDITION(newChildren.size() == 1 && newChildren.front().tryGet<WindowedAggregationLogicalOperator>().has_value(), "Child has to be a WindowAggregation!");
+        auto aggOp = newChildren.front().get<WindowedAggregationLogicalOperator>();
+        auto inputSchema = aggOp.getInputSchemas().front();
+        auto probeOp = opWithTypes.get<ReservoirProbeLogicalOperator>();
+        probeOp.sampleSchema.value().updateFieldsFromOtherSchema(inputSchema);
+        return probeOp.withInferredSchema(childSchemas);
+    }
+
+    return opWithTypes;
 }
 
 void TypeInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
