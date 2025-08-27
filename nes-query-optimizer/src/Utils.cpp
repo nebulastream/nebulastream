@@ -198,4 +198,53 @@ namespace NES
         // scanWrapperCol->addChild(emitWrapperRow);
         return {emitWrapperRow, scanWrapperRow};
     }
+    std::shared_ptr<PhysicalOperatorWrapper> addSwapBeforeProjection(std::shared_ptr<PhysicalOperatorWrapper> scanWrapper, LogicalOperator projectionLogicalOperator, QueryExecutionConfiguration conf)
+    {
+        PRECONDITION(scanWrapper->getPhysicalOperator().tryGet<ScanPhysicalOperator>(), "Expected a ScanPhysicalOperator");
+        auto inputSchema = projectionLogicalOperator.getChildren()[0].getOutputSchema();
+
+        if (conf.memoryLayout.getValue() == conf.memoryLayout.getDefaultValue() )//== Schema::MemoryLayoutType::ROW_LAYOUT)
+        {
+            /// add x to row swap before projection
+            return scanWrapper;
+        }
+        /// add x to column swap before projection
+        return scanWrapper;
+    }
+
+    std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapBeforeOperator(std::shared_ptr<PhysicalOperatorWrapper> operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf)
+    {
+        auto inputSchema = operatorWrapper->getInputSchema().value().withMemoryLayoutType(memoryLayoutTrait.incomingLayoutType);
+        auto targetSchema = inputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
+
+        auto incomingProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.operatorBufferSize, inputSchema);
+        auto targetProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.operatorBufferSize, targetSchema);
+
+        auto scan = ScanPhysicalOperator(incomingProvider, inputSchema.getFieldNames());
+        auto handlerId = getNextOperatorHandlerId();
+        auto emit = EmitPhysicalOperator(handlerId, targetProvider);
+        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            scan, inputSchema, inputSchema, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+
+        auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
+            emit, targetSchema, targetSchema, handlerId, std::make_shared<EmitOperatorHandler>(),
+            PhysicalOperatorWrapper::PipelineLocation::EMIT);
+
+        operatorWrapper->addChild(emitWrapper);
+        emitWrapper->addChild(scanWrapper);
+
+        return {operatorWrapper, scanWrapper};
+    }
+    MemoryLayoutTypeTrait getMemoryLayoutTypeTrait(const LogicalOperator& logicalOperator)
+    {
+        auto traitSet = logicalOperator.getTraitSet();
+
+        const auto memoryLayoutIter
+            = std::ranges::find_if(traitSet, [](const Trait& trait) { return trait.tryGet<MemoryLayoutTypeTrait>().has_value(); });
+        PRECONDITION(memoryLayoutIter != traitSet.end(), "operator must have a memory layout type trait");
+        auto memoryLayoutTrait = memoryLayoutIter->get<MemoryLayoutTypeTrait>();
+        return memoryLayoutTrait;
+    }
+
+
 }
