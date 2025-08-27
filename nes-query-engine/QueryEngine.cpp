@@ -363,7 +363,7 @@ private:
         static thread_local WorkerThreadId id;
         /// Handler for different Pipeline Tasks
         /// Boolean return value indicates if the onComplete should be called
-        bool operator()(const WorkTask& task) const;
+        bool operator()(WorkTask& task) const;
         bool operator()(const StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
@@ -451,7 +451,7 @@ private:
 /// Marks every Thread which has not explicitly been created by the ThreadPool as a non-worker thread
 thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadId>;
 
-bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
+bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
     if (terminating)
     {
@@ -477,7 +477,13 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
+                    pool.delayedTaskSubmitter.submitTaskIn(
+                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.onCompletion), std::move(task.onError)),
+                        std::chrono::milliseconds(25));
+                    task.onCompletion = {};
+                    task.onError = {};
+                    repeated = true;
+                    return true;
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(
@@ -588,6 +594,21 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
             if (terminating)
             {
                 ENGINE_LOG_WARNING("Dropping tuple buffer during query engine termination");
+                return true;
+            }
+
+            if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(
+                    StopPipelineTask(
+                        stopPipelineTask.queryId,
+                        std::move(stopPipelineTask.pipeline),
+                        std::move(stopPipelineTask.onCompletion),
+                        std::move(stopPipelineTask.onError)),
+                    std::chrono::milliseconds(25));
+
+                stopPipelineTask.onCompletion = {};
+                stopPipelineTask.onError = {};
                 return true;
             }
 
