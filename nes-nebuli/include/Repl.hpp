@@ -16,11 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <vector>
-#include <QueryManager/QueryManager.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
+
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -45,6 +41,7 @@ public:
     explicit Repl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        WorkerStatementHandler workerStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,

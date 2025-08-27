@@ -11,8 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-query-manager-grpc
-        GRPCQueryManager.cpp
+        GRPCQuerySubmissionBackend.cpp
+        QueryManager.cpp
 )
 
 add_source_files(nes-query-manager-embedded
-        EmbeddedWorkerQueryManager.cpp)
+        EmbeddedWorkerQuerySubmissionBackend.cpp)

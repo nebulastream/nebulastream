@@ -14,32 +14,39 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <expected>
 #include <vector>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Util/Pointers.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 
 namespace NES
 {
-class LogicalPlan;
-}
 
-namespace NES
+class QuerySubmissionBackend
 {
+public:
+    virtual ~QuerySubmissionBackend() = default;
+    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) = 0;
+    virtual std::expected<void, Exception> start(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> stop(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> unregister(const LocalQuery&) = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(const LocalQuery&) const = 0;
+};
 
 class QueryManager
 {
+    UniquePtr<QuerySubmissionBackend> backend;
+
 public:
-    virtual ~QueryManager() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
-    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
-    [[nodiscard]] virtual std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept = 0;
+    QueryManager(UniquePtr<QuerySubmissionBackend> backend);
+    [[nodiscard]] std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    std::expected<void, Exception> start(const Query& query);
+    std::expected<void, std::vector<Exception>> stop(const Query& query);
+    std::expected<void, std::vector<Exception>> unregister(const Query& query);
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const;
 };
+
 }
