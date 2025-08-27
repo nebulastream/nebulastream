@@ -251,7 +251,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
 template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
 TupleBuffer createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
-    PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
+    PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto rowLayout = std::make_shared<RowLayout>(bufferManager.getBufferSize(), schema);
     auto testTupleBuffer = std::make_unique<TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
 

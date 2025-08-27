@@ -58,9 +58,9 @@ void BufferManager::destroy()
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
         bool success = true;
-        if (allBuffers.size() != getAvailableBuffers())
+        if (allBuffers.size() != getNumberOfAvailableBuffers())
         {
-            NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), getAvailableBuffers());
+            NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), getNumberOfAvailableBuffers());
             success = false;
         }
         for (auto& buffer : allBuffers)
@@ -77,7 +77,7 @@ void BufferManager::destroy()
             success,
             "Requested buffer manager shutdown but a buffer is still used allBuffers={} available={}",
             allBuffers.size(),
-            getAvailableBuffers());
+            getNumberOfAvailableBuffers());
         /// RAII takes care of deallocating memory here
         allBuffers.clear();
 
@@ -233,7 +233,7 @@ size_t BufferManager::getNumOfUnpooledBuffers() const
     return unpooledChunksManager.getNumberOfUnpooledBuffers();
 }
 
-size_t BufferManager::getAvailableBuffers() const
+size_t BufferManager::getNumberOfAvailableBuffers() const
 {
     /// If there are pending reads the queue may report negative values. This effectivly means its empty.
     return static_cast<size_t>(std::max(availableBuffers.size(), static_cast<ssize_t>(0)));
