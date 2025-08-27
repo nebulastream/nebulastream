@@ -40,6 +40,11 @@ enum class StreamJoinStrategy : uint8_t
     HASH_JOIN,
     OPTIMIZER_CHOOSES
 };
+enum class MemoryLayoutStrategy : uint8_t
+{
+    LEGACY,
+    USE_SINGLE_LAYOUT
+};
 
 class QueryExecutionConfiguration : public BaseConfiguration
 {
@@ -77,10 +82,10 @@ public:
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
            "JoinStrategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
-    BoolOption useSingleMemoryLayout
-        = {"useSingleMemoryLayout",
-            "false",
-            "If true, all operators will use the memory layout determined in memoryLayout config."};
+    EnumOption<MemoryLayoutStrategy> layoutStrategy
+        = {"layoutStrategy",
+            MemoryLayoutStrategy::USE_SINGLE_LAYOUT,
+            "Memory layout choosing strategy for operators. Options: LEGACY, USE_SINGLE_LAYOUT."};
     EnumOption<Schema::MemoryLayoutType> memoryLayout
         = {"memoryLayout",
         Schema::MemoryLayoutType::ROW_LAYOUT,
@@ -89,7 +94,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize, &useSingleMemoryLayout, &memoryLayout};
+        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize, &layoutStrategy, &memoryLayout};
     }
 };
 
