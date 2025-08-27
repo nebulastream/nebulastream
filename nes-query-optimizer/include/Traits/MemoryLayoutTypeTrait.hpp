@@ -17,6 +17,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <typeinfo>
+
+#include <DataTypes/Schema.hpp>
 #include <Traits/Trait.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <SerializableTrait.pb.h>
@@ -36,6 +38,17 @@ struct MemoryLayoutTypeTrait final : public TraitConcept
 
     [[nodiscard]] const std::type_info& getType() const override { return typeid(MemoryLayoutTypeTrait); }
 
+    [[nodiscard]] SerializableTrait serialize() const override
+    {
+        SerializableTrait trait;
+        trait.set_trait_type(getType().name());
+        auto wrappedImplType = SerializableEnumWrapper{};
+        wrappedImplType.set_value(magic_enum::enum_name(targetLayoutType)); ///TODO: check if thourough implementation is needed
+        SerializableVariantDescriptor variant{};
+        variant.set_allocated_enum_value(&wrappedImplType);
+        (*trait.mutable_config())["implementationType"] = variant;
+        return trait;
+    }
 
     bool operator==(const TraitConcept& other) const override
     {
@@ -46,6 +59,9 @@ struct MemoryLayoutTypeTrait final : public TraitConcept
         }
         return incomingLayoutType == casted->incomingLayoutType && targetLayoutType == casted->targetLayoutType;
     };
+
+    [[nodiscard]] size_t hash() const override { return magic_enum::enum_integer(targetLayoutType); } ///TODO: check if implementation is needed
+
 
 };
 }
