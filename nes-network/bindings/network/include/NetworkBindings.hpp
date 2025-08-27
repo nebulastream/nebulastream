@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include "rust/cxx.h"
+#include <rust/cxx.h>
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>

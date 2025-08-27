@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include "NetworkSource.hpp"
-
 #include <cstddef>
 #include <memory>
 #include <stop_token>

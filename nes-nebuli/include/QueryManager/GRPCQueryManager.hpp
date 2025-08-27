@@ -14,29 +14,37 @@
 
 #pragma once
 
-#include <QueryManager/QueryManager.hpp>
-
-#include <cstddef>
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
+#include <unordered_map>
+#include <vector>
+
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <grpcpp/client_context.h>
+#include <QueryManager/QueryManager.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
-class GRPCQueryManager final : public QueryManager
+class GrpcQueryManager final : public QueryManager
 {
-    std::unique_ptr<WorkerRPCService::Stub> stub;
+    struct ClusterNode
+    {
+        std::unique_ptr<WorkerRPCService::Stub> stub;
+        WorkerConfig workerConfig;
+    };
+
+    using Cluster = std::unordered_map<GrpcAddr, ClusterNode>;
+    Cluster cluster;
 
 public:
-    explicit GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel);
-    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
-    std::expected<void, Exception> stop(QueryId queryId) noexcept override;
-    std::expected<void, Exception> start(QueryId queryId) noexcept override;
-    std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
-    [[nodiscard]] std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept override;
+    explicit GrpcQueryManager(std::vector<WorkerConfig> configs);
+    std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan) override;
+    std::expected<void, Exception> start(const Query& query) override;
+    std::expected<void, std::vector<Exception>> stop(const Query& query) override;
+    std::expected<void, std::vector<Exception>> unregister(const Query& query) override;
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const override;
 };
 }
