@@ -382,11 +382,11 @@ class PostProcessing:
                 slice_id = int(match.group("slice_id"))
                 prediction = match.group("prediction") == "with"
 
-                if slice_id not in tasks:
-                    tasks[slice_id] = benchmark_config_yaml.copy()
-                    tasks[slice_id].update({
+                key = (slice_id, thread_id)
+                if key not in tasks:
+                    tasks[key] = benchmark_config_yaml.copy()
+                    tasks[key].update({
                         "dir_name": dir_name,
-                        "thread_id": thread_id,
                         "first_write_pred_start": None,
                         "last_write_pred_end": None,
                         "first_write_nopred_start": None,
@@ -400,33 +400,33 @@ class PostProcessing:
                 if operation == "WRITE":
                     if prediction:
                         if status == "START":
-                            if tasks[slice_id]["first_write_pred_start"] is None or timestamp < tasks[slice_id]["first_write_pred_start"]:
-                                tasks[slice_id]["first_write_pred_start"] = timestamp
+                            if tasks[key]["first_write_pred_start"] is None or timestamp < tasks[key]["first_write_pred_start"]:
+                                tasks[key]["first_write_pred_start"] = timestamp
                         elif status == "END":
-                            if tasks[slice_id]["last_write_pred_end"] is None or timestamp > tasks[slice_id]["last_write_pred_end"]:
-                                tasks[slice_id]["last_write_pred_end"] = timestamp
+                            if tasks[key]["last_write_pred_end"] is None or timestamp > tasks[key]["last_write_pred_end"]:
+                                tasks[key]["last_write_pred_end"] = timestamp
                     else:
                         if status == "START":
-                            if tasks[slice_id]["first_write_nopred_start"] is None or timestamp < tasks[slice_id]["first_write_nopred_start"]:
-                                tasks[slice_id]["first_write_nopred_start"] = timestamp
+                            if tasks[key]["first_write_nopred_start"] is None or timestamp < tasks[key]["first_write_nopred_start"]:
+                                tasks[key]["first_write_nopred_start"] = timestamp
                         elif status == "END":
-                            if tasks[slice_id]["last_write_nopred_end"] is None or timestamp > tasks[slice_id]["last_write_nopred_end"]:
-                                tasks[slice_id]["last_write_nopred_end"] = timestamp
+                            if tasks[key]["last_write_nopred_end"] is None or timestamp > tasks[key]["last_write_nopred_end"]:
+                                tasks[key]["last_write_nopred_end"] = timestamp
                 elif operation == "READ":
                     if prediction:
                         if status == "START":
-                            if tasks[slice_id]["first_read_pred_start"] is None or timestamp < tasks[slice_id]["first_read_pred_start"]:
-                                tasks[slice_id]["first_read_pred_start"] = timestamp
+                            if tasks[key]["first_read_pred_start"] is None or timestamp < tasks[key]["first_read_pred_start"]:
+                                tasks[key]["first_read_pred_start"] = timestamp
                         elif status == "END":
-                            if tasks[slice_id]["last_read_pred_end"] is None or timestamp > tasks[slice_id]["last_read_pred_end"]:
-                                tasks[slice_id]["last_read_pred_end"] = timestamp
+                            if tasks[key]["last_read_pred_end"] is None or timestamp > tasks[key]["last_read_pred_end"]:
+                                tasks[key]["last_read_pred_end"] = timestamp
                     else:
                         if status == "START":
-                            if tasks[slice_id]["first_read_nopred_start"] is None or timestamp < tasks[slice_id]["first_read_nopred_start"]:
-                                tasks[slice_id]["first_read_nopred_start"] = timestamp
+                            if tasks[key]["first_read_nopred_start"] is None or timestamp < tasks[key]["first_read_nopred_start"]:
+                                tasks[key]["first_read_nopred_start"] = timestamp
                         elif status == "END":
-                            if tasks[slice_id]["last_read_nopred_end"] is None or timestamp > tasks[slice_id]["last_read_nopred_end"]:
-                                tasks[slice_id]["last_read_nopred_end"] = timestamp
+                            if tasks[key]["last_read_nopred_end"] is None or timestamp > tasks[key]["last_read_nopred_end"]:
+                                tasks[key]["last_read_nopred_end"] = timestamp
 
         if len(tasks) == 0:
             print(f"WARNING: {input_folder} produced no data")
@@ -434,7 +434,8 @@ class PostProcessing:
 
         # Create DataFrame from records
         df = pd.DataFrame.from_dict(tasks, orient="index").reset_index()
-        df = df.rename(columns={"index": "slice_id"})
+        df[["slice_id", "thread_id"]] = pd.DataFrame(df["index"].tolist(), index=df.index)
+        df = df.drop(columns=["index"])
 
         # Keep only relevant data
         def valid_row(row):
@@ -456,6 +457,10 @@ class PostProcessing:
         min_timestamp = min(df[col].min() for col in timestamp_cols)
         for col in timestamp_cols:
             df[col] = df[col] - min_timestamp
+
+        if df.empty:
+            print(f"WARNING: {input_folder} produced no data")
+            return
 
         # Sort the DataFrame
         df = df.sort_values(by=["slice_id"]).reset_index(drop=True)

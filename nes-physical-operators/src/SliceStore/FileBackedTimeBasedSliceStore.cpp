@@ -201,6 +201,12 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 
 #ifdef LOG_SLICE_ACCESS
     /// Initialise files to keep track of slice operations
+    if (numberOfWorkerThreads <= 1)
+    {
+        // TODO pass parameter instead
+        throw std::runtime_error(
+            "Slice access logging needs at least two worker threads to differentiate between predicted and forced read operations");
+    }
     const auto now = std::chrono::system_clock::now();
     const auto loggerPaths
         = {fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_0.stats", now), fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_1.stats", now)};
@@ -452,11 +458,6 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     }
 
 #ifdef LOG_SLICE_ACCESS
-    if (numberOfWorkerThreads <= 1)
-    {
-        throw std::runtime_error(
-            "Slice access logging needs at least two worker threads to differentiate between predicted and forced read operations");
-    }
     logger->log(
         {std::chrono::system_clock::now(),
          workerThreadId,

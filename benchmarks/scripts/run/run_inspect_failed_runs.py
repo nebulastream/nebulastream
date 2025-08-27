@@ -34,7 +34,12 @@ if __name__ == "__main__":
     all_failed_runs_dicts = [yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')) for failed_run
                              in ALL_FAILED_RUNS]
     # Find keys where all values are the same
-    keys_to_remove = {key for key in all_failed_runs_dicts[0] if all(d[key] == all_failed_runs_dicts[0][key] for d in all_failed_runs_dicts)}
+    identical_keys = {key for key in all_failed_runs_dicts[0] if all(d[key] == all_failed_runs_dicts[0][key] for d in all_failed_runs_dicts)}
+    print(f"Identical keys: {identical_keys}\n")
+
+    # Collect unique values for keys that vary between dictionaries
+    varying_keys_values = {key: set(d[key] for d in all_failed_runs_dicts) for key in all_failed_runs_dicts[0] if key not in identical_keys}
+    print(f"Varying keys and values: {varying_keys_values}")
 
     # Remove those keys from each dictionary
-    print([{k: v for k, v in d.items() if k not in keys_to_remove} for d in all_failed_runs_dicts])
+    # print([{k: v for k, v in d.items() if k not in identical_keys} for d in all_failed_runs_dicts])

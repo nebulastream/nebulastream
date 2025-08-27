@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
-SERVER = ''
-DATETIME = '2025-08-25_09-56-56'
+SERVER = 'amd'
+DATETIME = '2025-08-26_15-43-01'
 # FILE = 'combined_benchmark_statistics.csv'
 FILE = 'combined_slice_accesses.csv'
 
@@ -183,20 +183,20 @@ def find_default_values_for_params(min_support_ratio=1.0):
 def compute_prediction_correctness(row):
     if pd.notna(row['last_read_pred_end']) and row['last_read_pred_end'] >= row['first_read_nopred_start']:
         return False
-    if pd.notna(row['last_write_end']) and row['last_write_end'] >= row['first_read_nopred_start']:
+    if pd.notna(row['last_write_pred_end']) and row['last_write_pred_end'] >= row['first_read_nopred_start']:
         return False
-    if pd.notna(row['last_write_end']) and pd.notna(row['first_read_pred_start']):
-        if row['last_write_end'] >= row['first_read_pred_start']:
+    if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
+        if row['last_write_pred_end'] >= row['first_read_pred_start']:
             return False
 
     return True
 
 
 def compute_prediction_precision(row):
-    if pd.notna(row['last_write_end']) and pd.notna(row['last_read_pred_end']):
-        last_pred = max(row['last_write_end'], row['last_read_pred_end'])
-    elif pd.notna(row['last_write_end']):
-        last_pred = row['last_write_end']
+    if pd.notna(row['last_write_pred_end']) and pd.notna(row['last_read_pred_end']):
+        last_pred = max(row['last_write_pred_end'], row['last_read_pred_end'])
+    elif pd.notna(row['last_write_pred_end']):
+        last_pred = row['last_write_pred_end']
     elif pd.notna(row['last_read_pred_end']):
         last_pred = row['last_read_pred_end']
 
