@@ -149,55 +149,10 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
-    auto allFieldNames= queryPlan.getRootOperators()[0].getOutputSchema().getFieldNames();
-    auto fieldNames = std::vector<std::string>();
-    auto fieldNamesSet = std::unordered_set<std::string>();
-    auto op = queryPlan.getRootOperators()[0];
-    while (not op.getChildren().empty())
-    {
-        op= op.getChildren()[0]; //skip sink
-        if (op.tryGet<SourceDescriptorLogicalOperator>() || op.tryGet<SourceNameLogicalOperator>())
-        {
-            break; /// skip source
-        }
-        if (op.tryGet<SelectionLogicalOperator>())
-        {
-            auto selection = op.get<SelectionLogicalOperator>();
-            auto selectionFunc = selection.getPredicate();
-            auto res = selectionFunc.explain(ExplainVerbosity::Short);
-            for (const std::string& fieldName : allFieldNames)
-            {
-                if (res.find(fieldName) != std::string::npos) { //if the fieldname is part of the selection function
-                    fieldNamesSet.insert(fieldName);
-                }
-            }
-            fieldNames = std::vector<std::string>(fieldNamesSet.begin(), fieldNamesSet.end());
-        }
-        if (op.tryGet<ProjectionLogicalOperator>())
-        {
-            auto projection = op.get<ProjectionLogicalOperator>();
-            fieldNames = projection.getOutputSchema().getFieldNames();//getAccessedFields();
-        }
-        /// TODO: append new fields for all operators, take into account optimized schemas now
-        /// TODO: do also for agg
-    }
-    if (fieldNames.empty())
-    {
-        NES_DEBUG("Lower to Physical: No fields used in selection or projection, use all fields");
-        fieldNames = allFieldNames; /// if no selection or projection, use all fields
-    }
-    /// set in and outputschema of all operators except source to used fieldnames
-    auto newSchema = Schema(conf.memoryLayout.getDefaultValue());
+
+    /// TODO: assume fields are already correctly propagated for now
+
     auto sink = queryPlan.getRootOperators()[0];
-    for (const auto& fieldName : fieldNames)
-    {
-        newSchema.addField(fieldName, queryPlan.getRootOperators()[0].getOutputSchema().getFieldByName(fieldName)->dataType);
-    }
-
-    //sink = getNewChild(sink, newSchema); /// apply new schema to queryPlan without source
-
-    //auto newPlan = LogicalPlan(sink);
-
 
     for (const auto& logicalRoot : {sink})
     {
