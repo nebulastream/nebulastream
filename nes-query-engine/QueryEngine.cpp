@@ -661,7 +661,7 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     if (auto source = failSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());
-        source->fail(failSource.exception);
+        source->fail(std::move(*failSource.exception));
         return true;
     }
     return false;
