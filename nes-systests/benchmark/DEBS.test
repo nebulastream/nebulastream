@@ -19,6 +19,7 @@ SINK q5Checksum TYPE Checksum INT32 producerId INT32 groupId FLOAT64 producedPow
 SINK q6Checksum TYPE Checksum UINT64 source INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 ts
 SINK winPowerProductionChecksum TYPE Checksum UINT64 solarPanels$start UINT64 solarPanels$end INT32 solarPanels$groupId FLOAT64 solarPanels$producedPower
 SINK mapChecksum TYPE Checksum FLOAT64 producedPower
+SINK twoChecksum TYPE Checksum FLOAT64 producedPower INT32 producerId
 
 #Filter 5% selectivity
 SELECT * FROM solarPanels WHERE producedPower >= FLOAT64(50) INTO solarPanelsChecksum;
@@ -37,6 +38,7 @@ SELECT * FROM solarPanels WHERE producedPower >= FLOAT64(950) INTO solarPanelsCh
 14236360, 35170842947
 
 # 4: Map
+#SELECT (producedPower + UINT8(20)) AS producedPower, * FROM solarPanels INTO solarPanelsChecksum;
 SELECT (producedPower + UINT8(20)) AS producedPower FROM solarPanels INTO mapChecksum;
 ----
 14236360, 35170842947
