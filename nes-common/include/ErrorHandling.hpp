@@ -59,10 +59,6 @@ public:
     Exception(std::string message, ErrorCode errorCode, cpptrace::raw_trace&& trace)
         : cpptrace::lazy_exception(std::move(trace)), message(std::move(message)), errorCode(errorCode) { };
 
-    /// copy-constructor is unsaved noexcept because of std::string copy
-    Exception(const Exception&) noexcept = default;
-    Exception& operator=(const Exception&) noexcept = default;
-
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] ErrorCode code() const noexcept;
