@@ -434,8 +434,7 @@ class PostProcessing:
 
         # Create DataFrame from records
         df = pd.DataFrame.from_dict(tasks, orient="index").reset_index()
-        df[["slice_id", "thread_id"]] = pd.DataFrame(df["index"].tolist(), index=df.index)
-        df = df.drop(columns=["index"])
+        df = df.rename(columns={"level_0": "slice_id", "level_1": "thread_id"})
 
         # Keep only relevant data
         def valid_row(row):
