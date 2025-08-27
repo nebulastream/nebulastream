@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-
 #pragma once
+
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -26,8 +27,9 @@
 #include <variant>
 #include <vector>
 
-#include <Plans/LogicalPlan.hpp>
+#include <fmt/base.h>
 
+#include <Plans/LogicalPlan.hpp>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -36,8 +38,8 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES
 {
@@ -60,6 +62,7 @@ struct CreatePhysicalSourceStatement
 {
     LogicalSource attachedTo;
     std::string sourceType;
+    HostAddr workerId;
     std::unordered_map<std::string, std::string> sourceConfig;
     ParserConfig parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
@@ -70,7 +73,16 @@ struct CreateSinkStatement
     std::string name;
     std::string sinkType;
     Schema schema;
+    HostAddr workerId;
     std::unordered_map<std::string, std::string> sinkConfig;
+};
+
+struct CreateWorkerStatement
+{
+    HostAddr host;
+    GrpcAddr grpc;
+    size_t capacity;
+    std::vector<HostAddr> downstream;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
@@ -96,6 +108,12 @@ struct ShowSinksStatement
     std::optional<StatementOutputFormat> format;
 };
 
+struct ShowWorkersStatement
+{
+    std::optional<HostAddr> worker;
+    std::optional<StatementOutputFormat> format;
+};
+
 struct DropLogicalSourceStatement
 {
     LogicalSource source;
@@ -111,28 +129,36 @@ struct DropSinkStatement
     Sinks::SinkDescriptor descriptor;
 };
 
+struct DropWorkerStatement
+{
+    HostAddr worker;
+};
+
 using QueryStatement = LogicalPlan;
 
 struct ShowQueriesStatement
 {
-    std::optional<QueryId> id;
+    std::optional<DistributedQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
+    CreateWorkerStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
+    ShowWorkersStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
+    DropWorkerStatement,
     QueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
@@ -182,10 +208,8 @@ public:
 };
 }
 
-namespace fmt
-{
 template <>
-struct formatter<std::unordered_map<std::string, std::string>>
+struct fmt::formatter<std::unordered_map<std::string, std::string>>
 {
     [[nodiscard]] static constexpr auto parse(const format_parse_context& ctx) noexcept -> decltype(ctx.begin()) { return ctx.begin(); }
 
@@ -209,8 +233,6 @@ struct formatter<std::unordered_map<std::string, std::string>>
         return out;
     }
 };
-
-}
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
