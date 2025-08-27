@@ -165,7 +165,7 @@ struct FailSourceTask : BaseTask
     FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback);
 
     std::weak_ptr<RunningSource> target;
-    Exception exception;
+    std::unique_ptr<Exception> exception;
 };
 
 struct StopQueryTask : BaseTask

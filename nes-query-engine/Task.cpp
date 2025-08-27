@@ -134,12 +134,12 @@ StopSourceTask::StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> tar
 {
 }
 
-FailSourceTask::FailSourceTask() : exception("", 0)
+FailSourceTask::FailSourceTask() : exception(nullptr)
 {
 }
 
 FailSourceTask::FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback)
-    : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::move(exception))
+    : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::make_unique<Exception>(std::move(exception)))
 {
 }
 
