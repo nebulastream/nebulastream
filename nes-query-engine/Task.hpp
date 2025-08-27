@@ -140,7 +140,7 @@ public:
 
     BaseTask() = default;
 
-    BaseTask(QueryId queryId, TaskCallback callback) : queryId(queryId), callback(std::move(callback)) { }
+    BaseTask(LocalQueryId queryId, TaskCallback callback) : queryId(queryId), callback(std::move(callback)) { }
 
     void complete() { callback.callOnComplete(); }
 
@@ -148,13 +148,14 @@ public:
 
     void fail(Exception exception) { callback.callOnFailure(std::move(exception)); }
 
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID<LocalQueryId>;
     TaskCallback callback;
 };
 
 struct WorkTask : BaseTask
 {
-    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
+    WorkTask(
+        LocalQueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
         : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline)), pipelineId(pipelineId), buf(std::move(buf))
     {
     }
@@ -167,7 +168,7 @@ struct WorkTask : BaseTask
 
 struct StartPipelineTask : BaseTask
 {
-    StartPipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
+    StartPipelineTask(LocalQueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
         : BaseTask(std::move(queryId), std::move(callback)), pipeline(std::move(pipeline)), pipelineId(std::move(pipelineId))
     {
     }
@@ -178,7 +179,7 @@ struct StartPipelineTask : BaseTask
 
 struct StopPipelineTask : BaseTask
 {
-    explicit StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept;
+    explicit StopPipelineTask(LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept;
     std::unique_ptr<RunningQueryPlanNode> pipeline;
 };
 
@@ -186,7 +187,7 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback)
+    StopSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback)
         : BaseTask(queryId, std::move(callback)), target(std::move(target))
     {
     }
@@ -198,7 +199,7 @@ struct FailSourceTask : BaseTask
 {
     FailSourceTask() : exception("", 0) { }
 
-    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, TaskCallback callback)
+    FailSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, TaskCallback callback)
         : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::move(exception))
     {
     }
@@ -209,7 +210,9 @@ struct FailSourceTask : BaseTask
 
 struct StopQueryTask : BaseTask
 {
-    StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+    StopQueryTask(LocalQueryId queryId,
+        std::weak_ptr<QueryCatalog> catalog,
+        TaskCallback callback)
         : BaseTask(std::move(queryId), std::move(callback)), catalog(std::move(catalog))
     {
     }
@@ -220,7 +223,7 @@ struct StopQueryTask : BaseTask
 struct StartQueryTask : BaseTask
 {
     StartQueryTask(
-        QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+        LocalQueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
         : BaseTask(std::move(queryId), std::move(callback)), queryPlan(std::move(queryPlan)), catalog(std::move(catalog))
     {
     }
@@ -231,7 +234,7 @@ struct StartQueryTask : BaseTask
 
 struct PendingPipelineStopTask : BaseTask
 {
-    PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
+    PendingPipelineStopTask(LocalQueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
         : BaseTask(std::move(queryId), std::move(callback)), attempts(attempts), pipeline(std::move(pipeline))
     {
     }

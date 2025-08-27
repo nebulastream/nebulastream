@@ -23,7 +23,7 @@ namespace NES
 {
 
 
-StopPipelineTask::StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept
+StopPipelineTask::StopPipelineTask(LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept
     : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline))
 {
 }

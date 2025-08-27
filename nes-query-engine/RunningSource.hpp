@@ -40,7 +40,7 @@ public:
     /// once the last reference to the RunningSource is destroyed the source is stopped.
     /// UnRegistering a source should not block, but it may not succeed (immediately), the tryUnregister
     static std::shared_ptr<RunningSource> create(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,

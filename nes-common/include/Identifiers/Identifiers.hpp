@@ -70,9 +70,6 @@ using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0
 static constexpr DistributedQueryId INVALID_DISTRIBUTED_QUERY_ID = INVALID<DistributedQueryId>;
 static constexpr DistributedQueryId INITIAL_DISTRIBUTED_QUERY_ID = INITIAL<DistributedQueryId>;
 
-/// TEMP:
-using QueryId = LocalQueryId;
-
 class WorkerId
 {
     std::string value;
