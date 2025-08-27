@@ -131,11 +131,12 @@ namespace NES
         schemaOutCol,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
+        /// TODO: move swap decisions to memorySwappingPhase
         if (conf.memoryLayout.getValue() == conf.memoryLayout.getDefaultValue())// == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             if (logicalOperator.tryGet<SelectionLogicalOperator>())
             {
-                //swap in col
+                /// remain layout but still add swap before selection
                 emitSelectionNew->addChild(wrapper);
                 wrapper->addChild(scanSelectionNew);
                 scanSelectionNew->addChild(emitWrapperRowNew);
@@ -144,7 +145,7 @@ namespace NES
             }
             if (logicalOperator.tryGet<ProjectionLogicalOperator>())
             {
-                //swap back to row
+                /// remain layout but still add swap before map
                 emitWrapperRow->addChild(scanWrapperRowNew);
                 scanWrapperRowNew->addChild(emitSelectionNew);
                 emitSelectionNew->addChild(wrapper);
@@ -153,7 +154,7 @@ namespace NES
             }
             else
             {
-                ///use new row layout memoryProvider
+                ///use explicit row layout memoryProvider and swaps for comparability
                 emitWrapperRow->addChild(scanWrapperRowNew);
                 scanWrapperRowNew->addChild(emitSelectionNew);
                 emitSelectionNew->addChild(wrapper);
@@ -168,6 +169,7 @@ namespace NES
         {
             if (logicalOperator.tryGet<SelectionLogicalOperator>())
             {
+                /// new layout, add swap before selection
                 emitSelectionWrapper->addChild(wrapper);
                 wrapper->addChild(scanSelectionWrapper);
                 scanSelectionWrapper->addChild(emitWrapperCol);
@@ -176,13 +178,15 @@ namespace NES
             }
             if (logicalOperator.tryGet<ProjectionLogicalOperator>())
             {
+                /// new layout, add swap before map
+                /// TODO: only if map not just projection?
                 emitWrapperRow->addChild(scanWrapperCol);
                 scanWrapperCol->addChild(emitSelectionWrapper);
                 emitSelectionWrapper->addChild(wrapper);
                 wrapper->addChild(scanSelectionWrapper);
                 return std::make_pair(emitWrapperRow, scanSelectionWrapper);
             }
-
+            /// add swap before and after
             emitWrapperRow->addChild(scanWrapperCol);
             scanWrapperCol->addChild(emitSelectionWrapper);
             emitSelectionWrapper->addChild(wrapper);
