@@ -121,7 +121,7 @@ public:
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
-    size_t getAvailableBuffers() const;
+    size_t getNumberOfAvailableBuffers() const;
 
     /**
      * @brief Recycle a pooled buffer by making it available to others
