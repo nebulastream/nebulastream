@@ -47,12 +47,12 @@ public:
         std::unique_ptr<QueryEngine> queryEngine,
         int numberOfBuffersInSourceLocalPools);
 
-    [[nodiscard]] QueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
-    void unregisterQuery(QueryId queryId);
-    void startQuery(QueryId queryId);
+    [[nodiscard]] LocalQueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
+    void unregisterQuery(LocalQueryId queryId);
+    void startQuery(LocalQueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
-    void stopQuery(QueryId queryId, QueryTerminationType terminationType);
+    void stopQuery(LocalQueryId queryId, QueryTerminationType terminationType);
 
     [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
 

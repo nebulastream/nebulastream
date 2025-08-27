@@ -41,7 +41,7 @@ void threadRoutine(
     setThreadName("StatPrinter");
     while (!token.stop_requested())
     {
-        PrintingStatisticListener::CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
+        PrintingStatisticListener::CombinedEventType event = QueryStart{WorkerThreadId(0), LocalQueryId(0)}; /// Will be overwritten
 
         if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
         {

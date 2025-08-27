@@ -71,7 +71,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     CPPTRACE_TRY
     {
         delegate.unregisterQuery(queryId);
@@ -90,7 +90,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     CPPTRACE_TRY
     {
         delegate.startQuery(queryId);
@@ -109,7 +109,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
@@ -131,12 +131,12 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
 {
     CPPTRACE_TRY
     {
-        const auto queryId = QueryId{request->queryid()};
+        const auto queryId = LocalQueryId{request->queryid()};
         reply->set_queryid(queryId.getRawValue());
-        if (const auto summary = delegate.getQuerySummary(queryId); summary.has_value())
+        if (const auto summary = delegate.getLocalStatusForQuery(queryId); summary.has_value())
         {
             auto& metrics = summary->metrics;
-            reply->set_status(static_cast<::QueryStatus>(summary->state));
+            reply->set_state(static_cast<::QueryState>(summary->state));
             reply->mutable_metrics()->set_startunixtimeinms(
                 std::chrono::duration_cast<std::chrono::milliseconds>(
                     metrics.start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
@@ -178,14 +178,14 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
 {
     CPPTRACE_TRY
     {
-        auto queryId = QueryId(request->queryid());
+        auto queryId = LocalQueryId(request->queryid());
         auto log = delegate.getQueryLog(queryId);
         if (log.has_value())
         {
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status(static_cast<::QueryStatus>(entry.state));
+                logEntry.set_state(static_cast<::QueryState>(entry.state));
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())

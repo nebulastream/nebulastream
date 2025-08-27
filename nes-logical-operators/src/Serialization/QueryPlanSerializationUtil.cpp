@@ -113,7 +113,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     auto queryId = INVALID_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
     {
-        queryId = QueryId(serializedQueryPlan.queryid());
+        queryId = LocalQueryId(serializedQueryPlan.queryid());
     }
     return LogicalPlan(queryId, std::move(rootOperators));
 }
