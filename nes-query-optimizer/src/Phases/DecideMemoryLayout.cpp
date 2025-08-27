@@ -24,7 +24,11 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -32,50 +36,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
-
-namespace
-{
-/// We set the join type to be a Hash-Join if the join function consists of solely functions that are FieldAccessLogicalFunction.
-/// To be more specific, we currently support only
-/// Otherwise, we use a NLJ.
-bool shallUseHashJoin(const LogicalFunction& joinFunction)
-{
-    /// Checks if the logical function is allowed to be in our join function for a hash join
-    auto allowedLogicalFunction = [](const LogicalFunction& logicalFunction)
-    {
-        return logicalFunction.tryGet<AndLogicalFunction>().has_value() or logicalFunction.tryGet<EqualsLogicalFunction>().has_value()
-            or logicalFunction.tryGet<OrLogicalFunction>().has_value() or logicalFunction.tryGet<FieldAccessLogicalFunction>().has_value();
-    };
-
-    std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
-    for (auto logicalFunction : BFSRange<LogicalFunction>(joinFunction))
-    {
-        if (not allowedLogicalFunction(logicalFunction))
-        {
-            return false;
-        }
-
-        const auto anyChildIsLeaf
-            = std::ranges::any_of(logicalFunction.getChildren(), [](const LogicalFunction& child) { return child.getChildren().empty(); });
-        if (anyChildIsLeaf)
-        {
-            for (const auto& child : logicalFunction.getChildren())
-            {
-                if (not child.tryGet<FieldAccessLogicalFunction>().has_value())
-                {
-                    /// If the leaf is not a FieldAccessLogicalFunction, we need to use a NLJ
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-}
 
 LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan)
 {
@@ -91,25 +55,33 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
     auto traitSet = logicalOperator.getTraitSet();
     std::erase_if(traitSet, [](const Trait& trait) { return trait.tryGet<MemoryLayoutTypeTrait>().has_value(); });
 
-    if (const auto joinOperator = logicalOperator.tryGet<JoinLogicalOperator>())
+    if (this->conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
     {
-        if (this->conf->layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+        if (logicalOperator.tryGet<SourceDescriptorLogicalOperator>() || logicalOperator.tryGet<SourceNameLogicalOperator>())
         {
-            if (this->conf->memoryLayout.getValue() == Schema::MemoryLayoutType::ROW_LAYOUT)
+            /// sources are always in row layout
+            traitSet.insert(MemoryLayoutTypeTrait{Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT});
+        }else
+        {
+            auto incomingTraitSet = getMemoryLayoutTypeTrait(children[0]);
+            auto incomingLayout = incomingTraitSet.targetLayoutType;
+            auto targetLayout = this->conf.memoryLayout.getValue();
+            if (logicalOperator.tryGet<SinkLogicalOperator>())
             {
-                traitSet.insert(MemoryLayoutTypeTrait{LayoutImplementation::ROW});
-            }
-            else
+                /// Sinks target layout can currently only be row layout
+                traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, Schema::MemoryLayoutType::ROW_LAYOUT});
+            }else
             {
-                traitSet.insert(MemoryLayoutTypeTrait{LayoutImplementation::COL});
+                traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, targetLayout});
             }
         }
-        else if (this->conf->layoutStrategy.getValue() == MemoryLayoutStrategy::LEGACY)
-        {
-            return logicalOperator;
-        }
-        ///TODO: add advanced strategies here
     }
+    else if (this->conf.layoutStrategy.getValue() == MemoryLayoutStrategy::LEGACY)
+    {
+        return logicalOperator;
+    }
+    ///TODO: add advanced strategies here
+
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
 }
