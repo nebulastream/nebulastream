@@ -16,6 +16,8 @@
 
 #include <memory>
 #include <vector>
+#include <ranges>
+#include <optional>
 
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -63,10 +65,20 @@ deserializeWindowAggregationFunction(const SerializableAggregationFunction& seri
     const auto& type = serializedFunction.type();
     auto onField = deserializeFunction(serializedFunction.on_field());
     auto asField = deserializeFunction(serializedFunction.as_field());
-    std::optional<uint64_t> reservoirSize = std::nullopt;
+    std::optional<uint64_t> reservoirSize;
+    std::vector<FieldAccessLogicalFunction> sampleFields;
     if (type == "ReservoirSample")
     {
         reservoirSize = std::make_optional(serializedFunction.reservoir_size());
+        auto fieldsFns = serializedFunction.sample_fields().functions();
+        sampleFields = std::vector<FieldAccessLogicalFunction>{
+            fieldsFns | std::views::transform([](auto const& fn) {
+                LogicalFunction logFn = deserializeFunction(fn);
+                return logFn.get<FieldAccessLogicalFunction>();
+            })
+            | std::ranges::to<std::vector>()
+        };
+
     }
 
     if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>())
@@ -75,6 +87,7 @@ deserializeWindowAggregationFunction(const SerializableAggregationFunction& seri
         {
             AggregationLogicalFunctionRegistryArguments args;
             args.fields = {fieldAccess.value(), asFieldAccess.value()};
+            args.fields.insert(args.fields.end(), sampleFields.begin(), sampleFields.end());
             args.reservoirSize = reservoirSize;
 
             if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args))
