@@ -25,15 +25,11 @@ on:
 jobs:
   check-clang-tidy:
     # Due to limited ARM server capacity we only run on x64
-    runs-on: [ self-hosted, linux, Build, x64]
+    runs-on: [ "ubuntu-22.04" ]
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       options: --user root
-      volumes:
-        - ccache:/ccache
       env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
         GH_TOKEN: ${{ github.token }}
     steps:
       - name: Include base commit
@@ -43,6 +39,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.18
+        with:
+          key: x64-Debug-none-libcxx
       - name: Configure NebulaStream for Clang-Tidy
         run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       # We need to build the project, as some headers are only created during the build.
