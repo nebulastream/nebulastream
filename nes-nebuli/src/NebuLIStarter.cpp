@@ -45,7 +45,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <YAML/YAMLBinder.hpp>
+#include <YAML/YamlBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -55,7 +55,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
+#include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <StatementHandler.hpp>
@@ -159,8 +159,8 @@ int main(int argc, char** argv)
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
-        auto optimizer = std::make_shared<NES::CLI::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+        auto yamlBinder = NES::CLI::YamlBinder{sourceCatalog, sinkCatalog};
+        auto optimizer = std::make_shared<NES::GlobalOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog,
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GRPCQueryManager>(
+            queryManager = std::make_shared<NES::GrpcQueryManager>(
                 CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         }
         else
@@ -206,10 +206,13 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
-            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
+            auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+            NES::WorkerStatementHandler workerStatementHandler{workerCatalog};
+            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(workerStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
@@ -222,8 +225,8 @@ int main(int argc, char** argv)
                 for (const auto& query : queryStatementHandler->getRunningQueries())
                 {
                     auto status = queryManager->status(query);
-                    while (status.has_value() && status.value().currentStatus != NES::QueryStatus::Stopped
-                           && status.value().currentStatus != NES::QueryStatus::Failed)
+                    while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                           && status.value().state != NES::QueryState::Failed)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds(50));
                         status = queryManager->status(query);
@@ -236,13 +239,13 @@ int main(int argc, char** argv)
 
         bool handled = false;
         for (const auto& [name, fn] :
-             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
+             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::LocalQueryId)>>{
                  {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
-                auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
+                auto queryId = NES::LocalQueryId{parser.get<size_t>("queryId")};
                 ((*queryManager).*fn)(queryId);
                 handled = true;
                 break;
@@ -305,7 +308,7 @@ int main(int argc, char** argv)
             }
         }
 
-        std::optional<NES::QueryId> startedQuery;
+        std::optional<NES::LocalQueryId> startedQuery;
         if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
@@ -335,8 +338,8 @@ int main(int argc, char** argv)
             if (startedQuery.has_value())
             {
                 auto status = queryManager->status(startedQuery.value());
-                while (status.has_value() && status.value().currentStatus != NES::QueryStatus::Stopped
-                       && status.value().currentStatus != NES::QueryStatus::Failed)
+                while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                       && status.value().state != NES::QueryState::Failed)
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
                     status = queryManager->status(startedQuery.value());

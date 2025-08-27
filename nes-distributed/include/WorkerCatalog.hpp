@@ -36,8 +36,8 @@ public:
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const HostAddr& hostAddr) const;
     bool tryConsumeCapacity(const HostAddr& hostAddr, size_t capacity);
     [[nodiscard]] size_t getNumWorkers() const;
-    std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] const Topology& getTopology() const;
+    std::vector<WorkerConfig> getAllWorkers() const;
 };
 
 }

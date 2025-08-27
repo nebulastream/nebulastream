@@ -10,7 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_subdirectory(src)
+get_source(nes-distributed NES_DISTRIBUTED_SOURCE_FILES)
 
-activate_optional_plugin("NetworkSource" ON)
-activate_optional_plugin("NetworkSink" ON)
+add_library(nes-distributed ${NES_DISTRIBUTED_SOURCE_FILES})
+target_link_libraries(nes-distributed PUBLIC nes-common nes-logical-operators)
+
+target_include_directories(nes-distributed PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+add_tests_if_enabled(tests)

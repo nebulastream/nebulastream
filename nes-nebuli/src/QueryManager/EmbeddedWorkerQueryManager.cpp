@@ -14,41 +14,49 @@
 
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 
+#include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
+
 EmbeddedWorkerQueryManager::EmbeddedWorkerQueryManager(const SingleNodeWorkerConfiguration& configuration) : worker(configuration)
 {
 }
 
-std::expected<QueryId, Exception> EmbeddedWorkerQueryManager::registerQuery(const LogicalPlan& plan) noexcept
+std::expected<Query, Exception> EmbeddedWorkerQueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
 {
-    return worker.registerQuery(plan);
+    return worker.registerQuery(*plan);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::start(const QueryId queryId) noexcept
+std::expected<void, Exception> EmbeddedWorkerQueryManager::start(const Query& query)
 {
-    return worker.startQuery(queryId);
+    return worker.startQuery(LocalQueryId{query.getEmbeddedId()});
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::stop(const QueryId queryId) noexcept
+std::expected<void, std::vector<Exception>> EmbeddedWorkerQueryManager::stop(const Query& query)
 {
-    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
+    return worker.stopQuery(LocalQueryId{query.getEmbeddedId()}, QueryTerminationType::Graceful)
+        .transform_error([](auto&& exception) { return std::vector{exception}; });
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::unregister(const QueryId queryId) noexcept
+std::expected<void, std::vector<Exception>> EmbeddedWorkerQueryManager::unregister(const Query& query)
 {
-    return worker.unregisterQuery(queryId);
+    return worker.unregisterQuery(LocalQueryId{query.getEmbeddedId()}).transform_error([](auto&& exception) { return std::vector{exception}; });
 }
 
-std::expected<QuerySummary, Exception> EmbeddedWorkerQueryManager::status(QueryId queryId) const noexcept
+std::expected<DistributedQueryStatus, std::vector<Exception>> EmbeddedWorkerQueryManager::status(const Query& query) const
 {
-    return worker.getQuerySummary(queryId);
+    auto localStatus = worker.getLocalStatusForQuery(LocalQueryId{query.getEmbeddedId()});
+    return localStatus.transform([](auto&& status) { return DistributedQueryStatus{.localStatusSnapshots = {status}}; })
+        .transform_error([](auto&& exception) { return std::vector{exception}; });
 }
+
 }

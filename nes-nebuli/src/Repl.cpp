@@ -32,11 +32,10 @@
 #include <unistd.h>
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <YAML/YAMLBinder.hpp>
+#include <YAML/YamlBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -53,6 +52,7 @@ struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
+    WorkerStatementHandler workerStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
 
@@ -74,6 +74,7 @@ struct Repl::Impl
     Impl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        WorkerStatementHandler workerStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -81,6 +82,7 @@ struct Repl::Impl
         const bool interactiveMode)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
+        , workerStatementHandler(std::move(workerStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
         , interactiveMode(interactiveMode)
@@ -384,9 +386,25 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
+                else if constexpr (requires { workerStatementHandler.apply(stmt); })
+                {
+                    return workerStatementHandler.apply(stmt);
+                }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
-                    return queryStatementHandler->apply(stmt);
+                    auto result = queryStatementHandler->apply(stmt);
+                    using ResultType = decltype(result);
+                    if constexpr (std::is_same_v<ResultType, std::expected<ShowQueriesStatementResult, std::vector<Exception>>> ||
+                                  std::is_same_v<ResultType, std::expected<DropQueryStatementResult, std::vector<Exception>>>)
+                    {
+                        return result.transform_error([](const std::vector<Exception>& errors) -> Exception {
+                            return errors.empty() ? Exception("Unknown error", 0) : errors.front();
+                        });
+                    }
+                    else
+                    {
+                        return result;
+                    }
                 }
                 else
                 {
@@ -522,6 +540,7 @@ struct Repl::Impl
 Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
+    WorkerStatementHandler workerStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
@@ -530,6 +549,7 @@ Repl::Repl(
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
+          std::move(workerStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,

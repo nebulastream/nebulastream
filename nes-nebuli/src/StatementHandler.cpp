@@ -22,14 +22,18 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <cpptrace/from_current.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <ErrorHandling.hpp>
-
-#include <Listeners/QueryLog.hpp>
-#include <QueryManager/QueryManager.hpp>
-#include <cpptrace/from_current.hpp>
-#include <LegacyOptimizer.hpp>
+#include <QueryPlanning.hpp>
+#include "DistributedQueryId.hpp"
+#include "Util/Pointers.hpp"
 
 namespace NES
 {
@@ -51,8 +55,8 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
-    if (const auto created
-        = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+    if (const auto created = sourceCatalog->addPhysicalSource(
+            statement.attachedTo, statement.sourceType, statement.workerId, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -133,7 +137,8 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.sinkConfig))
+    if (const auto created
+        = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.workerId, statement.sinkConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }
@@ -162,18 +167,67 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.descriptor.getSinkName())};
 }
 
-QueryStatementHandler::QueryStatementHandler(
-    const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<CLI::LegacyOptimizer>& optimizer)
-    : queryManager(queryManager), optimizer(optimizer)
+WorkerStatementHandler::WorkerStatementHandler(const std::shared_ptr<WorkerCatalog>& workerCatalog) : workerCatalog{workerCatalog}
 {
 }
 
-std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
+std::expected<CreateWorkerStatementResult, Exception> WorkerStatementHandler::operator()(const CreateWorkerStatement& statement)
+{
+    if (workerCatalog->addWorker(statement.host, statement.grpc, statement.capacity, statement.downstream))
+    {
+        return CreateWorkerStatementResult{};
+    }
+    return std::unexpected{WorkerAlreadyExists(statement.host)};
+}
+
+std::expected<ShowWorkersStatementResult, Exception> WorkerStatementHandler::operator()(const ShowWorkersStatement& statement) const
+{
+    if (statement.worker)
+    {
+        if (const auto foundWorker = workerCatalog->getWorker(*statement.worker))
+        {
+            return ShowWorkersStatementResult{std::vector{*foundWorker}};
+        }
+        return ShowWorkersStatementResult{{}};
+    }
+    return ShowWorkersStatementResult{workerCatalog->getAllWorkers()};
+}
+
+std::expected<DropWorkerStatementResult, Exception> WorkerStatementHandler::operator()(const DropWorkerStatement& statement)
+{
+    if (const auto removed = workerCatalog->removeWorker(statement.worker))
+    {
+        return DropWorkerStatementResult{std::move(removed).value()};
+    }
+    return std::unexpected{UnknownWorkerAddr(statement.worker)};
+}
+
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager,
+    SharedPtr<SourceCatalog> sourceCatalog,
+    SharedPtr<SinkCatalog> sinkCatalog,
+    SharedPtr<WorkerCatalog> workerCatalog)
+    : queryManager{copyPtr(queryManager)}
+    , sourceCatalog{copyPtr(sourceCatalog)}
+    , sinkCatalog{copyPtr(sinkCatalog)}
+    , workerCatalog{copyPtr(workerCatalog)}
+{
+}
+
+std::expected<DropQueryStatementResult, std::vector<Exception>> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
     const std::unique_lock lock(mutex);
-    std::erase(runningQueries, statement.id);
-    return queryManager->stop(statement.id)
-        .and_then([&statement, this] { return queryManager->unregister(statement.id); })
+    const auto it = std::ranges::find_if(runningQueries, [&statement](const Query& query) { return query.getId() == statement.id; });
+    if (it == std::end(runningQueries))
+    {
+        return std::unexpected{std::vector{QueryNotFound("Query {} has already been dropped", statement.id)}};
+    }
+
+    auto nodeHandle = runningQueries.extract(it);
+    Query queryToStop = std::move(nodeHandle.value());
+
+    return queryManager->stop(queryToStop)
+        .and_then([&queryToStop, this] { return queryManager->unregister(queryToStop); })
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
@@ -182,15 +236,33 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     const std::unique_lock lock(mutex);
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement);
-        const auto id = queryManager->registerQuery(optimizedPlan);
-        return id.and_then([this](const auto& queryId) { return queryManager->start(queryId); })
-            .transform(
-                [&id, this]
-                {
-                    runningQueries.push_back(id.value());
-                    return QueryStatementResult{id.value()};
-                });
+        QueryPlanningContext context{
+            .id = statement.getQueryId(),
+            .sqlString = statement.getOriginalSql(),
+            .sourceCatalog = copyPtr(sourceCatalog),
+            .sinkCatalog = copyPtr(sinkCatalog),
+            .workerCatalog = copyPtr(workerCatalog),
+        };
+
+        // Plan the query using QueryPlanner - statement is a LogicalPlan
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement};
+        const auto finalizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+
+        auto queryHandle = queryManager->registerQuery(finalizedPlan);
+        if (!queryHandle.has_value())
+        {
+            return std::unexpected{queryHandle.error()};
+        }
+
+        Query handle = std::move(queryHandle).value();
+        const auto id = handle.getId();
+        if (auto startResult = queryManager->start(handle); !startResult.has_value())
+        {
+            return std::unexpected{startResult.error()};
+        }
+
+        runningQueries.emplace(std::move(handle));
+        return QueryStatementResult{id};
     }
     CPPTRACE_CATCH(...)
     {
@@ -199,32 +271,54 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     std::unreachable();
 }
 
-std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
+std::expected<ShowQueriesStatementResult, std::vector<Exception>> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
     const std::unique_lock lock(mutex);
     if (not statement.id.has_value())
     {
-        auto allQueryState = runningQueries | std::views::transform([this](auto queryId) { return queryManager->status(queryId); })
-            | std::views::filter([](const std::expected<QuerySummary, Exception>& statusResult) { return statusResult.has_value(); })
-            | std::views::transform([](const auto& statusResult) { return statusResult.value(); }) | std::ranges::to<std::vector>();
-        auto newRunningQueries = allQueryState | std::views::transform([](const auto& querySummary) { return querySummary.queryId; })
-            | std::ranges::to<std::vector>();
-        runningQueries = newRunningQueries;
-        return ShowQueriesStatementResult{
-            allQueryState
-            | std::views::transform([](const auto& querySummary) { return std::make_pair(querySummary.queryId, querySummary); })
-            | std::ranges::to<std::unordered_map<QueryId, QuerySummary>>()};
+        std::unordered_map<DistributedQueryId, DistributedQueryStatus> validQueries;
+        std::vector<Exception> allErrors;
+
+        for (const auto& query : runningQueries)
+        {
+            if (auto statusResult = queryManager->status(query); statusResult.has_value())
+            {
+                validQueries[query.getId()] = statusResult.value();
+            }
+            else
+            {
+                allErrors.insert(allErrors.end(), statusResult.error().begin(), statusResult.error().end());
+            }
+        }
+
+        if (not allErrors.empty())
+        {
+            return std::unexpected{allErrors};
+        }
+
+        return ShowQueriesStatementResult{validQueries};
     }
-    if (const auto statusOpt = queryManager->status(statement.id.value()); statusOpt.has_value())
+
+    const auto it
+        = std::ranges::find_if(runningQueries, [&statement](const Query& query) { return query.getId() == statement.id.value(); });
+
+    if (it == std::end(runningQueries))
     {
-        return ShowQueriesStatementResult{std::unordered_map<QueryId, QuerySummary>{{statement.id.value(), statusOpt.value()}}};
+        return std::unexpected{std::vector{QueryNotFound("Query {} not found", statement.id.value())}};
     }
-    return ShowQueriesStatementResult{.queries = {}};
+
+    auto statusResult = queryManager->status(*it);
+    if (statusResult.has_value())
+    {
+        return ShowQueriesStatementResult{
+            std::unordered_map<DistributedQueryId, DistributedQueryStatus>{{statement.id.value(), statusResult.value()}}};
+    }
+    return std::unexpected(statusResult.error());
 }
 
-std::vector<QueryId> QueryStatementHandler::getRunningQueries() const
+auto QueryStatementHandler::getRunningQueries() const
 {
-    return runningQueries;
+    return runningQueries | std::views::all;
 }
 
 }

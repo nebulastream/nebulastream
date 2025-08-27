@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -14,20 +14,13 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <expected>
 #include <vector>
 
-#include <Identifiers/Identifiers.hpp>
+#include <DistributedQueryId.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
-
-namespace NES
-{
-class LogicalPlan;
-}
+#include <QueryPlanning.hpp>
 
 namespace NES
 {
@@ -36,10 +29,11 @@ class QueryManager
 {
 public:
     virtual ~QueryManager() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
-    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
-    [[nodiscard]] virtual std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept = 0;
+    [[nodiscard]] virtual std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan) = 0;
+    virtual std::expected<void, Exception> start(const Query& query) = 0;
+    virtual std::expected<void, std::vector<Exception>> stop(const Query& query) = 0;
+    virtual std::expected<void, std::vector<Exception>> unregister(const Query& query) = 0;
+    [[nodiscard]] virtual std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const = 0;
 };
+
 }

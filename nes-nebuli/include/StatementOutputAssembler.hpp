@@ -22,10 +22,14 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+#include <fmt/ranges.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <WorkerCatalog.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <StatementHandler.hpp>
 
@@ -49,7 +53,7 @@ using ConversionResultType = std::ranges::range_value_t<decltype(ConversionType<
 }
 
 template <typename Result>
-concept AssemblembleStatementResult =
+concept AssembleStatementResult =
     /// StatementOutputAssembler specialization
     std::is_default_constructible_v<StatementOutputAssembler<Result>>
     /// There must be a name for every type result field
@@ -61,18 +65,21 @@ using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
+    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
+using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
-using QueryIdOutputRowType = std::tuple<QueryId>;
+using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
-using QueryStatusOutputRowType = std::tuple<QueryId, std::string>;
+using QueryStatusOutputRowType = std::tuple<DistributedQueryId, std::string>;
 constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
+
+using WorkerConfigOutputRowType = std::tuple<HostAddr, GrpcAddr, size_t, std::vector<HostAddr>>;
+constexpr std::array<std::string_view, 4> workerConfigOutputColumns{"host", "grpc", "capacity", "downstream"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -242,9 +249,10 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
     {
         std::vector<OutputRowType> output;
         output.reserve(result.queries.size());
-        for (const auto& [id, query] : result.queries)
+        for (const auto& [id, globalStatus] : result.queries)
         {
-            output.emplace_back(id, magic_enum::enum_name(query.currentStatus));
+            auto localQueryStates = globalStatus.localStatusSnapshots | std::views::transform([](const LocalQueryStatus& local) { return magic_enum::enum_name(local.state); });
+            output.emplace_back(id, fmt::format("{}", fmt::join(localQueryStates, ", ")));
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }
@@ -262,20 +270,65 @@ struct StatementOutputAssembler<DropQueryStatementResult>
     }
 };
 
+template <>
+struct StatementOutputAssembler<CreateWorkerStatementResult>
+{
+    using OutputRowType = WorkerConfigOutputRowType;
+
+    auto convert(const CreateWorkerStatementResult& result)
+    {
+        return std::make_pair(
+            workerConfigOutputColumns, 
+            std::vector{std::make_tuple(result.created.host, result.created.grpc, result.created.capacity, result.created.downstream)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowWorkersStatementResult>
+{
+    using OutputRowType = WorkerConfigOutputRowType;
+
+    auto convert(const ShowWorkersStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.workers.size());
+        for (const auto& worker : result.workers)
+        {
+            output.emplace_back(worker.host, worker.grpc, worker.capacity, worker.downstream);
+        }
+        return std::make_pair(workerConfigOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropWorkerStatementResult>
+{
+    using OutputRowType = WorkerConfigOutputRowType;
+
+    auto convert(const DropWorkerStatementResult& result)
+    {
+        return std::make_pair(
+            workerConfigOutputColumns,
+            std::vector{std::make_tuple(result.dropped.host, result.dropped.grpc, result.dropped.capacity, result.dropped.downstream)});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
-
-static_assert(AssemblembleStatementResult<CreateLogicalSourceStatementResult>);
-static_assert(AssemblembleStatementResult<CreatePhysicalSourceStatementResult>);
-static_assert(AssemblembleStatementResult<CreateSinkStatementResult>);
-static_assert(AssemblembleStatementResult<ShowLogicalSourcesStatementResult>);
-static_assert(AssemblembleStatementResult<ShowPhysicalSourcesStatementResult>);
-static_assert(AssemblembleStatementResult<ShowSinksStatementResult>);
-static_assert(AssemblembleStatementResult<DropLogicalSourceStatementResult>);
-static_assert(AssemblembleStatementResult<DropPhysicalSourceStatementResult>);
-static_assert(AssemblembleStatementResult<DropSinkStatementResult>);
-static_assert(AssemblembleStatementResult<QueryStatementResult>);
-static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
-static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
+static_assert(AssembleStatementResult<CreateLogicalSourceStatementResult>);
+static_assert(AssembleStatementResult<CreatePhysicalSourceStatementResult>);
+static_assert(AssembleStatementResult<CreateSinkStatementResult>);
+static_assert(AssembleStatementResult<CreateWorkerStatementResult>);
+static_assert(AssembleStatementResult<ShowLogicalSourcesStatementResult>);
+static_assert(AssembleStatementResult<ShowPhysicalSourcesStatementResult>);
+static_assert(AssembleStatementResult<ShowSinksStatementResult>);
+static_assert(AssembleStatementResult<ShowWorkersStatementResult>);
+static_assert(AssembleStatementResult<DropLogicalSourceStatementResult>);
+static_assert(AssembleStatementResult<DropPhysicalSourceStatementResult>);
+static_assert(AssembleStatementResult<DropSinkStatementResult>);
+static_assert(AssembleStatementResult<DropWorkerStatementResult>);
+static_assert(AssembleStatementResult<QueryStatementResult>);
+static_assert(AssembleStatementResult<ShowQueriesStatementResult>);
+static_assert(AssembleStatementResult<DropQueryStatementResult>);
 
 }

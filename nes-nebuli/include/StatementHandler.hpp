@@ -21,17 +21,20 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
+
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <experimental/propagate_const>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
+#include "Util/Pointers.hpp"
 
 namespace NES
 {
@@ -51,6 +54,11 @@ struct CreateSinkStatementResult
     Sinks::SinkDescriptor created;
 };
 
+struct CreateWorkerStatementResult
+{
+    WorkerConfig created;
+};
+
 struct ShowLogicalSourcesStatementResult
 {
     std::vector<LogicalSource> sources;
@@ -64,6 +72,11 @@ struct ShowPhysicalSourcesStatementResult
 struct ShowSinksStatementResult
 {
     std::vector<Sinks::SinkDescriptor> sinks;
+};
+
+struct ShowWorkersStatementResult
+{
+    std::vector<WorkerConfig> workers;
 };
 
 struct DropLogicalSourceStatementResult
@@ -81,31 +94,39 @@ struct DropSinkStatementResult
     Sinks::SinkDescriptor dropped;
 };
 
+struct DropWorkerStatementResult
+{
+    WorkerConfig dropped;
+};
+
 struct QueryStatementResult
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<QueryId, QuerySummary> queries;
+    std::unordered_map<DistributedQueryId, DistributedQueryStatus> queries;
 };
 
 struct DropQueryStatementResult
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    CreateWorkerStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
+    ShowWorkersStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
+    DropWorkerStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     DropQueryStatementResult>;
@@ -159,28 +180,46 @@ public:
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
 };
 
+class WorkerStatementHandler final : public StatementHandler<WorkerStatementHandler>
+{
+    std::shared_ptr<WorkerCatalog> workerCatalog;
+
+public:
+    explicit WorkerStatementHandler(const std::shared_ptr<WorkerCatalog>& workerCatalog);
+    std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
+    std::expected<ShowWorkersStatementResult, Exception> operator()(const ShowWorkersStatement& statement) const;
+    std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
+};
+
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     mutable std::mutex mutex;
     SharedPtr<QueryManager> queryManager;
-    std::vector<QueryId> runningQueries;
-    std::shared_ptr<const CLI::LegacyOptimizer> optimizer;
+    SharedPtr<SourceCatalog> sourceCatalog;
+    SharedPtr<SinkCatalog> sinkCatalog;
+    SharedPtr<WorkerCatalog> workerCatalog;
+    std::unordered_set<Query> runningQueries;
 
 public:
-    explicit QueryStatementHandler(
-        const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<CLI::LegacyOptimizer>& optimizer);
+    QueryStatementHandler(
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<SourceCatalog> sourceCatalog,
+        SharedPtr<SinkCatalog> sinkCatalog,
+        SharedPtr<WorkerCatalog> workerCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
-    std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
-    std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
+    std::expected<ShowQueriesStatementResult, std::vector<Exception>> operator()(const ShowQueriesStatement& statement);
+    std::expected<DropQueryStatementResult, std::vector<Exception>> operator()(const DropQueryStatement& statement);
 
-    [[nodiscard]] std::vector<QueryId> getRunningQueries() const;
+    [[nodiscard]] auto getRunningQueries() const;
 };
 
 }
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatementResult);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatementResult);
+FMT_OSTREAM(NES::CreateWorkerStatementResult);
 FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
 FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
+FMT_OSTREAM(NES::DropWorkerStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);

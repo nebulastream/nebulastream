@@ -88,7 +88,7 @@ size_t WorkerCatalog::getNumWorkers() const
 
 const Topology& WorkerCatalog::getTopology() const
 {
-    return topology; /// Copy constructor creates a snapshot
+    return topology;
 }
 
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const

@@ -26,7 +26,7 @@ namespace NES
 /// There can never exist two objects with the same Identifier, regardless if the previous object has been destroyed
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
-using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
+using LocalQueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
 
@@ -36,8 +36,8 @@ using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
 
 
-static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
-static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
+static constexpr LocalQueryId INVALID_QUERY_ID = INVALID<LocalQueryId>;
+static constexpr LocalQueryId INITIAL_QUERY_ID = INITIAL<LocalQueryId>;
 
 static constexpr OperatorId INVALID_OPERATOR_ID = INVALID<OperatorId>;
 static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;
@@ -63,6 +63,11 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
     return id.getRawValue() % containerSize;
 }
+
+/// Distributed
+using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0, 1>;
+static constexpr DistributedQueryId INVALID_DISTRIBUTED_QUERY_ID = INVALID<DistributedQueryId>;
+static constexpr DistributedQueryId INITIAL_DISTRIBUTED_QUERY_ID = INITIAL<DistributedQueryId>;
 
 /// Legacy
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node

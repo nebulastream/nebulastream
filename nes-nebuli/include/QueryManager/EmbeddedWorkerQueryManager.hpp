@@ -13,13 +13,16 @@
 */
 
 #pragma once
-#include <Identifiers/Identifiers.hpp>
+
+#include <vector>
+
 #include <Listeners/QueryLog.hpp>
+#include <DistributedQueryId.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-
-#include <QueryManager/QueryManager.hpp>
+#include <QueryPlanning.hpp>
 
 namespace NES
 {
@@ -27,11 +30,12 @@ class EmbeddedWorkerQueryManager final : public QueryManager
 {
 public:
     explicit EmbeddedWorkerQueryManager(const SingleNodeWorkerConfiguration& configuration);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
-    std::expected<void, Exception> start(QueryId queryId) noexcept override;
-    std::expected<void, Exception> stop(QueryId queryId) noexcept override;
-    std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
-    [[nodiscard]] std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept override;
+    [[nodiscard]] std::expected<Query, Exception>
+    registerQuery(const PlanStage::DistributedLogicalPlan& plan) override;
+    std::expected<void, Exception> start(const Query& query) override;
+    std::expected<void, std::vector<Exception>> stop(const Query& query) override;
+    std::expected<void, std::vector<Exception>> unregister(const Query& query) override;
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const override;
 
 private:
     SingleNodeWorker worker;
