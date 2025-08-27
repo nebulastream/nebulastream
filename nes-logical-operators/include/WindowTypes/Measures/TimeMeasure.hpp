@@ -26,6 +26,10 @@ class TimeMeasure
 {
 public:
     explicit TimeMeasure(uint64_t milliseconds);
+    TimeMeasure(const TimeMeasure&) = default;
+    TimeMeasure& operator=(const TimeMeasure&) = default;
+    TimeMeasure(TimeMeasure&&) = default;
+    TimeMeasure& operator=(TimeMeasure&&) = default;
 
     [[nodiscard]] uint64_t getTime() const;
 
@@ -36,7 +40,7 @@ public:
     bool operator==(const TimeMeasure& other) const;
 
 private:
-    const uint64_t milliSeconds;
+    uint64_t milliSeconds;
 };
 
 }
