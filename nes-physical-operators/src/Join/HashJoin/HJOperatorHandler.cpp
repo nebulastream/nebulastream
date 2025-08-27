@@ -129,13 +129,12 @@ void HJOperatorHandler::emitSlicesToProbe(
 
     /// Copying the left and right hashmap pointer to the buffer
     const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
-    const auto rightHashMapPtrSizeInByte = rightHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
-    auto* addressFirstLeftHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger);
-    auto* addressFirstRightHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger) + leftHashMapPtrSizeInByte;
-    bufferMemory->leftHashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
-    bufferMemory->rightHashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
-    std::memcpy(static_cast<void*>(addressFirstLeftHashMapPtr), static_cast<const void*>(leftHashMaps.data()), leftHashMapPtrSizeInByte);
-    std::memcpy(static_cast<void*>(addressFirstRightHashMapPtr), static_cast<const void*>(rightHashMaps.data()), rightHashMapPtrSizeInByte);
+    auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger);
+    auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger) + leftHashMapPtrSizeInByte;
+    bufferMemory->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
+    bufferMemory->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
+    std::ranges::copy(leftHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr));
+    std::ranges::copy(rightHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr));
 
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
