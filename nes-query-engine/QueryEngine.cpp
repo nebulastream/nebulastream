@@ -106,13 +106,13 @@ public:
     using StateRef = State::element_type;
 
     void start(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> plan,
         const std::shared_ptr<AbstractQueryStatusListener>& listener,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
-    void stopQuery(QueryId queryId);
+    LocalQueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
+    void stopQuery(LocalQueryId queryId);
 
     void clear()
     {
@@ -121,9 +121,9 @@ public:
     }
 
 private:
-    std::atomic<QueryId::Underlying> queryIdCounter = QueryId::INITIAL;
+    std::atomic<LocalQueryId::Underlying> queryIdCounter = LocalQueryId::INITIAL;
     std::recursive_mutex mutex;
-    std::unordered_map<QueryId, State> queryStates;
+    std::unordered_map<LocalQueryId, State> queryStates;
 };
 
 namespace detail
@@ -241,7 +241,7 @@ public:
     }
 
     bool emitWork(
-        QueryId qid,
+        LocalQueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
         Memory::TupleBuffer buffer,
         BaseTask::onComplete complete,
@@ -286,13 +286,13 @@ public:
     }
 
     void emitPipelineStart(
-        QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
+        LocalQueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
     {
         addTaskOrDoNextTask(StartPipelineTask(qid, node->id, complete, injectQueryFailure(node, failure), node));
     }
 
     void emitPipelineStop(
-        QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
+        LocalQueryId qid, std::unique_ptr<RunningQueryPlanNode> node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
     {
         auto nodePtr = node.get();
         /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
@@ -300,7 +300,7 @@ public:
         addTaskOrDoNextTask(StopPipelineTask(qid, std::move(node), complete, injectQueryFailureUnsafe(nodePtr, failure)));
     }
 
-    void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
+    void initializeSourceFailure(LocalQueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
         admissionQueue.blockingWrite(FailSourceTask{
@@ -312,7 +312,7 @@ public:
             {}});
     }
 
-    void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
+    void initializeSourceStop(LocalQueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
         admissionQueue.blockingWrite(StopSourceTask{
@@ -324,7 +324,7 @@ public:
     }
 
     void emitPendingPipelineStop(
-        QueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
+        LocalQueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, BaseTask::onComplete complete, BaseTask::onFailure failure) override
     {
         ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
         addTaskOrDoNextTask(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(complete), std::move(failure)});
@@ -738,7 +738,7 @@ QueryEngine::QueryEngine(
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::stop(QueryId queryId)
+void QueryEngine::stop(LocalQueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
     threadPool->admissionQueue.blockingWrite(StopQueryTask{queryId, queryCatalog, {}, {}});
@@ -758,7 +758,7 @@ QueryEngine::~QueryEngine()
 }
 
 void QueryCatalog::start(
-    QueryId queryId,
+    LocalQueryId queryId,
     std::unique_ptr<ExecutableQueryPlan> plan,
     const std::shared_ptr<AbstractQueryStatusListener>& listener,
     QueryLifetimeController& controller,
@@ -768,7 +768,7 @@ void QueryCatalog::start(
 
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
-        RealQueryLifeTimeListener(QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
+        RealQueryLifeTimeListener(LocalQueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener)
             : listener(std::move(listener)), queryId(queryId)
         {
         }
@@ -854,7 +854,7 @@ void QueryCatalog::start(
         }
 
         std::shared_ptr<AbstractQueryStatusListener> listener;
-        QueryId queryId;
+        LocalQueryId queryId;
         WeakStateRef state;
     };
 
@@ -882,7 +882,7 @@ void QueryCatalog::start(
     }
 }
 
-void QueryCatalog::stopQuery(QueryId id)
+void QueryCatalog::stopQuery(LocalQueryId id)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {

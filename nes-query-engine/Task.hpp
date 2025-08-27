@@ -40,7 +40,7 @@ public:
 
     BaseTask() = default;
 
-    BaseTask(QueryId queryId, std::function<void()> onCompletion, std::function<void(Exception)> onError)
+    BaseTask(LocalQueryId queryId, std::function<void()> onCompletion, std::function<void(Exception)> onError)
         : queryId(queryId), onCompletion(std::move(onCompletion)), onError(std::move(onError))
     {
     }
@@ -65,7 +65,7 @@ public:
         }
     }
 
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID<LocalQueryId>;
 
 private:
 #ifndef NO_ASSERT /// Only used in debug INVARIANT
@@ -81,7 +81,7 @@ private:
 struct WorkTask : BaseTask
 {
     WorkTask(
-        QueryId queryId,
+        LocalQueryId queryId,
         PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
         Memory::TupleBuffer buf,
@@ -103,7 +103,7 @@ struct WorkTask : BaseTask
 struct StartPipelineTask : BaseTask
 {
     StartPipelineTask(
-        QueryId queryId,
+        LocalQueryId queryId,
         PipelineId pipelineId,
         std::function<void()> onCompletion,
         std::function<void(Exception)> onError,
@@ -122,7 +122,7 @@ struct StartPipelineTask : BaseTask
 struct StopPipelineTask : BaseTask
 {
     explicit StopPipelineTask(
-        QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept;
+        LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept;
     StopPipelineTask(const StopPipelineTask& other) = delete;
     StopPipelineTask(StopPipelineTask&& other) noexcept;
     StopPipelineTask& operator=(const StopPipelineTask& other) = delete;
@@ -136,7 +136,7 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, onComplete onComplete, onFailure onFailure)
+    StopSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target))
     {
     }
@@ -149,7 +149,7 @@ struct FailSourceTask : BaseTask
     FailSourceTask() : exception("", 0) { }
 
     FailSourceTask(
-        QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, onComplete onComplete, onFailure onFailure)
+        LocalQueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, onComplete onComplete, onFailure onFailure)
         : BaseTask(queryId, std::move(onComplete), std::move(onFailure)), target(std::move(target)), exception(std::move(exception))
     {
     }
@@ -161,7 +161,7 @@ struct FailSourceTask : BaseTask
 struct StopQueryTask : BaseTask
 {
     StopQueryTask(
-        QueryId queryId, std::weak_ptr<QueryCatalog> catalog, std::function<void()> onCompletion, std::function<void(Exception)> onError)
+        LocalQueryId queryId, std::weak_ptr<QueryCatalog> catalog, std::function<void()> onCompletion, std::function<void(Exception)> onError)
         : BaseTask(std::move(queryId), std::move(onCompletion), std::move(onError)), catalog(std::move(catalog))
     {
     }
@@ -173,7 +173,7 @@ struct StopQueryTask : BaseTask
 struct StartQueryTask : BaseTask
 {
     StartQueryTask(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> queryPlan,
         std::weak_ptr<QueryCatalog> catalog,
         std::function<void()> onCompletion,
@@ -192,7 +192,7 @@ struct StartQueryTask : BaseTask
 struct PendingPipelineStopTask : BaseTask
 {
     PendingPipelineStopTask(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::shared_ptr<RunningQueryPlanNode> pipeline,
         size_t attempts,
         std::function<void()> onCompletion,

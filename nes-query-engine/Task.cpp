@@ -27,7 +27,7 @@ StopPipelineTask::StopPipelineTask(StopPipelineTask&& other) noexcept = default;
 StopPipelineTask& StopPipelineTask::operator=(StopPipelineTask&& other) noexcept = default;
 
 StopPipelineTask::StopPipelineTask(
-    QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept
+    LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, onComplete complete, onFailure failure) noexcept
     : BaseTask(queryId, std::move(complete), std::move(failure)), pipeline(std::move(pipeline))
 {
 }

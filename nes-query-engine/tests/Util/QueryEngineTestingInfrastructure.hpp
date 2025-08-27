@@ -149,9 +149,9 @@ struct ExpectStats
 class QueryStatusListener final : public AbstractQueryStatusListener
 {
 public:
-    MOCK_METHOD(bool, logSourceTermination, (QueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryFailure, (QueryId, Exception, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, QueryState, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logSourceTermination, (LocalQueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryFailure, (LocalQueryId, Exception, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryStatusChange, (LocalQueryId, QueryState, std::chrono::system_clock::time_point), (override));
 };
 
 /// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal
@@ -161,7 +161,7 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         bool,
         emitWork,
-        (QueryId,
+        (LocalQueryId,
          const std::shared_ptr<RunningQueryPlanNode>&,
          Memory::TupleBuffer,
          BaseTask::onComplete,
@@ -171,21 +171,21 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         void,
         emitPipelineStart,
-        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure),
+        (LocalQueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
         void,
         emitPendingPipelineStop,
-        (QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
+        (LocalQueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
-        void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure), (override));
+        void, emitPipelineStop, (LocalQueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure), (override));
 };
 
 struct TestQueryLifetimeController : QueryLifetimeController
 {
-    MOCK_METHOD(void, initializeSourceFailure, (QueryId, OriginId, std::weak_ptr<RunningSource>, Exception), (override));
-    MOCK_METHOD(void, initializeSourceStop, (QueryId, OriginId, std::weak_ptr<RunningSource>), (override));
+    MOCK_METHOD(void, initializeSourceFailure, (LocalQueryId, OriginId, std::weak_ptr<RunningSource>, Exception), (override));
+    MOCK_METHOD(void, initializeSourceStop, (LocalQueryId, OriginId, std::weak_ptr<RunningSource>), (override));
 };
 
 template <template <typename> class FutType, typename T>
@@ -394,7 +394,7 @@ struct QueryPlanBuilder
         std::unordered_map<identifier_t, ExecutablePipelineStage*> stages;
     };
 
-    TestPlanCtrl build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
+    TestPlanCtrl build(LocalQueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
 
     QueryPlanBuilder(identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter);
 
@@ -420,19 +420,19 @@ struct TestingHarness
     std::unique_ptr<QueryEngine> qm;
     size_t numberOfThreads;
 
-    QueryId::Underlying queryIdCounter = INITIAL<QueryId>.getRawValue();
-    QueryId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
-    QueryId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
+    LocalQueryId::Underlying queryIdCounter = INITIAL<LocalQueryId>.getRawValue();
+    LocalQueryId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
+    LocalQueryId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
     std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<Sources::TestSourceControl>> sourceControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestSinkController>> sinkControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestPipelineController>> pipelineControls;
-    std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryTermination;
-    std::unordered_map<QueryId, std::shared_future<void>> queryTerminationFutures;
-    std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryRunning;
-    std::unordered_map<QueryId, std::shared_future<void>> queryRunningFutures;
+    std::unordered_map<LocalQueryId, std::unique_ptr<std::promise<void>>> queryTermination;
+    std::unordered_map<LocalQueryId, std::shared_future<void>> queryTerminationFutures;
+    std::unordered_map<LocalQueryId, std::unique_ptr<std::promise<void>>> queryRunning;
+    std::unordered_map<LocalQueryId, std::shared_future<void>> queryRunningFutures;
     std::unordered_map<std::shared_ptr<SourceDescriptor>, std::unique_ptr<Sources::SourceHandle>> unusedSources;
 
     std::unordered_map<QueryPlanBuilder::identifier_t, OriginId> sourceIds;
@@ -452,10 +452,10 @@ struct TestingHarness
     std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
-    void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states);
+    void expectQueryStatusEvents(LocalQueryId id, std::initializer_list<QueryState> states);
 
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
-    void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);
+    void expectSourceTermination(LocalQueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);
 
 
     /// Starts the query engine and initializes internal futures used to track query termination events.
@@ -469,12 +469,12 @@ struct TestingHarness
     /// Inserts a new Query into the Query Engine. Requires `start` to be called beforehand.
     void startQuery(std::unique_ptr<ExecutableQueryPlan> query) const;
     /// Stops a Query. Requires `start` to be called beforehand.
-    void stopQuery(QueryId id) const;
+    void stopQuery(LocalQueryId id) const;
 
     /// Shuts the query engine down by calling its destructor
     void stop();
-    testing::AssertionResult waitForQepTermination(QueryId id, std::chrono::milliseconds timeout) const;
-    testing::AssertionResult waitForQepRunning(QueryId id, std::chrono::milliseconds timeout);
+    testing::AssertionResult waitForQepTermination(LocalQueryId id, std::chrono::milliseconds timeout) const;
+    testing::AssertionResult waitForQepRunning(LocalQueryId id, std::chrono::milliseconds timeout);
 };
 
 /// Data Generator used within the QueryEngineTest

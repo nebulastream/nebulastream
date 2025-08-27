@@ -29,15 +29,18 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/Common.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <StatisticPrinter.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -67,13 +70,13 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
-static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
+static std::atomic queryIdCounter = INITIAL<LocalQueryId>.getRawValue();
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
+std::expected<LocalQueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        plan.setQueryId(QueryId(queryIdCounter++));
+        plan.setQueryId(LocalQueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
@@ -89,7 +92,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::startQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -104,7 +107,7 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(LocalQueryId queryId, QueryTerminationType type) noexcept
 {
     CPPTRACE_TRY
     {
@@ -119,7 +122,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -134,7 +137,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
+std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getLocalStatusForQuery(LocalQueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
@@ -154,33 +157,32 @@ std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) c
 
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
-    auto summaries = nodeEngine->getQueryLog()->getSummary();
+    const auto summaries = nodeEngine->getQueryLog()->getSummary();
     WorkerStatus status;
-    for (auto& summary : summaries)
+    for (const auto& [queryId, state, metrics] : summaries)
     {
-        if (summary.state == QueryState::Running)
+        if (state == QueryState::Running)
         {
-            INVARIANT(summary.metrics.running.has_value(), "If query is running, it should have a running timestamp");
-            if (summary.metrics.running.value() >= after)
+            INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
+            if (metrics.running.value() >= after)
             {
-                status.activeQueries.emplace_back(summary.queryId, summary.metrics.running.value());
+                status.activeQueries.emplace_back(queryId, metrics.running.value());
             }
         }
-        else if (summary.state == QueryState::Stopped)
+        else if (state == QueryState::Stopped)
         {
-            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
-            INVARIANT(summary.metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
-            if (summary.metrics.stop.value() >= after)
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
+            if (metrics.stop.value() >= after)
             {
-                status.terminatedQueries.emplace_back(
-                    summary.queryId, summary.metrics.running.value(), summary.metrics.stop.value(), std::move(summary.metrics.error));
+                status.terminatedQueries.emplace_back(queryId, metrics.running.value(), metrics.stop.value(), std::move(metrics.error));
             }
         }
     }
     return status;
 }
 
-std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(LocalQueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }

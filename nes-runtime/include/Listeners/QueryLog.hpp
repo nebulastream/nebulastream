@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <optional>
 #include <ostream>
@@ -40,14 +41,53 @@ struct QueryMetrics
 /// Summary structure of the query log for a query
 struct LocalQueryStatus
 {
-    QueryId queryId = INVALID_QUERY_ID;
+    LocalQueryId queryId = INVALID_QUERY_ID;
     QueryState state = QueryState::Registered;
     QueryMetrics metrics{};
 };
 
-struct QueryStatus
+struct DistributedQueryStatus
 {
     std::vector<LocalQueryStatus> localStatusSnapshots;
+
+    QueryState getGlobalQueryState() const
+    {
+        /// Query if considered failed if any local query failed
+        if (std::ranges::any_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Failed; }))
+        {
+            return QueryState::Failed;
+        }
+        /// Query is not failed, stopped if all local queries have stopped
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Stopped; }))
+        {
+            return QueryState::Stopped;
+        }
+        /// Query is neither failed nor stopped. Running, if all local queries are running
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Running; }))
+        {
+            return QueryState::Running;
+        }
+        /// Query is neither failed nor stopped, nor running. Started, if all local queries have started
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Started; }))
+        {
+            return QueryState::Started;
+        }
+        /// Some local queries might be stopped, running, or started, but at least one local query has not been started
+        return QueryState::Registered;
+    }
+
+    std::vector<Exception> getExceptions()
+    {
+        std::vector<Exception> exceptions;
+        for (const auto& localStatus : localStatusSnapshots)
+        {
+            if (auto err = localStatus.metrics.error)
+            {
+                exceptions.push_back(*err);
+            }
+        }
+        return exceptions;
+    }
 };
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
@@ -71,17 +111,17 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& status
 struct QueryLog : AbstractQueryStatusListener
 {
     using Log = std::vector<QueryStateChange>;
-    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStateChange>>;
+    using QueryStatusLog = std::unordered_map<LocalQueryId, std::vector<QueryStateChange>>;
 
     /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
     bool logSourceTermination(
-        QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
+        LocalQueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryFailure(LocalQueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryStatusChange(LocalQueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
 
-    [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
-    [[nodiscard]] std::optional<LocalQueryStatus> getQuerySummary(QueryId queryId) const;
-    [[nodiscard]] std::vector<LocalQueryStatus> getSummary();
+    [[nodiscard]] std::optional<Log> getLogForQuery(LocalQueryId queryId) const;
+    [[nodiscard]] std::optional<LocalQueryStatus> getQuerySummary(LocalQueryId queryId) const;
+    [[nodiscard]] std::vector<LocalQueryStatus> getSummary() const;
 
 private:
     folly::Synchronized<QueryStatusLog> queryStatusLog;

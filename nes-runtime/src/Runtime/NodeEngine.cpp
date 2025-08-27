@@ -47,18 +47,18 @@ class QueryTracker
     };
 
     using QueryState = AtomicState<Idle, Executing>;
-    folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
+    folly::Synchronized<std::unordered_map<LocalQueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    QueryId registerQuery(std::unique_ptr<CompiledQueryPlan> qep)
+    LocalQueryId registerQuery(std::unique_ptr<CompiledQueryPlan> qep)
     {
         NES_INFO("Register {}", qep->queryId);
-        QueryId queryId = qep->queryId;
+        LocalQueryId queryId = qep->queryId;
         queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
         return queryId;
     }
 
-    std::unique_ptr<CompiledQueryPlan> moveToExecuting(QueryId qid)
+    std::unique_ptr<CompiledQueryPlan> moveToExecuting(LocalQueryId qid)
     {
         auto rlocked = queries.rlock();
         std::unique_ptr<CompiledQueryPlan> qep;
@@ -92,14 +92,14 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
+LocalQueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
     auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
     queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
     return queryId;
 }
 
-void NodeEngine::startQuery(QueryId queryId)
+void NodeEngine::startQuery(LocalQueryId queryId)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
 
@@ -114,14 +114,14 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
-void NodeEngine::unregisterQuery(QueryId queryId)
+void NodeEngine::unregisterQuery(LocalQueryId queryId)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Unregister {}", queryId);
     queryEngine->stop(queryId);
 }
 
-void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
+void NodeEngine::stopQuery(LocalQueryId queryId, QueryTerminationType)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Stop {}", queryId);

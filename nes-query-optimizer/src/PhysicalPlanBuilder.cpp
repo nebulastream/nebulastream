@@ -30,7 +30,7 @@
 namespace NES
 {
 
-PhysicalPlanBuilder::PhysicalPlanBuilder(QueryId id) : queryId(id)
+PhysicalPlanBuilder::PhysicalPlanBuilder(LocalQueryId id) : queryId(id)
 {
 }
 
