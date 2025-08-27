@@ -10,9 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(GlobalOptimizer)
-add_subdirectory(YAML)
-add_subdirectory(QueryManager)
+function(add_nes_distributed_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-distributed)
+    target_include_directories(${TARGET_NAME}
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+endfunction()
 
-add_source_files(nes-coordinator StatementHandler.cpp JsonOutputFormatter.cpp)
-add_source_files(nes-global-optimizer QueryPlanning.cpp)
+add_nes_distributed_test("network-topology-test" NetworkTopologyTest.cpp)

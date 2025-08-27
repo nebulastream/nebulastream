@@ -1,0 +1,124 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream)
+  INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW TUMBLING (timestamp, size 1 sec)
+  INTO sinkStreamStream2Stream4Stream4_1;
+
+sinks:
+  - name: sinkStreamStream2Stream4Stream4_1
+    type: Print
+    schema:
+      - name: streamstream2stream4stream4_1$start
+        dataType: UINT64
+      - name: streamstream2stream4stream4_1$end
+        dataType: UINT64
+      - name: streamstream2stream4$start
+        dataType: UINT64
+      - name: streamstream2stream4$end
+        dataType: UINT64
+      - name: streamstream2$start
+        dataType: UINT64
+      - name: streamstream2$end
+        dataType: UINT64
+      - name: stream$id
+        dataType: UINT64
+      - name: stream$value
+        dataType: UINT64
+      - name: stream$timestamp
+        dataType: UINT64
+      - name: stream2$id2
+        dataType: UINT64
+      - name: stream2$value2
+        dataType: UINT64
+      - name: stream2$timestamp
+        dataType: UINT64
+      - name: stream4$id4
+        dataType: UINT64
+      - name: stream4$value4
+        dataType: UINT64
+      - name: stream4$timestamp
+        dataType: UINT64
+      - name: stream4_1$id4_1
+        dataType: UINT64
+      - name: stream4_1$value4_1
+        dataType: UINT64
+      - name: stream4_1$timestamp
+        dataType: UINT64
+    host: host2
+    config:
+      inputFormat: CSV
+
+logicalSources:
+  - name: stream
+    schema:
+      - name: id
+        dataType: UINT64
+      - name: value
+        dataType: UINT64
+      - name: timestamp
+        dataType: UINT64
+  - name: stream2
+    schema:
+      - name: id2
+        dataType: UINT64
+      - name: value2
+        dataType: UINT64
+      - name: timestamp
+        dataType: UINT64
+  - name: stream4
+    schema:
+      - name: id4
+        dataType: UINT64
+      - name: value4
+        dataType: UINT64
+      - name: timestamp
+        dataType: UINT64
+  - name: stream4_1
+    schema:
+      - name: id4_1
+        dataType: UINT64
+      - name: value4_1
+        dataType: UINT64
+      - name: timestamp
+        dataType: UINT64
+
+physicalSources:
+  - logicalSource: stream
+    type: File
+    host: host1
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      filePath: "[MOCKED]"
+  - logicalSource: stream2
+    type: File
+    host: host1
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      filePath: "[MOCKED]"
+  - logicalSource: stream4
+    type: File
+    host: host1
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      filePath: "[MOCKED]"
+  - logicalSource: stream4_1
+    type: File
+    host: host1
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      filePath: "[MOCKED]"
+
+workerNodes:
+  - host: host1
+    grpc: grpc1
+    capacity: 5
+    downstreamNodes:
+      - host2
+  - host: host2
+    grpc: grpc2
+    capacity: 255

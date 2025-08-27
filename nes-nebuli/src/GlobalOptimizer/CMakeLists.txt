@@ -10,9 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(GlobalOptimizer)
-add_subdirectory(YAML)
-add_subdirectory(QueryManager)
+add_subdirectory(Phases)
 
-add_source_files(nes-coordinator StatementHandler.cpp JsonOutputFormatter.cpp)
-add_source_files(nes-global-optimizer QueryPlanning.cpp)
+add_source_files(nes-global-optimizer
+        BottomUpPlacement.cpp
+        GlobalOptimizer.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
+)

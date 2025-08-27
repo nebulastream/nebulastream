@@ -10,9 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(GlobalOptimizer)
-add_subdirectory(YAML)
-add_subdirectory(QueryManager)
+add_subdirectory(src)
+get_source(nes-distributed NES_DISTRIBUTED_SOURCE_FILES)
 
-add_source_files(nes-coordinator StatementHandler.cpp JsonOutputFormatter.cpp)
-add_source_files(nes-global-optimizer QueryPlanning.cpp)
+add_library(nes-distributed ${NES_DISTRIBUTED_SOURCE_FILES})
+target_link_libraries(nes-distributed PUBLIC nes-common nes-logical-operators)
+
+target_include_directories(nes-distributed PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+add_tests_if_enabled(tests)

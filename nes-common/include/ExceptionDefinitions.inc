@@ -70,6 +70,15 @@ EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
+EXCEPTION(InvalidSourceConfig, 2129, "invalid source config")
+EXCEPTION(InvalidSinkConfig, 2129, "invalid sink config")
+
+/// 23XX Distributed
+EXCEPTION(NoPathFoundInTopology, 2300, "could not find a path between source and sink")
+EXCEPTION(PlacementFailure, 2301, "could not place all operators")
+EXCEPTION(InvalidTopology, 2302, "topology is in an invalid state")
+EXCEPTION(WorkerAlreadyExists, 2303, "worker already exists")
+EXCEPTION(UnknownWorkerAddr, 2304, "unknown worker addr")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
