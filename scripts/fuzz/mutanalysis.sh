@@ -16,9 +16,9 @@ set -e
 
 export CCACHE_DIR=/ccache
 
-if [ ! -d /out ]
+if [ ! -d /out ] || [ ! -d /wdir ]
 then
-    echo expects /out dir to exist
+    echo expects /out and /wdir to exist
     exit 1
 fi
 
@@ -36,6 +36,11 @@ out_log=$out_dir/log.txt
 log_out() {
     echo "$*" | tee -a $out_log
 }
+
+wdir=/wdir/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
+
+mkdir $wdir
+cd $wdir
 
 git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.git
 git clone --depth=1 "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
