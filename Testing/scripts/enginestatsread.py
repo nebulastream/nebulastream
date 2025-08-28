@@ -157,13 +157,14 @@ def main():
         print("Usage: python enginestatsread.py <directory>")
         return
 
-    directory = sys.argv[1]
+    base_directory = sys.argv[1]
+    logs_directory = os.path.join(base_directory, "logs")
 
-    # Find all trace files in the directory
+    # Find all trace files in the logs directory
     trace_files = []
-    for file in os.listdir(directory):
+    for file in os.listdir(logs_directory):
         if file.endswith('.json') and 'GoogleEventTrace' in file:
-            trace_files.append(os.path.join(directory, file))
+            trace_files.append(os.path.join(logs_directory, file))
 
     # Process all trace files in parallel
     results = []
@@ -205,7 +206,7 @@ def main():
         csv_data.append(row)
 
     # Write the results to a text file
-    with open(os.path.join(directory, 'results.txt'), 'w') as f:
+    with open(os.path.join(base_directory, 'results.txt'), 'w') as f:
         for file_path, total_time, full_time, pipelines, total_skipped in sorted(results):
             if isinstance(total_skipped, str) and total_skipped.startswith("Error"):
                 f.write(f"File: {os.path.basename(file_path)}\n{total_skipped}\n\n")
@@ -225,8 +226,8 @@ def main():
                         f"skipped_tasks={p['skipped']}\n")
             f.write("\n--------------------------------------------------\n\n")
 
-    # Write CSV with all possible fields
-    csv_path = os.path.join(directory, os.path.basename(directory) + ".csv")
+    # Write CSV with all possible fields to the base directory
+    csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
     import csv
     with open(csv_path, 'w', newline='') as csvfile:
         if csv_data:
@@ -241,7 +242,7 @@ def main():
                         row[field] = 0  # Use 0 instead of empty for numeric fields
                 writer.writerow(row)
 
-    print(f"Results written to {os.path.join(directory, 'results.txt')}")
+    print(f"Results written to {os.path.join(base_directory, 'results.txt')}")
     print(f"CSV written to {csv_path}")
 
 if __name__ == "__main__":

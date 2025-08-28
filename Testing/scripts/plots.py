@@ -266,7 +266,7 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
             plt.tight_layout()
 
             # Save to both main directory and query subfolder
-            plt.savefig(os.path.join(output_dir, f'layout_vs_duration_query{query}_threads_{thread_count}.png'))
+            #plt.savefig(os.path.join(output_dir, f'layout_vs_duration_query{query}_threads_{thread_count}.png'))
             plt.savefig(os.path.join(query_dirs[query_str], f'duration_threads_{thread_count}.png'))
             plt.close()
 
@@ -510,7 +510,7 @@ def create_throughput_by_parameter_chart(df, output_dir, query_dirs, tp_type='ef
             plt.tight_layout()
 
             # Save to both main directory and query subfolder
-            plt.savefig(os.path.join(output_dir, f'query{query}_{tp_type}_throughput_threads_{thread_count}.png'))
+            #plt.savefig(os.path.join(output_dir, f'query{query}_{tp_type}_throughput_threads_{thread_count}.png'))
             plt.savefig(os.path.join(query_dirs[query_str], f'{tp_type}_throughput_threads_{thread_count}.png'))
             plt.close()
 

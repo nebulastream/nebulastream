@@ -94,7 +94,7 @@ for test_file in "${test_files[@]}"; do
   done
 done
 
-echo "All tests completed. Results in $BENCHMARK_DIR directory."
+echo "All tests completed. Results in $BENCHMARK_DIR/logs directory."
 
 echo "reading GoogleEventTrace files"
 
