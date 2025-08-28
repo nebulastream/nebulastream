@@ -64,7 +64,7 @@ for layout in "${memory_layouts[@]}"; do
           --worker.numberOfBuffersInGlobalBufferManager=$totalBuffer \
           --worker.defaultQueryExecution.operatorBufferSize=$buffer_size \
           --worker.defaultQueryExecution.memoryLayout=$layout \
-          --worker.defaultQueryExecution.useSingleMemoryLayout=true \
+          --worker.defaultQueryExecution.layoutStrategy=USE_SINGLE_LAYOUT \
           --enableGoogleEventTrace=true
         "
 

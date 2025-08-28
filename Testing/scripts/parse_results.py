@@ -6,8 +6,8 @@ import sys
 from pathlib import Path
 
 def extract_params_from_filename(filename):
-    """Extract parameters from the enginestats filename."""
-    pattern = r'enginestats_([A-Z_]+)_buffer(\d+)_threads(\d+)_query(\d+)'
+    """Extract parameters from the GoogleEventTrace filename."""
+    pattern = r'GoogleEventTrace_([A-Z_]+)_buffer(\d+)_threads(\d+)_query(\d+)'
     match = re.search(pattern, filename)
     if match:
         layout, buffer_size, threads, query = match.groups()

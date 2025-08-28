@@ -52,6 +52,30 @@ PIPELINE_COLORS = {
     '10': '#17becf'  # teal
 }
 
+def get_pipeline_label(query, pipeline_id):
+    """Get descriptive label for pipeline based on query type."""
+    query_str = str(query)
+    pipeline_id = int(pipeline_id)
+
+    # For queries 1-3 (Filter queries)
+    if query_str in ['1', '2', '3', '01', '02', '03']:
+        labels = {1: 'Source', 2: 'Swap', 3: 'Filter', 4: 'Swap', 5: 'Sink'}
+        return labels.get(pipeline_id, f"Pipeline {pipeline_id}")
+
+    # For query 4 (Map query)
+    elif query_str in ['4', '04']:
+        labels = {1: 'Source', 2: 'Swap', 3: 'Map', 4: 'Swap', 5: 'Sink'}
+        return labels.get(pipeline_id, f"Pipeline {pipeline_id}")
+
+    # For queries 5-6 (Filter and Map queries)
+    elif query_str in ['5', '6', '05', '06']:
+        labels = {1: 'Source', 2: 'Swap', 3: 'Filter', 4: 'Swap',
+                  5: 'Map', 6: 'Swap', 7: 'Map', 8: 'Swap', 9: 'Sink'}
+        return labels.get(pipeline_id, f"Pipeline {pipeline_id}")
+
+    # Default case
+    return f"Pipeline {pipeline_id}"
+
 def load_data(csv_file):
     """Load data from CSV file."""
     df = pd.read_csv(csv_file)
@@ -276,6 +300,8 @@ def create_pipeline_percentage_chart(df, output_dir, query_dirs):
             bottom = 0
             for col in sorted(pipeline_cols, key=lambda x: int(x.split('_')[1])):
                 pipeline_id = col.split('_')[1]
+                # Get custom pipeline label
+                pipeline_label = get_pipeline_label(query, pipeline_id)
 
                 # Skip if column doesn't exist or all NaN
                 if col not in group.columns or group[col].isna().all():
@@ -285,10 +311,12 @@ def create_pipeline_percentage_chart(df, output_dir, query_dirs):
 
                 color = pipeline_id_mapping[col]
                 ax.bar(i, value, bottom=bottom, color=color,
-                       label=f"Pipeline {pipeline_id}" if i == 0 else "")
+                       label=pipeline_label if i == 0 else "")
 
                 if value > 5:
-                    ax.text(i, bottom + value/2, f"P{pipeline_id}\n{value:.1f}%",
+                    # Use operation name instead of just "P{pipeline_id}"
+                    short_label = pipeline_label.split(' ')[0] if ' ' in pipeline_label else pipeline_label
+                    ax.text(i, bottom + value/2, f"{short_label}\n{value:.1f}%",
                             ha='center', va='center', color='white', fontweight='bold')
 
                 bottom += value
@@ -378,13 +406,15 @@ def create_throughput_by_parameter_chart(df, output_dir, query_dirs, tp_type='ef
                 pipeline_start = p_idx * pipeline_spacing
                 pipeline_centers.append(pipeline_start + pipeline_spacing/2)
 
+                # Get custom pipeline label
+                pipeline_label = get_pipeline_label(query, pipeline_id)
+
                 # Get column name
                 if pipeline_id == 1 and f'pipeline_1_{tp_type}_tuples_per_sec' in relevant_pipeline_cols:
                     col_name = f'pipeline_1_{tp_type}_tuples_per_sec'
-                    pipeline_label = "Pipeline 1 (tuples/s)"
+                    pipeline_label += " (tuples/s)"
                 else:
                     col_name = f'pipeline_{pipeline_id}_{tp_type}_tp'
-                    pipeline_label = f"Pipeline {pipeline_id}"
 
                 # Draw bars for each buffer size
                 for b_idx, buffer_size in enumerate(buffer_sizes):
