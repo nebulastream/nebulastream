@@ -56,8 +56,8 @@ CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE
 CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
 
 cmake --build cmake-build-nrm
-cmake --build cmake-build-afl
-cmake --build cmake-build-hfz
+cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
+cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
 for patch in $(find mutations -name "*.patch" -print0 | xargs -0 sha256sum | sort | awk '{ print $2 }')
 do
