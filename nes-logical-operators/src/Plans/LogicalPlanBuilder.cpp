@@ -130,6 +130,7 @@ LogicalPlan LogicalPlanBuilder::addJoin(
 
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
+        /// WORKAROUND for https://github.com/nebulastream/nebulastream/issues/1052
         if (++iters > 1000 * 1000)
         {
             throw InvalidQuerySyntax("unreasonably large joinFn");
