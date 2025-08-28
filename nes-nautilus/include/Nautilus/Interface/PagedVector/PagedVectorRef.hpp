@@ -56,7 +56,7 @@ public:
     /// @param record the new record to be written
     /// @param pos record position in pagedVector
     [[nodiscard]] Record replaceRecord(
-        const Record& record, const nautilus::val<uint64_t>& pos, nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+        const Record& record, const nautilus::val<uint64_t>& pos, nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
 
     [[nodiscard]] PagedVectorRefIter begin(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     [[nodiscard]] PagedVectorRefIter end(const std::vector<Record::RecordFieldIdentifier>& projections) const;

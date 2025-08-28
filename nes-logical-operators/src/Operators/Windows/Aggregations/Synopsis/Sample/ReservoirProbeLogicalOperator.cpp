@@ -176,7 +176,7 @@ std::string ReservoirProbeLogicalOperator::explain(ExplainVerbosity verbosity) c
     return fmt::format("RESERVOIR_PROBE");
 }
 
-SerializableOperator ReservoirProbeLogicalOperator::serialize() const
+void ReservoirProbeLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -209,7 +209,6 @@ SerializableOperator ReservoirProbeLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
@@ -228,7 +227,6 @@ SerializableOperator ReservoirProbeLogicalOperator::serialize() const
     }
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType

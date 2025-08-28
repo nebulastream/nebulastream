@@ -86,7 +86,7 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
 }
 
 Record PagedVectorRef::replaceRecord(
-    const Record& record, const nautilus::val<uint64_t>& pos, nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+    const Record& record, const nautilus::val<uint64_t>& pos, nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     /// As we can not return two values via one invoke, we have to perform two invokes
     /// This is still less than iterating over the pages in the PagedVector here and calling getNumberOfTuples on each page.

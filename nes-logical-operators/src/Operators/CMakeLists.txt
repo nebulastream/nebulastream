@@ -17,7 +17,6 @@ add_source_files(nes-logical-operators
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windows)
-add_subdirectory(Statistics)
 
 add_plugin(Selection LogicalOperator nes-logical-operators SelectionLogicalOperator.cpp)
 add_plugin(Projection LogicalOperator nes-logical-operators ProjectionLogicalOperator.cpp)
