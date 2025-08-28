@@ -14,25 +14,29 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #pragma once
 
-#include <Aggregation/AggregationProbePhysicalOperator.hpp>
+#include <WindowProbePhysicalOperator.hpp>
+
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
-class SampleProbePhysicalOperator final : public WindowProbePhysicalOperator
+class SampleProbePhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     SampleProbePhysicalOperator(
-        const Schema& sampleSchema,
-        const Record::RecordFieldIdentifier& inputFieldIdentifier,
-        const OperatorHandlerId operatorHandlerId,
-        WindowMetaData windowMetaData);
+        const Schema& sampleSchema, const Record::RecordFieldIdentifier& inputFieldIdentifier, WindowMetaData windowMetaData);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void execute(ExecutionContext& executionCtx, Record& record) const override;
+
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
+    void setChild(PhysicalOperator child) override;
 
 private:
     Schema sampleSchema;
     Record::RecordFieldIdentifier inputFieldIdentifier;
+    std::optional<PhysicalOperator> child;
+    WindowMetaData windowMetaData;
 };
 
 }

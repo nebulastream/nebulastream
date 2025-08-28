@@ -14,36 +14,45 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <Aggregation/Function/Synopsis/Sample/SampleProbePhysicalOperator.hpp>
 
+#include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/Synopsis/SynopsisFunctionRef.hpp>
+#include <function.hpp>
 
 namespace NES
 {
 
 SampleProbePhysicalOperator::SampleProbePhysicalOperator(
-    const Schema& sampleSchema,
-    const Record::RecordFieldIdentifier& inputFieldIdentifier,
-    const OperatorHandlerId operatorHandlerId,
-    WindowMetaData windowMetaData)
-    : WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
-    , sampleSchema(sampleSchema)
-    , inputFieldIdentifier(inputFieldIdentifier)
+    const Schema& sampleSchema, const Record::RecordFieldIdentifier&, WindowMetaData windowMetaData)
+    : sampleSchema(sampleSchema)
+    , inputFieldIdentifier("stream$reservoir") // TODO Fix this
+    , windowMetaData(windowMetaData)
 {
 }
 
-void SampleProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void SampleProbePhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     auto sampleRef = SynopsisFunctionRef(sampleSchema);
-    // TODO Finish ;)
-    (void)recordBuffer;
-    //sampleRef.initializeForReading(recordBuffer.read(inputFieldIdentifier).cast<VariableSizedData>().getReference());
-
-    const auto sampleSize = Util::readValueFromMemRef<uint64_t>(sampleRef.getMetaData().getContent());
+    sampleRef.initializeForReading(record.read(inputFieldIdentifier).cast<VariableSizedData>().getReference());
+    const auto sampleSize = Nautilus::Util::readValueFromMemRef<uint64_t>(sampleRef.getMetaData().getContent());
     for (auto i = nautilus::val<uint64_t>(0); i < sampleSize; ++i)
     {
         auto sampleRecord = sampleRef.readNextRecord();
-        //sampleRecord.reassignFields(recordBuffer);
-        child->execute(executionCtx, sampleRecord);
+        // TODO Also add ID if group by? Maybe save that info?
+        sampleRecord.write(windowMetaData.windowStartFieldName, record.read(windowMetaData.windowStartFieldName));
+        sampleRecord.write(windowMetaData.windowEndFieldName, record.read(windowMetaData.windowEndFieldName));
+        executeChild(executionCtx, sampleRecord);
     }
 }
+
+std::optional<PhysicalOperator> SampleProbePhysicalOperator::getChild() const
+{
+    return child;
+}
+
+void SampleProbePhysicalOperator::setChild(PhysicalOperator child)
+{
+    this->child = std::move(child);
+}
+
 
 }

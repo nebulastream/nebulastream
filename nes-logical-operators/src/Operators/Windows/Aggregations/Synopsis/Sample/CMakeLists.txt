@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_plugin(ReservoirSample AggregationLogicalFunction nes-logical-operators ReservoirSampleLogicalFunction.cpp)
+add_plugin(ReservoirProbe LogicalOperator nes-logical-operators ReservoirProbeLogicalOperator.cpp)

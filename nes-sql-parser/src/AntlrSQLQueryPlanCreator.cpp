@@ -444,6 +444,11 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
+        if (helpers.top().windowAggs.front().get()->getName() == "ReservoirSample")
+        {
+            auto asField = helpers.top().windowAggs.front().get()->asField;
+            queryPlan = LogicalPlanBuilder::addReservoirProbeOp(queryPlan, asField);
+        }
     }
 
     queryPlan = LogicalPlanBuilder::addProjection(helpers.top().getProjections(), helpers.top().asterisk, queryPlan);

@@ -82,6 +82,8 @@ public:
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
     static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);
 
+    static LogicalPlan addReservoirProbeOp(const LogicalPlan& queryPlan, FieldAccessLogicalFunction asField);
+
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
     /// @param operatorNode the binary operator to add
