@@ -27,15 +27,15 @@ QUERY_DESCRIPTIONS = {
 
 # Define color maps for buffer sizes
 ROW_COLORS = {
-    '4000': '#1f77b4',     # blue
-    '400000': '#2a9df4',   # lighter blue
-    '20000000': '#7fbfff'  # lightest blue
+    '4k': '#1f77b4',     # blue
+    '400k': '#2a9df4',   # lighter blue
+    '20M': '#7fbfff'  # lightest blue
 }
 
 COL_COLORS = {
-    '4000': '#ff7f0e',     # orange
-    '400000': '#ffb14e',   # lighter orange
-    '20000000': '#ffd699'  # lightest orange
+    '4k': '#ff7f0e',     # orange
+    '400k': '#ffb14e',   # lighter orange
+    '20M': '#ffd699'  # lightest orange
 }
 
 # Define pipeline colors
@@ -51,6 +51,29 @@ PIPELINE_COLORS = {
     '9': '#bcbd22',  # olive
     '10': '#17becf'  # teal
 }
+
+def format_number(num):
+    """Format large numbers with k, M, B, etc. suffixes."""
+    if num is None:
+        return "0"
+
+    num = float(num)
+
+    if abs(num) < 1000:
+        return str(int(num))
+
+    for unit in ['', 'k', 'M', 'B', 'T']:
+        if abs(num) < 1000:
+            if unit == '':
+                return f"{num:.0f}"
+            # Use decimal places only if needed
+            if num == int(num):
+                return f"{int(num)}{unit}"
+            else:
+                return f"{num:.1f}{unit}"
+        num /= 1000
+
+    return f"{num:.1f}P"  # For extremely large numbers
 
 def get_pipeline_label(query, pipeline_id):
     """Get descriptive label for pipeline based on query type."""
@@ -185,7 +208,7 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
 
             # Draw bars with ROW/COL of same buffer size next to each other
             for i, buffer_size in enumerate(buffer_sizes):
-                buffer_str = str(buffer_size)
+                buffer_str = str(format_number(buffer_size))
                 buffer_df = query_df[query_df['buffer_size'] == buffer_size]
 
                 # Position for this buffer size group
@@ -215,7 +238,7 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
                         ax.errorbar(col_pos, col_mean, yerr=col_std, color='black', capsize=5)
 
                 # Add group label centered between row and col
-                bar_labels.append(f"{buffer_size}")
+                bar_labels.append(f"{format_number(buffer_size)}")
 
             # Only scale y-axis if we have data
             if not query_df['full_query_duration'].isna().all():
@@ -232,11 +255,11 @@ def create_throughput_comparison_chart(df, output_dir, query_dirs):
             handles, labels = [], []
             for bs in buffer_sizes:
                 handles.append(plt.Rectangle((0,0),1,1, color=row_color))
-                labels.append(f"ROW {bs}")
+                labels.append(f"ROW {format_number(bs)}")
 
             for bs in buffer_sizes:
                 handles.append(plt.Rectangle((0,0),1,1, color=col_color))
-                labels.append(f"COL {bs}")
+                labels.append(f"COL {format_number(bs)}")
 
             # Position legend in upper left to avoid overlap with bars
             plt.legend(handles, labels, loc='lower right', bbox_to_anchor=(0.01, 0.99))
@@ -294,7 +317,7 @@ def create_pipeline_percentage_chart(df, output_dir, query_dirs):
             pipeline_id_mapping[col] = PIPELINE_COLORS.get(pipeline_id, f'C{len(pipeline_id_mapping) % 10}')
 
         for i, ((layout, buffer_size, threads), group) in enumerate(grouped):
-            config_label = f"{layout}\n{buffer_size}, {threads}T"
+            config_label = f"{layout}\n{format_number(buffer_size)}, {threads}T"
             bar_labels.append(config_label)
 
             bottom = 0
@@ -419,7 +442,7 @@ def create_throughput_by_parameter_chart(df, output_dir, query_dirs, tp_type='ef
                 # Draw bars for each buffer size
                 for b_idx, buffer_size in enumerate(buffer_sizes):
                     buffer_df = thread_df[thread_df['buffer_size'] == buffer_size].copy()
-                    buffer_str = str(buffer_size)
+                    buffer_str = str(format_number(buffer_size))
 
                     # Calculate positions
                     row_pos = pipeline_start + b_idx * 2 * (bar_width + group_spacing)
@@ -454,7 +477,7 @@ def create_throughput_by_parameter_chart(df, output_dir, query_dirs, tp_type='ef
                     # Track position for labels
                     if p_idx == 0:
                         x_positions.append((row_pos + col_pos) / 2)
-                        x_labels.append(f"Buffer\n{buffer_size}")
+                        x_labels.append(f"Buffer\n{format_number(buffer_size)}")
 
                 # Add pipeline label
                 ax.text(pipeline_start + pipeline_spacing/2, ax.get_ylim()[1] * 0.02,
@@ -476,9 +499,9 @@ def create_throughput_by_parameter_chart(df, output_dir, query_dirs, tp_type='ef
             for bs in buffer_sizes:
                 bs_str = str(bs)
                 handles.append(plt.Rectangle((0,0),1,1, color=ROW_COLORS.get(bs_str, '#1f77b4')))
-                labels.append(f"ROW {bs}")
+                labels.append(f"ROW {format_number(bs)}")
                 handles.append(plt.Rectangle((0,0),1,1, color=COL_COLORS.get(bs_str, '#ff7f0e')))
-                labels.append(f"COL {bs}")
+                labels.append(f"COL {format_number(bs)}")
 
             plt.legend(handles, labels, loc='upper right')
             plt.title(f'{query_label}: Pipeline {tp_type_label} Throughput ({thread_count} Threads)')
