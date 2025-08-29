@@ -13,12 +13,14 @@
 # limitations under the License.
 
 set -e
+set -u
+shopt -s nullglob
 
 export CCACHE_DIR=/ccache
 
-if [ ! -d /out ] || [ ! -d /wdir ]
+if [ ! -d /out ] || [ ! -d /wdir ] || [ ! -d /ccache ]
 then
-    echo expects /out and /wdir to exist
+    echo expects /out, /wdir, and /ccache to exist
     exit 1
 fi
 
@@ -67,9 +69,12 @@ do
         continue
     fi
 
-    if ! ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --quiet
+    if ! ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --quiet -O ctest.log
     then
-        log_out mutant $patch killed by ctest
+        for testcase in $(cat ctest.log | grep Failed | awk '$2 == "-" { print $3 }')
+        do
+            log_out mutant $patch killed by ctest with $testcase
+        done
     fi
 
 
@@ -93,7 +98,7 @@ do
     do
         timeout 10m $(find cmake-build-nrm -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
 
-        while [ $(pgrep -a $harness | wc -l) = $(( $(nproc) / 2 + 1 )) ]
+        while [ $(pgrep -f $harness | wc -l) = $(( $(nproc) / 2 + 1 )) ]
         do
             sleep 1
         done
@@ -113,21 +118,21 @@ do
             afl-fuzz -i ~/nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
             for i in $(seq $(( $(nproc) / 2 - 1 )) )
             do
-            afl-fuzz -i ~/nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$1.log &
+            afl-fuzz -i ~/nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
             done
             wait
             AFL_CORPUS_LOADED=true
         fi
-        rm -r afl-out
+        rm -rf afl-out
         cp -r afl-base-out afl-out
 
         timeout 10m afl-fuzz -i - -o afl-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
         for i in $(seq $(( $(nproc) / 2 - 1 )) )
         do
-        timeout 10m afl-fuzz -i - -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$1.log &
+        timeout 10m afl-fuzz -i - -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
         done
 
-        while pgrep -a $harness
+        while pgrep -f $harness
         do
             if [ -e crash_found ]
             then
@@ -154,7 +159,7 @@ do
 
         if ! honggfuzz --run_time 600 -i /nes-corpora/$harness/corpus -o hfz_out --crash-dir hf-crashes --exit_upon_crash --exit_code_upon_crash 1 -- $(find cmake-build-hfz -name $harness) 2> hf.log
         then
-            log_out mutant $patch killed by honggfuzz $harness with $crash
+            true
         fi
 
         for crash in hf-crashes/*
@@ -162,5 +167,8 @@ do
             mv "$crash" $out_dir/crashes
             log_out mutant $patch killed by honggfuzz $harness with "$crash"
         done
+
+        rm -rf hf-crashes/
     done
+    log_out mutant $patch survived
 done
