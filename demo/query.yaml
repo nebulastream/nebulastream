@@ -29,11 +29,10 @@ physicalSources:
       type: CSV
     sourceConfig:
       stopGeneratorWhenSequenceFinishes: ALL
-      maxRuntimeMS: 3000
       seed: 1
       generatorSchema: |
-        SEQUENCE UINT64 0 1000000 1
-        SEQUENCE UINT64 0 1000000 1
+        SEQUENCE UINT64 0 10001 1
+        SEQUENCE UINT64 0 10001 1
 
 workerNodes:
   - host: 127.0.0.1:9090
