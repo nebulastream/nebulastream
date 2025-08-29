@@ -145,9 +145,7 @@ QueryDecomposer::Bridge QueryDecomposer::connect(NetworkChannel channel)
                                            logicalSource,
                                            "Network",
                                            channel.downstreamNode,
-                                           {
-                                               {"channel", channel.id},
-                                           },
+                                           {{"channel", channel.id}, {"bind", channel.downstreamNode}},
                                            ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""})
                                        .value();
 
@@ -156,7 +154,7 @@ QueryDecomposer::Bridge QueryDecomposer::connect(NetworkChannel channel)
         channel.upstreamOp.getOutputSchema(),
         "Network",
         channel.upstreamNode,
-        {{"channel", channel.id}, {"connection", channel.downstreamNode}});
+        {{"channel", channel.id}, {"bind", channel.upstreamNode}, {"connection", channel.downstreamNode}});
 
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
     return Bridge{
