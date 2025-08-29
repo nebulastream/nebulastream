@@ -48,6 +48,7 @@
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -156,6 +157,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation.getWindowType());
     INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
+    auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
@@ -166,6 +168,14 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     uint64_t keySize = 0;
     std::vector<PhysicalFunction> keyFunctions;
     auto newInputSchema = aggregation.getInputSchemas()[0];
+
+    if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
+    {
+
+        newInputSchema = newInputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
+        outputSchema = outputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
+    }
+
     for (auto& nodeFunctionKey : aggregation.getGroupingKeys())
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
@@ -219,6 +229,23 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{buildWrapper});
 
+    if (conf.layoutStrategy == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    {
+        /// build probe
+        auto ref1 = addSwapBeforeOperator(probeWrapper, memoryLayoutTrait, conf);
+
+        /// build swap (ref1.second) probe (ref.first)
+        buildWrapper->setChildren({ref1.second});
+
+        auto ref2 = addSwapBeforeOperator(buildWrapper, memoryLayoutTrait, conf);
+        /// swap (ref2.second) build (ref2.first) swap (ref1.second) probe (ref1.first)
+
+        auto leaf = ref2.second;
+        std::vector leafes(logicalOperator.getChildren().size(), leaf);
+
+        return {.root = ref1.first, .leafs = {leafes}};
+
+    }
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), buildWrapper);
     return {.root = probeWrapper, .leafs = {leafes}};
