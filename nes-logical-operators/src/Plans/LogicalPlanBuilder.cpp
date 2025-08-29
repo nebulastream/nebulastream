@@ -203,8 +203,8 @@ LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const st
 LogicalPlan LogicalPlanBuilder::addReservoirProbeOp(const LogicalPlan& queryPlan, FieldAccessLogicalFunction asField)
 {
     PRECONDITION(
-        not queryPlan.rootOperators.empty()
-            && queryPlan.rootOperators.front().tryGet<WindowedAggregationLogicalOperator>().and_then(
+        not queryPlan.getRootOperators().empty()
+            && queryPlan.getRootOperators().front().tryGet<WindowedAggregationLogicalOperator>().and_then(
                 [](auto&& op) -> std::optional<bool>
                 {
                     if (not op.getWindowAggregation().empty())

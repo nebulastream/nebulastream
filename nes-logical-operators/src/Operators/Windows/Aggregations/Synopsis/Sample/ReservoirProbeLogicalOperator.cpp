@@ -102,6 +102,14 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
     return copy;
 }
 
+LogicalOperator ReservoirProbeLogicalOperator::withTraitSet(TraitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+
+}
+
 TraitSet ReservoirProbeLogicalOperator::getTraitSet() const
 {
     return {};

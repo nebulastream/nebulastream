@@ -120,7 +120,7 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregation
     (void)arguments;
     PRECONDITION(false, "Not yet used. TODO Implement when NES/main has it.");
     // PRECONDITION(
-    //     arguments.fields.size() == 2, "ReservoirSampleLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    //     arguments.fields.size() == 3, "ReservoirSampleLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     // auto reservoirSizeString = arguments.fields[2].getFieldName();
     // uint64_t reservoirSize;
     // auto parseResult = std::from_chars(reservoirSizeString.data(), reservoirSizeString.data() + reservoirSizeString.size(), reservoirSize);

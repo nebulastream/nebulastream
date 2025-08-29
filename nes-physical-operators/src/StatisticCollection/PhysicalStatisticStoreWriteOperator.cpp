@@ -21,6 +21,16 @@ PhysicalStatisticStoreWriteOperator::PhysicalStatisticStoreWriteOperator()
 {
 }
 
+std::optional<PhysicalOperator> PhysicalStatisticStoreWriteOperator::getChild() const
+{
+    return child;
+}
+
+void PhysicalStatisticStoreWriteOperator::setChild(PhysicalOperator child)
+{
+    this->child = std::move(child);
+}
+
 // std::shared_ptr<PhysicalOperator> PhysicalStatisticStoreWriteOperator::create(
 //     OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema)
 // {

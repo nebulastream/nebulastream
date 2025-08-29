@@ -29,11 +29,17 @@ public:
     //static std::shared_ptr<PhysicalOperator>
     //create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema);
 
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
+    void setChild(PhysicalOperator child) override;
+
     const std::string hashFieldName = "hash";
     const std::string typeFieldName = "type";
     const std::string startTsFieldName = "startTs";
     const std::string endTsFieldName = "endTs";
     const std::string dataFieldName = "data";
+
+protected:
+    std::optional<PhysicalOperator> child;
 };
 
 }

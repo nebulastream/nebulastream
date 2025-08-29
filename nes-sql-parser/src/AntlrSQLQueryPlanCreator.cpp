@@ -583,13 +583,23 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helper.asterisk = true;
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function and we need to generate one.
-    else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation)
+    else if (context->name == nullptr and ((not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation) or helpers.top().hasUnnamedSample))
     {
-        const auto accessFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-        const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
+        std::string aggIdentifyingString;
+        if (not helpers.top().hasUnnamedSample)
+        {
+            const auto fieldAccess = helpers.top().functionBuilder.back();
+            helpers.top().functionBuilder.pop_back();
+            const auto fieldAccessLogicalFn = fieldAccess.get<FieldAccessLogicalFunction>();
+            aggIdentifyingString = fmt::format("{}_", fieldAccessLogicalFn.getFieldName());
+        }
+        else
+        {
+            aggIdentifyingString = "";
+            helpers.top().hasUnnamedSample = false;
+        }
         const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation->getName());
+        const auto newName = fmt::format("{}{}", aggIdentifyingString, lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
         lastAggregation->asField = asField;
         helpers.top().windowAggs.pop_back();
@@ -794,6 +804,17 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     }
 }
 
+static uint64_t parseConstant(std::string constant, const char* fieldName)
+{
+    uint64_t result;
+    auto parseResult = std::from_chars(constant.data(), constant.data() + constant.size(), result);
+    if (parseResult.ec == std::errc())
+    {
+        throw InvalidQuerySyntax("Failed to parse field `{}` content: {}", fieldName, constant);
+    }
+    return result;
+}
+
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     const auto funcName = Util::toUpperCase(context->children[0]->getText());
@@ -867,6 +888,20 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(helpers.top().functionBuilder)))
             {
                 helpers.top().functionBuilder.push_back(*logicalFunction);
+            }
+            else if (funcName == "RESERVOIR")
+            {
+                auto constantString = helpers.top().constantBuilder.back();
+                helpers.top().constantBuilder.pop_back();
+                uint64_t reservoirSize;
+                auto parseResult = std::from_chars(constantString.data(), constantString.data() + constantString.size(), reservoirSize);
+                INVARIANT(parseResult.ec == std::errc(), "Failed to parse reservoir size: {}", constantString);
+                const auto uselessField = FieldAccessLogicalFunction("timestamp");
+                const auto asFieldIfNotOverwritten = FieldAccessLogicalFunction("reservoir");
+                helpers.top().windowAggs.push_back(
+                    ReservoirSampleLogicalFunction::create(uselessField, asFieldIfNotOverwritten, reservoirSize));
+                helpers.top().hasUnnamedSample = true;
+                break;
             }
             else
             {
