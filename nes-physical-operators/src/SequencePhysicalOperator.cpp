@@ -36,7 +36,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
             NES_INFO("Tuple buffer with {} tuples sequence {}", n, seq)
         }, recordBuffer.getSequenceNumber(), recordBuffer.getNumRecords());
     auto buffer = nautilus::invoke(
-        +[](OperatorHandler* handler, uint8_t* bufferMemory) -> Memory::TupleBuffer*
+        +[](OperatorHandler* handler, uint8_t* bufferMemory) -> TupleBuffer*
         { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(bufferMemory).value_or(nullptr); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         recordBuffer.getBuffer());
@@ -49,7 +49,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
         scan.close(executionCtx, nextBufferInSequence);
 
         buffer = nautilus::invoke(
-            +[](OperatorHandler* handler, Memory::TupleBuffer* tupleBuffer) -> Memory::TupleBuffer*
+            +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
             { return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr); },
             executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
             buffer);

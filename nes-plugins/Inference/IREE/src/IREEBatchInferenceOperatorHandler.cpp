@@ -149,7 +149,7 @@ void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-IREEBatchInferenceOperatorHandler::getCreateNewSlicesFunction() const
+IREEBatchInferenceOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
 {
     return [](SliceStart, SliceEnd)
     {

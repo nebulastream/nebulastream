@@ -48,7 +48,7 @@
 
 #include "GeneratorDataRegistry.hpp"
 
-namespace NES::Sources
+namespace NES
 {
 
 AudioSource::AudioSource(const SourceDescriptor& sourceDescriptor)
@@ -192,7 +192,7 @@ void AudioSource::open()
 }
 
 
-size_t fillBuffer(int sockfd, NES::Memory::TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
+size_t fillBuffer(int sockfd, TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
 {
     const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer(), numberOfSamples * sampleWidth);
     if (bufferSizeReceived < 0)
@@ -202,9 +202,10 @@ size_t fillBuffer(int sockfd, NES::Memory::TupleBuffer& tupleBuffer, size_t numb
     return static_cast<size_t>(bufferSizeReceived);
 }
 
-size_t AudioSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider&, const std::stop_token&)
+size_t AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     static std::chrono::nanoseconds timePerSample{1000000000 / sampleRate};
+
     struct __attribute__((packed)) Tuple
     {
         uint64_t timestamp;
@@ -271,13 +272,13 @@ void AudioSource::close()
     }
 }
 
-NES::Configurations::DescriptorConfig::Config AudioSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config AudioSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersAudio>(std::move(config), name());
+    return DescriptorConfig::validateAndFormat<ConfigParametersAudio>(std::move(config), name());
 }
 
 SourceValidationRegistryReturnType
-SourceValidationGeneratedRegistrar::RegisterAudioSourceValidation(SourceValidationRegistryArguments sourceConfig)
+RegisterAudioSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return AudioSource::validateAndFormat(std::move(sourceConfig.config));
 }
