@@ -130,19 +130,19 @@ int8_t* ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferP
 {
     if (varSizedSpace.empty() or varSizedSpace.back().getNumberOfTuples() + neededSize >= varSizedSpace.back().getBufferSize())
     {
-        static constexpr auto numberOfPreAllocatedSpaces = 100;
-        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * numberOfPreAllocatedSpaces);
+        /// We allocate more space than currently necessary for the variable sized data to reduce the allocation overhead
+        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
         if (not varSizedBuffer)
         {
             throw CannotAllocateBuffer(
-                "Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize * numberOfPreAllocatedSpaces));
+                "Could not allocate memory for ChainedHashMap of size {}",
+                std::to_string(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS));
         }
         varSizedSpace.emplace_back(varSizedBuffer.value());
     }
 
-    auto& varSizedBuffer = varSizedSpace.back();
-    varSizedBuffer.setNumberOfTuples(varSizedBuffer.getNumberOfTuples() + neededSize);
-    return varSizedBuffer.getMemArea<int8_t>() + varSizedBuffer.getNumberOfTuples() - neededSize;
+    varSizedSpace.back().setNumberOfTuples(varSizedSpace.back().getNumberOfTuples() + neededSize);
+    return varSizedSpace.back().getMemArea<int8_t>() + varSizedSpace.back().getNumberOfTuples() - neededSize;
 }
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
@@ -153,7 +153,7 @@ uint64_t ChainedHashMap::getNumberOfTuples() const
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
-    if (entries == nullptr)
+    if (entries == nullptr) [[unlikely]]
     {
         /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
         /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator

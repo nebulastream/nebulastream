@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -87,6 +88,8 @@ public:
 private:
     friend class ChainedHashMapRef;
 
+    /// Specifies the number of pre-allocated var sized
+    static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
     TupleBuffer entrySpace;
     std::vector<TupleBuffer> storageSpace;
     std::vector<TupleBuffer> varSizedSpace;
