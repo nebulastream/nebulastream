@@ -27,17 +27,6 @@ namespace NES
 
 class MemoryLayoutTupleBuffer;
 
-/// @brief Reads the variable sized data from the child buffer at the provided index
-/// @return Variable sized data as a string
-std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
-
-/// @brief Writes the variable sized data to the buffer
-/// @param buffer
-/// @param value
-/// @param bufferProvider
-/// @return Index of the child buffer
-std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider);
-
 /// @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.
 /// To this end, it requires the definition of an schema and a specific buffer size.
 /// Currently. we support a RowLayout and a ColumnLayout.
@@ -51,6 +40,27 @@ public:
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
+
+    /// @brief Writes the varSizedValue to the tupleBuffer. Similar to writeVarSizedData, but this method expects the varSizedValue containing
+    /// the length of varSizedValue as its first 32-bits
+    /// @return Combined child index and offset
+    static uint64_t storeAssociatedVarSizedValue(
+        const TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* varSizedValue, uint32_t varSizedValueLength);
+
+    /// @brief Writes the variable sized data to the buffer
+    /// @param buffer
+    /// @param value
+    /// @param bufferProvider
+    /// @return Index of the child buffer
+    static uint64_t writeVarSizedData(const TupleBuffer& buffer, std::string_view value, AbstractBufferProvider& bufferProvider);
+
+    /// @brief Reads the variable sized data from the child buffer at the provided index and returns the pointer to the var sized data
+    /// @return Pointer to variable sized data
+    static const int8_t* loadAssociatedVarSizedValue(const TupleBuffer* tupleBuffer, uint64_t combinedIdxOffset);
+
+    /// @brief Reads the variable sized data from the child buffer at the provided index. Similar as loadAssociatedVarSizedValue, but returns a string
+    /// @return Variable sized data as a string
+    static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, uint64_t combinedIdxOffset);
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
