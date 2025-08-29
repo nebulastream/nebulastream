@@ -84,9 +84,13 @@ public:
     public:
         EntryIterator(
             const nautilus::val<HashMap*>& hashMapRef,
+            const nautilus::val<ChainedHashMapEntry*>& currentEntry,
+            const nautilus::val<uint64_t>& entrySize,
             const nautilus::val<uint64_t>& tupleIndex,
-            const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
-            const std::vector<MemoryProvider::FieldOffsets>& fieldValues);
+            const nautilus::val<uint64_t>& indexOnPage,
+            const nautilus::val<uint64_t>& numberOfTuplesInCurrentPage,
+            const nautilus::val<uint64_t>& pageIndex,
+            const nautilus::val<uint64_t>& numberOfPages);
         EntryIterator& operator++();
         nautilus::val<bool> operator==(const EntryIterator& other) const;
         nautilus::val<bool> operator!=(const EntryIterator& other) const;
@@ -94,10 +98,14 @@ public:
 
     private:
         nautilus::val<HashMap*> hashMapRef;
-        ChainedEntryRef currentEntry;
-        nautilus::val<uint64_t> chainIndex;
+        nautilus::val<ChainedHashMapEntry*> currentEntry;
+        nautilus::val<uint64_t> entrySize;
+        /// TODO #1152 create a custom class for these indices
         nautilus::val<uint64_t> tupleIndex;
-        nautilus::val<uint64_t> numberOfChains;
+        nautilus::val<uint64_t> indexOnPage;
+        nautilus::val<uint64_t> numberOfTuplesInCurrentPage;
+        nautilus::val<uint64_t> pageIndex;
+        nautilus::val<uint64_t> numberOfPages;
     };
 
     ChainedHashMapRef(
