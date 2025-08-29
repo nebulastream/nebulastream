@@ -93,7 +93,7 @@ const Topology& WorkerCatalog::getTopology() const
 
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
 {
-    return workers | std::views::keys | std::ranges::to<std::vector<WorkerConfig>>();
+    return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();
 }
 
 }
