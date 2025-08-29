@@ -27,8 +27,8 @@
 #include <fmt/format.h>
 
 #include <Listeners/QueryLog.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Overloaded.hpp>
 #include <YAML/YamlLoader.hpp>
@@ -42,32 +42,52 @@
 
 namespace NES::Systest
 {
-
 using namespace std::chrono_literals;
 
-SystestRunner::SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const uint64_t queryConcurrency)
-    : queryTracker{std::move(inputQueries), queryConcurrency}
-    , executionMode{executionMode}
-    , reporter{std::make_unique<QueryResultReporter>(queryTracker.getTotalQueries())}
+namespace
 {
-    std::visit(
+UniquePtr<QuerySubmissionBackend> createSubmissionBackend(const SystestRunner::ExecutionMode& executionMode)
+{
+    return std::visit(
         Overloaded{
-            [this](const LocalExecution& local)
-            { this->executionBackend = std::make_unique<EmbeddedWorkerQueryManager>(local.singleNodeWorkerConfig); },
-            [this](const DistributedExecution& distributed)
+            [](const SystestRunner::LocalExecution& local) -> UniquePtr<QuerySubmissionBackend>
+            {
+                const auto topologyPath = local.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
+                auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
+                return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                    std::views::all(nodes)
+                        | std::views::transform(
+                            [](const CLI::WorkerConfig& worker) -> WorkerConfig
+                            { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
+                        | std::ranges::to<std::vector>(),
+                    local.singleNodeWorkerConfig);
+            },
+            [](const SystestRunner::DistributedExecution& distributed) -> UniquePtr<QuerySubmissionBackend>
             {
                 const auto topologyPath = distributed.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
                 auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
-                this->executionBackend = std::make_unique<GrpcQueryManager>(
+                return std::make_unique<GRPCQuerySubmissionBackend>(
                     std::views::all(nodes)
                     | std::views::transform(
                         [](const CLI::WorkerConfig& worker) -> WorkerConfig
                         { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
                     | std::ranges::to<std::vector>());
             },
-            [this](const BenchmarkExecution& benchmark)
-            { this->executionBackend = std::make_unique<EmbeddedWorkerQueryManager>(benchmark.singleNodeWorkerConfig); }},
+            [](const SystestRunner::BenchmarkExecution& benchmark) -> UniquePtr<QuerySubmissionBackend>
+            {
+                return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                    std::vector{WorkerConfig{"local", "local", 10000, {}}}, benchmark.singleNodeWorkerConfig);
+            }},
         executionMode);
+}
+}
+
+SystestRunner::SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const uint64_t queryConcurrency)
+    : queryTracker{std::move(inputQueries), queryConcurrency}
+    , executionMode{executionMode}
+    , queryManager(createSubmissionBackend(executionMode))
+    , reporter{std::make_unique<QueryResultReporter>(queryTracker.getTotalQueries())}
+{
 }
 
 SystestRunner SystestRunner::from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, const uint64_t queryConcurrency)
@@ -106,7 +126,7 @@ void SystestRunner::submit()
             .and_then(
                 [this, &planned](const auto& planInfo) mutable
                 {
-                    return executionBackend->registerQuery(planInfo.plan)
+                    return queryManager.registerQuery(planInfo.plan)
                         .transform(
                             [this, &planned](auto&& query) mutable
                             {
@@ -123,7 +143,7 @@ void SystestRunner::submit()
             .and_then(
                 [this](auto&& submitted) -> std::expected<void, Exception>
                 {
-                    return executionBackend->start(submitted.query)
+                    return queryManager.start(submitted.query)
                         .transform([this, &submitted] { queryTracker.moveToSubmitted(std::forward<decltype(submitted)>(submitted)); });
                 })
             .or_else(
@@ -141,8 +161,8 @@ void SystestRunner::handle()
 {
     while (auto submittedQuery = queryTracker.nextSubmitted())
     {
-        executionBackend
-            ->status(submittedQuery->query) /// NOLINT(*-unused-return-value)
+        queryManager
+            .status(submittedQuery->query) /// NOLINT(*-unused-return-value)
             .and_then(
                 [this, &submittedQuery](auto&& status) -> std::expected<void, std::vector<Exception>>
                 {
@@ -230,5 +250,4 @@ void SystestRunner::onStopped(SubmittedQuery&& submitted, const DistributedQuery
         queryTracker.moveToFinished(std::move(finished));
     }
 }
-
 }

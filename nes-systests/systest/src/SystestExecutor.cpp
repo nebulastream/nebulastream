@@ -55,6 +55,8 @@
 
 using namespace std::literals;
 
+extern void enable_memcom();
+
 namespace NES
 {
 
@@ -97,9 +99,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
               "/nes-systests/");
 
     /// distributed mode, otherwise fall back to local (dummy topology, will lead to single-node execution
-    program.add_argument("--topology")
-        .help("run distributed, optionally based on topology file (.yaml). If no file specified, uses default distributed topology.")
-        .nargs(argparse::nargs_pattern::optional);
+    program.add_argument("--topology").help("topology file").nargs(1);
+
+    program.add_argument("--remote").flag();
 
     /// test query order
     program.add_argument("--shuffle").flag().help("run queries in random order");
@@ -300,9 +302,10 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
             config.topology = DEFAULT_DISTRIBUTED_TOPOLOGY; /// Distributed execution with default topology
         }
     }
-    else
+
+    if (program.is_used("--remote"))
     {
-        config.topology = DEFAULT_LOCAL_TOPOLOGY; /// Local execution
+        config.remote = true;
     }
 
     if (program.is_used("-n"))
@@ -400,9 +403,10 @@ void runEndlessMode(std::vector<Systest::PlannedQuery> queries, SystestConfigura
         std::vector<Systest::FailedQuery> failedQueries;
         if (config.topology.getValue() == DEFAULT_LOCAL_TOPOLOGY)
         {
-            failedQueries = Systest::SystestRunner::from(
-                                queries, Systest::SystestRunner::LocalExecution{singleNodeWorkerConfiguration}, numberConcurrentQueries)
-                                .run();
+            failedQueries
+                = Systest::SystestRunner::from(
+                      queries, Systest::SystestRunner::LocalExecution{std::nullopt, singleNodeWorkerConfiguration}, numberConcurrentQueries)
+                      .run();
         }
         else if (config.topology.getValue().empty())
         {
@@ -547,27 +551,20 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         }
 
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-        std::vector<Systest::FailedQuery> failedQueries;
-        Systest::SystestRunner::ExecutionMode executionMode;
-        if (config.topology.getValue() != std::filesystem::path{TEST_CONFIGURATION_DIR} / "topologies" / "default_local.yaml")
+        Systest::SystestRunner::ExecutionMode executionMode = [&]() -> Systest::SystestRunner::ExecutionMode
         {
-            if (config.topology.getValue().empty())
+            if (config.remote)
             {
-                failedQueries = Systest::SystestRunner::from(
-                                    queries, Systest::SystestRunner::DistributedExecution{std::nullopt}, config.numberConcurrentQueries)
-                                    .run();
+                return Systest::SystestRunner::DistributedExecution{
+                    config.topology.getValue().empty() ? std::make_optional<std::filesystem::path>()
+                                                       : std::filesystem::path{config.topology.getValue()}};
             }
-            else
+
+            if (!config.topology.getValue().empty())
             {
-                failedQueries = Systest::SystestRunner::from(
-                                    queries,
-                                    Systest::SystestRunner::DistributedExecution{std::filesystem::path{config.topology.getValue()}},
-                                    config.numberConcurrentQueries)
-                                    .run();
+                enable_memcom();
             }
-        }
-        else
-        {
+
             auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
             if (not config.workerConfig.getValue().empty())
             {
@@ -577,29 +574,26 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
+
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::SystestRunner::from(
-                                    queries,
-                                    Systest::SystestRunner::BenchmarkExecution{std::move(singleNodeWorkerConfiguration), benchmarkResults},
-                                    config.numberConcurrentQueries)
-                                    .run();
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
                 outputFile << benchmarkResults.dump(4);
                 outputFile.close();
+                return Systest::SystestRunner::BenchmarkExecution{std::move(singleNodeWorkerConfiguration), benchmarkResults};
             }
-            else
-            {
-                failedQueries = Systest::SystestRunner::from(
-                                    std::move(queries),
-                                    Systest::SystestRunner::LocalExecution{std::move(singleNodeWorkerConfiguration)},
-                                    numberConcurrentQueries)
-                                    .run();
-            }
-        }
+
+            return Systest::SystestRunner::LocalExecution{
+                config.topology.getValue().empty() ? std::make_optional<std::filesystem::path>()
+                                                   : std::filesystem::path{config.topology.getValue()},
+                singleNodeWorkerConfiguration};
+        }();
+
+        auto failedQueries = Systest::SystestRunner::from(queries, executionMode, config.numberConcurrentQueries).run();
+
         if (not failedQueries.empty())
         {
             std::stringstream outputMessage;

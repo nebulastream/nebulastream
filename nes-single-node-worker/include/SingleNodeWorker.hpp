@@ -40,14 +40,14 @@ struct PrintingStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    SharedPtr<PrintingStatisticListener> listener;
+    std::shared_ptr<SystemEventListener> systemEvents;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
 
 public:
-    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&);
+    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, WorkerId = WorkerId("offline"));
     ~SingleNodeWorker();
     /// Non-Copyable
     SingleNodeWorker(const SingleNodeWorker& other) = delete;
@@ -82,6 +82,6 @@ public:
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(LocalQueryId queryId) const;
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> getLocalStatusForQuery(LocalQueryId queryId) const noexcept;
-    [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
+    [[nodiscard]] NES::WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }

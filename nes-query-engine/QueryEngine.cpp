@@ -41,11 +41,13 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
+#include <NESThread.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
@@ -182,7 +184,7 @@ struct DefaultPEC final : PipelineExecutionContext
 class ThreadPool : public WorkEmitter, public QueryLifetimeController
 {
 public:
-    void addThread();
+    void addThread(WorkerId workerId);
 
     /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
     std::function<void(Exception)> injectQueryFailureUnsafe(RunningQueryPlanNode* node, std::function<void(Exception)> failure)
@@ -254,7 +256,7 @@ public:
             qid,
             node->id,
             node,
-            buffer,
+            std::move(buffer),
             injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
             injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
@@ -347,6 +349,7 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , admissionQueue(admissionQueueSize)
         , internalTaskQueue(internalTaskQueueSize)
+        , delayedTaskSubmitter([this](Task&& t) noexcept { internalTaskQueue.blockingWrite(std::move(t)); })
     {
     }
 
@@ -368,7 +371,7 @@ private:
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask pendingPipelineStop) const;
-        bool operator()(const StopPipelineTask& stopPipelineTask) const;
+        bool operator()(StopPipelineTask& stopPipelineTask) const;
         bool operator()(const StopSourceTask& stopSource) const;
         bool operator()(const FailSourceTask& failSource) const;
 
@@ -438,11 +441,12 @@ private:
 
     detail::Queue admissionQueue;
     detail::Queue internalTaskQueue;
+    DelayedTaskSubmitter delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
     /// The number of threads is only available via the atomic.
-    std::vector<std::jthread> pool;
+    std::vector<Thread> pool;
     std::atomic<int32_t> numberOfThreads_;
 
     friend class QueryEngine;
@@ -453,6 +457,7 @@ thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadI
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
+    LogContext logContext("Task", fmt::format("{}-{}", task.queryId, task.pipelineId));
     if (terminating)
     {
         ENGINE_LOG_WARNING("Skipped Task for {}-{} during termination", task.queryId, task.pipelineId);
@@ -463,6 +468,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        bool repeated = false;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -470,6 +476,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto continuationPolicy)
             {
+                INVARIANT(repeated == false, "A task cannot be repeated more than once");
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
@@ -509,6 +516,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
 bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline) const
 {
+    LogContext logContext("Task", fmt::format("{}-{}", startPipeline.queryId, startPipeline.pipelineId));
     if (terminating)
     {
         ENGINE_LOG_WARNING("Pipeline Start {}-{} was skipped during Termination", startPipeline.queryId, startPipeline.pipelineId);
@@ -543,6 +551,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelineStop) const
 {
+    LogContext logContext("Task", fmt::format("{}-{}", pendingPipelineStop.queryId, pendingPipelineStop.pipeline->id));
     INVARIANT(
         pendingPipelineStop.pipeline->pendingTasks >= 0,
         "Pending Pipeline Stop must have pending tasks, but had {} pending tasks.",
@@ -581,8 +590,9 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask pendingPipelin
     return true;
 }
 
-bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTask) const
+bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) const
 {
+    LogContext logContext("Task", fmt::format("{}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id));
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     DefaultPEC pec(
         pool.numberOfThreads(),
@@ -612,6 +622,18 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                 return true;
             }
 
+            if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(
+                    StopPipelineTask(
+                        stopPipelineTask.queryId,
+                        std::move(stopPipelineTask.pipeline),
+                        std::move(stopPipelineTask.onCompletion),
+                        std::move(stopPipelineTask.onError)),
+                    std::chrono::milliseconds(25));
+                return true;
+            }
+
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
@@ -623,13 +645,16 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    auto pipelineId = stopPipelineTask.pipeline->id;
+    auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id});
+    pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
 
 bool ThreadPool::WorkerThread::operator()(const StopQueryTask& stopQuery) const
 {
+    LogContext logContext("Task", fmt::format("{}", stopQuery.queryId));
     ENGINE_LOG_INFO("Terminate Query Task for Query {}", stopQuery.queryId);
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
@@ -642,6 +667,7 @@ bool ThreadPool::WorkerThread::operator()(const StopQueryTask& stopQuery) const
 
 bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
 {
+    LogContext logContext("Task", fmt::format("{}", startQuery.queryId));
     ENGINE_LOG_INFO("Start Query Task for Query {}", startQuery.queryId);
     if (auto queryCatalog = startQuery.catalog.lock())
     {
@@ -654,6 +680,7 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
 
 bool ThreadPool::WorkerThread::operator()(const StopSourceTask& stopSource) const
 {
+    LogContext logContext("Task", fmt::format("{}", stopSource.queryId));
     if (auto source = stopSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Stop Source Task for Query {} Source {}", stopSource.queryId, source->getOriginId());
@@ -672,6 +699,7 @@ bool ThreadPool::WorkerThread::operator()(const StopSourceTask& stopSource) cons
 
 bool ThreadPool::WorkerThread::operator()(const FailSourceTask& failSource) const
 {
+    LogContext logContext("Task", fmt::format("{}", failSource.queryId));
     if (auto source = failSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());
@@ -681,13 +709,14 @@ bool ThreadPool::WorkerThread::operator()(const FailSourceTask& failSource) cons
     return false;
 }
 
-void ThreadPool::addThread()
+void ThreadPool::addThread(WorkerId workerId)
 {
     pool.emplace_back(
+        fmt::format("WorkerThread-{}", numberOfThreads_),
+        workerId,
         [this, id = numberOfThreads_++](const std::stop_token& stopToken)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
-            setThreadName(fmt::format("WorkerThread-{}", id));
             WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
@@ -701,6 +730,10 @@ void ThreadPool::addThread()
                         ENGINE_LOG_TRACE(
                             "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
                         addTaskOrDoItInPlace(std::move(task));
+                    }
+                    else
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     }
                 }
                 if (not internalTaskQueue.read(task))
@@ -750,17 +783,19 @@ QueryEngine::QueryEngine(
     const QueryEngineConfiguration& config,
     std::shared_ptr<QueryEngineStatisticListener> statListener,
     std::shared_ptr<AbstractQueryStatusListener> listener,
-    std::shared_ptr<Memory::BufferManager> bm)
+    std::shared_ptr<Memory::BufferManager> bm,
+    WorkerId workerId)
     : bufferManager(std::move(bm))
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
     , threadPool(std::make_unique<ThreadPool>(
           statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
+    , workerId(workerId)
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
-        threadPool->addThread();
+        threadPool->addThread(workerId);
     }
 }
 

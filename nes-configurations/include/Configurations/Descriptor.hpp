@@ -182,7 +182,7 @@ public:
         {
             for (const auto& [keyString, configParameterString] : config)
             {
-                NES_DEBUG("key: {}, value: {}", keyString, configParameterString);
+                NES_TRACE("key: {}, value: {}", keyString, configParameterString);
             }
             const auto validatedParameter = configParameter.validate(config);
             if (validatedParameter.has_value())

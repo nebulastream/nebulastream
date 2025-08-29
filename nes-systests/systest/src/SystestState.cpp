@@ -215,15 +215,15 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
                 if (std::ranges::none_of(
                         testFile.groups, [&](const auto& group) { return includedGroups.contains(Util::toLowerCase(group)); }))
                 {
-                    std::cout << fmt::format(
-                        "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
+                    // std::cout << fmt::format(
+                        // "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
                     return true;
                 }
             }
             if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(Util::toLowerCase(group)); }))
             {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
+                // std::cout << fmt::format(
+                    // "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
                 return true;
             }
             return false;

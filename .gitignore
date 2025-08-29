@@ -45,3 +45,10 @@ nes-asp/data/*.csv
 *.log
 
 scripts/__pycache__
+
+# Docker undo analysis temporary files
+docker/undo-analysis/docker-compose.yml
+docker/undo-analysis/bin/
+docker/undo-analysis/demo/
+docker/undo-analysis/input/
+docker/undo-analysis/scripts/

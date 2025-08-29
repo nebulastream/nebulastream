@@ -28,7 +28,7 @@
 
 namespace NES
 {
-class GrpcQueryManager final : public QueryManager
+class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 {
     struct ClusterNode
     {
@@ -40,11 +40,11 @@ class GrpcQueryManager final : public QueryManager
     Cluster cluster;
 
 public:
-    explicit GrpcQueryManager(std::vector<WorkerConfig> configs);
-    std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan) override;
-    std::expected<void, Exception> start(const Query& query) override;
-    std::expected<void, std::vector<Exception>> stop(const Query& query) override;
-    std::expected<void, std::vector<Exception>> unregister(const Query& query) override;
-    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const override;
+    explicit GRPCQuerySubmissionBackend(std::vector<WorkerConfig> configs);
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) override;
+    std::expected<void, Exception> start(const LocalQuery& query) override;
+    std::expected<void, Exception> stop(const LocalQuery& query) override;
+    std::expected<void, Exception> unregister(const LocalQuery& query) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(const LocalQuery& query) const override;
 };
 }

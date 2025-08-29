@@ -25,15 +25,28 @@
 namespace NES
 {
 
-class QueryManager
+class QuerySubmissionBackend
 {
 public:
-    virtual ~QueryManager() = default;
-    [[nodiscard]] virtual std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan) = 0;
-    virtual std::expected<void, Exception> start(const Query& query) = 0;
-    virtual std::expected<void, std::vector<Exception>> stop(const Query& query) = 0;
-    virtual std::expected<void, std::vector<Exception>> unregister(const Query& query) = 0;
-    [[nodiscard]] virtual std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const = 0;
+    virtual ~QuerySubmissionBackend() = default;
+    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) = 0;
+    virtual std::expected<void, Exception> start(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> stop(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> unregister(const LocalQuery&) = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(const LocalQuery&) const = 0;
+};
+
+class QueryManager
+{
+    UniquePtr<QuerySubmissionBackend> backend;
+
+public:
+    QueryManager(UniquePtr<QuerySubmissionBackend> backend);
+    [[nodiscard]] std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    std::expected<void, Exception> start(const Query& query);
+    std::expected<void, std::vector<Exception>> stop(const Query& query);
+    std::expected<void, std::vector<Exception>> unregister(const Query& query);
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const;
 };
 
 }

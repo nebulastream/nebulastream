@@ -182,6 +182,11 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     const auto numberOfTuplesLeft = leftPagedVector.getNumberOfTuples();
     const auto numberOfTuplesRight = rightPagedVector.getNumberOfTuples();
 
+    if (numberOfTuplesLeft == 0 || numberOfTuplesRight == 0)
+    {
+        return;
+    }
+
     /// Outer loop should have more no. tuples
     if (numberOfTuplesLeft < numberOfTuplesRight)
     {

@@ -317,12 +317,19 @@ struct SystestBinder::Impl
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<PlannedQuery> queries;
         uint64_t loadedFiles = 0;
+
+        auto systestTopology = SystestTopology{CLI::YamlLoader<CLI::ClusterConfig>::load(topologyFile).nodes};
+        fmt::println("=================================================");
+        fmt::print("Using topology from: {}", topologyFile);
+        renderTopology(systestTopology.getTopologyGraph(), std::cout);
+        fmt::println("=================================================");
+
         for (auto& testFile : discoveredTestFiles | std::views::values)
         {
-            std::cout << "Loading queries from test file: file://" << testFile.getLogFilePath() << '\n' << std::flush;
+            // std::cout << "Loading queries from test file: file://" << testFile.getLogFilePath() << '\n' << std::flush;
             try
             {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testFile); auto& query : testsForFile)
+                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testFile, systestTopology); auto& query : testsForFile)
                 {
                     queries.emplace_back(std::move(query));
                 }
@@ -338,10 +345,9 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<PlannedQuery> loadOptimizeQueriesFromTestFile(TestFile& testFile)
+    std::vector<PlannedQuery> loadOptimizeQueriesFromTestFile(TestFile& testFile, SystestTopology& systestTopology)
     {
         SLTSinkFactory sinkProvider{testFile.sinkCatalog};
-        auto systestTopology = SystestTopology{CLI::YamlLoader<CLI::ClusterConfig>::load(topologyFile).nodes};
 
         auto loadedSystests = loadFromSLTFile(testFile, sinkProvider, systestTopology);
         std::unordered_set<SystestQueryId> foundQueries;

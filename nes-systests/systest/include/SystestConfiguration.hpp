@@ -55,7 +55,8 @@ public:
     SequenceOption<StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    StringOption topology = {"topology", "", "run distributed, based on topology file (.yaml)"};
+    StringOption topology = {"topology", "", "topology used for query planning and deployment"};
+    BoolOption remote = {"remote", "", "use local or remote deployment"};
     BoolOption endlessMode = {"endlessMode", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

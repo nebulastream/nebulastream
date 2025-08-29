@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 #include <Plans/LogicalPlan.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GrpcQueryManager>(
+            queryManager = std::make_shared<NES::GRPCQuerySubmissionBackend>(
                 CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         }
         else

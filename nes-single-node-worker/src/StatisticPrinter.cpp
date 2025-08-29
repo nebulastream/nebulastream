@@ -104,7 +104,7 @@ void PrintingStatisticListener::onEvent(SystemEvent event)
 
 PrintingStatisticListener::PrintingStatisticListener(const std::filesystem::path& path)
     : file(path, std::ios::out | std::ios::app)
-    , printThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, file, events); })
+    , printThread("StatisticPrinter", [this](const std::stop_token& stopToken) { threadRoutine(stopToken, file, events); })
 {
     NES_INFO("Writing Statistics to: {}", path);
 }

@@ -13,21 +13,22 @@
 */
 
 use async_channel::TrySendError;
-use nes_network::protocol::{
-    ConnectionIdentifier, ThisConnectionIdentifier, TupleBuffer,
-};
+use nes_network::protocol::{ConnectionIdentifier, ThisConnectionIdentifier, TupleBuffer};
 use nes_network::sender::{ChannelControlMessage, ChannelControlQueue};
 use nes_network::*;
 use once_cell::sync;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::error::Error;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
 #[cxx::bridge]
 pub mod ffi {
     enum SendResult {
         Ok,
-        Error,
+        Closed,
         Full,
     }
 
@@ -46,6 +47,7 @@ pub mod ffi {
         fn set_metadata(self: Pin<&mut TupleBufferBuilder>, meta: &SerializedTupleBuffer);
         fn set_data(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
         fn add_child_buffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn identify_thread(thread_name: String, worker_id: String);
     }
 
     extern "Rust" {
@@ -54,10 +56,11 @@ pub mod ffi {
         type SenderDataChannel;
         type ReceiverDataChannel;
 
-        fn init_receiver_service(bind_addr: String, connection_addr: String) -> Result<()>;
-        fn receiver_instance() -> Result<Box<ReceiverNetworkService>>;
-        fn init_sender_service(connection_addr: String) -> Result<()>;
-        fn sender_instance() -> Result<Box<SenderNetworkService>>;
+        fn enable_memcom() -> Result<()>;
+        fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<()>;
+        fn receiver_instance(connection_addr: String) -> Result<Box<ReceiverNetworkService>>;
+        fn init_sender_service(connection_addr: String, worker_id: String) -> Result<()>;
+        fn sender_instance(connection_addr: String) -> Result<Box<SenderNetworkService>>;
 
         fn register_receiver_channel(
             server: &mut ReceiverNetworkService,
@@ -75,7 +78,7 @@ pub mod ffi {
             server: &SenderNetworkService,
             connection_identifier: String,
             channel_identifier: String,
-        ) -> Box<SenderDataChannel>;
+        ) -> Result<Box<SenderDataChannel>>;
 
         fn close_sender_channel(channel: Box<SenderDataChannel>);
         fn sender_writes_pending(channel: &SenderDataChannel) -> bool;
@@ -90,16 +93,40 @@ pub mod ffi {
     }
 }
 
+#[derive(Clone)]
+enum ReceiverService {
+    MemCom(Arc<receiver::NetworkService<channel::MemCom>>),
+    Tcp(Arc<receiver::NetworkService<channel::TcpCommunication>>),
+}
+#[derive(Clone)]
+enum SenderService {
+    MemCom(Arc<sender::NetworkService<channel::MemCom>>),
+    Tcp(Arc<sender::NetworkService<channel::TcpCommunication>>),
+}
+#[derive(Default)]
+struct Services {
+    receiver: HashMap<ThisConnectionIdentifier, ReceiverService>,
+    sender: HashMap<ThisConnectionIdentifier, SenderService>,
+}
+
+static USE_MEMCOM: Mutex<bool> = Mutex::new(false);
+fn enable_memcom() -> Result<(), String> {
+    let mut use_memcom = USE_MEMCOM.lock().unwrap();
+    if *use_memcom {
+        return Err("Memcom is already enabled".into());
+    }
+    *use_memcom = true;
+    Ok(())
+}
 /// Lazy singleton types, initialized on first use in a thread-safe way
-static RECEIVER: sync::OnceCell<Arc<receiver::NetworkService>> = sync::OnceCell::new();
-static SENDER: sync::OnceCell<Arc<sender::NetworkService>> = sync::OnceCell::new();
+static SERVICES: sync::Lazy<Mutex<Services>> = sync::Lazy::new(|| Mutex::default());
 
 pub struct ReceiverNetworkService {
-    handle: Arc<receiver::NetworkService>,
+    handle: ReceiverService,
 }
 
 struct SenderNetworkService {
-    handle: Arc<sender::NetworkService>,
+    handle: SenderService,
 }
 
 struct SenderDataChannel {
@@ -110,59 +137,107 @@ struct ReceiverDataChannel {
     chan: Box<async_channel::Receiver<TupleBuffer>>,
 }
 
-fn init_sender_service(connection_addr: String) -> Result<(), String> {
-    SENDER.get_or_init(move || {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .thread_name("net-receiver")
-            .worker_threads(2)
-            .enable_io()
-            .enable_time()
-            .worker_threads(2)
-            .build()
-            .unwrap();
-        sender::NetworkService::start(runtime, ThisConnectionIdentifier::from(connection_addr))
-    });
-    Ok(())
+fn init_sender_service(connection_addr: String, worker_id: String) -> Result<(), String> {
+    let this_connection =
+        ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
+    let mut services = SERVICES.lock().unwrap();
+    match services.sender.entry(this_connection.clone()) {
+        Entry::Occupied(_) => Err("Sender service was already registered".into()),
+        Entry::Vacant(e) => {
+            e.insert({
+                let runtime = tokio::runtime::Builder::new_multi_thread()
+                    .thread_name("net-sender")
+                    .worker_threads(1)
+                    .enable_io()
+                    .enable_time()
+                    .build()
+                    .unwrap();
+                runtime.spawn(async move {
+                    ffi::identify_thread("net-sender".to_string(), worker_id);
+                });
+                if *USE_MEMCOM.lock().unwrap() {
+                    SenderService::MemCom(sender::NetworkService::start(
+                        runtime,
+                        this_connection,
+                        channel::MemCom::new(),
+                    ))
+                } else {
+                    SenderService::Tcp(sender::NetworkService::start(
+                        runtime,
+                        this_connection,
+                        channel::TcpCommunication::new(),
+                    ))
+                }
+            });
+            Ok(())
+        }
+    }
 }
 
-fn init_receiver_service(bind_addr: String, connection_addr: String) -> Result<(), String> {
-    let bind = bind_addr
-        .parse()
-        .map_err(|e| format!("Bind address `{bind_addr}` is invalid: {e:?}"))?;
-
-    RECEIVER.get_or_init(move || {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .thread_name("net-sender")
-            .worker_threads(2)
-            .enable_io()
-            .worker_threads(2)
-            .enable_time()
-            .build()
-            .unwrap();
-        receiver::NetworkService::start(
-            runtime,
-            bind,
-            ThisConnectionIdentifier::from(connection_addr),
-        )
-    });
-    Ok(())
+fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<(), String> {
+    let this_connection =
+        ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
+    let mut services = SERVICES.lock().unwrap();
+    match services.receiver.entry(this_connection.clone()) {
+        Entry::Occupied(_) => Err("Receiver service was already registered".into()),
+        Entry::Vacant(e) => {
+            e.insert({
+                let runtime = tokio::runtime::Builder::new_multi_thread()
+                    .thread_name("net-receiver")
+                    .worker_threads(1)
+                    .enable_io()
+                    .enable_time()
+                    .build()
+                    .unwrap();
+                runtime.spawn(async move {
+                    ffi::identify_thread("net-receiver".to_string(), worker_id);
+                });
+                if *USE_MEMCOM.lock().unwrap() {
+                    ReceiverService::MemCom(receiver::NetworkService::start(
+                        runtime,
+                        this_connection,
+                        channel::MemCom::new(),
+                    ))
+                } else {
+                    ReceiverService::Tcp(receiver::NetworkService::start(
+                        runtime,
+                        this_connection,
+                        channel::TcpCommunication::new(),
+                    ))
+                }
+            });
+            Ok(())
+        }
+    }
 }
 
-fn receiver_instance() -> Result<Box<ReceiverNetworkService>, Box<dyn Error>> {
+fn receiver_instance(
+    connection_identifier: String,
+) -> Result<Box<ReceiverNetworkService>, Box<dyn Error>> {
+    let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
+        .map_err(|e| e.to_string())?;
+    let services = SERVICES.lock().unwrap();
+    let receiver = services
+        .receiver
+        .get(&this_connection)
+        .ok_or("Receiver server has not been initialized yet.")?;
     Ok(Box::new(ReceiverNetworkService {
-        handle: RECEIVER
-            .get()
-            .ok_or("Receiver server has not been initialized yet.")?
-            .clone(),
+        handle: receiver.clone(),
     }))
 }
 
-fn sender_instance() -> Result<Box<SenderNetworkService>, Box<dyn Error>> {
+fn sender_instance(
+    connection_identifier: String,
+) -> Result<Box<SenderNetworkService>, Box<dyn Error>> {
+    let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
+        .map_err(|e| e.to_string())?;
+    let services = SERVICES.lock().unwrap();
+    let sender = services
+        .sender
+        .get(&this_connection)
+        .ok_or("Sender server has not been initialized yet.")?;
     Ok(Box::new(SenderNetworkService {
-        handle: SENDER
-            .get()
-            .ok_or("Sender server has not been initialized yet.")?
-            .clone(),
+        handle: sender.clone(),
     }))
 }
 
@@ -170,9 +245,10 @@ fn register_receiver_channel(
     receiver_service: &mut ReceiverNetworkService,
     channel_identifier: String,
 ) -> Box<ReceiverDataChannel> {
-    let queue = receiver_service
-        .handle
-        .register_channel(channel_identifier.clone())
+    let queue = match &receiver_service.handle {
+        ReceiverService::MemCom(r) => r.register_channel(channel_identifier.clone()),
+        ReceiverService::Tcp(r) => r.register_channel(channel_identifier.clone()),
+    }
         .unwrap();
 
     Box::new(ReceiverDataChannel {
@@ -221,15 +297,16 @@ fn register_sender_channel(
     sender_service: &SenderNetworkService,
     connection_addr: String,
     channel_id: String,
-) -> Box<SenderDataChannel> {
-    let data_queue = sender_service
-        .handle
-        .register_channel(
-            ConnectionIdentifier::from(connection_addr),
-            channel_id,
-        )
+) -> Result<Box<SenderDataChannel>, String> {
+    let connection_addr =
+        ConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
+    let data_queue = match &sender_service.handle {
+        SenderService::MemCom(s) => s.register_channel(connection_addr.clone(), channel_id.clone()),
+        SenderService::Tcp(s) => s.register_channel(connection_addr.clone(), channel_id.clone()),
+    }
         .unwrap();
-    Box::new(SenderDataChannel { chan: data_queue })
+
+    Ok(Box::new(SenderDataChannel { chan: data_queue }))
 }
 
 fn try_send_on_channel(
@@ -248,13 +325,10 @@ fn try_send_on_channel(
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
     };
-    match channel
-        .chan
-        .try_send(ChannelControlMessage::Data(buffer))
-    {
+    match channel.chan.try_send(ChannelControlMessage::Data(buffer)) {
         Ok(()) => ffi::SendResult::Ok,
         Err(TrySendError::Full(_)) => ffi::SendResult::Full,
-        Err(TrySendError::Closed(_)) => ffi::SendResult::Error,
+        Err(TrySendError::Closed(_)) => ffi::SendResult::Closed,
     }
 }
 
@@ -267,9 +341,7 @@ fn sender_writes_pending(channel: &SenderDataChannel) -> bool {
 
 fn flush_channel(channel: &SenderDataChannel) {
     let (tx, _) = tokio::sync::oneshot::channel();
-    let _ = channel
-        .chan
-        .send_blocking(ChannelControlMessage::Flush(tx));
+    let _ = channel.chan.send_blocking(ChannelControlMessage::Flush(tx));
 }
 
 // CXX requires the usage of Boxed types
@@ -287,7 +359,5 @@ fn close_sender_channel(channel: Box<SenderDataChannel>) {
     }
 
     let _ = rx.blocking_recv();
-    let _ = channel
-        .chan
-        .send_blocking(ChannelControlMessage::Terminate);
+    let _ = channel.chan.send_blocking(ChannelControlMessage::Terminate);
 }

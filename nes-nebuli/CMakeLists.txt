@@ -50,19 +50,22 @@ target_link_libraries(nes-nebuli-embedded-lib
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp src/Repl.cpp)
-# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
-set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
+add_executable(nes-nebuli-embedded src/NebuLIEmbeddedStarter.cpp src/Repl.cpp)
 
-target_include_directories(nes-nebuli
-        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
-)
+# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
+target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
 target_include_directories(nes-nebuli
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+)
 
 
-add_executable(nes-nebuli-embedded src/NebuLIStarter.cpp src/Repl.cpp)
+target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx nes-single-node-worker-lib)
+target_include_directories(nes-nebuli-embedded
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+)
+
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli-embedded PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)

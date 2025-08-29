@@ -27,7 +27,6 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>

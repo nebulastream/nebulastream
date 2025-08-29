@@ -82,7 +82,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
         +[](HJOperatorHandler* operatorHandler, const HJBuildPhysicalOperator* buildOperator, const JoinBuildSideType buildSide)
         {
             nautilus::engine::Options options;
-            options.setOption("engine.Compilation", true);
+            options.setOption("engine.Compilation", false);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
 
             /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.

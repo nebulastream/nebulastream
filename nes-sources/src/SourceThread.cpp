@@ -81,7 +81,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Memory::TupleBuffer&&, bool addBufferMetadata)>;
 
 /// RAII-Wrapper around source open and close
 struct SourceHandle
@@ -264,7 +264,7 @@ void SourceThread::stop()
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
     PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
-    NES_DEBUG("SourceThread {} : attempting to stop source", originId);
+    NES_DEBUG("SourceThread {}: attempting to stop source", originId);
     thread.requestStop();
 
     try
@@ -272,7 +272,7 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
         auto result = this->terminationFuture.wait_for(timeout);
         if (result == std::future_status::timeout)
         {
-            NES_DEBUG("SourceThread  {} : source was not stopped during timeout", originId);
+            NES_DEBUG("SourceThread {}: source was not stopped during timeout", originId);
             return SourceReturnType::TryStopResult::TIMEOUT;
         }
         auto deletedOnScopeExit = std::move(thread);
@@ -282,7 +282,7 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
 
-    NES_DEBUG("SourceThread  {} : stopped", originId);
+    NES_DEBUG("SourceThread {}: stopped", originId);
     return SourceReturnType::TryStopResult::SUCCESS;
 }
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NetworkSource.hpp>
+#include "NetworkSource.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -40,7 +40,8 @@ namespace NES::Sources
 {
 
 NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
-    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL)), receiverServer(receiver_instance())
+    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
+    , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
 {
 }
 
@@ -62,7 +63,6 @@ Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(Memory::TupleBuffer
     const std::stop_callback callback(stopToken, [this] { interrupt_receiver(**channel); });
     if (receive_buffer(**channel, builder))
     {
-        NES_DEBUG("Received buffer {}", tupleBuffer.getSequenceNumber());
         return FillTupleBufferResult(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
     return FillTupleBufferResult(); /// End of Stream

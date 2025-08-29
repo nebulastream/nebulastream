@@ -24,15 +24,16 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
+#include <NESThread.hpp>
 
-void init_receiver_service(std::string bindAddr, std::string connectionAddr)
+void init_receiver_service(std::string connectionAddr, NES::WorkerId workerId)
 {
-    init_receiver_service(rust::String(std::move(bindAddr)), rust::String(std::move(connectionAddr)));
+    init_receiver_service(rust::String(std::move(connectionAddr)), rust::String(workerId.getRawValue()));
 }
 
-void init_sender_service(std::string connectionAddr)
+void init_sender_service(std::string connectionAddr, NES::WorkerId workerId)
 {
-    init_sender_service(rust::String(std::move(connectionAddr)));
+    init_sender_service(rust::String(std::move(connectionAddr)), rust::String(workerId.getRawValue()));
 }
 
 void TupleBufferBuilder::set_metadata(const SerializedTupleBuffer& metaData)
@@ -58,7 +59,7 @@ void TupleBufferBuilder::set_data(rust::Slice<const uint8_t> data)
 
 void TupleBufferBuilder::add_child_buffer(const rust::Slice<const uint8_t> child)
 {
-    const auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
+    auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
     if (!childBuffer)
     {
         throw NES::CannotAllocateBuffer("allocating child buffer");
@@ -70,5 +71,12 @@ void TupleBufferBuilder::add_child_buffer(const rust::Slice<const uint8_t> child
         childBuffer->getBufferSize(),
         child.length());
 
-    memcpy(buffer.getBuffer(), child.data(), std::min(child.length(), childBuffer->getBufferSize()));
+    memcpy(childBuffer->getBuffer(), child.data(), std::min(child.length(), childBuffer->getBufferSize()));
+    auto _ = buffer.storeChildBuffer(*childBuffer);
+}
+
+void identify_thread(rust::String threadName, rust::String workerId)
+{
+    NES::Thread::ThreadName = static_cast<std::string>(threadName);
+    NES::Thread::WorkerNodeId = NES::WorkerId(static_cast<std::string>(workerId));
 }

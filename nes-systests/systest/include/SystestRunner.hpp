@@ -35,6 +35,7 @@ class SystestRunner
 public:
     struct LocalExecution
     {
+        std::optional<std::filesystem::path> topologyPath;
         SingleNodeWorkerConfiguration singleNodeWorkerConfig;
     };
 
@@ -56,7 +57,7 @@ public:
 private:
     QueryTracker queryTracker;
     ExecutionMode executionMode;
-    std::unique_ptr<QueryManager> executionBackend;
+    QueryManager queryManager;
     std::unique_ptr<QueryResultReporter> reporter;
     std::vector<FailedQuery> reportedFailures;
     std::vector<FinishedQuery> finishedQueries;

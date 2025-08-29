@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::net::{TcpSocket, TcpStream};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
@@ -26,10 +28,11 @@ use tracing::{Instrument, Span, debug, info, info_span, warn};
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
-pub struct NetworkService {
+pub struct NetworkService<L: Communication> {
     runtime: Mutex<Option<Runtime>>,
     controller: NetworkingServiceController,
     cancellation_token: CancellationToken,
+    communication: PhantomData<L>,
 }
 
 enum NetworkingServiceControlMessage {
@@ -61,20 +64,25 @@ enum ChannelHandlerResult {
     Closed,
 }
 
-async fn connect(target_identifier: ConnectionIdentifier) -> Result<TcpStream> {
-    let address = target_identifier.to_socket_address().await?;
-    let socket = TcpSocket::new_v4().map_err(|e| format!("Could not create TCP socket: {e:?}"))?;
-    socket
-        .connect(address)
+async fn connect<L: Communication>(
+    target_identifier: ConnectionIdentifier,
+    communication: L,
+) -> Result<Channel<L::Reader, L::Writer>> {
+    communication
+        .connect(&target_identifier)
         .await
-        .map_err(|e| format!("Could not connect to {address:?}: {e:?}").into())
+        .map_err(|e| format!("Could not connect to {target_identifier}: {e}").into())
 }
 
-async fn create_connection(
+async fn create_connection<L: Communication>(
     this_connection: ThisConnectionIdentifier,
     target_identifier: ConnectionIdentifier,
-) -> Result<(ControlChannelSenderReader, ControlChannelSenderWriter)> {
-    let stream = connect(target_identifier).await?;
+    communication: L,
+) -> Result<(
+    ControlChannelSenderReader<L::Reader>,
+    ControlChannelSenderWriter<L::Writer>,
+)> {
+    let stream = connect(target_identifier, communication).await?;
     let (mut read, mut write) = identification_sender(stream);
     write
         .send(IdentificationRequest::IAmConnection(this_connection))
@@ -84,11 +92,10 @@ async fn create_connection(
         .await
         .ok_or("Connection closed during identification")??;
 
-    let stream = read
-        .into_inner()
-        .into_inner()
-        .reunite(write.into_inner().into_inner())
-        .expect("Could not reunite streams");
+    let stream = Channel {
+        writer: write.into_inner().into_inner(),
+        reader: read.into_inner().into_inner(),
+    };
 
     match response {
         IdentificationResponse::Ok => Ok(control_channel_sender(stream)),
@@ -98,12 +105,16 @@ async fn create_connection(
     }
 }
 
-async fn create_channel(
+async fn create_channel<L: Communication>(
     this_connection: ThisConnectionIdentifier,
     target_identifier: ConnectionIdentifier,
     channel_identifier: ChannelIdentifier,
-) -> Result<(DataChannelSenderReader, DataChannelSenderWriter)> {
-    let stream = connect(target_identifier).await?;
+    communication: L,
+) -> Result<(
+    DataChannelSenderReader<L::Reader>,
+    DataChannelSenderWriter<L::Writer>,
+)> {
+    let stream = connect(target_identifier, communication).await?;
     let (mut read, mut write) = identification_sender(stream);
     write
         .send(IdentificationRequest::IAmChannel(
@@ -117,11 +128,10 @@ async fn create_channel(
         .await
         .ok_or("Connection closed during identification")??;
 
-    let stream = read
-        .into_inner()
-        .into_inner()
-        .reunite(write.into_inner().into_inner())
-        .expect("Could not reunite streams");
+    let stream = Channel {
+        writer: write.into_inner().into_inner(),
+        reader: read.into_inner().into_inner(),
+    };
 
     match response {
         IdentificationResponse::Ok => Ok(data_channel_sender(stream)),
@@ -132,11 +142,13 @@ async fn create_channel(
 }
 
 mod channel_handler {
-
-    use crate::protocol::{DataChannelRequest, DataChannelResponse, DataChannelSenderReader, DataChannelSenderWriter, Sequence, TupleBuffer};
+    use crate::protocol::{
+        DataChannelRequest, DataChannelResponse, DataChannelSenderReader, DataChannelSenderWriter,
+        Sequence, TupleBuffer,
+    };
     use futures::SinkExt;
     use std::collections::{HashMap, VecDeque};
-
+    use tokio::io::{AsyncRead, AsyncWrite};
     use tokio::select;
     use tokio::sync::oneshot;
     use tokio_stream::StreamExt;
@@ -159,23 +171,23 @@ mod channel_handler {
         Cancelled,
         Terminated,
     }
-    pub(super) struct ChannelHandler {
+    pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
         cancellation_token: CancellationToken,
         pending_writes: VecDeque<TupleBuffer>,
         wait_for_ack: HashMap<Sequence, TupleBuffer>,
-        writer: DataChannelSenderWriter,
-        reader: DataChannelSenderReader,
+        writer: DataChannelSenderWriter<W>,
+        reader: DataChannelSenderReader<R>,
         queue: ChannelControlQueueListener,
     }
 
     type Result<T> = core::result::Result<T, ChannelHandlerError>;
 
-    impl ChannelHandler {
+    impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         pub fn new(
             cancellation_token: CancellationToken,
             queue: ChannelControlQueueListener,
-            reader: DataChannelSenderReader,
-            writer: DataChannelSenderWriter,
+            reader: DataChannelSenderReader<R>,
+            writer: DataChannelSenderWriter<W>,
         ) -> Self {
             Self {
                 cancellation_token,
@@ -234,7 +246,7 @@ mod channel_handler {
         }
 
         async fn send_pending(
-            writer: &mut DataChannelSenderWriter,
+            writer: &mut DataChannelSenderWriter<W>,
             pending_writes: &mut VecDeque<TupleBuffer>,
             wait_for_ack: &mut HashMap<Sequence, TupleBuffer>,
         ) -> Result<()> {
@@ -329,12 +341,14 @@ async fn channel_handler(
     target_connection: ConnectionIdentifier,
     channel_identifier: ChannelIdentifier,
     queue: channel_handler::ChannelControlQueueListener,
+    communication: impl Communication,
 ) -> ChannelHandlerResult {
     debug!("Channel negotiated. Connecting to {target_connection} on channel {channel_identifier}");
     let (reader, writer) = match create_channel(
         this_connection,
         target_connection.clone(),
         channel_identifier,
+        communication,
     )
     .await
     {
@@ -375,15 +389,16 @@ enum EstablishChannelResult {
     Cancelled,
 }
 
-async fn establish_channel(
-    control_channel_sender_writer: &mut ControlChannelSenderWriter,
-    control_channel_sender_reader: &mut ControlChannelSenderReader,
+async fn establish_channel<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
+    control_channel_sender_writer: &mut ControlChannelSenderWriter<W>,
+    control_channel_sender_reader: &mut ControlChannelSenderReader<R>,
     this_connection: &ThisConnectionIdentifier,
     target_connection: &ConnectionIdentifier,
     channel: ChannelIdentifier,
     channel_cancellation_token: CancellationToken,
     queue: channel_handler::ChannelControlQueueListener,
     controller: NetworkingConnectionController,
+    communication: impl Communication + 'static,
 ) -> EstablishChannelResult {
     match channel_cancellation_token
         .run_until_cancelled(
@@ -437,6 +452,7 @@ async fn establish_channel(
                     target_connection,
                     channel.clone(),
                     queue.clone(),
+                    communication,
                 )
                 .await
                 {
@@ -455,13 +471,13 @@ async fn establish_channel(
                         {
                             None => {}
                             Some(Ok(())) => {
-                                info!("Channel connection lost.Reopening channel");
+                                debug!("Channel connection lost. Reopening channel");
                             }
                             Some(Err(_)) => {}
                         }
                     }
                     ChannelHandlerResult::Closed => {
-                        info!("Channel closed");
+                        debug!("Channel closed");
                     }
                 }
             }
@@ -471,16 +487,17 @@ async fn establish_channel(
     EstablishChannelResult::Ok
 }
 
-async fn connection_handler(
+async fn connection_handler<L: Communication + 'static>(
     connection_cancellation_token: CancellationToken,
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
     controller: NetworkingConnectionController,
     listener: NetworkingConnectionControlListener,
+    communication: L,
 ) -> Result<()> {
     let (connection_tx, mut connection_rx) = tokio::sync::mpsc::channel::<(
-        ControlChannelSenderReader,
-        ControlChannelSenderWriter,
+        ControlChannelSenderReader<L::Reader>,
+        ControlChannelSenderWriter<L::Writer>,
         tokio::sync::oneshot::Sender<()>,
     )>(1);
     let (channel_tx, mut channel_rx) = tokio::sync::mpsc::channel::<(
@@ -497,6 +514,7 @@ async fn connection_handler(
             let target_connection = target_connection.clone();
             let this_connection = this_connection.clone();
             let connection_cancellation_token = connection_cancellation_token.clone();
+            let communication = communication.clone();
             async move {
                 let mut retry = 0;
                 loop {
@@ -504,6 +522,7 @@ async fn connection_handler(
                         .run_until_cancelled(create_connection(
                             this_connection.clone(),
                             target_connection.clone(),
+                            communication.clone(),
                         ))
                         .await
                     else {
@@ -517,8 +536,8 @@ async fn connection_handler(
                                 "Could not create connection to {}: {e:?}",
                                 target_connection
                             );
-                            retry = retry + 1;
-                            tokio::time::sleep(Duration::from_secs(retry)).await;
+                            retry += 1;
+                            tokio::time::sleep(Duration::from_millis(10 * 2u64.pow(retry))).await;
                             continue;
                         }
                     };
@@ -562,6 +581,7 @@ async fn connection_handler(
                             channel_cancellation_token.clone(),
                             queue,
                             controller.clone(),
+                            communication.clone(),
                         ))
                         .await
                     {
@@ -620,7 +640,7 @@ async fn connection_handler(
                 }
                 EstablishChannelResult::ChannelReject
                 | EstablishChannelResult::BadConnection(_, _, _) => {
-                    retry = retry + 1;
+                    retry += 1;
                     tokio::time::sleep(Duration::from_millis(100 * retry)).await;
                     continue;
                 }
@@ -671,6 +691,7 @@ async fn connection_handler(
 async fn create_connection_handler(
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
+    communication: impl Communication + 'static,
 ) -> Result<(CancellationToken, NetworkingConnectionController)> {
     let (tx, rx) = async_channel::bounded::<NetworkingConnectionControlMessage>(1024);
     let control = tx.clone();
@@ -682,8 +703,15 @@ async fn create_connection_handler(
             async move {
                 info!(
                     "Connection is terminated: {:?}",
-                    connection_handler(token, this_connection, target_connection, control, rx)
-                        .await
+                    connection_handler(
+                        token,
+                        this_connection,
+                        target_connection,
+                        control,
+                        rx,
+                        communication
+                    )
+                    .await
                 );
             }
         }
@@ -699,6 +727,7 @@ async fn network_sender_dispatcher(
     cancellation_token: CancellationToken,
     this_connection: ThisConnectionIdentifier,
     control: NetworkingServiceControlListener,
+    communication: impl Communication + 'static,
 ) -> Result<()> {
     let mut connections: HashMap<
         ConnectionIdentifier,
@@ -729,6 +758,7 @@ async fn network_sender_dispatcher(
                         .run_until_cancelled(create_connection_handler(
                             this_connection.clone(),
                             target_connection.clone(),
+                            communication.clone(),
                         ))
                         .await
                     {
@@ -765,22 +795,25 @@ async fn network_sender_dispatcher(
     }
 }
 
-impl NetworkService {
+impl<L: Communication + 'static> NetworkService<L> {
     pub fn start(
         runtime: Runtime,
         this_connection: ThisConnectionIdentifier,
-    ) -> Arc<NetworkService> {
+        communication: L,
+    ) -> Arc<NetworkService<L>> {
         let (controller, listener) = async_channel::bounded(5);
         let cancellation_token = CancellationToken::new();
         runtime.spawn(
             {
                 let this_connection = this_connection.clone();
                 let token = cancellation_token.clone();
+                let communication = communication.clone();
                 async move {
-                    info!("Starting sender network service");
-                    info!(
+                    debug!("Starting sender network service");
+                    debug!(
                         "sender network service stopped: {:?}",
-                        network_sender_dispatcher(token, this_connection, listener).await
+                        network_sender_dispatcher(token, this_connection, listener, communication)
+                            .await
                     );
                 }
             }
@@ -791,11 +824,12 @@ impl NetworkService {
             runtime: Mutex::new(Some(runtime)),
             cancellation_token,
             controller,
+            communication: Default::default(),
         })
     }
 
     pub fn register_channel(
-        self: &Arc<NetworkService>,
+        self: &Arc<NetworkService<L>>,
         connection: ConnectionIdentifier,
         channel: ChannelIdentifier,
     ) -> Result<channel_handler::ChannelControlQueue> {
@@ -813,7 +847,7 @@ impl NetworkService {
             .map_err(|_| "Network Service Closed".into())
     }
 
-    pub fn shutdown(self: Arc<NetworkService>) -> Result<()> {
+    pub fn shutdown(self: Arc<NetworkService<L>>) -> Result<()> {
         let runtime = self
             .runtime
             .lock()
@@ -825,5 +859,3 @@ impl NetworkService {
         Ok(())
     }
 }
-
-impl NetworkService {}

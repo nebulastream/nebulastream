@@ -38,7 +38,7 @@ public:
     void format(const spdlog::details::log_msg&, const std::tm&, spdlog::memory_buf_t& dest) override
     {
         const auto id = NES::Thread::getThisWorkerNodeId();
-        dest.append(id.value.data(), id.value.data() + id.value.size());
+        dest.append(id.getRawValue().data(), id.getRawValue().data() + id.getRawValue().size());
     }
 
     std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<WorkerIdFlag>(); }

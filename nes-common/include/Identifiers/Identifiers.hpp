@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <Identifiers/NESStrongType.hpp>
 
 namespace NES
@@ -69,8 +70,15 @@ using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0
 static constexpr DistributedQueryId INVALID_DISTRIBUTED_QUERY_ID = INVALID<DistributedQueryId>;
 static constexpr DistributedQueryId INITIAL_DISTRIBUTED_QUERY_ID = INITIAL<DistributedQueryId>;
 
-/// Legacy
-using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
-static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
-static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
+class WorkerId
+{
+    std::string value;
+
+public:
+    explicit WorkerId(std::string value) : value(std::move(value)) { }
+
+    const std::string& getRawValue() const { return value; }
+
+    auto operator<=>(const WorkerId&) const = default;
+};
 }

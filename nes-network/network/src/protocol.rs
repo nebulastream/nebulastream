@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
+use crate::channel::Channel;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::net::SocketAddr;
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::net::{TcpStream, lookup_host};
+use std::str::FromStr;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::net::lookup_host;
 use tokio_serde::Framed;
-use tokio_serde::formats::Json;
+use tokio_serde::formats::Cbor;
 use tokio_util::codec::LengthDelimitedCodec;
 use tokio_util::codec::{FramedRead, FramedWrite};
+use url::{Host, Url};
 
 pub type ChannelIdentifier = String;
 
@@ -28,29 +31,32 @@ pub type Result<T> = std::result::Result<T, crate::sender::Error>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub struct ConnectionIdentifier(String);
-
+pub struct ConnectionIdentifier(Url);
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub struct ThisConnectionIdentifier(String);
+pub struct ThisConnectionIdentifier(Url);
 impl Display for ConnectionIdentifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        f.write_str(&self.0.to_string())
     }
 }
 impl Display for ThisConnectionIdentifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        f.write_str(&self.0.to_string())
     }
 }
 
 impl ConnectionIdentifier {
     pub async fn to_socket_address(&self) -> Result<SocketAddr> {
-        lookup_host(&self.0)
-            .await
-            .map_err(|e| format!("Could not resolve host. DNS Lookup failed: {e:?}"))?
-            .filter(|addr| addr.is_ipv4())
-            .next()
-            .ok_or(format!("Could not resolve host: {:?}", self.0).into())
+        let port = self.0.port().expect("Checked");
+        match self.0.host().expect("Checked") {
+            Host::Domain(s) => lookup_host(format!("{s}:{port}"))
+                .await
+                .map_err(|e| format!("Could not resolve host. DNS Lookup failed: {e:?}"))?
+                .find(|addr| addr.is_ipv4())
+                .ok_or(format!("Could not resolve host: {:?}", self.0).into()),
+            Host::Ipv4(ip) => Ok(SocketAddr::new(ip.into(), port)),
+            Host::Ipv6(ip) => Ok(SocketAddr::new(ip.into(), port)),
+        }
     }
 }
 impl Into<ConnectionIdentifier> for ThisConnectionIdentifier {
@@ -59,15 +65,26 @@ impl Into<ConnectionIdentifier> for ThisConnectionIdentifier {
     }
 }
 
-impl From<String> for ThisConnectionIdentifier {
-    fn from(value: String) -> Self {
-        ThisConnectionIdentifier(value)
+impl FromStr for ThisConnectionIdentifier {
+    type Err = Box<dyn std::error::Error + Send + Sync>;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let connection = ConnectionIdentifier::from_str(s)?;
+        Ok(ThisConnectionIdentifier(connection.0))
     }
 }
 
-impl From<String> for ConnectionIdentifier {
-    fn from(value: String) -> Self {
-        ConnectionIdentifier(value)
+impl FromStr for ConnectionIdentifier {
+    type Err = Box<dyn std::error::Error + Send + Sync>;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let url = Url::parse(&format!("nes://{s}"))
+            .map_err(|e| format!("InvalidConnection Identifier: Invalid Url: {e}"))?;
+        url.host().ok_or("InvalidConnection Identifier: No host")?;
+        url.port().ok_or("InvalidConnection Identifier: No port")?;
+        if url.scheme() != "nes" {
+            return Err("InvalidConnection Identifier: Invalid scheme".into());
+        }
+
+        Ok(ConnectionIdentifier(url))
     }
 }
 
@@ -118,54 +135,54 @@ impl Debug for TupleBuffer {
     }
 }
 
-pub type DataChannelSenderReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type DataChannelSenderReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     DataChannelResponse,
     DataChannelResponse,
-    Json<DataChannelResponse, DataChannelResponse>,
+    Cbor<DataChannelResponse, DataChannelResponse>,
 >;
-pub type DataChannelSenderWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type DataChannelSenderWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Json<DataChannelRequest, DataChannelRequest>,
+    Cbor<DataChannelRequest, DataChannelRequest>,
 >;
-pub type DataChannelReceiverReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type DataChannelReceiverReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     DataChannelRequest,
     DataChannelRequest,
-    Json<DataChannelRequest, DataChannelRequest>,
+    Cbor<DataChannelRequest, DataChannelRequest>,
 >;
-pub type DataChannelReceiverWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type DataChannelReceiverWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     DataChannelResponse,
     DataChannelResponse,
-    Json<DataChannelResponse, DataChannelResponse>,
+    Cbor<DataChannelResponse, DataChannelResponse>,
 >;
 
-pub type ControlChannelSenderReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type ControlChannelSenderReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     ControlChannelResponse,
     ControlChannelResponse,
-    Json<ControlChannelResponse, ControlChannelResponse>,
+    Cbor<ControlChannelResponse, ControlChannelResponse>,
 >;
-pub type ControlChannelSenderWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type ControlChannelSenderWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     ControlChannelRequest,
     ControlChannelRequest,
-    Json<ControlChannelRequest, ControlChannelRequest>,
+    Cbor<ControlChannelRequest, ControlChannelRequest>,
 >;
-pub type ControlChannelReceiverReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type ControlChannelReceiverReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     ControlChannelRequest,
     ControlChannelRequest,
-    Json<ControlChannelRequest, ControlChannelRequest>,
+    Cbor<ControlChannelRequest, ControlChannelRequest>,
 >;
-pub type ControlChannelReceiverWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type ControlChannelReceiverWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     ControlChannelResponse,
     ControlChannelResponse,
-    Json<ControlChannelResponse, ControlChannelResponse>,
+    Cbor<ControlChannelResponse, ControlChannelResponse>,
 >;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -178,141 +195,152 @@ pub enum IdentificationRequest {
     IAmConnection(ThisConnectionIdentifier),
     IAmChannel(ThisConnectionIdentifier, ChannelIdentifier),
 }
-pub type IdentificationSenderReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type IdentificationSenderReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     IdentificationResponse,
     IdentificationResponse,
-    Json<IdentificationResponse, IdentificationResponse>,
+    Cbor<IdentificationResponse, IdentificationResponse>,
 >;
-pub type IdentificationSenderWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type IdentificationSenderWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     IdentificationRequest,
     IdentificationRequest,
-    Json<IdentificationRequest, IdentificationRequest>,
+    Cbor<IdentificationRequest, IdentificationRequest>,
 >;
-pub type IdentificationReceiverReader = Framed<
-    FramedRead<OwnedReadHalf, LengthDelimitedCodec>,
+pub type IdentificationReceiverReader<R> = Framed<
+    FramedRead<R, LengthDelimitedCodec>,
     IdentificationRequest,
     IdentificationRequest,
-    Json<IdentificationRequest, IdentificationRequest>,
+    Cbor<IdentificationRequest, IdentificationRequest>,
 >;
-pub type IdentificationReceiverWriter = Framed<
-    FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>,
+pub type IdentificationReceiverWriter<W> = Framed<
+    FramedWrite<W, LengthDelimitedCodec>,
     IdentificationResponse,
     IdentificationResponse,
-    Json<IdentificationResponse, IdentificationResponse>,
+    Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 
-pub fn data_channel_sender(
-    stream: TcpStream,
-) -> (DataChannelSenderReader, DataChannelSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn data_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (DataChannelSenderReader<R>, DataChannelSenderWriter<W>) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<DataChannelResponse, DataChannelResponse>::default(),
+        Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<DataChannelRequest, DataChannelRequest>::default(),
+        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
     (read, write)
 }
 
-pub fn data_channel_receiver(
-    stream: TcpStream,
-) -> (DataChannelReceiverReader, DataChannelReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn data_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (DataChannelReceiverReader<R>, DataChannelReceiverWriter<W>) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<DataChannelRequest, DataChannelRequest>::default(),
+        Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<DataChannelResponse, DataChannelResponse>::default(),
+        Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
     (read, write)
 }
 
-pub fn control_channel_sender(
-    stream: TcpStream,
-) -> (ControlChannelSenderReader, ControlChannelSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn control_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (ControlChannelSenderReader<R>, ControlChannelSenderWriter<W>) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<ControlChannelResponse, ControlChannelResponse>::default(),
+        Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<ControlChannelRequest, ControlChannelRequest>::default(),
+        Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
     (read, write)
 }
 
-pub fn control_channel_receiver(
-    stream: TcpStream,
-) -> (ControlChannelReceiverReader, ControlChannelReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn control_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (
+    ControlChannelReceiverReader<R>,
+    ControlChannelReceiverWriter<W>,
+) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<ControlChannelRequest, ControlChannelRequest>::default(),
+        Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<ControlChannelResponse, ControlChannelResponse>::default(),
+        Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
     (read, write)
 }
 
-pub fn identification_sender(
-    stream: TcpStream,
-) -> (IdentificationSenderReader, IdentificationSenderWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn identification_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (IdentificationSenderReader<R>, IdentificationSenderWriter<W>) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<IdentificationResponse, IdentificationResponse>::default(),
+        Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<IdentificationRequest, IdentificationRequest>::default(),
+        Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
     (read, write)
 }
 
-pub fn identification_receiver(
-    stream: TcpStream,
-) -> (IdentificationReceiverReader, IdentificationReceiverWriter) {
-    let (read, write) = stream.into_split();
-    let read = FramedRead::new(read, LengthDelimitedCodec::new());
+pub fn identification_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
+    stream: Channel<R, W>,
+) -> (
+    IdentificationReceiverReader<R>,
+    IdentificationReceiverWriter<W>,
+) {
+    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
     let read = tokio_serde::Framed::new(
         read,
-        Json::<IdentificationRequest, IdentificationRequest>::default(),
+        Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
-    let write = FramedWrite::new(write, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
     let write = tokio_serde::Framed::new(
         write,
-        Json::<IdentificationResponse, IdentificationResponse>::default(),
+        Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
     (read, write)
+}
+
+#[test]
+fn test() {
+    assert!(ConnectionIdentifier::from_str("tcp://localhost:8080").is_err());
+    assert!(ConnectionIdentifier::from_str("localhost").is_err());
+    assert!(ConnectionIdentifier::from_str("localhost:ABBB").is_err());
+    assert!(ConnectionIdentifier::from_str("yoo:localhost:ABBB").is_err());
+    assert!(ConnectionIdentifier::from_str("localhost:8080").is_ok());
+    assert!(ConnectionIdentifier::from_str("127.0.0.1:8080").is_ok());
+    assert!(ConnectionIdentifier::from_str("google.dot.com:8080").is_ok());
 }

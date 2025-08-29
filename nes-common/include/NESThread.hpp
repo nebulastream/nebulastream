@@ -46,9 +46,7 @@ public:
         thread = std::jthread(
             []<typename FN2, typename... Args2>(std::stop_token token, WorkerId worker_id, std::string name, FN2&& fn, Args2&&... args)
             {
-                WorkerNodeId = std::move(worker_id);
-                ThreadName = std::move(name);
-                setThreadName(ThreadName);
+                initializeThread(std::move(worker_id), std::move(name));
                 if constexpr (std::is_member_function_pointer_v<FN2>)
                 {
                     [&token]<typename MemFN, typename ThisArg, typename... Args3>(MemFN memberFunction, ThisArg&& thisArg, Args3&&... args)
@@ -103,5 +101,12 @@ public:
     [[nodiscard]] bool isCurrentThread() const { return std::this_thread::get_id() == thread.get_id(); }
 
     bool requestStop() { return thread.request_stop(); }
+
+    static void initializeThread(WorkerId worker_id, std::string name)
+    {
+        WorkerNodeId = std::move(worker_id);
+        ThreadName = std::move(name);
+        setThreadName(ThreadName);
+    }
 };
 }

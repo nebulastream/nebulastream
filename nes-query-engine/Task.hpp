@@ -67,13 +67,12 @@ public:
 
     LocalQueryId queryId = INVALID<LocalQueryId>;
 
-private:
 #ifndef NO_ASSERT /// Only used in debug INVARIANT
     mutable bool onCompletionCalled = false;
     mutable bool onErrorCalled = false;
 #endif
 
-    std::chrono::high_resolution_clock::time_point creation = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point creation{};
     std::function<void()> onCompletion = [] { };
     std::function<void(Exception)> onError = [](Exception) { };
 };

@@ -17,11 +17,13 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <NESThread.hpp>
 #include <SystestExecutor.hpp>
 
 int main(const int argc, const char** argv)
 {
     const auto startTime = std::chrono::high_resolution_clock::now();
+    NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
     switch (const auto [returnType, outputMessage, exceptionCode, _] = executeSystests(NES::readConfiguration(argc, argv)); returnType)
     {
