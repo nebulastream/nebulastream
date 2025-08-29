@@ -103,6 +103,7 @@ private:
     #define USED_IN_DEBUG [[maybe_unused]]
     #define PRECONDITION(condition, formatString, ...) ((void)0)
     #define INVARIANT(condition, formatString, ...) ((void)0)
+    #define NOXARIANT(condition, formatString, ...) ((void)0)
 #elif defined(NES_THROW_ON_INVARIANT_OR_PRECONDITION_VIOLATION)
     #define USED_IN_DEBUG
 
