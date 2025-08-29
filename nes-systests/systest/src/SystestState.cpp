@@ -35,25 +35,14 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataTypeProvider.hpp>
-
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDataProvider.hpp>
-#include <Sources/SourceValidationProvider.hpp>
-#include <SystestSources/SystestSourceYAMLBinder.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 
-#include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
@@ -289,21 +278,21 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
 
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
-    INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
     INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
 
-    const auto lastRun = querySummary.runs.back();
-    INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
-    return std::chrono::duration_cast<std::chrono::duration<double>>(lastRun.stop.value() - lastRun.running.value());
+    const auto stop = queryStatus.metrics.stop;
+    const auto running = queryStatus.metrics.stop;
+    INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
+    return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
 }
 
 std::string RunningQuery::getThroughput() const
 {
-    INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
     INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
 
-    const auto lastRun = querySummary.runs.back();
-    INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+    const auto stop = queryStatus.metrics.stop;
+    const auto running = queryStatus.metrics.running;
+    INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps timestamps attached", queryId);
     if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
     {
         return "";
@@ -314,7 +303,7 @@ std::string RunningQuery::getThroughput() const
     if (bytesProcessed.value() > 0 and tuplesProcessed.value() > 0)
     {
         /// Calculating the throughput in bytes per second and tuples per second
-        const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
+        const std::chrono::duration<double> duration = stop.value() - running.value();
         bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
         tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
     }

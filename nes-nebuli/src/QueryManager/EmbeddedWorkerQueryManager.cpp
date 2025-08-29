@@ -47,8 +47,8 @@ std::expected<void, Exception> EmbeddedWorkerQueryManager::unregister(const Quer
     return worker.unregisterQuery(queryId);
 }
 
-std::expected<QuerySummary, Exception> EmbeddedWorkerQueryManager::status(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQueryManager::status(QueryId queryId) const noexcept
 {
-    return worker.getQuerySummary(queryId);
+    return worker.getQueryStatus(queryId);
 }
 }
