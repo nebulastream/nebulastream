@@ -46,12 +46,11 @@ public:
         QueryId,
         const std::shared_ptr<RunningQueryPlanNode>& target,
         TupleBuffer,
-        BaseTask::onComplete,
-        BaseTask::onFailure,
+        TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
-    virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure) = 0;
-    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure) = 0;
-    virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure) = 0;
+    virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
+    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
+    virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
 };
 }

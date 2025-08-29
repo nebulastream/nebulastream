@@ -52,7 +52,7 @@ SourceReturnType::EmitFunction emitFunction(
                     {
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
-                            queryId, successor, data.buffer, {}, {}, PipelineExecutionContext::ContinuationPolicy::NEVER))
+                            queryId, successor, data.buffer, TaskCallback{}, PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
