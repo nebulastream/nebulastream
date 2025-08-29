@@ -445,18 +445,20 @@ def fn_len_from_line(line, lines, filename):
             print("could not find opening: ", filename + ":" + str(line))
             return None
 
-        j = line + i
+        j = brace_open
         while j < len(lines):
             if lines[j].startswith((" " * whitespace_offset) + "}"):
                 brace_clos = j
                 break
             j += 1
 
+        if brace_open and brace_clos and brace_open == brace_clos:
+            return (brace_open + 1, brace_open + 2)
+
         if brace_open and brace_clos:
             return (brace_open + 1, brace_clos + 1)
     except IndexError as e:
-        print("tja", e, filename, line)
-    print("could not find fn range: ", filename + ":" + str(line))
+        print(f"tja: exc {e} in {filename}:{line}")
 
 
 def is_overlap(a, b):
