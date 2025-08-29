@@ -50,7 +50,7 @@ struct LocalQuery
     /// Default constructor for YAML deserialization
     LocalQuery() : id{0} { }
 
-    LocalQuery(const size_t id, const GrpcAddr& addr) : id{id}, grpcAddr{addr} { }
+    LocalQuery(const LocalQueryId id, const GrpcAddr& addr) : id{id}, grpcAddr{addr} { }
 
     bool operator==(const LocalQuery& other) const = default;
 };
