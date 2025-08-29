@@ -32,6 +32,7 @@
 namespace NES
 {
 
+/// Combines both selecting the fields to project and renaming/mapping of fields
 class ProjectionLogicalOperator : public LogicalOperatorConcept
 {
 public:

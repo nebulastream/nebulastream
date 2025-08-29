@@ -589,13 +589,11 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function and we need to generate one.
     else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation)
     {
-        std::string aggIdentifyingString;
         const auto fieldAccess = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
         const auto fieldAccessLogicalFn = fieldAccess.get<FieldAccessLogicalFunction>();
-        aggIdentifyingString = fmt::format("{}_", fieldAccessLogicalFn.getFieldName());
         const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}{}", aggIdentifyingString, lastAggregation->getName());
+        const auto newName = fmt::format("{}_{}", fieldAccessLogicalFn.getFieldName(), lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
         lastAggregation->asField = asField;
         helpers.top().windowAggs.pop_back();
@@ -883,8 +881,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
             {
+                helpers.top().functionBuilder.pop_back();
                 helpers.top().functionBuilder.push_back(*logicalFunction);
             }
+            /// TODO Would be better to use the LogicalFunctionProvider for reservoir, but then it would also need to take constantBuilder
+            /// as argument and not just the functionBuilder (see above).
             else if (funcName == "RESERVOIR")
             {
                 if (helpers.top().functionBuilder.empty())
@@ -904,14 +905,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 }
                 auto constantString = helpers.top().constantBuilder.back();
                 helpers.top().constantBuilder.pop_back();
-                uint64_t reservoirSize;
-                auto parseResult = std::from_chars(constantString.data(), constantString.data() + constantString.size(), reservoirSize);
-                INVARIANT(parseResult.ec == std::errc(), "Failed to parse reservoir size: {}", constantString);
+                uint64_t reservoirSize = parseConstant(helpers.top().constantBuilder.back(), "reservoirSize");
                 const auto uselessField = FieldAccessLogicalFunction("timestamp");
                 const auto asFieldIfNotOverwritten = FieldAccessLogicalFunction("reservoir");
                 helpers.top().windowAggs.push_back(
                     ReservoirSampleLogicalFunction::create(uselessField, asFieldIfNotOverwritten, sampleFields, reservoirSize));
-                helpers.top().hasUnnamedSample = true;
                 break;
             }
             else

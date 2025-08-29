@@ -91,9 +91,8 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
         }
     }
 
-    PRECONDITION(sampleSchema.has_value(), "ReservoirProbe's sampleSchema needs to be initialized at this point!");
-    copy.sampleSchema = Schema{sampleSchema.value().memoryLayoutType};
-    for (auto field : sampleSchema.value().getFields())
+    copy.sampleSchema = Schema{sampleSchema.memoryLayoutType};
+    for (auto field : sampleSchema.getFields())
     {
         auto pos = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
         std::string qualifiedName = (pos == std::string::npos)? copy.inputSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + field.name : field.name;
@@ -101,7 +100,7 @@ LogicalOperator ReservoirProbeLogicalOperator::withInferredSchema(std::vector<Sc
         {
             copy.outputSchema.addField(qualifiedName, field.dataType);
         }
-        copy.sampleSchema.value().addField(qualifiedName, field.dataType);
+        copy.sampleSchema.addField(qualifiedName, field.dataType);
     }
 
     return copy;
@@ -217,14 +216,11 @@ void ReservoirProbeLogicalOperator::serialize(SerializableOperator& serializable
 
     auto asFieldFn = SerializableFunction();
     asFieldFn.CopyFrom(asField.serialize());
-    (*serializableOperator.mutable_config())[ConfigParameters::SAMPLE_AS_FIELD] = descriptorConfigTypeToProto(asFieldFn);
+    (*serializableOperator.mutable_config())[ConfigParameters::AS_FIELD] = descriptorConfigTypeToProto(asFieldFn);
 
-    if (sampleSchema.has_value())
-    {
-        SerializableSchema serializedSampleSchema;
-        SchemaSerializationUtil::serializeSchema(sampleSchema.value(), &serializedSampleSchema);
-        (*serializableOperator.mutable_config())[ConfigParameters::SAMPLE_SCHEMA] = descriptorConfigTypeToProto(serializedSampleSchema);
-    }
+    SerializableSchema serializedSampleSchema;
+    SchemaSerializationUtil::serializeSchema(sampleSchema, &serializedSampleSchema);
+    (*serializableOperator.mutable_config())[ConfigParameters::SAMPLE_SCHEMA] = descriptorConfigTypeToProto(serializedSampleSchema);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
@@ -232,7 +228,7 @@ void ReservoirProbeLogicalOperator::serialize(SerializableOperator& serializable
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterReservoirProbeLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    auto asFieldSerialized = arguments.config[ReservoirProbeLogicalOperator::ConfigParameters::SAMPLE_AS_FIELD];
+    auto asFieldSerialized = arguments.config[ReservoirProbeLogicalOperator::ConfigParameters::AS_FIELD];
     if (not std::holds_alternative<NES::SerializableFunction>(asFieldSerialized))
     {
         throw UnknownLogicalOperator();

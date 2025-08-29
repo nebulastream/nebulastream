@@ -54,7 +54,7 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
         auto aggOp = newChildren.front().get<WindowedAggregationLogicalOperator>();
         auto inputSchema = aggOp.getInputSchemas().front();
         auto probeOp = opWithTypes.get<ReservoirProbeLogicalOperator>();
-        probeOp.sampleSchema.value().updateFieldsFromOtherSchema(inputSchema);
+        probeOp.sampleSchema.updateFieldsFromOtherSchema(inputSchema);
         return probeOp.withInferredSchema(childSchemas);
     }
 

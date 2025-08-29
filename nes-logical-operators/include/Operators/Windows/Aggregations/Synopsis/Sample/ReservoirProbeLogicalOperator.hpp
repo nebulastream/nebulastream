@@ -61,11 +61,11 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SAMPLE_AS_FIELD{
-            "sampleAsField",
+        static inline const DescriptorConfig::ConfigParameter<std::string> AS_FIELD{
+            "asField",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(SAMPLE_AS_FIELD, config); }};
+            { return DescriptorConfig::tryGet(AS_FIELD, config); }};
 
         static inline const DescriptorConfig::ConfigParameter<std::string> SAMPLE_SCHEMA{
             "sampleSchema",
@@ -74,12 +74,12 @@ public:
             { return DescriptorConfig::tryGet(SAMPLE_SCHEMA, config); }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(SAMPLE_AS_FIELD, SAMPLE_SCHEMA);
+            = DescriptorConfig::createConfigParameterContainerMap(AS_FIELD, SAMPLE_SCHEMA);
     };
 
     /// Name of the field the sample is in.
     FieldAccessLogicalFunction asField;
-    std::optional<Schema> sampleSchema;
+    Schema sampleSchema;
 
 private:
     static constexpr std::string_view NAME = "ReservoirProbe";

@@ -72,6 +72,7 @@ std::string_view ReservoirSampleLogicalFunction::getName() const noexcept
     return NAME;
 }
 
+/// TODO Remove this function when upstream removes it.
 void ReservoirSampleLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
@@ -92,7 +93,6 @@ void ReservoirSampleLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    /// TODO input is the whole record. What should we use as inputStamp then?
     inputStamp = DataType(DataType::Type::VARSIZED);
     finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();

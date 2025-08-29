@@ -32,7 +32,7 @@ RewriteRuleResultSubgraph LowerToPhysicalReservoirProbe::apply(LogicalOperator l
 {
     PRECONDITION(logicalOperator.tryGet<ReservoirProbeLogicalOperator>(), "Expected a ReservoirProbeLogicalOperator");
     auto reservoirProbe = logicalOperator.get<ReservoirProbeLogicalOperator>();
-    auto sampleSchema = reservoirProbe.sampleSchema.value();
+    auto sampleSchema = reservoirProbe.sampleSchema;
     auto asField = reservoirProbe.asField.getFieldName();
     /// TODO get these from the logical operator!
     const auto windowMetaData = WindowMetaData{"stream$start", "stream$end"};

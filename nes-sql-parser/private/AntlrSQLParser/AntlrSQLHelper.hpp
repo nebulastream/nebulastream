@@ -59,7 +59,6 @@ public:
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
     bool hasUnnamedAggregation = false;
-    bool hasUnnamedSample = false;
     bool asterisk = false;
 
     [[nodiscard]] bool isInFunctionCall() const { return not functionBuilder.empty(); }
