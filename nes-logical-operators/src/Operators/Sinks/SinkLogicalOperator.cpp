@@ -35,6 +35,7 @@
 
 namespace NES
 {
+
 SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
 
 SinkLogicalOperator::SinkLogicalOperator(Sinks::SinkDescriptor sinkDescriptor)
@@ -140,8 +141,8 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
         }
 
         throw CannotInferSchema(
-            "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and found "
-            "unexpected fields {}",
+            "The schema of the sink must be equal to the schema of the input operator. \n Expected fields: \n{} \n where not found, and found \n"
+            "unexpected fields: \n{}",
             expectedFieldsString.str(),
             actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
     }
