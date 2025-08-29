@@ -511,12 +511,12 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
-    /// Test 2: Schema with missing fields in actual - should show added fields
+    /// Test 2: Schema with missing fields in actual - should show missing field and the mismatch for the second fieĺd
     {
         Schema expectedSchema;
         expectedSchema.addField("field1", DataType::Type::INT64);
@@ -530,15 +530,21 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_EQ(diff.leftFields.size(), 1);
-        EXPECT_EQ(diff.leftFields[0].name, "field2");
-        EXPECT_EQ(diff.leftFields[0].dataType.type, DataType::Type::FLOAT32);
+        EXPECT_EQ(diff.missingFields.size(), 1);
+        EXPECT_EQ(diff.missingFields[0].name, "field3");
+        EXPECT_EQ(diff.missingFields[0].dataType.type, DataType::Type::BOOLEAN);
 
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+
+        EXPECT_EQ(diff.schemaMismatches.size(), 1);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 1);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field2");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::FLOAT32);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field3");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::BOOLEAN);
     }
 
-    /// Test 3: Schema with extra fields in actual - should show removed fields
+    /// Test 3: Schema with extra fields in actual - should show additional fields
     {
         Schema expectedSchema;
         expectedSchema.addField("field1", DataType::Type::INT64);
@@ -551,13 +557,13 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
 
-        EXPECT_EQ(diff.rightFields.size(), 1);
-        EXPECT_EQ(diff.rightFields[0].name, "field3");
-        EXPECT_EQ(diff.rightFields[0].dataType.type, DataType::Type::BOOLEAN);
+        EXPECT_EQ(diff.additionalFields.size(), 1);
+        EXPECT_EQ(diff.additionalFields[0].name, "field3");
+        EXPECT_EQ(diff.additionalFields[0].dataType.type, DataType::Type::BOOLEAN);
 
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
     /// Test 4: Schema with type mismatches - should show modified fields
@@ -572,14 +578,15 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
 
-        EXPECT_EQ(diff.fieldsWithMissmatch.size(), 1);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.dataType.type, DataType::Type::INT64);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.dataType.type, DataType::Type::INT32);
+        EXPECT_EQ(diff.schemaMismatches.size(), 1);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 0);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::INT32);
     }
 
     /// Test 5: Schema with duplicate fields - should handle duplicates correctly
@@ -596,12 +603,12 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
-    /// Test 6: Schema with duplicate fields but different counts
+    /// Test 6: Schema with duplicate fields but different counts - should show missing field
     {
         Schema expectedSchema;
         expectedSchema.addField("field1", DataType::Type::INT64);
@@ -612,12 +619,12 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_EQ(diff.leftFields.size(), 1);
-        EXPECT_EQ(diff.leftFields[0].name, "field1");
-        EXPECT_EQ(diff.leftFields[0].dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.missingFields.size(), 1);
+        EXPECT_EQ(diff.missingFields[0].name, "field1");
+        EXPECT_EQ(diff.missingFields[0].dataType.type, DataType::Type::INT64);
 
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
     /// Test 7: Schema with duplicate fields and type mismatches
@@ -632,14 +639,15 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
 
-        EXPECT_EQ(diff.fieldsWithMissmatch.size(), 1);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.dataType.type, DataType::Type::INT64);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.dataType.type, DataType::Type::INT32);
+        EXPECT_EQ(diff.schemaMismatches.size(), 1);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 0);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::INT32);
     }
 
     /// Test 8: Empty schemas
@@ -649,9 +657,9 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
     /// Test 9: One empty schema
@@ -663,12 +671,12 @@ TEST_F(SchemaTest, diffSchemasTest)
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_EQ(diff.leftFields.size(), 1);
-        EXPECT_EQ(diff.leftFields[0].name, "field1");
-        EXPECT_EQ(diff.leftFields[0].dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.missingFields.size(), 1);
+        EXPECT_EQ(diff.missingFields[0].name, "field1");
+        EXPECT_EQ(diff.missingFields[0].dataType.type, DataType::Type::INT64);
 
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+        EXPECT_TRUE(diff.schemaMismatches.empty());
     }
 
     /// Test 10: Complex schema with multiple differences
@@ -683,27 +691,39 @@ TEST_F(SchemaTest, diffSchemasTest)
         actualSchema.addField("field1", DataType::Type::INT32); /// Type mismatch
         actualSchema.addField("field2", DataType::Type::FLOAT32); /// Same
         /// field3 is missing
-        actualSchema.addField("field4", DataType::Type::VARSIZED); /// Same
-        actualSchema.addField("field5", DataType::Type::BOOLEAN); /// Extra field
+        actualSchema.addField("field4", DataType::Type::VARSIZED); /// Type mismatch
+        actualSchema.addField("field5", DataType::Type::BOOLEAN); /// Type mismatch
+        actualSchema.addField("field6", DataType::Type::VARSIZED); /// Additional field
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-        EXPECT_EQ(diff.leftFields.size(), 1);
-        EXPECT_EQ(diff.leftFields[0].name, "field3");
-        EXPECT_EQ(diff.leftFields[0].dataType.type, DataType::Type::BOOLEAN);
+        EXPECT_TRUE(diff.missingFields.empty());
 
-        EXPECT_EQ(diff.rightFields.size(), 1);
-        EXPECT_EQ(diff.rightFields[0].name, "field5");
-        EXPECT_EQ(diff.rightFields[0].dataType.type, DataType::Type::BOOLEAN);
+        EXPECT_EQ(diff.additionalFields.size(), 1);
+        EXPECT_EQ(diff.additionalFields[0].name, "field6");
+        EXPECT_EQ(diff.additionalFields[0].dataType.type, DataType::Type::VARSIZED);
 
-        EXPECT_EQ(diff.fieldsWithMissmatch.size(), 1);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].first.dataType.type, DataType::Type::INT64);
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.name, "field1");
-        EXPECT_EQ(diff.fieldsWithMissmatch[0].second.dataType.type, DataType::Type::INT32);
+        EXPECT_EQ(diff.schemaMismatches.size(), 3);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 0);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::INT32);
+
+        EXPECT_EQ(diff.schemaMismatches[1].index, 2);
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.name, "field3");
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.dataType.type, DataType::Type::BOOLEAN);
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.name, "field4");
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.dataType.type, DataType::Type::VARSIZED);
+
+        EXPECT_EQ(diff.schemaMismatches[2].index, 3);
+        EXPECT_EQ(diff.schemaMismatches[2].expectedField.name, "field4");
+        EXPECT_EQ(diff.schemaMismatches[2].expectedField.dataType.type, DataType::Type::VARSIZED);
+        EXPECT_EQ(diff.schemaMismatches[2].actualField.name, "field5");
+        EXPECT_EQ(diff.schemaMismatches[2].actualField.dataType.type, DataType::Type::BOOLEAN);
     }
 
-    /// Test 11: Fields out of order - should still return empty diff if schemas are equivalent
+    /// Test 11: Fields out of order - should be treated like mismatches
     {
         Schema expectedSchema;
         expectedSchema.addField("field1", DataType::Type::INT64);
@@ -718,12 +738,30 @@ TEST_F(SchemaTest, diffSchemasTest)
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
         /// Since order doesn't matter, these schemas should be considered identical
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+
+        EXPECT_EQ(diff.schemaMismatches.size(), 3);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 0);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field3");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::BOOLEAN);
+
+        EXPECT_EQ(diff.schemaMismatches[1].index, 1);
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.name, "field2");
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.dataType.type, DataType::Type::INT64);
+
+        EXPECT_EQ(diff.schemaMismatches[2].index, 2);
+        EXPECT_EQ(diff.schemaMismatches[2].expectedField.name, "field3");
+        EXPECT_EQ(diff.schemaMismatches[2].expectedField.dataType.type, DataType::Type::BOOLEAN);
+        EXPECT_EQ(diff.schemaMismatches[2].actualField.name, "field2");
+        EXPECT_EQ(diff.schemaMismatches[2].actualField.dataType.type, DataType::Type::FLOAT32);
     }
 
-    /// Test 12: Fields out of order with duplicates - should handle correctly
+    /// Test 12: Fields out of order with duplicates - Should cause mismatches
     {
         Schema expectedSchema;
         expectedSchema.addField("field1", DataType::Type::INT64);
@@ -731,16 +769,28 @@ TEST_F(SchemaTest, diffSchemasTest)
         expectedSchema.addField("field2", DataType::Type::FLOAT32);
 
         Schema actualSchema;
-        actualSchema.addField("field2", DataType::Type::FLOAT32); /// Different order
-        actualSchema.addField("field1", DataType::Type::INT64); /// Different order
-        actualSchema.addField("field1", DataType::Type::INT64); /// Different order
+        actualSchema.addField("field2", DataType::Type::FLOAT32); /// mismatch
+        actualSchema.addField("field1", DataType::Type::INT64); /// same
+        actualSchema.addField("field1", DataType::Type::INT64); /// mismatch
 
         auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
         /// Since order doesn't matter and duplicates are handled correctly
-        EXPECT_TRUE(diff.leftFields.empty());
-        EXPECT_TRUE(diff.rightFields.empty());
-        EXPECT_TRUE(diff.fieldsWithMissmatch.empty());
+        EXPECT_TRUE(diff.missingFields.empty());
+        EXPECT_TRUE(diff.additionalFields.empty());
+
+        EXPECT_EQ(diff.schemaMismatches.size(), 2);
+        EXPECT_EQ(diff.schemaMismatches[0].index, 0);
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.name, "field2");
+        EXPECT_EQ(diff.schemaMismatches[0].actualField.dataType.type, DataType::Type::FLOAT32);
+
+        EXPECT_EQ(diff.schemaMismatches[1].index, 2);
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.name, "field2");
+        EXPECT_EQ(diff.schemaMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.name, "field1");
+        EXPECT_EQ(diff.schemaMismatches[1].actualField.dataType.type, DataType::Type::INT64);
     }
 }
 

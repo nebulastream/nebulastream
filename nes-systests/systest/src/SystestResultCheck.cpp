@@ -364,30 +364,18 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        auto matchingFieldIt = actualResultSchema.getRawValue().begin();
-        const auto endOfActualSchema = actualResultSchema.getRawValue().end();
-        while ((matchingFieldIt = std::ranges::find(matchingFieldIt, actualResultSchema.getRawValue().end(), expectedField))
-               != endOfActualSchema)
+        /// Experiment for enforced order of fields
+        if (static_cast<size_t>(expectedFieldIdx) >= actualResultSchema.getRawValue().getFields().size())
         {
-            /// If the schema has multiple, identical fields, we need to make sure that we match the expected field with a still unmatched actual field.
-            /// We check if the offset to the current matched field was already emplaced in matchedActualResultFields and continue searching
-            /// if this is the case.
-            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
-            if (!matchedActualResultFields.contains(offset))
-            {
-                /// We found an unmatched field and can stop searching.
-                break;
-            }
-
-            ++matchingFieldIt;
+            expectedToActualFieldMap.schemaErrorStream
+                << fmt::format("Number of fields does not match between actual and expected schema,");
         }
-        if (matchingFieldIt != endOfActualSchema)
+        if (expectedField == actualResultSchema.getRawValue().getFields()[expectedFieldIdx])
         {
-            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
-            matchedActualResultFields.emplace(offset);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, expectedFieldIdx);
+            matchedActualResultFields.emplace(expectedFieldIdx);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
-            expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(offset);
+            expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(expectedFieldIdx);
         }
         else
         {
