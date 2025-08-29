@@ -47,7 +47,8 @@ std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity) const
         id,
         fmt::join(std::views::transform(inputFields, [&](const auto& field) { return field.explain(verbosity); }), ", "));
 }
-SerializableOperator InferModelLogicalOperator::serialize() const
+
+void InferModelLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -81,8 +82,6 @@ SerializableOperator InferModelLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
@@ -93,11 +92,17 @@ SerializableOperator InferModelLogicalOperator::serialize() const
     {
         *funcList.add_functions() = inputField.serialize();
     }
-    (*serializableOperator.mutable_config())["inputFields"] = Configurations::descriptorConfigTypeToProto(funcList);
+    (*serializableOperator.mutable_config())["inputFields"] = descriptorConfigTypeToProto(funcList);
 
     serializeModel(model, *(*serializableOperator.mutable_config())["MODEL"].mutable_model());
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
+}
+
+LogicalOperator InferModelLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

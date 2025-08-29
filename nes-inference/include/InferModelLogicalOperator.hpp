@@ -63,8 +63,9 @@ public:
         return false;
     }
     [[nodiscard]] std::string_view getName() const noexcept override { return "InferenceModel"; }
-    [[nodiscard]] SerializableOperator serialize() const override;
+    void serialize(SerializableOperator&) const override;
     [[nodiscard]] TraitSet getTraitSet() const override { return {}; }
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return {inputSchema}; }
     [[nodiscard]] const Schema& getInputSchema() const { return inputSchema; }
     InferModelLogicalOperator setInputSchema(std::vector<Schema> inputSchemas) const
@@ -98,7 +99,7 @@ public:
         return copy;
     }
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+private:
+    TraitSet traitSet;
 };
-
-
 }

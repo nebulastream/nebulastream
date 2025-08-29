@@ -57,7 +57,7 @@ protected:
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
-    std::unique_ptr<Format> outputParser;
+    std::unique_ptr<CSVFormat> outputParser;
 };
 
 struct ConfigParametersPrint

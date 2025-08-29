@@ -99,6 +99,13 @@ TraitSet SequenceLogicalOperator::getTraitSet() const
     return {};
 }
 
+LogicalOperator SequenceLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
 LogicalOperator SequenceLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
@@ -145,7 +152,7 @@ std::vector<LogicalOperator> SequenceLogicalOperator::getChildren() const
     return children;
 }
 
-SerializableOperator SequenceLogicalOperator::serialize() const
+void SequenceLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
 
@@ -178,7 +185,6 @@ SerializableOperator SequenceLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
@@ -186,7 +192,6 @@ SerializableOperator SequenceLogicalOperator::serialize() const
     }
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
-    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType

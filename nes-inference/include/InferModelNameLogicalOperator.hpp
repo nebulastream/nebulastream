@@ -66,7 +66,7 @@ public:
 
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
     [[nodiscard]] std::string_view getName() const noexcept override { return "InferenceModelName"; }
-    [[nodiscard]] SerializableOperator serialize() const override
+    void serialize(SerializableOperator& serializableOperator) const override
     {
         SerializableLogicalOperator proto;
 
@@ -94,9 +94,6 @@ public:
         auto* outSch = proto.mutable_output_schema();
         SchemaSerializationUtil::serializeSchema(Schema{}, outSch);
 
-
-
-        SerializableOperator serializableOperator;
         serializableOperator.set_operator_id(id.getRawValue());
 
         FunctionList funcList;
@@ -104,20 +101,25 @@ public:
         {
             *funcList.add_functions() = inputField.serialize();
         }
-        (*serializableOperator.mutable_config())["inputFields"] = Configurations::descriptorConfigTypeToProto(funcList);
+        (*serializableOperator.mutable_config())["inputFields"] = descriptorConfigTypeToProto(funcList);
 
         for (auto& child : getChildren())
         {
             serializableOperator.add_children_ids(child.getId().getRawValue());
         }
 
-        const Configurations::DescriptorConfig::ConfigType modelNameConfig = modelName;
+        const DescriptorConfig::ConfigType modelNameConfig = modelName;
         (*serializableOperator.mutable_config())[ConfigParameters::MODEL_NAME] = descriptorConfigTypeToProto(modelNameConfig);
 
         serializableOperator.mutable_operator_()->CopyFrom(proto);
-        return serializableOperator;
     }
     [[nodiscard]] TraitSet getTraitSet() const override { return {}; }
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override
+    {
+        auto copy = *this;
+        copy.traitSet = traitSet;
+        return copy;
+    }
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
@@ -152,14 +154,16 @@ public:
 
     struct ConfigParameters
     {
-        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> MODEL_NAME{
+        static inline const DescriptorConfig::ConfigParameter<std::string> MODEL_NAME{
             "modelName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return NES::Configurations::DescriptorConfig::tryGet(MODEL_NAME, config); }};
+            { return DescriptorConfig::tryGet(MODEL_NAME, config); }};
 
-        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(MODEL_NAME);
+        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+            = DescriptorConfig::createConfigParameterContainerMap(MODEL_NAME);
     };
+private:
+    TraitSet traitSet;
 };
 }

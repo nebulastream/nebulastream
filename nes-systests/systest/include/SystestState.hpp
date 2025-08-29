@@ -52,6 +52,8 @@
 
 #include <Identifiers/NESStrongType.hpp>
 
+#include <ModelCatalog.hpp>
+
 namespace NES::Systest
 {
 
@@ -240,6 +242,7 @@ struct TestFile
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog;
 };
 
 /// intermediate representation storing all considered test files
