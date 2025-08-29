@@ -13,10 +13,14 @@
 # limitations under the License.
 
 set -e
+set -u
+shopt -s nullglob
 
-if [ ! -d /out ]
+export CCACHE_DIR=/ccache
+
+if [ ! -d /out ] || [ ! -d /ccache ]
 then
-    echo expects /out dir to exist
+    echo expects /out and /ccache to exist
     exit 1
 fi
 
@@ -51,8 +55,8 @@ fi
 mkdir /corpus-nesql
 mkdir /corpus-txtpb
 
-git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.git
-cd nebulastream || exit 1
+git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.git /nebulastream
+cd /nebulastream || exit 1
 
 if [ $harness != "snw-strict-fuzz" ]
 then
@@ -93,7 +97,7 @@ fi
 
 cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
 cmake --build build --target $harness
-absolute_harness=$(pwd)/$(find -name $harness)
+absolute_harness=$(pwd)/$(find build -name $harness)
 
 # must not have colon in workdir: https://github.com/google/honggfuzz/issues/530
 work_dir=/out/$harness"_"$engine"_"$(date -u +"%Y-%m-%dT%H-%M-%S")
@@ -127,3 +131,43 @@ else
 fi
 
 kill %1
+
+cd /nebulastream
+
+cmake -B cov-build -DCMAKE_BUILD_TYPE=Debug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_GCOV=ON
+cmake --build cov-build --target $harness
+
+apt install -y gcovr
+
+fuzzer=$(pwd)/$(find cov-build -name $harness)
+
+mkdir $work_dir/log
+mkdir $work_dir/cov
+
+if [ $engine = "alfpp" ]
+then
+    crash_dir=$work_dir/corpus/default/queue
+else
+    crash_dir=$work_dir/corpus
+fi
+
+
+i=0
+for commit in $(git -C $work_dir rev-list main -- $crash_dir | tac)
+do
+    fuzzer_ran=false
+    pi=$(printf '%04d' $i)
+    for file in $(git -C $work_dir ls-tree --name-only -r $commit -- $crash_dir)
+    do
+        $fuzzer $work_dir/$file > $work_dir/log/cov_fuzz_$pi.log 2>&1 || true
+        fuzzer_ran=true 
+    done
+
+    if $fuzzer_ran
+    then
+        gcovr --gcov-executable="llvm-cov-19 gcov" \
+        --json         $work_dir/cov/gcovr_all_$pi-$commit.json \
+        --json-summary $work_dir/cov/gcovr_sum_$pi-$commit.json
+    fi
+    i=$(( i + 1 ))
+done
