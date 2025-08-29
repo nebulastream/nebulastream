@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -64,12 +65,12 @@ class ChainedHashMap final : public HashMap
 public:
     struct Page
     {
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)), numberOfEntries(0) { }
+        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
 
         int8_t* getMemArea() { return buffer.getBuffer(); }
 
         TupleBuffer buffer;
-        uint64_t numberOfEntries;
+        uint64_t numberOfEntries{0};
     };
 
     ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);

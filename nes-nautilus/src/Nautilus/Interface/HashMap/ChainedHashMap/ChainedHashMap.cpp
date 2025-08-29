@@ -128,13 +128,21 @@ ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::ra
 
 int8_t* ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
-    auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize);
-    if (not varSizedBuffer)
+    if (varSizedSpace.empty() or varSizedSpace.back().getUsedMemorySize() + neededSize >= varSizedSpace.back().getBufferSize())
     {
-        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize));
+        static constexpr auto numberOfPreAllocatedSpaces = 100;
+        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * numberOfPreAllocatedSpaces);
+        if (not varSizedBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize * numberOfPreAllocatedSpaces));
+        }
+        varSizedSpace.emplace_back(varSizedBuffer.value());
     }
-    varSizedSpace.emplace_back(varSizedBuffer.value());
-    return varSizedBuffer.value().getBuffer<int8_t>();
+
+    auto& varSizedBuffer = varSizedSpace.back();
+    varSizedBuffer.setUsedMemorySize(varSizedBuffer.getUsedMemorySize() + neededSize);
+    return varSizedBuffer.getBuffer<int8_t>() + varSizedBuffer.getUsedMemorySize() - neededSize;
 }
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
@@ -145,7 +153,7 @@ uint64_t ChainedHashMap::getNumberOfTuples() const
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
-    if (entries == nullptr)
+    if (entries == nullptr) [[unlikely]]
     {
         /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
         /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
