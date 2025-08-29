@@ -12,5 +12,4 @@
 
 add_source_files(nes-sinks
         CSVFormat.cpp
-        JSONFormat.cpp
 )

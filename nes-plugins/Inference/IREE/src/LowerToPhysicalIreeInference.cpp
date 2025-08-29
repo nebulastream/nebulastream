@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -26,7 +26,7 @@
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 {
-    explicit LowerToPhysicalIREEInferenceOperator(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
+    explicit LowerToPhysicalIREEInferenceOperator(NES::QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
 
@@ -121,7 +121,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
     }
 
 private:
-    NES::Configurations::QueryOptimizerConfiguration conf;
+    NES::QueryExecutionConfiguration conf;
 };
 
 std::unique_ptr<NES::AbstractRewriteRule>

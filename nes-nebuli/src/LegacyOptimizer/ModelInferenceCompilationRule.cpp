@@ -41,14 +41,14 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan)
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
         {
             USED_IN_DEBUG auto shouldReplace = replaceOperator(
-            queryPlan, modelNameOperator, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
+            queryPlan, modelNameOperator.id, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
             queryPlan = std::move(shouldReplace.value());
         }
         else
         {
             queryPlan = replaceSubtree(
                             queryPlan,
-                            modelNameOperator,
+                            modelNameOperator.id,
                             inferModel.withChildren({SequenceLogicalOperator().withChildren(modelNameOperator.getChildren())}))
                             .value();
         }

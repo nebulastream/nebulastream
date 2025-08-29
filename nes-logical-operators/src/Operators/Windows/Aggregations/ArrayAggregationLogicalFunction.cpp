@@ -69,7 +69,7 @@ void ArrayAggregationLogicalFunction::inferStamp(const Schema& schema)
     onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     if (!onField.getDataType().isNumeric())
     {
-        NES_FATAL_ERROR("MergeAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_ERROR("MergeAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field

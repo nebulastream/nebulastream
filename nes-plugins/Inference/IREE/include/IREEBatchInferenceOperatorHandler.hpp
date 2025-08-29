@@ -48,7 +48,8 @@ public:
         PipelineExecutionContext* pipelineCtx,
         const Timestamp watermarkTs) const;
 
-    std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& ,
         PipelineExecutionContext*) override { /*noop*/ };

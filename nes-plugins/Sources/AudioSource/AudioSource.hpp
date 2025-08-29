@@ -36,34 +36,34 @@
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all Audio config parameters.
 struct ConfigParametersAudio
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
+    static inline const DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
         "realTimestamp",
         true,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
+        { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
         
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
+    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return Configurations::DescriptorConfig::tryGet(HOST, config); }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_RATE{
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_RATE{
         "sampleRate",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SAMPLE_RATE, config); }};
+        { return DescriptorConfig::tryGet(SAMPLE_RATE, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_WIDTH{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_WIDTH{
         "sampleWidth",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
         {
-            const auto sampleWidth = Configurations::DescriptorConfig::tryGet(SAMPLE_WIDTH, config);
+            const auto sampleWidth = DescriptorConfig::tryGet(SAMPLE_WIDTH, config);
             if (!sampleWidth.has_value())
             {
                 return std::nullopt;
@@ -77,13 +77,13 @@ struct ConfigParametersAudio
             return sampleWidth;
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
             /// Mandatory (no default value)
-            const auto portNumber = Configurations::DescriptorConfig::tryGet(PORT, config);
+            const auto portNumber = DescriptorConfig::tryGet(PORT, config);
             if (portNumber.has_value())
             {
                 constexpr uint32_t PORT_NUMBER_MAX = 65535;
@@ -96,8 +96,8 @@ struct ConfigParametersAudio
             return portNumber;
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, SAMPLE_RATE, SAMPLE_WIDTH, PORT, REAL_TIMESTAMP);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(HOST, SAMPLE_RATE, SAMPLE_WIDTH, PORT, REAL_TIMESTAMP);
 };
 
 class AudioSource : public Source
@@ -126,14 +126,14 @@ public:
     AudioSource& operator=(AudioSource&&) = delete;
 
     size_t
-    fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider&, const std::stop_token& stopToken) override;
+    fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open Audio connection.
     void open() override;
     /// Close Audio connection.
     void close() override;
 
-    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static NES::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

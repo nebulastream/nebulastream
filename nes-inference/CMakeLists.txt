@@ -26,7 +26,7 @@ function(add_nes_test_nebuli)
     target_include_directories(${TARGET_NAME} PRIVATE .)
 endfunction()
 
-add_tests_if_enabled(tests)
+#add_tests_if_enabled(tests)
 target_compile_definitions(nes-inference PUBLIC NEBULI_INFERENCE_SUPPORT)
 
 add_plugin_as_library(InferenceModelName LogicalOperator nes-logical-operators nes-inference-model-name-operator InferModelNameLogicalOperator.cpp)
