@@ -25,7 +25,6 @@
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
 
-
 void init_receiver_service(std::string bindAddr, std::string connectionAddr)
 {
     init_receiver_service(rust::String(std::move(bindAddr)), rust::String(std::move(connectionAddr)));

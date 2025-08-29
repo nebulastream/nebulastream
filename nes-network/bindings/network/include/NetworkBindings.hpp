@@ -22,6 +22,7 @@
 #include <folly/Synchronized.h>
 
 struct SerializedTupleBuffer;
+
 class TupleBufferBuilder
 {
 public:
