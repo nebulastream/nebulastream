@@ -110,6 +110,6 @@ private:
 };
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<AbstractPoolProvider> bufferPool);
+getTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
 }

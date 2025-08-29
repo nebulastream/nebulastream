@@ -140,7 +140,7 @@ public:
 Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
-std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
+SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
@@ -149,7 +149,7 @@ std::unique_ptr<SourceHandle> createFileSource(
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
-    int numberOfLocalBuffersInSource);
+    size_t numberOfRequiredSourceBuffers);
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
 
@@ -251,7 +251,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
 template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
 TupleBuffer createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
-    PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
+    PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto rowLayout = std::make_shared<RowLayout>(bufferManager.getBufferSize(), schema);
     auto testTupleBuffer = std::make_unique<TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
 
