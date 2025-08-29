@@ -19,10 +19,10 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 
-class SampleFunctionProbe final : public WindowProbePhysicalOperator
+class SampleProbePhysicalOperator final : public WindowProbePhysicalOperator
 {
 public:
-    SampleFunctionProbe(
+    SampleProbePhysicalOperator(
         const Schema& sampleSchema,
         const Record::RecordFieldIdentifier& inputFieldIdentifier,
         const OperatorHandlerId operatorHandlerId,

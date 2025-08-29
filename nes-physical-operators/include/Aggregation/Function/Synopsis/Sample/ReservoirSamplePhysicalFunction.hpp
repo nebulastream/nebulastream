@@ -14,19 +14,19 @@
 
 #pragma once
 
-#include <Aggregation/Function/Synopsis/Sample/SampleFunction.hpp>
+#include <Aggregation/Function/Synopsis/Sample/SamplePhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES
 {
 
-class ReservoirSampleFunction final : public SampleFunction
+class ReservoirSamplePhysicalFunction final : public SamplePhysicalFunction
 {
 public:
     /// Seed is used for testing purposes
     static constexpr auto GENERATOR_SEED = 42;
 
-    ReservoirSampleFunction(
+    ReservoirSamplePhysicalFunction(
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
@@ -45,7 +45,7 @@ public:
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~ReservoirSampleFunction() override = default;
+    ~ReservoirSamplePhysicalFunction() override = default;
 };
 
 }

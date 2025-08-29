@@ -10,11 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(ReservoirSample AggregationPhysicalFunction nes-physical-operators ReservoirSamplePhysicalFunction.cpp)
-add_plugin(ReservoirProbe WindowProbePhysicalOperator nes-physical-operators SampleProbePhysicalOperator.cpp)
-
-add_source_files(nes-physical-operators
-        ReservoirSamplePhysicalFunction.cpp
-        SamplePhysicalFunction.cpp
-        SampleProbePhysicalOperator.cpp
-)
+add_plugin(ReservoirSample AggregationLogicalFunction nes-logical-operators ReservoirSampleLogicalFunction.cpp)

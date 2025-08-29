@@ -24,7 +24,7 @@
 namespace NES
 {
 
-class SampleFunction : public AggregationPhysicalFunction
+class SamplePhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     /// @param inputType data type of the input
@@ -33,7 +33,7 @@ public:
     /// @param resultFieldIdentifier field name of the return record
     /// @param memProviderPagedVector MemoryProvider for the pagedVector to store incoming records
     /// @param sampleSize number of elements in the sample
-    SampleFunction(
+    SamplePhysicalFunction(
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,

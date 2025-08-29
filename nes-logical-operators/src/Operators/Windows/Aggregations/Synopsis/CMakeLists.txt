@@ -10,4 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(ReservoirSample AggregationLogicalFunction nes-logical-operators ReservoirSampleLogicalFunction.cpp)
+add_subdirectory(Sample)

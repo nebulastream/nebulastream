@@ -25,7 +25,7 @@
 #include <string_view>
 #include <tuple>
 #include <vector>
-#include <Aggregation/Function/Synopsis/Sample/ReservoirSampleFunction.hpp>
+#include <Aggregation/Function/Synopsis/Sample/ReservoirSamplePhysicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
         /// Draw to find out if we need to replace a record in the reservoir
         else
         {
-            static std::mt19937 gen(NES::ReservoirSampleFunction::GENERATOR_SEED);
+            static std::mt19937 gen(NES::ReservoirSamplePhysicalFunction::GENERATOR_SEED);
             const uint64_t currentIndex = sampleStore.getCorrespondingWindowReservoir(windowStart).getIndex();
             std::uniform_int_distribution<> dis(0, static_cast<int>(currentIndex));
             const uint64_t random = dis(gen);

@@ -12,14 +12,14 @@ Licensed under the Apache License, Version 2.0 (the "License");
     limitations under the License.
 */
 
-#include <Aggregation/Function/Synopsis/Sample/SampleFunctionProbe.hpp>
+#include <Aggregation/Function/Synopsis/Sample/SampleProbePhysicalOperator.hpp>
 
 #include <Aggregation/Function/Synopsis/SynopsisFunctionRef.hpp>
 
 namespace NES
 {
 
-SampleFunctionProbe::SampleFunctionProbe(
+SampleProbePhysicalOperator::SampleProbePhysicalOperator(
     const Schema& sampleSchema,
     const Record::RecordFieldIdentifier& inputFieldIdentifier,
     const OperatorHandlerId operatorHandlerId,
@@ -30,7 +30,7 @@ SampleFunctionProbe::SampleFunctionProbe(
 {
 }
 
-void SampleFunctionProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void SampleProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     auto sampleRef = SynopsisFunctionRef(sampleSchema);
     // TODO Finish ;)

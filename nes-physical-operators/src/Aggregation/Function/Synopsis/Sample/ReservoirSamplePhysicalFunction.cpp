@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Aggregation/Function/Synopsis/Sample/ReservoirSampleFunction.hpp>
+#include <Aggregation/Function/Synopsis/Sample/ReservoirSamplePhysicalFunction.hpp>
 
 #include <random>
-#include <Aggregation/Function/Synopsis/Sample/SampleFunction.hpp>
+#include <Aggregation/Function/Synopsis/Sample/SamplePhysicalFunction.hpp>
 #include <Aggregation/Function/Synopsis/SynopsisFunctionRef.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -26,20 +26,20 @@ namespace NES
 
 uint64_t getRandomNumberProxy(const uint64_t upperBound)
 {
-    static std::mt19937 gen(ReservoirSampleFunction::GENERATOR_SEED);
+    static std::mt19937 gen(ReservoirSamplePhysicalFunction::GENERATOR_SEED);
     std::uniform_int_distribution<> dis(0, upperBound);
 
     return dis(gen);
 }
 
-ReservoirSampleFunction::ReservoirSampleFunction(
+ReservoirSamplePhysicalFunction::ReservoirSamplePhysicalFunction(
     DataType inputType,
     DataType resultType,
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
     const uint64_t reservoirSize)
-    : SampleFunction(
+    : SamplePhysicalFunction(
           std::move(inputType),
           std::move(resultType),
           std::move(inputFunction),
@@ -50,7 +50,7 @@ ReservoirSampleFunction::ReservoirSampleFunction(
     PRECONDITION(reservoirSize != 0, "Reservoir size cannot be zero");
 }
 
-void ReservoirSampleFunction::lift(
+void ReservoirSamplePhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     const auto pagedVectorPtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -82,7 +82,7 @@ void ReservoirSampleFunction::lift(
     VarVal(sampleDataSize).writeToMemory(sampleDataSizePtr);
 }
 
-void ReservoirSampleFunction::combine(
+void ReservoirSamplePhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider& pipelineMemoryProvider)
@@ -114,7 +114,7 @@ void ReservoirSampleFunction::combine(
 }
 
 Record
-ReservoirSampleFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+ReservoirSamplePhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const auto pagedVectorPtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector);
@@ -143,7 +143,7 @@ ReservoirSampleFunction::lower(const nautilus::val<AggregationState*> aggregatio
     return resultRecord;
 }
 
-void ReservoirSampleFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void ReservoirSamplePhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     invoke(
         +[](AggregationState* pagedVectorMemArea) -> void
@@ -158,7 +158,7 @@ void ReservoirSampleFunction::reset(const nautilus::val<AggregationState*> aggre
         aggregationState);
 }
 
-void ReservoirSampleFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
+void ReservoirSamplePhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
 {
     nautilus::invoke(
         +[](AggregationState* pagedVectorMemArea) -> void
@@ -171,7 +171,7 @@ void ReservoirSampleFunction::cleanup(nautilus::val<AggregationState*> aggregati
         aggregationState);
 }
 
-size_t ReservoirSampleFunction::getSizeOfStateInBytes() const
+size_t ReservoirSamplePhysicalFunction::getSizeOfStateInBytes() const
 {
     // TODO(nikla44): we should use the SampleFunction::getSizeOfStateInBytes() method
     return sizeof(Interface::PagedVector) + sizeof(uint64_t) + sizeof(uint64_t);
@@ -184,7 +184,7 @@ AggregationPhysicalFunctionGeneratedRegistrar::RegisterReservoirSampleAggregatio
     /// TODO Get reservoir size
     uint64_t reservoirSize = 5;
 
-    return std::make_shared<ReservoirSampleFunction>(
+    return std::make_shared<ReservoirSamplePhysicalFunction>(
         std::move(arguments.inputType),
         std::move(arguments.resultType),
         arguments.inputFunction,

@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
-#include <Operators/Windows/Aggregations/Synopsis/ReservoirSampleLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/Synopsis/Sample/ReservoirSampleLogicalFunction.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -26,7 +27,6 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

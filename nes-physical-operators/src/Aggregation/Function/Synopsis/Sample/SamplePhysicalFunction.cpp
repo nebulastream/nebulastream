@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Aggregation/Function/Synopsis/Sample/SampleFunction.hpp>
+#include <Aggregation/Function/Synopsis/Sample/SamplePhysicalFunction.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Common.hpp>
@@ -20,7 +20,7 @@
 namespace NES
 {
 
-SampleFunction::SampleFunction(
+SamplePhysicalFunction::SamplePhysicalFunction(
     DataType inputType,
     DataType resultType,
     PhysicalFunction inputFunction,
@@ -33,7 +33,7 @@ SampleFunction::SampleFunction(
 {
 }
 
-nautilus::val<uint64_t> SampleFunction::getRecordDataSize(const Record& record) const
+nautilus::val<uint64_t> SamplePhysicalFunction::getRecordDataSize(const Record& record) const
 {
     const auto schema = memProviderPagedVector->getMemoryLayout()->getSchema();
     auto recordDataSize = nautilus::val<uint64_t>(schema.getSizeOfSchemaInBytes());
