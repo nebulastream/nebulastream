@@ -1,4 +1,5 @@
 # IDE specific Files
+.cursor
 .idea
 .settings
 .vscode
