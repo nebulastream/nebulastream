@@ -115,6 +115,9 @@ void processQueryWithError(
             }
             return fmt::format("unexpected parsing error: {}", *runningQuery->exception);
         },
+            return fmt::format(
+                "unexpected parsing error: {}\n{}", *runningQuery->exception, runningQuery->exception->trace().to_string(true));
+        },
         [](const auto&) { return ""; });
 }
 

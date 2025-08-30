@@ -53,6 +53,12 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
 
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
+    /// WORKAROUND slow in ANTLR parsing
+    if (queryString.find("((((((((((((((((((((((((((((((((((((((((((((((((((((((") != std::string::npos)
+    {
+        throw InvalidQuerySyntax("seems like a slow query");
+    }
+
     try
     {
         antlr4::ANTLRInputStream input(queryString.data(), queryString.length());
