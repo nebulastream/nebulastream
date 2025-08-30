@@ -646,7 +646,9 @@ jobs:
       - name: collect coverage
         if: ${{ !env.ACT }}
         run: |
-          gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --root nes
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --json-summary summary.json --txt --root nes >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
       - name: generate callgraph .dot
         if: ${{ !env.ACT }}
         run: |
@@ -656,7 +658,9 @@ jobs:
       - name: generate callgraph .svg
         if: ${{ !env.ACT }}
         run: |
-          neato -Tsvg cov.dot > cov.svg
+          neato -Tsvg cov.dot > neato.svg
+          sfdp  -Tsvg cov.dot > sfdp.svg
+          fdp   -Tsvg clustered.dot > clustered.svg
           patchwork -Tsvg patchwork.dot > pw.svg
       - uses: actions/upload-artifact@v4
         if: ${{ !env.ACT }}
@@ -664,6 +668,7 @@ jobs:
           name: coverage
           path: |
             cov/
-            cov.dot
-            cov.svg
+            *.dot
+            *.svg
             gcovr.json
+            summary.json
