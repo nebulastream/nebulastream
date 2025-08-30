@@ -1,0 +1,24 @@
+# name: bug/DuplicateFieldsSink.test
+# description: Uses a sink with 2 identical fields
+Source stream UINT64 id INLINE
+1
+2
+3
+4
+5
+6
+7
+
+Sink stream_sink UINT64 stream$id UINT64 stream$id
+
+# Selecting the same field twice to match the schema of the sink
+# Previously caused a schema mismatch error even though the schemas were identical
+SELECT id, id FROM stream INTO stream_sink
+----
+1,1
+2,2
+3,3
+4,4
+5,5
+6,6
+7,7
