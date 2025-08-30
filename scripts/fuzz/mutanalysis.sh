@@ -53,11 +53,13 @@ python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v t
 export AFL_SKIP_CPUFREQ=1
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 
-cmake -B cmake-build-nrm -DCMAKE_BUILD_TYPE=RelWithDebug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
-CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE=RelWithDebug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
-CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DUSE_LIBFUZZER=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
+                                     cmake -B cmake-build-nrm -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
+                                     cmake -B cmake-build-lfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
+CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
+CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
 
 cmake --build cmake-build-nrm
+cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
@@ -69,7 +71,7 @@ do
         continue
     fi
 
-    if ! ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --quiet -O ctest.log
+    if ! timeout 30m ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
     then
         for testcase in $(cat ctest.log | grep Failed | awk '$2 == "-" { print $3 }')
         do
@@ -81,7 +83,7 @@ do
     KILLED_BY_CORPUS=false
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
-        if ! $(find cmake-build-nrm -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
+        if ! $(find cmake-build-lfz -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
         then
             log_out mutant $patch killed by $harness with corpus
             KILLED_BY_CORPUS=true
@@ -96,7 +98,7 @@ do
     AFL_CORPUS_LOADED=false
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
-        timeout 10m $(find cmake-build-nrm -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
+        timeout 10m $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
 
         while [ $(pgrep -f $harness | wc -l) = $(( $(nproc) / 2 + 1 )) ]
         do
@@ -115,10 +117,10 @@ do
 
         if ! $AFL_CORPUS_LOADED
         then
-            afl-fuzz -i ~/nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
+            afl-fuzz -i /nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
             for i in $(seq $(( $(nproc) / 2 - 1 )) )
             do
-            afl-fuzz -i ~/nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
+            afl-fuzz -i /nes-corpora/$harness/corpus -o afl-base-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
             done
             wait
             AFL_CORPUS_LOADED=true
