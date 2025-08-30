@@ -52,7 +52,7 @@ jobs:
         run: mkdir clang-tidy-result
       - name: Clang-Tidy Precheck
         # quickly check for compile errors
-        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -checks='-*,readability-duplicate-include' -j $(nproc)
+        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml  -checks='-*,readability-duplicate-include' -j $(nproc)
       - name: Analyze by running Clang-Tidy
         run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
       - name: Upload Clang-Tidy Results
