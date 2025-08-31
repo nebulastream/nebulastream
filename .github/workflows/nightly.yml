@@ -646,9 +646,9 @@ jobs:
       - name: collect coverage
         if: ${{ !env.ACT }}
         run: |
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           gcovr --gcov-executable="llvm-cov-19 gcov" --html-details --output cov/ --json gcovr.json --json-summary summary.json --txt --root nes >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: generate callgraph .dot
         if: ${{ !env.ACT }}
         run: |
