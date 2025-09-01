@@ -36,8 +36,9 @@
 namespace NES
 {
 
-ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
-    : isOpen(false)
+ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
+    , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
 {
@@ -100,7 +101,7 @@ SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRe
 
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<ChecksumSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<ChecksumSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }
