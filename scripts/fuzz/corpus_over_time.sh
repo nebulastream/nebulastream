@@ -118,13 +118,13 @@ done &
 if [ $engine = "libfuzzer" ]
 then
     mkdir corpus
-    timeout $duration --kill-after=1m $absolute_harness -jobs=100000 -workers=1 $work_dir/corpus /corpus-$input_type || true
+    timeout --kill-after=1m $duration $absolute_harness -jobs=100000 -workers=1 $work_dir/corpus /corpus-$input_type || true
 elif [ $engine = "aflpp" ]
 then
-    timeout $duration --kill-after=1m afl-fuzz -t 10000    -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
+    timeout --kill-after=1m $duration afl-fuzz -t 10000    -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
 elif [ $engine = "honggfuzz" ]
 then
-    timeout $duration --kill-after=1m honggfuzz -t 10 -n 1 -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
+    timeout --kill-after=1m $duration honggfuzz -t 10 -n 1 -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
 else
     echo wat
     exit 1
@@ -144,7 +144,7 @@ fuzzer=$(pwd)/$(find cov-build -name $harness)
 mkdir $work_dir/log
 mkdir $work_dir/cov
 
-timeout 30m --kill-after=1m $fuzzer -runs=0 /corpus-$input_type || true
+timeout --kill-after=1m 30m $fuzzer -runs=0 /corpus-$input_type || true
 
 pi=$(printf '%04d' 0)
 gcovr --gcov-executable="llvm-cov-19 gcov" \
@@ -167,7 +167,7 @@ do
     pi=$(printf '%04d' $i)
     for file in $(git -C $work_dir ls-tree --name-only -r $commit -- $crash_dir)
     do
-        timeout 30m --kill-after=1m $fuzzer $work_dir/$file > $work_dir/log/cov_fuzz_$pi.log 2>&1 || true
+        timeout --kill-after=1m 30m $fuzzer $work_dir/$file > $work_dir/log/cov_fuzz_$pi.log 2>&1 || true
         fuzzer_ran=true 
     done
 
