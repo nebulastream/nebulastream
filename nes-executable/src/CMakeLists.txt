@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-executable
+        BackpressureChannel.cpp
         CompiledQueryPlan.cpp
         Pipeline.cpp
 )
