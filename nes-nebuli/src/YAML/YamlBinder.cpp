@@ -50,7 +50,7 @@ void YamlBinder::bindRegisterWorkers(const std::vector<WorkerConfig>& unboundWor
 {
     for (const auto& [host, grpc, capacity, downstream] : unboundWorkers)
     {
-        NES_INFO("Adding worker: {}", host);
+        NES_DEBUG("Adding worker: {}", host);
         if (not workerCatalog->addWorker(host, grpc, capacity, downstream))
         {
             NES_ERROR("Failed to add worker {}, because it already exists", host);
@@ -75,7 +75,7 @@ void YamlBinder::bindRegisterLogicalSources(const std::vector<LogicalSource>& un
     for (const auto& [logicalSourceName, schemaFields] : unboundSources)
     {
         auto schema = bindSchema(schemaFields);
-        NES_INFO("Adding logical source: {}", logicalSourceName);
+        NES_DEBUG("Adding logical source: {}", logicalSourceName);
         if (not sourceCatalog->addLogicalSource(logicalSourceName, schema).has_value())
         {
             NES_ERROR("Could not register logical source \"{}\" because it already exists", logicalSourceName);
