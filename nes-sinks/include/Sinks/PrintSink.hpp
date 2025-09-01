@@ -60,17 +60,24 @@ protected:
 private:
     folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<Format> outputParser;
+
+    uint32_t ingestion = 0;
 };
 
 struct ConfigParametersPrint
 {
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+        "ingestion",
+        0,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
+
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
         "input_format",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
 };
 
 }
