@@ -16,7 +16,7 @@ RUN apk update && apk add zstd
 ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLVM_VERSION}/nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd llvm.tar.zstd
 RUN zstd --decompress llvm.tar.zstd --stdout | tar -x
 
-FROM nebulastream/nes-development-base:${TAG}
+FROM nebulastream/nes-development-base:${TAG} AS dep-build
 ARG STDLIB=libcxx
 
 COPY --from=llvm-download /clang /clang
@@ -41,9 +41,17 @@ RUN \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
 
-# This hash is used to determine if a development/dependency image is compatible with the current checked out branch
+FROM nebulastream/nes-development-base:${TAG}
+ARG SANITIZER="none"
+ARG STDLIB=libcxx
 ARG VCPKG_DEPENDENCY_HASH
+
+COPY --from=llvm-download /clang /clang
+COPY --from=dep-build /vcpkg /vcpkg
+
+# This hash is used to determine if a development/dependency image is compatible with the current checked out branch
 ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
 ENV VCPKG_STDLIB=${STDLIB}
 ENV VCPKG_SANITIZER=${SANITIZER}
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
+ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
