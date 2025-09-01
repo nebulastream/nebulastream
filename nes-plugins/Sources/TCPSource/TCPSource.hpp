@@ -14,20 +14,19 @@
 
 #pragma once
 
-#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <span>
 #include <stop_token>
 #include <string>
-#include <string_view>
 #include <unordered_map>
+#include <variant>
 #include <netdb.h>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -38,6 +37,68 @@
 
 namespace NES
 {
+
+struct AddressInfo
+{
+    static std::expected<AddressInfo, std::string> from(const std::string& host, uint16_t port);
+
+    auto operator*() const { return *result; }
+
+    auto operator->() const { return result.operator->(); }
+
+    std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> result;
+};
+
+struct OwnedDescriptor
+{
+    int descriptor = -1;
+    explicit OwnedDescriptor(int descriptor);
+    ~OwnedDescriptor();
+
+    explicit operator int() const { return descriptor; }
+
+    OwnedDescriptor(OwnedDescriptor&& other) noexcept;
+    OwnedDescriptor& operator=(OwnedDescriptor&& other) noexcept;
+    OwnedDescriptor(const OwnedDescriptor& other) = delete;
+    OwnedDescriptor& operator=(const OwnedDescriptor& other) = delete;
+};
+
+struct Socket
+{
+    static std::expected<Socket, std::string> create(const AddressInfo& address);
+
+    std::expected<void, std::string> addFlag(unsigned flag);
+
+    std::expected<void, std::string> removeFlag(unsigned flag);
+
+    auto setNonBlock();
+    auto setBlock();
+
+    std::expected<void, std::string> setTimeouts(std::chrono::microseconds timeoutDuration);
+
+    [[nodiscard]] std::expected<void, std::string> checkError() const;
+
+    OwnedDescriptor descriptor;
+    unsigned flags;
+    std::chrono::microseconds timeout;
+};
+
+struct Connection
+{
+    static std::expected<Connection, std::string> from(Socket sock, AddressInfo addrinfo, std::chrono::microseconds connectionTimeout);
+
+    std::expected<void, std::string> reconnect();
+
+    struct EoS
+    {
+    };
+
+    std::expected<std::span<uint8_t>, std::variant<EoS, std::string>> receive(std::span<uint8_t> result, std::chrono::microseconds timeout);
+
+    Socket socket;
+    AddressInfo addrinfo;
+    std::chrono::microseconds connectionTimeout;
+};
 
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
@@ -118,23 +179,10 @@ struct ConfigParametersTCP
                 socketTypeString)
             return std::nullopt;
         }};
-    static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tuple_delimiter",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flush_interval_ms",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socket_buffer_size",
-        1024,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytes_sed_for_socket_buffer_size_transfer",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
         "connect_timeout_seconds",
         10,
@@ -142,19 +190,10 @@ struct ConfigParametersTCP
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap,
-            HOST,
-            PORT,
-            DOMAIN,
-            TYPE,
-            SEPARATOR,
-            FLUSH_INTERVAL_MS,
-            SOCKET_BUFFER_SIZE,
-            SOCKET_BUFFER_TRANSFER_SIZE,
-            CONNECT_TIMEOUT);
+            SourceDescriptor::parameterMap, HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
 };
 
-class TCPSource : public Source
+class TCPSource final : public Source
 {
     constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
@@ -191,24 +230,15 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
     bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
-    int connection = -1;
-    int sockfd = -1;
-
-    /// buffer for thread-safe strerror_r
-    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
+    std::optional<Connection> connection;
 
     std::string socketHost;
-    std::string socketPort;
+    uint16_t socketPort;
     int socketType;
     int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
-    uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
     u_int32_t connectionTimeout;
 };
