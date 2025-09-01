@@ -18,7 +18,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ModelCatalog.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 class ModelInferenceCompilationRule

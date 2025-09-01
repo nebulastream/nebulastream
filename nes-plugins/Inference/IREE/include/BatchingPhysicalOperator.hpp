@@ -37,7 +37,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer&) const override;
 
-    void setup(ExecutionContext& executionCtx) const override { setupChild(executionCtx); };
+    void setup(ExecutionContext&) const override { /*noop*/ };
     void terminate(ExecutionContext&) const override { /*noop*/ };
 
 protected:

@@ -500,7 +500,10 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
     }
 
-    queryPlan = LogicalPlanBuilder::addProjection(helpers.top().getProjections(), helpers.top().asterisk, queryPlan);
+    if (!helpers.top().getProjections().empty()) // inference operator syntax implies a subquery with no fields to project
+    {
+        queryPlan = LogicalPlanBuilder::addProjection(helpers.top().getProjections(), helpers.top().asterisk, queryPlan);
+    }
 
     if (helpers.top().windowType != nullptr)
     {

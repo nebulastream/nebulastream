@@ -23,7 +23,7 @@
 #include <Sources/SourceCatalog.hpp>
 
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 /**
