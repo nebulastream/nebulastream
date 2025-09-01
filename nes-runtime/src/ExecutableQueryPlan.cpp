@@ -30,6 +30,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <BackpressureChannel.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 
@@ -67,9 +68,11 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 
     std::unordered_map<OriginId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
+    auto [valve, ingestion] = Backpressure();
+
     for (auto& [pipelineId, descriptor, predecessors] : compiledQueryPlan.sinks)
     {
-        auto sink = ExecutablePipeline::create(pipelineId, lower(descriptor), {});
+        auto sink = ExecutablePipeline::create(pipelineId, lower(valve, descriptor), {});
         compiledQueryPlan.pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {
@@ -86,7 +89,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(
-            SourceProvider::lower(id, descriptor, poolProvider, numberOfBuffersInSourceLocalPools), std::move(successors));
+            SourceProvider::lower(id, ingestion, descriptor, poolProvider, numberOfBuffersInSourceLocalPools), std::move(successors));
     }
 
 

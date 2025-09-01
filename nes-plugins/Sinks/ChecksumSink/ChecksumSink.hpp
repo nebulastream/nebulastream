@@ -42,7 +42,7 @@ class ChecksumSink : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(const SinkDescriptor& sinkDescriptor);
+    explicit ChecksumSink(Valve valve, const SinkDescriptor& sinkDescriptor);
 
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;

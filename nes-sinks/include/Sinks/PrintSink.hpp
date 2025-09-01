@@ -21,13 +21,15 @@
 #include <string_view>
 #include <unordered_map>
 
+#include <folly/Synchronized.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <folly/Synchronized.h>
+#include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -38,7 +40,7 @@ class PrintSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
