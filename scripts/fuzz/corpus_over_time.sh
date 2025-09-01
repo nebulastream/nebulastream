@@ -118,13 +118,13 @@ done &
 if [ $engine = "libfuzzer" ]
 then
     mkdir corpus
-    timeout $duration $absolute_harness -jobs=100000 -workers=1 $work_dir/corpus /corpus-$input_type
+    timeout $duration $absolute_harness -jobs=100000 -workers=1 $work_dir/corpus /corpus-$input_type || true
 elif [ $engine = "aflpp" ]
 then
-    timeout $duration afl-fuzz -t 10000    -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness
+    timeout $duration afl-fuzz -t 10000    -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
 elif [ $engine = "honggfuzz" ]
 then
-    timeout $duration honggfuzz -t 10 -n 1 -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness
+    timeout $duration honggfuzz -t 10 -n 1 -i /corpus-$input_type -o $work_dir/corpus -- $absolute_harness || true
 else
     echo wat
     exit 1
@@ -144,6 +144,14 @@ fuzzer=$(pwd)/$(find cov-build -name $harness)
 mkdir $work_dir/log
 mkdir $work_dir/cov
 
+$fuzzer -runs=0 /corpus-$input_type || true
+
+pi=$(printf '%04d' 0)
+gcovr --gcov-executable="llvm-cov-19 gcov" \
+ --json         $work_dir/cov/gcovr_all_$pi-ini-corpus-baseline.json \
+ --json-summary $work_dir/cov/gcovr_sum_$pi-ini-corpus-baseline.json
+
+
 if [ $engine = "alfpp" ]
 then
     crash_dir=$work_dir/corpus/default/queue
@@ -152,7 +160,7 @@ else
 fi
 
 
-i=0
+i=1
 for commit in $(git -C $work_dir rev-list main -- $crash_dir | tac)
 do
     fuzzer_ran=false
@@ -166,8 +174,8 @@ do
     if $fuzzer_ran
     then
         gcovr --gcov-executable="llvm-cov-19 gcov" \
-        --json         $work_dir/cov/gcovr_all_$pi-$commit.json \
-        --json-summary $work_dir/cov/gcovr_sum_$pi-$commit.json
+         --json         $work_dir/cov/gcovr_all_$pi-$commit.json \
+         --json-summary $work_dir/cov/gcovr_sum_$pi-$commit.json
     fi
     i=$(( i + 1 ))
 done
