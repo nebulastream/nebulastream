@@ -453,13 +453,12 @@ def create_prediction_correctness_precision_configs():
     configs = []
     default_params = get_default_params_dict()
     default_params["slice_store_type"] = "FILE_BACKED"
-    default_params["batch_size"] = 1000000
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
     default_timestamp_increments, default_queries = get_additional_default_values()
     default_queries = [get_queries()[5], get_queries()[6]]
     # print(default_queries)
-    for timestamp_increment in [default_timestamp_increments[1]]:
+    for timestamp_increment in default_timestamp_increments:
         for query in default_queries:
             for max_num_watermark_gaps in [MAX_NUM_WATERMARK_GAPS[0], MAX_NUM_WATERMARK_GAPS[2]]:
                 for max_num_sequence_numbers in [MAX_NUM_SEQUENCE_NUMBERS[0], MAX_NUM_SEQUENCE_NUMBERS[2]]:
