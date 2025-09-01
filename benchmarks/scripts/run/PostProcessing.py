@@ -63,16 +63,13 @@ class PostProcessing:
                 futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
                 results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
-        # for f in self.input_folders:
-        #     self.convert_slice_accesses_to_csv(f)
-
         # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
         # failed_engines = self.combine_engine_statistics()
         failed_benchmarks = self.combine_benchmark_statistics()
         failed_experiments = failed_benchmarks  # + failed_engines
         if self.slice_access_logging:
             failed_slice_accesses = self.combine_slice_accesses()
-            failed_experiments += failed_slice_accesses
+            failed_experiments = list(set(failed_experiments + failed_slice_accesses))
 
         return failed_experiments
 
@@ -438,10 +435,11 @@ class PostProcessing:
 
         # Keep only relevant data
         def valid_row(row):
-            has_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
-            has_write = pd.notna(row["first_write_pred_start"]) and pd.notna(row["last_write_pred_end"])
-            has_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
-            return has_nopred and (has_write or has_pred)  # keep if read nopred + (write pred or read pred or both)
+            has_write_nopred = pd.notna(row["last_write_nopred_end"])
+            has_read_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
+            # has_write_pred = pd.notna(row["first_write_pred_start"]) and pd.notna(row["last_write_pred_end"])
+            # has_read_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
+            return has_write_nopred and has_read_nopred  # and (has_write_pred or has_read_pred)
 
         df = df[df.apply(valid_row, axis=1)]
 

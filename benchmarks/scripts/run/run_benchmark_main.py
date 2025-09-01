@@ -76,6 +76,7 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
+ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_prediction_correctness_precision_configs()
 
 
 # Helper functions
@@ -418,7 +419,6 @@ def main():
     print("################################################################")
     print("Running benchmark main")
     print("################################################################\n")
-    ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_prediction_correctness_precision_configs()
 
     engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:

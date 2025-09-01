@@ -68,6 +68,7 @@ SLICE_ACCESSES_FILE = "SliceAccesses_"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 TEST_NAME = "Nexmark.test:05"
 TEST_FILE_PATH = os.path.join("$(pwd)", "nes-systests/benchmark", TEST_NAME)
+ALL_SYSTEST_CONFIGS = BenchmarkConfig.create_systest_configs()
 
 
 # Helper functions
@@ -258,7 +259,6 @@ def main():
     print("################################################################")
     print("Running systest main")
     print("################################################################\n")
-    ALL_SYSTEST_CONFIGS = BenchmarkConfig.create_systest_configs()
 
     engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:
