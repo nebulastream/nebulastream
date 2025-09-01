@@ -16,6 +16,7 @@
 
 #include <ostream>
 #include <fmt/ostream.h>
+#include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
 
 namespace NES
@@ -24,8 +25,12 @@ namespace NES
 class Sink : public ExecutablePipelineStage
 {
 public:
+    explicit Sink(BackpressureController backpressureController) : backpressureController(std::move(backpressureController)) { }
+
     ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
+
+    BackpressureController backpressureController;
 };
 
 }

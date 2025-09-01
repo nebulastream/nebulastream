@@ -41,8 +41,14 @@ namespace NES
 {
 
 SourceThread::SourceThread(
-    OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
-    : originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
+    BackpressureListener backpressureListener,
+    OriginId originId,
+    std::shared_ptr<AbstractBufferProvider> poolProvider,
+    std::unique_ptr<Source> sourceImplementation)
+    : originId(originId)
+    , localBufferManager(std::move(poolProvider))
+    , sourceImplementation(std::move(sourceImplementation))
+    , backpressureListener(std::move(backpressureListener))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -102,11 +108,15 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider, const EmitFn& emit)
+    const std::stop_token& stopToken,
+    BackpressureListener backpressureListener,
+    Source& source,
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source, bufferProvider);
     const bool requiresMetadata = !source.addsMetadata();
-    while (!stopToken.stop_requested())
+    while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
@@ -116,15 +126,25 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider->getBufferBlocking();
-        const auto fillTupleResult = source.fillTupleBuffer(emptyBuffer, stopToken);
+
+        std::optional<TupleBuffer> emptyBuffer;
+        while (!emptyBuffer && !stopToken.stop_requested())
+        {
+            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+        }
+        if (stopToken.stop_requested())
+        {
+            return {SourceImplementationTermination::StopRequested};
+        }
+
+        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(emptyBuffer), requiresMetadata);
+            emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
+            emit(std::move(*emptyBuffer), requiresMetadata);
         }
         else
         {
@@ -141,6 +161,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
 void dataSourceThread(
     const std::stop_token& stopToken,
+    BackpressureListener backpressureListener,
     std::promise<SourceImplementationTermination> result,
     Source* source,
     SourceReturnType::EmitFunction emit,
@@ -160,7 +181,8 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, std::move(bufferProvider), dataEmit));
+        result.set_value_at_thread_exit(
+            dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -168,9 +190,9 @@ void dataSourceThread(
     }
     catch (const std::exception& e)
     {
-        auto ingestionException = RunningRoutineFailure(e.what());
-        result.set_exception_at_thread_exit(std::make_exception_ptr(ingestionException));
-        emit(originId, SourceReturnType::Error{std::move(ingestionException)}, stopToken);
+        auto backpressureListenerException = RunningRoutineFailure(e.what());
+        result.set_exception_at_thread_exit(std::make_exception_ptr(backpressureListenerException));
+        emit(originId, SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken);
     }
 }
 }
@@ -190,6 +212,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     Thread sourceThread(
         fmt::format("DataSrc-{}", originId),
         dataSourceThread,
+        backpressureListener,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
