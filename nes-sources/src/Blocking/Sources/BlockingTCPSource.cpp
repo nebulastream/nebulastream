@@ -39,6 +39,9 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
+#include <DataServer/TCPDataServer.hpp>
 
 namespace NES::Sources
 {
@@ -219,6 +222,61 @@ SourceValidationGeneratedRegistrar::RegisterBlockingTCPSourceValidation(SourceVa
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBlockingTCPSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<BlockingTCPSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterBlockingTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersBlockingTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.attachSource.tuples.value()));
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersBlockingTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterBlockingTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersBlockingTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(attachSourceFilePath.value());
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersBlockingTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                systestAdaptorArguments.physicalSourceConfig.sourceConfig.erase(std::string(SYSTEST_FILE_PATH_PARAMETER));
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
 
 }

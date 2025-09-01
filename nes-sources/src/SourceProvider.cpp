@@ -44,8 +44,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
 {
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     const auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
-           ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
-           : numBuffersPerSource;
+        ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
+        : numBuffersPerSource;
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
     {
         if (const auto bufferProvider = poolProvider->createFixedSizeBufferPool(numberOfBuffersInLocalPool); bufferProvider)
@@ -57,18 +57,21 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                         return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
                             .originId = originId,
                             .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value()});
+                            .bufferProvider = bufferProvider.value(),
+                            .formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD)});
                     },
                     [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                     {
                         return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
                             .originId = originId,
                             .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value()});
+                            .bufferProvider = bufferProvider.value(),
+                            .formattingThread = std::nullopt});
                     }},
                 std::move(source.value()));
         }
-        throw BufferAllocationFailure("Cannot allocate the buffer pool for source: {}", sourceDescriptor.getLogicalSource().getLogicalSourceName());
+        throw BufferAllocationFailure(
+            "Cannot allocate the buffer pool for source: {}", sourceDescriptor.getLogicalSource().getLogicalSourceName());
     }
     throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

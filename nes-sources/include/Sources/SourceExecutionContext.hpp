@@ -23,19 +23,6 @@
 
 namespace NES::Sources
 {
-// struct Error
-// {
-//     Exception ex;
-// };
-//
-// struct Data
-// {
-//     NES::Memory::TupleBuffer buffer;
-// };
-//
-// struct EoS
-// {
-// };
 
 template <typename SourceType>
 struct SourceExecutionContext
@@ -43,6 +30,7 @@ struct SourceExecutionContext
     const OriginId originId;
     std::unique_ptr<SourceType> sourceImpl;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::optional<FormattingThread> formattingThread;
 };
 
 enum class TryStopResult : uint8_t

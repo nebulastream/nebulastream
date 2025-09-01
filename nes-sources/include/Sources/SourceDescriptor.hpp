@@ -40,6 +40,12 @@ namespace NES
 class SourceCatalog;
 class OperatorSerializationUtil;
 
+enum FormattingThread
+{
+    BlockingSourceThread,
+    WorkerThread,
+};
+
 struct ParserConfig
 {
     std::string parserType;
@@ -102,11 +108,18 @@ public:
         INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FormattingThread> FORMATTING_THREAD {
+        "formattingThread",
+        EnumWrapper{FormattingThread::BlockingSourceThread},
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            return DescriptorConfig::tryGet(FORMATTING_THREAD, config);
+        }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(NUMBER_OF_BUFFERS_IN_LOCAL_POOL);
+        = DescriptorConfig::createConfigParameterContainerMap(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, FORMATTING_THREAD);
 };
 
 }

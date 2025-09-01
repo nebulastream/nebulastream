@@ -14,11 +14,11 @@
 
 #include <Blocking/BlockingSourceRunner.hpp>
 
+#include <exception>
 #include <future>
 #include <memory>
 #include <stop_token>
 #include <utility>
-#include <exception>
 
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceExecutionContext.hpp>
@@ -57,7 +57,20 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
             addBufferMetadata(executionContext->originId, buffer, sequenceNumber++);
 
             // Todo: execute next pipeline in-place (must be inputformatter pipeline) (add INVARIANT/PRECONDITION)
-            emitFn(executionContext->originId, InPlaceData{std::move(buffer), this->executionContext->bufferProvider});
+            PRECONDITION(
+                this->executionContext->formattingThread.has_value(), "A BlockingSourceRunner requires a formatting thread config");
+            switch (this->executionContext->formattingThread.value())
+            {
+                case BlockingSourceThread: {
+                    emitFn(executionContext->originId, InPlaceData{std::move(buffer), this->executionContext->bufferProvider});
+                    break;
+                }
+                case WorkerThread: {
+                    emitFn(executionContext->originId, Data{std::move(buffer)});
+                    break;
+                }
+            }
+            std::unreachable();
         }
 
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
