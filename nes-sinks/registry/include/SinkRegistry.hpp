@@ -18,6 +18,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include <BackpressureChannel.hpp>
 
 namespace NES
 {
@@ -26,6 +27,7 @@ using SinkRegistryReturnType = std::unique_ptr<Sink>;
 
 struct SinkRegistryArguments
 {
+    BackpressureController backpressureController;
     SinkDescriptor sinkDescriptor;
 };
 
