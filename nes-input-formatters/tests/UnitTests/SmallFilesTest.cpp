@@ -207,7 +207,7 @@ public:
         std::shared_ptr<BufferManager> sourceBufferPool = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
-        const auto fileSource = InputFormatterTestUtil::createFileSource(
+        const auto [value, fileSource] = InputFormatterTestUtil::createFileSource(
             sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);

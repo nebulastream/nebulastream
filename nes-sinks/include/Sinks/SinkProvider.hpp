@@ -16,11 +16,12 @@
 #include <memory>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <BackpressureChannel.hpp>
 
 namespace NES
 {
 
 /// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
-std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor);
+std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
 }

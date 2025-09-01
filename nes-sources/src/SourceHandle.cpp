@@ -23,18 +23,21 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <BackpressureChannel.hpp>
 #include <SourceThread.hpp>
 
 namespace NES
 {
 SourceHandle::SourceHandle(
+    BackpressureListener backpressureListener,
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
     std::unique_ptr<Source> sourceImplementation)
     : configuration(std::move(configuration))
 {
-    this->sourceThread = std::make_unique<SourceThread>(std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+    this->sourceThread = std::make_unique<SourceThread>(
+        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;
