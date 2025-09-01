@@ -32,9 +32,10 @@
 #include <unistd.h>
 
 #include <Plans/LogicalPlan.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include "YAML/YamlLoader.hpp"
 
 #include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -159,7 +160,10 @@ int main(int argc, char** argv)
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto yamlBinder = NES::CLI::YamlBinder{sourceCatalog, sinkCatalog};
+        auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+        NES::CLI::QueryConfig config;
+        NES::CLI::YamlBinder(config).bind();
+        auto yamlBinder = NES::CLI::YamlBinder().bind(){sourceCatalog, sinkCatalog, workerCatalog};
         auto optimizer = std::make_shared<NES::GlobalOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
@@ -169,7 +173,7 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GrpcQueryManager>(
+            queryManager = std::make_shared<NES::GRPCQuerySubmissionBackend>(
                 CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         }
         else
