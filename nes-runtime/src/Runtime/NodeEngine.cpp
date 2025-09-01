@@ -75,7 +75,11 @@ public:
     }
 };
 
-NodeEngine::~NodeEngine() = default;
+NodeEngine::~NodeEngine()
+{
+    queryEngine.reset();
+    bufferManager->destroy();
+}
 
 NodeEngine::NodeEngine(
     std::shared_ptr<BufferManager> bufferManager,
