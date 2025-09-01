@@ -14,5 +14,6 @@ add_plugin_as_library(TCP Source nes-sources-registry tcp_source_plugin_library 
 add_plugin_as_library(TCP SourceValidation nes-sources-registry tcp_source_validation_plugin_library TCPSource.cpp)
 add_plugin_as_library(TCP InlineData nes-sources-registry tcp_inline_data_plugin_library TCPSource.cpp)
 add_plugin_as_library(TCP FileData nes-sources-registry tcp_file_data_plugin_library TCPSource.cpp)
+add_plugin_as_library(TCP GeneratorData nes-sources-registry tcp_generator_data_plugin_library TCPSource.cpp)
 
 target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
