@@ -36,7 +36,7 @@ class VoidSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Void";
-    explicit VoidSink(const SinkDescriptor& sinkDescriptor);
+    explicit VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;

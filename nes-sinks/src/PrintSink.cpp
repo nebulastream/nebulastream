@@ -29,6 +29,7 @@
 #include <SinksParsing/JSONFormat.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -37,7 +38,9 @@
 namespace NES
 {
 
-PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
+PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController)), outputStream(&std::cout)
+
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
@@ -86,7 +89,7 @@ SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegis
 
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }
