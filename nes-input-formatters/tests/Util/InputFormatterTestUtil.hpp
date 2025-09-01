@@ -144,7 +144,7 @@ std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunctio
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
-std::unique_ptr<SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
