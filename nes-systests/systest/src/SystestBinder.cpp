@@ -412,7 +412,12 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(
+            testfile.file,
+            testfile.name(),
+            *testfile.sourceCatalog,
+            *testfile.modelCatalog,
+            sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
@@ -783,7 +788,8 @@ struct SystestBinder::Impl
     std::vector<SystestQueryBuilder> loadFromSLTFile(
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
-        const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
+        SourceCatalog& sourceCatalog,
+        Nebuli::Inference::ModelCatalog& modelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -815,6 +821,195 @@ struct SystestBinder::Impl
             throw TestException("Could not successfully load test file://{}", testFilePath.string());
         }
 
+        /// We create a map from sink names to their schema
+        parser.registerOnSystestSinkCallback(
+            [&](const SystestParser::SystestSink& sinkParsed)
+            {
+                Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+                for (const auto& [type, name] : sinkParsed.fields)
+                {
+                    schema.addField(name, type);
+                }
+                sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
+            });
+
+        parser.registerOnSystestLogicalSourceCallback(
+            [&](const SystestParser::SystestLogicalSource& source)
+            {
+                Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+                for (const auto& [type, name] : source.fields)
+                {
+                    schema.addField(name, type);
+                }
+                if (const auto logicalSource = sourceCatalog.addLogicalSource(source.name, schema); not logicalSource.has_value())
+                {
+                    throw SourceAlreadyExists("{}", source.name);
+                }
+            });
+
+        /// We add new found sources to our config
+        parser.registerOnSystestAttachSourceCallback(
+            [&](SystestAttachSource attachSource)
+            {
+                attachSource.serverThreads = sourceThreads;
+                if (not contains(attachSource.inputFormatterType))
+                {
+                    throw UnknownSourceFormat("Did not find input formatter for type {}", attachSource.inputFormatterType);
+                }
+
+                /// Load physical source from file and overwrite logical source name with value from attach source
+                const auto initialPhysicalSourceConfigFromFile = [](const std::string& logicalSourceName,
+                                                                    const std::string& sourceConfigPath,
+                                                                    const std::string& inputFormatterConfigPath)
+                {
+                    try
+                    {
+                        auto loadedPhysicalSourceConfig = SystestSourceYAMLBinder::loadSystestPhysicalSourceFromYAML(
+                            logicalSourceName, sourceConfigPath, inputFormatterConfigPath);
+                        return loadedPhysicalSourceConfig;
+                    }
+                    catch (const std::exception& e)
+                    {
+                        throw CannotLoadConfig("Failed to parse source: {}", e.what());
+                    }
+                };
+
+                /// load physical source from inline definition
+                const auto initialPhysicalSourceConfigInline
+                    = [&sourceCatalog](const std::string& logicalSourceName, const InlineGeneratorConfiguration& inlineConfig)
+                {
+                    SystestSourceYAMLBinder::PhysicalSource physicalSource{};
+                    physicalSource.logical = logicalSourceName;
+                    physicalSource.parserConfig["type"] = "CSV";
+                    physicalSource.parserConfig["field_delimiter"] = ",";
+                    auto logicalSourceMapping = sourceCatalog.getLogicalSource(logicalSourceName);
+                    if (!logicalSourceMapping.has_value())
+                    {
+                        throw InvalidConfigParameter("{} does not exist in the same catalog!", logicalSourceName);
+                    }
+                    auto definedLogicalSchema = logicalSourceMapping.value().getSchema();
+                    if (definedLogicalSchema->getFields().size() != inlineConfig.fieldSchema.size())
+                    {
+                        throw InvalidConfigParameter(
+                            "Number of defined generator field schemas ({}) does not match the number of fields defined in the source ({})",
+                            definedLogicalSchema->getFields().size(),
+                            inlineConfig.fieldSchema.size());
+                    }
+
+                    std::string generatorSchema;
+                    for (const auto& fieldSchema : inlineConfig.fieldSchema)
+                    {
+                        auto fieldSchemaTokens = fieldSchema | std::views::split(' ')
+                            | std::views::filter([](auto v) { return !v.empty(); })
+                            | std::views::transform([](auto v) { return std::string_view(&*v.begin(), std::ranges::distance(v)); })
+                            | std::ranges::to<std::vector<std::string>>();
+                        auto fieldName = fieldSchemaTokens[0];
+                        auto schemaFieldType = fieldSchemaTokens[2];
+                        auto definedLogicalField = definedLogicalSchema->getFieldByName(fieldName);
+                        if (!definedLogicalField.has_value())
+                        {
+                            throw InvalidConfigParameter(
+                                "Field {} is defined in the generatorSchema, but does not exist in the sources logical schema!", fieldName);
+                        }
+                        if (magic_enum::enum_cast<DataType::Type>(schemaFieldType) != definedLogicalField.value().dataType.type)
+                        {
+                            throw InvalidConfigParameter(
+                                "Field \"{}\" type in generator Schema does not match declared type ({}) in Source Schema ({})",
+                                fieldName,
+                                schemaFieldType,
+                                magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
+                        }
+                        auto generatorFieldIdentifier = fieldSchemaTokens[1];
+                        auto [acceptedTypesBegin, acceptedTypesEnd]
+                            = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
+                        bool isAcceptedType = false;
+                        for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
+                        {
+                            if (definedLogicalField->dataType.type == it->second)
+                            {
+                                isAcceptedType = true;
+                                break;
+                            }
+                        }
+                        if (!isAcceptedType)
+                        {
+                            throw InvalidConfigParameter(
+                                "Field {} is of {} type, which does not allow {}!",
+                                fieldName,
+                                generatorFieldIdentifier,
+                                magic_enum::enum_name(definedLogicalField.value().dataType.type));
+                        }
+
+                        for (const auto& token : fieldSchemaTokens | std::views::drop(1))
+                        {
+                            generatorSchema.append(token);
+                            generatorSchema.append(" "sv);
+                        }
+                        generatorSchema.back() = '\n';
+                    }
+
+                    physicalSource.sourceConfig = inlineConfig.options;
+                    physicalSource.type = "Generator";
+                    physicalSource.sourceConfig["generator_schema"] = generatorSchema;
+                    return physicalSource;
+                };
+
+                const auto initialPhysicalSourceConfig = attachSource.inlineGeneratorConfiguration.has_value()
+                    ? initialPhysicalSourceConfigInline(attachSource.logicalSourceName, attachSource.inlineGeneratorConfiguration.value())
+                    : initialPhysicalSourceConfigFromFile(
+                          attachSource.logicalSourceName,
+                          attachSource.sourceConfigurationPath,
+                          attachSource.inputFormatterConfigurationPath);
+
+                const auto [logical, sourceType, parserConfig, sourceConfig] = [&]()
+                {
+                    switch (attachSource.testDataIngestionType)
+                    {
+                        case TestDataIngestionType::INLINE: {
+                            if (attachSource.tuples.has_value())
+                            {
+                                const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
+                                return SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource, sourceFile);
+                            }
+                            throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
+                        }
+                        case TestDataIngestionType::FILE: {
+                            return SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir);
+                        }
+                        case TestDataIngestionType::GENERATOR: {
+                            return SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
+                        }
+                    }
+                    std::unreachable();
+                }();
+
+                const auto logicalSource = sourceCatalog.getLogicalSource(attachSource.logicalSourceName);
+                if (not logicalSource.has_value())
+                {
+                    throw UnknownSourceName("{}", attachSource.logicalSourceName);
+                }
+
+                const auto physicalSource
+                    = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+                if (not physicalSource.has_value())
+                {
+                    NES_ERROR(
+                        "Concurrent deletion of just created logical source \"{}\" by another thread",
+                        logicalSource.value().getLogicalSourceName());
+                    throw UnknownSourceName(
+                        "Failed to attach physical source with type {} to logical source {}",
+                        attachSource.sourceType,
+                        attachSource.logicalSourceName);
+                }
+            });
+
+        parser.registerOnModelCallback(
+            [&](Nebuli::Inference::ModelDescriptor&& model)
+        {
+            modelCatalog.registerModel(std::move(model));
+        });
+
+        /// We create a new query plan from our config when finding a query
         SystestQueryId lastParsedQueryId = INVALID_SYSTEST_QUERY_ID;
         parser.registerOnQueryCallback(
             [&](std::string query, SystestQueryId currentQueryNumberInTest)

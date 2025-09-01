@@ -20,7 +20,7 @@
 #include <ModelCatalog.hpp>
 #include <Operators/SequenceLogicalOperator.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 ModelInferenceCompilationRule::ModelInferenceCompilationRule(std::shared_ptr<const Nebuli::Inference::ModelCatalog> modelCatalog)
@@ -53,8 +53,6 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan)
                             .value();
         }
     }
-
-    NES_DEBUG("ModelInferenceCompilationRule: Plan after\n{}", queryPlan);
 }
 
 }

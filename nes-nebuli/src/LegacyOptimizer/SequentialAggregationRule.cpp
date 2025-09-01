@@ -20,7 +20,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void SequentialAggregationRule::apply(LogicalPlan& queryPlan) const
