@@ -19,11 +19,13 @@
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/SequentialAggregationRule.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
 
 namespace NES
 {
@@ -37,8 +39,10 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
     constexpr auto typeInference = TypeInferencePhase{};
     constexpr auto originIdInferencePhase = OriginIdInferencePhase{};
+    constexpr auto sequentialAggregationRule = SequentialAggregationRule{};
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
+    auto modelCompilationRule = ModelInferenceCompilationRule(modelCatalog);
 
     inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);
@@ -46,6 +50,13 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     NES_INFO("After Source Expansion:\n{}", newPlan);
+
+    sequentialAggregationRule.apply(newPlan);
+    NES_INFO("After Sequential Aggregation:\n{}", newPlan);
+
+    modelCompilationRule.apply(newPlan);
+    NES_INFO("After Model Compilation:\n{}", newPlan);
+
     redundantUnionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Union Removal:\n{}", newPlan);
     typeInference.apply(newPlan);
