@@ -73,7 +73,7 @@ do
     fi
 
     log_out running ctest
-    if ! timeout 30m ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
+    if ! timeout --kill-after=1m 30m ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
     then
         for testcase in $(cat ctest.log | grep Failed | awk '$2 == "-" { print $3 }')
         do
@@ -101,21 +101,21 @@ do
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
         log_out running $harness libfuzzer
-        timeout 10m $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
+        timeout --kill-after=1m 10m $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
 
-        while [ $(pgrep -f $harness | wc -l) = $(( $(nproc) / 2 + 1 )) ]
+        while pgrep -f $harness > /dev/null
         do
+            for crash in crash-*
+            do
+                # kill all child processes
+                pkill -P $$
+
+                mv $crash $out_dir/crashes
+                log_out mutant $patch killed by libfuzzer $harness with $crash
+            done
             sleep 1
         done
 
-        # kill all child processes
-        pkill -P $$
-
-        for crash in crash-*
-        do
-            mv $crash $out_dir/crashes
-            log_out mutant $patch killed by libfuzzer $harness with $crash
-        done
 
         log_out running $harness aflpp
 
@@ -127,7 +127,7 @@ do
         afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
         done
 
-        while pgrep -f $harness
+        while pgrep -f $harness > /dev/null
         do
             if [ -e crash_found ]
             then
@@ -135,7 +135,7 @@ do
                 pkill -P $$
                 rm crash_found
 
-                for crash in afl-out/main/crashes/*
+                for crash in afl-out/main/crashes/id*
                 do
                     mv $crash $out_dir/crashes
                     log_out mutant $patch killed by aflpp $harness with $crash
@@ -143,17 +143,18 @@ do
 
                 for i in $(seq $(( $(nproc) / 2 - 1 )) )
                 do
-                    for crash in afl-out/sub-$i/crashes/*
+                    for crash in afl-out/sub-$i/crashes/id*
                     do
                         mv $crash $out_dir/crashes
                         log_out mutant $patch killed by aflpp $harness with $crash
                     done
                 done
             fi
+            sleep 1
         done
 
         log_out running $harness honggfuzz
-        if ! honggfuzz --run_time 600 -i /nes-corpora/$harness/corpus -o hfz_out --crash-dir hf-crashes --exit_upon_crash --exit_code_upon_crash 1 -- $(find cmake-build-hfz -name $harness) 2> hf.log
+        if ! honggfuzz --run_time 600 -i /nes-corpora/$harness/corpus -o hfz_out --crashdir hf-crashes --exit_upon_crash --exit_code_upon_crash 1 -- $(find cmake-build-hfz -name $harness) 2> hf.log
         then
             true
         fi
