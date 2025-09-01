@@ -712,6 +712,10 @@ void ThreadPool::addThread(WorkerId workerId)
                             "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
                         addTaskOrDoItInPlace(std::move(task));
                     }
+                    else
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    }
                 }
                 if (not internalTaskQueue.read(task))
                 {
