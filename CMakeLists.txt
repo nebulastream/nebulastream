@@ -239,12 +239,28 @@ endif ()
 
 add_custom_target(build_all_plugins)
 
+add_subdirectory(nes-passes)
+
+function(nautilus_inline target)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_dependencies(${target} nes-passes)
+        target_compile_options(${target} PRIVATE
+                "-fpass-plugin=$<TARGET_FILE:nes-passes>"
+        )
+    else ()
+        message(WARNING "Cannot apply inlining pass when not compiling with clang")
+    endif ()
+endfunction()
+
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 foreach (NES_DIR ${NES_DIRECTORIES})
-    add_subdirectory(${NES_DIR})
+    if (NOT NES_DIR STREQUAL "nes-passes")
+        add_subdirectory(${NES_DIR})
+    endif ()
 endforeach ()
+
 
 # Other configurations
 project_enable_format()

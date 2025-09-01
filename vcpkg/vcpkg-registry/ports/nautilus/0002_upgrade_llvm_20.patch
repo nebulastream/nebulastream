@@ -1,0 +1,14 @@
+Index: nautilus/src/nautilus/llvm-passes/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/llvm-passes/CMakeLists.txt b/nautilus/src/nautilus/llvm-passes/CMakeLists.txt
+--- a/nautilus/src/nautilus/llvm-passes/CMakeLists.txt	(revision 7b5386edf1f85702651f943e6cadea3da513bb0e)
++++ b/nautilus/src/nautilus/llvm-passes/CMakeLists.txt	(date 1756742555612)
+@@ -1,4 +1,4 @@
+-find_package(LLVM 20.1.7 CONFIG)
++find_package(LLVM 20.1.1 CONFIG)
+
+ add_library(InliningPass SHARED FunctionInliningPass.cpp
+         InliningUtils.cpp InliningUtils.h)
