@@ -78,10 +78,6 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const auto slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
     auto& alteredSlicesVec = alteredSlicesPerThread[{workerThread, joinBuildSide}];
     alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
-#ifdef LOG_SLICE_ACCESS
-    logger->log(
-        {std::chrono::system_clock::now(), workerThread, FileOperation::WRITE, OperationStatus::END, slicesVec[0]->getSliceEnd(), false});
-#endif
     return slicesVec;
 }
 
@@ -256,6 +252,17 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             }
         }
     }
+
+    auto& alteredSlicesVec = alteredSlicesPerThread[{workerThreadId, joinBuildSide}];
+#ifdef LOG_SLICE_ACCESS
+    const auto now = std::chrono::system_clock::now();
+    for (const auto& slice : alteredSlicesVec)
+    {
+        logger->log({now, workerThreadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), false});
+    }
+#endif
+    alteredSlicesVec.clear();
+
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
 }
 
@@ -300,7 +307,6 @@ FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadI
         std::back_inserter(slicesToUpdate),
         [](const std::shared_ptr<Slice>& slice) { return std::make_pair(slice, FileOperation::WRITE); });
 
-    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
@@ -324,7 +330,6 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
             return std::make_pair(slice, FileOperation::READ);
         });
 
-    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
@@ -396,7 +401,6 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         /// Slice should not be written out or read back in any other case
     }
 
-    alteredSlicesVec.clear();
     return slicesToUpdate;
 }
 
