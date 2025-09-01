@@ -55,7 +55,9 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
             /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             buffer.setNumberOfTuples(numReadBytes);
             addBufferMetadata(executionContext->originId, buffer, sequenceNumber++);
-            emitFn(executionContext->originId, Data{std::move(buffer)});
+
+            // Todo: execute next pipeline in-place (must be inputformatter pipeline) (add INVARIANT/PRECONDITION)
+            emitFn(executionContext->originId, InPlaceData{std::move(buffer), this->executionContext->bufferProvider});
         }
 
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.

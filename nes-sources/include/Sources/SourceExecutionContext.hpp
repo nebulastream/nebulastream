@@ -51,7 +51,7 @@ enum class TryStopResult : uint8_t
     TIMEOUT
 };
 
-using SourceReturnType = std::variant<Error, Data, EoS>;
+using SourceReturnType = std::variant<Error, Data, EoS, InPlaceData>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }

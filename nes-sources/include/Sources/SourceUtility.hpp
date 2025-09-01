@@ -29,6 +29,12 @@ namespace NES::Sources
 
 using IOBuffer = Memory::TupleBuffer;
 
+struct InPlaceData
+{
+    IOBuffer buffer;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+};
+
 struct Data
 {
     IOBuffer buffer;
@@ -43,7 +49,7 @@ struct Error
     Exception ex;
 };
 
-using SourceReturnType = std::variant<Error, Data, EoS>;
+using SourceReturnType = std::variant<Error, Data, EoS, InPlaceData>;
 using EmitFunction = std::function<void(OriginId, SourceReturnType)>;
 
 inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const uint64_t sequenceNumber)
