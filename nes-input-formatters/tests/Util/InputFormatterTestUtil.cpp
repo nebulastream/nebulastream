@@ -49,6 +49,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <BackpressureChannel.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -168,7 +169,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     return validParserConfig;
 }
 
-std::unique_ptr<SourceHandle> createFileSource(
+std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -182,9 +183,9 @@ std::unique_ptr<SourceHandle> createFileSource(
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), {{"type", "CSV"}});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return sourceProvider.lower(NES::OriginId(1), sourceDescriptor.value());
+    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

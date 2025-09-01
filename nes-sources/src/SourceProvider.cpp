@@ -21,6 +21,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -32,7 +33,8 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 {
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescriptor) const
+std::unique_ptr<SourceHandle>
+SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
@@ -45,7 +47,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const Sou
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
-        return std::make_unique<SourceHandle>(std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
+        return std::make_unique<SourceHandle>(
+            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
