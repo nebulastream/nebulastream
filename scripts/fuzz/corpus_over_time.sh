@@ -144,12 +144,15 @@ fuzzer=$(pwd)/$(find cov-build -name $harness)
 mkdir $work_dir/log
 mkdir $work_dir/cov
 
-timeout --kill-after=1m 30m $fuzzer -runs=0 /corpus-$input_type || true
+if [ $harness != "snw-strict-fuzz" ]
+then
+    timeout --kill-after=1m 30m $fuzzer -runs=0 /corpus-$input_type || true
 
-pi=$(printf '%04d' 0)
-gcovr --gcov-executable="llvm-cov-19 gcov" \
- --json         $work_dir/cov/gcovr_all_$pi-ini-corpus-baseline.json \
- --json-summary $work_dir/cov/gcovr_sum_$pi-ini-corpus-baseline.json
+    pi=$(printf '%04d' 0)
+    gcovr --gcov-executable="llvm-cov-19 gcov" \
+    --json         $work_dir/cov/gcovr_all_$pi-ini-corpus-baseline.json \
+    --json-summary $work_dir/cov/gcovr_sum_$pi-ini-corpus-baseline.json
+ fi
 
 
 if [ $engine = "alfpp" ]
