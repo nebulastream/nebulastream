@@ -50,7 +50,7 @@ inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const u
 {
     buffer.setOriginId(originId);
     buffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     buffer.setSequenceNumber(SequenceNumber{sequenceNumber});
     buffer.setChunkNumber(ChunkNumber{1});
     buffer.setLastChunk(true);

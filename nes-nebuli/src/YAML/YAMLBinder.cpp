@@ -108,7 +108,8 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
-        rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
+        // rhs.sinks = sinkNode.as<std::vector<NES::CLI::Sink>>();
+        rhs.sinks = std::vector<NES::CLI::Sink>{node["sinks"].as<NES::CLI::Sink>()};
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();

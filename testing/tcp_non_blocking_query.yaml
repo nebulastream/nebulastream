@@ -1,0 +1,74 @@
+query: |
+  SELECT seqNumber, ts, clientId FROM tcp_source INTO csv_sink
+logical:
+  - name: tcp_source
+    schema:
+      - name: seqNumber
+        type: UINT64
+      - name: ts
+        type: UINT64
+      - name: clientId
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: value3
+        type: UINT64
+      - name: value4
+        type: UINT64
+      - name: value5
+        type: UINT64
+      - name: value6
+        type: UINT64
+      - name: value7
+        type: UINT64
+      - name: value8
+        type: UINT64
+      - name: value9
+        type: UINT64
+      - name: value10
+        type: UINT64
+      - name: value11
+        type: UINT64
+      - name: value12
+        type: UINT64
+      - name: value13
+        type: UINT64
+      - name: value14
+        type: UINT64
+      - name: value15
+        type: UINT64
+      - name: value16
+        type: UINT64
+      - name: value17
+        type: UINT64
+      - name: value18
+        type: UINT64
+      - name: value19
+        type: UINT64
+physical:
+  - logical: tcp_source
+    type: TCP
+    parserConfig:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    sourceConfig:
+      socketPort: 43715
+      socketHost: localhost
+
+sinks:
+  name: csv_sink
+  schema:
+    - name: tcp_source$seqNumber
+      type: UINT64
+    - name: tcp_source$ts
+      type: UINT64
+    - name: tcp_source$clientId
+      type: UINT64
+  type: File
+  config:
+    inputFormat: CSV
+    append: false
+    filePath: "output/outputQuery.csv"

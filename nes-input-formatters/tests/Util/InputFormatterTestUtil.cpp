@@ -238,7 +238,10 @@ TestPipelineTask createInputFormatterTask(
     taskBuffer.setSequenceNumber(sequenceNumber);
     // Todo: set configured size using 'formatted' size
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(formatScanPhysicalOp));
-    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilus::engine::Options{});
+    nautilus::engine::Options nautilusOptions{};
+    nautilusOptions.setOption("engine.Compilation", true);
+    nautilusOptions.setOption("mlir.enableMultithreading", false);
+    const auto testStage = std::make_shared<CompiledExecutablePipelineStage>(physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);
     return TestPipelineTask{workerThreadId, taskBuffer, std::move(testStage)};
 }
 

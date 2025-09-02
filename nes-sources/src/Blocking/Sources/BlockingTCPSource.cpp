@@ -149,22 +149,20 @@ size_t BlockingTCPSource::fillBuffer(IOBuffer& buffer, const std::stop_token&)
 
 bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
 {
-    const auto flushIntervalTimerStart = std::chrono::system_clock::now();
-    bool flushIntervalPassed = false;
     bool readWasValid = true;
 
     const size_t rawTBSize = buffer.getBufferSize();
-    while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
+    while (numReceivedBytes < rawTBSize)
     {
         const ssize_t bufferSizeReceived = read(sockfd, buffer.getBuffer() + numReceivedBytes, rawTBSize - numReceivedBytes);
-        numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {
             /// if read method returned -1 an error occurred during read.
-            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
+            // NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
             readWasValid = false;
-            break;
+            continue;
         }
+        numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == EOF_RECEIVED_BUFFER_SIZE)
         {
             NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
@@ -178,15 +176,20 @@ bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((flushIntervalInMs > 0
-             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
-                 >= flushIntervalInMs))
-        {
-            NES_DEBUG("BlockingTCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
-            flushIntervalPassed = true;
-        }
+        // if ((flushIntervalInMs > 0
+        //      && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
+        //          >= flushIntervalInMs))
+        // {
+        //     NES_DEBUG("BlockingTCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+        //     flushIntervalPassed = true;
+        // }
     }
     ++generatedBuffers;
+    // if (numReceivedBytes < rawTBSize - 1 and buffer.getBuffer()[numReceivedBytes] == '\n')
+    // {
+    //     ++numReceivedBytes;
+    // }
+    // fmt::println("num received bytes: {}, on valid read?: {}", numReceivedBytes, readWasValid);
     /// Loop while we haven't received any bytes yet and we can still read from the socket.
     return numReceivedBytes == 0 and readWasValid;
 }

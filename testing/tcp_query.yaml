@@ -1,0 +1,422 @@
+query: |
+  SELECT seqNumber, ts, clientId FROM tcp_source INTO csv_sink
+logical:
+  - name: tcp_source
+    schema:
+      - name: seqNumber
+        type: UINT64
+      - name: ts
+        type: UINT64
+      - name: clientId
+        type: UINT64
+      - name: value1
+        type: UINT64
+      - name: value2
+        type: UINT64
+      - name: value3
+        type: UINT64
+      - name: value4
+        type: UINT64
+      - name: value5
+        type: UINT64
+      - name: value6
+        type: UINT64
+      - name: value7
+        type: UINT64
+      - name: value8
+        type: UINT64
+      - name: value9
+        type: UINT64
+      - name: value10
+        type: UINT64
+      - name: value11
+        type: UINT64
+      - name: value12
+        type: UINT64
+      - name: value13
+        type: UINT64
+      - name: value14
+        type: UINT64
+      - name: value15
+        type: UINT64
+      - name: value16
+        type: UINT64
+      - name: value17
+        type: UINT64
+      - name: value18
+        type: UINT64
+      - name: value19
+        type: UINT64
+      - name: value20
+        type: UINT64
+      - name: value21
+        type: UINT64
+      - name: value22
+        type: UINT64
+      - name: value23
+        type: UINT64
+      - name: value24
+        type: UINT64
+      - name: value25
+        type: UINT64
+      - name: value26
+        type: UINT64
+      - name: value27
+        type: UINT64
+      - name: value28
+        type: UINT64
+      - name: value29
+        type: UINT64
+      - name: value30
+        type: UINT64
+      - name: value31
+        type: UINT64
+      - name: value32
+        type: UINT64
+      - name: value33
+        type: UINT64
+      - name: value34
+        type: UINT64
+      - name: value35
+        type: UINT64
+      - name: value36
+        type: UINT64
+      - name: value37
+        type: UINT64
+      - name: value38
+        type: UINT64
+      - name: value39
+        type: UINT64
+      - name: value40
+        type: UINT64
+      - name: value41
+        type: UINT64
+      - name: value42
+        type: UINT64
+      - name: value43
+        type: UINT64
+      - name: value44
+        type: UINT64
+      - name: value45
+        type: UINT64
+      - name: value46
+        type: UINT64
+      - name: value47
+        type: UINT64
+      - name: value48
+        type: UINT64
+      - name: value49
+        type: UINT64
+      - name: value50
+        type: UINT64
+      - name: value51
+        type: UINT64
+      - name: value52
+        type: UINT64
+      - name: value53
+        type: UINT64
+      - name: value54
+        type: UINT64
+      - name: value55
+        type: UINT64
+      - name: value56
+        type: UINT64
+      - name: value57
+        type: UINT64
+      - name: value58
+        type: UINT64
+      - name: value59
+        type: UINT64
+      - name: value60
+        type: UINT64
+      - name: value61
+        type: UINT64
+      - name: value62
+        type: UINT64
+      - name: value63
+        type: UINT64
+      - name: value64
+        type: UINT64
+      - name: value65
+        type: UINT64
+      - name: value66
+        type: UINT64
+      - name: value67
+        type: UINT64
+      - name: value68
+        type: UINT64
+      - name: value69
+        type: UINT64
+      - name: value70
+        type: UINT64
+      - name: value71
+        type: UINT64
+      - name: value72
+        type: UINT64
+      - name: value73
+        type: UINT64
+      - name: value74
+        type: UINT64
+      - name: value75
+        type: UINT64
+      - name: value76
+        type: UINT64
+      - name: value77
+        type: UINT64
+      - name: value78
+        type: UINT64
+      - name: value79
+        type: UINT64
+      - name: value80
+        type: UINT64
+      - name: value81
+        type: UINT64
+      - name: value82
+        type: UINT64
+      - name: value83
+        type: UINT64
+      - name: value84
+        type: UINT64
+      - name: value85
+        type: UINT64
+      - name: value86
+        type: UINT64
+      - name: value87
+        type: UINT64
+      - name: value88
+        type: UINT64
+      - name: value89
+        type: UINT64
+      - name: value90
+        type: UINT64
+      - name: value91
+        type: UINT64
+      - name: value92
+        type: UINT64
+      - name: value93
+        type: UINT64
+      - name: value94
+        type: UINT64
+      - name: value95
+        type: UINT64
+      - name: value96
+        type: UINT64
+      - name: value97
+        type: UINT64
+      - name: value98
+        type: UINT64
+      - name: value99
+        type: UINT64
+      - name: value100
+        type: UINT64
+      - name: value101
+        type: UINT64
+      - name: value102
+        type: UINT64
+      - name: value103
+        type: UINT64
+      - name: value104
+        type: UINT64
+      - name: value105
+        type: UINT64
+      - name: value106
+        type: UINT64
+      - name: value107
+        type: UINT64
+      - name: value108
+        type: UINT64
+      - name: value109
+        type: UINT64
+      - name: value110
+        type: UINT64
+      - name: value111
+        type: UINT64
+      - name: value112
+        type: UINT64
+      - name: value113
+        type: UINT64
+      - name: value114
+        type: UINT64
+      - name: value115
+        type: UINT64
+      - name: value116
+        type: UINT64
+      - name: value117
+        type: UINT64
+      - name: value118
+        type: UINT64
+      - name: value119
+        type: UINT64
+      - name: value120
+        type: UINT64
+      - name: value121
+        type: UINT64
+      - name: value122
+        type: UINT64
+      - name: value123
+        type: UINT64
+      - name: value124
+        type: UINT64
+      - name: value125
+        type: UINT64
+      - name: value126
+        type: UINT64
+      - name: value127
+        type: UINT64
+      - name: value128
+        type: UINT64
+      - name: value129
+        type: UINT64
+      - name: value130
+        type: UINT64
+      - name: value131
+        type: UINT64
+      - name: value132
+        type: UINT64
+      - name: value133
+        type: UINT64
+      - name: value134
+        type: UINT64
+      - name: value135
+        type: UINT64
+      - name: value136
+        type: UINT64
+      - name: value137
+        type: UINT64
+      - name: value138
+        type: UINT64
+      - name: value139
+        type: UINT64
+      - name: value140
+        type: UINT64
+      - name: value141
+        type: UINT64
+      - name: value142
+        type: UINT64
+      - name: value143
+        type: UINT64
+      - name: value144
+        type: UINT64
+      - name: value145
+        type: UINT64
+      - name: value146
+        type: UINT64
+      - name: value147
+        type: UINT64
+      - name: value148
+        type: UINT64
+      - name: value149
+        type: UINT64
+      - name: value150
+        type: UINT64
+      - name: value151
+        type: UINT64
+      - name: value152
+        type: UINT64
+      - name: value153
+        type: UINT64
+      - name: value154
+        type: UINT64
+      - name: value155
+        type: UINT64
+      - name: value156
+        type: UINT64
+      - name: value157
+        type: UINT64
+      - name: value158
+        type: UINT64
+      - name: value159
+        type: UINT64
+      - name: value160
+        type: UINT64
+      - name: value161
+        type: UINT64
+      - name: value162
+        type: UINT64
+      - name: value163
+        type: UINT64
+      - name: value164
+        type: UINT64
+      - name: value165
+        type: UINT64
+      - name: value166
+        type: UINT64
+      - name: value167
+        type: UINT64
+      - name: value168
+        type: UINT64
+      - name: value169
+        type: UINT64
+      - name: value170
+        type: UINT64
+      - name: value171
+        type: UINT64
+      - name: value172
+        type: UINT64
+      - name: value173
+        type: UINT64
+      - name: value174
+        type: UINT64
+      - name: value175
+        type: UINT64
+      - name: value176
+        type: UINT64
+      - name: value177
+        type: UINT64
+      - name: value178
+        type: UINT64
+      - name: value179
+        type: UINT64
+      - name: value180
+        type: UINT64
+      - name: value181
+        type: UINT64
+      - name: value182
+        type: UINT64
+      - name: value183
+        type: UINT64
+      - name: value184
+        type: UINT64
+      - name: value185
+        type: UINT64
+      - name: value186
+        type: UINT64
+      - name: value187
+        type: UINT64
+      - name: value188
+        type: UINT64
+      - name: value189
+        type: UINT64
+      - name: value190
+        type: UINT64
+      - name: value191
+        type: UINT64
+      - name: value192
+        type: UINT64
+      - name: value193
+        type: UINT64
+physical:
+  - logical: tcp_source
+    type: TCP
+    parserConfig:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    sourceConfig:
+      socketPort: 33473
+      socketHost: localhost
+
+sinks:
+  name: csv_sink
+  schema:
+    - name: tcp_source$seqNumber
+      type: UINT64
+    - name: tcp_source$ts
+      type: UINT64
+    - name: tcp_source$clientId
+      type: UINT64
+  type: File
+  config:
+    inputFormat: CSV
+    append: false
+    filePath: "output/outputQuery.csv"

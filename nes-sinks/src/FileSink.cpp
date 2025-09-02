@@ -65,39 +65,39 @@ std::ostream& FileSink::toString(std::ostream& str) const
 void FileSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
-    auto stream = outputFileStream.wlock();
-    /// Remove an existing file unless the isAppend mode is isAppend.
-    if (!isAppend)
-    {
-        if (std::filesystem::exists(outputFilePath.c_str()))
-        {
-            std::error_code ec;
-            if (!std::filesystem::remove(outputFilePath.c_str(), ec))
-            {
-                isOpen = false;
-                throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
-            }
-        }
-    }
-
-    /// Open the file stream
-    if (!stream->is_open())
-    {
-        stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
-    }
-    isOpen = stream->is_open() && stream->good();
-    if (!isOpen)
-    {
-        throw CannotOpenSink(
-            "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
-    }
-
-    /// Write the schema to the file, if it is empty.
-    if (stream->tellp() == 0)
-    {
-        const auto schemaStr = formatter->getFormattedSchema();
-        stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
-    }
+    // auto stream = outputFileStream.wlock();
+    // /// Remove an existing file unless the isAppend mode is isAppend.
+    // if (!isAppend)
+    // {
+    //     if (std::filesystem::exists(outputFilePath.c_str()))
+    //     {
+    //         std::error_code ec;
+    //         if (!std::filesystem::remove(outputFilePath.c_str(), ec))
+    //         {
+    //             isOpen = false;
+    //             throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
+    //         }
+    //     }
+    // }
+    //
+    // /// Open the file stream
+    // if (!stream->is_open())
+    // {
+    //     stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
+    // }
+    // isOpen = stream->is_open() && stream->good();
+    // if (!isOpen)
+    // {
+    //     throw CannotOpenSink(
+    //         "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
+    // }
+    //
+    // /// Write the schema to the file, if it is empty.
+    // if (stream->tellp() == 0)
+    // {
+    //     const auto schemaStr = formatter->getFormattedSchema();
+    //     stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
+    // }
 }
 
 void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
@@ -106,13 +106,24 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExec
     PRECONDITION(isOpen, "Sink was not opened");
 
     {
-        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
-        {
-            auto wlocked = outputFileStream.wlock();
-            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
-            wlocked->flush();
+        // auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+        const auto unixTSFinalMS = Timestamp{static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count())};
+        const uint64_t unixTSFinal = std::chrono::system_clock::now().time_since_epoch().count();
+        const uint64_t unixTSEventTime = inputTupleBuffer.getBuffer<uint64_t>()[1];
+        const uint64_t clientId = inputTupleBuffer.getBuffer<uint64_t>()[2];
+        const auto sourceIngestionTS = inputTupleBuffer.getCreationTimestampInMS();
+        if (clientId == 1) {
+            fmt::println("{}", fmt::format("{},{}\n", (unixTSFinalMS - sourceIngestionTS), (unixTSFinal - unixTSEventTime)));
         }
+        // fmt::println("writing: {}, with size: {}", timesToWrite, timesToWrite.size());
+        // NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
+        // {
+            // auto wlocked = outputFileStream.wlock();
+            // wlocked->write(timesToWrite.c_str(), timesToWrite.size());
+            // wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            // wlocked->flush();
+        // }
     }
 }
 

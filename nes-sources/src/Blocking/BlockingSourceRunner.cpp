@@ -48,7 +48,7 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
         const auto numReadBytes = handle.source.fillBuffer(buffer, stopToken);
 
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
-        if (numReadBytes != 0)
+        if (numReadBytes != 0 and numReadBytes != std::numeric_limits<size_t>::max())
         {
             // executionContext->inputFormatter->parseTupleBufferRaw(buffer, *executionContext->bufferProvider, numReadBytes, dataEmit);
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
