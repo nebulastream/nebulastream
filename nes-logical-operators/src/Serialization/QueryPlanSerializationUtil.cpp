@@ -178,12 +178,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     bool first = true;
     for (auto op : BFSRange(rootOperators.at(0)))
     {
-        if (first)
-        {
-            first = false;
-            continue;
-        }
-        if (auto sink = op.tryGet<SinkLogicalOperator>())
+        if (auto sink = op.tryGet<SinkLogicalOperator>(); not first and sink)
         {
             throw CannotDeserialize("Sink is not root of plan!\n{}", serializedQueryPlan.DebugString());
         }
@@ -199,6 +194,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
                 uniun->getChildren().size(),
                 uniun->getInputSchemas().size());
         }
+        first = false;
     }
 
     /// 4) Finalize plan
