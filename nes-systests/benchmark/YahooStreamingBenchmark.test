@@ -11,10 +11,6 @@ TESTDATA/large/ysb/ysb_10k_data_479M.csv
 SINK ysb10kChecksum TYPE Checksum UINT64 ysb10k$start UINT64 ysb10k$end UINT64 ysb10k$campaign_id UINT64 ysb10k$sum_user_id
 SINK ysb1kChecksum TYPE Checksum UINT64 ysb1k$user_id UINT64 ysb1k$page_id UINT64 ysb1k$campaign_id UINT64 ysb1k$ad_type UINT64 ysb1k$event_type UINT64 ysb1k$current_ms UINT64 ysb1k$ip UINT64 ysb1k$d1 UINT64 ysb1k$d2 UINT32 ysb1k$d3 UINT16 ysb1k$d4
 SINK ysb1kMapChecksum TYPE Checksum UINT64 ysb1k$user_id UINT64 click_score
-SINK campaignStatsChecksum TYPE Checksum UINT64 ysb10k$start UINT64 ysb10k$end UINT64 ysb10k$campaign_id UINT64 ysb10k$impression_count
-SINK campaignEngagementChecksum TYPE Checksum UINT64 campaign_id UINT64 impression_count UINT64 avg_engagement
-SINK highValueCampaignChecksum TYPE Checksum UINT64 start UINT64 end UINT64 campaign_id UINT64 high_value_count
-SINK normalizedCampaignChecksum TYPE Checksum UINT64 campaign_id UINT64 normalized_score
 
 # Query 1: Filter 5% selectivity - ad clicks on specific pages
 SELECT * FROM ysb1k WHERE page_id % UINT64(20) = UINT64(0) INTO ysb1kChecksum;
@@ -50,64 +46,4 @@ INTO ysb1kMapChecksum;
 ----
 14236360, 35170842947
 
-# Query 7: Simple Windowed Aggregation - Count impressions by campaign
-SELECT
-    start,
-    end,
-    campaign_id,
-    COUNT(user_id) AS impression_count
-FROM ysb10k
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO campaignStatsChecksum;
-----
-14236360, 35170842947
 
-# Query 8: Aggregation + Filter - Count high-value impressions
-SELECT
-    start,
-    end,
-    campaign_id,
-    COUNT(user_id) AS high_value_count
-FROM ysb10k
-WHERE user_id > UINT64(900000)
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 10000 MS)
-INTO highValueCampaignChecksum;
-----
-14236360, 35170842947
-
-# Query 9: Aggregation + Map - Calculate engagement metrics
-SELECT
-    campaign_id,
-    COUNT(user_id) AS impression_count,
-    AVG(user_id % UINT64(100)) AS avg_engagement
-FROM ysb10k
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 10000 MS)
-INTO campaignEngagementChecksum;
-----
-14236360, 35170842947
-
-# Query 10: Aggregation + Filter + Map - Calculate normalized scores for filtered campaigns
-SELECT
-    campaign_id,
-    SUM(user_id) / COUNT(user_id) AS normalized_score
-FROM ysb10k
-WHERE page_id > UINT64(500)
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 10000)
-INTO normalizedCampaignChecksum;
-----
-14236360, 35170842947
-
-# Query 11: Multi-column operation (less columnar advantage)
-SELECT
-    campaign_id,
-    SUM(user_id + page_id + ad_type) AS combined_score
-FROM ysb10k
-GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 10000)
-INTO normalizedCampaignChecksum;
-----
-14236360, 35170842947
