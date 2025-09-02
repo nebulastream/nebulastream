@@ -22,9 +22,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
@@ -183,6 +185,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         if (auto sink = op.tryGet<SinkLogicalOperator>())
         {
             throw CannotDeserialize("Sink is not root of plan!\n{}", serializedQueryPlan.DebugString());
+        }
+        if (op.getChildren().empty() && not op.tryGet<SourceDescriptorLogicalOperator>().has_value())
+        {
+            throw CannotDeserialize("Plan has Leaf that is not Sink: {}\n{}", op.explain(ExplainVerbosity::Short), rootOperators.at(0));
         }
     }
 
