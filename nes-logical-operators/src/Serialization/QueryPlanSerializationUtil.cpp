@@ -23,6 +23,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -189,6 +190,14 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         if (op.getChildren().empty() && not op.tryGet<SourceDescriptorLogicalOperator>().has_value())
         {
             throw CannotDeserialize("Plan has Leaf that is not Sink: {}\n{}", op.explain(ExplainVerbosity::Short), rootOperators.at(0));
+        }
+        if (auto uniun = op.tryGet<UnionLogicalOperator>(); uniun and uniun->getChildren().size() != uniun->getInputSchemas().size())
+        {
+            throw CannotDeserialize(
+                "Union with id {} has {} children but {} input schemas!",
+                op.getId(),
+                uniun->getChildren().size(),
+                uniun->getInputSchemas().size());
         }
     }
 
