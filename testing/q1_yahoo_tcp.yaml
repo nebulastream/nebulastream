@@ -52,4 +52,4 @@ sinks:
   config:
     inputFormat: CSV
     append: false
-    filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    filePath: "output/outputQuery.csv"
