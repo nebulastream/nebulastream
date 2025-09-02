@@ -85,11 +85,10 @@ TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
     return result;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+LogicalOperator SourceDescriptorLogicalOperator::withChildren([[maybe_unused]] std::vector<LogicalOperator> children) const
 {
-    auto copy = *this;
-    copy.children = children;
-    return copy;
+    PRECONDITION(children.empty(), "source should not have childen but given {}", children);
+    return *this;
 }
 
 std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
