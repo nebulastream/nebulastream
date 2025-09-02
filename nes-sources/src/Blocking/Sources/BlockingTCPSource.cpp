@@ -171,10 +171,10 @@ bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
             NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
             if (numReceivedBytes == 0)
             {
-                NES_INFO("BlockingTCPSource: EoS emitted from peer.");
+                NES_INFO("TCP Source detected EoS");
                 readWasValid = false;
-                break;
             }
+            break;
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
