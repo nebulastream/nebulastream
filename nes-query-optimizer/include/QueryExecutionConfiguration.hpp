@@ -84,7 +84,7 @@ public:
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
     EnumOption<MemoryLayoutStrategy> layoutStrategy
         = {"layoutStrategy",
-            MemoryLayoutStrategy::USE_SINGLE_LAYOUT,
+            MemoryLayoutStrategy::LEGACY,
             "Memory layout choosing strategy for operators. Options: LEGACY, USE_SINGLE_LAYOUT."};
     EnumOption<Schema::MemoryLayoutType> memoryLayout
         = {"memoryLayout",
