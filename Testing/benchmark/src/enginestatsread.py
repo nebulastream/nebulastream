@@ -6,6 +6,7 @@ import multiprocessing
 import concurrent.futures
 import time
 import re
+import argparse  # Add missing import
 from collections import defaultdict
 
 def compute_stats(trace_path):
@@ -152,19 +153,30 @@ def extract_metadata_from_filename(file_path):
     return metadata
 
 def main():
-    # Get directory from command line
-    if len(sys.argv) != 2:
-        print("Usage: python enginestatsread.py <directory>")
+
+    # Get directory and optional trace files from command line
+    parser = argparse.ArgumentParser(description='Process trace files')
+    parser.add_argument('base_directory', help='Directory to save results')
+    parser.add_argument('--trace-files', nargs='+', help='List of trace files to process')
+    parser.add_argument('--num-reps', type=int, default=2, help='Number of repetitions for averaging')
+    args = parser.parse_args()
+
+    base_directory = args.base_directory
+
+    # Find all trace files in the logs directory if not provided directly
+    trace_files = args.trace_files or []
+    if not trace_files:
+        logs_directory = os.path.join(base_directory, "logs")
+        if os.path.exists(logs_directory):
+            for file in os.listdir(logs_directory):
+                if file.endswith('.json') and 'GoogleEventTrace' in file:
+                    trace_files.append(os.path.join(logs_directory, file))
+
+    if not trace_files:
+        print("No trace files found to process")
         return
 
-    base_directory = sys.argv[1]
-    logs_directory = os.path.join(base_directory, "logs")
-
-    # Find all trace files in the logs directory
-    trace_files = []
-    for file in os.listdir(logs_directory):
-        if file.endswith('.json') and 'GoogleEventTrace' in file:
-            trace_files.append(os.path.join(logs_directory, file))
+    print(f"Processing {len(trace_files)} trace files in parallel...")
 
     # Process all trace files in parallel
     results = []

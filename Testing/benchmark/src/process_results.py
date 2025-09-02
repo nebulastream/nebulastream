@@ -10,137 +10,198 @@ import shutil
 
 def process_benchmark(benchmark_dir):
     """Process benchmark results using enginestatsread.py for each query with new directory structure."""
-    benchmark_dir = Path(benchmark_dir)
+    try:
+        benchmark_dir = Path(benchmark_dir)
 
-    # Find filter and map directories
-    filter_dir = benchmark_dir / "filter"
-    map_dir = benchmark_dir / "map"
+        # Validate benchmark directory
+        if not benchmark_dir.exists():
+            print(f"Error: Benchmark directory does not exist: {benchmark_dir}")
+            print(f"Raw path value received: '{benchmark_dir}'")
+            return None
 
-    all_results = []
+        if not benchmark_dir.is_dir():
+            print(f"Error: Path is not a directory: {benchmark_dir}")
+            return None
 
-    # Process each operator type directory
-    for op_dir in [filter_dir, map_dir]:
-        if not op_dir.exists():
-            continue
+        print(f"Processing results in: {benchmark_dir}")
 
-        operator_type = op_dir.name  # "filter" or "map"
+        # Find filter and map directories
+        filter_dir = benchmark_dir / "filter"
+        map_dir = benchmark_dir / "map"
 
-        # Process each buffer size directory
-        for buffer_dir in op_dir.glob("bufferSize*"):
-            buffer_size = int(buffer_dir.name.replace("bufferSize", ""))
+        # Check if expected subdirectories exist
+        if not filter_dir.exists() and not map_dir.exists():
+            print(f"Warning: Neither 'filter' nor 'map' directories found in {benchmark_dir}")
+            print("Available contents:")
+            for item in benchmark_dir.iterdir():
+                print(f"  - {item.name}")
+            return None
 
-            # Process each query directory
-            for query_dir in buffer_dir.glob("query_*"):
-                # Read query configuration
-                config = {}
-                config_file = query_dir / "config.txt"
-                if config_file.exists():
-                    with open(config_file, 'r') as f:
-                        for line in f:
-                            if ':' in line:
-                                key, value = line.strip().split(':', 1)
-                                config[key.strip()] = value.strip()
+        # Collect all trace files and their metadata
+        trace_file_info = []
 
-                query_id = int(config.get('query_id', 0))
-                if query_id == 0:
-                    continue
+        for op_dir in [filter_dir, map_dir]:
+            if not op_dir.exists():
+                continue
 
-                # Process each run directory
-                for run_dir in query_dir.glob("run*"):
-                    # Extract run number and layout from directory name
-                    run_parts = run_dir.name.split('_')
-                    run_num = int(run_parts[0].replace("run", ""))
-                    layout = run_parts[1] if len(run_parts) > 1 else "UNKNOWN"
+            operator_type = op_dir.name  # "filter" or "map"
+            print(f"Collecting trace files for {operator_type} operations...")
 
-                    # Find GoogleEventTrace file
-                    trace_files = list(run_dir.glob("GoogleEventTrace*.json"))
-                    if not trace_files:
+            # Process each buffer size directory
+            for buffer_dir in op_dir.glob("bufferSize*"):
+                buffer_size = int(buffer_dir.name.replace("bufferSize", ""))
+
+                # Process each query directory
+                for query_dir in buffer_dir.glob("query_*"):
+                    # Read query configuration
+                    config = {}
+                    config_file = query_dir / "config.txt"
+                    if config_file.exists():
+                        with open(config_file, 'r') as f:
+                            for line in f:
+                                if ':' in line:
+                                    key, value = line.strip().split(':', 1)
+                                    config[key.strip()] = value.strip()
+
+                    query_id = int(config.get('query_id', 0))
+                    if query_id == 0:
                         continue
 
-                    trace_file = trace_files[0]
+                    # Process each run directory
+                    for run_dir in query_dir.glob("run*"):
+                        # Extract run number and layout from directory name
+                        run_parts = run_dir.name.split('_')
+                        run_num = int(run_parts[0].replace("run", ""))
+                        layout = run_parts[1] if len(run_parts) > 1 else "UNKNOWN"
 
-                    # Create a temporary directory for enginestatsread.py
-                    temp_dir = benchmark_dir / f"temp_{query_id}_{layout}_{run_num}"
-                    temp_dir.mkdir(exist_ok=True)
-                    logs_dir = temp_dir / "logs"
-                    logs_dir.mkdir(exist_ok=True)
+                        # Find GoogleEventTrace file
+                        trace_files = list(run_dir.glob("GoogleEventTrace*.json"))
+                        if not trace_files:
+                            continue
 
-                    # Copy trace file to the logs directory
-                    trace_dest = logs_dir / trace_file.name
-                    shutil.copy(trace_file, trace_dest)
+                        trace_file = trace_files[0]
 
-                    # Run enginestatsread.py
-                    try:
-                        subprocess.run(
-                            ["python3", "src/enginestatsread.py", str(temp_dir)],
-                            check=True
-                        )
+                        # Store file info with metadata
+                        trace_file_info.append({
+                            'file_path': trace_file,
+                            'query_id': query_id,
+                            'run': run_num,
+                            'layout': layout,
+                            'buffer_size': buffer_size,
+                            'operator_type': operator_type,
+                            'query_dir': query_dir,
+                            'config': config
+                        })
 
-                        # Read CSV result from enginestatsread.py
-                        csv_file = temp_dir / f"temp_{query_id}_{layout}_{run_num}.csv"
-                        if csv_file.exists():
-                            df = pd.read_csv(csv_file)
+        if not trace_file_info:
+            print("No trace files found to process")
+            return None
 
-                            # Add query parameters and run information
-                            for k, v in config.items():
-                                # Try to convert numerical values
-                                try:
-                                    v_float = float(v)
-                                    df[k] = v_float
-                                except ValueError:
-                                    df[k] = v
+        print(f"Found {len(trace_file_info)} trace files to process")
 
-                            df['query_id'] = query_id
-                            df['run'] = run_num
-                            df['layout'] = layout
-                            df['buffer_size'] = buffer_size
-                            df['operator_type'] = operator_type
+        # Create a temporary directory for enginestatsread.py output
+        temp_dir = benchmark_dir / "temp_results"
+        temp_dir.mkdir(exist_ok=True)
 
-                            all_results.append(df)
+        # Get a list of all trace files
+        trace_files = [str(info['file_path']) for info in trace_file_info]
 
-                            # Copy the CSV to the query directory for reference
-                            shutil.copy(csv_file, query_dir / f"run{run_num}_{layout}_results.csv")
+        # Run enginestatsread.py with all trace files at once
+        try:
+            subprocess.run(
+                ["python3", "src/enginestatsread.py",
+                 str(temp_dir),
+                 "--trace-files"] + trace_files,
+                check=True
+            )
 
-                    except Exception as e:
-                        print(f"Error processing trace for query {query_id}, run {run_num}: {e}")
+            # Read CSV result from enginestatsread.py
+            csv_file = temp_dir / f"{temp_dir.name}.csv"
+            if csv_file.exists():
+                results_df = pd.read_csv(csv_file)
 
-                    # Clean up temporary directory
-                    shutil.rmtree(temp_dir)
+                # Process the combined results
+                all_results = []
 
-                # Calculate average results for this query across runs
+                for info in trace_file_info:
+                    trace_name = info['file_path'].name
+                    query_results = results_df[results_df['filename'] == trace_name].copy()
+
+                    if not query_results.empty:
+                        # Add query parameters and run information
+                        for k, v in info['config'].items():
+                            # Try to convert numerical values
+                            try:
+                                v_float = float(v)
+                                query_results[k] = v_float
+                            except ValueError:
+                                query_results[k] = v
+
+                        query_results['query_id'] = info['query_id']
+                        query_results['run'] = info['run']
+                        query_results['layout'] = info['layout']
+                        query_results['buffer_size'] = info['buffer_size']
+                        query_results['operator_type'] = info['operator_type']
+
+                        all_results.append(query_results)
+
+                        # Copy individual results to query directory
+                        result_csv = info['query_dir'] / f"run{info['run']}_{info['layout']}_results.csv"
+                        query_results.to_csv(result_csv, index=False)
+
                 if all_results:
-                    # Filter results for just this query
-                    query_results = [df for df in all_results if df['query_id'].iloc[0] == query_id]
-                    if query_results:
-                        query_df = pd.concat(query_results)
-                        avg_df = query_df.groupby(['layout']).mean().reset_index()
-                        avg_csv = query_dir / "avg_results.csv"
-                        avg_df.to_csv(avg_csv, index=False)
+                    combined_df = pd.concat(all_results, ignore_index=True)
 
-                        # Generate plots for this query
-                        try:
-                            subprocess.run([
-                                "python3", "Testing/benchmark/src/enhanced_plots.py",
-                                "--results-csv", str(avg_csv),
-                                "--output-dir", str(query_dir / "plots")
-                            ], check=True)
-                        except Exception as e:
-                            print(f"Error generating plots for query {query_id}: {e}")
+                    # Process per-query statistics
+                    query_ids = combined_df['query_id'].unique()
+                    for query_id in query_ids:
+                        query_results = combined_df[combined_df['query_id'] == query_id]
 
-    # Combine all results
-    if all_results:
-        combined_df = pd.concat(all_results)
-        output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
-        combined_df.to_csv(output_csv, index=False)
-        print(f"Combined results saved to {output_csv}")
+                        # Get the query directory from first matching info
+                        query_info = next((info for info in trace_file_info if info['query_id'] == query_id), None)
+                        if query_info:
+                            query_dir = query_info['query_dir']
 
-        # Average results across runs for all queries
-        avg_df = combined_df.groupby(['query_id', 'layout', 'buffer_size', 'operator_type']).mean().reset_index()
-        avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
-        avg_df.to_csv(avg_csv, index=False)
-        print(f"Averaged results saved to {avg_csv}")
+                            # Calculate average results for this query across runs
+                            avg_df = query_results.groupby(['layout']).mean(numeric_only=True).reset_index()
+                            avg_csv = query_dir / "avg_results.csv"
+                            avg_df.to_csv(avg_csv, index=False)
 
-        return str(avg_csv)
+                            # Generate plots for this query
+                            try:
+                                subprocess.run([
+                                    "python3", "Testing/benchmark/src/enhanced_plots.py",
+                                    "--results-csv", str(avg_csv),
+                                    "--output-dir", str(query_dir / "plots")
+                                ], check=True)
+                            except Exception as e:
+                                print(f"Error generating plots for query {query_id}: {e}")
+
+                    # Combine all results
+                    output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
+                    combined_df.to_csv(output_csv, index=False)
+                    print(f"Combined results saved to {output_csv}")
+
+                    # Average results across runs for all queries
+                    avg_df = combined_df.groupby(['query_id', 'layout', 'buffer_size', 'operator_type']).mean(numeric_only=True).reset_index()
+                    avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
+                    avg_df.to_csv(avg_csv, index=False)
+                    print(f"Averaged results saved to {avg_csv}")
+
+                    return str(avg_csv)
+
+        except Exception as e:
+            print(f"Error processing trace files: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Clean up temporary directory
+        shutil.rmtree(temp_dir)
+
+    except Exception as e:
+        print(f"Error processing benchmark: {e}")
+        import traceback
+        traceback.print_exc()
 
     return None
 
