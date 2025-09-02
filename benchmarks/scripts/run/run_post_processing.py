@@ -14,6 +14,8 @@
 
 
 import os
+import time
+import datetime
 import PostProcessing
 
 
@@ -23,6 +25,7 @@ SERVER_NAME = "amd"
 DATETIME = "2025-06-02_20-08-46"
 RESULTS_DIR = f"benchmarks/data/{DATETIME}"
 WORKING_DIR = f".cache/benchmarks/{DATETIME}"
+ERROR_FILE_PATH = os.path.join(RESULTS_DIR, "failed_benchmarks.txt")
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
 COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
@@ -52,11 +55,12 @@ def get_subdirectories_with_paths(directory):
 if __name__ == "__main__":
     output_folders = get_subdirectories_with_paths(WORKING_DIR)
     print(f"Found {len(output_folders)} directories")
+    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
 
     # Calling the postprocessing main
+    start_time = time.time()
     measurement_time = MEASURE_INTERVAL * 1000
     startup_time = WAIT_BETWEEN_COMMANDS * 1000
-    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     post_processing = PostProcessing.PostProcessing(output_folders,
                                                     measurement_time,
                                                     startup_time,
@@ -74,8 +78,13 @@ if __name__ == "__main__":
                                                     TEST_NAME,
                                                     LOG_SLICE_ACCESSES)
     failed_run_folders = post_processing.main()
+    end_time = time.time()
+    print(f"Post Processing completed in {datetime.timedelta(seconds=int(end_time - start_time))}\n")
 
     if not failed_run_folders:
         print("Post processing completed successfully.")
     else:
-        print(f"{len(failed_run_folders)} runs failed:\n{failed_run_folders}")
+        with open(ERROR_FILE_PATH, "a") as f:
+            f.write("\nNo measurements available for the following runs:\n")
+            f.write(", ".join(failed_run_folders) + "\n")
+        print(f"Failed runs:\n{failed_run_folders}\nNumber of failed runs: {len(failed_run_folders)}")
