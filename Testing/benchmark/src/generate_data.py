@@ -44,7 +44,7 @@ def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.c
     # Create DataFrame and save to CSV
     df = pd.DataFrame(data)
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-    df.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False, header=False)
 
     file_size_gb = os.path.getsize(file_path) / (1024*1024*1024)
     print(f"Generated {num_rows} rows with {num_columns} columns at {file_path}")

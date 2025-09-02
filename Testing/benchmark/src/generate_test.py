@@ -8,12 +8,16 @@ import shutil
 
 def generate_test_file(data_file, output_path, result_dir, params):
     """Generate benchmark test file with queries for all parameter combinations"""
-    buffer_sizes = params.get('buffer_sizes', [4000])#, 400000, 20000000])
-    num_columns_list = params.get('num_columns', [1 ])#, 5, 10])
-    accessed_columns_list = params.get('accessed_columns', [1])#, 2])
-    function_types = params.get('function_types', ['add'])#, 'exp'])
-    selectivities = params.get('selectivities', [5])#, 50, 95])
+    buffer_sizes = params.get('buffer_sizes', [4000, 400000, 20000000])
+    num_columns_list = params.get('num_columns', [1, 5, 10])
+    accessed_columns_list = params.get('accessed_columns', [1, 2])
+    function_types = params.get('function_types', ['add', 'exp'])
+    selectivities = params.get('selectivities', [5, 50, 95])
 
+
+    docker_data_path = "/tmp/nebulastream/Testing/benchmark/benchmark_results/data/" + os.path.basename(data_file)
+
+    print(f"Using output test file: {output_path}")
     # Read column names from data file
     sample_df = pd.read_csv(data_file, nrows=1)
     column_names = sample_df.columns.tolist()
@@ -25,12 +29,12 @@ def generate_test_file(data_file, output_path, result_dir, params):
         f.write("# description: Generated benchmark test for filter and map operations\n")
         f.write("# groups: [benchmark]\n\n")
 
-        # Source definition
+        # Source definition with Docker-compatible path
         f.write("# Source definitions\n")
         source_def = "Source bench_data"
         for col in column_names:
             source_def += f" UINT64 {col}"
-        source_def += f" FILE\n{os.path.abspath(data_file)}\n\n"
+        source_def += f" FILE\n{docker_data_path}\n\n"
         f.write(source_def)
 
         # Sink definitions
@@ -155,6 +159,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
 
     print(f"Generated test files with {query_id-1} queries")
     print(f"Created organized directory structure in {result_dir}")
+    print(f"Using Docker-compatible data path: {docker_data_path}")
     return query_id-1, query_configs
 
 if __name__ == "__main__":
@@ -166,11 +171,11 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 400000, 20000000],
-        'num_columns': [1, 5, 10],
-        'accessed_columns': [1, 2],
-        'function_types': ['add', 'exp'],
-        'selectivities': [5, 50, 95]
+        'buffer_sizes': [4000], #, 400000, 20000000],
+        'num_columns': [1], #, 5, 10],
+        'accessed_columns': [1], #, 2],
+        'function_types': ['add'], #, 'exp'],
+        'selectivities': [5] #, 50, 95]
     }
 
     generate_test_file(args.data, args.output, args.result_dir, params)

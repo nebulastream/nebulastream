@@ -7,10 +7,16 @@ import shutil
 from pathlib import Path
 import json
 
-def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
+def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""
     if layouts is None:
         layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
+
+    if project_dir is None:
+        project_dir = os.path.abspath(os.getcwd())
+
+    project_dir = Path(project_dir)
+    build_path = project_dir / build_dir
 
     # Create benchmark directory structure
     output_dir = Path(output_dir)
@@ -29,7 +35,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
                     parts = line.split(":", 1)
                     query_id = int(parts[0].replace("Query ", "").strip())
                     config_str = parts[1].strip()
-                    # Convert string representation to dict (simplified approach)
+                    # Convert string representation to dict
                     config_dict = eval(config_str)
                     query_configs[query_id] = config_dict
 
@@ -47,8 +53,6 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
         for buffer_dir in op_dir.glob("bufferSize*"):
             buffer_dirs.append(buffer_dir)
 
-    PROJECT_DIR = os.path.abspath(os.getcwd())
-
     # For each buffer directory, run all queries in the test file
     for buffer_dir in buffer_dirs:
         # Find test files in this buffer directory
@@ -60,95 +64,33 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
         buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
         operator_type = "filter" if "filter" in str(buffer_dir) else "map"
 
-        # Extract queries from test file
-        with open(buffer_test_file, 'r') as f:
-            content = f.read()
+        # Get query directories for this buffer size
+        query_dirs = list(buffer_dir.glob("query_*"))
 
-        # Split file by queries (sections starting with "# Query")
-        query_sections = re.split(r'# Query \d+:', content)
-
-        # First section is the header with source/sink definitions
-        header = query_sections[0]
-
-        # Process each query section
-        for i, section in enumerate(query_sections[1:], 1):
-            query_text = f"# Query {i}:" + section
-
-            # Find the query ID from the text
-            query_id_match = re.search(r'# Query (\d+):', query_text)
-            if not query_id_match:
+        for query_dir in query_dirs:
+            # Extract query ID from config file
+            config_file = query_dir / "config.txt"
+            if not config_file.exists():
+                print(f"Warning: No config file found in {query_dir}, skipping...")
                 continue
 
-            query_id = int(query_id_match.group(1))
+            # Read config to get query ID
+            query_id = None
+            with open(config_file, 'r') as f:
+                for line in f:
+                    if line.startswith("query_id:"):
+                        query_id = int(line.split(":")[1].strip())
+                        break
 
-            # Find the query directory based on config
-            config = query_configs.get(query_id, {})
-            if not config:
-                # Try to extract parameters from query text
-                params = {}
-                buffer_match = re.search(r'BufferSize: (\d+)', query_text)
-                if buffer_match:
-                    params['buffer_size'] = buffer_match.group(1)
+            if query_id is None:
+                print(f"Warning: Could not determine query ID for {query_dir}, skipping...")
+                continue
 
-                op_match = re.search(r'OperatorType: (\w+)', query_text)
-                if op_match:
-                    params['operator_type'] = op_match.group(1)
+            print(f"Processing query {query_id} in {query_dir}")
 
-                if params.get('operator_type') == 'filter':
-                    sel_match = re.search(r'Selectivity: (\d+)', query_text)
-                    if sel_match:
-                        params['selectivity'] = sel_match.group(1)
-
-                    cols_match = re.search(r'NumColumns: (\d+)', query_text)
-                    if cols_match:
-                        params['num_columns'] = cols_match.group(1)
-
-                    access_match = re.search(r'AccessedColumns: (\d+)', query_text)
-                    if access_match:
-                        params['accessed_columns'] = access_match.group(1)
-
-                    query_dir = buffer_dir / f"query_sel{params.get('selectivity', 'unknown')}_cols{params.get('num_columns', 'unknown')}_access{params.get('accessed_columns', 'unknown')}"
-
-                elif params.get('operator_type') == 'map':
-                    func_match = re.search(r'FunctionType: (\w+)', query_text)
-                    if func_match:
-                        params['function_type'] = func_match.group(1)
-
-                    cols_match = re.search(r'NumColumns: (\d+)', query_text)
-                    if cols_match:
-                        params['num_columns'] = cols_match.group(1)
-
-                    access_match = re.search(r'AccessedColumns: (\d+)', query_text)
-                    if access_match:
-                        params['accessed_columns'] = access_match.group(1)
-
-                    query_dir = buffer_dir / f"query_{params.get('function_type', 'unknown')}_cols{params.get('num_columns', 'unknown')}_access{params.get('accessed_columns', 'unknown')}"
-
-                else:
-                    # Skip if we can't determine the query directory
-                    continue
-            else:
-                # Use the config from the mapping file
-                if config['operator_type'] == 'filter':
-                    query_dir = buffer_dir / f"query_sel{config['selectivity']}_cols{config['num_columns']}_access{config['accessed_columns']}"
-                else:
-                    query_dir = buffer_dir / f"query_{config['function_type']}_cols{config['num_columns']}_access{config['accessed_columns']}"
-
-            # Ensure query directory exists
-            if not query_dir.exists():
-                query_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save config if not already saved
-            if not (query_dir / "config.txt").exists():
-                with open(query_dir / "config.txt", 'w') as f:
-                    for k, v in config.items():
-                        f.write(f"{k}: {v}\n")
-
-            # Create a temporary test file with just this query
-            temp_test_file = query_dir / "query.test"
-            with open(temp_test_file, 'w') as f:
-                f.write(header)
-                f.write(query_text)
+            # Calculate Docker path mapping for the test file
+            # The test file path must be relative to project_dir to map correctly in Docker
+            docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
 
             # Run for each layout
             for layout in layouts:
@@ -158,17 +100,17 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
 
                     print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}...")
 
-                    # Docker command similar to benchmark.sh
+                    # Docker command using existing test file with query ID
                     cmd = [
                         "docker", "run", "--entrypoint=",
-                        "-v", f"/home/user/.cache/ccache:/home/ubuntu/.ccache/ccache",
-                        "-v", f"{PROJECT_DIR}:/tmp/nebulastream",
+                        "-v", f"{os.path.expanduser('~')}/.cache/ccache:/home/ubuntu/.ccache/ccache",
+                        "-v", f"/home/user/CLionProjects/nebulastream:/tmp/nebulastream",
                         "--cap-add", "SYS_ADMIN", "--cap-add", "SYS_PTRACE", "--rm",
                         "nebulastream/nes-development:local",
                         "bash", "-c", (
                             f"cd /tmp/nebulastream/cmake-build-release/nes-systests/systest/ && "
                             f"/tmp/nebulastream/cmake-build-release/nes-systests/systest/systest -b "
-                            f"-t {os.path.abspath(temp_test_file)}:1 -- "
+                            f"-t {docker_test_path}:{query_id} -- "
                             f"--worker.queryEngine.numberOfWorkerThreads=4 "
                             f"--worker.bufferSizeInBytes={buffer_size} "
                             f"--worker.numberOfBuffersInGlobalBufferManager=1000 "
@@ -180,6 +122,9 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
                     ]
 
                     try:
+                        # Debug: Print Docker command
+                        print(f"  Running Docker with command pointing to test file: {docker_test_path}:{query_id}")
+
                         # Run the benchmark
                         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -189,8 +134,12 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None):
                         with open(run_dir / "stderr.log", 'w') as f:
                             f.write(result.stderr)
 
+                        if result.returncode != 0:
+                            print(f"  Error running benchmark, check logs in {run_dir}")
+                            print(f"  Error output: {result.stderr[:200]}...")
+
                         # Copy GoogleEventTrace file if it exists
-                        trace_files = list(Path(f"{PROJECT_DIR}/cmake-build-release/nes-systests").glob("GoogleEventTrace*"))
+                        trace_files = list(Path(f"{project_dir}/{build_dir}/nes-systests").glob("GoogleEventTrace*"))
                         if trace_files:
                             trace_file = trace_files[0]
                             trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
@@ -210,6 +159,14 @@ if __name__ == "__main__":
     parser.add_argument('--test-file', required=True, help='Path to test file')
     parser.add_argument('--output-dir', default='benchmark_results', help='Output directory')
     parser.add_argument('--repeats', type=int, default=2, help='Number of repetitions')
+    parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
+    parser.add_argument('--project-dir', default=os.path.abspath(os.getcwd()), help='Project root directory')
     args = parser.parse_args()
 
-    run_benchmark(args.test_file, args.output_dir, args.repeats)
+    run_benchmark(
+        args.test_file,
+        args.output_dir,
+        args.repeats,
+        build_dir=args.build_dir,
+        project_dir=args.project_dir
+    )
