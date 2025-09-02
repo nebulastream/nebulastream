@@ -7,6 +7,16 @@ from pathlib import Path
 
 def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.csv"):
     """Generate test data with configurable columns and distribution for different selectivities"""
+    # Check if file already exists
+    if os.path.exists(file_path):
+        file_size_gb = os.path.getsize(file_path) / (1024*1024*1024)
+        print(f"Using existing data file: {file_path}")
+        print(f"File size: {file_size_gb:.2f} GB")
+
+        # Read the first row to get column list
+        sample_df = pd.read_csv(file_path, nrows=1)
+        return file_path, sample_df.columns.tolist()
+
     # Calculate rows needed for ~1.5GB file
     bytes_per_row = num_columns * 10  # ~8 bytes per UINT64 + CSV overhead
     target_size = 1.5 * 1024 * 1024 * 1024  # Target 1.5GB
@@ -48,5 +58,9 @@ if __name__ == "__main__":
     parser.add_argument('--columns', type=int, default=10, help='Number of columns')
     parser.add_argument('--output', type=str, default='benchmark_data.csv', help='Output file path')
     args = parser.parse_args()
+
+    # Create output directories if they don't exist
+    output_path = Path(args.output)
+    output_path.parent.mkdir(exist_ok=True, parents=True)
 
     generate_data(args.rows, args.columns, args.output)
