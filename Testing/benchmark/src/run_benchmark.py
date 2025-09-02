@@ -139,17 +139,20 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                             print(f"  Error output: {result.stderr[:200]}...")
 
                         # Copy GoogleEventTrace file if it exists
-                        trace_files = list(Path(f"{project_dir}/{build_dir}/nes-systests").glob("GoogleEventTrace*"))
+                        search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests/systest")
+                        trace_files = list(search_path.glob("**/GoogleEventTrace*"))
                         if trace_files:
-                            trace_file = trace_files[0]
+                            # Sort by name (which includes timestamps) and take the most recent
+                            trace_files.sort()
+                            trace_file = trace_files[-1]
                             trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
                             shutil.copy(trace_file, trace_dest)
-                            print(f"  Saved trace to {trace_dest}")
+                            print(f"  Saved most recent trace file: {trace_file.name} to {trace_dest}")
                         else:
-                            print(f"  No trace file found for Query {query_id}, Run {run}")
+                            print(f"  No trace file found for Query {query_id}, Run {run} in path {search_path}")
 
                     except Exception as e:
-                        print(f"Error running benchmark: {e}")
+                        print(f"Error running benchmark: {e}", file=os.sys.stderr)
 
     print(f"Benchmark complete. Results in {output_dir}")
     return str(output_dir)

@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import numpy as np
 import shutil
+import json
 
 def generate_test_file(data_file, output_path, result_dir, params):
     """Generate benchmark test file with queries for all parameter combinations"""
@@ -19,8 +20,15 @@ def generate_test_file(data_file, output_path, result_dir, params):
 
     print(f"Using output test file: {output_path}")
     # Read column names from data file
-    sample_df = pd.read_csv(data_file, nrows=1)
-    column_names = sample_df.columns.tolist()
+    meta_file = data_file + ".meta"
+    if os.path.exists(meta_file):
+        with open(meta_file, 'r') as f:
+            column_names = json.load(f)
+    else:
+        # Fallback if metadata file doesn't exist
+        print("Warning: No metadata file found, reading first row of CSV")
+        sample_df = pd.read_csv(data_file, nrows=1, header=None)
+        column_names = [f"col_{i}" for i in range(len(sample_df.columns))]
 
     # Create main test file
     with open(output_path, 'w') as f:

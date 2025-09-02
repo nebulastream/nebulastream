@@ -3,31 +3,46 @@ import pandas as pd
 import numpy as np
 import os
 import argparse
+import json
 from pathlib import Path
 
 def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.csv"):
     """Generate test data with configurable columns and distribution for different selectivities"""
+    # Create metadata file path
+    meta_file_path = str(file_path) + ".meta"
+
     # Check if file already exists
     if os.path.exists(file_path):
         file_size_gb = os.path.getsize(file_path) / (1024*1024*1024)
         print(f"Using existing data file: {file_path}")
         print(f"File size: {file_size_gb:.2f} GB")
 
-        # Read the first row to get column list
-        sample_df = pd.read_csv(file_path, nrows=1)
-        return file_path, sample_df.columns.tolist()
+        # Read column names from metadata file
+        if os.path.exists(meta_file_path):
+            with open(meta_file_path, 'r') as f:
+                columns = json.load(f)
+            return file_path, columns
+        else:
+            # Legacy support - read first row to guess columns
+            print("Warning: No metadata file found, guessing column names")
+            columns = [f"col_{i}" for i in range(num_columns)]
+            with open(meta_file_path, 'w') as f:
+                json.dump(columns, f)
+            return file_path, columns
 
     # Calculate rows needed for ~1.5GB file
     bytes_per_row = num_columns * 10  # ~8 bytes per UINT64 + CSV overhead
     target_size = 1.5 * 1024 * 1024 * 1024  # Target 1.5GB
     num_rows = min(num_rows, int(target_size / bytes_per_row))
 
-    # Create data dictionary
+    # Create data dictionary and column list
     data = {}
+    columns = []
 
     # Generate columns with varied distributions for filter testing
     for i in range(num_columns):
         column_name = f"col_{i}"
+        columns.append(column_name)
 
         if i % 3 == 0:
             # Uniform distribution - good for predictable selectivity
@@ -41,16 +56,21 @@ def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.c
             values = np.random.exponential(2**28, size=num_rows)
             data[column_name] = values.astype(np.uint64)
 
-    # Create DataFrame and save to CSV
+    # Create DataFrame and save to CSV without headers
     df = pd.DataFrame(data)
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
     df.to_csv(file_path, index=False, header=False)
 
+    # Save column metadata to a separate file
+    with open(meta_file_path, 'w') as f:
+        json.dump(columns, f)
+
     file_size_gb = os.path.getsize(file_path) / (1024*1024*1024)
     print(f"Generated {num_rows} rows with {num_columns} columns at {file_path}")
     print(f"File size: {file_size_gb:.2f} GB")
+    print(f"Column metadata saved to: {meta_file_path}")
 
-    return file_path, df.columns.tolist()
+    return file_path, columns
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate benchmark data')

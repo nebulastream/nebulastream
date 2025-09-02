@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# cd /home/user/CLionProjects/nebulastream/Testing/benchmark
+# python3 src/benchmark_system.py
 import argparse
 import os
 import subprocess
@@ -97,14 +99,31 @@ def main():
 
     # Step 3: Run benchmark
     print("Step 3: Running benchmarks...")
-    benchmark_result_dir = subprocess.check_output([
+    process = subprocess.run([
         "python3", str(src_dir / "run_benchmark.py"),
         "--test-file", str(test_file),
         "--output-dir", str(benchmark_dir),
         "--repeats", str(args.repeats),
         "--build-dir", str(build_dir),
         "--project-dir", str(project_dir)
-    ], text=True).strip()
+    ], text=True, capture_output=True, check=False)
+
+    if process.returncode != 0:
+        print(f"Warning: Benchmark execution returned non-zero exit code: {process.returncode}")
+        print(f"Error output: {process.stderr}")
+
+    # Print any stderr output for debugging
+    if process.stderr:
+        print(process.stderr)
+
+    # The benchmark directory should be the last line of stdout
+    benchmark_result_dir = process.stdout.strip().split('\n')[-1]
+
+    if not Path(benchmark_result_dir).exists():
+        print(f"Warning: Benchmark directory not found: {benchmark_result_dir}")
+        benchmark_result_dir = str(benchmark_dir)  # Fall back to the original benchmark dir
+
+    print(f"Using benchmark result directory: {benchmark_result_dir}")
 
     # Step 4: Process results
     print("Step 4: Processing benchmark results...")

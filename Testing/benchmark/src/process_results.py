@@ -72,7 +72,7 @@ def process_benchmark(benchmark_dir):
                     # Run enginestatsread.py
                     try:
                         subprocess.run(
-                            ["python3", "Testing/scripts/enginestatsread.py", str(temp_dir)],
+                            ["python3", "src/enginestatsread.py", str(temp_dir)],
                             check=True
                         )
 
