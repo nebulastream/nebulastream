@@ -18,8 +18,9 @@ def main():
 
     start_time = time.time()
 
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(exist_ok=True, parents=True)
+    # Get the directory where this script is located
+    script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    src_dir = script_dir
 
     # Step 1: Generate data
     data_file = args.data_file
@@ -27,7 +28,7 @@ def main():
         print("Step 1: Generating benchmark data...")
         data_file = output_dir / "benchmark_data.csv"
         subprocess.run([
-            "python3", "generate_data.py",
+            "python3", str(src_dir / "generate_data.py"),
             "--rows", str(args.rows),
             "--columns", str(args.columns),
             "--output", str(data_file)
@@ -42,7 +43,7 @@ def main():
         print("Step 2: Generating benchmark test file...")
         test_file = output_dir / "benchmark.test"
         subprocess.run([
-            "python3", "generate_test.py",
+            "python3", str(src_dir / "generate_test.py"),
             "--data", str(data_file),
             "--output", str(test_file)
         ], check=True)
@@ -50,7 +51,7 @@ def main():
     # Step 3: Run benchmark
     print("Step 3: Running benchmarks...")
     benchmark_dir = subprocess.check_output([
-        "python3", "run_benchmark.py",
+        "python3", str(src_dir / "run_benchmark.py"),
         "--test-file", str(test_file),
         "--output-dir", str(output_dir),
         "--repeats", str(args.repeats)
@@ -59,14 +60,14 @@ def main():
     # Step 4: Process results
     print("Step 4: Processing benchmark results...")
     results_csv = subprocess.check_output([
-        "python3", "process_results.py",
+        "python3", str(src_dir / "process_results.py"),
         "--benchmark-dir", benchmark_dir
     ], text=True).strip()
 
     # Step 5: Generate plots
     print("Step 5: Creating visualization plots...")
     subprocess.run([
-        "python3", "enhanced_plots.py",
+        "python3", str(src_dir / "enhanced_plots.py"),
         "--results-csv", results_csv
     ], check=True)
 
