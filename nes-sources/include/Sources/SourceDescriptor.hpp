@@ -107,7 +107,9 @@ public:
         "numberOfBuffersInLocalPool",
         INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config); }};
+        {
+            return DescriptorConfig::tryGet(NUMBER_OF_BUFFERS_IN_LOCAL_POOL, config);
+        }};
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FormattingThread> FORMATTING_THREAD {
         "formattingThread",
         EnumWrapper{FormattingThread::BlockingSourceThread},

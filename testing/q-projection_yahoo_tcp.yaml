@@ -20,14 +20,14 @@ logical:
       - name: d1
         type: UINT64
       - name: d2
-        type: UINT32
-      - name: d3
-        type: UINT16
-      - name: d4
         type: UINT64
+      - name: d3
+        type: UINT32
+      - name: d4
+        type: UINT16
 physical:
   - logical: tcp_source
-    type: TCP
+    type: BlockingTCP
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
@@ -35,6 +35,10 @@ physical:
     sourceConfig:
       socketPort: 1111
       socketHost: localhost
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketBufferSize: 2
+      formattingThread: WorkerThread
 
 sinks:
   name: csv_sink
@@ -49,4 +53,4 @@ sinks:
   config:
     inputFormat: CSV
     append: false
-    filePath: "output/outputQuery.csv"
+    filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"

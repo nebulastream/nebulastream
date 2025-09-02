@@ -54,6 +54,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                 Overloaded{
                     [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                     {
+                        const auto formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD);
                         return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
                             .originId = originId,
                             .sourceImpl = std::move(sourceImpl),

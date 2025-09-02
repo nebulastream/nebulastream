@@ -1,51 +1,29 @@
 query: |
-  SELECT seqNumber, ts, clientId FROM tcp_source INTO csv_sink
+  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
 logical:
   - name: tcp_source
     schema:
-      - name: seqNumber
+      - name: user_id
         type: UINT64
-      - name: ts
+      - name: page_id
         type: UINT64
-      - name: clientId
+      - name: campaign_id
         type: UINT64
-      - name: value1
+      - name: ad_type
         type: UINT64
-      - name: value2
+      - name: event_type
         type: UINT64
-      - name: value3
+      - name: current_ms
         type: UINT64
-      - name: value4
+      - name: ip
         type: UINT64
-      - name: value5
+      - name: d1
         type: UINT64
-      - name: value6
-        type: UINT64
-      - name: value7
-        type: UINT64
-      - name: value8
-        type: UINT64
-      - name: value9
-        type: UINT64
-      - name: value10
-        type: UINT64
-      - name: value11
-        type: UINT64
-      - name: value12
-        type: UINT64
-      - name: value13
-        type: UINT64
-      - name: value14
-        type: UINT64
-      - name: value15
-        type: UINT64
-      - name: value16
-        type: UINT64
-      - name: value17
-        type: UINT64
-      - name: value18
-        type: UINT64
-      - name: value19
+      - name: d2
+        type: UINT32
+      - name: d3
+        type: UINT16
+      - name: d4
         type: UINT64
 physical:
   - logical: tcp_source
@@ -55,7 +33,7 @@ physical:
       fieldDelimiter: ","
       type: CSV
     sourceConfig:
-      socketPort: 35113
+      socketPort: 1111
       socketHost: localhost
       socketDomain: AF_INET
       socketType: SOCK_STREAM

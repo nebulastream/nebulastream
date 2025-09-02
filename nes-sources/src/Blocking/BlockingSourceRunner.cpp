@@ -70,7 +70,6 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
                     break;
                 }
             }
-            std::unreachable();
         }
 
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.

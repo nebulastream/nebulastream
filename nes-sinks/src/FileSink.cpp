@@ -103,19 +103,20 @@ void FileSink::start(PipelineExecutionContext&)
 void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
-    PRECONDITION(isOpen, "Sink was not opened");
+    // PRECONDITION(isOpen, "Sink was not opened");
 
     {
         // auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        const auto unixTSFinalMS = Timestamp{static_cast<uint64_t>(
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count())};
-        const uint64_t unixTSFinal = std::chrono::system_clock::now().time_since_epoch().count();
-        const uint64_t unixTSEventTime = inputTupleBuffer.getBuffer<uint64_t>()[1];
-        const uint64_t clientId = inputTupleBuffer.getBuffer<uint64_t>()[2];
+        // const auto unixTSFinalMS = Timestamp{static_cast<uint64_t>(
+            // std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count())};
+        // const uint64_t unixTSFinal = std::chrono::system_clock::now().time_since_epoch().count();
+        // const uint64_t unixTSEventTime = inputTupleBuffer.getBuffer<uint64_t>()[1];
+        // const uint64_t clientId = inputTupleBuffer.getBuffer<uint64_t>()[2];
         const auto sourceIngestionTS = inputTupleBuffer.getCreationTimestampInMS();
-        if (clientId == 1) {
-            fmt::println("{}", fmt::format("{},{}\n", (unixTSFinalMS - sourceIngestionTS), (unixTSFinal - unixTSEventTime)));
-        }
+        // if (clientId == 1) {
+        //     fmt::println("{}", fmt::format("{},{}\n", (unixTSFinalMS - sourceIngestionTS), (unixTSFinal - unixTSEventTime)));
+        // }
+        (void) sourceIngestionTS;
         // fmt::println("writing: {}, with size: {}", timesToWrite, timesToWrite.size());
         // NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         // {
