@@ -41,6 +41,8 @@ int main(const int argc, const char* argv[])
         builder.SetMaxMessageSize(-1);
         builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
+            grpc::EnableDefaultHealthCheckService(true);
+        grpc::EnableDefaultHealthCheckService(true);
 
         const auto server = builder.BuildAndStart();
         NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
