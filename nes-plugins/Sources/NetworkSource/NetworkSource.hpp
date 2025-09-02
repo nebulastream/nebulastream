@@ -52,6 +52,8 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider> provider) override;
     void close() override;
 
+    [[nodiscard]] bool addsMetadata() const override { return true; }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
