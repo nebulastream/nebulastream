@@ -103,7 +103,7 @@ do
         log_out running $harness libfuzzer
         timeout --kill-after=1m 10m $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
 
-        while pgrep -f $harness > /dev/null
+        while pgrep -P $$ > /dev/null
         do
             for crash in crash-*
             do
@@ -112,6 +112,18 @@ do
 
                 mv $crash $out_dir/crashes
                 log_out mutant $patch killed by libfuzzer $harness with $crash
+
+                sleep 10
+
+                if pgrep -P $$ > /dev/null
+                then
+                    echo some children still alive
+                    pgrep -P $$
+                    echo sending sigkill
+                    pkill -P $$ --signal kill || true
+                    sleep 1
+                    pgrep -P $$ > /dev/null && echo all children dead || exit 123
+                fi
             done
             sleep 1
         done
@@ -127,7 +139,7 @@ do
         afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
         done
 
-        while pgrep -f $harness > /dev/null
+        while pgrep -P $$ > /dev/null
         do
             if [ -e crash_found ]
             then
@@ -149,6 +161,18 @@ do
                         log_out mutant $patch killed by aflpp $harness with $crash
                     done
                 done
+
+                sleep 10
+
+                if pgrep -P $$ > /dev/null
+                then
+                    echo some children still alive
+                    pgrep -P $$
+                    echo sending sigkill
+                    pkill -P $$ --signal kill || true
+                    sleep 1
+                    pgrep -P $$ > /dev/null && echo all children dead || exit 123
+                fi
             fi
             sleep 1
         done
