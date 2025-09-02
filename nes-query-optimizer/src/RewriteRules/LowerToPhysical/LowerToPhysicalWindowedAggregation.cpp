@@ -145,6 +145,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
+    PRECONDITION(
+        not logicalOperator.tryGet<WindowedAggregationLogicalOperator>()->getWindowAggregation().empty(), "Expects at least one agg fn");
 
     auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();

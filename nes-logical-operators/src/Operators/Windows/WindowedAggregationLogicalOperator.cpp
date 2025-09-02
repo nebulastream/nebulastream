@@ -56,6 +56,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::shared_ptr<Windowing::WindowType> windowType)
     : aggregationFunctions(std::move(aggregationFunctions)), windowType(std::move(windowType)), groupingKey(std::move(groupingKey))
 {
+    PRECONDITION(not this->aggregationFunctions.empty(), "Requires at least one aggregation function");
 }
 
 std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
@@ -392,6 +393,10 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
         throw UnknownLogicalOperator();
     }
     auto aggregations = std::get<AggregationFunctionList>(aggregationsVariant).functions();
+    if (aggregations.empty())
+    {
+        throw CannotDeserialize("Expects at least one aggregation functions!");
+    }
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregations;
     for (const auto& agg : aggregations)
     {
