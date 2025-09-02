@@ -236,6 +236,16 @@ LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorR
             arguments.inputOriginIds.size(),
             arguments.inputSchemas.size());
     }
+    for (const auto& inputSchema : arguments.inputSchemas)
+    {
+        if (inputSchema.getNumberOfFields() != arguments.outputSchema.getNumberOfFields())
+        {
+            throw CannotDeserialize(
+                "Union input schema with {} fields but outputschema with {} fields!",
+                inputSchema.getNumberOfFields(),
+                arguments.outputSchema.getNumberOfFields());
+        }
+    }
     auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
                          .withOutputOriginIds(arguments.outputOriginIds)
                          .get<UnionLogicalOperator>()
