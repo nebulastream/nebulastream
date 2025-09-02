@@ -137,6 +137,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             children.push_back(build(childId, anc));
         }
 
+        if (auto source = op.tryGet<SourceDescriptorLogicalOperator>(); source and not children.empty())
+        {
+            throw CannotDeserialize("Got source (id: {}) with children!", id);
+        }
         LogicalOperator withKids = op.withChildren(std::move(children));
         builtOps.emplace(id, withKids);
         return withKids;
