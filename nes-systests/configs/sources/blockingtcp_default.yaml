@@ -1,0 +1,5 @@
+type: BlockingTCP
+socketPort: PLACEHOLDER
+socketHost: PLACEHOLDER
+numberOfBuffersInLocalPool: 64
+formattingThread: BlockingSourceThread
