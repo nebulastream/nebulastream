@@ -23,6 +23,7 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -33,8 +34,27 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
     auto assigner = logicalOperator.get<EventTimeWatermarkAssignerLogicalOperator>();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner.onField);
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner.unit));
+
+    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    {
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
+
+        auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+               physicalOperator,
+               logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType),
+               logicalOperator.getOutputSchema().withMemoryLayoutType(memoryLayoutTrait.targetLayoutType));
+
+        auto res = addSwapBeforeOperator(wrapper, memoryLayoutTrait, conf);
+
+        auto root = res.first;
+        auto leaf = res.second;
+        std::vector leafes(logicalOperator.getChildren().size(), leaf);
+        return {.root = root, .leafs = {leafes}};
+
+    }
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+            physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

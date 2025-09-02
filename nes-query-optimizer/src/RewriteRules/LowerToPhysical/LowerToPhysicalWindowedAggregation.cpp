@@ -118,6 +118,13 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
         auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
             configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
+        if (configuration.layoutStrategy != MemoryLayoutStrategy::LEGACY)
+            {
+                auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
+                layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+                    configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType));
+            }
+
         auto memoryProvider = std::make_shared<Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
 
         auto name = descriptor->getName();
@@ -157,7 +164,6 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation.getWindowType());
     INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
-    auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
@@ -171,7 +177,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
     {
-
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
         newInputSchema = newInputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
         outputSchema = outputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
     }
@@ -231,19 +237,26 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     if (conf.layoutStrategy == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
     {
+        auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
+
+        ///TODO: BA find out what gets wrong when adding swap between build and probe
+
         /// build probe
-        auto ref1 = addSwapBeforeOperator(probeWrapper, memoryLayoutTrait, conf);
+        //auto ref1 = addSwapBeforeOperator(probeWrapper, memoryLayoutTrait, conf);
 
-        /// build swap (ref1.second) probe (ref.first)
-        buildWrapper->setChildren({ref1.second});
+        ///build swap (ref1.second) probe (ref.first)
+        //auto ref2 = addSwapBeforeOperator(buildWrapper, memoryLayoutTrait, conf);
 
-        auto ref2 = addSwapBeforeOperator(buildWrapper, memoryLayoutTrait, conf);
         /// swap (ref2.second) build (ref2.first) swap (ref1.second) probe (ref1.first)
+        //auto leaf = ref2.second;
 
-        auto leaf = ref2.second;
+        auto ref1 = addSwapBeforeOperator(buildWrapper, memoryLayoutTrait, conf);
+        /// swap (ref1.second) build (ref1.first) probe
+        auto leaf = ref1.second;
         std::vector leafes(logicalOperator.getChildren().size(), leaf);
+        probeWrapper->setChildren({ref1.first});
 
-        return {.root = ref1.first, .leafs = {leafes}};
+        return {.root = probeWrapper, .leafs = {leafes}};
 
     }
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

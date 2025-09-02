@@ -81,6 +81,7 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
         return logicalOperator;
     }
     ///TODO: add advanced strategies here
+    ///note that aggregate has to have same format as event time watermark assigner before
 
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
