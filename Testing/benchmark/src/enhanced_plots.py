@@ -83,7 +83,7 @@ def plot_by_param(df, output_dir, param_name, param_label, log_scale=False):
         plt.savefig(output_dir / filename)
         plt.close()
 
-        print(f"Created plot: {filename}")
+        #print(f"Created plot: {filename}")
 
 def main():
     parser = argparse.ArgumentParser(description='Create enhanced benchmark plots')

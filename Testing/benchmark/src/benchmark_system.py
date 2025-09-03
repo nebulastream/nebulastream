@@ -164,7 +164,7 @@ def main():
     # Step 5: Generate plots
     print("Step 5: Creating visualization plots...")
 
-    # Improved script path finding
+    # Find enhanced_plots.py script
     script_locations = [
         src_dir / "enhanced_plots.py",
         Path("src/enhanced_plots.py"),
@@ -177,6 +177,18 @@ def main():
             enhanced_plots_path = path
             break
 
+    # Find plots.py script
+    plots_script_locations = [
+        src_dir / "plots.py",
+        Path("Testing/scripts/plots.py"),
+        Path(os.path.abspath(".")) / "scripts" / "plots.py"
+    ]
+    plots_script_path = None
+    for path in plots_script_locations:
+        if path.exists():
+            plots_script_path = path
+            break
+
     if not enhanced_plots_path:
         print("Error: Could not find enhanced_plots.py script")
         print("Searched in:")
@@ -184,52 +196,64 @@ def main():
             print(f"  - {path}")
     else:
         try:
-            # Find all avg_results.csv files in the benchmark directory
-            result_files = []
+            # Create charts directory for global summaries
+            charts_dir = Path(benchmark_result_dir) / "charts"
+            charts_dir.mkdir(exist_ok=True, parents=True)
 
-            # 1. Main benchmark average results
+            # Find main results CSV for global charts
             main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
             if main_results.exists():
-                result_files.append((main_results, benchmark_dir / "charts"))
                 print(f"Found main results CSV: {main_results}")
 
-            # 2. Individual query results
-            query_results = []
+                # Generate global charts with enhanced_plots
+                try:
+                    subprocess.run(
+                        ["python3", str(enhanced_plots_path),
+                         "--results-csv", str(main_results),
+                         "--output-dir", str(charts_dir)],
+                        check=True
+                    )
+                    print(f"  Success: Global enhanced plots created in {charts_dir}")
+                except Exception as e:
+                    print(f"  Error generating global enhanced plots: {e}")
+
+                # Also run plots.py for the main results
+                if plots_script_path:
+                    try:
+                        subprocess.run(
+                            ["python3", str(plots_script_path), str(main_results)],
+                            check=True
+                        )
+                        print(f"  Success: Additional plots created using plots.py")
+                    except Exception as e:
+                        print(f"  Error generating additional plots: {e}")
+
+            # Find individual query results for per-query plots
+            query_count = 0
             for op_type in ['filter', 'map']:
                 op_dir = Path(benchmark_result_dir) / op_type
-                if op_dir.exists():
-                    for buffer_dir in op_dir.glob("bufferSize*"):
-                        for query_dir in buffer_dir.glob("query_*"):
-                            avg_file = query_dir / "avg_results.csv"
-                            if avg_file.exists():
-                                plots_dir = query_dir / "plots"
-                                query_results.append((avg_file, plots_dir))
+                if not op_dir.exists():
+                    continue
 
-            if query_results:
-                print(f"Found {len(query_results)} individual query result files")
-                result_files.extend(query_results)
+                for buffer_dir in op_dir.glob("bufferSize*"):
+                    for query_dir in buffer_dir.glob("query_*"):
+                        avg_csv = query_dir / "avg_results.csv"
+                        if avg_csv.exists():
+                            plots_dir = query_dir / "plots"
+                            plots_dir.mkdir(exist_ok=True, parents=True)
 
-            # Plot all found results
-            for csv_file, output_dir in result_files:
-                output_dir.mkdir(exist_ok=True, parents=True)
-                print(f"Generating plots for {csv_file.name} -> {output_dir}")
+                            try:
+                                subprocess.run(
+                                    ["python3", str(enhanced_plots_path),
+                                     "--results-csv", str(avg_csv),
+                                     "--output-dir", str(plots_dir)],
+                                    check=True
+                                )
+                                query_count += 1
+                            except Exception as e:
+                                print(f"  Error generating plots for {avg_csv}: {e}")
 
-                try:
-                    plot_result = subprocess.run(
-                        ["python3", str(enhanced_plots_path),
-                         "--results-csv", str(csv_file),
-                         "--output-dir", str(output_dir)],
-                        capture_output=True, text=True, check=False
-                    )
-
-                    if plot_result.returncode == 0:
-                        print(f"  Success: Plots created in {output_dir}")
-                    else:
-                        print(f"  Warning: Plot generation returned code {plot_result.returncode}")
-                        if plot_result.stderr:
-                            print(f"  Error details: {plot_result.stderr.strip()}")
-                except Exception as e:
-                    print(f"  Error generating plots: {e}")
+            print(f"Successfully generated plots for {query_count} individual queries")
 
         except Exception as e:
             print(f"Error during plot generation: {e}")
