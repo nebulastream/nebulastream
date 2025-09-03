@@ -433,10 +433,13 @@ class PostProcessing:
         df = pd.DataFrame.from_dict(tasks, orient="index").reset_index()
         df = df.rename(columns={"level_0": "slice_id", "level_1": "thread_id"})
 
+        # Overwrite first_read_nopred_start with the minimum for each slice_id
+        df["first_read_nopred_start"] = df.groupby("slice_id")["first_read_nopred_start"].transform("min")
+
         # Keep only relevant data
         def valid_row(row):
             has_write_nopred = pd.notna(row["last_write_nopred_end"])
-            has_read_nopred = pd.notna(row["first_read_nopred_start"]) and pd.notna(row["last_read_nopred_end"])
+            has_read_nopred = pd.notna(row["first_read_nopred_start"])  # and pd.notna(row["last_read_nopred_end"])
             # has_write_pred = pd.notna(row["first_write_pred_start"]) and pd.notna(row["last_write_pred_end"])
             # has_read_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
             return has_write_nopred and has_read_nopred  # and (has_write_pred or has_read_pred)
