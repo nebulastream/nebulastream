@@ -389,7 +389,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().windowAggs.pop_back();
         aggFunc->asField = (FieldAccessLogicalFunction(context->getText()));
         helpers.top().windowAggs.push_back(aggFunc);
-        if (not helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>())
+        if (helpers.top().functionBuilder.empty() or not helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>())
         {
             throw InvalidQuerySyntax(
                 "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
@@ -585,6 +585,10 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         const auto accessFunction = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
         const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
+        if (helpers.top().windowAggs.empty())
+        {
+            throw UnknownException("bug in parser?!");
+        }
         const auto lastAggregation = helpers.top().windowAggs.back();
         const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
