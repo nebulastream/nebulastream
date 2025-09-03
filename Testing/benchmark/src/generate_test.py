@@ -16,22 +16,23 @@ def generate_test_file(data_file, output_path, result_dir, params):
     function_types = params.get('function_types', ['add', 'exp'])
     selectivities = params.get('selectivities', [5, 50, 95])
 
-    docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data/"
+    docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data"
 
     base_name = os.path.basename(data_file).split('_cols')[0]
     docker_data_path = docker_base_path + f"/{base_name}_cols{{}}.csv"
 
     print(f"Using output test file: {output_path}")
     # Read column names from data file
-    meta_file = data_file + ".meta"
+    meta_file = "benchmark_results/data/" + base_name + f"_cols{num_columns_list[-1]}.csv"  + ".meta"
+    print(f"Reading metadata from: {meta_file}")
     if os.path.exists(meta_file):
         with open(meta_file, 'r') as f:
             column_names = json.load(f)
     else:
         # Fallback if metadata file doesn't exist
-        print("Warning: No metadata file found, reading first row of CSV")
-        sample_df = pd.read_csv(data_file, nrows=1, header=None)
-        column_names = [f"col_{i}" for i in range(len(sample_df.columns))]
+        print("Warning: No metadata file found, generating default column names")
+        column_names = [f"col_{i}" for i in range(num_columns_list[-1])]
+
 
     # Create main test file
     with open(output_path, 'w') as f:
@@ -44,8 +45,8 @@ def generate_test_file(data_file, output_path, result_dir, params):
         f.write("# Source definitions\n")
         for num_cols in num_columns_list:
             docker_path = str(docker_data_path).format(num_cols)
-            if not os.path.exists(docker_path):
-                print(f"Warning: Data file for {num_cols} columns does not exist at {docker_path}")
+            #if not os.path.exists(docker_path):
+                #print(f"Warning: Data file for {num_cols} columns does not exist at {docker_path}")
             source_def = f"Source bench_data{num_cols}"
             for col in column_names:
                 source_def += f" UINT64 {col}"
@@ -90,9 +91,9 @@ def generate_test_file(data_file, output_path, result_dir, params):
         with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
             # Generate queries for all parameter combinations for this buffer size
             for num_col in [n for n in num_columns_list if n <= len(column_names)]:
-                cols_to_use = column_names[:num_col-1]
+                cols_to_use = column_names[:num_col]
 
-                for access_col in [a for a in accessed_columns_list if a <= num_col-1]:
+                for access_col in [a for a in accessed_columns_list if a <= num_col]:
                     cols_to_access = cols_to_use[:access_col]
 
                     # Filter queries with different selectivities

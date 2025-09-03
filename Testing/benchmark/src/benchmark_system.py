@@ -97,6 +97,7 @@ def main():
                 print(f"Error generating test file: {result.stderr}")
                 return  # Exit if test generation fails
             else:
+                print(result.stdout)
                 print("Test file generated successfully")
         except Exception as e:
             print(f"Exception when running generate_test.py: {e}")
