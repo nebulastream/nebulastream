@@ -47,7 +47,10 @@ def generate_test_file(data_file, output_path, result_dir, params):
 
         # Sink definitions
         f.write("# Sink definitions\n")
-        f.write("SINK FilterSink TYPE Checksum UINT64 result\n")
+        sink_def= "SINK FilterSink TYPE Checksum"
+        for col in column_names:
+            sink_def += f" UINT64 bench_data${col}"
+        f.write(sink_def + "\n")
         f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
 
     # Create operator directories
@@ -114,7 +117,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query to buffer-specific test file
                         query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
-                        query += f"SELECT {filter_col} AS result FROM bench_data WHERE {filter_col} > UINT64({threshold}) INTO FilterSink;\n"
+                        query += f"SELECT * FROM bench_data WHERE {filter_col} > UINT64({threshold}) INTO FilterSink;\n"
                         query += "----\n1, 1\n\n"
                         filter_f.write(query)
 
