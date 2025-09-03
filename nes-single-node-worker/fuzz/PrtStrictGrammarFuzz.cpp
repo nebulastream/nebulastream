@@ -172,13 +172,17 @@ std::optional<LogicalOperator> toOp(const FOp& op)
     if (op.has_unop())
     {
         const auto& unop = op.unop();
+        if (not unop.has_child())
+        {
+            return {};
+        }
         auto child = toOp(unop.child());
         if (unop.has_select())
         {
             const auto& pred = unop.select().predicate();
             if (auto fn = toFn(pred); fn.has_value())
             {
-                return SelectionLogicalOperator(*toFn(pred));
+                return SelectionLogicalOperator(*toFn(pred)).withChildren({child.value()});
             }
             return {};
         }
