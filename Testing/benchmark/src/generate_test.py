@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import shutil
 import json
+from benchmark_system import parse_int_list
 
 def generate_test_file(data_file, output_path, result_dir, params):
     """Generate benchmark test file with queries for all parameter combinations"""
@@ -15,8 +16,10 @@ def generate_test_file(data_file, output_path, result_dir, params):
     function_types = params.get('function_types', ['add', 'exp'])
     selectivities = params.get('selectivities', [5, 50, 95])
 
+    docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data/"
 
-    docker_data_path = "/tmp/nebulastream/Testing/benchmark/benchmark_results/data/" + os.path.basename(data_file)
+    base_name = os.path.basename(data_file).split('_cols')[0]
+    docker_data_path = docker_base_path + f"/{base_name}_cols{{}}.csv"
 
     print(f"Using output test file: {output_path}")
     # Read column names from data file
@@ -39,19 +42,24 @@ def generate_test_file(data_file, output_path, result_dir, params):
 
         # Source definition with Docker-compatible path
         f.write("# Source definitions\n")
-        source_def = "Source bench_data"
-        for col in column_names:
-            source_def += f" UINT64 {col}"
-        source_def += f" FILE\n{docker_data_path}\n\n"
-        f.write(source_def)
+        for num_cols in num_columns_list:
+            docker_path = str(docker_data_path).format(num_cols)
+            if not os.path.exists(docker_path):
+                print(f"Warning: Data file for {num_cols} columns does not exist at {docker_path}")
+            source_def = f"Source bench_data{num_cols}"
+            for col in column_names:
+                source_def += f" UINT64 {col}"
+            source_def += f" FILE\n{docker_path}\n\n"
+            f.write(source_def)
 
         # Sink definitions
         f.write("# Sink definitions\n")
-        sink_def= "SINK FilterSink TYPE Checksum"
-        for col in column_names:
-            sink_def += f" UINT64 bench_data${col}"
-        f.write(sink_def + "\n")
-        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
+        for num_cols in num_columns_list:
+            sink_def= f"SINK AllSink{num_cols} TYPE Checksum"
+            for col in column_names:
+                sink_def += f" UINT64 bench_data{num_cols}${col}"
+            f.write(sink_def + "\n")
+        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")#todo: map queries based on accessed columns
 
     # Create operator directories
     result_dir = Path(result_dir)
@@ -82,9 +90,9 @@ def generate_test_file(data_file, output_path, result_dir, params):
         with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
             # Generate queries for all parameter combinations for this buffer size
             for num_col in [n for n in num_columns_list if n <= len(column_names)]:
-                cols_to_use = column_names[:num_col]
+                cols_to_use = column_names[:num_col-1]
 
-                for access_col in [a for a in accessed_columns_list if a <= num_col]:
+                for access_col in [a for a in accessed_columns_list if a <= num_col-1]:
                     cols_to_access = cols_to_use[:access_col]
 
                     # Filter queries with different selectivities
@@ -117,7 +125,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query to buffer-specific test file
                         query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
-                        query += f"SELECT * FROM bench_data WHERE {filter_col} > UINT64({threshold}) INTO FilterSink;\n"
+                        query += f"SELECT * FROM bench_data{num_col} WHERE {filter_col} > UINT64({threshold}) INTO AllSink{num_col};\n"
                         query += "----\n1, 1\n\n"
                         filter_f.write(query)
 
@@ -157,7 +165,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         else:
                             expression = f"({cols_to_access[0]} * UINT64(2))"
 
-                        query += f"SELECT {expression} AS result FROM bench_data INTO MapSink;\n"
+                        query += f"SELECT {expression} AS result FROM bench_data{num_col} INTO MapSink;\n"
                         query += "----\n1, 1\n\n"
                         map_f.write(query)
 
@@ -178,15 +186,16 @@ if __name__ == "__main__":
     parser.add_argument('--data', required=True, help='Path to benchmark data CSV')
     parser.add_argument('--output', required=True, help='Output test file path')
     parser.add_argument('--result-dir', required=True, help='Result directory for organized structure')
+    parser.add_argument('--columns', type=parse_int_list, default=[10], help='List of number of columns to use')
     args = parser.parse_args()
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
-        'num_columns': [10], #, 5, 10], TODO: Fix multi-column queries and create num_columns in data accordingly
-        'accessed_columns': [1],#, 2],
+        'buffer_sizes': [4000],#, 40000, 400000, 4000000, 10000000, 20000000],
+        'num_columns': args.columns, #, 5, 10], TODO: Fix multi-column queries and create num_columns in data accordingly
+        'accessed_columns': [1, 2],
         'function_types': ['add', 'exp'],
-        'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
+        'selectivities': [5],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
     }
 
     generate_test_file(args.data, args.output, args.result_dir, params)

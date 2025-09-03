@@ -10,9 +10,12 @@ import time
 import glob
 import re
 
+def parse_int_list(arg):
+    """Convert comma-separated string to list of integers."""
+    return [int(x) for x in arg.split(',')]
 def main():
     parser = argparse.ArgumentParser(description='NebulaBenchmark: Complete Benchmark System')
-    parser.add_argument('--columns', type=int, default=10, help='Number of columns')
+    parser.add_argument('--columns', type=parse_int_list, default=[1, 5, 10], help='List of number of columns to use (comma-separated)')
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
@@ -58,7 +61,7 @@ def main():
     data_file = args.data_file
     if not args.skip_data_gen:
         print("Step 1: Generating benchmark data...")
-        data_filename = f"benchmark_data_rows{args.rows}_cols{args.columns}.csv"
+        data_filename = f"benchmark_data_rows{args.rows}"
         data_file = data_dir / data_filename
 
         # Check if data with same configuration already exists
@@ -67,9 +70,10 @@ def main():
         else:
             subprocess.run([
                 "python3", str(src_dir / "generate_data.py"),
+                "--output", str(data_file),
                 "--rows", str(args.rows),
-                "--columns", str(args.columns),
-                "--output", str(data_file)
+                "--columns", ','.join(map(str, args.columns))
+
             ], check=True)
     elif not data_file:
         print("Error: --data-file must be specified when using --skip-data-gen")
@@ -85,7 +89,8 @@ def main():
                 "python3", str(src_dir / "generate_test.py"),
                 "--data", str(data_file),
                 "--output", str(test_file),
-                "--result-dir", str(benchmark_dir)
+                "--result-dir", str(benchmark_dir),
+                "--columns", ','.join(map(str, args.columns))
             ], check=False, capture_output=True, text=True)
 
             if result.returncode != 0:

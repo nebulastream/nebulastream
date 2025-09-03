@@ -5,10 +5,12 @@ import os
 import argparse
 import json
 from pathlib import Path
+from benchmark_system import parse_int_list
 
 def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.csv"):
     """Generate test data with configurable columns and distribution for different selectivities"""
     # Create metadata file path
+    file_path+=f"_cols{num_columns}.csv"
     meta_file_path = str(file_path) + ".meta"
 
     # Check if file already exists
@@ -74,13 +76,13 @@ def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.c
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate benchmark data')
-    parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
-    parser.add_argument('--columns', type=int, default=10, help='Number of columns')
     parser.add_argument('--output', type=str, default='benchmark_data.csv', help='Output file path')
+    parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
+    parser.add_argument('--columns', type=parse_int_list, default=[10], help='Number of columns')
     args = parser.parse_args()
 
     # Create output directories if they don't exist
     output_path = Path(args.output)
     output_path.parent.mkdir(exist_ok=True, parents=True)
-
-    generate_data(args.rows, args.columns, args.output)
+    for col_count in args.columns:
+        generate_data(args.rows, col_count, args.output)
