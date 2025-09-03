@@ -275,17 +275,23 @@ struct Repl::Impl
         return false;
     }
 
-    [[nodiscard]] std::string readMultiLineQuery() const
+    [[nodiscard]] std::string readMultiLineQuery(const std::string& firstLine) const
     {
+        PRECONDITION(!firstLine.empty(), "first line may not be empty.");
+
         std::string query;
         std::string line;
-        size_t parenCount = 0;
+        ssize_t parenCount = 0;
         bool inString = false;
         char stringChar = 0;
 
         while (true)
         {
-            if (!interactiveMode)
+            if (query.empty())
+            {
+                line = firstLine;
+            }
+            else if (!interactiveMode)
             {
                 /// Use std::getline for non-interactive mode
                 std::getline(std::cin, line);
@@ -305,7 +311,7 @@ struct Repl::Impl
                 continue;
             }
 
-            if (interactiveMode)
+            if (interactiveMode && !query.empty())
             {
                 rx->history_add(line);
             }
@@ -343,6 +349,11 @@ struct Repl::Impl
             if (parenCount > 0 || inString)
             {
                 continue;
+            }
+
+            if (parenCount < 0)
+            {
+                throw QueryInvalid("too many closing parantesis");
             }
 
             /// Check if the line ends with a semicolon
@@ -498,7 +509,7 @@ struct Repl::Impl
                 }
                 else
                 {
-                    const std::string fullQuery = input + "\n" + readMultiLineQuery();
+                    const std::string fullQuery = readMultiLineQuery(input);
                     executeQuery(fullQuery);
                 }
             }
