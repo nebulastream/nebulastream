@@ -11,15 +11,14 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(Monitoring Sink nes-sinks-registry monitoring_sink_plugin MonitoringSink.cpp)
+add_plugin_as_library(Monitoring SinkValidation nes-sinks-registry monitoring_sink_validation_plugin MonitoringSink.cpp)
 
-# NOTE: Since these plugins are part of the main NebulaStream repo,
-#       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
-
-# activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/GeneratorSource" OFF)
-activate_optional_plugin("Sinks/MonitoringSink" ON)
-
-if (NES_ENABLES_TESTS)
-  # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
-  activate_optional_plugin("Sinks/ChecksumSink" ON)
-endif()
+target_include_directories(monitoring_sink_plugin
+        PUBLIC include
+        PRIVATE .
+)
+target_include_directories(monitoring_sink_validation_plugin
+        PUBLIC include
+        PRIVATE .
+)

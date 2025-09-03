@@ -117,6 +117,7 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
         std::visit(
             Overloaded{
                 [&](const Sources::Data& data) { resultBuffers.emplace_back(data.buffer); },
+                [](const Sources::InPlaceData&) { /*Todo*/ },
                 [](const Sources::EoS&) { NES_DEBUG("Reached EoS in source"); },
                 [](const Sources::Error& error) { throw error.ex; }},
             returnType);

@@ -286,6 +286,16 @@ void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)
     this->creationTimestamp = timestamp;
 }
 
+Timestamp BufferControlBlock::getSourceCreationTimestampInMS() const noexcept
+{
+ return this->sourceCreationTimestamp;
+}
+
+void BufferControlBlock::setSourceCreationTimestampInMS(const Timestamp sourceCreationTS) noexcept
+{
+    this->sourceCreationTimestamp = sourceCreationTS;
+}
+
 Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
 {
     return creationTimestamp;

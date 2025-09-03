@@ -23,6 +23,8 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 
+#include "TimestampRef.hpp"
+
 namespace NES::Nautilus
 {
 
@@ -66,7 +68,9 @@ public:
 
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
     nautilus::val<Timestamp> getCreatingTs();
+    nautilus::val<Timestamp> getSourceCreationTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
+    void setSourceCreationTs(const nautilus::val<Timestamp>& sourceCreationTs);
 
     ~RecordBuffer() = default;
 

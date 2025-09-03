@@ -66,6 +66,11 @@ inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const Memory::T
     return tupleBuffer->getCreationTimestampInMS();
 };
 
+inline Timestamp NES_Memory_TupleBuffer_getSourceCreationTimestampInMS(const Memory::TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->getSourceCreationTimestampInMS();
+};
+
 inline void NES_Memory_TupleBuffer_setSequenceNumber(Memory::TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
 {
     tupleBuffer->setSequenceNumber(sequenceNumber);
@@ -79,6 +84,11 @@ inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::Tup
 inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(Memory::TupleBuffer* tupleBuffer, const Timestamp value)
 {
     tupleBuffer->setCreationTimestampInMS(Timestamp(value));
+}
+
+inline void NES_Memory_TupleBuffer_setSourceCreationTimestampInMS(Memory::TupleBuffer* tupleBuffer, const Timestamp value)
+{
+    tupleBuffer->setSourceCreationTimestampInMS(Timestamp(value));
 }
 
 inline void NES_Memory_TupleBuffer_setChunkNumber(Memory::TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)

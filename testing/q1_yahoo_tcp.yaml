@@ -28,7 +28,7 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: BlockingTCP
+    type: TCP
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","

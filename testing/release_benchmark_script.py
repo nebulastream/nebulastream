@@ -6,12 +6,17 @@ import tempfile
 import os
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python3 script.py <numQueries>")
+    if len(sys.argv) != 3:
+        print("Usage: python3 script.py <yaml_query_path> <numQueries>")
         sys.exit(1)
 
-    num_queries = int(sys.argv[1])
-    yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q1_yahoo_tcp.yaml"
+    yaml_file_path = sys.argv[1]
+    num_queries = int(sys.argv[2])
+    # yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q1_yahoo_tcp.yaml"
+    # yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q-projection_yahoo_tcp.yaml"
+    # yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q-projection_yahoo_tcp_blocking.yaml"
+    # yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q-projection_yahoo_tcp_blocking_source_thread.yaml"
+    # yaml_file_path = "/home/rudi/dima/nebulastream-public/testing/q5_nexmark_tcp.yaml"
 
     # Read the original YAML file
     with open(yaml_file_path, 'r') as f:

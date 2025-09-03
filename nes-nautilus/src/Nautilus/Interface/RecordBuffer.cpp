@@ -105,10 +105,19 @@ nautilus::val<Timestamp> RecordBuffer::getCreatingTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, tupleBufferRef)};
 }
+nautilus::val<Timestamp> RecordBuffer::getSourceCreationTs()
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSourceCreationTimestampInMS, tupleBufferRef)};
+}
 
 void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setCreationTimestampInMS, tupleBufferRef, creationTs);
+}
+
+void RecordBuffer::setSourceCreationTs(const nautilus::val<Timestamp>& sourceCreationTs)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSourceCreationTimestampInMS, tupleBufferRef, sourceCreationTs);
 }
 
 }

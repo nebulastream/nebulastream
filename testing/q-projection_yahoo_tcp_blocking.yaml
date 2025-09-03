@@ -27,7 +27,7 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: TCP
+    type: BlockingTCP
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
@@ -35,6 +35,10 @@ physical:
     sourceConfig:
       socketPort: 1111
       socketHost: localhost
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketBufferSize: 2
+      formattingThread: BlockingSourceThread
 
 sinks:
   name: csv_sink
@@ -45,8 +49,7 @@ sinks:
       type: UINT64
     - name: tcp_source$campaign_id
       type: UINT64
-  type: File
+  type: Monitoring
   config:
-    inputFormat: CSV
-    append: false
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 24860711550

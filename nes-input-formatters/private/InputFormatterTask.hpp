@@ -63,6 +63,7 @@ inline void setMetadataOfFormattedBuffer(
     formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
     formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
     formattedBuffer.setOriginId(rawBuffer.getOriginId());
+    formattedBuffer.setSourceCreationTimestampInMS(rawBuffer.getSourceCreationTimestampInMS());
 }
 
 /// Given that we know the number of tuples in a raw buffer, the number of (spanning) tuples that we already wrote into our current formatted
@@ -575,6 +576,7 @@ public:
         executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
         executionCtx.originId = recordBuffer.getOriginId();
         executionCtx.currentTs = recordBuffer.getCreatingTs();
+        executionCtx.sourceCreationTimestamp = recordBuffer.getSourceCreationTs();
         executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
         executionCtx.chunkNumber = recordBuffer.getChunkNumber();
         executionCtx.lastChunk = recordBuffer.isLastChunk();

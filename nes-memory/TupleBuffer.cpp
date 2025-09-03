@@ -185,6 +185,16 @@ void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
     controlBlock->setCreationTimestamp(value);
 }
 
+Timestamp TupleBuffer::getSourceCreationTimestampInMS() const noexcept
+{
+    return this->controlBlock->getSourceCreationTimestampInMS();
+}
+
+void TupleBuffer::setSourceCreationTimestampInMS(const Timestamp sourceCreationTS) noexcept
+{
+    this->controlBlock->setSourceCreationTimestampInMS(sourceCreationTS);
+}
+
 void TupleBuffer::setOriginId(const OriginId id) noexcept
 {
     controlBlock->setOriginId(id);
