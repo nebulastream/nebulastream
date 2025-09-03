@@ -127,6 +127,12 @@ def extract_metadata_from_filename(file_path):
     # Get just the filename from path
     filename = os.path.basename(file_path)
 
+    # Fix duplicate filenames like "file.jsonfile.json"
+    if filename.endswith(".json"):
+        duplicate_pos = filename.find(".json", 0, -5)
+        if duplicate_pos > 0:
+            filename = filename[:duplicate_pos + 5]
+
     metadata = {}
 
     # Extract layout with more specific pattern

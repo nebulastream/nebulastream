@@ -46,8 +46,8 @@ def plot_by_param(df, output_dir, param_name, param_label, log_scale=False):
 
     # Metrics to plot
     metrics = [
-        ('pipeline_1_eff_tp', 'Effective Throughput'),
-        ('pipeline_1_comp_tp', 'Computational Throughput')
+        ('pipeline_3_eff_tp', 'Effective Throughput'),
+        ('pipeline_3_comp_tp', 'Computational Throughput')
     ]
 
     for metric, metric_label in metrics:
@@ -112,11 +112,11 @@ def main():
     create_layout_comparison_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
-    try:
-        subprocess.run(["python3", "Testing/scripts/plots.py", str(results_csv)], check=True)
-        print(f"Additional plots created using existing plots.py script")
-    except Exception as e:
-        print(f"Error running existing plots.py: {e}")
+    #try:
+    #   subprocess.run(["python3", "Testing/scripts/plots.py", str(results_csv)], check=True)
+    #   print(f"Additional plots created using existing plots.py script")
+    #except Exception as e:
+    #   print(f"Error running existing plots.py: {e}")
 
     print(f"All plots saved to {output_dir}")
 

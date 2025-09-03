@@ -164,18 +164,10 @@ def process_benchmark(benchmark_dir):
 
                             # Calculate average results for this query across runs
                             avg_df = query_results.groupby(['layout']).mean(numeric_only=True).reset_index()
+                            avg_df['operator_type'] = query_info['operator_type']
                             avg_csv = query_dir / "avg_results.csv"
                             avg_df.to_csv(avg_csv, index=False)
 
-                            # Generate plots for this query
-                            try:
-                                subprocess.run([
-                                    "python3", "Testing/benchmark/src/enhanced_plots.py",
-                                    "--results-csv", str(avg_csv),
-                                    "--output-dir", str(query_dir / "plots")
-                                ], check=True)
-                            except Exception as e:
-                                print(f"Error generating plots for query {query_id}: {e}")
 
                     # Combine all results
                     output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
@@ -184,6 +176,7 @@ def process_benchmark(benchmark_dir):
 
                     # Average results across runs for all queries
                     avg_df = combined_df.groupby(['query_id', 'layout', 'buffer_size', 'operator_type']).mean(numeric_only=True).reset_index()
+
                     avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
                     avg_df.to_csv(avg_csv, index=False)
                     print(f"Averaged results saved to {avg_csv}")

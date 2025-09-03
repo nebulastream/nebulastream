@@ -108,37 +108,133 @@ def main():
         "--project-dir", str(project_dir)
     ], text=True, capture_output=True, check=False)
 
-    if process.returncode != 0:
-        print(f"Warning: Benchmark execution returned non-zero exit code: {process.returncode}")
-        print(f"Error output: {process.stderr}")
+    # Extract benchmark directory from output - look for actual paths
+    benchmark_result_dir = None
+    for line in process.stdout.strip().split('\n'):
+        if line.startswith('/') and 'benchmark_results/benchmark' in line:
+            potential_dir = line.strip()
+            if Path(potential_dir).exists():
+                benchmark_result_dir = potential_dir
+                break
 
-    # Print any stderr output for debugging
-    if process.stderr:
-        print(process.stderr)
-
-    # The benchmark directory should be the last line of stdout
-    benchmark_result_dir = process.stdout.strip().split('\n')[-1]
-
-    if not Path(benchmark_result_dir).exists():
-        print(f"Warning: Benchmark directory not found: {benchmark_result_dir}")
-        benchmark_result_dir = str(benchmark_dir)  # Fall back to the original benchmark dir
+    if not benchmark_result_dir:
+        print(f"Warning: Could not extract valid benchmark directory from output")
+        benchmark_result_dir = str(benchmark_dir)
 
     print(f"Using benchmark result directory: {benchmark_result_dir}")
 
     # Step 4: Process results
     print("Step 4: Processing benchmark results...")
-    results_csv = subprocess.check_output([
-        "python3", str(src_dir / "process_results.py"),
-        "--benchmark-dir", benchmark_result_dir
-    ], text=True).strip()
+    try:
+        process_result = subprocess.run([
+            "python3", str(src_dir / "process_results.py"),
+            "--benchmark-dir", benchmark_result_dir
+        ], text=True, capture_output=True, check=False)
+
+        print(process_result.stdout)  # Display stdout for better visibility
+
+        # Extract the results CSV path from the output
+        results_csv = None
+        for line in process_result.stdout.strip().split('\n'):
+            if '_avg_results.csv' in line:
+                parts = line.split()
+                for part in parts:
+                    if part.endswith('_avg_results.csv') and Path(part).exists():
+                        results_csv = part
+                        break
+
+        # If not found in output, try direct path construction
+        if not results_csv or not Path(results_csv).exists():
+            potential_csv = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+            if potential_csv.exists():
+                results_csv = str(potential_csv)
+                print(f"Found results CSV by direct lookup: {results_csv}")
+
+        if not results_csv or not Path(results_csv).exists():
+            print("Warning: Could not find results CSV")
+        else:
+            print(f"Using results CSV: {results_csv}")
+
+    except Exception as e:
+        print(f"Error processing results: {e}")
+        import traceback
+        traceback.print_exc()
+        results_csv = None
 
     # Step 5: Generate plots
     print("Step 5: Creating visualization plots...")
-    subprocess.run([
-        "python3", str(src_dir / "enhanced_plots.py"),
-        "--results-csv", results_csv,
-        "--output-dir", str(benchmark_dir / "charts")
-    ], check=True)
+
+    # Improved script path finding
+    script_locations = [
+        src_dir / "enhanced_plots.py",
+        Path("src/enhanced_plots.py"),
+        Path("Testing/benchmark/src/enhanced_plots.py"),
+        Path(os.path.abspath(".")) / "src" / "enhanced_plots.py"
+    ]
+    enhanced_plots_path = None
+    for path in script_locations:
+        if path.exists():
+            enhanced_plots_path = path
+            break
+
+    if not enhanced_plots_path:
+        print("Error: Could not find enhanced_plots.py script")
+        print("Searched in:")
+        for path in script_locations:
+            print(f"  - {path}")
+    else:
+        try:
+            # Find all avg_results.csv files in the benchmark directory
+            result_files = []
+
+            # 1. Main benchmark average results
+            main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+            if main_results.exists():
+                result_files.append((main_results, benchmark_dir / "charts"))
+                print(f"Found main results CSV: {main_results}")
+
+            # 2. Individual query results
+            query_results = []
+            for op_type in ['filter', 'map']:
+                op_dir = Path(benchmark_result_dir) / op_type
+                if op_dir.exists():
+                    for buffer_dir in op_dir.glob("bufferSize*"):
+                        for query_dir in buffer_dir.glob("query_*"):
+                            avg_file = query_dir / "avg_results.csv"
+                            if avg_file.exists():
+                                plots_dir = query_dir / "plots"
+                                query_results.append((avg_file, plots_dir))
+
+            if query_results:
+                print(f"Found {len(query_results)} individual query result files")
+                result_files.extend(query_results)
+
+            # Plot all found results
+            for csv_file, output_dir in result_files:
+                output_dir.mkdir(exist_ok=True, parents=True)
+                print(f"Generating plots for {csv_file.name} -> {output_dir}")
+
+                try:
+                    plot_result = subprocess.run(
+                        ["python3", str(enhanced_plots_path),
+                         "--results-csv", str(csv_file),
+                         "--output-dir", str(output_dir)],
+                        capture_output=True, text=True, check=False
+                    )
+
+                    if plot_result.returncode == 0:
+                        print(f"  Success: Plots created in {output_dir}")
+                    else:
+                        print(f"  Warning: Plot generation returned code {plot_result.returncode}")
+                        if plot_result.stderr:
+                            print(f"  Error details: {plot_result.stderr.strip()}")
+                except Exception as e:
+                    print(f"  Error generating plots: {e}")
+
+        except Exception as e:
+            print(f"Error during plot generation: {e}")
+            import traceback
+            traceback.print_exc()
 
     # Create a symlink to the latest benchmark directory
     latest_link = base_output_dir / "latest"
