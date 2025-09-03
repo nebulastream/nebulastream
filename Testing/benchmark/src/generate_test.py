@@ -48,7 +48,8 @@ def generate_test_file(data_file, output_path, result_dir, params):
             #if not os.path.exists(docker_path):
                 #print(f"Warning: Data file for {num_cols} columns does not exist at {docker_path}")
             source_def = f"Source bench_data{num_cols}"
-            for col in column_names:
+            names = column_names[:num_cols]#TODO: not depend on same column names?
+            for col in names:
                 source_def += f" UINT64 {col}"
             source_def += f" FILE\n{docker_path}\n\n"
             f.write(source_def)
@@ -57,7 +58,8 @@ def generate_test_file(data_file, output_path, result_dir, params):
         f.write("# Sink definitions\n")
         for num_cols in num_columns_list:
             sink_def= f"SINK AllSink{num_cols} TYPE Checksum"
-            for col in column_names:
+            names = column_names[:num_cols]
+            for col in names:
                 sink_def += f" UINT64 bench_data{num_cols}${col}"
             f.write(sink_def + "\n")
         f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")#todo: map queries based on accessed columns
