@@ -225,14 +225,15 @@ def main():
 
                 # Also run plots.py for the main results
                 if plots_script_path:
-                    try:
+                    pass
+                    """try:
                         subprocess.run(
                             ["python3", str(plots_script_path), str(main_results)],
                             check=True
                         )
                         print(f"  Success: Additional plots created using plots.py")
                     except Exception as e:
-                        print(f"  Error generating additional plots: {e}")
+                        print(f"  Error generating additional plots: {e}") """
 
             # Find individual query results for per-query plots
             query_count = 0
