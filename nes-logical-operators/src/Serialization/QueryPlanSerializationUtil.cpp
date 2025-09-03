@@ -166,8 +166,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
     if (!sink)
     {
-        throw CannotDeserialize(
-            "Plan root has to be a source, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
+        throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
     }
 
     if (sink->getChildren().empty())
