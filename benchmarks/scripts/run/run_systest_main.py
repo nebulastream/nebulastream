@@ -260,6 +260,7 @@ def main():
     print("Running systest main")
     print("################################################################\n")
 
+    all_systest_configs = ALL_SYSTEST_CONFIGS
     engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Systest: \n")
@@ -270,13 +271,13 @@ def main():
         # Running all benchmarks
         output_folders = []
         iteration_times = []
-        num_configs = len(ALL_SYSTEST_CONFIGS)
+        num_configs = len(all_systest_configs)
         total_iterations = num_configs * num_runs_per_config
         print(f"Attempt {attempt + 1} of {NUM_RETRIES_PER_RUN} of running each of the {num_configs} experiments "
               f"{num_runs_per_config} times, totaling {total_iterations} runs...\n")
 
         for j in range(num_runs_per_config):
-            for i, systest_config in enumerate(ALL_SYSTEST_CONFIGS, start=(j * num_configs + 1)):
+            for i, systest_config in enumerate(all_systest_configs, start=(j * num_configs + 1)):
                 start_time = time.time()
 
                 output_folders.append(run_benchmark(systest_config))
@@ -331,7 +332,7 @@ def main():
             break
         else:
             print(f"\n{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...\n")
-            ALL_SYSTEST_CONFIGS = [
+            all_systest_configs = [
                 BenchmarkConfig.BenchmarkConfig(
                     **yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r')))
                 for failed_run in failed_run_folders

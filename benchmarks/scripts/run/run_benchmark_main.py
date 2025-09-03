@@ -420,6 +420,7 @@ def main():
     print("Running benchmark main")
     print("################################################################\n")
 
+    all_benchmark_configs = ALL_BENCHMARK_CONFIGS
     engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Benchmarks: \n")
@@ -430,13 +431,13 @@ def main():
         # Running all benchmarks
         output_folders = []
         iteration_times = []
-        num_configs = len(ALL_BENCHMARK_CONFIGS)
+        num_configs = len(all_benchmark_configs)
         total_iterations = num_configs * num_runs_per_config
         print(f"Attempt {attempt + 1} of {NUM_RETRIES_PER_RUN} of running each of the {num_configs} experiments "
               f"{num_runs_per_config} times, totaling {total_iterations} runs...\n")
 
         for j in range(num_runs_per_config):
-            for i, benchmark_config in enumerate(ALL_BENCHMARK_CONFIGS, start=(j * num_configs + 1)):
+            for i, benchmark_config in enumerate(all_benchmark_configs, start=(j * num_configs + 1)):
                 start_time = time.time()
 
                 output_folders.append(run_benchmark(benchmark_config))
@@ -491,11 +492,11 @@ def main():
             break
         else:
             print(f"\n{len(failed_run_folders)} runs failed in attempt {attempt + 1}. Retrying...\n")
-            ALL_BENCHMARK_CONFIGS = []
+            all_benchmark_configs = []
             for failed_run in failed_run_folders:
                 config_dict = yaml.safe_load(open(os.path.join(failed_run, BENCHMARK_CONFIG_FILE), 'r'))
                 # TODO config_dict["batch_size"] = config_dict["batch_size"] * 1000
-                ALL_BENCHMARK_CONFIGS.append(BenchmarkConfig.BenchmarkConfig(**config_dict))
+                all_benchmark_configs.append(BenchmarkConfig.BenchmarkConfig(**config_dict))
     else:
         with open(ERROR_FILE_PATH, "a") as f:
             f.write("\nNo measurements available for the following runs:\n")

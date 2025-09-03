@@ -39,10 +39,10 @@ WINDOW_SIZE_SLIDE = [
     (1000 * 1000 * 1000, 1000 * 1000),
     # Representing a sliding window of 277.78h with slide of 100s, resulting in 10000 concurrent windows
     (1000 * 1000 * 1000, 100 * 1000),
-    # Representing a sliding window of 10s with slide of 1s, resulting in 10 concurrent windows
-    (10 * 1000, 1000),
-    # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
-    (10 * 1000, 100)
+    # Representing a sliding window of 10s with slide of 5s, resulting in 2 concurrent windows
+    (10 * 1000, 5000),
+    # Representing a sliding window of 10s with slide of 500ms, resulting in 20 concurrent windows
+    (10 * 1000, 500)
 ]
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 
@@ -455,7 +455,7 @@ def create_prediction_correctness_precision_configs():
     default_params["slice_store_type"] = "FILE_BACKED"
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments, default_queries = get_additional_default_values()
+    default_timestamp_increments = TIMESTAMP_INCREMENTS[:2]
     default_queries = [get_queries()[5], get_queries()[6]]
     # print(default_queries)
     for timestamp_increment in default_timestamp_increments:
