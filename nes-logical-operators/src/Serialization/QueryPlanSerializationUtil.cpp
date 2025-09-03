@@ -158,6 +158,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         rootOperators.push_back(build(rootId, {}));
     }
 
+    /// Here we check:
+    /// (a) correct operator locations (e.g. that plan root is sink, leafs are sources)
+    /// (b) stuff about children, which is only possible after step 2: recursive build,
+    ///     i.e. not in the factory fn called with the registry arguments.
     if (rootOperators.size() != 1)
     {
         throw CannotDeserialize("Plan contains multiple root operators!");
