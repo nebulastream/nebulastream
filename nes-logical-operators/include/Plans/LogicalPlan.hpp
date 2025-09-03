@@ -58,6 +58,8 @@ public:
     void setQueryId(QueryId id);
 
 private:
+    void verify();
+
     QueryId queryId = INVALID_QUERY_ID;
     std::vector<LogicalOperator> rootOperators;
     std::string originalSql; /// Holds the original SQL string

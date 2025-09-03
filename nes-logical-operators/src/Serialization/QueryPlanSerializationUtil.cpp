@@ -158,58 +158,6 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         rootOperators.push_back(build(rootId, {}));
     }
 
-    /// Here we check:
-    /// (a) correct operator locations (e.g. that plan root is sink, leafs are sources)
-    /// (b) stuff about children, which is only possible after step 2: recursive build,
-    ///     i.e. not in the factory fn called with the registry arguments.
-    if (rootOperators.size() != 1)
-    {
-        throw CannotDeserialize("Plan contains multiple root operators!");
-    }
-
-    auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-    if (!sink)
-    {
-        throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
-    }
-
-    if (sink->getChildren().empty())
-    {
-        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
-    }
-
-    if (not sink->getSinkDescriptor())
-    {
-        throw CannotDeserialize("Sink has no descriptor!");
-    }
-
-    bool first = true;
-    for (auto op : BFSRange(rootOperators.at(0)))
-    {
-        if (auto sink = op.tryGet<SinkLogicalOperator>(); not first and sink)
-        {
-            throw CannotDeserialize("Sink is not root of plan!\n{}", serializedQueryPlan.DebugString());
-        }
-        if (auto projection = op.tryGet<ProjectionLogicalOperator>(); projection and projection->getChildren().size() != 1)
-        {
-            throw CannotDeserialize(
-                "Projection {} has not 1 but {} children!", op.explain(ExplainVerbosity::Short), projection->getChildren().size());
-        }
-        if (op.getChildren().empty() && not op.tryGet<SourceDescriptorLogicalOperator>().has_value())
-        {
-            throw CannotDeserialize("Plan has Leaf that is not Sink: {}\n{}", op.explain(ExplainVerbosity::Short), rootOperators.at(0));
-        }
-        if (auto uniun = op.tryGet<UnionLogicalOperator>(); uniun and uniun->getChildren().size() != uniun->getInputSchemas().size())
-        {
-            throw CannotDeserialize(
-                "Union with id {} has {} children but {} input schemas!",
-                op.getId(),
-                uniun->getChildren().size(),
-                uniun->getInputSchemas().size());
-        }
-        first = false;
-    }
-
     /// 4) Finalize plan
     auto queryId = INVALID_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
