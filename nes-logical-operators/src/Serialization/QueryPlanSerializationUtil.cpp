@@ -21,6 +21,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
@@ -185,6 +186,11 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         if (auto sink = op.tryGet<SinkLogicalOperator>(); not first and sink)
         {
             throw CannotDeserialize("Sink is not root of plan!\n{}", serializedQueryPlan.DebugString());
+        }
+        if (auto projection = op.tryGet<ProjectionLogicalOperator>(); projection and projection->getChildren().size() != 1)
+        {
+            throw CannotDeserialize(
+                "Projection {} has not 1 but {} children!", op.explain(ExplainVerbosity::Short), projection->getChildren().size());
         }
         if (op.getChildren().empty() && not op.tryGet<SourceDescriptorLogicalOperator>().has_value())
         {
