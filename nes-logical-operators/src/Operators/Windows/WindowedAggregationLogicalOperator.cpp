@@ -379,6 +379,31 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+std::vector<std::string> WindowedAggregationLogicalOperator::getKeyFields() const
+{
+    std::vector<std::string> fieldKeyNames;
+    fieldKeyNames.reserve(this->getGroupingKeys().size());
+
+    for (const auto& nodeAccess : this->getGroupingKeys())
+    {
+        fieldKeyNames.emplace_back(nodeAccess.getFieldName());
+    }
+    return fieldKeyNames;
+}
+
+std::vector<std::string> WindowedAggregationLogicalOperator::getValueFields() const
+{
+    std::vector<std::string> fieldValueNames;
+    fieldValueNames.reserve(this->getWindowAggregation().size());
+
+    for (const auto& descriptor : this->getWindowAggregation())
+    {
+        const auto aggregationResultFieldIdentifier = descriptor->onField.getFieldName();
+        fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
+    }
+    return fieldValueNames;
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
@@ -479,9 +504,27 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     {
         throw CannotDeserialize("Cannot construct WindowedAggregation");
     }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas)
-        .withInputOriginIds(arguments.inputOriginIds)
-        .withOutputOriginIds(arguments.outputOriginIds);
+    auto op = logicalOperator.withInferredSchema(arguments.inputSchemas)
+                  .withInputOriginIds(arguments.inputOriginIds)
+                  .withOutputOriginIds(arguments.outputOriginIds)
+                  .get<WindowedAggregationLogicalOperator>();
+
+    for (auto key : op.getKeyFields())
+    {
+        if (not op.getInputSchemas()[0].getFieldByName(key).has_value())
+        {
+            throw CannotDeserialize("Aggregation has key {} which is not in Schema!", key);
+        }
+    }
+    for (auto val : op.getValueFields())
+    {
+        if (not op.getInputSchemas()[0].getFieldByName(val).has_value())
+        {
+            throw CannotDeserialize("Aggregation has aggregation over field {} which is not in Schema!", val);
+        }
+    }
+
+    return op;
 }
 
 }

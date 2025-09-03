@@ -85,6 +85,9 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    [[nodiscard]] std::vector<std::string> getKeyFields() const;
+    [[nodiscard]] std::vector<std::string> getValueFields() const;
+
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
