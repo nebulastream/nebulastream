@@ -78,6 +78,10 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const auto slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
     auto& alteredSlicesVec = alteredSlicesPerThread[{workerThread, joinBuildSide}];
     alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
+#ifdef LOG_SLICE_ACCESS
+    logger->log(
+        {std::chrono::system_clock::now(), workerThread, FileOperation::WRITE, OperationStatus::START, slicesVec[0]->getSliceEnd(), false});
+#endif
     return slicesVec;
 }
 
