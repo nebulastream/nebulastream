@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from collections import Counter
 import BenchmarkConfig
 
 
@@ -30,6 +31,8 @@ if __name__ == "__main__":
     # Check if the sets are equal
     if not diff:
         print(f"The configurations are identical. Number of configs: {len(configs_1)}")
+        keys_values_count = {key: Counter(c.to_dict()[key] for c in configs_1) for key in configs_1[0].to_dict()}
+        print(f"Keys and values:\n{keys_values_count}")
     else:
         print("The configurations are not identical. Differences found:")
         for elem in diff:

@@ -180,11 +180,23 @@ def find_default_values_for_params(min_support_ratio=1.0):
     return likely_defaults
 
 
+def valid_row(row):
+    return pd.notna(row["last_write_nopred_end"]) and pd.notna(row["first_read_nopred_start"])
+
+
 def compute_prediction_correctness(row):
     if pd.notna(row['last_read_pred_end']) and row['last_read_pred_end'] >= row['first_read_nopred_start']:
         return False
     if pd.notna(row['last_write_pred_end']) and row['last_write_pred_end'] >= row['first_read_nopred_start']:
         return False
+    # if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
+    #     if row['last_write_pred_end'] >= row['first_read_pred_start']:
+    #         return False
+
+    return True
+
+
+def compute_prediction_correctness_2(row):
     if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
         if row['last_write_pred_end'] >= row['first_read_pred_start']:
             return False
@@ -199,8 +211,14 @@ def compute_prediction_precision(row):
         last_pred = row['last_write_pred_end']
     elif pd.notna(row['last_read_pred_end']):
         last_pred = row['last_read_pred_end']
+    else:
+        return np.nan
 
-    return row['first_read_nopred_start'] - last_pred
+    return row['last_write_nopred_end'] - last_pred
+
+
+def compute_prediction_precision_2(row):
+    return row['first_read_nopred_start'] - row['last_write_nopred_end']
 
 
 # Load the CSV file
@@ -243,10 +261,14 @@ df['query_id'] = df['query'].map(query_mapping)
 df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'], ascending=[True, True, True, True, True, True, True])
 
 # Compute correctness of predictions
+df_old = df.copy()
+df = df[df.apply(valid_row, axis=1)]
 df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
+df['prediction_correctness_2'] = df.apply(compute_prediction_correctness_2, axis=1)
 
 # Compute precision of predictions
 df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
+df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
@@ -400,16 +422,16 @@ def plot_test(data, config, metric, label):
 
         plt.figure(figsize=(14, 6))
         ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None, marker='o')
-    
+
         # Add labels for min and max values of metric for each slice store type
         add_min_max_labels_per_group(data, 'slice_store_type', metric, ax, param)
-    
+
         # Add config below
         mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.15)
         plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
-    
+
         plt.title(f'Effect of {param} on {label}')
         plt.xlabel(f'{param} (sec)')
         plt.ylabel(f'{label} ({unit})')
@@ -624,6 +646,7 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
     plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
+
 
 #df = df.head(4)
 #accuracy = (
