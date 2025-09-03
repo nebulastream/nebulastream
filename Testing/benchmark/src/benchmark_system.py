@@ -262,14 +262,15 @@ def main():
 
     # Create a symlink to the latest benchmark directory
     latest_link = base_output_dir / "latest"
-    if latest_link.exists() and latest_link.is_symlink():
-        os.unlink(latest_link)
-    os.symlink(benchmark_dir.name, latest_link, target_is_directory=True)
+    #if latest_link.exists() and latest_link.is_symlink():
+    #    os.unlink(latest_link)
+    #os.symlink(benchmark_dir.name, latest_link, target_is_directory=True)
 
     elapsed_time = time.time() - start_time
     print(f"Benchmark completed in {elapsed_time:.2f} seconds")
     print(f"Results and visualizations available in {benchmark_dir}")
     print(f"Access the latest results at {latest_link}")
+    #todo: save stdout and shutdown system
 
 if __name__ == "__main__":
     main()

@@ -79,7 +79,7 @@ def plot_by_param(df, output_dir, param_name, param_label, log_scale=False):
             ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
 
         # Save plot
-        filename = f"{operator_type}_{param_name}_{metric.replace('pipeline_1_', '')}.png"
+        filename = f"{operator_type}_{param_name}_{metric.replace('pipeline_3_', '')}.png"
         plt.savefig(output_dir / filename)
         plt.close()
 

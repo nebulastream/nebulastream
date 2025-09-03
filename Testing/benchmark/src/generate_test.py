@@ -182,11 +182,11 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000], #, 400000, 20000000],
-        'num_columns': [1], #, 5, 10],
-        'accessed_columns': [1], #, 2],
-        'function_types': ['add'], #, 'exp'],
-        'selectivities': [5] #, 50, 95]
+        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
+        'num_columns': [10], #, 5, 10], TODO: Fix multi-column queries and create num_columns in data accordingly
+        'accessed_columns': [1],#, 2],
+        'function_types': ['add', 'exp'],
+        'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
     }
 
     generate_test_file(args.data, args.output, args.result_dir, params)
