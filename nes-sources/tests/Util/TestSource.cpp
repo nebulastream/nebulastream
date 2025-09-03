@@ -237,6 +237,6 @@ NES::Sources::getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractP
     auto sourceRunner = std::make_unique<BlockingSourceHandle>(SourceExecutionContext<BlockingSource>{
         originId,
         std::make_unique<TestSource>(originId, ctrl),
-        *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS)});
+        *poolProvider->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS), std::nullopt});
     return {std::move(sourceRunner), ctrl};
 }

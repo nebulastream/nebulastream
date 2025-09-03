@@ -55,7 +55,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 
 private:
-    ParserConfig config;
+    char tupleDelimiter;
+    char fieldDelimiter;
     size_t numberOfFieldsInSchema;
 };
 

@@ -27,7 +27,7 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: TCP
+    type: BlockingTCP
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
@@ -35,6 +35,10 @@ physical:
     sourceConfig:
       socketPort: 1111
       socketHost: localhost
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketBufferSize: 2
+      formattingThread: BlockingSourceThread
 
 sinks:
   name: csv_sink

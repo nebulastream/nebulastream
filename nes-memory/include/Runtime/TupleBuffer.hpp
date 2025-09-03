@@ -183,6 +183,10 @@ public:
 
     void setCreationTimestampInMS(Timestamp value) noexcept;
 
+    /// used to determine how long a buffer spent in the system
+    Timestamp getSourceCreationTimestampInMS() const noexcept;
+    void setSourceCreationTimestampInMS(Timestamp sourceCreationTS) noexcept;
+
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId id) noexcept;
 

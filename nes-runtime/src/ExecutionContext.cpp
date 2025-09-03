@@ -55,6 +55,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
+    , sourceCreationTimestamp(0_u64)
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
