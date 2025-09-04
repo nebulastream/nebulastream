@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-08-26_15-43-01'
+DATETIME = '2025-09-03_15-17-01'
 # FILE = 'combined_benchmark_statistics.csv'
 FILE = 'combined_slice_accesses.csv'
 
@@ -158,6 +158,25 @@ def add_min_max_labels_per_group(data, group, metric, ax, param):
 
         sub = grouped[grouped[group] == group_type]
         add_min_max_labels(sub, metric, ax, param, y_offset, color)
+
+
+def add_numeric_labels_per_hue(ax, data, hue, param, legend, spacing=0.0725):
+    # Calculate the new y-axis limit to make space for labels
+    y_min, y_max = ax.get_ylim()
+    new_y_min = y_min - (0.05 * (y_max - y_min))
+    ax.set_ylim(new_y_min, y_max)
+
+    # Add numerical labels under each box
+    num_hue_values = len(data[hue].unique())
+    for i in range(len(data[param].unique())):
+        for j in range(num_hue_values):
+            x_pos = i + (j - (num_hue_values - 1) / 2) * spacing
+            ax.text(x_pos, y_min, f"{j + 1}", ha='center', va='top', fontsize=10)
+
+    # Customize the legend to include numerical labels
+    handles, labels = ax.get_legend_handles_labels()
+    new_labels = [f"{j + 1}: {label}" for j, label in enumerate(labels)]
+    ax.legend(handles, new_labels, title='ID: ' + legend)
 
 
 def find_default_values_for_params(min_support_ratio=1.0):
@@ -640,24 +659,8 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
     plt.figure(figsize=(14, 6))
     ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
 
-    # Calculate the new y-axis limit to make space for labels
-    y_min, y_max = ax.get_ylim()
-    label_y_pos = y_min - (0.01 * (y_max - y_min))  # 1% of the data range below the minimum
-    new_y_min = label_y_pos - (0.05 * (y_max - y_min))  # Add a little extra space
-    ax.set_ylim(new_y_min, y_max)
-
-    # Add numerical labels under each box
-    hue_values = data_scaled[hue].unique()
-    num_hue_values = len(hue_values)
-    for i, cat in enumerate(data_scaled[param].unique()):
-        for j, hue in enumerate(hue_values):
-            x_pos = i + (j - num_hue_values / 2 + 0.5) / num_hue_values
-            ax.text(x_pos, label_y_pos, f"{j + 1}", ha='center', va='top', fontsize=10)
-
-    # Customize the legend to include numerical labels
-    handles, labels = ax.get_legend_handles_labels()
-    new_labels = [f"{j + 1}: {label}" for j, label in enumerate(labels)]
-    ax.legend(handles, new_labels, title='ID: ' + legend)
+    # Create numeric labels for each hue value and add legend
+    add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend)
 
     # Add legend below
     add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
