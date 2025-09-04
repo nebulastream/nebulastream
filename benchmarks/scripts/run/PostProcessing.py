@@ -365,65 +365,66 @@ class PostProcessing:
         for idx, stat_file in enumerate(accesses_files):
             # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
             dir_name = os.path.dirname(stat_file)
-            with open(stat_file, 'r') as file:
-                log_text = file.read()
 
             with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
                 benchmark_config_yaml = yaml.safe_load(file)
 
-            for match in re.finditer(pattern_slice_access_details, log_text):
-                timestamp = pd.to_datetime(match.group("timestamp"), format="%Y-%m-%d %H:%M:%S.%f").value
-                thread_id = int(match.group("thread_id"))
-                operation = match.group("operation")
-                status = match.group("status")
-                slice_id = int(match.group("slice_id"))
-                prediction = match.group("prediction") == "with"
+            with open(stat_file, 'r') as file:
+                for line in file:
+                    match = pattern_slice_access_details.search(line)
+                    if match:
+                        timestamp = pd.to_datetime(match.group("timestamp"), format="%Y-%m-%d %H:%M:%S.%f").value
+                        thread_id = int(match.group("thread_id"))
+                        operation = match.group("operation")
+                        status = match.group("status")
+                        slice_id = int(match.group("slice_id"))
+                        prediction = match.group("prediction") == "with"
 
-                key = (slice_id, thread_id)
-                if key not in tasks:
-                    tasks[key] = benchmark_config_yaml.copy()
-                    tasks[key].update({
-                        "dir_name": dir_name,
-                        "first_write_pred_start": None,
-                        "last_write_pred_end": None,
-                        "first_write_nopred_start": None,
-                        "last_write_nopred_end": None,
-                        "first_read_pred_start": None,
-                        "last_read_pred_end": None,
-                        "first_read_nopred_start": None,
-                        "last_read_nopred_end": None,
-                    })
+                        key = (slice_id, thread_id)
+                        if key not in tasks:
+                            tasks[key] = benchmark_config_yaml.copy()
+                            tasks[key].update({
+                                "dir_name": dir_name,
+                                "first_write_pred_start": None,
+                                "last_write_pred_end": None,
+                                "first_write_nopred_start": None,
+                                "last_write_nopred_end": None,
+                                "first_read_pred_start": None,
+                                "last_read_pred_end": None,
+                                "first_read_nopred_start": None,
+                                "last_read_nopred_end": None,
+                            })
 
-                if operation == "WRITE":
-                    if prediction:
-                        if status == "START":
-                            if tasks[key]["first_write_pred_start"] is None or timestamp < tasks[key]["first_write_pred_start"]:
-                                tasks[key]["first_write_pred_start"] = timestamp
-                        elif status == "END":
-                            if tasks[key]["last_write_pred_end"] is None or timestamp > tasks[key]["last_write_pred_end"]:
-                                tasks[key]["last_write_pred_end"] = timestamp
-                    else:
-                        if status == "START":
-                            if tasks[key]["first_write_nopred_start"] is None or timestamp < tasks[key]["first_write_nopred_start"]:
-                                tasks[key]["first_write_nopred_start"] = timestamp
-                        elif status == "END":
-                            if tasks[key]["last_write_nopred_end"] is None or timestamp > tasks[key]["last_write_nopred_end"]:
-                                tasks[key]["last_write_nopred_end"] = timestamp
-                elif operation == "READ":
-                    if prediction:
-                        if status == "START":
-                            if tasks[key]["first_read_pred_start"] is None or timestamp < tasks[key]["first_read_pred_start"]:
-                                tasks[key]["first_read_pred_start"] = timestamp
-                        elif status == "END":
-                            if tasks[key]["last_read_pred_end"] is None or timestamp > tasks[key]["last_read_pred_end"]:
-                                tasks[key]["last_read_pred_end"] = timestamp
-                    else:
-                        if status == "START":
-                            if tasks[key]["first_read_nopred_start"] is None or timestamp < tasks[key]["first_read_nopred_start"]:
-                                tasks[key]["first_read_nopred_start"] = timestamp
-                        elif status == "END":
-                            if tasks[key]["last_read_nopred_end"] is None or timestamp > tasks[key]["last_read_nopred_end"]:
-                                tasks[key]["last_read_nopred_end"] = timestamp
+                        if operation == "WRITE":
+                            if prediction:
+                                if status == "START":
+                                    if tasks[key]["first_write_pred_start"] is None or timestamp < tasks[key]["first_write_pred_start"]:
+                                        tasks[key]["first_write_pred_start"] = timestamp
+                                elif status == "END":
+                                    if tasks[key]["last_write_pred_end"] is None or timestamp > tasks[key]["last_write_pred_end"]:
+                                        tasks[key]["last_write_pred_end"] = timestamp
+                            else:
+                                if status == "START":
+                                    if tasks[key]["first_write_nopred_start"] is None or timestamp < tasks[key]["first_write_nopred_start"]:
+                                        tasks[key]["first_write_nopred_start"] = timestamp
+                                elif status == "END":
+                                    if tasks[key]["last_write_nopred_end"] is None or timestamp > tasks[key]["last_write_nopred_end"]:
+                                        tasks[key]["last_write_nopred_end"] = timestamp
+                        elif operation == "READ":
+                            if prediction:
+                                if status == "START":
+                                    if tasks[key]["first_read_pred_start"] is None or timestamp < tasks[key]["first_read_pred_start"]:
+                                        tasks[key]["first_read_pred_start"] = timestamp
+                                elif status == "END":
+                                    if tasks[key]["last_read_pred_end"] is None or timestamp > tasks[key]["last_read_pred_end"]:
+                                        tasks[key]["last_read_pred_end"] = timestamp
+                            else:
+                                if status == "START":
+                                    if tasks[key]["first_read_nopred_start"] is None or timestamp < tasks[key]["first_read_nopred_start"]:
+                                        tasks[key]["first_read_nopred_start"] = timestamp
+                                elif status == "END":
+                                    if tasks[key]["last_read_nopred_end"] is None or timestamp > tasks[key]["last_read_nopred_end"]:
+                                        tasks[key]["last_read_nopred_end"] = timestamp
 
         if len(tasks) == 0:
             print(f"WARNING: {input_folder} produced no data")
