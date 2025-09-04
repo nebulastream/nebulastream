@@ -124,6 +124,10 @@ void LogicalPlan::verify()
     {
         throw CannotDeserialize("Sink has no descriptor!");
     }
+    if (not sink->getSinkDescriptor()->getSchema()->hasFields())
+    {
+        throw CannotDeserialize("Schema of SinkDescriptor has no fields!");
+    }
 
     bool first = true;
     for (auto op : BFSRange(rootOperators.at(0)))
