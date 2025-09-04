@@ -121,15 +121,14 @@ do
 
                 sleep 10
 
-                if pgrep -P $$ > /dev/null
-                then
+                while pgrep -P $$ > /dev/null
+                do
                     echo some children still alive
-                    pgrep -P $$
+                    pgrep -P $$ || true
                     echo sending sigkill
                     pkill -P $$ --signal kill || true
                     sleep 1
-                    pgrep -P $$ > /dev/null && echo all children dead || exit 123
-                fi
+                done
             done
 
             if [ -e timed_out ]
@@ -176,15 +175,14 @@ do
 
                 sleep 10
 
-                if pgrep -P $$ > /dev/null
-                then
+                while pgrep -P $$ > /dev/null
+                do
                     echo some children still alive
-                    pgrep -P $$
+                    pgrep -P $$ || true
                     echo sending sigkill
                     pkill -P $$ --signal kill || true
                     sleep 1
-                    pgrep -P $$ > /dev/null && echo all children dead || exit 123
-                fi
+                done
             fi
             sleep 1
         done
