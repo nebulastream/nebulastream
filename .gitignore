@@ -56,3 +56,4 @@ run_fuzzers.sh
 run_systest.sh
 wdir/
 cot/
+ccache/
