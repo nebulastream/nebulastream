@@ -105,7 +105,9 @@ do
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
         log_out running $harness libfuzzer
-        timeout --kill-after=1m 10m $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
+        $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus &
+
+        ( sleep 600; touch timed_out ) &
 
         while pgrep -P $$ > /dev/null
         do
@@ -129,8 +131,14 @@ do
                     pgrep -P $$ > /dev/null && echo all children dead || exit 123
                 fi
             done
+
+            if [ -e timed_out ]
+            then
+                pkill -P $$
+            fi
             sleep 1
         done
+        rm -f timed_out
 
 
         log_out running $harness aflpp
