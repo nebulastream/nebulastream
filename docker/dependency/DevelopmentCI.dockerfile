@@ -18,3 +18,4 @@ USER 1001:1001
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/${USERNAME}/.cargo/bin:${PATH}"
+RUN rustup toolchain install nightly && rustup default nightly && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu

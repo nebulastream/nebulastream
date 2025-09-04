@@ -77,14 +77,6 @@ struct CreateSinkStatement
     std::unordered_map<std::string, std::string> sinkConfig;
 };
 
-struct CreateWorkerStatement
-{
-    HostAddr host;
-    GrpcAddr grpc;
-    size_t capacity;
-    std::vector<HostAddr> downstream;
-};
-
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
@@ -108,12 +100,6 @@ struct ShowSinksStatement
     std::optional<StatementOutputFormat> format;
 };
 
-struct ShowWorkersStatement
-{
-    std::optional<HostAddr> worker;
-    std::optional<StatementOutputFormat> format;
-};
-
 struct DropLogicalSourceStatement
 {
     LogicalSource source;
@@ -127,11 +113,6 @@ struct DropPhysicalSourceStatement
 struct DropSinkStatement
 {
     SinkDescriptor descriptor;
-};
-
-struct DropWorkerStatement
-{
-    HostAddr worker;
 };
 
 using QueryStatement = LogicalPlan;
@@ -151,14 +132,11 @@ using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
-    CreateWorkerStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
-    ShowWorkersStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
-    DropWorkerStatement,
     QueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
