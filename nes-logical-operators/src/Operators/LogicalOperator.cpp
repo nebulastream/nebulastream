@@ -120,11 +120,5 @@ LogicalOperator LogicalOperator::withInferredSchema(std::vector<Schema> inputSch
     return self->withInferredSchema(std::move(inputSchemas));
 }
 
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitSet& traitSet)
-{
-    auto result = op.getTraitSet();
-    result.insert(traitSet.cbegin(), traitSet.cend());
-    return op.withTraitSet(std::move(result));
-}
 
 }

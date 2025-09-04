@@ -167,7 +167,7 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     auto inputs = getInputSchemas();

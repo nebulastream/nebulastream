@@ -81,7 +81,7 @@ LogicalOperator SourceDescriptorLogicalOperator::withTraitSet(TraitSet traitSet)
 TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
 {
     TraitSet result = traitSet;
-    result.insert(originIdTrait);
+    insertTrait(result, originIdTrait);
     return result;
 }
 
