@@ -29,10 +29,10 @@ namespace NES
 
 RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
-    auto assigner = logicalOperator.get<EventTimeWatermarkAssignerLogicalOperator>();
-    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner.onField);
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner.unit));
+    PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
+    auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
+    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
 
