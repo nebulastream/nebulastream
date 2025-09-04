@@ -46,3 +46,13 @@ scripts/__pycache__
 cov-*/
 
 mutations
+
+build_all.sh
+calc_corpus_over_time.sh
+corpus_over_time/
+mutanalysis/
+outs/
+run_fuzzers.sh
+run_systest.sh
+wdir/
+cot/
