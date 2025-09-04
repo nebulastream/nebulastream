@@ -15,7 +15,7 @@ def parse_int_list(arg):
     return [int(x) for x in arg.split(',')]
 def main():
     parser = argparse.ArgumentParser(description='NebulaBenchmark: Complete Benchmark System')
-    parser.add_argument('--columns', type=parse_int_list, default=[1, 5, 10], help='List of number of columns to use (comma-separated)')
+    parser.add_argument('--columns', type=parse_int_list, default=[1, 2, 5, 10], help='List of number of columns to use (comma-separated)')
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')

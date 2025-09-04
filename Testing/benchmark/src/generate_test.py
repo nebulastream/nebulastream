@@ -62,7 +62,17 @@ def generate_test_file(data_file, output_path, result_dir, params):
             for col in names:
                 sink_def += f" UINT64 bench_data{num_cols}${col}"
             f.write(sink_def + "\n")
-        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")#todo: map queries based on accessed columns
+
+        for acc_cols in accessed_columns_list:
+            #smallest_num_cols = np.min([n for n in num_columns_list if n >= acc_cols], default=None)
+            #if smallest_num_cols is None:
+                #continue
+            #source_qualifier = f"bench_data{smallest_num_cols}$"
+            sink = f"SINK MapSink{acc_cols} TYPE Checksum UINT64 result1"
+            for col_index in range(2,acc_cols + 1):#)column_names[1:acc_cols]:
+                sink +=(f" UINT64 result{col_index}")
+            f.write(sink + "\n")
+        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
 
     # Create operator directories
     result_dir = Path(result_dir)
@@ -160,15 +170,18 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query to buffer-specific test file
                         query = f"# Query {query_id}: Map with {func_type} function\n"
                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
-
-                        if func_type == 'add' and len(cols_to_access) >= 2:
-                            expression = f"({cols_to_access[0]} + {cols_to_access[1]})"
-                        elif func_type == 'exp':
-                            expression = f"({cols_to_access[0]} * {cols_to_access[0]})"
+                        asterisk = "*" if func_type == 'add' else "+"
+                        expression_template = f"({{}} {asterisk} {{}}) AS result{{}}"
+                        col_index=1
+                        if len(cols_to_access)>1:
+                            query += f"SELECT ({expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
                         else:
-                            expression = f"({cols_to_access[0]} * UINT64(2))"
+                            query += f"SELECT ({expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
 
-                        query += f"SELECT {expression} AS result FROM bench_data{num_col} INTO MapSink;\n"
+                        for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
+                            query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
+
+                        query += f") FROM bench_data{num_col} INTO MapSink{access_col};\n"
                         query += "----\n1, 1\n\n"
                         map_f.write(query)
 
@@ -195,8 +208,8 @@ if __name__ == "__main__":
     # Customizable parameters
     params = {
         'buffer_sizes': [4000],#, 40000, 400000, 4000000, 10000000, 20000000],
-        'num_columns': args.columns, #, 5, 10], TODO: Fix multi-column queries and create num_columns in data accordingly
-        'accessed_columns': [1, 2],
+        'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
+        'accessed_columns': [1, 2, 5, 10],
         'function_types': ['add', 'exp'],
         'selectivities': [5],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
     }
