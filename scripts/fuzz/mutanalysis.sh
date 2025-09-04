@@ -88,6 +88,10 @@ do
     do
         if ! $(find cmake-build-lfz -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
         then
+            for crash in crash-*
+            do
+                log_out mutant $patch killed by $harness corpus with $crash
+            done
             log_out mutant $patch killed by $harness with corpus
             KILLED_BY_CORPUS=true
         fi
