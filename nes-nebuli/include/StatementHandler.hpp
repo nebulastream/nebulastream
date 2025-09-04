@@ -54,11 +54,6 @@ struct CreateSinkStatementResult
     SinkDescriptor created;
 };
 
-struct CreateWorkerStatementResult
-{
-    WorkerConfig created;
-};
-
 struct ShowLogicalSourcesStatementResult
 {
     std::vector<LogicalSource> sources;
@@ -74,11 +69,6 @@ struct ShowSinksStatementResult
     std::vector<SinkDescriptor> sinks;
 };
 
-struct ShowWorkersStatementResult
-{
-    std::vector<WorkerConfig> workers;
-};
-
 struct DropLogicalSourceStatementResult
 {
     LogicalSource dropped;
@@ -92,11 +82,6 @@ struct DropPhysicalSourceStatementResult
 struct DropSinkStatementResult
 {
     SinkDescriptor dropped;
-};
-
-struct DropWorkerStatementResult
-{
-    WorkerConfig dropped;
 };
 
 struct QueryStatementResult
@@ -118,15 +103,12 @@ using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
-    CreateWorkerStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
-    ShowWorkersStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
-    DropWorkerStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     DropQueryStatementResult>;
@@ -180,17 +162,6 @@ public:
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
 };
 
-class WorkerStatementHandler final : public StatementHandler<WorkerStatementHandler>
-{
-    std::shared_ptr<WorkerCatalog> workerCatalog;
-
-public:
-    explicit WorkerStatementHandler(const std::shared_ptr<WorkerCatalog>& workerCatalog);
-    std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
-    std::expected<ShowWorkersStatementResult, Exception> operator()(const ShowWorkersStatement& statement) const;
-    std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
-};
-
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     mutable std::mutex mutex;
@@ -217,9 +188,7 @@ public:
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatementResult);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatementResult);
-FMT_OSTREAM(NES::CreateWorkerStatementResult);
 FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
 FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
-FMT_OSTREAM(NES::DropWorkerStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);

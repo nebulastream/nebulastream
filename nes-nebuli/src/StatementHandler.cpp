@@ -167,41 +167,6 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.descriptor.getSinkName())};
 }
 
-WorkerStatementHandler::WorkerStatementHandler(const std::shared_ptr<WorkerCatalog>& workerCatalog) : workerCatalog{workerCatalog}
-{
-}
-
-std::expected<CreateWorkerStatementResult, Exception> WorkerStatementHandler::operator()(const CreateWorkerStatement& statement)
-{
-    if (workerCatalog->addWorker(statement.host, statement.grpc, statement.capacity, statement.downstream))
-    {
-        return CreateWorkerStatementResult{};
-    }
-    return std::unexpected{WorkerAlreadyExists(statement.host)};
-}
-
-std::expected<ShowWorkersStatementResult, Exception> WorkerStatementHandler::operator()(const ShowWorkersStatement& statement) const
-{
-    if (statement.worker)
-    {
-        if (const auto foundWorker = workerCatalog->getWorker(*statement.worker))
-        {
-            return ShowWorkersStatementResult{std::vector{*foundWorker}};
-        }
-        return ShowWorkersStatementResult{{}};
-    }
-    return ShowWorkersStatementResult{workerCatalog->getAllWorkers()};
-}
-
-std::expected<DropWorkerStatementResult, Exception> WorkerStatementHandler::operator()(const DropWorkerStatement& statement)
-{
-    if (const auto removed = workerCatalog->removeWorker(statement.worker))
-    {
-        return DropWorkerStatementResult{std::move(removed).value()};
-    }
-    return std::unexpected{UnknownWorkerAddr(statement.worker)};
-}
-
 QueryStatementHandler::QueryStatementHandler(
     SharedPtr<QueryManager> queryManager,
     SharedPtr<SourceCatalog> sourceCatalog,
