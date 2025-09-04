@@ -21,7 +21,6 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
-#include <NetworkTopology.hpp>
 #include <QueryConfig.hpp>
 #include <QueryPlanning.hpp>
 #include <WorkerCatalog.hpp>
@@ -45,7 +44,6 @@ public:
     std::pair<PlanStage::BoundLogicalPlan, QueryPlanningContext> bind(LogicalPlan&& plan) &&;
 
 private:
-    void bindRegisterWorkers(const std::vector<WorkerConfig>& unboundWorkers);
     void bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources);
     void bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
     void bindRegisterSinks(const std::vector<Sink>& unboundSinks);

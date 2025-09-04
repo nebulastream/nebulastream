@@ -46,8 +46,7 @@ public:
 TEST_F(NetworkTopologyTest, SingleNodeTopology)
 {
     const std::string node = "host";
-    auto topology = Topology{};
-    topology.addNode(node, {});
+    const auto topology = Topology::from({{node, {}}});
     EXPECT_THAT(topology, SizeIs(1));
     EXPECT_THAT(topology.getDownstreamNodesOf(node), IsEmpty());
     EXPECT_THAT(topology.getUpstreamNodesOf(node), IsEmpty());
@@ -57,9 +56,7 @@ TEST_F(NetworkTopologyTest, TwoNodesWithoutUpOrDownstream)
 {
     const std::string node1 = "node1";
     const std::string node2 = "node2";
-    auto topology = Topology{};
-    topology.addNode(node1, {});
-    topology.addNode(node2, {});
+    const auto topology = Topology::from({{node1, {}}, {node2, {}}});
     EXPECT_THAT(topology.getDownstreamNodesOf(node1), IsEmpty());
     EXPECT_THAT(topology.getUpstreamNodesOf(node1), IsEmpty());
     EXPECT_THAT(topology.getDownstreamNodesOf(node2), IsEmpty());
@@ -70,9 +67,7 @@ TEST_F(NetworkTopologyTest, TwoNodesConnection)
 {
     const std::string node1 = "node1";
     const std::string node2 = "node2";
-    auto topology = Topology{};
-    topology.addNode(node1, {node2});
-    topology.addNode(node2, {});
+    const auto topology = Topology::from({{node1, {node2}}, {node2, {}}});
     EXPECT_THAT(topology.getUpstreamNodesOf(node1), IsEmpty());
     EXPECT_THAT(topology.getDownstreamNodesOf(node1), Contains(node2));
     EXPECT_THAT(topology.getUpstreamNodesOf(node2), Contains(node1));
@@ -84,9 +79,7 @@ TEST_F(NetworkTopologyTest, FindPathSimpleTwoNodes)
 {
     const std::string node1 = "node1";
     const std::string node2 = "node2";
-    auto topology = Topology{};
-    topology.addNode(node1, {node2});
-    topology.addNode(node2, {});
+    const auto topology = Topology::from({{node1, {node2}}, {node2, {}}});
     EXPECT_THAT(topology.findPaths(node1, node2, Topology::Downstream), Contains(Topology::Path{{node1, node2}}));
     EXPECT_THAT(topology.findPaths(node2, node1, Topology::Downstream), IsEmpty());
 
@@ -100,11 +93,7 @@ TEST_F(NetworkTopologyTest, FindPathSimpleDiamondShape)
     const std::string left = "left";
     const std::string right = "right";
     const std::string dest = "dest";
-    auto topology = Topology{};
-    topology.addNode(src, {left, right});
-    topology.addNode(left, {dest});
-    topology.addNode(right, {dest});
-    topology.addNode(dest, {});
+    const auto topology = Topology::from({{src, {left, right}}, {left, {dest}}, {right, {dest}}, {dest, {}}});
     const auto paths = topology.findPaths(src, dest, Topology::Downstream);
     EXPECT_THAT(paths, SizeIs(2));
 }
@@ -127,14 +116,15 @@ TEST_F(NetworkTopologyTest, FindPathInComplexTopology)
     const std::string right2 = "right2";
     const std::string dest = "dest";
 
-    auto topology = Topology{};
-    topology.addNode(src, {left1, right1});
-    topology.addNode(left1, {left2, mid2});
-    topology.addNode(right1, {mid2, right2});
-    topology.addNode(left2, {dest});
-    topology.addNode(mid2, {dest});
-    topology.addNode(right2, {dest});
-    topology.addNode(dest, {});
+    const auto topology = Topology::from({
+        {src, {left1, right1}},
+        {left1, {left2, mid2}},
+        {right1, {mid2, right2}},
+        {left2, {dest}},
+        {mid2, {dest}},
+        {right2, {dest}},
+        {dest, {}}
+    });
 
     EXPECT_THAT(
         topology.findPaths(src, dest, Topology::Downstream),
@@ -167,14 +157,15 @@ TEST_F(NetworkTopologyTest, FindLCAInComplexTopology)
     const std::string right2 = "right2";
     const std::string dest = "dest";
 
-    auto topology = Topology{};
-    topology.addNode(src, {left1, right1});
-    topology.addNode(left1, {left2, mid2});
-    topology.addNode(right1, {mid2, right2});
-    topology.addNode(left2, {dest});
-    topology.addNode(mid2, {dest});
-    topology.addNode(right2, {dest});
-    topology.addNode(dest, {});
+    const auto topology = Topology::from({
+        {src, {left1, right1}},
+        {left1, {left2, mid2}},
+        {right1, {mid2, right2}},
+        {left2, {dest}},
+        {mid2, {dest}},
+        {right2, {dest}},
+        {dest, {}}
+    });
 
     EXPECT_THAT(
         topology.findLCA(left1, right1, dest, Topology::Downstream),
@@ -220,9 +211,7 @@ TEST_F(NetworkTopologyTest, ValidDAGSimple)
 {
     const std::string node1 = "node1";
     const std::string node2 = "node2";
-    auto topology = Topology{};
-    topology.addNode(node1, {node2});
-    topology.addNode(node2, {});
+    const auto topology = Topology::from({{node1, {node2}}, {node2, {}}});
 
     EXPECT_TRUE(topology.isValidDAG());
 }
@@ -233,11 +222,7 @@ TEST_F(NetworkTopologyTest, ValidDAGDiamond)
     const std::string left = "left";
     const std::string right = "right";
     const std::string sink = "sink";
-    auto topology = Topology{};
-    topology.addNode(src, {left, right});
-    topology.addNode(left, {sink});
-    topology.addNode(right, {sink});
-    topology.addNode(sink, {});
+    const auto topology = Topology::from({{src, {left, right}}, {left, {sink}}, {right, {sink}}, {sink, {}}});
 
     EXPECT_TRUE(topology.isValidDAG());
 }
@@ -247,10 +232,7 @@ TEST_F(NetworkTopologyTest, InvalidDAGWithCycle)
     const std::string node1 = "node1";
     const std::string node2 = "node2";
     const std::string node3 = "node3";
-    auto topology = Topology{};
-    topology.addNode(node1, {node2});
-    topology.addNode(node2, {node3});
-    topology.addNode(node3, {node1}); /// Creates cycle: node1 -> node2 -> node3 -> node1
+    const auto topology = Topology::from({{node1, {node2}}, {node2, {node3}}, {node3, {node1}}}); /// Creates cycle: node1 -> node2 -> node3 -> node1
 
     EXPECT_FALSE(topology.isValidDAG());
 }
@@ -267,13 +249,14 @@ TEST_F(NetworkTopologyTest, InvalidDAGWithSubtleCycle)
     const std::string middle2 = "middle2";
     const std::string sink = "sink";
 
-    auto topology = Topology{};
-    topology.addNode(src, {left, right});
-    topology.addNode(left, {middle1});
-    topology.addNode(right, {middle2});
-    topology.addNode(middle1, {middle2}); /// Forward edge
-    topology.addNode(middle2, {middle1, sink}); /// Back edge creates cycle: middle1 -> middle2 -> middle1
-    topology.addNode(sink, {});
+    const auto topology = Topology::from({
+        {src, {left, right}},
+        {left, {middle1}},
+        {right, {middle2}},
+        {middle1, {middle2}}, /// Forward edge
+        {middle2, {middle1, sink}}, /// Back edge creates cycle: middle1 -> middle2 -> middle1
+        {sink, {}}
+    });
 
     EXPECT_FALSE(topology.isValidDAG());
 }

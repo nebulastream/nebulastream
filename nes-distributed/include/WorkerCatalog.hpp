@@ -16,8 +16,8 @@
 
 #include <cstddef>
 #include <optional>
-#include <shared_mutex>
 #include <unordered_map>
+#include <vector>
 
 #include <NetworkTopology.hpp>
 #include <WorkerConfig.hpp>
@@ -30,11 +30,13 @@ class WorkerCatalog
     std::unordered_map<HostAddr, WorkerConfig> workers;
     Topology topology;
 
+    explicit WorkerCatalog(const std::vector<WorkerConfig>& workerConfigs);
+
 public:
-    bool addWorker(const HostAddr& host, const GrpcAddr& grpc, size_t capacity, const std::vector<HostAddr>& downstream);
-    std::optional<WorkerConfig> removeWorker(const HostAddr& hostAddr);
+    static WorkerCatalog from(const std::vector<WorkerConfig>& workers);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const HostAddr& hostAddr) const;
     bool tryConsumeCapacity(const HostAddr& hostAddr, size_t capacity);
+    void returnCapacity(const HostAddr& hostAddr, size_t capacity);
     [[nodiscard]] size_t getNumWorkers() const;
     std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] const Topology& getTopology() const;

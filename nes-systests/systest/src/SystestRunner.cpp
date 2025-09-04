@@ -163,8 +163,7 @@ void SystestRunner::handle()
                     {
                         case QueryState::Failed: {
                             /// Best effort error handling by terminating other local queries
-                            const auto stopResult = queryManager.stop(submittedQuery->query);
-                            if (!stopResult)
+                            if (const auto stopResult = queryManager.stop(submittedQuery->query); !stopResult)
                             {
                                 fmt::println(
                                     std::cerr,
