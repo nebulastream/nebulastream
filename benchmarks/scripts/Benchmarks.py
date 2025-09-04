@@ -63,14 +63,12 @@ def shift_time_per_groups(data, param, group_cols, time_col):
     return data_shifted
 
 
-def convert_units(data, col, unit='B'):
-    orders = ['', 'K', 'M', 'G', 'T']
-    factor = 1000.0
+def convert_units(data, col, unit='B', order_idx=3, factor=1000.0):
+    orders = ['n', 'µ', 'm', '', 'K', 'M', 'G', 'T']
 
     # Get max value for metric
     max_val = data[col].max()
 
-    order_idx = 0
     while max_val >= factor and order_idx < len(orders) - 1:
         max_val /= factor
         order_idx += 1
@@ -255,20 +253,22 @@ file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_par
 common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
 common_config_dicts = common_configs.to_dict(orient='records')
 
-# Map long queries to short codes and sort by hue column values
-query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
-df['query_id'] = df['query'].map(query_mapping)
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'], ascending=[True, True, True, True, True, True, True])
-
-# Compute correctness of predictions
+# Filter out invalid rows
+print(f'Percentage of invalid rows: {int(100 * (len(df) - len(df[df.apply(valid_row, axis=1)])) / len(df))}%')
 df_old = df.copy()
 df = df[df.apply(valid_row, axis=1)]
+
+# Compute correctness of predictors
 df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
 df['prediction_correctness_2'] = df.apply(compute_prediction_correctness_2, axis=1)
 
-# Compute precision of predictions
+# Compute precision of predictors
 df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
 df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
+
+# Map long queries to short codes
+query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
+df['query_id'] = df['query'].map(query_mapping)
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
@@ -276,6 +276,8 @@ df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astyp
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
 
+# Sort by all hue values
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'], ascending=[True, True, True, True, True, True, True])
 
 # %% Compare slice store types for different configs
 
@@ -633,10 +635,29 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
     if metric == 'prediction_correctness':
         data_scaled, metric_unit = convert_units(data, metric, '%')
     if metric == 'prediction_precision':
-        data_scaled, metric_unit = convert_units(data, metric, 'ns')
+        data_scaled, metric_unit = convert_units(data, metric, 's', 0)
 
     plt.figure(figsize=(14, 6))
-    sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+    ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+
+    # Calculate the new y-axis limit to make space for labels
+    y_min, y_max = ax.get_ylim()
+    label_y_pos = y_min - (0.01 * (y_max - y_min))  # 1% of the data range below the minimum
+    new_y_min = label_y_pos - (0.05 * (y_max - y_min))  # Add a little extra space
+    ax.set_ylim(new_y_min, y_max)
+
+    # Add numerical labels under each box
+    hue_values = data_scaled[hue].unique()
+    num_hue_values = len(hue_values)
+    for i, cat in enumerate(data_scaled[param].unique()):
+        for j, hue in enumerate(hue_values):
+            x_pos = i + (j - num_hue_values / 2 + 0.5) / num_hue_values
+            ax.text(x_pos, label_y_pos, f"{j + 1}", ha='center', va='top', fontsize=10)
+
+    # Customize the legend to include numerical labels
+    handles, labels = ax.get_legend_handles_labels()
+    new_labels = [f"{j + 1}: {label}" for j, label in enumerate(labels)]
+    ax.legend(handles, new_labels, title='ID: ' + legend)
 
     # Add legend below
     add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
@@ -644,7 +665,6 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
     plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
     plt.xlabel(param)
     plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
-    plt.legend(title=legend)
     plt.show()
 
 
