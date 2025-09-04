@@ -134,7 +134,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             children.push_back(build(childId, anc));
         }
 
-        LogicalOperator withKids = op.withChildren(std::move(children));
+        LogicalOperator withKids = op.withChildren(std::move(children)).withOperatorId(op.getId());
         builtOps.emplace(id, withKids);
         return withKids;
     };
@@ -155,7 +155,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         throw CannotDeserialize("Plan contains multiple root operators!");
     }
 
-    auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+    auto sink = rootOperators.at(0).tryGetAs<SinkLogicalOperator>();
     if (!sink)
     {
         throw CannotDeserialize(
@@ -167,7 +167,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
     }
 
-    if (not sink->getSinkDescriptor())
+    if (not sink.value()->getSinkDescriptor())
     {
         throw CannotDeserialize("Sink has no descriptor!");
     }

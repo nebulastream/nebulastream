@@ -28,18 +28,19 @@ void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
         | std::ranges::views::transform(
             [this](const LogicalOperator& rootOperator) -> LogicalOperator
             {
-                auto sinkOperator = rootOperator.tryGet<SinkLogicalOperator>();
+                auto sinkOperator = rootOperator.tryGetAs<SinkLogicalOperator>();
                 PRECONDITION(sinkOperator.has_value(), "Root operator must be sink");
                 /// Check to centralize the sink binding logic
                 /// TODO #897 move sink binding to new query binder
                 PRECONDITION(
-                    not sinkOperator->getSinkDescriptor().has_value(), "Sink Descriptors should only be set during the sink binding phase");
-                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->getSinkName());
+                    not sinkOperator.value()->getSinkDescriptor().has_value(),
+                    "Sink Descriptors should only be set during the sink binding phase");
+                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->get().getSinkName());
                 if (not sinkDescriptor.has_value())
                 {
-                    throw UnknownSinkName("{}", sinkOperator->getSinkName());
+                    throw UnknownSinkName("{}", sinkOperator->get().getSinkName());
                 }
-                return sinkOperator->withSinkDescriptor(sinkDescriptor.value());
+                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
 }

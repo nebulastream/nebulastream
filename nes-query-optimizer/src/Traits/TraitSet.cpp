@@ -12,9 +12,21 @@
     limitations under the License.
 */
 
-#include <Traits/OriginIdAssignerTrait.hpp>
+#include <Traits/TraitSet.hpp>
+
+#include <cstddef>
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
+
+bool operator==(const TraitSet& lhs, const TraitSet& rhs)
+{
+    return lhs.traitMap == rhs.traitMap;
+}
+
+std::size_t TraitSet::size() const
+{
+    return traitMap.size();
+}
+
 }

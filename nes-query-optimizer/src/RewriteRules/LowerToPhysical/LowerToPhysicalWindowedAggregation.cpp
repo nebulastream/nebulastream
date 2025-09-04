@@ -141,20 +141,20 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
 RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
+    PRECONDITION(logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
 
-    auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
+    auto aggregation = logicalOperator.getAs<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
     auto outputSchema = aggregation.getOutputSchema();
     auto inputOriginIds = aggregation.getInputOriginIds()[0];
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
-    auto timeFunction = getTimeFunction(aggregation);
-    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation.getWindowType());
+    auto timeFunction = getTimeFunction(*aggregation);
+    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation->getWindowType());
     INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
-    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(aggregation, conf);
+    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
@@ -165,7 +165,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     uint64_t keySize = 0;
     std::vector<PhysicalFunction> keyFunctions;
     auto newInputSchema = aggregation.getInputSchemas()[0];
-    for (auto& nodeFunctionKey : aggregation.getGroupingKeys())
+    for (auto& nodeFunctionKey : aggregation->getGroupingKeys())
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
         if (loweredFunctionType.isType(DataType::Type::VARSIZED))
@@ -182,11 +182,11 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
-    const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
+    const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(*aggregation);
     const auto& [fieldKeys, fieldValues]
         = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 
-    const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
+    const auto windowMetaData = WindowMetaData{aggregation->getWindowStartFieldName(), aggregation->getWindowEndFieldName()};
 
     const HashMapOptions hashMapOptions(
         std::make_unique<Interface::MurMur3HashFunction>(),

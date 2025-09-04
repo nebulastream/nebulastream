@@ -15,6 +15,8 @@
 #pragma once
 
 #include <string>
+
+#include <Configurations/Descriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Registry.hpp>
 
@@ -25,6 +27,7 @@ using TraitRegistryReturnType = Trait;
 
 struct TraitRegistryArguments
 {
+    DescriptorConfig::Config config;
 };
 
 class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>

@@ -14,14 +14,15 @@
 
 #pragma once
 
-#include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
-
-/// Marks an operator as creator of new origin ids
-struct OriginIdAssignerTrait final : DefaultTrait<OriginIdAssignerTrait>
+class TraitSetSerializationUtil
 {
+public:
+    static SerializableTraitSet* serialize(const NES::TraitSet& traitSet, SerializableTraitSet* traitSetPtr);
+    static TraitSet deserialize(const SerializableTraitSet* traitSetPtr);
 };
-
 }
