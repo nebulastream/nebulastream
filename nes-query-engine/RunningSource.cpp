@@ -35,7 +35,7 @@ namespace NES
 namespace
 {
 SourceReturnType::EmitFunction emitFunction(
-    QueryId queryId,
+    LocalQueryId queryId,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
@@ -52,7 +52,7 @@ SourceReturnType::EmitFunction emitFunction(
                     {
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
-                            queryId, successor, data.buffer, {}, {}, PipelineExecutionContext::ContinuationPolicy::NEVER))
+                            queryId, successor, data.buffer, TaskCallback{}, PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
@@ -87,7 +87,7 @@ RunningSource::RunningSource(
 }
 
 std::shared_ptr<RunningSource> RunningSource::create(
-    QueryId queryId,
+    LocalQueryId queryId,
     std::unique_ptr<SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,

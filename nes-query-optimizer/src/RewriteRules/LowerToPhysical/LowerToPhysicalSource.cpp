@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
+
 #include <memory>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -31,10 +32,6 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
 
     const auto outputOriginIds = source.getOutputOriginIds();
-    PRECONDITION(
-        outputOriginIds.size() == 1,
-        "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}",
-        outputOriginIds.size());
     auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
 
     const auto inputSchemas = logicalOperator.getInputSchemas();

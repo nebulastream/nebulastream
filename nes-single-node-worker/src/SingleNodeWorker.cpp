@@ -20,7 +20,6 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -28,17 +27,20 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Common.hpp>
-#include <Util/DumpMode.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryEngineStatisticListener.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
+
+extern void init_receiver_service(std::string connectionAddr, NES::WorkerId worker_id);
+extern void init_sender_service(std::string connectionAddr, NES::WorkerId worker_id);
 
 namespace NES
 {
@@ -47,7 +49,7 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, WorkerId workerId)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     if (configuration.enableGoogleEventTrace.getValue())
@@ -58,7 +60,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build();
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, Util::copyPtr(listener)).build(workerId);
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
@@ -71,17 +73,23 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             configuration.workerConfiguration.bufferSizeInBytes.getValue(),
             configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
     }
+
+    if (!configuration.connection.getValue().empty())
+    {
+        init_receiver_service(configuration.connection.getValue(), workerId);
+        init_sender_service(configuration.connection.getValue(), workerId);
+    }
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
-static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
+static std::atomic queryIdCounter = INITIAL<LocalQueryId>.getRawValue();
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
+std::expected<LocalQueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        plan.setQueryId(QueryId(queryIdCounter++));
+        plan.setQueryId(LocalQueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
@@ -97,7 +105,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::startQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -112,7 +120,7 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(LocalQueryId queryId, QueryTerminationType type) noexcept
 {
     CPPTRACE_TRY
     {
@@ -127,7 +135,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -142,7 +150,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::expected<QuerySummary, Exception> SingleNodeWorker::getQuerySummary(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getLocalStatusForQuery(LocalQueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
@@ -160,7 +168,34 @@ std::expected<QuerySummary, Exception> SingleNodeWorker::getQuerySummary(QueryId
     std::unreachable();
 }
 
-std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+{
+    const auto summaries = nodeEngine->getQueryLog()->getSummary();
+    WorkerStatus status;
+    for (const auto& [queryId, state, metrics] : summaries)
+    {
+        if (state == QueryState::Running)
+        {
+            INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
+            if (metrics.running.value() >= after)
+            {
+                status.activeQueries.emplace_back(queryId, metrics.running.value());
+            }
+        }
+        else if (state == QueryState::Stopped)
+        {
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
+            if (metrics.stop.value() >= after)
+            {
+                status.terminatedQueries.emplace_back(queryId, metrics.running.value(), metrics.stop.value(), std::move(metrics.error));
+            }
+        }
+    }
+    return status;
+}
+
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(LocalQueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }

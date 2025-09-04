@@ -36,25 +36,33 @@
 namespace NES
 {
 
-std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
+
+Schema withSourceQualifier(const std::string& sourceName, const Schema& schema)
 {
     Schema newSchema;
     for (const auto& field : schema.getFields())
     {
-        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
-        if (field.name.find(logicalSourceName) != std::string::npos)
+        newSchema.addField(sourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
+        if (field.name.find(sourceName) != std::string::npos)
         {
             NES_DEBUG(
                 "Trying to register logical source \"{}\" where passed field name {} already contained the source name as a prefix, which "
                 "is probably a mistake",
-                logicalSourceName,
+                sourceName,
                 field.name);
         }
     }
+    return newSchema;
+}
+
+std::optional<LogicalSource>
+SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema, const SourceIngestionType sourceType)
+{
     const std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName))
     {
-        LogicalSource logicalSource{logicalSourceName, newSchema};
+        LogicalSource logicalSource{
+            logicalSourceName, sourceType == SourceIngestionType::Origin ? withSourceQualifier(logicalSourceName, schema) : schema};
         namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);
@@ -67,6 +75,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const std::string_view sourceType,
+    std::string workerId,
     std::unordered_map<std::string, std::string> descriptorConfig,
     const ParserConfig& parserConfig)
 {
@@ -84,7 +93,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     {
         return std::nullopt;
     }
-    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfig};
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(workerId), std::move(descriptorConfigOpt.value()), parserConfig};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);

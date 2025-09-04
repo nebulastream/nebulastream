@@ -109,13 +109,13 @@ struct RunningQueryPlanNode
     struct RunningQueryPlanNodeDeleter
     {
         WorkEmitter& emitter; ///NOLINT The WorkEmitter (a.k.a. ThreadPool) always outlives the RunningQueryPlan and its nodes
-        QueryId queryId = INVALID_QUERY_ID;
+        LocalQueryId queryId = INVALID_QUERY_ID;
 
         void operator()(RunningQueryPlanNode* ptr);
     };
 
     static std::shared_ptr<RunningQueryPlanNode> create(
-        QueryId queryId,
+        LocalQueryId queryId,
         PipelineId pipelineId,
         WorkEmitter& emitter,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -172,24 +172,23 @@ struct StoppingQueryPlan
 };
 
 /// It is possible to attach callbacks to the RunningQueryPlan
-struct RunningQueryPlan
+struct RunningQueryPlan final
 {
     /// Returns a RunningQueryPlan alongside a CallbackRef.
     /// The CallbackRef prevents the RunningQueryPlan from completing its setup:
     /// AS LONG AS THE CallbackRef IS ALIVE onRunning WILL NOT BE CALLED.
     /// The main purpose is to allow the owner of the RQP to release locks before the listeners can be called.
     static std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> start(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> plan,
         QueryLifetimeController&,
         WorkEmitter&,
         std::shared_ptr<QueryLifetimeListener>);
 
     /// Stopping a RunningQueryPlan will:
-    /// 1. Keep all callbacks alive. Eventually onDestruction will be called.
-    /// 2. Initialize pipeline termination asynchronously.
-    /// 3. Block until all sources are terminated.
-    static std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+    /// 1. Initialize pipeline termination asynchronously.
+    /// 2. Block until all sources are terminated.
+    static std::unique_ptr<StoppingQueryPlan> stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
 
     /// Disposing a RunningQueryPlan will:
     /// 1. Not notify any listeners. `onDestruction` will not be called.

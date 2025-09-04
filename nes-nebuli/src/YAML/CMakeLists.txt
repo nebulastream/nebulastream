@@ -11,5 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-yaml-binder
-        YAMLBinder.cpp
+        YamlBinder.cpp
 )

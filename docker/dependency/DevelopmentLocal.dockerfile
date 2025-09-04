@@ -17,3 +17,7 @@ RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}
 
 USER ${USERNAME}
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/${USERNAME}/.cargo/bin:${PATH}"
+RUN rustup toolchain install nightly && rustup default nightly && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu

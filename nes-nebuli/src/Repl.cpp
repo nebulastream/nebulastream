@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <array>
 #include <csignal>
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -32,11 +31,10 @@
 #include <unistd.h>
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <YAML/YAMLBinder.hpp>
+#include <YAML/YamlBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -397,7 +395,20 @@ struct Repl::Impl
                 }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
-                    return queryStatementHandler->apply(stmt);
+                    auto result = queryStatementHandler->apply(stmt);
+                    using ResultType = decltype(result);
+                    if constexpr (
+                        std::is_same_v<ResultType, std::expected<ShowQueriesStatementResult, std::vector<Exception>>>
+                        || std::is_same_v<ResultType, std::expected<DropQueryStatementResult, std::vector<Exception>>>)
+                    {
+                        return result.transform_error(
+                            [](const std::vector<Exception>& errors) -> Exception
+                            { return errors.empty() ? Exception("Unknown error", 0) : errors.front(); });
+                    }
+                    else
+                    {
+                        return result;
+                    }
                 }
                 else
                 {

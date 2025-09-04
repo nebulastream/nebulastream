@@ -14,4 +14,5 @@ add_subdirectory(Sequencing)
 add_subdirectory(Util)
 
 add_source_files(nes-common
+        NESThread.cpp
         ErrorHandling.cpp)

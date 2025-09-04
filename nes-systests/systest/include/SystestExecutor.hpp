@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -23,7 +24,6 @@
 #include <argparse/argparse.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
 struct SystestExecutorResult
@@ -36,12 +36,13 @@ struct SystestExecutorResult
     ReturnType returnType;
     std::string outputMessage;
     std::optional<NES::ErrorCode> errorCode = std::nullopt;
+    size_t numFailedQueries{0};
 };
 
 namespace NES
 {
 
-void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfiguration& config);
+void runEndlessMode(std::vector<Systest::PlannedQuery> queries, SystestConfiguration& config);
 void loadConfig(const argparse::ArgumentParser& program, SystestConfiguration& config);
 SystestConfiguration readConfiguration(int argc, const char** argv);
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath);

@@ -27,11 +27,10 @@
 namespace NES
 {
 
-std::unique_ptr<InputFormatterTaskPipeline>
-provideInputFormatterTask(const OriginId originId, const Schema& schema, const ParserConfig& config)
+std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config)
 {
     if (auto inputFormatter
-        = InputFormatIndexerRegistry::instance().create(config.parserType, InputFormatIndexerRegistryArguments(config, originId, schema)))
+        = InputFormatIndexerRegistry::instance().create(config.parserType, InputFormatIndexerRegistryArguments(config, schema)))
     {
         return std::move(inputFormatter.value());
     }

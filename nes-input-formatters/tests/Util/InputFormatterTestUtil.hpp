@@ -144,7 +144,7 @@ std::function<void(OriginId, SourceReturnType::SourceReturnType)> getEmitFunctio
 
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
-std::unique_ptr<SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -355,7 +355,7 @@ template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     const std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask
-        = provideInputFormatterTask(OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
+        = provideInputFormatterTask(testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)

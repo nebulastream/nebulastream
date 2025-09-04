@@ -44,10 +44,10 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -153,7 +153,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     return validParserConfig;
 }
 
-std::unique_ptr<SourceHandle> createFileSource(
+std::pair<Valve, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
@@ -165,9 +165,11 @@ std::unique_ptr<SourceHandle> createFileSource(
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
-        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
+        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", "localhost", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
-    return SourceProvider::lower(OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
+    auto [valve, ingestion] = Backpressure();
+    return std::make_pair(
+        std::move(valve), SourceProvider::lower(NES::OriginId(1), ingestion, sourceDescriptor.value(), std::move(sourceBufferPool), -1));
 }
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
@@ -176,7 +178,7 @@ std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schem
         {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
-    return provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    return provideInputFormatterTask(schema, validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

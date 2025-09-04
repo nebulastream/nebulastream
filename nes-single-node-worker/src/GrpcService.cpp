@@ -86,7 +86,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     CPPTRACE_TRY
     {
         getValueOrThrow(delegate.unregisterQuery(queryId));
@@ -105,7 +105,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     CPPTRACE_TRY
     {
         getValueOrThrow(delegate.startQuery(queryId));
@@ -124,7 +124,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
-    auto queryId = QueryId(request->queryid());
+    auto queryId = LocalQueryId(request->queryid());
     auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
@@ -146,34 +146,33 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
 {
     CPPTRACE_TRY
     {
-        auto queryId = QueryId(request->queryid());
-        auto summary = delegate.getQuerySummary(queryId);
-        if (summary.has_value())
+        const auto queryId = LocalQueryId{request->queryid()};
+        reply->set_queryid(queryId.getRawValue());
+        if (const auto summary = delegate.getLocalStatusForQuery(queryId); summary.has_value())
         {
-            reply->set_status(::QueryStatus(summary->currentStatus));
-            for (const auto& [start, running, stop, error] : summary->runs)
+            auto& metrics = summary->metrics;
+            reply->set_state(static_cast<::QueryState>(summary->state));
+            reply->mutable_metrics()->set_startunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+            reply->mutable_metrics()->set_runningunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.running.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+            reply->mutable_metrics()->set_stopunixtimeinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    metrics.stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
+                    .count());
+
+            if (metrics.error.has_value())
             {
-                auto* const replyRun = reply->add_runs();
-                replyRun->set_startunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        start.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                replyRun->set_runningunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        running.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                replyRun->set_stopunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        stop.value_or(std::chrono::system_clock::time_point(std::chrono::seconds(0))).time_since_epoch())
-                        .count());
-                if (error.has_value())
-                {
-                    auto* const runError = replyRun->mutable_error();
-                    runError->set_message(error->what());
-                    runError->set_stacktrace(error->trace().to_string());
-                    runError->set_code(error->code());
-                    runError->set_location(std::string(error->where()->filename) + ":" + std::to_string(error->where()->line.value_or(0)));
-                }
+                auto error = reply->mutable_metrics()->error();
+                const Exception exception(metrics.error.value());
+                error.set_message(exception.what());
+                error.set_stacktrace(exception.trace().to_string());
+                error.set_code(exception.code());
+                error.set_location(std::string{exception.where()->filename} + ":" + std::to_string(exception.where()->line.value_or(0)));
             }
             return grpc::Status::OK;
         }
@@ -194,14 +193,14 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
 {
     CPPTRACE_TRY
     {
-        auto queryId = QueryId(request->queryid());
+        auto queryId = LocalQueryId(request->queryid());
         auto log = delegate.getQueryLog(queryId);
         if (log.has_value())
         {
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status(static_cast<::QueryStatus>(entry.state));
+                logEntry.set_state(static_cast<::QueryState>(entry.state));
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())
@@ -220,6 +219,56 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             return grpc::Status::OK;
         }
         return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
+}
+
+grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
+{
+    CPPTRACE_TRY
+    {
+        const auto status
+            = delegate.getWorkerStatus(std::chrono::system_clock::time_point(std::chrono::milliseconds(request->afterunixtimestampinms())));
+
+        for (const auto& activeQuery : status.activeQueries)
+        {
+            auto* activeQueryGRPC = response->add_activequeries();
+            activeQueryGRPC->set_queryid(activeQuery.queryId.getRawValue());
+            activeQueryGRPC->set_startedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(activeQuery.started.time_since_epoch()).count());
+        }
+
+        for (const auto& terminatedQuery : status.terminatedQueries)
+        {
+            auto* terminatedQueryGRPC = response->add_terminatedqueries();
+            terminatedQueryGRPC->set_queryid(terminatedQuery.queryId.getRawValue());
+            terminatedQueryGRPC->set_startedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.started.time_since_epoch()).count());
+            terminatedQueryGRPC->set_terminatedunixtimestampinms(
+                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.terminated.time_since_epoch()).count());
+            if (terminatedQuery.error)
+            {
+                const auto& exception = terminatedQuery.error.value();
+                auto* errorGRPC = terminatedQueryGRPC->mutable_error();
+                errorGRPC->set_message(exception.what());
+                errorGRPC->set_stacktrace(exception.trace().to_string());
+                errorGRPC->set_code(exception.code());
+                errorGRPC->set_location(
+                    std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
+            }
+        }
+        response->set_afterunixtimestampinms(
+            std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
+
+        return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
     {

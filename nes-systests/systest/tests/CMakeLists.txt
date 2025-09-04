@@ -22,8 +22,7 @@ endfunction()
 add_nes_test_systest(slt-parser-test
         "SystestParserTests.cpp"
         "SystestParserInvalidTestFilesTests.cpp"
-        "SystestParserValidTestFilesTests.cpp"
-        "SystestRunnerTest.cpp")
+        "SystestParserValidTestFilesTests.cpp")
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")

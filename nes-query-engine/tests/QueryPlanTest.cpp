@@ -150,8 +150,7 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
 struct TerminatePipelineArgs
 {
     std::unique_ptr<RunningQueryPlanNode> target;
-    BaseTask::onComplete onComplete;
-    BaseTask::onFailure onFailure;
+    TaskCallback callback;
 };
 
 template <typename Args, typename KeyT>
@@ -257,9 +256,9 @@ std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipeli
     auto terminations = std::make_unique<Terminations>();
     for (auto* stage : stages)
     {
-        EXPECT_CALL(emitter, emitPipelineStop(::testing::_, UniquePtrStageMatcher(stage), ::testing::_, ::testing::_))
-            .WillOnce(::testing::Invoke([&terminations, stage](auto, auto termination, auto complete, auto fail)
-                                        { terminations->add(stage, std::move(termination), std::move(complete), std::move(fail)); }));
+        EXPECT_CALL(emitter, emitPipelineStop(::testing::_, UniquePtrStageMatcher(stage), ::testing::_))
+            .WillOnce(::testing::Invoke([&terminations, stage](auto, auto termination, auto callback)
+                                        { terminations->add(stage, std::move(termination), std::move(callback)); }));
     }
 
     return terminations;
@@ -273,21 +272,20 @@ template <>
     try
     {
         args.target->stage->stop(pec);
-        args.onComplete();
+        args.callback.callOnSuccess();
     }
     catch (const Exception& e)
     {
-        args.onFailure(e);
+        args.callback.callOnFailure(e);
     }
-
+    args.callback.callOnComplete();
     return ::testing::AssertionSuccess();
 }
 
 struct SetupPipelineArgs
 {
     std::weak_ptr<RunningQueryPlanNode> target;
-    BaseTask::onComplete onComplete;
-    BaseTask::onFailure onFailure;
+    TaskCallback callback;
 };
 
 using Setups = EmittedTask<SetupPipelineArgs, ExecutablePipelineStage*>;
@@ -300,9 +298,9 @@ std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> au
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
     for (auto* stage : stages)
     {
-        EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_, ::testing::_))
-            .WillOnce(::testing::Invoke([&setups, stage](auto, auto setup, auto complete, auto fail)
-                                        { setups->add(stage, std::move(setup), std::move(complete), std::move(fail)); }));
+        EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_))
+            .WillOnce(::testing::Invoke([&setups, stage](auto, auto setup, auto callback)
+                                        { setups->add(stage, std::move(setup), std::move(callback)); }));
     }
 
     return setups;
@@ -318,14 +316,14 @@ template <>
         if (auto strongRef = args.target.lock())
         {
             strongRef->stage->start(pec);
-            args.onComplete();
+            args.callback.callOnSuccess();
         }
     }
     catch (const Exception& e)
     {
-        args.onFailure(e);
+        args.callback.callOnFailure(e);
     }
-
+    args.callback.callOnComplete();
     return ::testing::AssertionSuccess();
 }
 
@@ -417,11 +415,11 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
     auto setups = Setups::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
-    auto sink
-        = RunningQueryPlanNode::create(QueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
+    auto sink = RunningQueryPlanNode::create(
+        LocalQueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
     EXPECT_THAT(*setups, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
-        QueryId(1),
+        LocalQueryId(1),
         PipelineId(2),
         emitter,
         {std::move(sink)},
@@ -462,7 +460,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanDefaultDestructor)
     EXPECT_CALL(*listener, onDestruction()).Times(1);
     EXPECT_CALL(*listener, onRunning()).Times(0);
     {
-        auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        auto runningQueryPlan = RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener);
     }
     EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
     EXPECT_FALSE(srcCtrl->wasOpened());
@@ -489,7 +487,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanDispose)
     EXPECT_CALL(*listener, onRunning()).Times(0);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         RunningQueryPlan::dispose(std::move(runningQueryPlan));
     }
 
@@ -518,7 +516,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
     EXPECT_CALL(*listener, onRunning()).Times(0);
 
     {
-        auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        auto runningQueryPlan = RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener);
         setups->waitForTasks(2);
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
     }
@@ -563,7 +561,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
 
     std::unique_ptr<StoppingQueryPlan> stopping;
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_FALSE(srcCtrl->wasOpened());
         EXPECT_FALSE(srcCtrl->wasClosed());
 
@@ -572,7 +570,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
 
         EXPECT_TRUE(srcCtrl->waitUntilOpened());
         EXPECT_FALSE(srcCtrl->waitUntilClosed());
-        stopping = dropRef(RunningQueryPlan::stop(std::move(runningQueryPlan)));
+        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
     }
 
     EXPECT_TRUE(terminations->handle(test.stages.at(pipeline)));
@@ -608,13 +606,13 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
 
     std::unique_ptr<StoppingQueryPlan> stopping;
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
 
         EXPECT_TRUE(setups->waitForTasks(3));
         /// Only setup the pipeline1 pipeline
         EXPECT_TRUE(setups->handle(test.stages[pipeline1]));
-        stopping = dropRef(RunningQueryPlan::stop(std::move(runningQueryPlan)));
+        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
     }
 
     EXPECT_TRUE(terminations->handle(test.stages[pipeline1]));
@@ -653,7 +651,7 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
     auto terminations = Terminations::setup(stdv::values(test.stages), emitter);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
 
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
@@ -697,7 +695,7 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
         EXPECT_TRUE(test.sourceControls[source1]->waitUntilOpened());
@@ -733,7 +731,7 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
     EXPECT_CALL(*listener, onRunning()).Times(1);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();
@@ -768,7 +766,7 @@ TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
     EXPECT_CALL(*listener, onDestruction()).Times(1);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan = dropRef(RunningQueryPlan::start(LocalQueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();

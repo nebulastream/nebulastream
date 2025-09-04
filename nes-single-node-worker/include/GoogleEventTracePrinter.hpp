@@ -32,6 +32,7 @@
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <NESThread.hpp>
 
 template <typename Var1, typename Var2>
 struct FlattenVariant;
@@ -93,7 +94,7 @@ private:
 
     std::ofstream file;
     folly::MPMCQueue<CombinedEventType> events{QUEUE_LENGTH};
-    std::jthread traceThread;
+    Thread traceThread;
     std::atomic<bool> headerWritten{false};
     std::atomic<bool> footerWritten{false};
 
@@ -101,7 +102,7 @@ private:
     std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
 
     /// Track active queries and pipelines for cleanup
-    std::unordered_map<QueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
-    std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
+    std::unordered_map<LocalQueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
+    std::unordered_map<PipelineId, std::tuple<LocalQueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
 };
 }

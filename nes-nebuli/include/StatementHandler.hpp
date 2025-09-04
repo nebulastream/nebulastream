@@ -21,17 +21,20 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
+
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <experimental/propagate_const>
+#include <Util/Pointers.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -83,17 +86,17 @@ struct DropSinkStatementResult
 
 struct QueryStatementResult
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<QueryId, QuerySummary> queries;
+    std::unordered_map<DistributedQueryId, DistributedQueryStatus> queries;
 };
 
 struct DropQueryStatementResult
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 using StatementResult = std::variant<
@@ -163,16 +166,22 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 {
     mutable std::mutex mutex;
     SharedPtr<QueryManager> queryManager;
-    std::vector<QueryId> runningQueries;
-    std::shared_ptr<const LegacyOptimizer> optimizer;
+    SharedPtr<SourceCatalog> sourceCatalog;
+    SharedPtr<SinkCatalog> sinkCatalog;
+    SharedPtr<WorkerCatalog> workerCatalog;
+    std::unordered_set<Query> runningQueries;
 
 public:
-    explicit QueryStatementHandler(const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<LegacyOptimizer>& optimizer);
+    QueryStatementHandler(
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<SourceCatalog> sourceCatalog,
+        SharedPtr<SinkCatalog> sinkCatalog,
+        SharedPtr<WorkerCatalog> workerCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
-    std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
-    std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
+    std::expected<ShowQueriesStatementResult, std::vector<Exception>> operator()(const ShowQueriesStatement& statement);
+    std::expected<DropQueryStatementResult, std::vector<Exception>> operator()(const DropQueryStatement& statement);
 
-    [[nodiscard]] std::vector<QueryId> getRunningQueries() const;
+    [[nodiscard]] auto getRunningQueries() const;
 };
 
 }

@@ -129,9 +129,9 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, Valve valve, std::shared_ptr<AbstractBufferProvider> bm)
 {
-    auto sinkController = std::make_shared<TestSinkController>();
+    auto sinkController = std::make_shared<TestSinkController>(std::move(valve));
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
     auto pipeline = ExecutablePipeline::create(id, std::move(stage), {});
     return {pipeline, sinkController};
@@ -182,7 +182,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
     return identifier;
 }
 
-QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<BufferManager> bm) &&
+QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(LocalQueryId queryId, std::shared_ptr<BufferManager> bm) &&
 {
     auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
                                                { return std::holds_alternative<SourceDescriptor>(kv.second); });
@@ -197,6 +197,8 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     std::unordered_map<identifier_t, std::shared_ptr<TestSinkController>> sinkCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
     std::unordered_map<identifier_t, std::shared_ptr<ExecutablePipeline>> cache{};
+
+    auto [valve, ingestion] = Backpressure();
     std::function<std::shared_ptr<ExecutablePipeline>(identifier_t)> getOrCreatePipeline = [&](identifier_t identifier)
     {
         if (auto it = cache.find(identifier); it != cache.end())
@@ -213,7 +215,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
                 },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<ExecutablePipeline>
                 {
-                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, bm);
+                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, std::move(valve), bm);
                     pipelines.push_back(sink);
                     stages[identifier] = sink->stage.get();
                     sinkCtrls[identifier] = ctrl;
@@ -241,7 +243,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     {
         std::vector<std::weak_ptr<ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
-        auto [s, ctrl] = getTestSource(std::get<SourceDescriptor>(source.second).sourceId, bm);
+        auto [s, ctrl] = getTestSource(ingestion, std::get<SourceDescriptor>(source.second).sourceId, bm);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;
@@ -279,7 +281,7 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
 
 std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
-    const auto queryId = QueryId(queryIdCounter++);
+    const auto queryId = LocalQueryId(queryIdCounter++);
     lastIdentifier = builder.nextIdentifier;
     lastOriginIdCounter = builder.originIdCounter;
     lastPipelineIdCounter = builder.pipelineIdCounter;
@@ -294,23 +296,23 @@ std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilde
     return std::move(plan);
 }
 
-void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states)
+void TestingHarness::expectQueryStatusEvents(LocalQueryId id, std::initializer_list<QueryState> states)
 {
     for (auto state : states)
     {
         switch (state)
         {
-            case QueryStatus::Registered:
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Registered, ::testing::_)).Times(1);
+            case QueryState::Registered:
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Registered, ::testing::_)).Times(1);
                 break;
-            case QueryStatus::Started:
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Started, ::testing::_))
+            case QueryState::Started:
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Started, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
                 break;
-            case QueryStatus::Running:
+            case QueryState::Running:
                 queryRunning.emplace(id, std::make_unique<std::promise<void>>());
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Running, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Running, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
                         [this](auto id, auto, auto)
@@ -319,10 +321,10 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                             return true;
                         }));
                 break;
-            case QueryStatus::Stopped:
+            case QueryState::Stopped:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Stopped, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Stopped, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
                         [this](auto id, auto, auto)
@@ -331,7 +333,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                             return true;
                         }));
                 break;
-            case QueryStatus::Failed:
+            case QueryState::Failed:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))
@@ -347,7 +349,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
     }
 }
 
-void TestingHarness::expectSourceTermination(QueryId queryId, QueryPlanBuilder::identifier_t source, QueryTerminationType type)
+void TestingHarness::expectSourceTermination(LocalQueryId queryId, QueryPlanBuilder::identifier_t source, QueryTerminationType type)
 {
     EXPECT_CALL(*status, logSourceTermination(queryId, sourceIds.at(source), type, ::testing::_)).WillOnce(::testing::Return(true));
 }
@@ -364,7 +366,7 @@ void TestingHarness::start()
     }
     QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
-    qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm);
+    qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, WorkerId("test"));
 }
 
 void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const
@@ -372,7 +374,7 @@ void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) cons
     qm->start(std::move(query));
 }
 
-void TestingHarness::stopQuery(QueryId id) const
+void TestingHarness::stopQuery(LocalQueryId id) const
 {
     qm->stop(id);
 }
@@ -382,12 +384,12 @@ void TestingHarness::stop()
     qm.reset();
 }
 
-testing::AssertionResult TestingHarness::waitForQepTermination(QueryId id, std::chrono::milliseconds timeout) const
+testing::AssertionResult TestingHarness::waitForQepTermination(LocalQueryId id, std::chrono::milliseconds timeout) const
 {
     return waitForFuture(queryTerminationFutures.at(id), timeout);
 }
 
-testing::AssertionResult TestingHarness::waitForQepRunning(QueryId id, std::chrono::milliseconds timeout)
+testing::AssertionResult TestingHarness::waitForQepRunning(LocalQueryId id, std::chrono::milliseconds timeout)
 {
     return waitForFuture(queryRunningFutures.at(id), timeout);
 }
