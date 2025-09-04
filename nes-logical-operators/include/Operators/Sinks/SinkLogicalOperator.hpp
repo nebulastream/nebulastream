@@ -26,13 +26,14 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
 {
 
-struct SinkLogicalOperator final : LogicalOperatorConcept
+struct SinkLogicalOperator final
 {
     /// During deserialization, we don't need to know/use the name of the sink anymore.
     SinkLogicalOperator() = default;
@@ -40,27 +41,27 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     explicit SinkLogicalOperator(std::string sinkName);
     explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    void serialize(SerializableOperator&) const override;
+    [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
+    void serialize(SerializableOperator&) const;
 
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
+    [[nodiscard]] SinkLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] TraitSet getTraitSet() const;
 
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] SinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
+    [[nodiscard]] SinkLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
+    [[nodiscard]] SinkLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] SinkLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
     [[nodiscard]] std::string getSinkName() const noexcept;
     [[nodiscard]] std::optional<SinkDescriptor> getSinkDescriptor() const;
@@ -91,4 +92,6 @@ private:
 
     friend class OperatorSerializationUtil;
 };
+
+static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
 }

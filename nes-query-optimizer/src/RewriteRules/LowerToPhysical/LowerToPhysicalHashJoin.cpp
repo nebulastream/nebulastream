@@ -226,18 +226,18 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
 
 RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
+    PRECONDITION(logicalOperator.tryGetAs<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected exactly two input origin ids");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
-    auto join = logicalOperator.get<JoinLogicalOperator>();
+    auto join = logicalOperator.getAs<JoinLogicalOperator>();
 
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds().at(0);
-    auto logicalJoinFunction = join.getJoinFunction();
-    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
-    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);
+    auto logicalJoinFunction = join->getJoinFunction();
+    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
+    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join.get(), windowType);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     auto nested = logicalOperator.getInputOriginIds();
     auto inputOriginIds = nested | std::views::join | std::ranges::to<std::vector>();
@@ -246,9 +246,9 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
     /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto [leftJoinFields, rightJoinFields]
-        = getJoinFieldExtensionsLeftRight(join.getLeftSchema(), join.getRightSchema(), logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join.getLeftSchema(), leftJoinFields);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join.getRightSchema(), rightJoinFields);
+        = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields);
     auto leftBufferRef = Interface::BufferRef::TupleBufferRef::create(
         conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
     auto rightBufferRef = Interface::BufferRef::TupleBufferRef::create(
@@ -268,7 +268,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto probeOperator = HJProbePhysicalOperator(
         handlerId,
         physicalJoinFunction,
-        join.getWindowMetaData(),
+        join->getWindowMetaData(),
         joinSchema,
         leftBufferRef,
         rightBufferRef,

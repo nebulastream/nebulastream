@@ -10,9 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        Trait.cpp
-        TraitSet.cpp
-        ImplementationTypeTrait.cpp)
 
-add_plugin(ImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
+add_source_files(nes-query-optimizer TraitSetSerializationUtil.cpp)

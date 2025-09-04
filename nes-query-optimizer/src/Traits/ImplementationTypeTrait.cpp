@@ -14,7 +14,28 @@
 
 #include <Traits/ImplementationTypeTrait.hpp>
 
+#include <variant>
+
+#include <Configurations/Enums/EnumWrapper.hpp>
+#include <ErrorHandling.hpp>
+#include <TraitRegisty.hpp>
+
 namespace NES
 {
 /// Required for plugin registration, no implementation necessary
+TraitRegistryReturnType TraitGeneratedRegistrar::RegisterImplementationTypeTrait(TraitRegistryArguments arguments)
+{
+    if (const auto typeIter = arguments.config.find("implementationType"); typeIter != arguments.config.end())
+    {
+        if (std::holds_alternative<EnumWrapper>(typeIter->second))
+        {
+            if (const auto implementation = std::get<EnumWrapper>(typeIter->second).asEnum<JoinImplementation>();
+                implementation.has_value())
+            {
+                return ImplementationTypeTrait{implementation.value()};
+            }
+        }
+    }
+    throw CannotDeserialize("Failed to deserialize ImplementationTypeTrait");
+}
 }
