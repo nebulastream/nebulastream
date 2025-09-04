@@ -46,17 +46,17 @@ def generate_data(num_rows=10000000, num_columns=10, file_path="benchmark_data.c
         column_name = f"col_{i}"
         columns.append(column_name)
 
-        if i % 3 == 0:
-            # Uniform distribution - good for predictable selectivity
-            data[column_name] = np.random.randint(0, 2**32-1, size=num_rows, dtype=np.uint64)
-        elif i % 3 == 1:
+        #if i % 3 == 0:
+        # Uniform distribution - good for predictable selectivity
+        data[column_name] = np.random.randint(0, 2**32-1, size=num_rows, dtype=np.uint64)
+        #elif i % 3 == 1:
             # Normal distribution (clipped to positive values)
-            values = np.random.normal(2**31, 2**30, size=num_rows)
-            data[column_name] = np.clip(values, 0, 2**32-1).astype(np.uint64)
-        else:
+            #values = np.random.normal(2**31, 2**30, size=num_rows)
+            #data[column_name] = np.clip(values, 0, 2**32-1).astype(np.uint64)
+        #else:
             # Exponential distribution - good for skewed data
-            values = np.random.exponential(2**28, size=num_rows)
-            data[column_name] = values.astype(np.uint64)
+            #values = np.random.exponential(2**28, size=num_rows)
+            #data[column_name] = values.astype(np.uint64)
 
     # Create DataFrame and save to CSV without headers
     df = pd.DataFrame(data)

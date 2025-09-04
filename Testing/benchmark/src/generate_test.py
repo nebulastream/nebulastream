@@ -111,7 +111,14 @@ def generate_test_file(data_file, output_path, result_dir, params):
                     # Filter queries with different selectivities
                     for selectivity in selectivities:
                         filter_col = cols_to_access[0]
-                        threshold = int((100 - selectivity) * 0.01 * (2**32-1))
+
+                        # Calculate individual selectivity needed for each column
+                        # For N columns with AND, each needs selectivity^(1/N) to achieve target selectivity
+                        individual_selectivity = selectivity**(1.0/access_col)
+
+                        # Calculate threshold for this individual selectivity
+                        threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))
+
 
                         # Create query directory
                         query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
@@ -125,6 +132,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                             "accessed_columns": access_col,
                             "operator_type": "filter",
                             "selectivity": selectivity,
+                            "individual_selectivity": individual_selectivity,
                             "threshold": threshold
                         }
 
@@ -138,7 +146,12 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query to buffer-specific test file
                         query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
-                        query += f"SELECT * FROM bench_data{num_col} WHERE {filter_col} > UINT64({threshold}) INTO AllSink{num_col};\n"
+
+                        query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
+                        for col_name in cols_to_access[1:]:
+                            query += (f" AND {col_name} > UINT64({threshold})")
+
+                        query += (f") INTO AllSink{num_col};\n")
                         query += "----\n1, 1\n\n"
                         filter_f.write(query)
 
