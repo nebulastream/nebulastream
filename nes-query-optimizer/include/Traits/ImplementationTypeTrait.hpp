@@ -63,4 +63,5 @@ struct ImplementationTypeTrait final : public TraitConcept
 
     [[nodiscard]] size_t hash() const override { return magic_enum::enum_integer(implementationType); }
 };
+
 }

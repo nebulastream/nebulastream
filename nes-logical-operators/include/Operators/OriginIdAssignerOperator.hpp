@@ -12,9 +12,14 @@
     limitations under the License.
 */
 
-#include <Traits/OriginIdAssignerTrait.hpp>
+#pragma once
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
+/// Ideally should extend LogicalOperator, but because LogicalOperator is not pure virtual (has the id member field),
+/// diamond pattern inheritance would lead to conflicts
+
+class OriginIdAssigner
+{
+};
 }

@@ -30,8 +30,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
 {
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
     auto sink = logicalOperator.get<SinkLogicalOperator>();
-    PRECONDITION(sink.getSinkDescriptor().has_value(), "Expected SinkLogicalOperator to have sink descriptor");
-    auto physicalOperator = SinkPhysicalOperator(sink.getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
+    PRECONDITION(sink->getSinkDescriptor().has_value(), "Expected SinkLogicalOperator to have sink descriptor");
+    auto physicalOperator = SinkPhysicalOperator(sink->getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     ;

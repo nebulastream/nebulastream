@@ -21,9 +21,9 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/OriginIdAssignerOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
 
@@ -32,25 +32,25 @@ namespace NES
 
 namespace
 {
-LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
+LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, OriginId& lastOriginId)
 {
     std::vector<LogicalOperator> newChildren;
     std::vector<std::vector<OriginId>> childOriginIds;
     for (const auto& child : visitingOperator.getChildren())
     {
-        auto newChild = propagateOriginIds(child);
+        auto newChild = propagateOriginIds(child, lastOriginId);
         newChildren.push_back(newChild);
         childOriginIds.push_back(newChild.getOutputOriginIds());
     }
 
     auto copy = visitingOperator;
 
-    if (not copy.tryGet<SourceDescriptorLogicalOperator>())
+    if (copy.tryGet<OriginIdAssigner>().has_value())
     {
-        copy = copy.withInputOriginIds(childOriginIds);
+        lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
+        copy = copy.withOutputOriginIds({lastOriginId});
     }
-
-    if (not hasTrait<OriginIdAssignerTrait>(visitingOperator.getTraitSet()))
+    else
     {
         std::unordered_set<OriginId> outputOriginIds;
         for (auto& originIds : childOriginIds)
@@ -60,6 +60,15 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
         copy = copy.withOutputOriginIds({outputOriginIds.begin(), outputOriginIds.end()});
     }
 
+    if (copy.tryGet<SourceDescriptorLogicalOperator>().has_value())
+    {
+        copy = copy.withInputOriginIds({copy.getOutputOriginIds()});
+    }
+    else
+    {
+        copy = copy.withInputOriginIds(childOriginIds);
+    }
+
     return copy.withChildren(newChildren);
 }
 }
@@ -67,32 +76,13 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
-    auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (auto& assigner : getOperatorsByTraits<OriginIdAssignerTrait>(queryPlan))
-    {
-        if (assigner.tryGet<SourceDescriptorLogicalOperator>())
-        {
-            assigner = assigner.withInputOriginIds({{OriginId(++originIdCounter)}});
-            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
-            INVARIANT(replaceResult.has_value(), "replaceOperator failed");
-            queryPlan = std::move(replaceResult.value());
-        }
-        else
-        {
-            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(++originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
-            INVARIANT(replaceResult.has_value(), "replaceOperator failed");
-            queryPlan = std::move(replaceResult.value());
-        }
-    }
-
+    auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
     newSinks.reserve(queryPlan.getRootOperators().size());
     for (auto& sinkOperator : queryPlan.getRootOperators())
     {
-        newSinks.push_back(propagateOriginIds(sinkOperator));
+        newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
     queryPlan = queryPlan.withRootOperators(newSinks);
 }
