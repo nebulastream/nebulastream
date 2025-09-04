@@ -116,17 +116,19 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
-        auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-            configuration.operatorBufferSize.getValue(), logicalOperator.getInputSchemas()[0]);
+
+        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
         if (configuration.layoutStrategy != MemoryLayoutStrategy::LEGACY)
             {
                 auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
-                layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                    configuration.operatorBufferSize.getValue(), logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType));
+                memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+                    configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0].withMemoryLayoutType(memoryLayoutTrait.targetLayoutType));
             }
-
-        auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-            configuration.pageSize.getValue(), layout);
+        else
+        {
+            memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+                configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
+        }
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
