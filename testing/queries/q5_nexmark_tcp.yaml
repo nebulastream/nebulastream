@@ -38,6 +38,7 @@ sinks:
       type: UINT64
     - name: bid$max_tmp
       type: UINT64
-  type: Checksum
+  type: Monitoring
   config:
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 994428462

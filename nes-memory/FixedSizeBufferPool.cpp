@@ -153,7 +153,14 @@ size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
-    throw UnknownOperation("This function is not supported here");
+    detail::MemorySegment* memSegment = nullptr;
+    exclusiveBuffers.read(memSegment);
+    if (memSegment->controlBlock->prepare(shared_from_this()))
+    {
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+    }
+    throw InvalidRefCountForBuffer();
+    // throw UnknownOperation("This function is not supported here");
 }
 
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize)

@@ -28,14 +28,13 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: TCP
+    type: File
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
       type: CSV
     sourceConfig:
-      socketPort: 1111
-      socketHost: localhost
+      filePath: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv
 
 sinks:
   name: csv_sink
@@ -48,8 +47,7 @@ sinks:
       type: UINT64
     - name: tcp_source$sum_user_id
       type: UINT64
-  type: File
+  type: Monitoring
   config:
-    inputFormat: CSV
-    append: false
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 497214231

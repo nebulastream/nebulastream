@@ -21,6 +21,7 @@
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Sources
 {
@@ -69,11 +70,34 @@ std::mutex LazySingleton<SingletonType>::instantiationMutex;
 /// The thread is started upon construction and calls io_context::run() until the destructor is called.
 /// Without the workGuard, the io_context::run() function would return as soon as there are no more handlers to execute, causing the thread to exit.
 /// This way, the io_context is usable as long as this object is alive and can be controlled by us.
+// A replacement for your IOThread class
 class IOThread
 {
 public:
-    IOThread();
-    ~IOThread();
+    // Run the io_context on a pool of threads. A good default is std::thread::hardware_concurrency().
+    explicit IOThread(size_t poolSize = 8)
+        : workGuard(asio::make_work_guard(ioc))
+    {
+        NES_DEBUG("IOThread: starting with {} threads.", poolSize);
+        for (size_t i = 0; i < poolSize; ++i)
+        {
+            threads.emplace_back([this] { ioc.run(); });
+        }
+    }
+
+    ~IOThread()
+    {
+        workGuard.reset(); // Allow io_context::run() to exit
+        ioc.stop();
+        for (auto& t : threads)
+        {
+            if (t.joinable())
+            {
+                t.join();
+            }
+        }
+        NES_DEBUG("IOThread: stopped.");
+    }
 
     IOThread(const IOThread&) = delete;
     IOThread& operator=(const IOThread&) = delete;
@@ -81,13 +105,13 @@ public:
     IOThread(IOThread&&) = delete;
     IOThread& operator=(IOThread&&) = delete;
 
-    /// This needs to be exposed for operations that require the io_context, e.g., for creating sockets from an accepted TCP connection.
+    // asio::io_context& ioContext() { return ioc; }
     asio::io_context& ioContext() { return ioc; }
 
 private:
     asio::io_context ioc;
     asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
-    std::jthread ioThread;
+    std::vector<std::thread> threads;
 };
 
 }
