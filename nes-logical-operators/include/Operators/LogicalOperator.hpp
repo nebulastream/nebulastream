@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -23,10 +24,12 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -41,66 +44,119 @@ inline OperatorId getNextLogicalOperatorId()
     return OperatorId(id++);
 }
 
+struct ErasedLogicalOperator;
+template <typename Checked = ErasedLogicalOperator>
+struct LogicalOperatorBase;
+
+using LogicalOperator = LogicalOperatorBase<>;
 /// Concept defining the interface for all logical operators in the query plan.
 /// This concept defines the common interface that all logical operators must implement.
 /// Logical operators represent operations in the query plan and are used during query
 /// planning and optimization.
-/// TODO #875: Investigate C++20 Concepts to replace Operator/Function Inheritance
-struct LogicalOperatorConcept
-{
-    virtual ~LogicalOperatorConcept() = default;
-
-    explicit LogicalOperatorConcept();
-    explicit LogicalOperatorConcept(OperatorId existingId);
-
+template <typename T>
+concept LogicalOperatorConcept = requires(
+    const T& thisOperator,
+    ExplainVerbosity verbosity,
+    OperatorId operatorId,
+    std::vector<LogicalOperator> children,
+    TraitSet traitSet,
+    const T& rhs,
+    SerializableOperator& serializableOperator,
+    std::vector<Schema> inputSchemas,
+    std::vector<std::vector<OriginId>> inputOriginIds,
+    std::vector<OriginId> outputOriginIds) {
     /// Returns a string representation of the operator
-    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
+    { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
 
     /// Returns the children operators of this operator
-    [[nodiscard]] virtual std::vector<struct LogicalOperator> getChildren() const = 0;
+    { thisOperator.getChildren() } -> std::convertible_to<std::vector<LogicalOperator>>;
 
     /// Creates a new operator with the given children
-    [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator>) const = 0;
+    { thisOperator.withChildren(children) } -> std::convertible_to<T>;
 
     /// Creates a new operator with the given traits
-    [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet) const = 0;
+    { thisOperator.withTraitSet(traitSet) } -> std::convertible_to<T>;
 
     /// Compares this operator with another for equality
-    [[nodiscard]] virtual bool operator==(const LogicalOperatorConcept& rhs) const = 0;
+    { thisOperator == rhs } -> std::convertible_to<bool>;
 
     /// Returns the name of the operator, used during planning and optimization
-    [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
+    { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
     /// Serializes the operator to a protobuf message
-    virtual void serialize(SerializableOperator&) const = 0;
+    thisOperator.serialize(serializableOperator);
 
     /// Returns the trait set of the operator
-    [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
+    { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
 
     /// Returns the input schemas of the operator
-    [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
+    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<Schema>>;
 
     /// Returns the output schema of the operator
-    [[nodiscard]] virtual Schema getOutputSchema() const = 0;
+    { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
 
     /// Returns the input origin IDs of the operator
-    [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
+    { thisOperator.getInputOriginIds() } -> std::convertible_to<std::vector<std::vector<OriginId>>>;
 
     /// Returns the output origin IDs of the operator
-    [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
+    { thisOperator.getOutputOriginIds() } -> std::convertible_to<std::vector<OriginId>>;
 
     /// Creates a new operator with the given input origin IDs
-    [[nodiscard]] virtual LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>>) const = 0;
+    { thisOperator.withInputOriginIds(inputOriginIds) } -> std::convertible_to<T>;
 
     /// Creates a new operator with the given output origin IDs
-    [[nodiscard]] virtual LogicalOperator withOutputOriginIds(std::vector<OriginId>) const = 0;
+    { thisOperator.withOutputOriginIds(outputOriginIds) } -> std::convertible_to<T>;
 
     /// Creates a new operator with inferred schema based on input schemas
-    [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
+    { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
+};
 
-    /// Unique identifier for this operator
-    /// Currently not const to allow serialization.
-    OperatorId id = INVALID_OPERATOR_ID;
+using LogicalOperator = LogicalOperatorBase<>;
+
+struct DynamicBase
+{
+    virtual ~DynamicBase() = default;
+};
+
+template <typename T>
+struct Castable : DynamicBase
+{
+    const T& get() const { return *dynamic_cast<const T*>(this); }
+
+    const T* operator->() const { return dynamic_cast<const T*>(this); }
+
+    const T& operator*() const { return *dynamic_cast<const T*>(this); }
+};
+
+struct ErasedLogicalOperator
+{
+    virtual ~ErasedLogicalOperator() = default;
+
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
+    [[nodiscard]] virtual std::vector<LogicalOperator> getChildren() const = 0;
+    [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator> children) const = 0;
+    [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet traitSet) const = 0;
+    [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
+    virtual void serialize(SerializableOperator& sOp) const = 0;
+    [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
+    [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
+    [[nodiscard]] virtual Schema getOutputSchema() const = 0;
+    [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
+    [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
+    [[nodiscard]] virtual LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const = 0;
+    [[nodiscard]] virtual LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const = 0;
+    [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
+    [[nodiscard]] virtual bool equals(const ErasedLogicalOperator& other) const = 0;
+    [[nodiscard]] virtual OperatorId getOperatorId() const = 0;
+    [[nodiscard]] virtual LogicalOperator withOperatorId(OperatorId id) const = 0;
+
+    friend bool operator==(const ErasedLogicalOperator& lhs, const ErasedLogicalOperator& rhs) { return lhs.equals(rhs); }
+
+
+private:
+    template <typename T>
+    friend struct LogicalOperatorBase;
+    [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
 };
 
 /// A type-erased wrapper for logical operators.
@@ -109,31 +165,99 @@ struct LogicalOperatorConcept
 /// and manipulated without knowing their concrete type. It uses the PIMPL pattern
 /// to store the actual operator implementation.
 /// @tparam T The type of the logical operator. Must inherit from LogicalOperatorConcept.
-template <typename T>
-concept IsLogicalOperator = std::is_base_of_v<LogicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
+
+template <LogicalOperatorConcept OperatorType>
+struct OperatorModel;
 
 /// Id is preserved during copy
-struct LogicalOperator
+template <typename Checked>
+struct LogicalOperatorBase
 {
-    /// Constructs a LogicalOperator from a concrete operator type.
-    /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
-    /// @param op The operator to wrap.
-    template <IsLogicalOperator T>
-    LogicalOperator(const T& op) : self(std::make_shared<Model<T>>(std::move(op), std::move(op.id))) /// NOLINT
+    template <LogicalOperatorConcept T>
+    requires std::same_as<Checked, ErasedLogicalOperator>
+    LogicalOperatorBase(LogicalOperatorBase<T> other) : self(other.self) /// NOLINT(google-explicit-constructor)
     {
     }
 
-    LogicalOperator();
+    /// Constructs a LogicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
+    /// @param op The operator to wrap.
+    template <LogicalOperatorConcept T>
+    LogicalOperatorBase(const T& op) : self(std::make_shared<OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    {
+    }
+
+    template <LogicalOperatorConcept T>
+    LogicalOperatorBase(const OperatorModel<T>& op) : self(std::make_shared<OperatorModel<T>>(op.impl, op.id)) /// NOLINT(google-explicit-constructor)
+    {
+    }
+
+    explicit LogicalOperatorBase(std::shared_ptr<const ErasedLogicalOperator> op) : self(std::move(op)) { }
+
+    // TODO merge with the other get, default template parameter to checked
+    [[nodiscard]] const Checked& get() const
+    {
+        if constexpr (std::is_same_v<ErasedLogicalOperator, Checked>)
+        {
+            return *std::dynamic_pointer_cast<const ErasedLogicalOperator>(self);
+        }
+        else
+        {
+            return std::dynamic_pointer_cast<const OperatorModel<Checked>>(self)->impl;
+        }
+    }
+
+    const Checked& operator*() const
+    {
+        if constexpr (std::is_same_v<ErasedLogicalOperator, Checked>)
+        {
+            return *std::dynamic_pointer_cast<const ErasedLogicalOperator>(self);
+        }
+        else
+        {
+            return std::dynamic_pointer_cast<const OperatorModel<Checked>>(self)->impl;
+        }
+    }
+
+    const Checked* operator->() const
+    {
+        if constexpr (std::is_same_v<ErasedLogicalOperator, Checked>)
+        {
+            return std::dynamic_pointer_cast<const ErasedLogicalOperator>(self).get();
+        }
+        else
+        {
+            auto casted = std::dynamic_pointer_cast<const OperatorModel<Checked>>(self);
+            return &casted->impl;
+        }
+    }
+
+    LogicalOperatorBase() = default;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
     /// @return std::optional<T> The operator if it is of type T, nullopt otherwise.
-    template <typename T>
-    [[nodiscard]] std::optional<T> tryGet() const
+    template <LogicalOperatorConcept T>
+    std::optional<LogicalOperatorBase<T>> tryGet() const
     {
-        if (auto model = dynamic_cast<const Model<T>*>(self.get()))
+        if (auto model = std::dynamic_pointer_cast<const OperatorModel<T>>(self))
         {
-            return model->data;
+            return LogicalOperatorBase<T>{std::static_pointer_cast<const ErasedLogicalOperator>(model)};
+        }
+        return std::nullopt;
+    }
+
+    template <typename T>
+    requires(!LogicalOperatorConcept<T>)
+    std::optional<std::shared_ptr<const Castable<T>>> tryGet() const
+    {
+        auto castable = self->getImpl();
+        if (castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
         }
         return std::nullopt;
     }
@@ -142,117 +266,171 @@ struct LogicalOperator
     /// @tparam T The type to get the operator as.
     /// @return const T The operator.
     /// @throw InvalidDynamicCast If the operator is not of type T.
-    template <typename T>
-    [[nodiscard]] T get() const
+    template <LogicalOperatorConcept T>
+    LogicalOperatorBase<T> get() const
     {
-        if (auto model = dynamic_cast<const Model<T>*>(self.get()))
+        if (auto model = std::dynamic_pointer_cast<const OperatorModel<T>>(self))
         {
-            return model->data;
+            return LogicalOperatorBase<T>{std::static_pointer_cast<const ErasedLogicalOperator>(model)};
         }
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    template <typename T>
+    requires(!LogicalOperatorConcept<T>)
+    std::shared_ptr<const T> get() const
+    {
+        auto castable = self->getImpl();
+        if (castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const T>{self, ptr};
+            }
+        }
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+    }
+
+    [[nodiscard]] std::string explain(const ExplainVerbosity verbosity) const { return self->explain(verbosity); }
+
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return self->getChildren(); };
+
+    [[nodiscard]] LogicalOperatorBase withChildren(std::vector<LogicalOperator> children) const
+    {
+        return self->withChildren(std::move(children));
+    }
+
     /// Static traits defined as member variables will be present in the new operator nonetheless
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] LogicalOperatorBase withTraitSet(TraitSet traitSet) const { return self->withTraitSet(std::move(traitSet)); }
 
-    [[nodiscard]] OperatorId getId() const;
+    [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
-    [[nodiscard]] bool operator==(const LogicalOperator& other) const;
-    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] bool operator==(const LogicalOperator& other) const { return self->equals(*other.self); }
 
-    void serialize(SerializableOperator&) const;
-    [[nodiscard]] TraitSet getTraitSet() const;
+    [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    void serialize(SerializableOperator& serializableOperator) const { self->serialize(serializableOperator); }
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
+    [[nodiscard]] TraitSet getTraitSet() const { return self->getTraitSet(); }
 
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return self->getInputSchemas(); }
+
+    [[nodiscard]] Schema getOutputSchema() const { return self->getOutputSchema(); }
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const { return self->getInputOriginIds(); }
+
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const { return self->getOutputOriginIds(); }
+
+    [[nodiscard]] LogicalOperatorBase withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+    {
+        return self->withInputOriginIds(std::move(ids));
+    }
+
+    [[nodiscard]] LogicalOperatorBase withOutputOriginIds(std::vector<OriginId> ids) const
+    {
+        return self->withOutputOriginIds(std::move(ids));
+    }
+
+    [[nodiscard]] LogicalOperatorBase withInferredSchema(std::vector<Schema> inputSchemas) const
+    {
+        return self->withInferredSchema(std::move(inputSchemas));
+    }
 
 private:
-    struct Concept : LogicalOperatorConcept
+    friend class QueryPlanSerializationUtil;
+    friend class OperatorSerializationUtil;
+
+    template <typename FriendChecked>
+    friend struct LogicalOperatorBase;
+
+    [[nodiscard]] LogicalOperatorBase withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
+
+    std::shared_ptr<const ErasedLogicalOperator> self;
+};
+
+template <LogicalOperatorConcept OperatorType>
+struct OperatorModel : ErasedLogicalOperator
+{
+    OperatorType impl;
+    OperatorId id;
+
+    explicit OperatorModel(OperatorType impl) : impl(std::move(impl)), id(getNextLogicalOperatorId()) { }
+
+    OperatorModel(OperatorType impl, const OperatorId existingId) : impl(std::move(impl)), id(existingId) { }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity, id); }
+
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return impl.getChildren(); }
+
+    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override { return impl.withChildren(children); }
+
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override { return impl.withTraitSet(traitSet); }
+
+    [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
+
+    void serialize(SerializableOperator& sOp) const override
     {
-        explicit Concept(OperatorId existingId) : LogicalOperatorConcept(existingId) { }
+        impl.serialize(sOp);
+        PRECONDITION(sOp.operator_id() == OperatorId::INVALID, "Operator id should not be serialized in operator implementation");
+        sOp.set_operator_id(id.getRawValue());
+    }
 
-        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
-    };
+    [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 
-    template <IsLogicalOperator OperatorType>
-    struct Model : Concept
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return impl.getInputSchemas(); }
+
+    [[nodiscard]] Schema getOutputSchema() const override { return impl.getOutputSchema(); }
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return impl.getInputOriginIds(); }
+
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return impl.getOutputOriginIds(); }
+
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
     {
-        OperatorType data;
+        return impl.withInputOriginIds(ids);
+    }
 
-        explicit Model(OperatorType d) : Concept(getNextLogicalOperatorId()), data(std::move(d)) { }
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override { return impl.withOutputOriginIds(ids); }
 
-        Model(OperatorType d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
+    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override
+    {
+        return impl.withInferredSchema(inputSchemas);
+    }
 
-        [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
-
-        [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return data.getChildren(); }
-
-        [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
+    [[nodiscard]] bool equals(const ErasedLogicalOperator& other) const override
+    {
+        if (auto ptr = dynamic_cast<const OperatorModel*>(&other))
         {
-            return data.withChildren(children);
+            return impl.operator==(ptr->impl);
         }
+        return false;
+    }
 
-        [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override { return data.withTraitSet(traitSet); }
+    [[nodiscard]] OperatorId getOperatorId() const override { return id; }
 
-        [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }
+    [[nodiscard]] LogicalOperator withOperatorId(OperatorId id) const override { return LogicalOperator{OperatorModel{impl, id}}; }
 
-        void serialize(SerializableOperator& sOp) const override { return data.serialize(sOp); }
+    [[nodiscard]] OperatorType get() const { return impl; }
 
-        [[nodiscard]] TraitSet getTraitSet() const override { return data.getTraitSet(); }
+    [[nodiscard]] const OperatorType& operator*() const { return impl; }
 
-        [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return data.getInputSchemas(); }
+    [[nodiscard]] const OperatorType* operator->() const { return &impl; }
 
-        [[nodiscard]] Schema getOutputSchema() const override { return data.getOutputSchema(); }
+private:
+    template <typename T>
+    friend struct LogicalOperatorBase;
 
-        [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return data.getInputOriginIds(); }
-
-        [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return data.getOutputOriginIds(); }
-
-        [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
+    [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
+    {
+        if constexpr (std::is_base_of_v<DynamicBase, OperatorType>)
         {
-            return data.withInputOriginIds(ids);
+            return static_cast<const DynamicBase*>(&impl);
         }
-
-        [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override
+        else
         {
-            return data.withOutputOriginIds(ids);
+            return std::nullopt;
         }
-
-        [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override
-        {
-            return data.withInferredSchema(inputSchemas);
-        }
-
-        [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
-        {
-            if (const auto* p = dynamic_cast<const Concept*>(&rhs))
-            {
-                return equals(*p);
-            }
-            return false;
-        }
-
-        [[nodiscard]] bool equals(const Concept& other) const override
-        {
-            if (auto p = dynamic_cast<const Model*>(&other))
-            {
-                return data.operator==(p->data);
-            }
-            return false;
-        }
-    };
-
-    std::shared_ptr<const Concept> self;
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
@@ -262,7 +440,13 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 
 /// Adds additional traits to the given operator, returning a new operator
 /// If the same trait (with the same data) is already present, the new trait will not be added.
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitSet& traitSet);
+template <IsTrait... TraitType>
+LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&... traits)
+{
+    auto result = op.getTraitSet();
+    (result.tryInsert(traits), ...);
+    return op.withTraitSet(std::move(result));
+}
 
 }
 

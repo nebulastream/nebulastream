@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
@@ -43,25 +44,21 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(std::vector<Schema>) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
 {
     PRECONDITION(false, "Schema is already given by SourceDescriptor. No call ot InferSchema needed");
     return *this;
 }
 
-bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool SourceDescriptorLogicalOperator::operator==(const SourceDescriptorLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
-    {
-        const bool descriptorsEqual = sourceDescriptor == rhsOperator->sourceDescriptor;
-        return descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    const bool descriptorsEqual = sourceDescriptor == rhs.sourceDescriptor;
+    return descriptorsEqual && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
+        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
+        && getTraitSet() == rhs.getTraitSet();
 }
 
-std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
@@ -71,24 +68,22 @@ std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity)
     return fmt::format("SOURCE({})", sourceDescriptor.explain(verbosity));
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withTraitSet(TraitSet traitSet) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
 TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
 {
-    TraitSet result = traitSet;
-    result.insert(originIdTrait);
-    return result;
+    return traitSet;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -112,7 +107,7 @@ std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() cons
     return sourceOriginIds;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     PRECONDITION(ids.size() == 1, "Source should have one input");
     PRECONDITION(ids[0].size() == 1, "Source should have one originId, but has {}", ids[0].size());
@@ -121,7 +116,7 @@ LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<
     return copy;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
     copy.sourceOriginIds = ids;
@@ -144,8 +139,6 @@ void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializab
     INVARIANT(sourceOriginIds.size() == 1, "Expected one originId, got '{}' instead", sourceOriginIds.size());
     proto.set_sourceoriginid(sourceOriginIds[0].getRawValue());
     proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
-
-    serializableOperator.set_operator_id(id.getRawValue());
 
     serializableOperator.mutable_source()->CopyFrom(proto);
 }

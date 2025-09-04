@@ -54,27 +54,23 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
     return predicate;
 }
 
-bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool SelectionLogicalOperator::operator==(const SelectionLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs))
-    {
-        return predicate == rhsOperator->predicate && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    return predicate == rhs.predicate && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
+        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
+        && getTraitSet() == rhs.getTraitSet();
 };
 
-std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SELECTION(opId: {}, predicate: {})", id, predicate.explain(verbosity));
+        return fmt::format("SELECTION(opId: {}, predicate: {})", opId, predicate.explain(verbosity));
     }
     return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
 
-LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     if (inputSchemas.empty())
@@ -106,17 +102,17 @@ TraitSet SelectionLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-LogicalOperator SelectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+SelectionLogicalOperator SelectionLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-LogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SelectionLogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -140,17 +136,17 @@ std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-LogicalOperator SelectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+SelectionLogicalOperator SelectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     auto copy = *this;
-    copy.inputOriginIds = ids.at(0);
+    copy.inputOriginIds = std::move(ids.at(0));
     return copy;
 }
 
-LogicalOperator SelectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+SelectionLogicalOperator SelectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
-    copy.outputOriginIds = ids;
+    copy.outputOriginIds = std::move(ids);
     return copy;
 }
 
@@ -167,7 +163,7 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     auto inputs = getInputSchemas();
@@ -192,7 +188,6 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -220,10 +215,6 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
         }
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
         auto logicalOperator = SelectionLogicalOperator(function);
-        if (auto& id = arguments.id)
-        {
-            logicalOperator.id = *id;
-        }
         return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
             .withOutputOriginIds(arguments.outputOriginIds);

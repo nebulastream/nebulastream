@@ -42,13 +42,13 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
 
     auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
     auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
-    auto accessedFields = projection.getAccessedFields();
+    auto accessedFields = projection->getAccessedFields();
     auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
-    for (const auto& [fieldName, function] : projection.getProjections())
+    for (const auto& [fieldName, function] : projection->getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
         auto physicalOperator = MapPhysicalOperator(

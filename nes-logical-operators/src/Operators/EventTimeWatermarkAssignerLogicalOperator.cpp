@@ -53,7 +53,7 @@ std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noex
     return NAME;
 }
 
-std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
@@ -73,18 +73,15 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
     return "WATERMARK_ASSIGNER(Event time)";
 }
 
-bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool EventTimeWatermarkAssignerLogicalOperator::operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs))
-    {
-        return onField == rhsOperator->onField && unit == rhsOperator->unit && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    return onField == rhs.onField && unit == rhs.unit && getOutputSchema() == rhs.getOutputSchema()
+        && getInputSchemas() == rhs.getInputSchemas() && getInputOriginIds() == rhs.getInputOriginIds()
+        && getOutputOriginIds() == rhs.getOutputOriginIds() && getTraitSet() == rhs.getTraitSet();
 }
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+EventTimeWatermarkAssignerLogicalOperator
+EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     if (inputSchemas.size() != 1)
@@ -98,10 +95,10 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(st
     return copy;
 }
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
-    copy.outputOriginIds = ids;
+    copy.outputOriginIds = std::move(ids);
     return copy;
 }
 
@@ -110,17 +107,18 @@ TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
+EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+EventTimeWatermarkAssignerLogicalOperator
+EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -144,7 +142,8 @@ std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOrigin
     return outputOriginIds;
 }
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+EventTimeWatermarkAssignerLogicalOperator
+EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     if (ids.size() != 1)
     {
@@ -168,7 +167,7 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     for (const auto& inputSchema : getInputSchemas())
@@ -194,7 +193,6 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -229,10 +227,6 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
 
         auto logicalOperator = EventTimeWatermarkAssignerLogicalOperator(function, time);
-        if (auto& id = arguments.id)
-        {
-            logicalOperator.id = *id;
-        }
         return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
             .withOutputOriginIds(arguments.outputOriginIds);
