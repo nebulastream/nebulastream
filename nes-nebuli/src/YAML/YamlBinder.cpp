@@ -37,25 +37,18 @@
 
 namespace NES::CLI
 {
-
 YamlBinder::YamlBinder(const QueryConfig& config)
     : queryConfig{config}
-    , workerCatalog{std::make_unique<WorkerCatalog>()}
+    , workerCatalog{std::make_unique<WorkerCatalog>(
+        WorkerCatalog::from(
+            config.workerNodes | std::views::transform(
+                [](const auto& worker)
+                {
+                    return NES::WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes};
+                }) | std::ranges::to<std::vector>()))}
     , sourceCatalog{std::make_unique<SourceCatalog>()}
     , sinkCatalog{std::make_unique<SinkCatalog>()}
 {
-}
-
-void YamlBinder::bindRegisterWorkers(const std::vector<WorkerConfig>& unboundWorkers)
-{
-    for (const auto& [host, grpc, capacity, downstream] : unboundWorkers)
-    {
-        NES_DEBUG("Adding worker: {}", host);
-        if (not workerCatalog->addWorker(host, grpc, capacity, downstream))
-        {
-            NES_ERROR("Failed to add worker {}, because it already exists", host);
-        }
-    }
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -95,6 +88,11 @@ void YamlBinder::bindRegisterPhysicalSources(const std::vector<PhysicalSource>& 
         }
         NES_DEBUG("Source type is: {}", sourceType);
 
+        if (auto workerOpt = workerCatalog->getWorker(hostAddr); not workerOpt.has_value())
+        {
+            throw InvalidSourceConfig("Worker [{}] for source was not specified in the worker config");
+        }
+
         const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
         const auto sourceDescriptorOpt
             = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, hostAddr, sourceConfig, validInputFormatterConfig);
@@ -111,6 +109,12 @@ void YamlBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
     {
         auto schema = bindSchema(schemaFields);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
+
+        if (auto workerOpt = workerCatalog->getWorker(hostAddr); not workerOpt.has_value())
+        {
+            throw InvalidSourceConfig("Worker [{}] for sink was not specified in the worker config");
+        }
+
         if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, hostAddr, sinkConfig);
             not sinkDescriptor.has_value())
         {
@@ -122,7 +126,6 @@ void YamlBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
 std::pair<PlanStage::BoundLogicalPlan, QueryPlanningContext> YamlBinder::bind(LogicalPlan&& plan) &&
 {
     /// Validate and set descriptors for sources and sinks, register into source catalog
-    bindRegisterWorkers(queryConfig.workerNodes);
     bindRegisterLogicalSources(queryConfig.logicalSources);
     bindRegisterPhysicalSources(queryConfig.physicalSources);
     bindRegisterSinks(queryConfig.sinks);
@@ -136,5 +139,4 @@ std::pair<PlanStage::BoundLogicalPlan, QueryPlanningContext> YamlBinder::bind(Lo
 
     return {std::move(boundPlan), std::move(ctx)};
 }
-
 }

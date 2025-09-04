@@ -100,11 +100,13 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
               "/nes-systests/");
 
-    /// distributed mode, otherwise fall back to local (dummy topology, will lead to single-node execution
+    /// distributed mode, otherwise fall back to local (dummy topology, will lead to single-node execution)
     program.add_argument("--topology")
-        .help("path to a topology file. If none is provided the default topology at \"configs/topologies/default_distributed.yaml\" will "
-              "be picked")
-        .nargs(1);
+        .help(
+            "path to a topology file. If no argument is provided, defaults to \"configs/topologies/default_distributed.yaml\". "
+            "If flag is not used, local topology is used.")
+        .nargs(argparse::nargs_pattern::optional)
+        .default_value(std::string());
 
     program.add_argument("--remote")
         .help("use a remote instance(s) of nebulastream to run the system test queries. By default the worker will be started in-process "
@@ -301,14 +303,19 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     if (program.is_used("--topology"))
     {
-        if (auto topology = program.present<std::string>("--topology"))
-        {
-            config.topology = *topology;
-        }
-        else
+        auto topology = program.get<std::string>("--topology");
+        if (topology.empty())
         {
             config.topology = DEFAULT_DISTRIBUTED_TOPOLOGY; /// Distributed execution with default topology
         }
+        else
+        {
+            config.topology = topology;
+        }
+    }
+    else
+    {
+        config.topology = DEFAULT_LOCAL_TOPOLOGY; /// Local execution when --topology is not used
     }
 
     if (program.is_used("--remote"))

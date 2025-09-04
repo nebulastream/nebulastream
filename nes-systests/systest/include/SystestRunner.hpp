@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <variant>
@@ -27,6 +28,7 @@
 #include <QueryTracker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
+#include "Listeners/QueryLog.hpp"
 
 namespace NES::Systest
 {
@@ -75,7 +77,7 @@ private:
     void onStopped(SubmittedQuery&& submitted, const DistributedQueryStatus& queryStatus);
 
     template <typename QueryT>
-    requires requires(QueryT q) { q.ctx; }
+        requires requires(QueryT qry) { qry.ctx; }
     void onFailure(QueryT&& query, std::vector<Exception>&& exceptions)
     {
         /// Check if test is negative test
@@ -88,21 +90,29 @@ private:
             if (code == exceptions.front().code())
             {
                 reporter->reportSuccess(query.ctx);
-                queryTracker.moveToFinished(FinishedQuery{std::move(query)});
+                queryTracker.moveToFinished(FinishedQuery{std::forward<QueryT>(query)});
                 return;
             }
 
             const auto errorMessage = fmt::format("expected error {} but got {}", code, exceptions.front().code());
-            auto failed = FailedQuery{std::move(query.ctx), std::move(exceptions)};
+            auto failed = FailedQuery{std::forward<QueryT>(query).ctx, std::move(exceptions)};
             reporter->reportFailure(failed.ctx, std::move(errorMessage));
             reportedFailures.push_back(failed);
             queryTracker.moveToFailed(std::move(failed));
             return;
         }
 
-        auto failed = FailedQuery{std::move(query.ctx), std::move(exceptions)};
-        const auto errorMessage
-            = failed.exceptions.empty() ? "Query failed without error details" : fmt::format("{}", failed.exceptions.front());
+        auto failed = FailedQuery{std::forward<QueryT>(query).ctx, std::move(exceptions)};
+        auto errorMessage = failed.exceptions.empty()
+                                ? "Query failed without error details"
+                                : fmt::format("Query failed with {} exception(s):\n{}",
+                                              failed.exceptions.size(),
+                                              fmt::join(
+                                                  failed.exceptions | std::views::enumerate | std::views::transform(
+                                                      [](const auto &pair) {
+                                                          const auto &[index, exception] = pair;
+                                                          return fmt::format("  [{}] {}", index + 1, exception);
+                                                      }), "\n"));
         reporter->reportFailure(failed.ctx, std::move(errorMessage));
         reportedFailures.push_back(failed);
         queryTracker.moveToFailed(std::move(failed));

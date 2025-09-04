@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <array>
 #include <csignal>
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -52,7 +51,6 @@ struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
-    WorkerStatementHandler workerStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
 
@@ -74,7 +72,6 @@ struct Repl::Impl
     Impl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
-        WorkerStatementHandler workerStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -82,7 +79,6 @@ struct Repl::Impl
         const bool interactiveMode)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
-        , workerStatementHandler(std::move(workerStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
         , interactiveMode(interactiveMode)
@@ -386,10 +382,6 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
-                else if constexpr (requires { workerStatementHandler.apply(stmt); })
-                {
-                    return workerStatementHandler.apply(stmt);
-                }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
                     auto result = queryStatementHandler->apply(stmt);
@@ -541,7 +533,6 @@ struct Repl::Impl
 Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
-    WorkerStatementHandler workerStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
@@ -550,7 +541,6 @@ Repl::Repl(
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
-          std::move(workerStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,

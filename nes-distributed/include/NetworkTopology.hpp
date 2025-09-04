@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <ErrorHandling.hpp>
@@ -52,8 +53,28 @@ class Topology
 
     std::unordered_map<Node::Id, Node> dag;
 
+    Topology() = default;
+
 public:
     using NodeId = Node::Id;
+
+    static Topology from(const std::vector<std::pair<HostAddr, std::vector<HostAddr> > > &workers) {
+        Topology topology;
+        for (const auto &[host, downstream]: workers) {
+            const auto &[it, wasInserted] = topology.dag.try_emplace(host);
+            if (not wasInserted) {
+                throw InvalidTopology("Tried to insert the same node [{}] twice", host);
+            }
+            it->second.downstreamNodes = downstream;
+        }
+
+        for (const auto &[host, downstream]: workers) {
+            for (const auto &downstreamNode: downstream) {
+                topology.dag.at(downstreamNode).upstreamNodes.emplace_back(host);
+            }
+        }
+        return topology;
+    }
 
     /// Represents a path of directly connected nodes in the topology
     struct Path
@@ -67,9 +88,6 @@ public:
 
         [[nodiscard]] auto end() const { return path.end(); }
     };
-
-    void addNode(const Node::Id& id, const std::vector<Node::Id>& downstreamNodes);
-    void removeNode(const Node::Id& id);
 
     std::vector<NodeId> getUpstreamNodesOf(const NodeId& node) const;
     std::vector<NodeId> getDownstreamNodesOf(const NodeId& node) const;

@@ -271,63 +271,17 @@ struct StatementOutputAssembler<DropQueryStatementResult>
     }
 };
 
-template <>
-struct StatementOutputAssembler<CreateWorkerStatementResult>
-{
-    using OutputRowType = WorkerConfigOutputRowType;
-
-    auto convert(const CreateWorkerStatementResult& result)
-    {
-        return std::make_pair(
-            workerConfigOutputColumns,
-            std::vector{std::make_tuple(result.created.host, result.created.grpc, result.created.capacity, result.created.downstream)});
-    }
-};
-
-template <>
-struct StatementOutputAssembler<ShowWorkersStatementResult>
-{
-    using OutputRowType = WorkerConfigOutputRowType;
-
-    auto convert(const ShowWorkersStatementResult& result)
-    {
-        std::vector<OutputRowType> output;
-        output.reserve(result.workers.size());
-        for (const auto& worker : result.workers)
-        {
-            output.emplace_back(worker.host, worker.grpc, worker.capacity, worker.downstream);
-        }
-        return std::make_pair(workerConfigOutputColumns, output);
-    }
-};
-
-template <>
-struct StatementOutputAssembler<DropWorkerStatementResult>
-{
-    using OutputRowType = WorkerConfigOutputRowType;
-
-    auto convert(const DropWorkerStatementResult& result)
-    {
-        return std::make_pair(
-            workerConfigOutputColumns,
-            std::vector{std::make_tuple(result.dropped.host, result.dropped.grpc, result.dropped.capacity, result.dropped.downstream)});
-    }
-};
-
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 static_assert(AssembleStatementResult<CreateLogicalSourceStatementResult>);
 static_assert(AssembleStatementResult<CreatePhysicalSourceStatementResult>);
 static_assert(AssembleStatementResult<CreateSinkStatementResult>);
-static_assert(AssembleStatementResult<CreateWorkerStatementResult>);
 static_assert(AssembleStatementResult<ShowLogicalSourcesStatementResult>);
 static_assert(AssembleStatementResult<ShowPhysicalSourcesStatementResult>);
 static_assert(AssembleStatementResult<ShowSinksStatementResult>);
-static_assert(AssembleStatementResult<ShowWorkersStatementResult>);
 static_assert(AssembleStatementResult<DropLogicalSourceStatementResult>);
 static_assert(AssembleStatementResult<DropPhysicalSourceStatementResult>);
 static_assert(AssembleStatementResult<DropSinkStatementResult>);
-static_assert(AssembleStatementResult<DropWorkerStatementResult>);
 static_assert(AssembleStatementResult<QueryStatementResult>);
 static_assert(AssembleStatementResult<ShowQueriesStatementResult>);
 static_assert(AssembleStatementResult<DropQueryStatementResult>);
