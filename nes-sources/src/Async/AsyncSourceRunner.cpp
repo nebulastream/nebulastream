@@ -79,6 +79,8 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
         /// 1. Acquire buffer
         /// TODO(yschroeder97): replace this with timeout-based approach
         /// In the future, we might replace this with an async call: when the system is running at capacity, blocking here can slow down all other sources.
+        // auto buffer = context.bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(0));
+        // auto buffer = context.bufferProvider->getBufferBlocking();
         auto buffer = context.bufferProvider->getBufferBlocking();
         /// 2. Let source ingest raw bytes into buffer
         /// All IO-related errors are handled internally and returned via the result variant.

@@ -22,17 +22,17 @@ namespace NES::Sources
 {
 
 /// The io_context is initialized first from its default constructor.
-IOThread::IOThread() : workGuard(asio::make_work_guard(ioc)), ioThread([this] { ioc.run(); })
-{
-    NES_DEBUG("IOThread: started [{}]", ioThread.get_id());
-}
-
-IOThread::~IOThread()
-{
-    workGuard.reset();
-    ioc.stop();
-    NES_DEBUG("IOThread: stopped [{}]", ioThread.get_id());
-    /// Thread is joined when leaving this scope
-}
+// IOThread::IOThread() : workGuard(asio::make_work_guard(ioc)), ioThread([this] { ioc.run(); })
+// {
+//     NES_DEBUG("IOThread: started [{}]", ioThread.get_id());
+// }
+//
+// IOThread::~IOThread()
+// {
+//     workGuard.reset();
+//     ioc.stop();
+//     NES_DEBUG("IOThread: stopped [{}]", ioThread.get_id());
+//     /// Thread is joined when leaving this scope
+// }
 
 }

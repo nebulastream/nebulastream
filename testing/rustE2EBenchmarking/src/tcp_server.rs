@@ -1,3 +1,4 @@
+// src/tcp_server.rs
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::AsyncWriteExt;
 use tokio::fs;
@@ -9,7 +10,7 @@ use anyhow::Result;
 
 #[derive(Parser)]
 #[command(name = "tcp-server")]
-#[command(about = "High-performance TCP server for throughput testing")]
+#[command(about = "TCP server for NES benchmark framework")]
 struct Args {
     #[arg(short, long, default_value = "127.0.0.1")]
     host: String,
@@ -29,6 +30,9 @@ struct Args {
     #[arg(short = 'n', long, default_value_t = 1)]
     batch_size: usize,
 }
+
+// Reuse the existing server implementation from your code
+// (Copy the ServerMessage, ClientHandler, and Server structs from your original server.rs)
 
 #[derive(Debug)]
 enum ServerMessage {
@@ -65,15 +69,12 @@ impl ClientHandler {
     }
 
     async fn serve(mut self) -> Result<()> {
-        // Set TCP_NODELAY for lower latency
         self.stream.set_nodelay(true)?;
-
         let start_time = Instant::now();
         let mut total_sent = 0u64;
 
         println!("Client {} starting data transmission", self.client_id);
 
-        // Send data repeatedly
         for _ in 0..self.repeat_count {
             let mut offset = 0;
             while offset < self.data.len() {
@@ -93,7 +94,6 @@ impl ClientHandler {
             }
         }
 
-        // Flush any remaining data
         self.stream.flush().await?;
 
         let duration = start_time.elapsed();
@@ -127,7 +127,6 @@ impl Server {
             }
             Err(_) => {
                 println!("File not found, generating {} bytes of test data", buffer_size);
-                // Generate test data if file doesn't exist
                 (0..buffer_size).map(|i| (i % 256) as u8).collect()
             }
         };
@@ -149,7 +148,6 @@ impl Server {
 
         let (tx, mut rx) = mpsc::unbounded_channel::<ServerMessage>();
 
-        // Spawn listener task
         let listener_tx = tx.clone();
         tokio::spawn(async move {
             loop {
@@ -165,7 +163,6 @@ impl Server {
                             break;
                         }
 
-                        // Wait for the main loop to process this client
                         let _ = response_rx.await;
                     }
                     Err(e) => {
@@ -184,7 +181,6 @@ impl Server {
 
             let mut pending_clients = Vec::new();
 
-            // Collect N clients
             while pending_clients.len() < self.batch_size {
                 if let Some(msg) = rx.recv().await {
                     match msg {
@@ -201,7 +197,6 @@ impl Server {
                                 batch_number
                             );
 
-                            // Signal that we've processed this client
                             let _ = response_tx.send(());
                         }
                     }
@@ -211,7 +206,6 @@ impl Server {
             println!("Batch {} ready! Starting simultaneous data transmission to {} clients...",
                      batch_number, self.batch_size);
 
-            // Now serve all clients in this batch simultaneously
             let mut client_tasks = Vec::new();
 
             for (stream, client_id) in pending_clients {
@@ -232,7 +226,6 @@ impl Server {
                 client_tasks.push(task);
             }
 
-            // Wait for all clients in this batch to complete
             let batch_start = Instant::now();
             for task in client_tasks {
                 let _ = task.await;
@@ -253,9 +246,7 @@ impl Server {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-
     let server = Server::new(&args.file, args.repeat, args.buffer_size, args.batch_size).await?;
     server.run(&args.host, args.port).await?;
-
     Ok(())
 }

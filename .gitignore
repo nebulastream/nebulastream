@@ -40,4 +40,4 @@ nes-asp/data/*.csv
 *.log
 
 scripts/__pycache__
-testing/rustServer/target
+testing/rustE2EBenchmarking/target
