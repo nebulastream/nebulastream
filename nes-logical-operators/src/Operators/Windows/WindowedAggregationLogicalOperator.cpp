@@ -63,7 +63,7 @@ std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
@@ -80,49 +80,47 @@ std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosi
         "WINDOW AGG({})", fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getName(); }), ", "));
 }
 
-bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const WindowedAggregationLogicalOperator*>(&rhs))
+    if (this->isKeyed() != rhs.isKeyed())
     {
-        if (this->isKeyed() != rhsOperator->isKeyed())
-        {
-            return false;
-        }
-
-        if (this->getGroupingKeys().size() != rhsOperator->getGroupingKeys().size())
-        {
-            return false;
-        }
-
-        for (uint64_t i = 0; i < this->getGroupingKeys().size(); i++)
-        {
-            if (this->getGroupingKeys()[i] != rhsOperator->getGroupingKeys()[i])
-            {
-                return false;
-            }
-        }
-
-        if (this->getWindowAggregation().size() != rhsOperator->getWindowAggregation().size())
-        {
-            return false;
-        }
-
-        for (uint64_t i = 0; i < this->getWindowAggregation().size(); i++)
-        {
-            if (*(getWindowAggregation()[i]) != (rhsOperator->getWindowAggregation()[i]))
-            {
-                return false;
-            }
-        }
-
-        return *windowType == *rhsOperator->getWindowType() && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
+        return false;
     }
-    return false;
+
+    const auto rhsGroupingKeys = rhs.getGroupingKeys();
+    if (groupingKey.size() != rhsGroupingKeys.size())
+    {
+        return false;
+    }
+
+    for (uint64_t i = 0; i < groupingKey.size(); i++)
+    {
+        if (groupingKey[i] != rhsGroupingKeys[i])
+        {
+            return false;
+        }
+    }
+
+    const auto rhsWindowAggregation = rhs.getWindowAggregation();
+    if (aggregationFunctions.size() != rhsWindowAggregation.size())
+    {
+        return false;
+    }
+
+    for (uint64_t i = 0; i < aggregationFunctions.size(); i++)
+    {
+        if (*aggregationFunctions[i] != rhsWindowAggregation[i])
+        {
+            return false;
+        }
+    }
+
+    return *windowType == *rhs.getWindowType() && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
+        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
+        && getTraitSet() == rhs.getTraitSet();
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "WindowAggregation should have at least one input");
@@ -183,22 +181,20 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
 
 TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
-    TraitSet result = traitSet;
-    result.insert(originIdTrait);
-    return result;
+    return traitSet;
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withTraitSet(TraitSet traitSet) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -222,7 +218,7 @@ std::vector<OriginId> WindowedAggregationLogicalOperator::getOutputOriginIds() c
     return outputOriginIds;
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one input");
     auto copy = *this;
@@ -230,7 +226,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vect
     return copy;
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withOutputOriginIds(const std::vector<OriginId>& ids) const
 {
     PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one output OriginId");
     auto copy = *this;
@@ -296,7 +292,7 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     const auto inputs = getInputSchemas();
@@ -321,7 +317,6 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -466,10 +461,6 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     }
 
     auto logicalOperator = WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
     if (arguments.inputOriginIds.size() != 1 or arguments.outputOriginIds.size() != 1 or arguments.inputSchemas.empty())
     {
         throw CannotDeserialize("Cannot construct WindowedAggregation");

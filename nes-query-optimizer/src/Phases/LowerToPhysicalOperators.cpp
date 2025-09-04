@@ -24,6 +24,7 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
@@ -43,11 +44,10 @@ resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegi
     const auto logicalOperatorName = logicalOperator.getName();
     if (logicalOperatorName == "Join")
     {
-        auto traitSet = logicalOperator.getTraitSet();
-        const auto foundIter
-            = std::ranges::find_if(traitSet, [](const Trait& trait) { return trait.tryGet<ImplementationTypeTrait>().has_value(); });
-        PRECONDITION(foundIter != traitSet.end(), "Join operator must have an implementation type trait");
-        switch (const auto implementationTrait = foundIter->get<ImplementationTypeTrait>(); implementationTrait.implementationType)
+        const auto traitSet = logicalOperator.getTraitSet();
+        const auto implementationTraitOpt = getTrait<ImplementationTypeTrait>(traitSet);
+        PRECONDITION(implementationTraitOpt.has_value(), "Join operator must have an implementation type trait");
+        switch (const auto& implementationTrait = implementationTraitOpt.value(); implementationTrait.implementationType)
         {
             case JoinImplementation::HASH_JOIN: {
                 if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
@@ -62,6 +62,9 @@ resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegi
                     return std::move(ruleOptional.value());
                 }
                 throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+            }
+            case JoinImplementation::CHOICELESS: {
+                throw UnknownOptimizerRule("ImplementationTrait cannot be choiceless for join", logicalOperator.getName());
             }
         }
     }

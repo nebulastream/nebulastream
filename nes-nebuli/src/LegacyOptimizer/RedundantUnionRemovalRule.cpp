@@ -31,7 +31,7 @@ void RedundantUnionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(re
              | std::views::filter([](const auto& op) { return op.getChildren().size() == 1; }))
     {
         auto child = unionOperator.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, unionOperator.id, child);
+        auto replaceResult = replaceSubtree(queryPlan, unionOperator.getId(), child);
         INVARIANT(replaceResult.has_value(), "Failed to replace union with its child");
         queryPlan = std::move(replaceResult.value());
     }

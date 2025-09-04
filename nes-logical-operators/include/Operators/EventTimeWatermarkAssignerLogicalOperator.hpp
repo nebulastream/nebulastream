@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
@@ -34,7 +35,7 @@
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
+class EventTimeWatermarkAssignerLogicalOperator
 {
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
@@ -42,27 +43,27 @@ public:
     LogicalFunction onField;
     Windowing::TimeUnit unit;
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    void serialize(SerializableOperator&) const override;
+    [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
+    void serialize(SerializableOperator&) const;
 
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] TraitSet getTraitSet() const;
 
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
     struct ConfigParameters
     {
@@ -88,4 +89,7 @@ private:
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 };
+
+static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
+
 }

@@ -138,6 +138,8 @@ struct Trait
     /// @return SerializableTrait The serialized trait.
     [[nodiscard]] SerializableTrait serialize() const;
 
+    [[nodiscard]] const std::type_info& getTypeInfo() const;
+
 private:
     struct Concept : TraitConcept
     {
@@ -182,8 +184,6 @@ private:
     std::unique_ptr<Concept> self;
 };
 
-using TraitSet = std::unordered_set<Trait>;
-
 }
 
 template <>
@@ -191,35 +191,3 @@ struct std::hash<NES::Trait>
 {
     size_t operator()(const NES::Trait& trait) const noexcept { return trait.hash(); }
 };
-
-template <typename T>
-std::optional<T> getTrait(const NES::TraitSet& traitSet)
-{
-    for (const auto& trait : traitSet)
-    {
-        if (trait.tryGet<T>())
-        {
-            return {trait.get<T>()};
-        }
-    }
-    return std::nullopt;
-}
-
-template <typename T>
-bool hasTrait(const NES::TraitSet& traitSet)
-{
-    for (const auto& trait : traitSet)
-    {
-        if (trait.tryGet<T>())
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-template <typename... TraitTypes>
-bool hasTraits(const NES::TraitSet& traitSet)
-{
-    return (hasTrait<TraitTypes>(traitSet) && ...);
-}

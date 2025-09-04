@@ -27,7 +27,8 @@ namespace NES
 enum class JoinImplementation : uint8_t
 {
     NESTED_LOOP_JOIN,
-    HASH_JOIN
+    HASH_JOIN,
+    CHOICELESS
 };
 
 /// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
@@ -35,7 +36,7 @@ struct ImplementationTypeTrait final : public TraitConcept
 {
     JoinImplementation implementationType;
 
-    explicit ImplementationTypeTrait(JoinImplementation implementationType) : implementationType(implementationType) { }
+    explicit ImplementationTypeTrait(const JoinImplementation implementationType) : implementationType(implementationType) { }
 
     [[nodiscard]] const std::type_info& getType() const override { return typeid(ImplementationTypeTrait); }
 
@@ -63,4 +64,5 @@ struct ImplementationTypeTrait final : public TraitConcept
 
     [[nodiscard]] size_t hash() const override { return magic_enum::enum_integer(implementationType); }
 };
+
 }

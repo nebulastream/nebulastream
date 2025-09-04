@@ -95,18 +95,14 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
     return projections;
 }
 
-bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs))
-    {
-        return projections == rhsOperator->projections && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    return projections == rhs.projections && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
+        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
+        && getTraitSet() == rhs.getTraitSet();
 };
 
-std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     auto explainedProjections
         = std::views::transform(projections, [&](const auto& projection) { return explainProjection(projection, verbosity); });
@@ -135,7 +131,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     return builder.str();
 }
 
-LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     if (inputSchemas.empty())
     {
@@ -191,17 +187,17 @@ TraitSet ProjectionLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-LogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-LogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -225,7 +221,7 @@ std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-LogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     if (ids.size() != 1)
     {
@@ -236,10 +232,10 @@ LogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::v
     return copy;
 }
 
-LogicalOperator ProjectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
-    copy.outputOriginIds = ids;
+    copy.outputOriginIds = std::move(ids);
     return copy;
 }
 
@@ -256,7 +252,7 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     const auto inputs = getInputSchemas();
@@ -281,7 +277,6 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -322,11 +317,6 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOper
                     })
                 | std::ranges::to<std::vector>(),
             ProjectionLogicalOperator::Asterisk(asterisk));
-
-        if (auto& id = arguments.id)
-        {
-            logicalOperator.id = *id;
-        }
 
         return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
