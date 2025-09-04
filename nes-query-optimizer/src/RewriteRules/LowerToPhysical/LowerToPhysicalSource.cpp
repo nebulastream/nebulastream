@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
+
 #include <memory>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -27,15 +28,15 @@ namespace NES
 
 RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
-    const auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
+    const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
 
     const auto outputOriginIds = source.getOutputOriginIds();
     PRECONDITION(
         outputOriginIds.size() == 1,
         "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}",
         outputOriginIds.size());
-    auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
+    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIds[0]);
 
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(

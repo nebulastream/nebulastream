@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <Traits/Trait.hpp>
+
+#include <memory>
+#include <typeinfo>
 #include <SerializableTrait.pb.h>
 
 namespace NES
@@ -37,6 +39,11 @@ Trait& Trait::operator=(const Trait& other)
 SerializableTrait Trait::serialize() const
 {
     return self->serialize();
+}
+
+const std::type_info& Trait::getTypeInfo() const
+{
+    return self->getType();
 }
 
 }

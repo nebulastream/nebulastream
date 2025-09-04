@@ -32,11 +32,11 @@ namespace NES
 
 RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
 {
-    const auto source = logicalOperator.get<UnionLogicalOperator>();
+    const auto source = logicalOperator.getAs<UnionLogicalOperator>();
     auto inputSchemas = logicalOperator.getInputSchemas();
     auto outputSchema = logicalOperator.getOutputSchema();
 
-    PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
+    PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
     auto renames = inputSchemas
         | std::views::transform(
