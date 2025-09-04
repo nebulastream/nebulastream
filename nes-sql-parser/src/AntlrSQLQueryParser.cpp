@@ -58,12 +58,13 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
     charCount['('] = 0;
     charCount[')'] = 0;
     charCount['!'] = 0;
+    charCount['+'] = 0;
     for (char c : queryString)
     {
         charCount[c]++;
     }
 
-    if (charCount['('] > 100 || charCount[')'] > 100 || charCount['!'] > 1000
+    if (charCount['('] > 100 || charCount[')'] > 100 || charCount['!'] > 1000 || charCount['+'] > 1000
         || queryString.find("((((((((((((((((((((((((((((((((((((((((((((((((((((((") != std::string::npos)
     {
         throw InvalidQuerySyntax("seems like a slow query");
