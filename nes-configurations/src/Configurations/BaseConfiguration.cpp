@@ -14,6 +14,9 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 
+#include <filesystem>
+#include <fstream>
+#include <ranges>
 #include <algorithm>
 #include <cctype>
 #include <exception>
@@ -21,13 +24,19 @@
 #include <string>
 #include <unordered_map>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/ReadingVisitor.hpp>
+#include <Configurations/WritingVisitor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 
+
 namespace NES
 {
+
+
 
 BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) { };
 
@@ -165,19 +174,42 @@ void BaseConfiguration::clear()
     }
 };
 
-void BaseConfiguration::accept(OptionVisitor& visitor)
+void BaseConfiguration::accept(ReadingVisitor& visitor) const
 {
-    if (!name.empty())
-    {
-        visitor.visitConcrete(getName(), getDescription(), "");
-    }
+    visitor.push(*this);
     for (auto& option : getOptions())
     {
-        visitor.push();
         option->accept(visitor);
-        visitor.pop();
     }
+    visitor.pop(*this);
 };
+
+void BaseConfiguration::accept(WritingVisitor& visitor)
+{
+    visitor.push(*this);
+    for (auto& option : getOptions())
+    {
+        option->accept(visitor);
+    }
+    visitor.pop(*this);
+}
+
+bool BaseConfiguration::operator==(const BaseOption& other) const
+{
+    if (const auto* otherBaseConfiguration = dynamic_cast<const BaseConfiguration*>(&other))
+    {
+        return std::ranges::equal(
+            getOptions(), otherBaseConfiguration->getOptions(), [](const auto& lhs, const auto& rhs) { return *lhs == *rhs; });
+    }
+    return false;
+};
+
+std::vector<const BaseOption*> BaseConfiguration::getOptions() const
+{
+    return const_cast<BaseConfiguration*>(this)->getOptions()
+        | std::views::transform([](const auto& ptr) -> const BaseOption* { return ptr; }) | std::ranges::to<std::vector>();
+}
+
 
 std::unordered_map<std::string, BaseOption*> BaseConfiguration::getOptionMap()
 {

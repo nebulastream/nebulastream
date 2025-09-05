@@ -14,4 +14,7 @@
 include(ExternalProject)
 ### Config Tests ###
 add_nes_unit_test(configuration-help-message-tests "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp")
+add_nes_unit_test(arg-parse-visitor-tests "UnitTests/Configurations/ArgParseVisitorTest.cpp")
+find_package(argparse REQUIRED CONFIG)
+target_link_libraries(arg-parse-visitor-tests argparse::argparse)
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)

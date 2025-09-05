@@ -22,6 +22,7 @@
 #include <unordered_map>
 
 #include <Configurations/PrintingVisitor.hpp>
+#include <Configurations/ArgParseVisitor.hpp>
 
 namespace NES
 {
@@ -29,8 +30,15 @@ template <typename T>
 void generateHelp(std::ostream& ostream)
 {
     T config{};
-    PrintingVisitor visitor{ostream};
+    HelpVisitor visitor{ostream};
     config.accept(visitor);
+}
+
+template <typename T>
+void print(const T& configuration, std::ostream& ostream)
+{
+    PrintingVisitor visitor{ostream};
+    configuration.accept(visitor);
 }
 
 template <typename T>

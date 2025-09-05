@@ -11,24 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
+#pragma once
+#include <cstddef>
 #include <string>
-#include <string_view>
+#include <Configurations/BaseOption.hpp>
 
 namespace NES
 {
-class BaseConfiguration;
-
-class OptionVisitor
+/// marker class for SequenceOption
+class ISequenceOption : public NES::BaseOption
 {
 public:
-    virtual ~OptionVisitor() = default;
+    ISequenceOption(const std::string& name, const std::string& description) : NES::BaseOption(name, description) { }
 
-    OptionVisitor() { }
-
-    virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue = "") = 0;
-    virtual void push() = 0;
-    virtual void pop() = 0;
+    virtual BaseOption& operator[](size_t index) = 0;
+    virtual std::unique_ptr<BaseOption> defaultValue() const = 0;
+    [[nodiscard]] virtual size_t size() const = 0;
 };
 }

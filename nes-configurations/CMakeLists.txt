@@ -16,10 +16,10 @@ add_subdirectory(src)
 get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES}
-        include/Configurations/OptionVisitor.hpp
-        include/Configurations/PrintingVisitor.hpp)
-target_link_libraries(nes-configurations PUBLIC nes-common)
+add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES})
+find_package(magic_enum CONFIG REQUIRED)
+find_package(argparse CONFIG REQUIRED)
+target_link_libraries(nes-configurations PUBLIC nes-common magic_enum::magic_enum argparse::argparse)
 
 target_include_directories(nes-configurations PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
