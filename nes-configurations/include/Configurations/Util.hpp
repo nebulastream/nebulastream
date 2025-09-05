@@ -21,18 +21,11 @@
 #include <string>
 #include <unordered_map>
 
-#include <Configurations/PrintingVisitor.hpp>
 #include <Configurations/ArgParseVisitor.hpp>
+#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES
 {
-template <typename T>
-void generateHelp(std::ostream& ostream)
-{
-    T config{};
-    HelpVisitor visitor{ostream};
-    config.accept(visitor);
-}
 
 template <typename T>
 void print(const T& configuration, std::ostream& ostream)
@@ -42,35 +35,33 @@ void print(const T& configuration, std::ostream& ostream)
 }
 
 template <typename T>
-std::optional<T> loadConfiguration(const int argc, const char** argv)
+std::expected<T, std::string> loadConfiguration(const int argc, const char** argv)
 {
-    /// Convert the POSIX command line arguments to a map of strings.
-    std::unordered_map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i)
-    {
-        const size_t pos = std::string(argv[i]).find('=');
-        const std::string arg{argv[i]};
-        if (arg == "--help")
-        {
-            generateHelp<T>(std::cout);
-            return std::nullopt;
-        }
-        commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
-    }
-
-    /// Create a configuration object with default values.
     T config;
+    argparse::ArgumentParser parser("Test Arguments");
+    ArgParseVisitor parserCreator{parser};
+    config.accept(parserCreator);
 
-    /// Read options from the YAML file.
-    const auto configPathCLIParam = "--configPath";
-    if (const auto configPath = commandLineParams.find(configPathCLIParam); configPath != commandLineParams.end())
+    parser.add_argument("--config_path").help("Path to configuration file");
+    try
     {
-        config.overwriteConfigWithYAMLFileInput(configPath->second);
-        commandLineParams.erase(configPathCLIParam);
+        parser.parse_args(argc, argv);
+    }
+    catch (const std::exception& e)
+    {
+        std::stringstream message;
+        fmt::println(message, "{}", e.what());
+        fmt::println(message, "{}", fmt::streamed(parser));
+        return std::unexpected{message.str()};
     }
 
-    /// Options specified on the command line have the highest precedence.
-    config.overwriteConfigWithCommandLineInput(commandLineParams);
+    if (parser.is_used("--config_path"))
+    {
+        config.overwriteConfigWithYAMLFileInput(parser.get<std::string>("--config_path"));
+    }
+
+    ArgParseParserVisitor visitor{parser};
+    config.accept(visitor);
 
     return config;
 }

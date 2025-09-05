@@ -20,6 +20,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ISequenceOption.hpp>
 #include <Configurations/ReadingVisitor.hpp>
+#include <fmt/color.h>
 #include <sys/types.h>
 
 namespace NES
@@ -61,34 +62,92 @@ public:
     ///
     void push(const BaseOption& option) override
     {
-        os << std::string(indentCount * TAB_WIDTH, ' ') << option.getName() << ": " << '\n';
-        indentCount++;
+        if (!option.getName().empty())
+        {
+            path.push_back(option.getName());
+            os << std::string((path.size() - 1) * TAB_WIDTH, ' ');
+            fmt::print(os, "{}:\n", fmt::styled(path.back(), fmt::emphasis::bold), option.getName());
+        }
     }
 
-    void pop(const BaseOption&) override { indentCount--; }
+    void pop(const BaseOption& option) override
+    {
+        if (!option.getName().empty())
+        {
+            INVARIANT(!path.empty(), "Pop should only be called if there is an element on the stack");
+            path.pop_back();
+        }
+    }
 
-    void push(const ISequenceOption&) override { os << "["; }
+    void push(const ISequenceOption& option) override
+    {
+        inSequence = true;
+        current = 0;
+        end = option.size();
+    }
 
-    void pop(const ISequenceOption&) override { os << "]"; }
+    void pop(const ISequenceOption&) override
+    {
+        inSequence = false;
+        current = 0;
+        end = 0;
+    }
 
 protected:
-    void visitLeaf(const BaseOption& option) override { os << std::string(indentCount * TAB_WIDTH, ' ') << option.getName() << ':'; }
+    template <typename T>
+    void print(const T& value)
+    {
+        PRECONDITION(!path.empty(), "Should only be called after a value has been visited and added to the path");
+        if (inSequence)
+        {
+            if (current == 0 && end == 1)
+            {
+                os << std::string((path.size() - 1) * TAB_WIDTH, ' ');
+                fmt::print(os, "{}: [{}]\n", fmt::styled(path.back(), fmt::emphasis::bold), value);
+            }
+            else if (current == 0)
+            {
+                os << std::string((path.size() - 1) * TAB_WIDTH, ' ');
+                fmt::print(os, "{}: [{}", fmt::styled(path.back(), fmt::emphasis::bold), value);
+            }
+            else if (current == end - 1)
+            {
+                fmt::print(os, ", {}]\n", value);
+            }
+            else
+            {
+                fmt::print(os, ", {}", value);
+            }
+            current++;
+        }
+        else
+        {
+            os << std::string((path.size() - 1) * TAB_WIDTH, ' ');
+            fmt::print(os, "{}: {}\n", fmt::styled(path.back(), fmt::emphasis::bold), value);
+        }
+        path.pop_back();
+    }
 
-    void visitEnum(std::span<std::string_view> possibleValues, const size_t& index) override { os << possibleValues[index]; }
+    void visitLeaf(const BaseOption& option) override { path.push_back(option.getName()); }
 
-    void visitUnsignedInteger(const size_t& value) override { os << value; }
+    void visitEnum(std::span<std::string_view> possibleValues, const size_t& index) override { print(possibleValues[index]); }
 
-    void visitSignedInteger(const ssize_t& value) override { os << value; }
+    void visitUnsignedInteger(const size_t& value) override { print(value); }
 
-    void visitDouble(const double& value) override { os << value; }
+    void visitSignedInteger(const ssize_t& value) override { print(value); }
 
-    void visitBool(const bool& value) override { os << value; }
+    void visitDouble(const double& value) override { print(value); }
 
-    void visitString(const std::string& value) override { os << value; }
+    void visitBool(const bool& value) override { print(value); }
+
+    void visitString(const std::string& value) override { print("\"" + value + "\""); }
 
 private:
+    bool inSequence = 0;
+    size_t current = 0;
+    size_t end = 0;
+    std::vector<std::string> path;
     std::ostream& os;
-    size_t indentCount = 0;
     static constexpr u_int TAB_WIDTH = 4;
 };
 
@@ -155,13 +214,13 @@ public:
 protected:
     void visitLeaf(const BaseOption&) override { }
 
-    void visitEnum(std::string_view enumName, const size_t&) override
+    void visitEnum(std::span<std::string_view> enumNames, const size_t& index) override
     {
         if (inSequence.top())
         {
             return;
         }
-        os << " (" << enumName << ", Enum)";
+        os << " (" << enumNames[index] << ", Enum)";
     }
 
     void visitUnsignedInteger(const size_t& value) override

@@ -46,9 +46,13 @@ public:
         }
     }
 
-    void push(const ISequenceOption&) override { throw std::logic_error("Not implemented"); }
+    void push(const ISequenceOption& option) override
+    {
+        isSequence = true;
+        option.defaultValue()->accept(*this);
+    }
 
-    void pop(const ISequenceOption&) override { throw std::logic_error("Not implemented"); }
+    void pop(const ISequenceOption&) override { isSequence = false; }
 
 protected:
     void visitLeaf(const BaseOption& option) override
@@ -59,62 +63,136 @@ protected:
 
     void visitEnum(std::span<std::string_view> allPossibleValues, const size_t& index) override
     {
-        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, ".")))
-                             .default_value(std::string(allPossibleValues[index]))
-                             .help(description);
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, ".")));
         for (const auto& possibleValue : allPossibleValues)
         {
             argument.add_choice(std::string(possibleValue));
+        }
+        argument.help(fmt::format("{}. [{}]", description, fmt::join(allPossibleValues, "|")));
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.default_value(std::string(allPossibleValues[index])).nargs(1);
         }
         path.pop_back();
     }
 
     void visitUnsignedInteger(const size_t& value) override
     {
-        parser.add_argument(fmt::format("--{}", fmt::join(path, ".")))
-            .nargs(1)
-            .help(description)
-            .default_value(fmt::format("{}", value))
-            .template scan<'u', size_t>();
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description).template scan<'u', size_t>();
+
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.nargs(1).default_value(value);
+        }
+
         path.pop_back();
     }
 
     void visitSignedInteger(const ssize_t& value) override
     {
-        parser.add_argument(fmt::format("--{}", fmt::join(path, ".")))
-            .nargs(1)
-            .help(description)
-            .default_value(fmt::format("{}", value))
-            .template scan<'i', ssize_t>();
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description).template scan<'i', ssize_t>();
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.nargs(1).default_value(value);
+        }
         path.pop_back();
     }
 
     void visitDouble(const double& value) override
     {
-        parser.add_argument(fmt::format("--{}", fmt::join(path, ".")))
-            .help(description)
-            .nargs(1)
-            .default_value(fmt::format("{}", value))
-            .template scan<'f', double>();
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description).template scan<'f', double>();
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.nargs(1).default_value(value);
+        }
         path.pop_back();
     }
 
     void visitBool(const bool&) override
     {
-        parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description).flag();
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description);
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.flag();
+        }
         path.pop_back();
     }
 
     void visitString(const std::string& value) override
     {
-        parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).nargs(1).default_value(value).help(description);
+        auto& argument = parser.add_argument(fmt::format("--{}", fmt::join(path, "."))).help(description);
+        if (isSequence)
+        {
+            argument.nargs(argparse::nargs_pattern::any);
+        }
+        else
+        {
+            argument.nargs(1).default_value(value);
+        }
         path.pop_back();
     }
 
 private:
+    bool isSequence = false;
     std::string description;
     std::vector<std::string> path;
     argparse::ArgumentParser& parser;
+};
+
+struct VectorSizeVisitor final : ReadingVisitor
+{
+    VectorSizeVisitor(const argparse::ArgumentParser& parser, const std::string& name, size_t& result)
+        : parser(parser), name(name), result(result)
+    {
+    }
+
+    void push(const BaseOption&) override { throw std::runtime_error("Vector size not implemented"); }
+
+    void pop(const BaseOption&) override { throw std::runtime_error("Vector size not implemented"); }
+
+    void push(const ISequenceOption&) override { throw std::runtime_error("Vector size not implemented"); }
+
+    void pop(const ISequenceOption&) override { throw std::runtime_error("Vector size not implemented"); }
+
+protected:
+    void visitLeaf(const BaseOption&) override{};
+
+    void visitEnum(std::span<std::string_view>, const size_t&) override { result = parser.get<std::vector<std::string>>(name).size(); }
+
+    void visitUnsignedInteger(const size_t&) override { result = parser.get<std::vector<size_t>>(name).size(); }
+
+    void visitSignedInteger(const ssize_t&) override { result = parser.get<std::vector<ssize_t>>(name).size(); }
+
+    void visitDouble(const double&) override { result = parser.get<std::vector<double>>(name).size(); }
+
+    void visitBool(const bool&) override { result = parser.get<std::vector<bool>>(name).size(); }
+
+    void visitString(const std::string&) override { result = parser.get<std::vector<std::string>>(name).size(); }
+
+public:
+    const argparse::ArgumentParser& parser;
+    const std::string& name;
+    size_t& result;
 };
 
 class ArgParseParserVisitor final : public WritingVisitor
@@ -138,53 +216,72 @@ public:
         }
     }
 
-    size_t push(ISequenceOption&) override { throw std::logic_error("Not implemented"); }
+    size_t push(ISequenceOption& option) override
+    {
+        inSequence = true;
+        index = 0;
+        path.push_back(option.getName());
+        const auto arg = fmt::format("--{}", fmt::join(path, "."));
 
-    void pop(ISequenceOption&) override { throw std::logic_error("Not implemented"); }
+        if (!parser.is_used(arg))
+        {
+            return 0;
+        }
+
+        size_t size = 0;
+        VectorSizeVisitor visitor{parser, arg, size};
+        option.defaultValue()->accept(visitor);
+        return size;
+    }
+
+    void pop(ISequenceOption&) override
+    {
+        inSequence = false;
+        path.pop_back();
+    }
 
 protected:
-    void visitLeaf(BaseOption& option) override { path.push_back(option.getName()); }
+    template <typename T>
+    T readValue()
+    {
+        auto argumentName = fmt::format("--{}", fmt::join(path, "."));
+        if (inSequence)
+        {
+            return parser.get<std::vector<T>>(argumentName).at(index++);
+        }
+        path.pop_back();
+        return parser.get<T>(argumentName);
+    }
+
+    void visitLeaf(BaseOption& option) override
+    {
+        if (!inSequence)
+        {
+            path.push_back(option.getName());
+        }
+    }
 
     void visitEnum(std::span<std::string_view> allPossibleValues, size_t& index) override
     {
-        auto value = parser.get<std::string>(fmt::format("--{}", fmt::join(path, ".")));
+        auto value = readValue<std::string>();
         auto it = std::ranges::find(allPossibleValues, value);
         INVARIANT(it != allPossibleValues.end(), "argparse should have rejected invalid values");
         index = std::distance(allPossibleValues.begin(), it);
-        path.pop_back();
     }
 
-    void visitUnsignedInteger(size_t& value) override
-    {
-        value = parser.get<size_t>(fmt::format("--{}", fmt::join(path, ".")));
-        path.pop_back();
-    }
+    void visitUnsignedInteger(size_t& value) override { value = readValue<size_t>(); }
 
-    void visitSignedInteger(ssize_t& value) override
-    {
-        value = parser.get<ssize_t>(fmt::format("--{}", fmt::join(path, ".")));
-        path.pop_back();
-    }
+    void visitSignedInteger(ssize_t& value) override { value = readValue<ssize_t>(); }
 
-    void visitDouble(double& value) override
-    {
-        value = parser.get<double>(fmt::format("--{}", fmt::join(path, ".")));
-        path.pop_back();
-    }
+    void visitDouble(double& value) override { value = readValue<double>(); }
 
-    void visitBool(bool& value) override
-    {
-        value = parser.get<bool>(fmt::format("--{}", fmt::join(path, ".")));
-        path.pop_back();
-    }
+    void visitBool(bool& value) override { value = readValue<bool>(); }
 
-    void visitString(std::string& value) override
-    {
-        value = parser.get<std::string>(fmt::format("--{}", fmt::join(path, ".")));
-        path.pop_back();
-    }
+    void visitString(std::string& value) override { value = readValue<std::string>(); }
 
 private:
+    bool inSequence;
+    size_t index;
     std::vector<std::string> path;
     const argparse::ArgumentParser& parser;
 };

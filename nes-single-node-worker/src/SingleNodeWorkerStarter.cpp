@@ -32,6 +32,7 @@ int main(const int argc, const char* argv[])
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {
+            std::cerr << configuration.error();
             return 0;
         }
 

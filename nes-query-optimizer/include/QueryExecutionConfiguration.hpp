@@ -44,13 +44,12 @@ class QueryExecutionConfiguration : public BaseConfiguration
 {
 public:
     QueryExecutionConfiguration() = default;
-    QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
 
     EnumOption<ExecutionMode> executionMode
         = {"execution_mode",
            ExecutionMode::COMPILER,
-           "Execution mode for the query compiler"
-           "[COMPILER|INTERPRETER]."};
+           "Execution mode for the query compiler"};
     UIntOption numberOfPartitions
         = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
@@ -71,11 +70,7 @@ public:
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
-    EnumOption<StreamJoinStrategy> joinStrategy
-        = {"join_strategy",
-           StreamJoinStrategy::OPTIMIZER_CHOOSES,
-           "Join Strategy"
-           "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    EnumOption<StreamJoinStrategy> joinStrategy = {"join_strategy", StreamJoinStrategy::OPTIMIZER_CHOOSES, "Join Strategy"};
 
 private:
     std::vector<BaseOption*> getOptions() override
