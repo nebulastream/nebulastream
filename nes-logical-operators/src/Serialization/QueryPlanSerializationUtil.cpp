@@ -21,10 +21,14 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
@@ -134,6 +138,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             children.push_back(build(childId, anc));
         }
 
+        if (auto source = op.tryGet<SourceDescriptorLogicalOperator>(); source and not children.empty())
+        {
+            throw CannotDeserialize("Got source (id: {}) with children!", id);
+        }
         LogicalOperator withKids = op.withChildren(std::move(children));
         builtOps.emplace(id, withKids);
         return withKids;
@@ -148,28 +156,6 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     for (auto rootId : serializedQueryPlan.rootoperatorids())
     {
         rootOperators.push_back(build(rootId, {}));
-    }
-
-    if (rootOperators.size() != 1)
-    {
-        throw CannotDeserialize("Plan contains multiple root operators!");
-    }
-
-    auto sink = rootOperators.at(0).tryGet<SinkLogicalOperator>();
-    if (!sink)
-    {
-        throw CannotDeserialize(
-            "Plan root has to be a source, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
-    }
-
-    if (sink->getChildren().empty())
-    {
-        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
-    }
-
-    if (not sink->getSinkDescriptor())
-    {
-        throw CannotDeserialize("Sink has no descriptor!");
     }
 
     /// 4) Finalize plan

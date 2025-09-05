@@ -52,25 +52,6 @@
 namespace NES
 {
 
-static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
-getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
-{
-    std::vector<Record::RecordFieldIdentifier> fieldKeyNames;
-    std::vector<Record::RecordFieldIdentifier> fieldValueNames;
-
-    /// Getting the key and value field names
-    for (const auto& nodeAccess : logicalOperator.getGroupingKeys())
-    {
-        fieldKeyNames.emplace_back(nodeAccess.getFieldName());
-    }
-    for (const auto& descriptor : logicalOperator.getWindowAggregation())
-    {
-        const auto aggregationResultFieldIdentifier = descriptor->onField.getFieldName();
-        fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
-    }
-    return {fieldKeyNames, fieldValueNames};
-}
-
 static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
 {
     auto* const timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(logicalOperator.getWindowType().get());
@@ -145,6 +126,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
+    PRECONDITION(
+        not logicalOperator.tryGet<WindowedAggregationLogicalOperator>()->getWindowAggregation().empty(), "Expects at least one agg fn");
 
     auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
@@ -182,7 +165,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
-    const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
+    const auto fieldKeyNames = aggregation.getKeyFields();
+    const auto fieldValueNames = aggregation.getValueFields();
     const auto& [fieldKeys, fieldValues]
         = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 

@@ -96,7 +96,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
                 logicalOperator.getChildren().size() == 1,
                 "Empty lowering results of operators with multiple keys are not supported for {}",
                 logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+            return lowerOperatorRecursively(logicalOperator.getChildren().at(0), registryArgument);
         }
         return {};
     }
@@ -130,7 +130,10 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
 
-    INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
+    if (newRootOperators.empty())
+    {
+        throw CannotDeserialize("Plan must have at least one root operator");
+    }
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
     physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
     physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());

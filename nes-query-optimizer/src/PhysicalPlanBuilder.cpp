@@ -36,7 +36,10 @@ PhysicalPlanBuilder::PhysicalPlanBuilder(QueryId id) : queryId(id)
 
 void PhysicalPlanBuilder::addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink)
 {
-    PRECONDITION(sink->getPhysicalOperator().tryGet<SinkPhysicalOperator>(), "Expects SinkOperators as roots");
+    if (!sink->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    {
+        throw CannotDeserialize("Expects SinkOperators as roots");
+    }
     sinks.emplace_back(std::move(sink));
 }
 
