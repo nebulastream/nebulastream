@@ -1,0 +1,33 @@
+name: Test 23h stress test
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-current-main-commit:
+    runs-on: [ self-hosted ]
+    outputs:
+      sha: ${{ steps.fetch-sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+      - name: Fetch SHA
+        id: fetch-sha
+        run: |
+          git rev-parse --verify HEAD
+          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
+
+  get-dev-images:
+    needs: fetch-current-main-commit
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
+  stress-test-23h:
+    uses: ./.github/workflows/execute_query.yml
+    needs: [ get-dev-images ]
+    with:
+      ref: ${{ github.event.pull_request.head.ref }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      runtime_seconds: '60'
