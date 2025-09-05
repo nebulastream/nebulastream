@@ -77,33 +77,33 @@ void QuerySubmitter::unregisterQuery(const QueryId query)
     }
 }
 
-QuerySummary QuerySubmitter::waitForQueryTermination(const QueryId query)
+LocalQueryStatus QuerySubmitter::waitForQueryTermination(const QueryId query)
 {
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        if (const auto summary = queryManager->status(query))
+        if (const auto queryStatus = queryManager->status(query))
         {
-            if (summary->currentStatus == QueryStatus::Stopped)
+            if (queryStatus->state == QueryState::Stopped)
             {
-                return *summary;
+                return *queryStatus;
             }
         }
     }
 }
 
-std::vector<QuerySummary> QuerySubmitter::finishedQueries()
+std::vector<LocalQueryStatus> QuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<QuerySummary> results;
+        std::vector<LocalQueryStatus> results;
         for (const auto id : ids)
         {
-            if (auto summary = queryManager->status(id))
+            if (auto queryStatus = queryManager->status(id))
             {
-                if (summary->currentStatus == QueryStatus::Failed || summary->currentStatus == QueryStatus::Stopped)
+                if (queryStatus->state == QueryState::Failed || queryStatus->state == QueryState::Stopped)
                 {
-                    results.emplace_back(std::move(*summary));
+                    results.emplace_back(std::move(*queryStatus));
                 }
             }
         }

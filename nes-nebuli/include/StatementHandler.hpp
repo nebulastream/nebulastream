@@ -88,7 +88,7 @@ struct QueryStatementResult
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<QueryId, QuerySummary> queries;
+    std::unordered_map<QueryId, LocalQueryStatus> queries;
 };
 
 struct DropQueryStatementResult

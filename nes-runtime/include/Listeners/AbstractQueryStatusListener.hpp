@@ -32,6 +32,6 @@ struct AbstractQueryStatusListener
 
     virtual bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point) = 0;
 
-    virtual bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point) = 0;
+    virtual bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point) = 0;
 };
 }
