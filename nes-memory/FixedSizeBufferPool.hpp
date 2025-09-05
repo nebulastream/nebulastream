@@ -86,9 +86,8 @@ public:
 
     /**
      * @brief This calls is not supported and raises Runtime error
-     * @param buffer
      */
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(detail::MemorySegment* buffer, const ThreadIdCopyLastChunkPtr& threadCopyLastChunkPtr) override;
 
     virtual BufferManagerType getBufferManagerType() const override;
 

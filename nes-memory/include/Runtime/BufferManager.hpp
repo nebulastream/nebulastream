@@ -144,7 +144,7 @@ public:
     * @brief Recycle an unpooled buffer by making it available to others
     * @param buffer
     */
-    void recycleUnpooledBuffer(detail::MemorySegment* segment) override;
+    void recycleUnpooledBuffer(detail::MemorySegment* segment, const ThreadIdCopyLastChunkPtr&) override;
 
     /**
      * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager
@@ -157,7 +157,7 @@ private:
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
 
-    UnpooledChunksManager unpooledChunksManager;
+    std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;

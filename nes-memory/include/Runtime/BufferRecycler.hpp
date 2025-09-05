@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <thread>
 
 namespace NES
 {
@@ -20,6 +21,31 @@ namespace detail
 {
 class MemorySegment;
 }
+
+/// Stores necessary information for the recycle unpooled buffer callback
+struct ThreadIdCopyLastChunkPtr
+{
+    ThreadIdCopyLastChunkPtr(std::thread::id threadId, uint8_t* lastChunkPtr)
+        : threadId(std::move(threadId)), lastChunkPtr(lastChunkPtr) { }
+
+    ThreadIdCopyLastChunkPtr(ThreadIdCopyLastChunkPtr&& other) = default;
+    ThreadIdCopyLastChunkPtr(const ThreadIdCopyLastChunkPtr& other) = default;
+
+    ThreadIdCopyLastChunkPtr& operator=(const ThreadIdCopyLastChunkPtr& other)
+    {
+        threadId = other.threadId;
+        lastChunkPtr = other.lastChunkPtr;
+        return *this;
+    }
+
+    bool operator==(const ThreadIdCopyLastChunkPtr& other) const
+    {
+        return threadId == other.threadId && lastChunkPtr == other.lastChunkPtr;
+    }
+
+    std::thread::id threadId;
+    uint8_t* lastChunkPtr;
+};
 
 ///@brief Interface for buffer recycling mechanism
 class BufferRecycler
@@ -31,7 +57,8 @@ public:
 
     /// @brief Interface method for unpooled buffer recycling
     /// @param buffer the buffer to recycle
-    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
+    /// @param threadCopyLastChunkPtr stores the thread id and last chunk ptr
+    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer, const ThreadIdCopyLastChunkPtr& threadCopyLastChunkPtr) = 0;
 };
 
 }

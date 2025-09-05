@@ -151,6 +151,7 @@ void processSpanningTuple(
         processTuple<typename FormatterType::FieldIndexFunctionType>(
             completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+        formattedBuffer.setUsedMemorySize(formattedBuffer.getUsedMemorySize() + schemaInfo.getSizeOfTupleInBytes());
     }
 }
 
@@ -226,7 +227,7 @@ public:
         /// the InputFormatterTask does not need to do anything.
         /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
         /// leading to generated code that immediately operates on the data.
-        const auto [div, mod] = std::lldiv(static_cast<int64_t>(rawBuffer.getNumberOfTuples()), this->schemaInfo.getSizeOfTupleInBytes());
+        const auto [div, mod] = std::lldiv(static_cast<int64_t>(rawBuffer.getUsedMemorySize()), this->schemaInfo.getSizeOfTupleInBytes());
         PRECONDITION(
             mod == 0,
             "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
@@ -235,6 +236,7 @@ public:
         /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
         const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->schemaInfo.getSizeOfTupleInBytes();
         rawBuffer.setNumberOfTuples(numberOfTuplesInFormattedBuffer);
+        rawBuffer.setUsedMemorySize(numberOfTuplesInFormattedBuffer * this->schemaInfo.getSizeOfTupleInBytes());
         /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
         rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -338,6 +340,7 @@ private:
                 formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
                 ++numTuplesReadFromRawBuffer;
             }
+            formattedBuffer.setUsedMemorySize(formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes());
             numberOfFormattedTuplesToProduce -= formattedBuffer.getNumberOfTuples();
         }
     }

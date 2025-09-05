@@ -45,7 +45,7 @@ BufferManager::BufferManager(
     const uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
     , numOfAvailableBuffers(numOfBuffers)
-    , unpooledChunksManager(memoryResource)
+    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , memoryResource(std::move(memoryResource))
@@ -57,6 +57,7 @@ BufferManager::BufferManager(
 void BufferManager::destroy()
 {
     bool expected = false;
+    NES_INFO("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
         const std::scoped_lock lock(availableBuffersMutex, localBufferPoolsMutex);
@@ -101,7 +102,11 @@ void BufferManager::destroy()
 
         availableBuffers = decltype(availableBuffers)();
         NES_DEBUG("Shutting down Buffer Manager completed");
-        memoryResource->deallocate(basePointer, allocatedAreaSize);
+        memoryResource->deallocate(basePointer, allocatedAreaSize, DEFAULT_ALIGNMENT);
+        allocatedAreaSize = 0;
+
+        /// Destroying the unpooled chunks
+        unpooledChunksManager.reset();
     }
 }
 
@@ -128,7 +133,6 @@ void BufferManager::initialize(uint32_t withAlignment)
     double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
     NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
 
-    ///    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     INVARIANT(
         requiredMemorySpace < memorySizeInBytes,
         "NES tries to allocate more memory than physically available requested={} available={}",
@@ -161,6 +165,7 @@ void BufferManager::initialize(uint32_t withAlignment)
         numOfBuffers,
         controlBlockSize,
         alignof(detail::BufferControlBlock));
+
     INVARIANT(basePointer, "memory allocation failed, because 'basePointer' was a nullptr");
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i)
@@ -223,7 +228,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager.getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
+    return unpooledChunksManager->getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
@@ -235,7 +240,7 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     numOfAvailableBuffers.fetch_add(1);
 }
 
-void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*)
+void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const ThreadIdCopyLastChunkPtr&)
 {
     INVARIANT(false, "This method should not be called!");
 }
@@ -252,7 +257,7 @@ size_t BufferManager::getNumOfPooledBuffers() const
 
 size_t BufferManager::getNumOfUnpooledBuffers() const
 {
-    return unpooledChunksManager.getNumberOfUnpooledBuffers();
+    return unpooledChunksManager->getNumberOfUnpooledBuffers();
 }
 
 size_t BufferManager::getAvailableBuffers() const

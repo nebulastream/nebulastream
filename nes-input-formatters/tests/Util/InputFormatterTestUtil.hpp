@@ -236,7 +236,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         tupleBuffer.getBufferSize(),
         rawData.size());
     std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
-    tupleBuffer.setNumberOfTuples(rawData.size());
+    tupleBuffer.setUsedMemorySize(rawData.size());
     return tupleBuffer;
 }
 
