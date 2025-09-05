@@ -82,6 +82,14 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                         query_id = int(line.split(":")[1].strip())
                         break
 
+            # Read config to get test ID
+            test_id = None
+            with open(config_file, 'r') as f:
+                for line in f:
+                    if line.startswith("test_id:"):
+                        test_id = int(line.split(":")[1].strip())
+                        break
+
             if query_id is None:
                 print(f"Warning: Could not determine query ID for {query_dir}, skipping...")
                 continue
@@ -110,7 +118,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                         "bash", "-c", (
                             f"cd /tmp/nebulastream/cmake-build-release/nes-systests/systest/ && "
                             f"/tmp/nebulastream/cmake-build-release/nes-systests/systest/systest -b "
-                            f"-t {docker_test_path}:{query_id} -- "
+                            f"-t {docker_test_path}:{test_id} -- "
                             f"--worker.queryEngine.numberOfWorkerThreads=4 "
                             f"--worker.bufferSizeInBytes={buffer_size} "
                             f"--worker.numberOfBuffersInGlobalBufferManager=1000 "
@@ -123,7 +131,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
 
                     try:
                         # Debug: Print Docker command
-                        print(f"  Running Docker with command pointing to test file: {docker_test_path}:{query_id}")
+                        print(f"  Running Docker with command pointing to test file: {docker_test_path}:{test_id}")
 
                         # Run the benchmark
                         result = subprocess.run(cmd, capture_output=True, text=True)

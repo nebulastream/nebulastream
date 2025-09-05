@@ -68,6 +68,10 @@ def generate_test_file(data_file, output_path, result_dir, params):
             #if smallest_num_cols is None:
                 #continue
             #source_qualifier = f"bench_data{smallest_num_cols}$"
+            if acc_cols != 1:
+                acc_cols -= 1
+                if acc_cols < 2:
+                    continue
             sink = f"SINK MapSink{acc_cols} TYPE Checksum UINT64 result1"
             for col_index in range(2,acc_cols + 1):#)column_names[1:acc_cols]:
                 sink +=(f" UINT64 result{col_index}")
@@ -98,7 +102,8 @@ def generate_test_file(data_file, output_path, result_dir, params):
         # Copy header content from main test file
         shutil.copy(output_path, filter_test_path)
         shutil.copy(output_path, map_test_path)
-
+        map_queries=0
+        filter_queries=0
         # Open files for appending queries
         with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
             # Generate queries for all parameter combinations for this buffer size
@@ -111,7 +116,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                     # Filter queries with different selectivities
                     for selectivity in selectivities:
                         filter_col = cols_to_access[0]
-
+                        filter_queries+=1
                         # Calculate individual selectivity needed for each column
                         # For N columns with AND, each needs selectivity^(1/N) to achieve target selectivity
                         individual_selectivity = selectivity**(1.0/access_col)
@@ -127,13 +132,14 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query config
                         config = {
                             "query_id": query_id,
+                            "test_id": filter_queries,
                             "buffer_size": buffer_size,
                             "num_columns": num_col,
                             "accessed_columns": access_col,
                             "operator_type": "filter",
                             "selectivity": selectivity,
                             "individual_selectivity": individual_selectivity,
-                            "threshold": threshold
+                            "threshold": threshold,
                         }
 
                         with open(query_dir / "config.txt", 'w') as config_f:
@@ -159,6 +165,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
 
                     # Map queries with different function types
                     for func_type in function_types:
+                        map_queries+=1
                         # Create query directory
                         query_dir = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}"
                         query_dir.mkdir(exist_ok=True)
@@ -166,6 +173,7 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         # Write query config
                         config = {
                             "query_id": query_id,
+                            "test_id": map_queries,
                             "buffer_size": buffer_size,
                             "num_columns": num_col,
                             "accessed_columns": access_col,
@@ -184,17 +192,19 @@ def generate_test_file(data_file, output_path, result_dir, params):
                         query = f"# Query {query_id}: Map with {func_type} function\n"
                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
                         asterisk = "*" if func_type == 'add' else "+"
-                        expression_template = f"({{}} {asterisk} {{}}) AS result{{}}"
+                        expression_template = f"{{}} {asterisk} {{}} AS result{{}}"
                         col_index=1
                         if len(cols_to_access)>1:
-                            query += f"SELECT ({expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
+                            query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
                         else:
-                            query += f"SELECT ({expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
+                            query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
 
                         for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
                             query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
-
-                        query += f") FROM bench_data{num_col} INTO MapSink{access_col};\n"
+                        if access_col != 1:
+                            query += f" FROM bench_data{num_col} INTO MapSink{access_col - 1};\n"#two accessed fields result in one output field
+                        else:
+                            query += f" FROM bench_data{num_col} INTO MapSink{access_col};\n"
                         query += "----\n1, 1\n\n"
                         map_f.write(query)
 
@@ -220,11 +230,11 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000],#, 40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
         'accessed_columns': [1, 2, 5, 10],
         'function_types': ['add', 'exp'],
-        'selectivities': [5],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
+        'selectivities': [5, 45, 85],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
     }
 
     generate_test_file(args.data, args.output, args.result_dir, params)
