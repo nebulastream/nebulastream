@@ -109,8 +109,7 @@ struct DataType final
         return false;
     }
 
-    bool operator==(const DataType& other) const = default;
-    bool operator!=(const DataType& other) const = default;
+    auto operator<=>(const DataType& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
     [[nodiscard]] uint32_t getSizeInBytes() const;

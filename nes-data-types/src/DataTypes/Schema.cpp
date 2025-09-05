@@ -14,10 +14,14 @@
 
 #include <DataTypes/Schema.hpp>
 
+#include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -217,6 +221,80 @@ Schema withoutSourceQualifier(const Schema& input)
 
 
     return withoutPrefix;
+}
+
+SchemaDiff SchemaDiff::of(const Schema& expectedSchema, const Schema& actualSchema)
+{
+    SchemaDiff diff;
+    const size_t sizeOfSmallerSchema = std::min(expectedSchema.getNumberOfFields(), actualSchema.getNumberOfFields());
+
+    /// Check schemas for mismatches
+    for (size_t i = 0; i < sizeOfSmallerSchema; ++i)
+    {
+        if (expectedSchema.getFieldAt(i) != actualSchema.getFieldAt(i))
+        {
+            diff.schemaMismatches.push_back({i, expectedSchema.getFieldAt(i), actualSchema.getFieldAt(i)});
+        }
+    }
+
+    /// Determine missing or additional fields
+    if (expectedSchema.getNumberOfFields() > actualSchema.getNumberOfFields())
+    {
+        diff.missingFields.assign(expectedSchema.begin() + sizeOfSmallerSchema, expectedSchema.end());
+    }
+    else if (actualSchema.getNumberOfFields() > expectedSchema.getNumberOfFields())
+    {
+        diff.additionalFields.assign(actualSchema.begin() + sizeOfSmallerSchema, actualSchema.end());
+    }
+
+    return diff;
+}
+
+bool SchemaDiff::isDifferent() const
+{
+    return !missingFields.empty() || !additionalFields.empty() || !schemaMismatches.empty();
+}
+
+std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff)
+{
+    os << "SchemaDiff {\n";
+
+    if (!diff.schemaMismatches.empty())
+    {
+        os << "  Mismatching fields (" << diff.schemaMismatches.size() << "):\n";
+        for (const auto& [index, expected, actual] : diff.schemaMismatches)
+        {
+            os << "  For field " << index << ": Expected " << expected << ", got " << actual << "\n";
+        }
+        os << "\n";
+    }
+
+    if (!diff.missingFields.empty())
+    {
+        os << "  Actual schema misses fields (" << diff.missingFields.size() << "):\n";
+        for (const auto& field : diff.missingFields)
+        {
+            os << "  " << field << "\n";
+        }
+        os << "\n";
+    }
+
+    if (!diff.additionalFields.empty())
+    {
+        os << "  Actual schema contains additional fields (" << diff.additionalFields.size() << "):\n";
+        for (const auto& field : diff.additionalFields)
+        {
+            os << "  " << field << "\n";
+        }
+    }
+
+    if (!diff.isDifferent())
+    {
+        os << "  No differences found\n";
+    }
+
+    os << "}";
+    return os;
 }
 
 bool Schema::hasFields() const

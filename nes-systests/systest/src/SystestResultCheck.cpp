@@ -364,14 +364,18 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema.getRawValue(), expectedField);
-            matchingFieldIt != actualResultSchema.getRawValue().end())
+        /// Experiment for enforced order of fields
+        if (static_cast<size_t>(expectedFieldIdx) >= actualResultSchema.getRawValue().getFields().size())
         {
-            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
-            matchedActualResultFields.emplace(offset);
+            expectedToActualFieldMap.schemaErrorStream
+                << fmt::format("Number of fields does not match between actual and expected schema,");
+        }
+        if (expectedField == actualResultSchema.getRawValue().getFields()[expectedFieldIdx])
+        {
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, expectedFieldIdx);
+            matchedActualResultFields.emplace(expectedFieldIdx);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
-            expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(offset);
+            expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(expectedFieldIdx);
         }
         else
         {
