@@ -13,6 +13,30 @@ import re
 def parse_int_list(arg):
     """Convert comma-separated string to list of integers."""
     return [int(x) for x in arg.split(',')]
+
+def find_latest_benchmark_dir(base_dir):
+    """Find the most recent benchmark directory."""
+    base_dir = Path(base_dir)
+    if not base_dir.exists():
+        return None
+
+    benchmark_dirs = list(base_dir.glob("benchmark*"))
+    if not benchmark_dirs:
+        return None
+
+    # Extract benchmark numbers and find max
+    benchmark_numbers = []
+    for dir_path in benchmark_dirs:
+        match = re.search(r"benchmark(\d+)", str(dir_path))
+        if match:
+            benchmark_numbers.append(int(match.group(1)))
+
+    if not benchmark_numbers:
+        return None
+
+    latest_id = max(benchmark_numbers)
+    return base_dir / f"benchmark{latest_id}"
+
 def main():
     parser = argparse.ArgumentParser(description='NebulaBenchmark: Complete Benchmark System')
     parser.add_argument('--columns', type=parse_int_list, default=[1, 2, 5, 10], help='List of number of columns to use (comma-separated)')
@@ -20,11 +44,16 @@ def main():
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
     parser.add_argument('--skip-data-gen', action='store_true', help='Skip data generation')
+    parser.add_argument('--skip-test-gen', action='store_true', help='Skip test generation')
+    parser.add_argument('--skip-benchmark', action='store_true', help='Skip running benchmarks')
+    parser.add_argument('--skip-processing', action='store_true', help='Skip processing results')
+    parser.add_argument('--skip-plotting', action='store_true', help='Skip plotting')
     parser.add_argument('--data-file', help='Use existing data file (with --skip-data-gen)')
     parser.add_argument('--test-file', help='Use existing test file')
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.environ.get('PWD', os.getcwd()), help='Project root directory')
     parser.add_argument('--run_options', default='double', help='options: all, single or double')
+    parser.add_argument('--use-latest', action='store_true', help='Use latest benchmark directory instead of creating new one')
     args = parser.parse_args()
 
     start_time = time.time()
@@ -38,15 +67,23 @@ def main():
     base_output_dir = Path(args.output_dir)
     base_output_dir.mkdir(exist_ok=True, parents=True)
 
-    # Find the next available benchmark ID
-    next_id = 1
-    while (base_output_dir / f"benchmark{next_id}").exists():
-        next_id += 1
+    # Determine which benchmark directory to use
+    benchmark_dir = None
+    if args.use_latest:
+        benchmark_dir = find_latest_benchmark_dir(base_output_dir)
+        if benchmark_dir:
+            print(f"Using latest benchmark directory: {benchmark_dir}")
+        else:
+            print("No existing benchmark directories found. Creating new one.")
 
-    # Create the benchmark directory with incrementing ID
-    benchmark_dir =  project_dir / base_output_dir / f"benchmark{next_id}"
-    benchmark_dir.mkdir(exist_ok=True)
-    print(f"Using benchmark directory: {benchmark_dir}")
+    if not benchmark_dir:
+        # Create the benchmark directory with incrementing ID
+        next_id = 1
+        while (base_output_dir / f"benchmark{next_id}").exists():
+            next_id += 1
+        benchmark_dir =  project_dir / base_output_dir / f"benchmark{next_id}"
+        benchmark_dir.mkdir(exist_ok=True)
+        print(f"Created new benchmark directory: {benchmark_dir}")
 
     # Get the directory where this script is located
     script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -82,7 +119,7 @@ def main():
 
     # Step 2: Generate test file
     test_file = args.test_file
-    if not test_file:
+    if not args.skip_test_gen:
         print("Step 2: Generating benchmark test file...")
         test_file = data_dir / "benchmark.test"
         try:
@@ -97,178 +134,179 @@ def main():
 
             if result.returncode != 0:
                 print(f"Error generating test file: {result.stderr}")
-                return  # Exit if test generation fails
+                return
             else:
                 print(result.stdout)
                 print("Test file generated successfully")
         except Exception as e:
             print(f"Exception when running generate_test.py: {e}")
             return
+    elif not test_file:
+        # Find test files in benchmark directory or data directory
+        test_files = list((benchmark_dir / "data").glob("*.test"))
+        if not test_files:
+            test_files = list(data_dir.glob("*.test"))
+
+        if test_files:
+            test_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            test_file = test_files[0]
+            print(f"Using most recent test file: {test_file}")
+        else:
+            print("Error: No test file specified and none found in data or benchmark directory")
+            return
 
     # Step 3: Run benchmark
-    print(f"Step 3: Running benchmarks with {args.repeats} repetitions...")
-    try:
-        result = subprocess.run([
-            "python3", str(src_dir / "run_benchmark.py"),
-            "--test-file", str(test_file),
-            "--output-dir", str(benchmark_dir),
-            "--repeats", str(args.repeats),
-            "--build-dir", str(build_dir),
-            "--project-dir", str(project_dir)
-        ], text=True, capture_output=True, check=False)
+    if not args.skip_benchmark:
+        print(f"Step 3: Running benchmarks with {args.repeats} repetitions...")
+        try:
+            result = subprocess.run([
+                "python3", str(src_dir / "run_benchmark.py"),
+                "--test-file", str(test_file),
+                "--output-dir", str(benchmark_dir),
+                "--repeats", str(args.repeats),
+                "--build-dir", str(build_dir),
+                "--project-dir", str(project_dir)
+            ], text=True, capture_output=True, check=False)
 
-        if result.returncode != 0:
-            print(f"Error running tests: {result.stderr}")
-            return  # Exit if test generation fails
-        else:
-            print(result.stdout)
-            print("Tests ran successfully")
-    except Exception as e:
-        print(f"Exception when running run_benchmark.py: {e}")
-        return
+            if result.returncode != 0:
+                print(f"Error running tests: {result.stderr}")
+                return
+            else:
+                print(result.stdout)
+                print("Tests ran successfully")
+        except Exception as e:
+            print(f"Exception when running run_benchmark.py: {e}")
+            return
 
-    # Extract benchmark directory from output - look for actual paths
-    benchmark_result_dir = None
-    for line in result.stdout.strip().split('\n'):
-        if line.startswith('/') and 'benchmark_results/benchmark' in line:
-            potential_dir = line.strip()
-            if Path(potential_dir).exists():
-                benchmark_result_dir = potential_dir
-                break
-
-    if not benchmark_result_dir:
-        print(f"Warning: Could not extract valid benchmark directory from output")
-        benchmark_result_dir = str(benchmark_dir)
+    # Extract benchmark directory from output if needed
+    benchmark_result_dir = str(benchmark_dir)
 
     print(f"Using benchmark result directory: {benchmark_result_dir}")
 
     # Step 4: Process results
-    print("Step 4: Processing benchmark results...")
-    try:
-        process_result = subprocess.run([
-            "python3", str(src_dir / "process_results.py"),
-            "--benchmark-dir", benchmark_result_dir
-        ], text=True, capture_output=True, check=False)
-
-        print(process_result.stdout)  # Display stdout for better visibility
-
-        # Extract the results CSV path from the output
-        results_csv = None
-        for line in process_result.stdout.strip().split('\n'):
-            if '_avg_results.csv' in line:
-                parts = line.split()
-                for part in parts:
-                    if part.endswith('_avg_results.csv') and Path(part).exists():
-                        results_csv = part
-                        break
-
-        # If not found in output, try direct path construction
-        if not results_csv or not Path(results_csv).exists():
-            potential_csv = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
-            if potential_csv.exists():
-                results_csv = str(potential_csv)
-                print(f"Found results CSV by direct lookup: {results_csv}")
-
-        if not results_csv or not Path(results_csv).exists():
-            print("Warning: Could not find results CSV")
-        else:
-            print(f"Using results CSV: {results_csv}")
-
-    except Exception as e:
-        print(f"Error processing results: {e}")
-        import traceback
-        traceback.print_exc()
-        results_csv = None
-
-    # Step 5: Generate plots
-    print("Step 5: Creating visualization plots...")
-
-    # Find enhanced_plots.py script
-    script_locations = [
-        src_dir / "enhanced_plots.py",
-        Path("src/enhanced_plots.py"),
-        Path("Testing/benchmark/src/enhanced_plots.py"),
-        Path(os.path.abspath(".")) / "src" / "enhanced_plots.py"
-    ]
-    enhanced_plots_path = None
-    for path in script_locations:
-        if path.exists():
-            enhanced_plots_path = path
-            break
-
-    if not enhanced_plots_path:
-        print("Error: Could not find enhanced_plots.py script")
-    else:
+    if not args.skip_processing:
+        print("Step 4: Processing benchmark results...")
         try:
-            # Create charts directory for global summaries
-            charts_dir = Path(benchmark_result_dir) / "charts"
-            charts_dir.mkdir(exist_ok=True, parents=True)
+            process_result = subprocess.run([
+                "python3", str(src_dir / "process_results.py"),
+                "--benchmark-dir", benchmark_result_dir
+            ], text=True, capture_output=True, check=False)
 
-            # Find main results CSV for global charts
-            main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
-            if main_results.exists():
-                print(f"Found main results CSV: {main_results}")
+            #print(process_result.stdout)
 
-                # Generate global charts with enhanced_plots
-                try:
-                    subprocess.run(
-                        ["python3", str(enhanced_plots_path),
-                         "--results-csv", str(main_results),
-                         "--output-dir", str(charts_dir)],
-                        check=True
-                    )
-                    print(f"  Success: Global enhanced plots created in {charts_dir}")
-                except Exception as e:
-                    print(f"  Error generating global enhanced plots: {e}")
+            # Extract the results CSV path from the output
+            results_csv = None
+            for line in process_result.stdout.strip().split('\n'):
+                if '_avg_results.csv' in line:
+                    parts = line.split()
+                    for part in parts:
+                        if part.endswith('_avg_results.csv') and Path(part).exists():
+                            results_csv = part
+                            break
 
-            # Process individual query results (single operator)
-            query_count = 0
-            single_op_dir = Path(benchmark_result_dir) / "single_operator"
-            if single_op_dir.exists():
-                for op_type in ['filter', 'map']:
-                    op_dir = single_op_dir / op_type
-                    if not op_dir.exists():
-                        continue
-
-                    for buffer_dir in op_dir.glob("bufferSize*"):
-                        for query_dir in buffer_dir.glob("query_*"):
-                            avg_csv = query_dir / "avg_results.csv"
-                            if avg_csv.exists():
-                                plots_dir = query_dir / "plots"
-                                plots_dir.mkdir(exist_ok=True, parents=True)
-
-                                try:
-                                    subprocess.run(
-                                        ["python3", str(enhanced_plots_path),
-                                         "--results-csv", str(avg_csv),
-                                         "--output-dir", str(plots_dir)],
-                                        check=True
-                                    )
-                                    query_count += 1
-                                except Exception as e:
-                                    print(f"  Error generating plots for {avg_csv}: {e}")
-
-            # Process double operator results
-            double_op_dir = Path(benchmark_result_dir) / "double_operator"
-            if double_op_dir.exists():
-                try:
-                    double_plots_path = src_dir / "double_operator_plots.py"
-                    if double_plots_path.exists():
-                        subprocess.run(
-                            ["python3", str(double_plots_path),
-                             "--benchmark-dir", str(benchmark_result_dir)],
-                            check=True
-                        )
-                        print("  Success: Double operator plots created")
-                except Exception as e:
-                    print(f"  Error generating double operator plots: {e}")
-
-            print(f"Successfully generated plots for {query_count} individual queries")
+            # If not found in output, try direct path construction
+            if not results_csv or not Path(results_csv).exists():
+                potential_csv = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+                if potential_csv.exists():
+                    results_csv = str(potential_csv)
+                    print(f"Found results CSV by direct lookup: {results_csv}")
 
         except Exception as e:
-            print(f"Error during plot generation: {e}")
+            print(f"Error processing results: {e}")
             import traceback
             traceback.print_exc()
+            results_csv = None
+
+    # Step 5: Generate plots
+    if not args.skip_plotting:
+        print("Step 5: Creating visualization plots...")
+
+        # Find enhanced_plots.py script
+        script_locations = [
+            src_dir / "enhanced_plots.py",
+            Path("src/enhanced_plots.py"),
+            Path("Testing/benchmark/src/enhanced_plots.py"),
+            Path(os.path.abspath(".")) / "src" / "enhanced_plots.py"
+        ]
+        enhanced_plots_path = None
+        for path in script_locations:
+            if path.exists():
+                enhanced_plots_path = path
+                break
+
+        if not enhanced_plots_path:
+            print("Error: Could not find enhanced_plots.py script")
+        else:
+            try:
+                # Create charts directory for global summaries
+                charts_dir = Path(benchmark_result_dir) / "charts"
+                charts_dir.mkdir(exist_ok=True, parents=True)
+
+                # Find main results CSV for global charts
+                main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+                if main_results.exists():
+                    print(f"Found main results CSV: {main_results}")
+
+                    # Generate global charts with enhanced_plots
+                    try:
+                        subprocess.run(
+                            ["python3", str(enhanced_plots_path),
+                             "--results-csv", str(main_results),
+                             "--output-dir", str(charts_dir)],
+                            check=True
+                        )
+                        print(f"  Success: Global enhanced plots created in {charts_dir}")
+                    except Exception as e:
+                        print(f"  Error generating global enhanced plots: {e}")
+
+                # Process individual query results (single operator)
+                query_count = 0
+                single_op_dir = Path(benchmark_result_dir) / "single_operator"
+                if single_op_dir.exists():
+                    for op_type in ['filter', 'map']:
+                        op_dir = single_op_dir / op_type
+                        if not op_dir.exists():
+                            continue
+
+                        for buffer_dir in op_dir.glob("bufferSize*"):
+                            for query_dir in buffer_dir.glob("query_*"):
+                                avg_csv = query_dir / "avg_results.csv"
+                                if avg_csv.exists():
+                                    plots_dir = query_dir / "plots"
+                                    plots_dir.mkdir(exist_ok=True, parents=True)
+
+                                    try:
+                                        subprocess.run(
+                                            ["python3", str(enhanced_plots_path),
+                                             "--results-csv", str(avg_csv),
+                                             "--output-dir", str(plots_dir)],
+                                            check=True
+                                        )
+                                        query_count += 1
+                                    except Exception as e:
+                                        print(f"  Error generating plots for {avg_csv}: {e}")
+
+                # Process double operator results
+                double_op_dir = Path(benchmark_result_dir) / "double_operator"
+                if double_op_dir.exists():
+                    try:
+                        double_plots_path = src_dir / "double_operator_plots.py"
+                        if double_plots_path.exists():
+                            subprocess.run(
+                                ["python3", str(double_plots_path),
+                                 "--benchmark-dir", str(benchmark_result_dir)],
+                                check=True
+                            )
+                            print("  Success: Double operator plots created")
+                    except Exception as e:
+                        print(f"  Error generating double operator plots: {e}")
+
+                print(f"Successfully generated plots for {query_count} individual queries")
+
+            except Exception as e:
+                print(f"Error during plot generation: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Create a symlink to the latest benchmark directory
     latest_link = base_output_dir / "latest"
@@ -280,7 +318,6 @@ def main():
     print(f"Benchmark completed in {elapsed_time:.2f} seconds")
     print(f"Results and visualizations available in {benchmark_dir}")
     print(f"Access the latest results at {latest_link}")
-    #todo: save stdout and shutdown system
 
 if __name__ == "__main__":
     main()
