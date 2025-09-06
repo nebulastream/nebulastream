@@ -23,10 +23,12 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -262,7 +264,13 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 
 /// Adds additional traits to the given operator, returning a new operator
 /// If the same trait (with the same data) is already present, the new trait will not be added.
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitSet& traitSet);
+template <IsTrait... TraitType>
+LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&... traits)
+{
+    auto result = op.getTraitSet();
+    (result.tryInsert(traits), ...);
+    return op.withTraitSet(std::move(result));
+}
 
 }
 

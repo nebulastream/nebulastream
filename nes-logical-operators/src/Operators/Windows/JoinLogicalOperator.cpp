@@ -37,6 +37,7 @@
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -141,7 +142,7 @@ LogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 TraitSet JoinLogicalOperator::getTraitSet() const
 {
     TraitSet result = traitSet;
-    result.insert(originIdTrait);
+    insertTrait(result, originIdTrait);
     return result;
 }
 
@@ -238,7 +239,7 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     for (const auto& inputSchema : getInputSchemas())

@@ -13,6 +13,7 @@
 */
 
 #include <cstddef>
+#include <ranges>
 #include <sstream>
 
 #include <utility>
@@ -177,18 +178,16 @@ TEST_F(LogicalPlanTest, AddTraits)
     {
     };
 
-    EXPECT_TRUE(sourceOp.getTraitSet().empty());
-    const auto sourceWithTrait = sourceOp.withTraitSet({TestTrait{}});
+    EXPECT_TRUE(std::ranges::empty(sourceOp.getTraitSet()));
+    const auto sourceWithTrait = sourceOp.withTraitSet(TraitSet{TestTrait{}});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
-    ASSERT_THAT(sourceTraitSet, ::testing::SizeIs(1));
-    ASSERT_THAT(sourceTraitSet, ::testing::ElementsAre(TestTrait{}));
+    EXPECT_EQ(std::ranges::size(sourceTraitSet), 1);
+    EXPECT_TRUE(sourceTraitSet.tryGet<TestTrait>().has_value());
 
-    const auto sourceWithTwoTraits = addAdditionalTraits(sourceWithTrait, {OriginIdAssignerTrait{}});
-    ASSERT_THAT(sourceWithTwoTraits.getTraitSet(), ::testing::SizeIs(2));
-    ASSERT_THAT(sourceWithTwoTraits.getTraitSet(), ::testing::UnorderedElementsAre(OriginIdAssignerTrait{}, TestTrait{}));
-    ASSERT_THAT(
-        addAdditionalTraits(sourceWithTwoTraits, {TestTrait{}}).getTraitSet(),
-        ::testing::UnorderedElementsAre(OriginIdAssignerTrait{}, TestTrait{}));
+    const auto sourceWithTwoTraits = addAdditionalTraits(sourceWithTrait, OriginIdAssignerTrait{});
+    EXPECT_EQ(std::ranges::size(sourceWithTwoTraits.getTraitSet()), 2);
+    EXPECT_TRUE(sourceWithTwoTraits.getTraitSet().tryGet<OriginIdAssignerTrait>().has_value());
+    EXPECT_EQ(std::ranges::size(addAdditionalTraits(sourceWithTwoTraits, TestTrait{}).getTraitSet()), 2);
 }
 
 TEST_F(LogicalPlanTest, GetLeafOperators)

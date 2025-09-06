@@ -12,29 +12,29 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-
-#include <Configurations/Descriptor.hpp>
-#include <Traits/Trait.hpp>
-#include <Util/Registry.hpp>
+#include <Traits/TraitSet.hpp>
 
 namespace NES
 {
 
-using TraitRegistryReturnType = Trait;
-
-struct TraitRegistryArguments
+bool operator==(const TraitSet& lhs, const TraitSet& rhs)
 {
-    DescriptorConfig::Config config;
-};
-
-class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
-{
-};
+    return lhs.traitMap == rhs.traitMap;
 }
 
-#define INCLUDED_FROM_REGISTRY_TRAIT
-#include <TraitGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_TRAIT
+auto TraitSet::begin() const
+{
+    return traitMap.cbegin();
+}
+
+auto TraitSet::end() const
+{
+    return traitMap.cend();
+}
+
+std::size_t TraitSet::size() const
+{
+    return traitMap.size();
+}
+
+}
