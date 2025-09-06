@@ -42,14 +42,8 @@ namespace NES
 {
 
 SourceThread::SourceThread(
-    OriginId originId,
-    std::shared_ptr<AbstractPoolProvider> poolProvider,
-    size_t numOfLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
-    : originId(originId)
-    , localBufferManager(std::move(poolProvider))
-    , numOfLocalBuffers(numOfLocalBuffers)
-    , sourceImplementation(std::move(sourceImplementation))
+    OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
+    : originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -148,30 +142,17 @@ dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, Abstra
     return {SourceImplementationTermination::StopRequested};
 }
 
-struct DestroyOnExit
-{
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
-
-    ~DestroyOnExit() { bufferProvider->destroy(); }
-};
-
 void dataSourceThread(
     const std::stop_token& stopToken,
     std::promise<SourceImplementationTermination> result,
     Source* source,
     SourceReturnType::EmitFunction emit,
-    OriginId originId,
-    std::optional<std::shared_ptr<AbstractBufferProvider>> bufferProvider)
+    const OriginId originId,
+    ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
+    std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
     threadSetup(originId);
-    if (!bufferProvider)
-    {
-        emit(originId, SourceReturnType::Error(BufferAllocationFailure()));
-        result.set_exception(std::make_exception_ptr(BufferAllocationFailure()));
-        return;
-    }
 
-    const DestroyOnExit onExit{bufferProvider.value()};
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -179,22 +160,22 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
-        emit(originId, SourceReturnType::Data{std::move(buffer)});
+        emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
-            emit(originId, SourceReturnType::EoS{});
+            emit(originId, SourceReturnType::EoS{}, stopToken);
         }
     }
     catch (const std::exception& e)
     {
         auto ingestionException = RunningRoutineFailure(e.what());
         result.set_exception_at_thread_exit(std::make_exception_ptr(ingestionException));
-        emit(originId, SourceReturnType::Error{std::move(ingestionException)});
+        emit(originId, SourceReturnType::Error{std::move(ingestionException)}, stopToken);
     }
 }
 }
@@ -217,7 +198,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager->createFixedSizeBufferPool(numOfLocalBuffers));
+        localBufferManager);
     thread = std::move(sourceThread);
     return true;
 }
@@ -277,7 +258,6 @@ std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
 {
     out << "\nSourceThread(";
     out << "\n  originId: " << sourceThread.originId;
-    out << "\n  numOfLocalBuffers: " << sourceThread.numOfLocalBuffers;
     out << "\n  source implementation:" << *sourceThread.sourceImplementation;
     out << ")\n";
     return out;
