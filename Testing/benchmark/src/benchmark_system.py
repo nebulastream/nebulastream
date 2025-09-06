@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--test-file', help='Use existing test file')
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.environ.get('PWD', os.getcwd()), help='Project root directory')
+    parser.add_argument('--run_options', default='double', help='options: all, single or double')
     args = parser.parse_args()
 
     start_time = time.time()
@@ -90,7 +91,8 @@ def main():
                 "--data", str(data_file),
                 "--output", str(test_file),
                 "--result-dir", str(benchmark_dir),
-                "--columns", ','.join(map(str, args.columns))
+                "--columns", ','.join(map(str, args.columns)),
+                "--run_options", args.run_options
             ], check=False, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -104,19 +106,30 @@ def main():
             return
 
     # Step 3: Run benchmark
-    print("Step 3: Running benchmarks...")
-    process = subprocess.run([
-        "python3", str(src_dir / "run_benchmark.py"),
-        "--test-file", str(test_file),
-        "--output-dir", str(benchmark_dir),
-        "--repeats", str(args.repeats),
-        "--build-dir", str(build_dir),
-        "--project-dir", str(project_dir)
-    ], text=True, capture_output=True, check=False)
+    print(f"Step 3: Running benchmarks with {args.repeats} repetitions...")
+    try:
+        result = subprocess.run([
+            "python3", str(src_dir / "run_benchmark.py"),
+            "--test-file", str(test_file),
+            "--output-dir", str(benchmark_dir),
+            "--repeats", str(args.repeats),
+            "--build-dir", str(build_dir),
+            "--project-dir", str(project_dir)
+        ], text=True, capture_output=True, check=False)
+
+        if result.returncode != 0:
+            print(f"Error running tests: {result.stderr}")
+            return  # Exit if test generation fails
+        else:
+            print(result.stdout)
+            print("Tests ran successfully")
+    except Exception as e:
+        print(f"Exception when running run_benchmark.py: {e}")
+        return
 
     # Extract benchmark directory from output - look for actual paths
     benchmark_result_dir = None
-    for line in process.stdout.strip().split('\n'):
+    for line in result.stdout.strip().split('\n'):
         if line.startswith('/') and 'benchmark_results/benchmark' in line:
             potential_dir = line.strip()
             if Path(potential_dir).exists():
@@ -183,23 +196,8 @@ def main():
             enhanced_plots_path = path
             break
 
-    # Find plots.py script
-    plots_script_locations = [
-        src_dir / "plots.py",
-        Path("Testing/scripts/plots.py"),
-        Path(os.path.abspath(".")) / "scripts" / "plots.py"
-    ]
-    plots_script_path = None
-    for path in plots_script_locations:
-        if path.exists():
-            plots_script_path = path
-            break
-
     if not enhanced_plots_path:
         print("Error: Could not find enhanced_plots.py script")
-        print("Searched in:")
-        for path in script_locations:
-            print(f"  - {path}")
     else:
         try:
             # Create charts directory for global summaries
@@ -223,42 +221,47 @@ def main():
                 except Exception as e:
                     print(f"  Error generating global enhanced plots: {e}")
 
-                # Also run plots.py for the main results
-                if plots_script_path:
-                    pass
-                    """try:
+            # Process individual query results (single operator)
+            query_count = 0
+            single_op_dir = Path(benchmark_result_dir) / "single_operator"
+            if single_op_dir.exists():
+                for op_type in ['filter', 'map']:
+                    op_dir = single_op_dir / op_type
+                    if not op_dir.exists():
+                        continue
+
+                    for buffer_dir in op_dir.glob("bufferSize*"):
+                        for query_dir in buffer_dir.glob("query_*"):
+                            avg_csv = query_dir / "avg_results.csv"
+                            if avg_csv.exists():
+                                plots_dir = query_dir / "plots"
+                                plots_dir.mkdir(exist_ok=True, parents=True)
+
+                                try:
+                                    subprocess.run(
+                                        ["python3", str(enhanced_plots_path),
+                                         "--results-csv", str(avg_csv),
+                                         "--output-dir", str(plots_dir)],
+                                        check=True
+                                    )
+                                    query_count += 1
+                                except Exception as e:
+                                    print(f"  Error generating plots for {avg_csv}: {e}")
+
+            # Process double operator results
+            double_op_dir = Path(benchmark_result_dir) / "double_operator"
+            if double_op_dir.exists():
+                try:
+                    double_plots_path = src_dir / "double_operator_plots.py"
+                    if double_plots_path.exists():
                         subprocess.run(
-                            ["python3", str(plots_script_path), str(main_results)],
+                            ["python3", str(double_plots_path),
+                             "--benchmark-dir", str(benchmark_result_dir)],
                             check=True
                         )
-                        print(f"  Success: Additional plots created using plots.py")
-                    except Exception as e:
-                        print(f"  Error generating additional plots: {e}") """
-
-            # Find individual query results for per-query plots
-            query_count = 0
-            for op_type in ['filter', 'map']:
-                op_dir = Path(benchmark_result_dir) / op_type
-                if not op_dir.exists():
-                    continue
-
-                for buffer_dir in op_dir.glob("bufferSize*"):
-                    for query_dir in buffer_dir.glob("query_*"):
-                        avg_csv = query_dir / "avg_results.csv"
-                        if avg_csv.exists():
-                            plots_dir = query_dir / "plots"
-                            plots_dir.mkdir(exist_ok=True, parents=True)
-
-                            try:
-                                subprocess.run(
-                                    ["python3", str(enhanced_plots_path),
-                                     "--results-csv", str(avg_csv),
-                                     "--output-dir", str(plots_dir)],
-                                    check=True
-                                )
-                                query_count += 1
-                            except Exception as e:
-                                print(f"  Error generating plots for {avg_csv}: {e}")
+                        print("  Success: Double operator plots created")
+                except Exception as e:
+                    print(f"  Error generating double operator plots: {e}")
 
             print(f"Successfully generated plots for {query_count} individual queries")
 

@@ -7,6 +7,15 @@ import shutil
 from pathlib import Path
 import json
 
+def get_config_from_file(config_file):
+    config={}
+    with open(config_file, 'r') as f:
+        for line in f:
+            name, value = line.split(':')
+            config[name.strip()] = value.strip()
+
+    return config
+
 def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""
     if layouts is None:
@@ -42,14 +51,25 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
     # Extract individual test files from the filter and map directories
     filter_dir = output_dir / "filter"
     map_dir = output_dir / "map"
+    double_op_dir = output_dir / "double_operator"
+    possible_dirs = [filter_dir, map_dir, double_op_dir]
+    dirs = []
+    if double_op_dir.exists():
+        for op_dir in double_op_dir.iterdir(): #get strategy dirs inside double_op_dir
+            if op_dir.is_dir():
+                dirs.append(op_dir)
 
-    if not filter_dir.exists() or not map_dir.exists():
+    for dir in possible_dirs:
+        if(dir.exists()):
+            dirs.append(dir)
+
+    if (not filter_dir.exists() or not map_dir.exists()) and not double_op_dir.exists():
         print("Error: Directory structure not found. Make sure to run generate_test.py first.")
         return
 
     # Get all buffer size directories
     buffer_dirs = []
-    for op_dir in [filter_dir, map_dir]:
+    for op_dir in dirs:
         for buffer_dir in op_dir.glob("bufferSize*"):
             buffer_dirs.append(buffer_dir)
 
@@ -62,7 +82,6 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
 
         buffer_test_file = test_files[0]
         buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
-        operator_type = "filter" if "filter" in str(buffer_dir) else "map"
 
         # Get query directories for this buffer size
         query_dirs = list(buffer_dir.glob("query_*"))
@@ -73,22 +92,23 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
             if not config_file.exists():
                 print(f"Warning: No config file found in {query_dir}, skipping...")
                 continue
+            config = get_config_from_file(config_file)
 
             # Read config to get query ID
-            query_id = None
-            with open(config_file, 'r') as f:
-                for line in f:
-                    if line.startswith("query_id:"):
-                        query_id = int(line.split(":")[1].strip())
-                        break
+            query_id = config["query_id"]
 
             # Read config to get test ID
-            test_id = None
-            with open(config_file, 'r') as f:
-                for line in f:
-                    if line.startswith("test_id:"):
-                        test_id = int(line.split(":")[1].strip())
-                        break
+            test_id = config["test_id"]
+            op_chain = config["operator_chain"]
+            strategy = config["swap_strategy"]
+
+            if len(op_chain.split(",")) > 1:
+                print(f"  Multiple operators in chain: {op_chain}")
+
+                #multiple operators in query
+                layouts = ["ROW_LAYOUT"] #layout field gets ignored if strategy is set
+            else:
+                layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
 
             if query_id is None:
                 print(f"Warning: Could not determine query ID for {query_dir}, skipping...")
@@ -124,14 +144,14 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                             f"--worker.numberOfBuffersInGlobalBufferManager=1000 "
                             f"--worker.defaultQueryExecution.operatorBufferSize={buffer_size} "
                             f"--worker.defaultQueryExecution.memoryLayout={layout} "
-                            f"--worker.defaultQueryExecution.layoutStrategy=USE_SINGLE_LAYOUT "
+                            f"--worker.defaultQueryExecution.layoutStrategy={strategy} "
                             f"--enableGoogleEventTrace=true"
                         )
                     ]
 
                     try:
                         # Debug: Print Docker command
-                        print(f"  Running Docker with command pointing to test file: {docker_test_path}:{test_id}")
+                        #print(f"  Running Docker with command pointing to test file: {docker_test_path}:{test_id}")
 
                         # Run the benchmark
                         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -143,8 +163,9 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                             f.write(result.stderr)
 
                         if result.returncode != 0:
-                            print(f"  Error running benchmark, check logs in {run_dir}")
-                            print(f"  Error output: {result.stderr[:200]}...")
+                            if result.stderr.strip():
+                                print(f"  Error running benchmark, check logs in {run_dir}")
+                                print(f"  Error output: {result.stderr[:200]}...")
 
                         # Copy GoogleEventTrace file if it exists
                         search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests/systest")
@@ -155,7 +176,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                             trace_file = trace_files[-1]
                             trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
                             shutil.copy(trace_file, trace_dest)
-                            print(f"  Saved most recent trace file: {trace_file.name} to {trace_dest}")
+                            #print(f"  Saved most recent trace file: {trace_file.name} to {trace_dest}")
                         else:
                             print(f"  No trace file found for Query {query_id}, Run {run} in path {search_path}")
 

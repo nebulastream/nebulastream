@@ -8,7 +8,110 @@ import shutil
 import json
 from benchmark_system import parse_int_list
 
-def generate_test_file(data_file, output_path, result_dir, params):
+def swap_config_to_strategy(swap_config):
+    """Convert swap configuration to layout strategy name"""
+    if swap_config == [False, False, False]:  # No swaps
+        return "ALL_ROW"
+    elif swap_config == [True, True, False]:
+        return "ALL_COL"
+    elif swap_config == [True, False, False]:  # Just first swap
+        return "FIRST"
+    elif swap_config == [False, True, False]:  # Just middle swap
+        return "SECOND"
+    else:
+        return "CUSTOM"  # For other configurations
+
+def generate_double_operator_query(test_id, buffer_size, num_cols, access_cols, op_chain, swap_config, result_dir):
+    """Generate a query with a chain of two operators and configurable swaps"""
+
+    # Create strategy-specific directory in double_operator
+    strategy = swap_config
+    chain_str = '_'.join(op_chain)
+
+    # For directory structure
+    strategy_dir = result_dir / strategy
+    strategy_dir.mkdir(exist_ok=True)
+
+    buffer_dir = strategy_dir / f"bufferSize{buffer_size}"
+    buffer_dir.mkdir(exist_ok=True)
+
+    query_dir = buffer_dir / f"query_{chain_str}_cols{num_cols}_access{access_cols}"
+    query_dir.mkdir(exist_ok=True)
+
+    # Prepare test file path
+    test_file = buffer_dir / f"{chain_str}_queries_buffer{buffer_size}.test"
+
+    # Calculate threshold for filters (use same threshold calculation as single operators)
+    selectivity = 50  # Default selectivity
+    threshold = int((100 - selectivity) * 0.01 * (2**32-1))
+
+    # Generate query SQL
+    query = f"# Query {test_id}: Chain {chain_str} with strategy {strategy}\n"
+    query += f"# BufferSize: {buffer_size}, Operators: {chain_str}, SwapStrategy: {strategy}, Strategy: {strategy}\n"
+    query += "SELECT "
+
+    # Generate different queries based on operator chain
+    if op_chain == ['map', 'filter']:
+        # First map then filter
+        if access_cols == 1:
+            # Single column access
+            inner_expr = f"col_0 + col_0 AS result1"
+            outer_expr = f"result1 > UINT64({threshold})"
+            sink = "MapSink"
+        else:
+            # Multi-column access
+            inner_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+            inner_expr = ", ".join(inner_exprs)
+            outer_expr = " AND ".join([f"result{i+1} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
+            sink = f"MapSink{access_cols}"
+
+
+
+        query += f"* FROM (SELECT {inner_expr} FROM bench_data{num_cols}"
+
+        query += f" INTO {sink};\n"
+
+    elif op_chain == ['filter', 'map']:
+        # First filter then map
+        if access_cols == 1:
+            filter_expr = f"col_0 > UINT64({threshold})"
+            map_expr = f"col_0 + col_0 AS result"
+            sink = "MapSink"
+        else:
+            filter_expr = " AND ".join([f"col_{i} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
+            map_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+            map_expr = ", ".join(map_exprs)
+            sink = f"MapSink{access_cols}"
+
+
+
+        query += f"{map_expr} FROM (SELECT * FROM bench_data{num_cols} WHERE ({filter_expr})"
+
+
+        query += ")"
+
+
+        query += f" INTO {sink};\n"
+
+    # Similar cases for map-map and filter-filter chains...
+
+    # Store configuration
+    config = {
+        'query_id': test_id,
+        'test_id': test_id,  # Make sure test_id is also stored
+        'buffer_size': buffer_size,
+        'num_columns': num_cols,
+        'accessed_columns': access_cols,
+        'operator_chain': op_chain,
+        'swap_strategy': strategy
+    }
+
+    with open(query_dir / "config.txt", 'w') as f:
+        for k, v in config.items():
+            f.write(f"{k}: {v}\n")
+
+    return query, config, test_file
+def generate_test_file(data_file, output_path, result_dir, params, run_options='all'):
     """Generate benchmark test file with queries for all parameter combinations"""
     buffer_sizes = params.get('buffer_sizes', [4000, 400000, 20000000])
     num_columns_list = params.get('num_columns', [1, 5, 10])
@@ -79,136 +182,174 @@ def generate_test_file(data_file, output_path, result_dir, params):
         f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
 
     # Create operator directories
+
     result_dir = Path(result_dir)
+    double_operator_dir = result_dir / "double_operator"
     filter_dir = result_dir / "filter"
     map_dir = result_dir / "map"
-    filter_dir.mkdir(exist_ok=True, parents=True)
-    map_dir.mkdir(exist_ok=True, parents=True)
+
+
 
     query_id = 1
     query_configs = {}
 
-    # For each buffer size, create separate test files and directory structure
-    for buffer_size in buffer_sizes:
-        filter_buffer_dir = filter_dir / f"bufferSize{buffer_size}"
-        map_buffer_dir = map_dir / f"bufferSize{buffer_size}"
-        filter_buffer_dir.mkdir(exist_ok=True)
-        map_buffer_dir.mkdir(exist_ok=True)
+    if run_options == 'all' or run_options == 'single': #TODO: refactor in own function
+        filter_dir.mkdir(exist_ok=True, parents=True)
+        map_dir.mkdir(exist_ok=True)
+        # For each buffer size, create separate test files and directory structure
+        for buffer_size in buffer_sizes:
+            filter_buffer_dir = filter_dir / f"bufferSize{buffer_size}"
+            map_buffer_dir = map_dir / f"bufferSize{buffer_size}"
+            filter_buffer_dir.mkdir(exist_ok=True)
+            map_buffer_dir.mkdir(exist_ok=True)
 
-        # Create buffer-specific test files
-        filter_test_path = filter_buffer_dir / f"filter_queries_buffer{buffer_size}.test"
-        map_test_path = map_buffer_dir / f"map_queries_buffer{buffer_size}.test"
+            # Create buffer-specific test files
+            filter_test_path = filter_buffer_dir / f"filter_queries_buffer{buffer_size}.test"
+            map_test_path = map_buffer_dir / f"map_queries_buffer{buffer_size}.test"
 
-        # Copy header content from main test file
-        shutil.copy(output_path, filter_test_path)
-        shutil.copy(output_path, map_test_path)
-        map_queries=0
-        filter_queries=0
-        # Open files for appending queries
-        with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
-            # Generate queries for all parameter combinations for this buffer size
-            for num_col in [n for n in num_columns_list if n <= len(column_names)]:
-                cols_to_use = column_names[:num_col]
+            # Copy header content from main test file
+            shutil.copy(output_path, filter_test_path)
+            shutil.copy(output_path, map_test_path)
+            map_queries=0
+            filter_queries=0
+            # Open files for appending queries
+            with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
+                # Generate queries for all parameter combinations for this buffer size
+                for num_col in [n for n in num_columns_list if n <= len(column_names)]:
+                    cols_to_use = column_names[:num_col]
 
-                for access_col in [a for a in accessed_columns_list if a <= num_col]:
-                    cols_to_access = cols_to_use[:access_col]
+                    for access_col in [a for a in accessed_columns_list if a <= num_col]:
+                        cols_to_access = cols_to_use[:access_col]
 
-                    # Filter queries with different selectivities
-                    for selectivity in selectivities:
-                        filter_col = cols_to_access[0]
-                        filter_queries+=1
-                        # Calculate individual selectivity needed for each column
-                        # For N columns with AND, each needs selectivity^(1/N) to achieve target selectivity
-                        individual_selectivity = selectivity**(1.0/access_col)
+                        # Filter queries with different selectivities
+                        for selectivity in selectivities:
+                            filter_col = cols_to_access[0]
+                            filter_queries+=1
+                            # Calculate individual selectivity needed for each column
+                            # For N columns with AND, each needs selectivity^(1/N) to achieve target selectivity
+                            individual_selectivity = selectivity**(1.0/access_col)
 
-                        # Calculate threshold for this individual selectivity
-                        threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))
+                            # Calculate threshold for this individual selectivity
+                            threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))
 
 
-                        # Create query directory
-                        query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
-                        query_dir.mkdir(exist_ok=True)
+                            # Create query directory
+                            query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
+                            query_dir.mkdir(exist_ok=True)
 
-                        # Write query config
-                        config = {
-                            "query_id": query_id,
-                            "test_id": filter_queries,
-                            "buffer_size": buffer_size,
-                            "num_columns": num_col,
-                            "accessed_columns": access_col,
-                            "operator_type": "filter",
-                            "selectivity": selectivity,
-                            "individual_selectivity": individual_selectivity,
-                            "threshold": threshold,
-                        }
+                            # Write query config
+                            config = {
+                                "query_id": query_id,
+                                "test_id": filter_queries,
+                                "buffer_size": buffer_size,
+                                "num_columns": num_col,
+                                "accessed_columns": access_col,
+                                "operator_chain": "filter",
+                                "swap_strategy": "USE_SINGLE_LAYOUT",
+                                "selectivity": selectivity,
+                                "individual_selectivity": individual_selectivity,
+                                "threshold": threshold,
+                            }
 
-                        with open(query_dir / "config.txt", 'w') as config_f:
-                            for k, v in config.items():
-                                config_f.write(f"{k}: {v}\n")
+                            with open(query_dir / "config.txt", 'w') as config_f:
+                                for k, v in config.items():
+                                    config_f.write(f"{k}: {v}\n")
 
-                        # Store config in dictionary for later use
-                        query_configs[query_id] = config
+                            # Store config in dictionary for later use
+                            query_configs[query_id] = config
 
-                        # Write query to buffer-specific test file
-                        query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
-                        query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
+                            # Write query to buffer-specific test file
+                            query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
+                            query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
 
-                        query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
-                        for col_name in cols_to_access[1:]:
-                            query += (f" AND {col_name} > UINT64({threshold})")
+                            query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
+                            for col_name in cols_to_access[1:]:
+                                query += (f" AND {col_name} > UINT64({threshold})")
 
-                        query += (f") INTO AllSink{num_col};\n")
-                        query += "----\n1, 1\n\n"
-                        filter_f.write(query)
+                            query += (f") INTO AllSink{num_col};\n")
+                            query += "----\n1, 1\n\n"
+                            filter_f.write(query)
 
-                        query_id += 1
+                            query_id += 1
 
-                    # Map queries with different function types
-                    for func_type in function_types:
-                        map_queries+=1
-                        # Create query directory
-                        query_dir = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}"
-                        query_dir.mkdir(exist_ok=True)
+                        # Map queries with different function types
+                        for func_type in function_types:
+                            map_queries+=1
+                            # Create query directory
+                            query_dir = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}"
+                            query_dir.mkdir(exist_ok=True)
 
-                        # Write query config
-                        config = {
-                            "query_id": query_id,
-                            "test_id": map_queries,
-                            "buffer_size": buffer_size,
-                            "num_columns": num_col,
-                            "accessed_columns": access_col,
-                            "operator_type": "map",
-                            "function_type": func_type
-                        }
+                            # Write query config
+                            config = {
+                                "query_id": query_id,
+                                "test_id": map_queries,
+                                "buffer_size": buffer_size,
+                                "num_columns": num_col,
+                                "accessed_columns": access_col,
+                                "operator_chain": "map",
+                                "swap_strategy": "USE_SINGLE_LAYOUT",
+                                "function_type": func_type
+                            }
 
-                        with open(query_dir / "config.txt", 'w') as config_f:
-                            for k, v in config.items():
-                                config_f.write(f"{k}: {v}\n")
+                            with open(query_dir / "config.txt", 'w') as config_f:
+                                for k, v in config.items():
+                                    config_f.write(f"{k}: {v}\n")
 
-                        # Store config in dictionary for later use
-                        query_configs[query_id] = config
+                            # Store config in dictionary for later use
+                            query_configs[query_id] = config
 
-                        # Write query to buffer-specific test file
-                        query = f"# Query {query_id}: Map with {func_type} function\n"
-                        query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
-                        asterisk = "*" if func_type == 'add' else "+"
-                        expression_template = f"{{}} {asterisk} {{}} AS result{{}}"
-                        col_index=1
-                        if len(cols_to_access)>1:
-                            query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
-                        else:
-                            query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
+                            # Write query to buffer-specific test file
+                            query = f"# Query {query_id}: Map with {func_type} function\n"
+                            query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
+                            asterisk = "*" if func_type == 'add' else "+"
+                            expression_template = f"{{}} {asterisk} {{}} AS result{{}}"
+                            col_index=1
+                            if len(cols_to_access)>1:
+                                query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
+                            else:
+                                query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
 
-                        for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
-                            query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
-                        if access_col != 1:
-                            query += f" FROM bench_data{num_col} INTO MapSink{access_col - 1};\n"#two accessed fields result in one output field
-                        else:
-                            query += f" FROM bench_data{num_col} INTO MapSink{access_col};\n"
-                        query += "----\n1, 1\n\n"
-                        map_f.write(query)
+                            for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
+                                query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
+                            if access_col != 1:
+                                query += f" FROM bench_data{num_col} INTO MapSink{access_col - 1};\n"#two accessed fields result in one output field
+                            else:
+                                query += f" FROM bench_data{num_col} INTO MapSink{access_col};\n"
+                            query += "----\n1, 1\n\n"
+                            map_f.write(query)
 
-                        query_id += 1
+                            query_id += 1
+
+
+    if run_options == 'all' or run_options == 'double':
+        double_operator_dir.mkdir(exist_ok=True, parents=True)
+        # Generate double operator queries
+        for buffer_size in buffer_sizes:
+            for op_chain in params['operator_chains']:
+                # Skip single operators for double operator section
+                if len(op_chain) < 2:
+                    continue
+
+                for swap_config in params['swap_strategy']:
+                    for num_col in [n for n in num_columns_list if n <= len(column_names)]:
+                        for access_col in [a for a in accessed_columns_list if a <= num_col]:
+                            # Generate double operator query
+                            query, config, test_file = generate_double_operator_query(
+                                query_id, buffer_size, num_col, access_col, op_chain,
+                                swap_config, double_operator_dir
+                            )
+
+                            # Append to test file or create if doesn't exist
+                            if not os.path.exists(test_file):
+                                # Copy header content from main test file
+                                shutil.copy(output_path, test_file)
+
+                            with open(test_file, 'a') as f:
+                                f.write(query)
+                                f.write("----\n1, 1\n\n")
+
+                            query_id += 1
+                            query_configs[query_id] = config
 
     # Write query mapping to a file for later reference
     with open(result_dir / "query_mapping.txt", 'w') as f:
@@ -220,21 +361,83 @@ def generate_test_file(data_file, output_path, result_dir, params):
     print(f"Using Docker-compatible data path: {docker_data_path}")
     return query_id-1, query_configs
 
+def generate_operator_chain_query(query_id, buffer_size, num_cols, op_chain, swap_config, result_dir):
+    """Generate a query with a chain of operators and configurable swaps"""
+
+    # Create query directory structure
+    swap_config_str = ''.join(['S' if s else 'N' for s in swap_config])
+    chain_str = '_'.join(op_chain)
+    query_dir = result_dir / f"query_{chain_str}_swap{swap_config_str}_cols{num_cols}"
+    query_dir.mkdir(exist_ok=True)
+
+    # Generate query SQL with appropriate swap operators
+    query = f"# Query {query_id}: Chain {chain_str} with swap config {swap_config_str}\n"
+    query += "SELECT "
+
+    # Configure source and first swap if needed
+    source = f"bench_data{num_cols}"
+    if swap_config[0]:
+        query += "SWAP_LAYOUT "  # First swap (after source)
+
+    # Add operators and intermediate swaps
+    last_op_idx = len(op_chain) - 1
+    for i, op in enumerate(op_chain):
+        if op == 'filter':
+            query += f"FILTER col_0 > UINT64({threshold}) "
+        else:  # map
+            query += f"MAP (col_0 + col_1) AS result{i+1} "
+
+    query += f"FROM {source} INTO MapSink;\n"
+
+    # Store configuration
+    config = {
+        'query_id': query_id,
+        'buffer_size': buffer_size,
+        'operator_chain': op_chain,
+        'swap_strategy': swap_config,
+        'num_columns': num_cols
+    }
+
+    with open(query_dir / "config.txt", 'w') as f:
+        for k, v in config.items():
+            f.write(f"{k}: {v}\n")
+
+    return query, config
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate benchmark test file')
     parser.add_argument('--data', required=True, help='Path to benchmark data CSV')
     parser.add_argument('--output', required=True, help='Output test file path')
     parser.add_argument('--result-dir', required=True, help='Result directory for organized structure')
     parser.add_argument('--columns', type=parse_int_list, default=[10], help='List of number of columns to use')
+    parser.add_argument('--run_options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 400000],#, 20000000],#+ 40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
-        'accessed_columns': [1, 2, 5, 10],
+        'accessed_columns': [1, 2],#, 5, 10],
         'function_types': ['add', 'exp'],
-        'selectivities': [5, 45, 85],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95]
+        'selectivities': [5, 15],#, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+
+        'operator_chains': [
+            ['map'],                  # Single map
+            ['filter'],               # Single filter
+            ['map', 'filter'],        # Map followed by filter
+            ['filter', 'map'],        # Filter followed by map
+            #['map', 'map'],           # Two map operators
+            #['filter', 'filter']      # Two filter operators
+        ],
+        'swap_strategy': [
+            #[True, True, True],      # last swap cant be true because sink is always row
+            swap_config_to_strategy([False, False, False]),    # No swaps
+            swap_config_to_strategy([False, True, False]),
+            swap_config_to_strategy([True, False, False]),
+            swap_config_to_strategy([True, True, False]),
+
+        ]
     }
 
-    generate_test_file(args.data, args.output, args.result_dir, params)
+    #TODO: save params to benchmark dir
+    generate_test_file(args.data, args.output, args.result_dir, params, args.run_options)
