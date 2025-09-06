@@ -172,7 +172,7 @@ struct StoppingQueryPlan
 };
 
 /// It is possible to attach callbacks to the RunningQueryPlan
-struct RunningQueryPlan
+struct RunningQueryPlan final
 {
     /// Returns a RunningQueryPlan alongside a CallbackRef.
     /// The CallbackRef prevents the RunningQueryPlan from completing its setup:
@@ -186,10 +186,9 @@ struct RunningQueryPlan
         std::shared_ptr<QueryLifetimeListener>);
 
     /// Stopping a RunningQueryPlan will:
-    /// 1. Keep all callbacks alive. Eventually onDestruction will be called.
-    /// 2. Initialize pipeline termination asynchronously.
-    /// 3. Block until all sources are terminated.
-    static std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+    /// 1. Initialize pipeline termination asynchronously.
+    /// 2. Block until all sources are terminated.
+    static std::unique_ptr<StoppingQueryPlan> stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
 
     /// Disposing a RunningQueryPlan will:
     /// 1. Not notify any listeners. `onDestruction` will not be called.

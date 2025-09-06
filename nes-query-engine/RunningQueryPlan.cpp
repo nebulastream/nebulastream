@@ -146,20 +146,23 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
         emitter.emitPipelineStop(
             queryId,
             std::move(node),
-            [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
-            {
-                ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
-                ptr->requiresTermination = false;
-                for (auto& successor : ptr->successors)
-                {
-                    emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
-                }
-            },
-            [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
-            {
-                ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
-                ptr->requiresTermination = false;
-            });
+            TaskCallback{
+                TaskCallback::OnComplete(
+                    [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
+                    {
+                        ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
+                        ptr->requiresTermination = false;
+                        for (auto& successor : ptr->successors)
+                        {
+                            emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
+                        }
+                    }),
+                TaskCallback::OnFailure(
+                    [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
+                    {
+                        ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
+                        ptr->requiresTermination = false;
+                    })});
     }
     else
     {
@@ -183,15 +186,15 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
-        {
-            if (const auto nodeLocked = weakRef.lock())
+        TaskCallback{TaskCallback::OnComplete(
+            [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
             {
-                ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
-                nodeLocked->requiresTermination = true;
-            }
-        },
-        {});
+                if (const auto nodeLocked = weakRef.lock())
+                {
+                    ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
+                    nodeLocked->requiresTermination = true;
+                }
+            })});
 
     return node;
 }
@@ -340,7 +343,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
 
                                 for (auto& successor : successors)
                                 {
-                                    emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
+                                    emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
                                 }
 
                                 internal.sources.erase(id);
@@ -359,35 +362,25 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     return {std::move(runningPlan), pipelineSetupCallbackRef};
 }
 
-std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
+std::unique_ptr<StoppingQueryPlan> RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
     ENGINE_LOG_DEBUG("Soft Stopping Query Plan");
 
     auto lock = runningQueryPlan->internal.lock();
     auto& internal = *lock;
 
-    /// By default the RunningQueryPlan dtor will disable pipeline termination. The SoftStop should invoke all pipeline terminations.
-    /// So we prevent the disabling the terminations by clearing all weak references to the pipelines before destroying the rqp.
-    auto callback = internal.allPipelinesExpired.getRef();
-
-    /// Disarm the pipeline setup callback. Once this scope is over, there will no longer be any concurrent access into the
+    /// Disarm the pipeline setup callback, there will no longer be any concurrent access into the
     /// sources map.
     /// This allows us to clear all sources and not have to worry about a in flight pipeline setup to trigger the initialization of
     /// sources.
     internal.allPipelinesStarted = {};
-
-    INVARIANT(
-        callback.has_value(),
-        "Invalid State, the pipeline expiration callback should not have been triggered while attempting to stop the query");
     internal.pipelines.clear();
 
     /// Source stop will emit a the PendingPipelineStop which stops a pipeline once no more tasks are depending on it.
     internal.sources.clear();
 
-    return {
-        std::make_unique<StoppingQueryPlan>(
-            std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired)),
-        *callback};
+    return {std::make_unique<StoppingQueryPlan>(
+        std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired))};
 }
 
 std::unique_ptr<ExecutableQueryPlan> StoppingQueryPlan::dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan)
@@ -412,6 +405,17 @@ RunningQueryPlan::~RunningQueryPlan()
 {
     auto lock = this->internal.lock();
     auto& internal = *lock;
+
+
+    /// CRITICAL: Disable pipeline setup callback during destruction to prevent race condition.
+    ///
+    /// This prevents any pending pipeline setup callbacks from executing after the
+    /// RunningQueryPlan starts being destroyed. Without this, callbacks could access
+    /// partially destroyed object state, leading to use-after-free errors.
+    ///
+    /// The callback may have captured a raw pointer to this RunningQueryPlan during
+    /// the start() method, and this ensures it cannot execute after destruction begins.
+    internal.allPipelinesStarted = {};
 
     for (const auto& weakRef : internal.pipelines)
     {
