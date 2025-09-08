@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <Functions/ConcatPhysicalFunction.hpp>
+
 #include <cstdint>
 #include <utility>
-#include <Functions/ConcatPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -39,8 +40,7 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
 
     const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
-    const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
-    VariableSizedData newVarSizeData(newVarSizeDataArea, newSize);
+    auto newVarSizeData = arena.allocateVariableSizedData(newSize);
 
     /// Writing the left value and then the right value to the new variable sized data
     nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
