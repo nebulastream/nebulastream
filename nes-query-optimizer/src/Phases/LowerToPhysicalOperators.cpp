@@ -128,33 +128,12 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     return root;
 }
 
-LogicalOperator getNewChild(LogicalOperator op, Schema newSchema)
-{
-    if (op.getChildren().empty())
-    {
-        return op;
-    }
-    auto child = getNewChild(op.getChildren()[0], newSchema);
-    op = op.withChildren({child});
-    if (op.tryGet<SinkLogicalOperator>())
-    {
-        auto sink = op.get<SinkLogicalOperator>();
-        return sink.withSchema({newSchema}); /// TODO: work with filter/ map not at first position
-    }
-    return op.withInferredSchema({newSchema});
-}
-
 PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
-
-    /// TODO: assume fields are already correctly propagated for now
-
-    auto sink = queryPlan.getRootOperators()[0];
-
-    for (const auto& logicalRoot : {sink})
+    for (const auto& logicalRoot : queryPlan.getRootOperators())
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
