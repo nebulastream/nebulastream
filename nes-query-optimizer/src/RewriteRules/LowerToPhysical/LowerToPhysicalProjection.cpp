@@ -82,7 +82,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
             std::vector{child});
     }
 
-    if (conf.layoutStrategy == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
     {
         auto memoryLayoutTrait = getMemoryLayoutTypeTrait(projectionLogicalOperator);
 

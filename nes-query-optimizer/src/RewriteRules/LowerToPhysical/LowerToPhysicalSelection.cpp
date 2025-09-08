@@ -47,7 +47,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
 
 
     /// if function left, right is field access, then use fieldname for outputschemas and swap after selection
-    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    if (conf.layoutStrategy.getValue() != MemoryLayoutStrategy::LEGACY)
     {
         auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
 

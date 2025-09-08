@@ -36,7 +36,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     PRECONDITION(sink.getSinkDescriptor().has_value(), "Expected SinkLogicalOperator to have sink descriptor");
     auto physicalOperator = SinkPhysicalOperator(sink.getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
 
-    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    if (conf.layoutStrategy.getValue() != MemoryLayoutStrategy::LEGACY)
     {
 
         auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);

@@ -35,7 +35,7 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner.onField);
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner.unit));
 
-    if (conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    if (conf.layoutStrategy.getValue() != MemoryLayoutStrategy::LEGACY)
     {
         auto memoryLayoutTrait = getMemoryLayoutTypeTrait(logicalOperator);
 
